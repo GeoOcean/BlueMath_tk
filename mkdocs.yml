@@ -13,5 +13,5 @@ markdown_extensions:
   - admonition
   - codehilite
 
-theme: 
+theme:
   name: "material"

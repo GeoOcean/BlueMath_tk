@@ -1,0 +1,14 @@
+name: bluemath
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - numpy
+  - pandas
+  - matplotlib
+  - scikit-learn
+  - pytest
+  # PIP packages can be added belos (Avoid this)
+  # - pip
+  # - pip:
+  #   - some-package
