@@ -29,6 +29,6 @@ jobs:
 
       - name: Run tests
         run: |
-          conda init
+          source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate bluemath
           python -m unittest discover tests/
