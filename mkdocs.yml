@@ -1,0 +1,17 @@
+site_name: BlueMath {Toolkit}
+
+nav:
+  - Home: index.md
+  - API Reference: api.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      default: numpy
+
+markdown_extensions:
+  - admonition
+  - codehilite
+
+theme: 
+  name: "material"

@@ -12,10 +12,22 @@
 
 import numpy as np
 import pandas as pd
-from bluemath_tk.core.data import normalize, denormalize, scatter
+from typing import List
+from ..core.models import BlueMathModel
+from ..core.data import normalize, denormalize, scatter
 
 
-class MDA:
+class MDAError(Exception):
+    """
+    Custom exception for MDA class.
+    """
+
+    def __init__(self, message="MDA error occurred."):
+        self.message = message
+        super().__init__(self.message)
+
+
+class MDA(BlueMathModel):
     """
     This class implements the MDA algorithm (Maximum Dissimilarity Algorithm)
 
@@ -23,11 +35,12 @@ class MDA:
 
     Attributes
     ----------
-    data : pandas.core.frame.DataFrame
+    data : pd.DataFrame
         The data to be clustered. Each column will represent a different variable
 
-    ix_directional : list of str
-        List with the names of the directional variables in the data. If no directional variables are present, this list should be empty.
+    ix_directional : List[str]
+        List with the names of the directional variables in the data. If no directional 
+        variables are present, this list should be empty.
 
     Methods
     -------
@@ -44,13 +57,13 @@ class MDA:
         'Tp': np.random.rand(1000)*20,
         'Dir': np.random.rand(1000)*360
     })
-
     mda_ob = MDA(data=df, ix_directional=['Dir'])
     mda_ob.run(10)
     mda_ob.scatter_data()
     """
 
-    def __init__(self, data=None, ix_directional=[]):
+    def __init__(self, data: pd.DataFrame = None, ix_directional: List[str] = []) -> None:
+        super().__init__()
         self.data = data
         self.ix_directional = ix_directional
         self.scale_factor = {}
@@ -60,7 +73,7 @@ class MDA:
         self.centroid_iterative_indices = []
         self.centroid_real_indices = []
 
-    def run(self, num_centers):
+    def run(self, num_centers: int, verbose: int = 0):
         """
         Normalize data and calculate centers using
         maxdiss  algorithm
@@ -75,10 +88,10 @@ class MDA:
         # Check if data is correctly set
         if self.data is None:
             raise MDAError("No data was provided.")
-        elif type(self.data) is not pd.DataFrame:
+        elif not isinstance(self.data, pd.DataFrame):
             raise MDAError("Data should be a pandas DataFrame.")
 
-        print("\nmda parameters: {0} --> {1}\n".format(self.data.shape[0], num_centers))
+        self.logger.info(f"\nmda parameters: {self.data.shape[0]} --> {num_centers}\n")
 
         self.data_norm, self.scale_factor = normalize(self.data, self.ix_directional)
 
@@ -100,9 +113,8 @@ class MDA:
         # Repeat until we have the desired num_centers
         n_c = 1
         while n_c < num_centers:
-
             m2 = subset.shape[0]
-            print(
+            self.logger.info(
                 f"   MDA centroids: {subset.shape[0]:04d}/{num_centers:04d}", end="\r"
             )
             if m2 == 1:
@@ -124,7 +136,7 @@ class MDA:
 
                 # Log
                 fmt = "0{0}d".format(len(str(num_centers)))
-                print(
+                self.logger.info(
                     "   MDA centroids: {1:{0}}/{2:{0}}".format(
                         fmt, subset.shape[0], num_centers
                     ),
@@ -289,11 +301,3 @@ class MDA:
             scatter(data, centroids=centroids, custom_params=custom_params)
         else:
             scatter(data, custom_params=custom_params)
-
-
-class MDAError(Exception):
-    """Custom exception for MDA class."""
-
-    def __init__(self, message="MDA error occurred."):
-        self.message = message
-        super().__init__(self.message)
