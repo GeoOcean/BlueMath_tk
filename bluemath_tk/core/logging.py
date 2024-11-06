@@ -4,7 +4,9 @@ import pytz
 import logging
 
 
-def get_file_logger(name: str, logs_path: str = None, level: int = logging.INFO) -> logging.Logger:
+def get_file_logger(
+    name: str, logs_path: str = None, level: int = logging.INFO
+) -> logging.Logger:
     """
     Creates and returns a logger that writes log messages to a file.
 

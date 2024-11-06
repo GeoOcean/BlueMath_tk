@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
-from .utils import get_file_logger
+from .logging import get_file_logger
+from .data import normalize, denormalize
 import logging
+import pandas as pd
+from typing import Tuple
 
 
 class BlueMathModel(ABC):
@@ -34,3 +37,23 @@ class BlueMathModel(ABC):
         """Logs an error message and raises an exception."""
         self.logger.error(message)
         raise ValueError(message)
+
+    def normalize(
+        self, data: pd.DataFrame, custom_scale_factor: dict = {}
+    ) -> Tuple[pd.DataFrame, dict]:
+        """
+        Normalize data to 0-1 using min max scaler approach
+        """
+        self.logger.info("Normalizing data to range 0-1 using min max scaler approach")
+        normalized_data, scale_factor = normalize(
+            data=data, custom_scale_factor=custom_scale_factor, logger=self.logger
+        )
+        return normalized_data, scale_factor
+
+    def denormalize(
+        self, normalized_data: pd.DataFrame, scale_factor: dict
+    ) -> pd.DataFrame:
+        """
+        Denormalize data using provided scale_factor
+        """
+        return denormalize(normalized_data=normalized_data, scale_factor=scale_factor)
