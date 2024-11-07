@@ -7,7 +7,11 @@ nav:
 plugins:
   - search
   - mkdocstrings:
-      default: numpy
+      handlers:
+        python:
+          options:
+            docstring_style: numpy
+            docstring_section_style: table
 
 markdown_extensions:
   - admonition
