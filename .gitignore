@@ -25,6 +25,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+conda-recipe/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -73,6 +74,9 @@ instance/
 # Sphinx documentation
 docs/_build/
 
+# MkDocs documentation (production)
+site/
+
 # PyCharm
 .idea/
 *.iml
@@ -88,3 +92,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Local notebooks
+notebooks/
