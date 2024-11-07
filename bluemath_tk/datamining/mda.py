@@ -1,15 +1,3 @@
-"""
----
-Project: Bluemath{toolkit}
-File: mda.py
-Description: Maximum Dissimilarity Algorithm
-Author: GeoOcean Research Group, Universidad de Cantabria
-Created Date: 19 January 2024
-License: MIT
-Repository: https://github.com/GeoOcean/BlueMath_tk.git
----
-"""
-
 import numpy as np
 import pandas as pd
 from typing import List
@@ -48,7 +36,7 @@ class MDA(BlueMathModel):
     custom_scale_factor : dict
         A dictionary of custom scale factors.
     scale_factor : dict
-        A dictionary of scale factors.
+        A dictionary of scale factors (after normalizing the data).
     centroids : pd.DataFrame
         The selected centroids.
     normalized_centroids : pd.DataFrame
@@ -60,25 +48,25 @@ class MDA(BlueMathModel):
 
     Notes
     -----
-        This class is designed to perform the MDA algorithm.
+    - This class is designed to perform the MDA algorithm.
 
     Examples
     --------
-        >>> import pandas as pd
-        >>> from bluemath_tk.datamining import MDA
-        >>> data = pd.DataFrame(
-        ...     {
-        ...         'Hs': np.random.rand(1000) * 7,
-        ...         'Tp': np.random.rand(1000) * 20,
-        ...         'Dir': np.random.rand(1000) * 360
-        ...     }
-        ... )
-        >>> mda = MDA(num_centers=10)
-        >>> mda.fit(
-        ...     data=data,
-        ...     directional_variables=['Dir'],
-        ...     custom_scale_factor={'Dir': [0, 360]},
-        ... )
+    >>> import pandas as pd
+    >>> from bluemath_tk.datamining.mda import MDA
+    >>> data = pd.DataFrame(
+    ...     {
+    ...         'Hs': np.random.rand(1000) * 7,
+    ...         'Tp': np.random.rand(1000) * 20,
+    ...         'Dir': np.random.rand(1000) * 360
+    ...     }
+    ... )
+    >>> mda = MDA(num_centers=10)
+    >>> mda.fit(
+    ...     data=data,
+    ...     directional_variables=['Dir'],
+    ...     custom_scale_factor={'Dir': [0, 360]},
+    ... )
     """
 
     def __init__(self, num_centers: int) -> None:
@@ -103,7 +91,6 @@ class MDA(BlueMathModel):
             self.num_centers = int(num_centers)
         else:
             raise ValueError("Variable num_centers must be > 0")
-        # NOTE: Below, all class attributes are instantiated
         self._data: pd.DataFrame = pd.DataFrame()
         self._normalized_data: pd.DataFrame = pd.DataFrame()
         self.data_variables: list = []
@@ -122,14 +109,18 @@ class MDA(BlueMathModel):
         Calculate the normalized distance between the array_to_compare and all_rest_data.
 
         Parameters:
-        - array_to_compare (np.ndarray): The array to compare against.
-        - all_rest_data (np.ndarray): The rest of the data.
+        array_to_compare : np.ndarray
+            The array to compare against.
+        all_rest_data : np.ndarray)
+            The rest of the data.
 
         Returns:
-        - np.ndarray: An array of squared Euclidean distances between the two arrays for each row.
+        dist : np.ndarray
+            An array of squared Euclidean distances between the two arrays for each row.
 
         Raises:
-        - MDAError: If the function is NOT called before or during fitting.
+        MDAError
+            If the function is NOT called before or during fitting.
 
         Notes:
         - The function assumes that the data_variables, directional_variables, and scale_factor
@@ -251,6 +242,7 @@ class MDA(BlueMathModel):
         self.directional_variables = directional_variables
         self.custom_scale_factor = custom_scale_factor
 
+        # TODO: add good explanation of fitting
         self.logger.info(
             f"\nmda parameters: {self._data.shape[0]} --> {self.num_centers}\n"
         )
