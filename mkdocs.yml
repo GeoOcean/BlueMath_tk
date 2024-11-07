@@ -2,7 +2,7 @@ site_name: BlueMath {Toolkit}
 
 nav:
   - Home: index.md
-  - API Reference: api.md
+  - MDA: mda.md
 
 plugins:
   - search
@@ -12,6 +12,7 @@ plugins:
           options:
             docstring_style: numpy
             docstring_section_style: table
+            show_source: false
 
 markdown_extensions:
   - admonition
