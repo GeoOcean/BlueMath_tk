@@ -18,6 +18,10 @@ class BlueMathModel(ABC):
     def logger(self, value: logging.Logger) -> None:
         self._logger = value
 
+    def set_logger_name(self, name: str):
+        """Sets the name of the logger."""
+        self.logger = get_file_logger(name=name)
+
     # @abstractmethod
     # def perform_action(self):
     #     """Abstract method to perform an action."""

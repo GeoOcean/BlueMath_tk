@@ -35,6 +35,7 @@ def get_file_logger(
     # Create a logger with the specified name
     logger = logging.getLogger(name)
     logger.setLevel(level)
+    logger.propagate = False  # TODO: check as it is not preventing duplicated logs
 
     # Get current date to append to logs_path
     date_str = datetime.now(pytz.timezone("Europe/Madrid")).strftime("%Y-%m-%d")
