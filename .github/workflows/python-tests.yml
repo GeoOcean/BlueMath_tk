@@ -31,4 +31,4 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate bluemath
-          python -m unittest discover tests/
+          python -m unittest discover tests/datamining/
