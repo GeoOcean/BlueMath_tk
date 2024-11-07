@@ -1,202 +1,181 @@
-"""
-
-- Project: Bluemath{toolkit}.datamining
-- File: kma.py
-- Description: KMeans algorithm
-- Author: GeoOcean Research Group, Universidad de Cantabria
-- Created Date: 23 January 2024
-- License: MIT
-- Repository: https://gitlab.com/geoocean/bluemath/toolkit/
-
-"""
-
-# 1. Format Document (black). Documentar
-# Preferences: Open User Setting JSON
-# "python.formatting.provider": "black"
-
-
-# Laura
-# 3. Laura comprobar que el código funciona y las gráficas están bien
-
-
-# 4. Mejorar control de errores. Poner alguno más
-# 5. Cómo guardar los objetos de la clase y como pasarselos a las funciones auxiliares como scatter_data
-
-
-
-# PREDICTIA:
-# - Autopep8, longitud de línea 120?
-# - Documentar con qué
-# - Cómo se guarda el objeto de la clase
-# - Logging
-# - Mejorar control de errores. Poner alguno más
-# - Cómo guardar los objetos de la clase y como pasarselos a las funciones auxiliares como scatter_data
-
-
+import numpy as np
 import pandas as pd
-from bluemath_tk.core.data import normalize, denormalize, scatter
-
-# Kmeans algorithm
+from typing import List
 from sklearn.cluster import KMeans
-
-
-class KMA:
-    """
-    This class implements the KMeans Algorithm (KMA)
-    KMA is a clustering algorithm that divides a dataset into K distinct groups based on data similarity. It iteratively assigns data points to the nearest cluster center and updates centroids until convergence, aiming to minimize the sum of squared distances. While efficient and widely used, KMA requires specifying the number of clusters and is sensitive to initial centroid selection.
-
-    ...
-
-    Attributes
-    ----------
-    data : pandas.core.frame.DataFrame
-        The data to be clustered. Each column will represent a different variable
-
-    ix_directional : list of str
-        List with the names of the directional variables in the data. If no directional variables are present, this list should be empty.
-
-    Methods
-    -------
-    run()
-        Normalize data and calculate centers using kmeans algorithm
-    
-    scatter_data()
-        Plot the data and/or the centroids
-
-    Examples
-    --------
-    df = pd.DataFrame({
-        'Hs': np.random.rand(1000)*7,
-        'Tp': np.random.rand(1000)*20,
-        'Dir': np.random.rand(1000)*360
-    })
-
-    kma_ob = KMA(data=df, ix_directional=['Dir'])
-    kma_ob.run(10)
-    kma_ob.scatter_data()
-    """
-
-    def __init__(self, data=None, ix_directional=[]):
-        self.data = data
-        self.ix_directional = ix_directional
-        self.scale_factor = {}
-        self.data_norm = []
-        self.centroids_norm = []
-        self.centroids = []
-
-    def run(self, n_clusters):
-        """
-        Normalize data and calculate centers using k-means algorithm.
-
-        Parameters 
-        ---------- 
-        n_clusters: int
-            Number of clusters to be calculated.
-
-        Returns
-        -------
-        pandas.core.frame.DataFrame
-            Calculated centroids.
-        """
-
-        # Check if data is correctly set
-        if self.data is None:
-            raise KMAError("No data was provided.")
-        elif type(self.data) is not pd.DataFrame:
-            raise KMAError("Data should be a pandas DataFrame.")
-            
-
-        print("\nkma parameters: {0} --> {1}\n".format(self.data.shape[0], n_clusters))
-
-        # if not np.shape(self.data)[1] == len(self.ix_scalar) + len(self.ix_directional):
-        #     raise KMAError(
-        #         "ix_scalar and ix_directional should match with the number of data columns"
-        #     )
-
-        self.data_norm, self.scale_factor = normalize(self.data, self.ix_directional)
-
-        kma = KMeans(n_clusters=n_clusters, n_init=100).fit(self.data_norm)
-
-        # De-normalize scalar and directional data
-
-        self.bmus = kma.labels_
-        self.centroids_norm = pd.DataFrame(
-            kma.cluster_centers_, columns=self.data_norm.keys()
-        )
-
-        self.centroids = denormalize(
-            self.centroids_norm, self.ix_directional, self.scale_factor
-        )
-        return self.centroids
-
-    def scatter_data(self, norm=False, plot_centroids=False, custom_params=None):
-        """
-        Plot the data and/or the centroids.
-
-        Parameters
-        ----------
-        norm : bool
-            If True, the normalized data will be plotted. Default is False.
-
-        plot_centroids : bool
-            If True, the centroids will be plotted. Default is False.
-
-        custom_params : dict
-            Custom parameters for the scatter plot. Default is None.
-        """
-        
-        if norm == True:
-            data=self.data_norm
-            centroids=self.centroids_norm
-        else:
-            data=self.data
-            centroids=self.centroids_norm
-        
-        if plot_centroids:    
-            scatter(
-                data, centroids=centroids, custom_params=custom_params
-            )
-        else:
-            scatter(
-                data, custom_params=custom_params
-            )
-
-    def scatter_bmus(self, norm=False, plot_centroids=False, custom_params=None):
-        """
-        Plot the data and/or the centroids.
-
-        Parameters
-        ----------
-        norm : bool
-            If True, the normalized data will be plotted. Default is False.
-
-        plot_centroids : bool
-            If True, the centroids will be plotted. Default is False.
-
-        custom_params : dict
-            Custom parameters for the scatter plot. Default is None.
-        """
-
-        if norm == True:
-            data=self.data_norm
-            centroids=self.centroids_norm
-        else:
-            data=self.data
-            centroids=self.centroids
-        
-        if plot_centroids:    
-            scatter(
-                data, centroids=centroids, color_data=self.bmus, custom_params=custom_params
-            )
-        else:
-            scatter(
-                data, color_data=self.bmus, custom_params=custom_params
-            )
+from ..core.models import BlueMathModel
+from ..core.decorators import validate_data_kma
 
 
 class KMAError(Exception):
-    """Custom exception for KMA class."""
+    """
+    Custom exception for KMA class.
+    """
 
-    def __init__(self, message="KMA error occurred."):
+    def __init__(self, message: str = "KMA error occurred."):
         self.message = message
         super().__init__(self.message)
+
+
+class KMA(BlueMathModel):
+    """
+    K-Means (KMA) class.
+
+    This class performs the K-Means algorithm on a given dataframe.
+
+    Attributes
+    ----------
+    num_clusters : int
+        The number of clusters to use in the K-Means algorithm.
+    seed : int
+        The random seed to use.
+    _data : pd.DataFrame
+        The input data.
+    _normalized_data : pd.DataFrame
+        The normalized input data.
+    data_variables : list
+        A list of all data variables.
+    directional_variables : list
+        A list with directional variables.
+    custom_scale_factor : dict
+        A dictionary of custom scale factors.
+    scale_factor : dict
+        A dictionary of scale factors (after normalizing the data).
+    centroids : pd.DataFrame
+        The selected centroids.
+    normalized_centroids : pd.DataFrame
+        The selected normalized centroids.
+    bmus : np.array
+        The cluster assignments for each data point.
+
+    Notes
+    -----
+    - The K-Means algorithm is used to cluster data points into k clusters.
+    - The K-Means algorithm is sensitive to the initial centroids.
+    - The K-Means algorithm is not suitable for large datasets.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from bluemath_tk.datamining.kma import KMA
+    >>> data = pd.DataFrame(
+    ...     {
+    ...         'Hs': np.random.rand(1000) * 7,
+    ...         'Tp': np.random.rand(1000) * 20,
+    ...         'Dir': np.random.rand(1000) * 360
+    ...     }
+    ... )
+    >>> kma = KMA(num_clusters=5)
+    >>> kma.fit(
+    ...     data=data,
+    ...     directional_variables=['Dir'],
+    ...     custom_scale_factor={'Dir': [0, 360]},
+    ... )
+    """
+
+    def __init__(self, num_clusters: int, seed: int = 0) -> None:
+        """
+        Initializes the KMA class.
+
+        Parameters
+        ----------
+        num_clusters : int
+            The number of clusters to use in the K-Means algorithm.
+            Must be greater than 0.
+        seed : int, optional
+            The random seed to use.
+            Must be greater or equal to 0.
+            Defaults to 0.
+
+        Raises
+        ------
+        ValueError
+            If num_centers is not greater than 0.
+            Or if seed is not greater or equal to 0.
+        """
+        super().__init__()
+        self.set_logger_name(name=self.__class__.__name__)
+        if num_clusters > 0:
+            self.num_clusters = int(num_clusters)
+            # TODO: check random_state and n_init
+            self._kma = KMeans(
+                n_clusters=self.num_clusters, random_state=seed, n_init="auto"
+            )
+        else:
+            raise ValueError("Variable num_clusters must be > 0")
+        if seed >= 0:
+            self.seed = int(seed)
+        else:
+            raise ValueError("Variable seed must be >= 0")
+        self._data: pd.DataFrame = pd.DataFrame()
+        self._normalized_data: pd.DataFrame = pd.DataFrame()
+        self.data_variables: list = []
+        self.directional_variables: list = []
+        self.custom_scale_factor: dict = {}
+        self.scale_factor: dict = {}
+        self.centroids: pd.DataFrame = pd.DataFrame()
+        self.normalized_centroids: pd.DataFrame = pd.DataFrame()
+        self.bmus: np.array = np.array([])
+
+    @validate_data_kma
+    def fit(
+        self,
+        data: pd.DataFrame,
+        directional_variables: List[str],
+        custom_scale_factor: dict,
+    ):
+        """
+        Fit the K-Means algorithm to the provided data.
+
+        This method initializes centroids for the K-Means algorithm using the
+        provided dataframe, directional variables, and custom scale factor.
+        It normalizes the data, and returns the calculated centroids.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The input data to be used for the KMA algorithm.
+        directional_variables : List[str]
+            A list of names of the directional variables within the data.
+        custom_scale_factor : dict
+            A dictionary specifying custom scale factors for normalization.
+
+        Returns
+        -------
+        pd.DataFrame
+            The calculated centroids of the data.
+
+        Notes
+        -----
+        - The function assumes that the data is validated by the `validate_data_kma`
+        decorator before execution.
+        - The method logs the progress of centroid initialization.
+        """
+
+        self._data = data.copy()
+        self.data_variables = list(self._data.columns)
+        self.directional_variables = directional_variables
+        self.custom_scale_factor = custom_scale_factor
+
+        # TODO: add good explanation of fitting
+        self.logger.info(
+            f"\nkma parameters: {self._data.shape[0]} --> {self.num_clusters}\n"
+        )
+
+        # Normalize data using custom min max scaler
+        self._normalized_data, self.scale_factor = self.normalize(
+            data=self._data, custom_scale_factor=self.custom_scale_factor
+        )
+
+        # Fit K-Means algorithm
+        kma = self._kma.fit(self._normalized_data)
+
+        # De-normalize scalar and directional data
+        self.bmus = kma.labels_
+        self.normalized_centroids = pd.DataFrame(
+            kma.cluster_centers_, columns=self.data_variables
+        )
+        self.centroids = self.denormalize(
+            normalized_data=self.normalized_centroids, scale_factor=self.scale_factor
+        )
+
+        return self.centroids

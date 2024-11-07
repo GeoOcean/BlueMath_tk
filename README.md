@@ -6,7 +6,7 @@ The package also includes a set of utility functions for processing climate data
 
 ## Main contents
 
-<img src="codes/sketch_tk.png" alt="picture" width="800"/>
+![Sketch](./bluemath_tk/sketch_tk.png)
 
 Link to the different sections:
 - [data](./codes/data/)
