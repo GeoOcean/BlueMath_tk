@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from typing import List
-from ..core.models import BlueMathModel
+from ._base_datamining import BaseDataMining
 from ..core.decorators import validate_data_mda
 
 
@@ -15,7 +15,7 @@ class MDAError(Exception):
         super().__init__(self.message)
 
 
-class MDA(BlueMathModel):
+class MDA(BaseDataMining):
     """
     Maximum Dissimilarity Algorithm (MDA) class.
 
@@ -62,7 +62,7 @@ class MDA(BlueMathModel):
     ...     }
     ... )
     >>> mda = MDA(num_centers=10)
-    >>> mda.fit(
+    >>> mda_centroids_df = mda.fit(
     ...     data=data,
     ...     directional_variables=['Dir'],
     ...     custom_scale_factor={'Dir': [0, 360]},
@@ -102,6 +102,14 @@ class MDA(BlueMathModel):
         self.centroid_iterative_indices: list = []
         self.centroid_real_indices: list = []
 
+    @property
+    def data(self) -> pd.DataFrame:
+        return self._data
+
+    @property
+    def normalized_data(self) -> pd.DataFrame:
+        return self._normalized_data
+
     def _normalized_distance(
         self, array_to_compare: np.ndarray, all_rest_data: np.ndarray
     ) -> np.ndarray:
@@ -131,11 +139,7 @@ class MDA(BlueMathModel):
         absolute difference, effectively "wrapping around" the scale factor range.
         """
 
-        if (
-            not self.data_variables
-            or not self.directional_variables
-            or not self.scale_factor
-        ):
+        if not self.data_variables:
             raise MDAError(
                 "_normalized_distance must be called after or during fitting, not before."
             )
@@ -180,21 +184,22 @@ class MDA(BlueMathModel):
         and each centroid.
         """
 
-        if self.normalized_centroids.empty or self._normalized_data.empty:
+        if self.normalized_centroids.empty or self.normalized_data.empty:
             raise MDAError(
                 "_nearest_indices must be called after or during fitting, not before."
             )
+
         # Compute distances and store nearest distance index
         nearest_indices_array = np.zeros(self.normalized_centroids.shape[0], dtype=int)
 
         for i in range(self.normalized_centroids.shape[0]):
             rep = np.repeat(
                 np.expand_dims(self.normalized_centroids.values[i, :], axis=0),
-                self._normalized_data.values.shape[0],
+                self.normalized_data.values.shape[0],
                 axis=0,
             )
             ndist = self._normalized_distance(
-                array_to_compare=rep, all_rest_data=self._normalized_data.values
+                array_to_compare=rep, all_rest_data=self.normalized_data.values
             )
 
             nearest_indices_array[i] = np.nanargmin(ndist)
@@ -205,8 +210,8 @@ class MDA(BlueMathModel):
     def fit(
         self,
         data: pd.DataFrame,
-        directional_variables: List[str],
-        custom_scale_factor: dict,
+        directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
     ):
         """
         Fit the Maximum Dissimilarity Algorithm (MDA) to the provided data.
@@ -220,9 +225,9 @@ class MDA(BlueMathModel):
         ----------
         data : pd.DataFrame
             The input data to be used for the MDA algorithm.
-        directional_variables : List[str]
+        directional_variables : List[str], optional
             A list of names of the directional variables within the data.
-        custom_scale_factor : dict
+        custom_scale_factor : dict, optional
             A dictionary specifying custom scale factors for normalization.
 
         Returns
@@ -238,30 +243,30 @@ class MDA(BlueMathModel):
         """
 
         self._data = data.copy()
-        self.data_variables = list(self._data.columns)
+        self.data_variables = list(self.data.columns)
         self.directional_variables = directional_variables
         self.custom_scale_factor = custom_scale_factor
 
         # TODO: add good explanation of fitting
         self.logger.info(
-            f"\nmda parameters: {self._data.shape[0]} --> {self.num_centers}\n"
+            f"\nmda parameters: {self.data.shape[0]} --> {self.num_centers}\n"
         )
 
         # Normalize provided data with instantiated custom_scale_factor
         self._normalized_data, self.scale_factor = self.normalize(
-            data=self._data, custom_scale_factor=self.custom_scale_factor
+            data=self.data, custom_scale_factor=self.custom_scale_factor
         )
 
         # [DEPRECATED] Select the point with the maximum value in the first column of pandas dataframe
-        # seed = normalized_data[normalized_data.columns[0]].idxmax()
+        # seed = self.normalized_data[self.normalized_data.columns[0]].idxmax()
         # Select the point with the maximum summed value
-        seed = self._normalized_data.sum(axis=1).idxmax()
+        seed = self.normalized_data.sum(axis=1).idxmax()
 
         # Initialize centroids subset
         subset = np.array(
-            [self._normalized_data.values[seed]]
+            [self.normalized_data.values[seed]]
         )  # The row that starts as seed
-        train = np.delete(self._normalized_data.values, seed, axis=0)
+        train = np.delete(self.normalized_data.values, seed, axis=0)
 
         # Repeat until we have the desired num_centers
         n_c = 1
