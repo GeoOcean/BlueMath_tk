@@ -26,8 +26,8 @@ def validate_data_mda(func):
     def wrapper(
         self,
         data: pd.DataFrame,
-        directional_variables: List[str],
-        custom_scale_factor: dict,
+        directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
     ):
         # NOTE: Default custom scale factors are defined below
         _default_custom_scale_factor = {"Dir": [0, 360]}

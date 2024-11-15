@@ -1,9 +1,10 @@
+import logging
+from typing import Tuple
+import pickle
+import pandas as pd
 from abc import ABC, abstractmethod
 from .logging import get_file_logger
 from .data import normalize, denormalize
-import logging
-import pandas as pd
-from typing import Tuple
 
 
 class BlueMathModel(ABC):
@@ -21,6 +22,12 @@ class BlueMathModel(ABC):
     def set_logger_name(self, name: str):
         """Sets the name of the logger."""
         self.logger = get_file_logger(name=name)
+
+    def save_model(self, model_path: str):
+        """Saves the model to a file."""
+        self.logger.info(f"Saving model to {model_path}")
+        with open(model_path, "wb") as f:
+            pickle.dump(self, f)
 
     # @abstractmethod
     # def perform_action(self):

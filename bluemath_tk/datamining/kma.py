@@ -65,7 +65,7 @@ class KMA(BlueMathModel):
     ...     }
     ... )
     >>> kma = KMA(num_clusters=5)
-    >>> kma.fit(
+    >>> kma_centroids_df = kma.fit(
     ...     data=data,
     ...     directional_variables=['Dir'],
     ...     custom_scale_factor={'Dir': [0, 360]},
