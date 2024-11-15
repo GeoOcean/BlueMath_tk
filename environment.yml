@@ -5,8 +5,13 @@ dependencies:
   - python=3.12
   - numpy
   - pandas
-  - matplotlib
+  - xarray
   - scikit-learn
+  - matplotlib
+  - qt
+  - pyqt
+  - plotly
+  - cartopy
   - pytest
   # PIP packages can be added belos (Avoid this)
   # - pip
