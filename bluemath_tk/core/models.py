@@ -4,7 +4,7 @@ import pickle
 import pandas as pd
 from abc import ABC, abstractmethod
 from .logging import get_file_logger
-from .data import normalize, denormalize
+from .operations import normalize, denormalize
 
 
 class BlueMathModel(ABC):

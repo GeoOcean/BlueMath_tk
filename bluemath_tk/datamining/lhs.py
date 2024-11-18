@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import List
 from scipy.stats import qmc
-from ..core.models import BlueMathModel
+from ._base_datamining import BaseClustering
 from ..core.decorators import validate_data_lhs
 
 
@@ -15,7 +15,7 @@ class LHSError(Exception):
         super().__init__(self.message)
 
 
-class LHS(BlueMathModel):
+class LHS(BaseClustering):
     """
     Latin Hypercube Sampling (LHS) class.
 
@@ -31,6 +31,8 @@ class LHS(BlueMathModel):
         The random seed to use.
     lhs : qdc.LatinHypercube
         The Latin Hypercube object.
+    _data : pd.DataFrame
+        The LHS samples dataframe.
 
     Notes
     -----
@@ -88,6 +90,11 @@ class LHS(BlueMathModel):
         else:
             raise ValueError("Variable seed must be >= 0")
         self.lhs: qmc.LatinHypercube = None
+        self._data: pd.DataFrame = pd.DataFrame()
+
+    @property
+    def data(self) -> pd.DataFrame:
+        return self._data
 
     @validate_data_lhs
     def fit(
@@ -119,4 +126,5 @@ class LHS(BlueMathModel):
         lhs_scaled_data = qmc.scale(
             sample=lhs_samples, l_bounds=lower_bounds, u_bounds=upper_bounds
         )
-        return pd.DataFrame(data=lhs_scaled_data, columns=dimensions_names)
+        self._data = pd.DataFrame(data=lhs_scaled_data, columns=dimensions_names)
+        return self.data

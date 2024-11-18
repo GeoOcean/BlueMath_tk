@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from typing import List
-from ._base_datamining import BaseDataMining
+from ._base_datamining import BaseClustering
 from ..core.decorators import validate_data_mda
 
 
@@ -15,7 +15,7 @@ class MDAError(Exception):
         super().__init__(self.message)
 
 
-class MDA(BaseDataMining):
+class MDA(BaseClustering):
     """
     Maximum Dissimilarity Algorithm (MDA) class.
 
@@ -52,6 +52,7 @@ class MDA(BaseDataMining):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import pandas as pd
     >>> from bluemath_tk.datamining.mda import MDA
     >>> data = pd.DataFrame(
