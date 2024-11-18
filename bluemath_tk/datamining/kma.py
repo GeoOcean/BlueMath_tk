@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from typing import List
 from sklearn.cluster import KMeans
-from ..core.models import BlueMathModel
+from ._base_datamining import BaseClustering
 from ..core.decorators import validate_data_kma
 
 
@@ -16,7 +16,7 @@ class KMAError(Exception):
         super().__init__(self.message)
 
 
-class KMA(BlueMathModel):
+class KMA(BaseClustering):
     """
     K-Means (KMA) class.
 
@@ -55,6 +55,7 @@ class KMA(BlueMathModel):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import pandas as pd
     >>> from bluemath_tk.datamining.kma import KMA
     >>> data = pd.DataFrame(
@@ -116,6 +117,18 @@ class KMA(BlueMathModel):
         self.normalized_centroids: pd.DataFrame = pd.DataFrame()
         self.bmus: np.array = np.array([])
 
+    @property
+    def data(self) -> pd.DataFrame:
+        return self._data
+
+    @property
+    def normalized_data(self) -> pd.DataFrame:
+        return self._normalized_data
+
+    @property
+    def kma(self) -> KMeans:
+        return self._kma
+
     @validate_data_kma
     def fit(
         self,
@@ -152,7 +165,7 @@ class KMA(BlueMathModel):
         """
 
         self._data = data.copy()
-        self.data_variables = list(self._data.columns)
+        self.data_variables = list(self.data.columns)
         self.directional_variables = directional_variables
         self.custom_scale_factor = custom_scale_factor
 
@@ -163,11 +176,11 @@ class KMA(BlueMathModel):
 
         # Normalize data using custom min max scaler
         self._normalized_data, self.scale_factor = self.normalize(
-            data=self._data, custom_scale_factor=self.custom_scale_factor
+            data=self.data, custom_scale_factor=self.custom_scale_factor
         )
 
         # Fit K-Means algorithm
-        kma = self._kma.fit(self._normalized_data)
+        kma = self.kma.fit(self.normalized_data)
 
         # De-normalize scalar and directional data
         self.bmus = kma.labels_

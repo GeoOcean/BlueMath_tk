@@ -1,9 +1,18 @@
 import pandas as pd
 from ..core.models import BlueMathModel
-from ..plotting.base_plotting import DefaultStaticPlotting
+from ..core.plotting.base_plotting import DefaultStaticPlotting
 
 
-class BaseDataMining(BlueMathModel):
+class BaseClustering(BlueMathModel):
+    """
+    Base class for all clustering BlueMath models.
+    This class provides the basic structure for all clustering models.
+
+    Methods
+    -------
+    plot_selected_data(data, centroids, data_color, centroids_color, **kwargs)
+    """
+
     def __init__(self):
         super().__init__()
 
@@ -16,14 +25,44 @@ class BaseDataMining(BlueMathModel):
         **kwargs,
     ):
         """
-        Create scatter plots for all combinations of variables in the data.
+        Plots selected data and centroids on a scatter plot matrix.
+
+        Parameters:
+        -----------
+        data : pd.DataFrame
+            DataFrame containing the data to be plotted.
+        centroids : pd.DataFrame, optional
+            DataFrame containing the centroids to be plotted. Default is None.
+        data_color : str, optional
+            Color for the data points. Default is "blue".
+        centroids_color : str, optional
+            Color for the centroid points. Default is "red".
+        **kwargs : dict, optional
+            Additional keyword arguments to be passed to the scatter plot function.
+
+        Returns:
+        --------
+        fig : matplotlib.figure.Figure
+            The figure object containing the plot.
+        axes : numpy.ndarray
+            Array of axes objects for the subplots.
+
+        Raises:
+        -------
+        ValueError
+            If the data and centroids do not have the same number of columns or if the columns are empty.
         """
 
-        if list(data.columns) == list(centroids.columns):
+        if (
+            list(data.columns) == list(centroids.columns)
+            and list(data.columns) != []
+        ):
             variables_names = list(data.columns)
             num_variables = len(variables_names)
         else:
-            raise ValueError("Data and centroids must have the same number of columns.")
+            raise ValueError(
+                "Data and centroids must have the same number of columns > 0."
+            )
 
         # Create figure and axes
         default_static_plot = DefaultStaticPlotting()

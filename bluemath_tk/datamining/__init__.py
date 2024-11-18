@@ -1,6 +1,6 @@
 """
 Project: Bluemath{toolkit}
-Module: core
+Sub-Module: datamining
 Author: GeoOcean Research Group, Universidad de Cantabria
 Creation Date: 19 January 2024
 License: MIT

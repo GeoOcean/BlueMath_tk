@@ -27,7 +27,7 @@ import regionmask
 
 from ..datamining.pca import PCA
 from ..datamining.kma import KMA
-from ..colors import get_config_variables, get_cluster_colors
+from ..core.plotting.colors import get_config_variables, get_cluster_colors
 
 config_variables = get_config_variables()
 
