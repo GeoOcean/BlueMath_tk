@@ -1,6 +1,7 @@
 import functools
 from typing import List
 import pandas as pd
+import xarray as xr
 
 
 def validate_data_mda(func):
@@ -82,6 +83,7 @@ def validate_data_lhs(func):
         dimensions_names: List[str],
         lower_bounds: List[float],
         upper_bounds: List[float],
+        num_samples: int,
     ):
         if not isinstance(dimensions_names, list):
             raise TypeError("Dimensions names must be a list")
@@ -99,6 +101,8 @@ def validate_data_lhs(func):
             [lower <= upper for lower, upper in zip(lower_bounds, upper_bounds)]
         ):
             raise ValueError("Lower bounds must be less than or equal to upper bounds")
+        if not isinstance(num_samples, int) or num_samples <= 0:
+            raise ValueError("Variable num_samples must be integer and > 0")
         return func(self, dimensions_names, lower_bounds, upper_bounds)
 
     return wrapper
@@ -154,5 +158,92 @@ def validate_data_kma(func):
                         "All directional variables must have an associated custom scale factor"
                     )
         return func(self, data, directional_variables, custom_scale_factor)
+
+    return wrapper
+
+
+def validate_data_pca(func):
+    """
+    Decorator to validate data in PCA class fit method.
+
+    It checks that the Dataset is not None and that it is indeed an xarray Dataser.
+    If these conditions are not met, it raises a ValueError.
+    Moreover
+
+    Parameters
+    ----------
+    func : callable
+        The function to be decorated
+
+    Returns
+    -------
+    callable
+        The decorated function
+    """
+
+    @functools.wraps(func)
+    def wrapper(
+        self,
+        data: xr.Dataset,
+        vars_to_stack: List[str],
+        coords_to_stack: List[str],
+        pca_dim_for_rows: str,
+        window_in_pca_dim_for_rows: List[int] = [0],
+        value_to_replace_nans: float = None,
+    ):
+        if data is None:
+            raise ValueError("Data cannot be None")
+        elif not isinstance(data, xr.Dataset):
+            raise TypeError("Data must be an xarray Dataset")
+        # Check that all vars_to_stack are in the data
+        if not isinstance(vars_to_stack, list) or len(vars_to_stack) == 0:
+            raise ValueError("Variables to stack must be a non-empty list")
+        for var in vars_to_stack:
+            if var not in data.data_vars:
+                raise ValueError(f"Variable {var} not found in data")
+        # Check that all variables in vars_to_stack have the same coordinates and dimensions
+        first_var = vars_to_stack[0]
+        first_var_dims = list(data[first_var].dims)
+        first_var_coords = list(data[first_var].coords)
+        for var in vars_to_stack:
+            if list(data[var].dims) != first_var_dims:
+                raise ValueError(
+                    f"All variables must have the same dimensions. Variable {var} does not match."
+                )
+            if list(data[var].coords) != first_var_coords:
+                raise ValueError(
+                    f"All variables must have the same coordinates. Variable {var} does not match."
+                )
+        # Check that all coords_to_stack are in the data
+        if not isinstance(coords_to_stack, list) or len(coords_to_stack) == 0:
+            raise ValueError("Coordinates to stack must be a non-empty list")
+        for coord in coords_to_stack:
+            if coord not in data.coords:
+                raise ValueError(f"Coordinate {coord} not found in data.")
+        # Check that pca_dim_for_rows is in the data, and window > 0 if provided
+        if not isinstance(pca_dim_for_rows, str) or pca_dim_for_rows not in data.dims:
+            raise ValueError(
+                "PCA dimension for rows must be a string and found in the data dimensions"
+            )
+        if window_in_pca_dim_for_rows is not None:
+            if (
+                not isinstance(window_in_pca_dim_for_rows, list)
+                or len(window_in_pca_dim_for_rows) == 0
+            ):
+                raise ValueError(
+                    "Window in PCA dimension for rows must be a non-empty list"
+                )
+        if value_to_replace_nans is not None:
+            if not isinstance(value_to_replace_nans, float):
+                raise ValueError("Value to replace NaNs must be float")
+        return func(
+            self,
+            data,
+            vars_to_stack,
+            coords_to_stack,
+            pca_dim_for_rows,
+            window_in_pca_dim_for_rows,
+            value_to_replace_nans,
+        )
 
     return wrapper

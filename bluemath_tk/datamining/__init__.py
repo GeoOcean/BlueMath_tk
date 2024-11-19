@@ -13,4 +13,4 @@ from .lhs import LHS
 from .kma import KMA
 
 # Optionally, define the module's `__all__` variable to control what gets imported when using `from module import *`.
-__all__ = ["MDA", "LHS", "KMA"]
+__all__ = ["MDA", "LHS", "KMA", "PCA"]

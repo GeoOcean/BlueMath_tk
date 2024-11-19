@@ -53,10 +53,7 @@ class BaseClustering(BlueMathModel):
             If the data and centroids do not have the same number of columns or if the columns are empty.
         """
 
-        if (
-            list(data.columns) == list(centroids.columns)
-            and list(data.columns) != []
-        ):
+        if list(data.columns) == list(centroids.columns) and list(data.columns) != []:
             variables_names = list(data.columns)
             num_variables = len(variables_names)
         else:
@@ -103,3 +100,13 @@ class BaseClustering(BlueMathModel):
                     fig.delaxes(axes[c2, c1])
 
         return fig, axes
+
+
+class BaseReduction(BlueMathModel):
+    """
+    Base class for all dimensionality reduction BlueMath models.
+    This class provides the basic structure for all dimensionality reduction models.
+    """
+
+    def __init__(self):
+        super().__init__()

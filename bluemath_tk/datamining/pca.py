@@ -1,385 +1,467 @@
-'''
-
-- Project: Bluemath{toolkit}.datamining
-- File: pca.py
-- Description: PCA algorithm
-- Author: GeoOcean Research Group, Universidad de Cantabria
-- Created Date: 23 January 2024
-- License: MIT
-- Repository: https://gitlab.com/geoocean/bluemath/toolkit/
-
-'''
-
 import numpy as np
 import xarray as xr
+from typing import Union, List
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA as PCA_, IncrementalPCA as IncrementalPCA_
+from ._base_datamining import BaseReduction
+from ..core.decorators import validate_data_pca
+from ..core.plotting.base_plotting import DefaultStaticPlotting
 
-import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize
-import itertools
 
-# Principal component analysis
-from sklearn.decomposition import PCA as PCAsk
-
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-
-class PCA:
-
-    '''
-    This class implements the Princial Component Algorithm (PCA)
-    
-    '''
-
-    def __init__(self):
-        self.data = []
-        self
-
-    def generate_data_matrix(self):
-        '''
-        Generate data matrix for PCA analysis
-        '''
-
-        ds = self.dataset
-
-        coords_stack = list(ds.dims)
-        coords_stack.remove(self.dim_pca)
-    
-        self.coords_extra = coords_stack
-        
-        self.vars_keys = list(ds.data_vars.keys()) #Variables involved in PCA analysis
-        
-        self.data_matrix = np.hstack([ds.stack(positions=(self.coords_extra))[var].values 
-                            for var in self.vars_keys])
-
-          
-    def reshape_eofs(self, EOFs, n_components, num_splits):
-        assert EOFs.shape[0] % num_splits == 0, "Total number of elements must be divisible by num_splits"
-    
-        EOFs_splits = np.array_split(EOFs, num_splits)
-
-        coords_extra = self.coords_extra
-        ds = self.dataset
-
-        if len(coords_extra) == 2:
-            c1, c2 = np.meshgrid(ds[coords_extra[1]].values, ds[coords_extra[0]].values)
-            EOFs_reshaped_splits = [split.reshape((c1.shape[0], c1.shape[1], n_components)) for split in EOFs_splits]
-        elif len(coords_extra) == 1:
-            c1 = ds[coords_extra[0]].values
-            EOFs_reshaped_splits = [split.reshape((c1.shape[0], n_components)) for split in EOFs_splits]
-            
-        return EOFs_reshaped_splits
-
-    def reshape_vars(self, var, num_splits):
-        
-        assert var.shape[0] % num_splits == 0, "Total number of elements must be divisible by num_splits"
-    
-        var_splits = np.array_split(var, num_splits)
-
-        coords_extra = self.coords_extra
-        ds = self.dataset
-
-        if len(coords_extra) == 2:
-            c1, c2 = np.meshgrid(ds[coords_extra[1]].values, ds[coords_extra[0]].values)
-            EOFs_reshaped_splits = [split.reshape((c1.shape[0], c1.shape[1])) for split in var_splits]
-            
-        elif len(coords_extra) == 1:
-            c1 = ds[coords_extra[0]].values
-            EOFs_reshaped_splits = [split.reshape((c1.shape[0])) for split in var_splits]
-        
-        return EOFs_reshaped_splits
-            
-    def pca(self):
-
-        matrix = self.data_matrix
-        dim_pca = self.dim_pca
-        n_vars = len(self.vars_keys)
-
-        coords_extra = self.coords_extra
-        vars_keys = self.vars_keys
-        ds = self.dataset
-
-        # remove nans
-        data_pos = ~np.isnan(matrix[0,:])
-        clean_row = matrix[0, data_pos]
-        dp_ur_nonan = np.nan * np.ones(
-            (matrix.shape[0], len(clean_row))
-        )
-        matrix_nonan = matrix[:, data_pos]
-
-        # standarize matrix
-        self.pred_mean = np.nanmean(matrix_nonan, axis=0) + 0.000000001
-        self.pred_std = np.nanstd(matrix_nonan, axis=0) + 0.000000001
-        matrix_pca_norm = (matrix_nonan[:,:] - self.pred_mean) / self.pred_std
-        
-        pca = PCAsk().fit(matrix_pca_norm) 
-
-        eofs = pca.components_.T
-        
-        eofs_total = np.full((matrix.shape[1], eofs.shape[1]), np.nan)
-        eofs_total[np.where(data_pos == True)[0],:] = eofs
-        
-        EOFs_reshaped_splits = self.reshape_eofs(eofs_total, len(pca.explained_variance_), n_vars)
-        
-        #eofs reorder
-        #EOFs_reshaped_splits = self.reshape_eofs(pca.components_.T, len(pca.explained_variance_), n_vars)
-
-        means = np.full(matrix.shape[1], np.nan)
-        means[np.where(data_pos == True)[0]] = self.pred_mean
-
-        stds = np.full(matrix.shape[1], np.nan)
-        stds[np.where(data_pos == True)[0]] = self.pred_std
-
-        mean_splits = self.reshape_vars(means,  n_vars)
-        std_splits = self.reshape_vars(stds,  n_vars)
-
-        #APEV: the cummulative proportion of explained variance by ith PC
-        APEV = np.cumsum(pca.explained_variance_) / np.sum(pca.explained_variance_)*100.0
-       
-        xds_PCA = xr.Dataset(
-            {
-                'PCs': ((dim_pca, 'n_components'), pca.transform(matrix_pca_norm)),
-                'EOFs': (('var', *self.coords_extra, 'n_components'), EOFs_reshaped_splits),
-                'variance': (('n_components',), pca.explained_variance_),
-                'means': (('var', *self.coords_extra), mean_splits),
-                'stds': (('var', *self.coords_extra), std_splits), 
-                'var': (('var',), self.vars_keys), 
-                'APEV': (('n_components',), APEV),
-            }
-        )
-        xds_PCA.update({coord: ds[coord] for coord in coords_extra})
-        
-        self.pca = xds_PCA
-    
-    
-     ### Plotting ###   
-    default_colors = ['#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A', '#19D3F3', '#FF6692', '#B6E880', '#FF97FF', '#FECB52']
-
-    def plot_data(self, N = 10, custom_params = None):
-
-        '''
-
-        N : Number of 2D maps to plot
-        '''
-
-        ds = self.dataset
-        vars_keys = self.vars_keys
-        coords_extra = self.coords_extra
-        dim_pca = self.dim_pca
-
-        plot_defaults = {
-            'figsize': (len(vars_keys)*8, 15),
-            'fontsize' : 12,
-            'cmap':'rainbow'
-        }
-
-        plot_params = {**plot_defaults, **custom_params} if custom_params else plot_defaults
-
-        
-        
-        if len(coords_extra) == 2: #2d maps
-        
-            fig , axs = plt.subplots(1, len(vars_keys), figsize=plot_params['figsize'], subplot_kw={'projection': '3d'})
-            
-            for iv, var in  enumerate(vars_keys):
-        
-                if len(vars_keys)>1:
-                    ax = axs[iv]
-                else:
-                    ax=axs
-        
-                for iplot in range(np.nanmin([N, len(ds[dim_pca])])):
-                    
-                    c1, c2 = np.meshgrid(ds[coords_extra[1]].values, ds[coords_extra[0]].values)
-                    
-                    X_slice = ds.isel({dim_pca: iplot})[var].values
-
-                    norm = Normalize(np.nanmin(X_slice), np.nanmax(X_slice))
-                    cmap = plt.get_cmap(plot_params['cmap'])
-                    cmap.set_bad('white')
-                    colors = cmap(norm(X_slice))
-                    im = ax.plot_surface(c1, iplot, c2, facecolors = colors, alpha = .9, ec = None,
-                                         vmin = np.nanmin(ds[var].values), vmax = np.nanmax(ds[var].values))
-                    
-                ax.view_init(elev=20, azim=-40)
-                ax.grid(False)
-                ax.set_xlabel(coords_extra[0], fontsize = plot_params['fontsize'])
-                ax.set_ylabel(f'{dim_pca} [PCA dim]', fontsize = 12, color = 'darkred')
-                ax.set_zlabel(coords_extra[1], fontsize = plot_params['fontsize'])
-                sm = plt.cm.ScalarMappable(cmap=plt.get_cmap(plot_params['cmap']), norm=norm)
-                cbar = fig.colorbar(sm, ax = ax, orientation = 'horizontal', shrink = .6, pad = .02)
-        
-                cbar.set_label(var, fontsize = plot_params['fontsize'])
-                ax.tick_params(axis='both', colors='grey')
-        
-        elif len(coords_extra) == 1:
-            fig , axs = plt.subplots(len(vars_keys), 1, figsize=plot_params['figsize'])
-
-            for iv, var in  enumerate(vars_keys):
-            
-                if len(vars_keys)>1:
-                    ax = axs[iv]
-                else:
-                    ax=axs
-            
-                for iplot in range(np.nanmin([N, len(ds[dim_pca])])):
-                    
-                    c1 = ds[coords_extra[0]].values
-                    
-                    X_slice = ds.isel({dim_pca: iplot})[var].values
-            
-                    norm = Normalize(0, np.nanmin([N, len(ds[dim_pca])]))
-                    colors = plt.get_cmap(plot_params['cmap'])(norm(iplot))
-                    if iplot == 0:
-                        ax.plot(c1,  X_slice, color = colors, label = 'Dim PCA')
-                    else:
-                        ax.plot(c1,  X_slice, color = colors)
-                
-                ax.legend()
-                ax.grid(False)
-                ax.set_xlabel(coords_extra[0], fontsize = plot_params['fontsize'])
-                ax.set_ylabel(var, fontsize = plot_params['fontsize'])
-                ax.tick_params(axis='both', colors='grey')
-                
-                sm = plt.cm.ScalarMappable(cmap=plt.get_cmap(plot_params['cmap']), norm=norm)
-                cbar = fig.colorbar(sm, ax = ax, orientation = 'vertical', shrink = .6)
-                cbar.set_label('Dim PCA')
-
-    def plot_map_features(self, ax):
-        
-        ax.add_feature(cfeature.COASTLINE)
-        ax.add_feature(cfeature.BORDERS, linestyle=':')
-        ax.add_feature(cfeature.LAND, edgecolor='black')
-        ax.add_feature(cfeature.OCEAN, color='lightblue', alpha = .2)
-        
-    def plot_eofs(self, n_pca = 3, pc_sel = None, custom_params = None, plot_map = False, central_longitude = 180):
-    
-        coords_extra = self.coords_extra
-        vars_keys = self.vars_keys
-        dim_pca = self.dim_pca
-        ds = self.dataset
-        vars = self.vars_keys
-        n_vars = len(vars)
-
-        '''
-        area = self.area
-        if area[1]<area[0]:
-            central_longitude = 0
-        '''
-
-        if pc_sel: 
-            it=[pc_sel]
-        elif pc_sel == 0:
-            it = [pc_sel]
-        else:
-            it = range(n_pca)
-            
-        plot_defaults = {
-                'figsize': (n_vars*8, len(it)*7),
-                'fontsize' : 12,
-                'cmap':'RdBu_r'
-            }
-    
-        if len(coords_extra)>2:
-                raise PCAError("Only up to 2D map plots are available for plottinh")
-    
-        plot_params = {**plot_defaults, **custom_params} if custom_params else plot_defaults
-
-        if plot_map:
-            fig, axs = plt.subplots(len(it), n_vars, figsize = plot_params['figsize'],
-                                subplot_kw={'projection': ccrs.PlateCarree(central_longitude = central_longitude)})
-        else:
-            fig , axs = plt.subplots(len(it), n_vars, figsize= plot_params['figsize'])
-
-        if len(coords_extra) == 2:
-            c1, c2 = np.meshgrid(ds[coords_extra[1]].values, ds[coords_extra[0]].values)
-        if len(coords_extra) == 1:
-            c1 = ds[coords_extra[0]].values
-
-        for pc in it:
-            for ivar, var in enumerate(vars):
-        
-                if (n_vars == 1) & (len(it) ==1):
-                    ax = axs
-                elif n_vars == 1:
-                    ax = axs[pc]
-                elif len(it) == 1:
-                    ax = axs[ivar]
-                else:
-                    ax = axs[pc, ivar]
-
-                var_plot = self.pca.EOFs.isel(n_components = pc, var = ivar)
-
-                lim = np.nanmax([np.abs(np.nanmin(var_plot)),np.abs(np.nanmax(var_plot))])
-
-                if len(coords_extra) == 2:
-                    if plot_map:
-                        im = ax.pcolor(c1, c2, var_plot, cmap = plot_params['cmap'], 
-                                  vmin = -lim, vmax = lim, transform=ccrs.PlateCarree())
-                        ax.set_extent([ds.longitude.values.min()-10, ds.longitude.values.max()+10, 
-                          ds.latitude.values.min()-10, ds.latitude.values.max()+10, ], crs=ccrs.PlateCarree())
-                        self.plot_map_features(ax)
-                    else:
-                        im = ax.pcolor(c1, c2, var_plot, cmap = plot_params['cmap'], vmin = -lim, vmax = lim)
-
-                    plt.colorbar(im, ax = ax, orientation = 'horizontal', shrink = .6).set_label(var)
-                    
-                elif len(coords_extra) == 1:
-                    ax.plot(c1, var_plot, color = 'grey')
-                    ax.scatter(c1, var_plot, c=var_plot, cmap = plot_params['cmap'], vmin = -lim, vmax = lim)
-                    ax.grid(':', color = 'lightgrey')
-                    
-                ax.set_ylabel(f'EOF{pc}', fontsize = plot_params['fontsize'])
-                ax.set_title(f'{var}', fontsize = plot_params['fontsize'])
-
-        fig.suptitle(f'EOF{pc}', fontsize = plot_params['fontsize'])      
-    
-    def plot_pcs(self, n_pca = 3, pc_sel = None, custom_params = None):
-
-        vars_keys = self.vars_keys
-        dim_pca = self.dim_pca
-        ds = self.dataset
-        
-
-        if pc_sel: 
-            it=[pc_sel]
-        else:
-            it = range(n_pca)
-            
-        plot_defaults = {
-                'figsize': (15, len(it)*4),
-                'fontsize' : 12,
-            }
-        plot_params = {**plot_defaults, **custom_params} if custom_params else plot_defaults
-    
-        fig , axs = plt.subplots(len(it), 1, figsize=(15, len(it)*2), sharex = True)
-        
-        for pc in it:
-
-            if len(it)==1:
-                ax = axs
-            else:
-                ax = axs[pc]
-
-            ax.grid(color = 'lightgrey')
-            ax.plot(ds[dim_pca].values, self.pca.PCs.isel(n_components = pc), color = self.default_colors[2])
-            ax.set_ylabel(f'PC{pc}', fontsize = 12)
-            ax.set_xlim(ds[dim_pca].values[0], ds[dim_pca].values[-1])
-    
-    def plot_eofs_pcs(self, n_pca = 1, central_longitude = 180):
-
-        ds = self.dataset
-        spatial_dims = ['longitude', 'latitude']
-        plot_map = all(dim in ds.dims for dim in spatial_dims)
-    
-        for n in range(n_pca):
-
-            self.plot_eofs(pc_sel = n, plot_map = plot_map, central_longitude = central_longitude)
-            self.plot_pcs(pc_sel = n)
-            
 class PCAError(Exception):
-    """Custom exception for PCA class."""
-    def __init__(self, message="PCA error occurred."):
+    """
+    Custom exception for PCA class.
+    """
+
+    def __init__(self, message: str = "PCA error occurred."):
         self.message = message
         super().__init__(self.message)
 
 
+class PCA(BaseReduction):
+    """
+    Principal Component Analysis (PCA) class.
+
+    Attributes
+    ----------
+    n_components : int or float
+        The number of components or the explained variance ratio.
+    is_incremental : bool
+        Indicates whether Incremental PCA is used.
+    _pca : PCA_ or IncrementalPCA_
+        The PCA or Incremental PCA model.
+    is_fitted : bool
+        Indicates whether the PCA model has been fitted.
+    _data : xr.Dataset
+        The original dataset.
+    _stacked_data_matrix : np.ndarray
+        The stacked data matrix.
+    _standarized_stacked_data_matrix : np.ndarray
+        The standardized stacked data matrix.
+    scaler : StandardScaler
+        The scaler used for standardizing the data.
+    vars_to_stack : list of str
+        The list of variables to stack.
+    coords_to_stack : list of str
+        The list of coordinates to stack.
+    pca_dim_for_rows : str
+        The dimension for rows in PCA.
+    window_in_pca_dim_for_rows : list of int
+        The window in PCA dimension for rows.
+    value_to_replace_nans : float
+        The value to replace NaNs in the dataset.
+    num_cols_for_vars : int
+        The number of columns for variables.
+    """
+
+    def __init__(
+        self, n_components: Union[int, float] = 0.98, is_incremental: bool = False
+    ):
+        """
+        Initialize the PCA class.
+
+        Parameters
+        ----------
+        n_components : int or float, optional
+            Number of components to keep. If 0 < n_components < 1, it represents the
+            proportion of variance to be explained by the selected components. If
+            n_components >= 1, it represents the number of components to keep. Default is 0.98.
+        is_incremental : bool, optional
+            If True, use Incremental PCA which is useful for large datasets. Default is False.
+
+        Raises
+        ------
+        ValueError
+            If n_components is less than or equal to 0.
+        TypeError
+            If n_components is not an integer when it is greater than or equal to 1.
+        """
+
+        super().__init__()
+        self.set_logger_name(name=self.__class__.__name__)
+        if n_components <= 0:
+            raise ValueError("Number of components must be greater than 0.")
+        elif n_components >= 1:
+            if not isinstance(n_components, int):
+                raise TypeError("Number of components must be an integer when >= 1.")
+            self.logger.info(f"Number of components: {n_components}")
+        else:
+            self.logger.info(f"Explained variance ratio: {n_components}")
+        self.n_components = n_components
+        if is_incremental:
+            self.logger.info("Using Incremental PCA")
+            self._pca = IncrementalPCA_(n_components=self.n_components)
+            self.is_fitted = False
+        else:
+            self.logger.info("Using PCA")
+            self._pca = PCA_(n_components=self.n_components)
+            self.is_fitted = False
+        self.is_incremental = is_incremental
+        self._data: xr.Dataset = xr.Dataset()
+        self._stacked_data_matrix: np.ndarray = np.array([])
+        self._standarized_stacked_data_matrix: np.ndarray = np.array([])
+        self.scaler: StandardScaler = StandardScaler()
+        self.vars_to_stack: List[str] = []
+        self.coords_to_stack: List[str] = []
+        self.pca_dim_for_rows: str = None
+        self.window_in_pca_dim_for_rows: List[int] = [0]
+        self.value_to_replace_nans: float = None
+        self.num_cols_for_vars: int = None
+
+    @property
+    def pca(self) -> Union[PCA_, IncrementalPCA_]:
+        return self._pca
+
+    @property
+    def data(self) -> xr.Dataset:
+        return self._data
+
+    @property
+    def stacked_data_matrix(self) -> np.ndarray:
+        return self._stacked_data_matrix
+
+    @property
+    def standarized_stacked_data_matrix(self) -> np.ndarray:
+        return self._standarized_stacked_data_matrix
+
+    def _generate_stacked_data(self, data: xr.Dataset):
+        """
+        Generate stacked data matrix.
+
+        Parameters
+        ----------
+        data : xr.Dataset
+            The data to stack.
+
+        Returns
+        -------
+        stacked_data_matrix : np.ndarray
+            The stacked data matrix
+        """
+
+        self.logger.info(
+            f"Generating data matrix with variables to stack: {self.vars_to_stack} and coordinates to stack: {self.coords_to_stack}"
+        )
+        num_cols_for_vars = 1
+        for coord_to_stack in self.coords_to_stack:
+            num_cols_for_vars *= len(data[coord_to_stack])
+        tmp_stacked_data = data.stack(positions=self.coords_to_stack)
+        if (
+            len(self.window_in_pca_dim_for_rows) != 0
+            or self.window_in_pca_dim_for_rows[0] != 0
+        ):
+            self.logger.info(f"Rolling over coordinate: {self.pca_dim_for_rows}")
+            tmp_stacked_data = xr.concat(
+                [
+                    tmp_stacked_data.shift({self.pca_dim_for_rows: i})
+                    for i in self.window_in_pca_dim_for_rows
+                ],
+                dim="positions",
+            )
+        self.num_cols_for_vars = num_cols_for_vars * len(
+            self.window_in_pca_dim_for_rows
+        )
+        stacked_data_matrix = np.hstack(
+            [tmp_stacked_data[var].values for var in self.vars_to_stack]
+        )
+        self.logger.info(
+            f"Data matrix generated successfully with shape: {self._stacked_data_matrix.shape}"
+        )
+
+        return stacked_data_matrix
+
+    def _preprocess_data(self, data: xr.Dataset, is_fit: bool = True):
+        """
+        Preprocess data for PCA.
+
+        Parameters
+        ----------
+        data : xr.Dataset
+            The data to preprocess.
+        is_fit : bool, optional
+            If True, set the data. Default is True.
+
+        Returns
+        -------
+        standarized_stacked_data_matrix : np.ndarray
+            The standarized stacked data matrix.
+        """
+
+        self.logger.info("Preprocessing data")
+        data = self.check_nans(
+            data=data,
+            replace_value=self.value_to_replace_nans,
+        )
+        self.logger.info("Generating stacked data matrix")
+        stacked_data_matrix = self._generate_stacked_data(
+            data=data,
+        )
+        self.logger.info("Standarizing data matrix")
+        standarized_stacked_data_matrix, scaler = self.standarize(
+            data=stacked_data_matrix,
+            scaler=self.scaler if not is_fit else None,
+        )
+        self.logger.info("Removing NaNs from standarized data matrix")
+        standarized_stacked_data_matrix = self.check_nans(
+            data=standarized_stacked_data_matrix,
+            replace_value=self.value_to_replace_nans,
+        )
+        self.logger.info("Data preprocessed successfully")
+
+        if is_fit:
+            self._data = data.copy()
+            self._stacked_data_matrix = stacked_data_matrix.copy()
+            self._standarized_stacked_data_matrix = (
+                standarized_stacked_data_matrix.copy()
+            )
+            self.scaler = scaler
+
+        return standarized_stacked_data_matrix
+
+    def _reshape_EOFs(self, destandarize: bool = False):
+        """
+        Reshape EOFs to the original data shape.
+
+        Parameters
+        ----------
+        destandarize : bool, optional
+            If True, destandarize the EOFs. Default is True.
+
+        Returns
+        -------
+        xr.Dataset
+            The reshaped EOFs.
+        """
+
+        EOFs = self.pca.components_  # Get Empirical Orthogonal Functions (EOFs)
+        if destandarize:
+            EOFs = self.scaler.inverse_transform(EOFs)
+        EOFs_reshaped_vars_arrays = np.array_split(
+            EOFs, len(self.vars_to_stack), axis=1
+        )
+        coords_to_stack_shape = [
+            len(self.window_in_pca_dim_for_rows),
+            self.pca.n_components_,
+        ] + [self.data[coord].shape[0] for coord in self.coords_to_stack]
+        EOFs_reshaped_vars_dict = {
+            var: (
+                ["window", "n_component", *self.coords_to_stack],
+                np.array(
+                    np.array_split(
+                        EOF_reshaped_var, len(self.window_in_pca_dim_for_rows), axis=1
+                    )
+                ).reshape(*coords_to_stack_shape),
+            )
+            for var, EOF_reshaped_var in zip(
+                self.vars_to_stack, EOFs_reshaped_vars_arrays
+            )
+        }
+        return xr.Dataset(
+            EOFs_reshaped_vars_dict,
+            coords={
+                "window": self.window_in_pca_dim_for_rows,
+                "n_component": np.arange(self.pca.n_components_),
+                **{coord: self.data[coord] for coord in self.coords_to_stack},
+            },
+        )
+
+    def _reshape_data(self, X: np.ndarray, destandarize: bool = True):
+        """
+        Reshape data to the original data shape.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            The data to reshape.
+        destandarize : bool, optional
+            If True, destandarize the data. Default is True.
+
+        Returns
+        -------
+        xr.Dataset
+            The reshaped data.
+        """
+
+        if destandarize:
+            X = self.scaler.inverse_transform(X)
+        X_reshaped_vars_arrays = np.array_split(X, len(self.vars_to_stack), axis=1)
+        coords_to_stack_shape = [
+            len(self.window_in_pca_dim_for_rows),
+            self.data[self.pca_dim_for_rows].shape[0],
+        ] + [self.data[coord].shape[0] for coord in self.coords_to_stack]
+        X_reshaped_vars_dict = {
+            var: (
+                ["window", self.pca_dim_for_rows, *self.coords_to_stack],
+                np.array(
+                    np.array_split(
+                        X_reshaped_var, len(self.window_in_pca_dim_for_rows), axis=1
+                    )
+                ).reshape(*coords_to_stack_shape),
+            )
+            for var, X_reshaped_var in zip(self.vars_to_stack, X_reshaped_vars_arrays)
+        }
+        return xr.Dataset(
+            X_reshaped_vars_dict,
+            coords={
+                "window": self.window_in_pca_dim_for_rows,
+                self.pca_dim_for_rows: self.data[self.pca_dim_for_rows],
+                **{coord: self.data[coord] for coord in self.coords_to_stack},
+            },
+        )
+
+    @validate_data_pca
+    def fit(
+        self,
+        data: xr.Dataset,
+        vars_to_stack: List[str],
+        coords_to_stack: List[str],
+        pca_dim_for_rows: str,
+        window_in_pca_dim_for_rows: List[int] = [0],
+        value_to_replace_nans: float = None,
+    ):
+        """
+        Fit PCA model to data.
+
+        Parameters
+        ----------
+        data : xr.Dataset
+            The data to fit the PCA model.
+        vars_to_stack : list of str
+            The variables to stack.
+        coords_to_stack : list of str
+            The coordinates to stack.
+        pca_dim_for_rows : str
+            The PCA dimension to maintain in rows (usually the time).
+        window_in_pca_dim_for_rows : list of int, optional
+            The window steps to roll the pca_dim_for_rows. Default is [0].
+        value_to_replace_nans : float, optional
+            The value to replace NaNs. Default is None.
+        """
+
+        self.vars_to_stack = vars_to_stack
+        self.coords_to_stack = coords_to_stack
+        self.pca_dim_for_rows = pca_dim_for_rows
+        self.window_in_pca_dim_for_rows = window_in_pca_dim_for_rows
+        self.value_to_replace_nans = value_to_replace_nans
+
+        self._preprocess_data(data=data[self.vars_to_stack], is_fit=True)
+        self.logger.info("Fitting PCA model")
+        self.pca.fit(X=self.standarized_stacked_data_matrix)
+        self.is_fitted = True
+        self.logger.info("PCA model fitted successfully")
+
+    def transform(self, data: xr.Dataset):
+        """
+        Transform data using the fitted PCA model.
+
+        Parameters
+        ----------
+        data : xr.Dataset
+            The data to transform.
+
+        Returns
+        -------
+        transformed_data : xr.Dataset
+            The transformed data.
+        """
+
+        if self.is_fitted is False:
+            raise PCAError("PCA model must be fitted before transforming data")
+        self.logger.info("Transforming data using PCA model")
+        processed_data = self._preprocess_data(
+            data=data[self.vars_to_stack], is_fit=False
+        )
+        transformed_data = self.pca.transform(X=processed_data)
+        return xr.Dataset(
+            {
+                "PCs": ((self.pca_dim_for_rows, "n_component"), transformed_data),
+            },
+            coords={
+                self.pca_dim_for_rows: data[self.pca_dim_for_rows],
+                "n_component": np.arange(self.pca.n_components_),
+            },
+        )
+
+    def fit_transform(
+        self,
+        data: xr.Dataset,
+        vars_to_stack: List[str],
+        coords_to_stack: List[str],
+        pca_dim_for_rows: str,
+        window_in_pca_dim_for_rows: List[int] = [0],
+        value_to_replace_nans: float = None,
+    ):
+        """
+        Fit and transform data using PCA model.
+
+        Parameters
+        ----------
+        data : xr.Dataset
+            The data to fit the PCA model.
+        vars_to_stack : list of str
+            The variables to stack.
+        coords_to_stack : list of str
+            The coordinates to stack.
+        pca_dim_for_rows : str
+            The PCA dimension to maintain in rows (usually the time).
+        window_in_pca_dim_for_rows : list of int, optional
+            The window steps to roll the pca_dim_for_rows. Default is [0].
+        value_to_replace_nans : float, optional
+            The value to replace NaNs. Default is None.
+
+        Returns
+        -------
+        transformed_data : xr.Dataset
+            The transformed data.
+        """
+
+        self.fit(
+            data=data,
+            vars_to_stack=vars_to_stack,
+            coords_to_stack=coords_to_stack,
+            pca_dim_for_rows=pca_dim_for_rows,
+            window_in_pca_dim_for_rows=window_in_pca_dim_for_rows,
+            value_to_replace_nans=value_to_replace_nans,
+        )
+        # TODO: JAVI - Add a flag to use the already processed data??
+        return self.transform(data=data)
+
+    def inverse_transform(self, PCs: Union[np.ndarray, xr.Dataset]):
+        """
+        Inverse transform data using the fitted PCA model.
+
+        Parameters
+        ----------
+        X : np.ndarray or xr.Dataset
+            The data to inverse transform.
+
+        Returns
+        -------
+        data_transformed : xr.Dataset
+            The inverse transformed data.
+        """
+
+        if self.is_fitted is False:
+            raise PCAError("PCA model must be fitted before inverse transforming data")
+        if isinstance(PCs, xr.Dataset):
+            X = PCs["PCs"].values
+        elif isinstance(PCs, np.ndarray):
+            X = PCs
+        self.logger.info("Inverse transforming data using PCA model")
+        X_transformed = self.pca.inverse_transform(X=X)
+        data_transformed = self._reshape_data(X=X_transformed, destandarize=True)
+        return data_transformed
+
+    def postprocess_data(self, data: xr.Dataset = None):
+        """
+        Postprocess data after PCA.
+
+        Parameters
+        ----------
+        data : xr.Dataset, optional
+            The data to postprocess. Default is None.
+        """
+
+        self.logger.info("Postprocessing data")
+        # TODO: JAVI - Add postprocessing steps
+        self.logger.info("Data postprocessed successfully")
