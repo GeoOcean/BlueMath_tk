@@ -93,20 +93,21 @@ class KMA(BaseClustering):
             If num_centers is not greater than 0.
             Or if seed is not greater or equal to 0.
         """
+
         super().__init__()
         self.set_logger_name(name=self.__class__.__name__)
         if num_clusters > 0:
             self.num_clusters = int(num_clusters)
-            # TODO: check random_state and n_init
-            self._kma = KMeans(
-                n_clusters=self.num_clusters, random_state=seed, n_init="auto"
-            )
         else:
             raise ValueError("Variable num_clusters must be > 0")
         if seed >= 0:
             self.seed = int(seed)
         else:
             raise ValueError("Variable seed must be >= 0")
+        # TODO: check random_state and n_init
+        self._kma = KMeans(
+            n_clusters=self.num_clusters, random_state=self.seed, n_init="auto"
+        )
         self._data: pd.DataFrame = pd.DataFrame()
         self._normalized_data: pd.DataFrame = pd.DataFrame()
         self.data_variables: list = []
@@ -118,16 +119,16 @@ class KMA(BaseClustering):
         self.bmus: np.array = np.array([])
 
     @property
+    def kma(self) -> KMeans:
+        return self._kma
+
+    @property
     def data(self) -> pd.DataFrame:
         return self._data
 
     @property
     def normalized_data(self) -> pd.DataFrame:
         return self._normalized_data
-
-    @property
-    def kma(self) -> KMeans:
-        return self._kma
 
     @validate_data_kma
     def fit(

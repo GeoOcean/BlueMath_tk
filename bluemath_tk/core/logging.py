@@ -10,28 +10,35 @@ def get_file_logger(
     """
     Creates and returns a logger that writes log messages to a file.
 
-    Args:
-        name (str): The name of the logger.
-        logs_path (str, optional): The file path where the log messages will be written (default is None).
-        level (int, optional): The logging level (default is logging.INFO).
+    Parameters
+    ----------
+    name : str
+        The name of the logger.
+    logs_path : str, optional
+        The file path where the log messages will be written (default is None).
+    level : int, optional
+        The logging level (default is logging.INFO).
 
-    Returns:
-        logging.Logger: Configured logger instance.
+    Returns
+    -------
+    logger: logging.Logger
+        Configured logger instance.
 
-    Example:
-        # Create a logger that writes to "app.log"
-        logger = get_file_logger("my_app_logger", "app.log")
-
-        # Log messages
-        logger.info("This is an info message.")
-        logger.warning("This is a warning message.")
-        logger.error("This is an error message.")
-
-        # The output will be saved in "app.log" with the format:
-        # 2023-10-22 14:55:23,456 - my_app_logger - INFO - This is an info message.
-        # 2023-10-22 14:55:23,457 - my_app_logger - WARNING - This is a warning message.
-        # 2023-10-22 14:55:23,458 - my_app_logger - ERROR - This is an error message.
+    Examples
+    --------
+    >>> from bluemath_tk.core.logging import get_file_logger
+    >>> # Create a logger that writes to "app.log"
+    >>> logger = get_file_logger("my_app_logger", "app.log")
+    >>> # Log messages
+    >>> logger.info("This is an info message.")
+    >>> logger.warning("This is a warning message.")
+    >>> logger.error("This is an error message.")
+    >>> # The output will be saved in "app.log" with the format:
+    >>> # 2023-10-22 14:55:23,456 - my_app_logger - INFO - This is an info message.
+    >>> # 2023-10-22 14:55:23,457 - my_app_logger - WARNING - This is a warning message.
+    >>> # 2023-10-22 14:55:23,458 - my_app_logger - ERROR - This is an error message.
     """
+
     # Create a logger with the specified name
     logger = logging.getLogger(name)
     logger.setLevel(level)
