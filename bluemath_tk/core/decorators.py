@@ -103,7 +103,7 @@ def validate_data_lhs(func):
             raise ValueError("Lower bounds must be less than or equal to upper bounds")
         if not isinstance(num_samples, int) or num_samples <= 0:
             raise ValueError("Variable num_samples must be integer and > 0")
-        return func(self, dimensions_names, lower_bounds, upper_bounds)
+        return func(self, dimensions_names, lower_bounds, upper_bounds, num_samples)
 
     return wrapper
 
