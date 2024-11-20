@@ -14,6 +14,6 @@ setup(
         "numpy",  # Example dependency
         "pandas",
     ],
-    classifiers=["Programming Language :: Python :: 3.12"],
-    python_requires=">=3.12",  # Specify the Python version required
+    classifiers=["Programming Language :: Python :: 3.6"],
+    python_requires=">=3.6",  # Specify the Python version required
 )
