@@ -72,10 +72,7 @@ months = (
         range(int(args["MONTHS"].split("-")[0]), int(args["MONTHS"].split("-")[1]) + 1)
     )
 )
-if args["--var"]:
-    variables = args["--var"].split(",")
-else:
-    raise ValueError("The --var argument is mandatory")
+variables = args["--var"].split(",") if args["--var"] else []
 
 output = copernicus_downloader.download_data(
     variables=variables,

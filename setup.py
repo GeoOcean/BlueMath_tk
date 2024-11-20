@@ -10,6 +10,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/GeoOcean/BlueMath",
     packages=find_packages(),  # Automatically find packages in the directory
+    include_package_data=True,
     install_requires=[  # List your package dependencies here
         "numpy",  # Example dependency
         "pandas",
