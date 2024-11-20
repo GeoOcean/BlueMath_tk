@@ -347,8 +347,10 @@ class CopernicusDownloader(BlueMathDownloader):
                         fully_downloaded_files.append(output_nc_file)
 
         return f"""
-            Fully downloaded files: {fully_downloaded_files}
-            Not fully downloaded files: {NOT_fullly_downloaded_files}
+            Fully downloaded files:
+            {'\n'.join(fully_downloaded_files)}
+            Not fully downloaded files:
+            {'\n'.join(NOT_fullly_downloaded_files)}
         """
 
 
