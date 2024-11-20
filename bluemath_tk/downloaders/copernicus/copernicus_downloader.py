@@ -238,6 +238,7 @@ class CopernicusDownloader(BlueMathDownloader):
 
         for variable in variables:
             for year in years:
+                year = f"{int(year):04d}"  # Ensure year is 4 digits
                 for month in months:
                     month = f"{int(month):02d}"  # Ensure month is 2 digits
                     variable_config = self.product_config["variables"].get(variable)
@@ -289,7 +290,7 @@ class CopernicusDownloader(BlueMathDownloader):
                         product_type,
                         variable_config["nc_name"],
                         year,
-                        f"{variable_config["nc_name"]}_{year}{month}.nc",
+                        f"{variable_config['nc_name']}_{year}{month}.nc",
                     )
                     # Create the output directory if it does not exist
                     os.makedirs(os.path.dirname(output_nc_file), exist_ok=True)
