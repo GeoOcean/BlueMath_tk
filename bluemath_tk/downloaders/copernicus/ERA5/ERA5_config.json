@@ -94,7 +94,7 @@
         "geo500": {
             "cds_name": "geopotential",
             "long_name": "Geopotential",
-            "nc_name": "z",
+            "nc_name": "geo500",
             "type": "pressure",
             "units": "m2 s-2",
             "dataset": "reanalysis-era5-pressure-levels",
