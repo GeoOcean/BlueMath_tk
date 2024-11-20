@@ -4,7 +4,7 @@ from typing import List
 import calendar
 import cdsapi
 import xarray as xr
-from bluemath_tk.downloaders.base_downloaders import BlueMathDownloader
+from ..base_downloaders import BlueMathDownloader
 
 config = {
     "url": "https://cds.climate.copernicus.eu/api",  # /v2?
@@ -15,9 +15,7 @@ config = {
 class CopernicusDownloader(BlueMathDownloader):
     products_configs = {
         "ERA5": json.load(
-            open(
-                "/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/downloaders/copernicus/ERA5/ERA5_config.json"
-            )
+            open(os.path.join(os.path.dirname(__file__), "ERA5", "ERA5_config.json"))
         )
     }
 
@@ -28,29 +26,43 @@ class CopernicusDownloader(BlueMathDownloader):
         debug: bool = True,
     ) -> None:
         super().__init__(base_path_to_download=base_path_to_download, debug=debug)
-        self.set_logger_name("CopernicusDownloader")
         self._product = product
-        self._client = cdsapi.Client(
-            url=config["url"], key=config["key"], debug=self.debug
-        )
+        self._product_config = self.products_configs.get(product)
+        if self._product_config is None:
+            raise ValueError(f"{product} configuration not found")
+        self.set_logger_name(f"CopernicusDownloader - {product}")
+        # self._client = cdsapi.Client(
+        #     url=config["url"], key=config["key"], debug=self.debug
+        # )
 
     @property
     def product(self) -> str:
         return self._product
 
-    @product.setter
-    def product(self, value: str) -> None:
-        self._product = value
+    @property
+    def product_config(self) -> dict:
+        return self._product_config
 
     @property
     def client(self) -> cdsapi.Client:
         return self._client
 
-    @client.setter
-    def client(self, value: cdsapi.Client) -> None:
-        self._client = value
+    def download_data(self, *args, **kwargs):
+        if self.product == "ERA5":
+            return self.download_data_era5(*args, **kwargs)
+        else:
+            raise ValueError(f"Download for product {self.product} not supported")
 
-    def download_data(
+    def check_data(self, *args, **kwargs):
+        return super().check_data(*args, **kwargs)
+
+    def list_variables(self):
+        return list(self.product_config["variables"].keys())
+
+    def list_datasets(self):
+        return list(self.product_config["datasets"].keys())
+
+    def download_data_era5(
         self,
         variables: List[str],
         years: List[str],
@@ -92,17 +104,15 @@ class CopernicusDownloader(BlueMathDownloader):
         for variable in variables:
             for year in years:
                 for month in months:
-                    variable_config = self.products_configs[self.product][
-                        "variables"
-                    ].get(variable)
+                    variable_config = self.product_config["variables"].get(variable)
                     if variable_config is None:
                         self.logger.error(
                             f"Variable {variable} not found in product configuration file"
                         )
                         continue
-                    variable_dataset = self.products_configs[self.product][
-                        "datasets"
-                    ].get(variable_config["dataset"])
+                    variable_dataset = self.product_config["datasets"].get(
+                        variable_config["dataset"]
+                    )
                     if variable_dataset is None:
                         self.logger.error(
                             f"Dataset {variable_config['dataset']} not found in product configuration file"
@@ -134,6 +144,7 @@ class CopernicusDownloader(BlueMathDownloader):
                     output_nc_file = os.path.join(
                         self.base_path_to_download,
                         self.product,
+                        variable_config["dataset"],
                         variable_config["type"],
                         product_type,
                         variable_config["nc_name"],
@@ -142,6 +153,8 @@ class CopernicusDownloader(BlueMathDownloader):
                     )
                     # Create the output directory if it does not exist
                     os.makedirs(os.path.dirname(output_nc_file), exist_ok=True)
+
+                    continue
 
                     self.logger.info(
                         f"Downloading variable {variable}: {json.dumps(template_for_variable, indent=2)}"
@@ -190,9 +203,6 @@ class CopernicusDownloader(BlueMathDownloader):
                             target=output_nc_file,
                         )
 
-    def check_data(self, *args, **kwargs):
-        return super().check_data(*args, **kwargs)
-
 
 if __name__ == "__main__":
     copernicus_downloader = CopernicusDownloader(
@@ -201,5 +211,5 @@ if __name__ == "__main__":
         debug=True,
     )
     copernicus_downloader.download_data(
-        variables=["geo500", "tp", "p140122"], year=["2021"], month=["01"]
+        variables=["geo500", "tp", "p140122"], years=["2021"], months=["01"]
     )
