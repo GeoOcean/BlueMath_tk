@@ -2,7 +2,7 @@ site_name: BlueMath {Toolkit}
 
 nav:
   - Home: index.md
-  - MDA: mda.md
+  - Test: test.md
 
 plugins:
   - search
@@ -20,3 +20,6 @@ markdown_extensions:
 
 theme:
   name: "material"
+
+extra:
+  code-copy: true

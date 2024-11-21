@@ -10,8 +10,8 @@ class TestLHS(unittest.TestCase):
         self.upper_bounds = [5.3, 1.5, 200]
         self.lhs = LHS(num_dimensions=3, seed=0)
 
-    def test_fit(self):
-        lhs_sampled_df = self.lhs.fit(
+    def test_generate(self):
+        lhs_sampled_df = self.lhs.generate(
             dimensions_names=self.dimensions_names,
             lower_bounds=self.lower_bounds,
             upper_bounds=self.upper_bounds,

@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import List
+from typing import List, Tuple
 from ._base_datamining import BaseClustering
 from ..core.decorators import validate_data_mda
 
@@ -25,13 +25,13 @@ class MDA(BaseClustering):
     ----------
     num_centers : int
         The number of centers to use in the MDA algorithm.
-    _data : pd.DataFrame
+    data : pd.DataFrame
         The input data.
-    _normalized_data : pd.DataFrame
+    normalized_data : pd.DataFrame
         The normalized input data.
-    data_variables : list
+    data_variables : List[str]
         A list of all data variables.
-    directional_variables : list
+    directional_variables : List[str]
         A list with directional variables.
     custom_scale_factor : dict
         A dictionary of custom scale factors.
@@ -41,9 +41,9 @@ class MDA(BaseClustering):
         The selected centroids.
     normalized_centroids : pd.DataFrame
         The selected normalized centroids.
-    centroid_iterative_indices : list
+    centroid_iterative_indices : List[int]
         A list of iterative indices of the centroids.
-    centroid_real_indices : list
+    centroid_real_indices : List[int]
         A list of real indices of the centroids.
 
     Notes
@@ -94,14 +94,14 @@ class MDA(BaseClustering):
             raise ValueError("Variable num_centers must be > 0")
         self._data: pd.DataFrame = pd.DataFrame()
         self._normalized_data: pd.DataFrame = pd.DataFrame()
-        self.data_variables: list = []
-        self.directional_variables: list = []
+        self.data_variables: List[str] = []
+        self.directional_variables: List[str] = []
         self.custom_scale_factor: dict = {}
         self.scale_factor: dict = {}
         self.centroids: pd.DataFrame = pd.DataFrame()
         self.normalized_centroids: pd.DataFrame = pd.DataFrame()
-        self.centroid_iterative_indices: list = []
-        self.centroid_real_indices: list = []
+        self.centroid_iterative_indices: List[int] = []
+        self.centroid_real_indices: List[int] = []
 
     @property
     def data(self) -> pd.DataFrame:
@@ -117,21 +117,25 @@ class MDA(BaseClustering):
         """
         Calculate the normalized distance between the array_to_compare and all_rest_data.
 
-        Parameters:
+        Parameters
+        ----------
         array_to_compare : np.ndarray
             The array to compare against.
         all_rest_data : np.ndarray)
             The rest of the data.
 
-        Returns:
+        Returns
+        -------
         dist : np.ndarray
             An array of squared Euclidean distances between the two arrays for each row.
 
-        Raises:
+        Raises
+        ------
         MDAError
             If the function is NOT called before or during fitting.
 
-        Notes:
+        Notes
+        -----
         - The function assumes that the data_variables, directional_variables, and scale_factor
         attributes have been set.
         - The function calculates the squared sum of differences for each row.
@@ -165,30 +169,41 @@ class MDA(BaseClustering):
 
         return dist
 
-    def _nearest_indices(self):
+    def _nearest_indices_to_centroids(
+        self, data: pd.DataFrame
+    ) -> Tuple[np.ndarray, pd.DataFrame]:
         """
-        Compute nearest centroid index for each data point.
+        Compute nearest data points to calculated centroids.
 
         Parameters
         ----------
-        None
+        data : pd.DataFrame
+            The input data to be used to compute nearest data point to centroids.
 
         Returns
         -------
-        nearest_indices_array : numpy.ndarray
-            Array of nearest centroid indices for each data point.
+        nearest_indices_array : np.ndarray
+            An array containing the index of the nearest data point to centroids.
+        normalized_data.iloc[nearest_indices_array] : pd.DataFrame
+            A DataFrame containing the nearest data points to centroids.
 
-        Notes:
-        - This function assumes that the normalized_centroids and _normalized_data
-        attributes have been set.
-        - The function calculates the squared sum of differences for each data point
-        and each centroid.
+        Raises
+        ------
+        MDAError
+            If the fit method has not been called before this method.
+            Or if the data is empty.
         """
 
-        if self.normalized_centroids.empty or self.normalized_data.empty:
+        if self.normalized_centroids.empty or not self.scale_factor:
             raise MDAError(
                 "_nearest_indices must be called after or during fitting, not before."
             )
+        if data.empty:
+            raise MDAError("Data cannot be empty.")
+
+        normalized_data, _scale_factor = self.normalize(
+            data=data, custom_scale_factor=self.scale_factor
+        )
 
         # Compute distances and store nearest distance index
         nearest_indices_array = np.zeros(self.normalized_centroids.shape[0], dtype=int)
@@ -196,16 +211,65 @@ class MDA(BaseClustering):
         for i in range(self.normalized_centroids.shape[0]):
             rep = np.repeat(
                 np.expand_dims(self.normalized_centroids.values[i, :], axis=0),
-                self.normalized_data.values.shape[0],
+                normalized_data.values.shape[0],
                 axis=0,
             )
             ndist = self._normalized_distance(
-                array_to_compare=rep, all_rest_data=self.normalized_data.values
+                array_to_compare=rep, all_rest_data=normalized_data.values
             )
-
             nearest_indices_array[i] = np.nanargmin(ndist)
 
-        return nearest_indices_array
+        return nearest_indices_array, normalized_data.iloc[nearest_indices_array]
+
+    def _nearest_indices(self, data: pd.DataFrame) -> Tuple[np.ndarray, pd.DataFrame]:
+        """
+        Compute nearest centroids to the provided data.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The input data to be used to compute nearest centroids.
+
+        Returns
+        -------
+        nearest_indices_array : np.ndarray
+            An array containing the index of the nearest centroid to the data.
+        self.centroids.iloc[nearest_indices_array] : pd.DataFrame
+            A DataFrame containing the nearest centroids to the data.
+
+        Raises
+        ------
+        MDAError
+            If the fit method has not been called before this method.
+            Or if the data is empty.
+        """
+
+        if self.normalized_centroids.empty or not self.scale_factor:
+            raise MDAError(
+                "_nearest_indices must be called after or during fitting, not before."
+            )
+        if data.empty:
+            raise MDAError("Data cannot be empty.")
+
+        normalized_data, _scale_factor = self.normalize(
+            data=data, custom_scale_factor=self.scale_factor
+        )
+
+        # Compute distances and store nearest distance index
+        nearest_indices_array = np.zeros(normalized_data.shape[0], dtype=int)
+
+        for i in range(normalized_data.shape[0]):
+            rep = np.repeat(
+                np.expand_dims(normalized_data.values[i, :], axis=0),
+                self.normalized_centroids.values.shape[0],
+                axis=0,
+            )
+            ndist = self._normalized_distance(
+                array_to_compare=rep, all_rest_data=self.normalized_centroids.values
+            )
+            nearest_indices_array[i] = np.nanargmin(ndist)
+
+        return nearest_indices_array, self.centroids.iloc[nearest_indices_array]
 
     @validate_data_mda
     def fit(
@@ -230,11 +294,6 @@ class MDA(BaseClustering):
             A list of names of the directional variables within the data.
         custom_scale_factor : dict, optional
             A dictionary specifying custom scale factors for normalization.
-
-        Returns
-        -------
-        pd.DataFrame
-            The calculated centroids of the dataset.
 
         Notes
         -----
@@ -312,92 +371,54 @@ class MDA(BaseClustering):
 
         # TODO: use the normalized centroids and the norm_data to avoid rounding errors.
         # Calculate the real indices of the centroids
-        self.centroid_real_indices = self._nearest_indices()
-
-        return self.centroids
-
-    def nearest_centroid_indices(self, data_q: np.ndarray):
-        """
-        Calculate the index of the nearest centroid to each data point in `data_q`.
-
-        Parameters
-        ----------
-        data_q : numpy.ndarray
-            The input data points. Can be a 1D or 2D array.
-
-        Returns
-        -------
-        ix_near_cent : numpy.ndarray
-            An array containing the index of the nearest centroid for each data point.
-
-        Raises
-        ------
-        MDAError
-            If centroids have not been calculated beforehand using the `.run` method.
-
-        Notes
-        -----
-        - This method assumes that the centroids have been calculated beforehand using the `.run` method.
-        - The normalization of the data points is performed using the `normalize` method with a custom scale factor.
-        - The distance between each data point and the centroids is calculated using the `_normalized_distance` method.
-        - The index of the nearest centroid for each data point is determined by finding the minimum distance.
-        """
-
-        # Reshape if only one data point was selected
-        if len(np.shape(data_q)) == 1:
-            data_q = data_q.reshape(1, -1)
-
-        # Normalize data point
-        data_q_pd = pd.DataFrame(data_q, columns=self.data_variables)
-        data_q_norm, b = self.normalize(
-            data=data_q_pd,
-            custom_scale_factor=self.scale_factor,
+        self.centroid_real_indices = self._nearest_indices_to_centroids(
+            data=self.normalized_data
         )
 
-        # Check centroids were calculated beforehand
-        if len(self.centroids) == 0:
-            raise MDAError(
-                "Centroids have not been calculated, first apply .run method"
-            )
-
-        # Compute distances to centroids and store nearest distance index
-        ix_near_cent = np.zeros(data_q_norm.values.shape[0], dtype=int)
-        for i in range(data_q_norm.values.shape[0]):
-            norm_dists_centroids = self._normalized_distance(
-                self.normalized_centroids.values,
-                np.repeat(
-                    np.expand_dims(data_q_norm.values[i, :], axis=0),
-                    self.normalized_centroids.values.shape[0],
-                    axis=0,
-                ),
-            )
-            ix_near_cent[i] = np.nanargmin(norm_dists_centroids)
-
-        return ix_near_cent
-
-    def nearest_centroid(self, data_q: np.ndarray):
+    def predict(self, data: pd.DataFrame):
         """
-        Determine the nearest centroid for each data point in the provided dataset.
+        Predict the nearest centroid for the provided data.
 
         Parameters
         ----------
-        data_q : numpy.ndarray
-            An array of data points for which the nearest centroid is to be determined.
+        data : pd.DataFrame
+            The input data to be used for the prediction.
 
         Returns
         -------
-        numpy.ndarray
-            An array of the nearest centroids corresponding to each data point in `data_q`.
-
-        Notes
-        -----
-        - This method assumes that centroids have been calculated and are available.
-        - The distance between each data point and the centroids is calculated using
-          the `_normalized_distance` method. The index of the nearest centroid for each
-          data point is determined by finding the minimum distance.
+        self._nearest_indices(data=data) : Tuple[np.ndarray, pd.DataFrame]
+            A tuple containing the nearest centroid index for each data point and the nearest centroids.
         """
 
-        ix_near_cents = self.nearest_centroid_indices(data_q)
-        nearest_cents = self.centroids.values[ix_near_cents]
+        return self._nearest_indices(data=data)
 
-        return nearest_cents
+    def fit_predict(
+        self,
+        data: pd.DataFrame,
+        directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
+    ):
+        """
+        Fits the MDA model to the data and predicts the nearest centroids.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The input data to be used for the MDA algorithm.
+        directional_variables : List[str], optional
+            A list of names of the directional variables within the data.
+        custom_scale_factor : dict, optional
+            A dictionary specifying custom scale factors for normalization.
+
+        Returns
+        -------
+        self.predict(data=data) : Tuple[np.ndarray, pd.DataFrame]
+            A tuple containing the nearest centroid index for each data point and the nearest centroids.
+        """
+
+        self.fit(
+            data=data,
+            directional_variables=directional_variables,
+            custom_scale_factor=custom_scale_factor,
+        )
+        return self.predict(data=data)

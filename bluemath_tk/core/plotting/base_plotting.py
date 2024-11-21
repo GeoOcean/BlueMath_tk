@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+from typing import Union
 import matplotlib.pyplot as plt
+from matplotlib.colors import Colormap
 import plotly.graph_objects as go
 import cartopy.crs as ccrs
 
@@ -39,6 +41,29 @@ class BasePlotting(ABC):
         Should be implemented by subclasses.
         """
         pass
+
+    def get_list_of_colors_for_colormap(
+        self, cmap: Union[str, Colormap], num_colors: int
+    ) -> list:
+        """
+        Get a list of colors from a colormap.
+
+        Parameters
+        ----------
+        cmap : str or Colormap
+            The colormap to use.
+        num_colors : int
+            The number of colors to generate.
+
+        Returns
+        -------
+        list
+            A list of colors generated from the colormap.
+        """
+
+        if isinstance(cmap, str):
+            cmap = plt.get_cmap(cmap)
+        return [cmap(i) for i in range(0, 256, 256 // num_colors)]
 
 
 class DefaultStaticPlotting(BasePlotting):

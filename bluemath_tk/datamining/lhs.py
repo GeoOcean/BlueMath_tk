@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import List
 from scipy.stats import qmc
-from ._base_datamining import BaseClustering
+from ._base_datamining import BaseSampling
 from ..core.decorators import validate_data_lhs
 
 
@@ -15,7 +15,7 @@ class LHSError(Exception):
         super().__init__(self.message)
 
 
-class LHS(BaseClustering):
+class LHS(BaseSampling):
     """
     Latin Hypercube Sampling (LHS) class.
 
@@ -27,10 +27,15 @@ class LHS(BaseClustering):
         The number of dimensions to use in the LHS algorithm.
     seed : int
         The random seed to use.
-    _lhs : qdc.LatinHypercube
+    lhs : qdc.LatinHypercube
         The Latin Hypercube object.
-    _data : pd.DataFrame
+    data : pd.DataFrame
         The LHS samples dataframe.
+
+    Methods
+    -------
+    generate(dimensions_names, lower_bounds, upper_bounds, num_samples)
+        Generate LHS samples.
 
     Notes
     -----
@@ -43,7 +48,7 @@ class LHS(BaseClustering):
     >>> lower_bounds = [0.5, -0.2, 1]
     >>> upper_bounds = [5.3, 1.5, 200]
     >>> lhs = LHS(num_dimensions=3, seed=0)
-    >>> lhs_sampled_df = lhs.fit(
+    >>> lhs_sampled_df = lhs.generate(
     ...     dimensions_names=dimensions_names,
     ...     lower_bounds=lower_bounds,
     ...     upper_bounds=upper_bounds,
@@ -63,7 +68,7 @@ class LHS(BaseClustering):
         seed : int, optional
             The random seed to use.
             Must be greater or equal to 0.
-            By default 1.
+            Default to 1.
 
         Raises
         ------
@@ -96,7 +101,7 @@ class LHS(BaseClustering):
         return self._data
 
     @validate_data_lhs
-    def fit(
+    def generate(
         self,
         dimensions_names: List[str],
         lower_bounds: List[float],
@@ -120,7 +125,7 @@ class LHS(BaseClustering):
 
         Returns
         -------
-        pd.DataFrame
+        self.data : pd.DataFrame
             The LHS samples.
         """
 
