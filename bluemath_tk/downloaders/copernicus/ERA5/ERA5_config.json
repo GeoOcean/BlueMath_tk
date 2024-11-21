@@ -132,6 +132,14 @@
             "units": "m",
             "dataset": "reanalysis-era5-single-levels"
         },
+        "msl": {
+            "cds_name": "mean_sea_level_pressure",
+            "long_name": "Mean sea level pressure",
+            "nc_name": "msl",
+            "type": "atmosphere",
+            "units": "Pa",
+            "dataset": "reanalysis-era5-single-levels"
+        },
         "wmb": {
             "cds_name": "model_bathymetry",
             "long_name": "Model bathymetry",

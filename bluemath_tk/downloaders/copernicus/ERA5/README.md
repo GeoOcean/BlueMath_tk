@@ -16,8 +16,8 @@ The Reanalysis ERA5 single levels dataset has the following characteristics:
 - Projection: Regular latitude-longitude grid
 - Horizontal coverage: Global
 - Horizontal resolution:
-    - Reanalysis: 0.25° x 0.25° (atmosphere), 0.5° x 0.5° (ocean waves)
-    - Mean, spread and members: 0.5° x 0.5° (atmosphere), 1° x 1° (ocean waves)
+  - Reanalysis: 0.25° x 0.25° (atmosphere), 0.5° x 0.5° (ocean waves)
+  - Mean, spread and members: 0.5° x 0.5° (atmosphere), 1° x 1° (ocean waves)
 - Temporal coverage: 1940 to present
 - Temporal resolution: Hourly
 - File format: NetCDF
@@ -27,24 +27,26 @@ The Reanalysis ERA5 single levels dataset has the following characteristics:
 
 ## Downloaded Dataset Variables
 
-These are the variables currently available for download:
+These are the variables currently available for download. If a new variable is required, it MUST be added to the `ERA5_config.json` file, and then to the code or crontab downloading the files.
 
-| path    | cds_name                                                        | type          | source                          |
+In the table, below, all paths start in `/lustre/geocean/DATA/Copernicus/ERA5/source/`.
+
+| name    | path                                                            | units         | source                          |
 | ------- | --------------------------------------------------------------- | ------------- | ------------------------------- |
+| geo500  | pressure/reanalysis/geo500/$year/monthly_files.nc               | m2 s-2        | reanalysis-era5-pressure-levels |
+| u10     | atmosphere/reanalysis/u10/$year/monthly_files.nc                | m s-1         | reanalysis-era5-single-levels   |
+| v10     | WINDS/ERA5_05/10m_v_component_of_wind                           | wind          | reanalysis-era5-single-levels   |
+| sst     | SST/ERA5_05/sea_surface_temperature                             | temperature   | reanalysis-era5-single-levels   |
+| tp      | PRECIPITATION/ERA5_05/total_precipitation                       | precipitation | reanalysis-era5-single-levels   |
+| msl     | PRESSURE/ERA5_05/mean_sea_level_pressure                        | pressure      | reanalysis-era5-single-levels   |
+| wmb     | WAVES/ERA5_05/model_bathymetry                                  | waves         | reanalysis-era5-single-levels   |
 | mdww    | WAVES/ERA5_05/mean_direction_of_wind_waves                      | waves         | reanalysis-era5-single-levels   |
 | mpww    | WAVES/ERA5_05/mean_period_of_wind_waves                         | waves         | reanalysis-era5-single-levels   |
 | mwp     | WAVES/ERA5_05/mean_wave_period                                  | waves         | reanalysis-era5-single-levels   |
-| wmb     | WAVES/ERA5_05/model_bathymetry                                  | waves         | reanalysis-era5-single-levels   |
 | shww    | WAVES/ERA5_05/significant_height_of_wind_waves                  | waves         | reanalysis-era5-single-levels   |
 | dwww    | WAVES/ERA5_05/wave_spectral_directional_width_for_wind_waves    | waves         | reanalysis-era5-single-levels   |
 | pp1d    | WAVES/ERA5_05/peak_wave_period                                  | waves         | reanalysis-era5-single-levels   |
 | swh     | WAVES/ERA5_05/significant_height_of_combined_wind_waves_and_    | waves         | reanalysis-era5-single-levels   |
-| msl     | PRESSURE/ERA5_05/mean_sea_level_pressure                        | pressure      | reanalysis-era5-single-levels   |
-| geo500  | PRESSURE/ERA5_05/geopotential                                   | pressure      | reanalysis-era5-pressure-levels |
-| u10     | WINDS/ERA5_05/10m_u_component_of_wind                           | wind          | reanalysis-era5-single-levels   |
-| v10     | WINDS/ERA5_05/10m_v_component_of_wind                           | wind          | reanalysis-era5-single-levels   |
-| sst     | SST/ERA5_05/sea_surface_temperature                             | temperature   | reanalysis-era5-single-levels   |
-| tp      | PRECIPITATION/ERA5_05/total_precipitation                       | precipitation | reanalysis-era5-single-levels   |
 | p140122 | WAVES/ERA5_05/mean_wave_direction_of_first_swell_partition      | wave          | reanalysis-era5-single-levels   |
 | p140125 | WAVES/ERA5_05/mean_wave_direction_of_second_swell_partition     | wave          | reanalysis-era5-single-levels   |
 | p140128 | WAVES/ERA5_05/mean_wave_direction_of_third_swell_partition      | wave          | reanalysis-era5-single-levels   |
