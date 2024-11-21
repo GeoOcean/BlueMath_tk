@@ -16,32 +16,34 @@ class TestMDA(unittest.TestCase):
         self.mda = MDA(num_centers=10)
 
     def test_fit(self):
-        centroids = self.mda.fit(
+        self.mda.fit(
             data=self.df,
             directional_variables=["Dir"],
             custom_scale_factor={"Dir": [0, 360]},
         )
-        self.assertIsInstance(centroids, pd.DataFrame)
-        self.assertEqual(centroids.shape[0], 10)
+        self.assertIsInstance(self.mda.centroids, pd.DataFrame)
+        self.assertEqual(self.mda.centroids.shape[0], 10)
 
-    def test_nearest_centroid_indices(self):
+    def test_predict(self):
         data_sample = pd.DataFrame(
             {
                 "Hs": np.random.rand(15) * 7,
                 "Tp": np.random.rand(15) * 20,
                 "Dir": np.random.rand(15) * 360,
             }
-        ).values
-        _centroids = self.mda.fit(
+        )
+        self.mda.fit(
             data=self.df,
             directional_variables=["Dir"],
             custom_scale_factor={},
         )
-        nearest_centroids = self.mda.nearest_centroid_indices(
-            data_q=data_sample,
+        nearest_centroids, nearest_centroid_df = self.mda.predict(
+            data=data_sample,
         )
         self.assertIsInstance(nearest_centroids, np.ndarray)
         self.assertEqual(len(nearest_centroids), 15)
+        self.assertIsInstance(nearest_centroid_df, pd.DataFrame)
+        self.assertEqual(nearest_centroid_df.shape[0], 15)
 
 
 if __name__ == "__main__":
