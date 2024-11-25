@@ -82,6 +82,30 @@ class RBF(BaseInterpolation):
         kernel: str = "gaussian",
         smooth: float = 1e-5,
     ):
+        """
+        Initializes the RBF model.
+
+        Parameters
+        ----------
+        sigma_min : float, optional
+            The minimum value for the sigma parameter. Default is 0.001.
+        sigma_max : float, optional
+            The maximum value for the sigma parameter. Default is 0.1.
+        sigma_diff : float, optional
+            The minimum difference between the optimal sigma and the minimum and maximum sigma values.
+            Default is 0.0001.
+        kernel : str, optional
+            The kernel to use for the RBF model. Default is "gaussian".
+            The available kernels are:
+            - "gaussian": Gaussian kernel.
+            - "multiquadratic": Multiquadratic kernel.
+            - "inverse": Inverse kernel.
+            - "cubic": Cubic kernel.
+            - "thin_plate": Thin plate kernel.
+        smooth : float, optional
+            The smoothness parameter. Default is 1e-5.
+        """
+
         super().__init__()
         self.set_logger_name(name=self.__class__.__name__)
         if not isinstance(sigma_min, float) or sigma_min < 0:
@@ -195,17 +219,23 @@ class RBF(BaseInterpolation):
         return self._opt_sigmas
 
     @staticmethod
-    def _get_uv_components(self, x_deg: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def _get_uv_components(x_deg: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         This function calculates the x and y components for the given directional data.
+
+        Parameters
+        ----------
+        x_deg : np.ndarray
+            The directional data in degrees.
+
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray]
+            The x and y components.
         """
 
         # Convert degrees to radians and adjust by subtracting from π/2
-        x_rad = np.pi / 2 - x_deg * np.pi / 180
-
-        # Adjust angles less than -π by adding 2π
-        pos = np.where(x_rad < -np.pi)[0]
-        x_rad[pos] = x_rad[pos] + 2 * np.pi
+        x_rad = x_deg * np.pi / 180
 
         # Calculate x and y components using cosine and sine
         xx = np.cos(x_rad)
@@ -215,9 +245,21 @@ class RBF(BaseInterpolation):
         return xx, xy
 
     @staticmethod
-    def _get_degrees_from_uv(self, xx: np.ndarray, xy: np.ndarray) -> np.ndarray:
+    def _get_degrees_from_uv(xx: np.ndarray, xy: np.ndarray) -> np.ndarray:
         """
         This function calculates the degrees from the x and y components.
+
+        Parameters
+        ----------
+        xx : np.ndarray
+            The x component.
+        xy : np.ndarray
+            The y component.
+
+        Returns
+        -------
+        np.ndarray
+            The degrees.
         """
 
         # Calculate the degrees using the arctangent function
@@ -232,6 +274,18 @@ class RBF(BaseInterpolation):
     def _rbf_assemble(self, x: np.ndarray, sigma: float) -> np.ndarray:
         """
         This function assembles the RBF matrix for the given data.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            The data.
+        sigma : float
+            The sigma parameter for the kernel.
+
+        Returns
+        -------
+        np.ndarray
+            The data with all the calculated kernel values.
         """
 
         # Get the number of rows and columns in x
@@ -260,6 +314,20 @@ class RBF(BaseInterpolation):
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         This function calculates the RBF coefficients for the given data.
+
+        Parameters
+        ----------
+        sigma : float
+            The sigma parameter for the kernel.
+        x : np.ndarray
+            The subset data used to interpolate.
+        y : np.ndarray
+            The target data to interpolate.
+
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray]
+            The RBF coefficients and the A matrix.
         """
 
         # Get the number of rows and columns in x
@@ -279,6 +347,20 @@ class RBF(BaseInterpolation):
     def _cost_sigma(self, sigma: float, x: np.ndarray, y: np.ndarray) -> float:
         """
         This function is called by fminbound to minimize the cost function.
+
+        Parameters
+        ----------
+        sigma : float
+            The sigma parameter for the kernel.
+        x : np.ndarray
+            The subset data used to interpolate.
+        y : np.ndarray
+            The target data to interpolate.
+
+        Returns
+        -------
+        float
+            The cost value.
         """
 
         # Calculate RBF coefficients and A matrix
@@ -312,6 +394,18 @@ class RBF(BaseInterpolation):
     ) -> float:
         """
         This function calculates the optimal sigma for the given target variable.
+
+        Parameters
+        ----------
+        target_variable : np.ndarray
+            The target variable to interpolate.
+        subset_variables : np.ndarray
+            The subset variables used to interpolate.
+
+        Returns
+        -------
+        float
+            The optimal sigma.
         """
 
         t0 = time.time()
@@ -346,9 +440,19 @@ class RBF(BaseInterpolation):
 
         return rbf_coeff, opt_sigma
 
-    def _rbf_interpolate(self, dataset: pd.DataFrame) -> np.ndarray:
+    def _rbf_interpolate(self, dataset: pd.DataFrame) -> pd.DataFrame:
         """
         This function interpolates the dataset.
+
+        Parameters
+        ----------
+        dataset : pd.DataFrame
+            The dataset to interpolate (must have same variables as subset).
+
+        Returns
+        -------
+        pd.DataFrame
+            The interpolated dataset (with all target variables).
         """
 
         # Get the number of rows and columns in subset and dataset
@@ -360,8 +464,8 @@ class RBF(BaseInterpolation):
             (num_points_dataset, len(self.target_data.columns))
         )
 
+        # Loop through the target variables
         for i_var, target_var in enumerate(self.target_data.columns):
-            target_var_interpolated = np.zeros(num_points_dataset)
             rbf_coeff = self._rbf_coeffs[target_var].values
             opt_sigma = self._opt_sigmas[target_var]
             for i in range(num_points_dataset):
@@ -382,7 +486,7 @@ class RBF(BaseInterpolation):
 
         return pd.DataFrame(interpolated_array, columns=self.target_data.columns)
 
-    # add custom decorator
+    # TODO: Add custom decorator
     def fit(
         self,
         subset_data: pd.DataFrame,
@@ -414,6 +518,8 @@ class RBF(BaseInterpolation):
                 )
                 target_data[f"{directional_variable}_u"] = var_u_component
                 target_data[f"{directional_variable}_v"] = var_y_component
+                # Drop the original directional variable in target_data
+                target_data.drop(columns=[directional_variable], inplace=True)
         self._target_data = target_data
         self._subset_directional_variables = subset_directional_variables
         self._target_directional_variables = target_directional_variables
@@ -462,8 +568,21 @@ class RBF(BaseInterpolation):
 
         if self.is_fitted is False:
             raise ValueError("RBF model must be fitted before predicting.")
-        self.logger.info("Reconstructing data using fitted coeeficients.")
-        return self._rbf_interpolate(dataset=dataset)
+        self.logger.info("Reconstructing data using fitted coefficients.")
+        normalized_dataset, _ = self.normalize(
+            data=dataset, custom_scale_factor=self.subset_scale_factor
+        )
+        interpolated_target = self._rbf_interpolate(dataset=normalized_dataset)
+        if self.is_target_normalized:
+            interpolated_target = self.denormalize(
+                normalized_data=interpolated_target, scale_factor=self.target_scale_factor
+            )
+        for directional_variable in self.target_directional_variables:
+            interpolated_target[directional_variable] = self._get_degrees_from_uv(
+                xx=interpolated_target[f"{directional_variable}_u"].values,
+                xy=interpolated_target[f"{directional_variable}_v"].values,
+            )
+        return interpolated_target
 
     def fit_predict(self, *args, **kwargs):
         """
