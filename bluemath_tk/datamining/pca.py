@@ -91,11 +91,11 @@ class PCA(BaseReduction):
         if is_incremental:
             self.logger.info("Using Incremental PCA")
             self._pca = IncrementalPCA_(n_components=self.n_components)
-            self.is_fitted = False
+            self.is_fitted: bool = False
         else:
             self.logger.info("Using PCA")
             self._pca = PCA_(n_components=self.n_components)
-            self.is_fitted = False
+            self.is_fitted: bool = False
         self.is_incremental = is_incremental
         self._data: xr.Dataset = xr.Dataset()
         self._stacked_data_matrix: np.ndarray = np.array([])

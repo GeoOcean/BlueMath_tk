@@ -12,7 +12,7 @@ def normalize(
     logger: logging.Logger = None,
 ) -> Tuple[Union[pd.DataFrame, xr.Dataset], dict]:
     """
-    Normalize data to 0-1 using min max scaler approach
+    Normalize data to 0-1 using min max scaler approach.
 
     Parameters
     ----------

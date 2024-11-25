@@ -15,7 +15,7 @@ def gaussian_kernel(r: float, const: float) -> float:
     r : float
         The distance.
     const : float
-        The constant (default name is usually sigma).
+        The constant (default name is usually sigma for gaussian kernel).
 
     Returns
     -------
@@ -68,7 +68,7 @@ class RBF(BaseInterpolation):
 
     rbf_kernels = {
         "gaussian": gaussian_kernel,
-        "multiquadric": multiquadratic_kernel,
+        "multiquadratic": multiquadratic_kernel,
         "inverse": inverse_kernel,
         "cubic": cubic_kernel,
         "thin_plate": thin_plate_kernel,
@@ -103,14 +103,22 @@ class RBF(BaseInterpolation):
         self._kernel_func = self.rbf_kernels[self.kernel]
         if not isinstance(smooth, float) or smooth < 0:
             raise ValueError("smooth must be a positive float.")
+        self._smooth = smooth
+        # Below, we initialize the attributes that will be set in the fit method
+        self.is_fitted: bool = False
+        self.is_target_normalized: bool = False
         self._subset_data: pd.DataFrame = pd.DataFrame()
         self._normalized_subset_data: pd.DataFrame = pd.DataFrame()
         self._target_data: pd.DataFrame = pd.DataFrame()
         self._normalized_target_data: pd.DataFrame = pd.DataFrame()
         self._subset_directional_variables: List[str] = []
         self._target_directional_variables: List[str] = []
-        self._custom_scale_factor: dict = {}
-        self._scale_factor: dict = {}
+        self._subset_custom_scale_factor: dict = {}
+        self._target_custom_scale_factor: dict = {}
+        self._subset_scale_factor: dict = {}
+        self._target_scale_factor: dict = {}
+        self._rbf_coeffs: pd.DataFrame = pd.DataFrame()
+        self._opt_sigmas: dict = {}
 
     @property
     def sigma_min(self):
@@ -150,6 +158,8 @@ class RBF(BaseInterpolation):
 
     @property
     def normalized_target_data(self):
+        if self._normalized_target_data.empty:
+            raise ValueError("Target data is not normalized.")
         return self._normalized_target_data
 
     @property
@@ -161,19 +171,35 @@ class RBF(BaseInterpolation):
         return self._target_directional_variables
 
     @property
-    def custom_scale_factor(self):
-        return self._custom_scale_factor
+    def subset_custom_scale_factor(self):
+        return self._subset_custom_scale_factor
 
     @property
-    def scale_factor(self):
-        return self._scale_factor
+    def target_custom_scale_factor(self):
+        return self._target_custom_scale_factor
+
+    @property
+    def subset_scale_factor(self):
+        return self._subset_scale_factor
+
+    @property
+    def target_scale_factor(self):
+        return self._target_scale_factor
+
+    @property
+    def rbf_coeffs(self):
+        return self._rbf_coeffs
+
+    @property
+    def opt_sigmas(self):
+        return self._opt_sigmas
 
     @staticmethod
-    def _get_dir_components(self, x_deg: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def _get_uv_components(self, x_deg: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         This function calculates the x and y components for the given directional data.
         """
-        
+
         # Convert degrees to radians and adjust by subtracting from π/2
         x_rad = np.pi / 2 - x_deg * np.pi / 180
 
@@ -187,6 +213,21 @@ class RBF(BaseInterpolation):
 
         # Return the x and y components
         return xx, xy
+
+    @staticmethod
+    def _get_degrees_from_uv(self, xx: np.ndarray, xy: np.ndarray) -> np.ndarray:
+        """
+        This function calculates the degrees from the x and y components.
+        """
+
+        # Calculate the degrees using the arctangent function
+        x_deg = np.arctan2(xy, xx) * 180 / np.pi
+
+        # Adjust the degrees to be between 0 and 360
+        x_deg = np.where(x_deg < 0, x_deg + 360, x_deg)
+
+        # Return the degrees
+        return x_deg
 
     def _rbf_assemble(self, x: np.ndarray, sigma: float) -> np.ndarray:
         """
@@ -225,7 +266,7 @@ class RBF(BaseInterpolation):
         m, n = x.shape
 
         # Assemble the A matrix
-        A = self._rbf_assemble(x, sigma)
+        A = self._rbf_assemble(x=x, sigma=sigma)
 
         # Concatenate y with zeros and reshape
         b = np.concatenate((y, np.zeros((m + 1,)))).reshape(-1, 1)
@@ -266,7 +307,9 @@ class RBF(BaseInterpolation):
 
         return yy
 
-    def _calc_opt_sigma(self, target_variable: np.ndarray) -> float:
+    def _calc_opt_sigma(
+        self, target_variable: np.ndarray, subset_variables: np.ndarray
+    ) -> float:
         """
         This function calculates the optimal sigma for the given target variable.
         """
@@ -278,10 +321,10 @@ class RBF(BaseInterpolation):
         # Loop until sigma_diff is less than the specified sigma_diff
         while sigma_diff < self.sigma_diff:
             opt_sigma = fminbound(
-                func=self._cost_eps,
+                func=self._cost_sigma,
                 x1=sigma_min,
                 x2=sigma_max,
-                args=(self.normalized_subset_data.values.T, target_variable),
+                args=(subset_variables, target_variable),
                 disp=0,
             )
             lm_min = np.abs(opt_sigma - sigma_min)
@@ -296,7 +339,48 @@ class RBF(BaseInterpolation):
         t1 = time.time()
         self.logger.info(f"Optimal sigma: {opt_sigma} - Time: {t1 - t0:.2f} seconds")
 
-        return opt_sigma
+        # Calculate the RBF coefficients for the optimal sigma
+        rbf_coeff, _ = self._calc_rbf_coeff(
+            sigma=opt_sigma, x=subset_variables, y=target_variable
+        )
+
+        return rbf_coeff, opt_sigma
+
+    def _rbf_interpolate(self, dataset: pd.DataFrame) -> np.ndarray:
+        """
+        This function interpolates the dataset.
+        """
+
+        # Get the number of rows and columns in subset and dataset
+        num_vars_subset, num_points_subset = self.normalized_subset_data.T.shape
+        _, num_points_dataset = dataset.T.shape
+
+        # Initialize the interpolated dataset
+        interpolated_array = np.zeros(
+            (num_points_dataset, len(self.target_data.columns))
+        )
+
+        for i_var, target_var in enumerate(self.target_data.columns):
+            target_var_interpolated = np.zeros(num_points_dataset)
+            rbf_coeff = self._rbf_coeffs[target_var].values
+            opt_sigma = self._opt_sigmas[target_var]
+            for i in range(num_points_dataset):
+                r = np.linalg.norm(
+                    np.repeat([dataset.iloc[i].values], num_points_subset, axis=0)
+                    - self.normalized_subset_data.values,
+                    axis=1,
+                )
+                s = rbf_coeff[num_points_subset] + np.sum(
+                    rbf_coeff[:num_points_subset] * self.kernel_func(r, opt_sigma)
+                )
+
+                # linear part
+                for k in range(num_vars_subset):
+                    s = s + rbf_coeff[k + num_vars_subset + 1] * dataset.values.T[k, i]
+
+                interpolated_array[i, i_var] = s
+
+        return pd.DataFrame(interpolated_array, columns=self.target_data.columns)
 
     # add custom decorator
     def fit(
@@ -305,188 +389,85 @@ class RBF(BaseInterpolation):
         target_data: pd.DataFrame,
         subset_directional_variables: List[str] = [],
         target_directional_variables: List[str] = [],
-        custom_scale_factor: dict = {},
+        subset_custom_scale_factor: dict = {},
+        normalize_target_data: bool = True,
+        target_custom_scale_factor: dict = {},
     ):
+        """
+        Fits the model to the data.
+        """
+
+        if subset_directional_variables:
+            for directional_variable in subset_directional_variables:
+                var_u_component, var_y_component = self._get_uv_components(
+                    x_deg=subset_data[directional_variable].values
+                )
+                subset_data[f"{directional_variable}_u"] = var_u_component
+                subset_data[f"{directional_variable}_v"] = var_y_component
+                # Drop the original directional variable in subset_data
+                subset_data.drop(columns=[directional_variable], inplace=True)
         self._subset_data = subset_data
+        if target_directional_variables:
+            for directional_variable in target_directional_variables:
+                var_u_component, var_y_component = self._get_uv_components(
+                    x_deg=target_data[directional_variable].values
+                )
+                target_data[f"{directional_variable}_u"] = var_u_component
+                target_data[f"{directional_variable}_v"] = var_y_component
         self._target_data = target_data
         self._subset_directional_variables = subset_directional_variables
         self._target_directional_variables = target_directional_variables
-        self._custom_scale_factor = custom_scale_factor
-        self._normalized_subset_data, self._scale_factor = self.normalize(
-            data=self.subset_data, custom_scale_factor=self.custom_scale_factor
-        )
-        self._normalized_target_data, _ = self.normalize(
-            data=self.target_data, custom_scale_factor=self.scale_factor
-        )
+        self._subset_custom_scale_factor = subset_custom_scale_factor
+        self._target_custom_scale_factor = target_custom_scale_factor
 
-        # RBF scalar variables
-        rbf_coeffs, opt_sigmas = [], []
-        output_scalar, output_dir_x, output_dir_y = [], [], []
+        # Normalize the data given the custom scale factor
+        self._normalized_subset_data, self._subset_scale_factor = self.normalize(
+            data=self.subset_data, custom_scale_factor=self.subset_custom_scale_factor
+        )
+        if normalize_target_data:
+            self._normalized_target_data, self._target_scale_factor = self.normalize(
+                data=self.target_data,
+                custom_scale_factor=self.target_custom_scale_factor,
+            )
+            self.is_target_normalized = True
+
+        # RBF fitting for all variables
+        rbf_coeffs, opt_sigmas = {}, {}
 
         for target_var in self.target_data.columns:
-            if target_var in self.target_directional_variables:
-                self.logger.info(
-                    f"Fitting RBF for directional variable {target_var}. Skipping..."
-                )
-                continue
-            else:
-                self.logger.info(f"Fitting RBF for scalar variable {target_var}")
-                target_variable = self.target_data[target_var]
-                opt_sigma = self._calc_opt_sigma(target_variable=target_variable.values)
-                rbf_coeff, _ = self._calc_rbf_coeff(
-                    ep=opt_sigma, x=self.normalized_subset_data.T, y=v
-                )
-                output_scalar.append(np.reshape(rbf_coeff, -1))
-                opt_sigmas.append(opt_sigma)
-
-        # Fit the scalar variables
-        for ix in ix_scalar_target:
-            print(f"Calibrating scalar {ix}")
-            v = target[:, ix]
-
-            # minimize RBF cost function
-            t0 = time.time()  # time counter
-
-            # ensure that sigma opt is in the bounds of [sigma_min, sigma_max]
-            # parameters
-            sigma_min, sigma_max, d_sigma = 0.001, 0.1, 0
-
-            print(
-                "\rScalar {0}: Range sigma {1:.4f}-{2:.4f} - Opt sigma {3:.4f}".format(
-                    ix, sigma_min, sigma_max, opt_sigma
-                )
+            self.logger.info(f"Fitting RBF for variable {target_var}")
+            target_var_values = (
+                self.normalized_target_data[target_var].values
+                if self.is_target_normalized
+                else self.target_data[target_var].values
             )
-
-            t1 = time.time()  # optimization time
-
-            # calculate RBF coeff
-            rbf_coeff, _ = calc_rbf_coeff(opt_sigma, subset_norm.T, v)
-            output_scalar.append(np.reshape(rbf_coeff, -1))
-
-            # rbf_coeffs.append(rbf_coeff)
-            opt_sigmas.append(opt_sigma)
-
-        # RBF directional variables
-        opt_sigma_xs, opt_sigma_ys = [], []
-
-        for ix in ix_directional_target:
-            print(f"Calibrating directional {ix}")
-            v = target[:, ix]
-
-            # x and y directional variable components
-            vdg = np.pi / 2 - v * np.pi / 180
-            pos = np.where(vdg < -np.pi)[0]
-            vdg[pos] = vdg[pos] + 2 * np.pi
-            vdx = np.cos(vdg)
-            vdy = np.sin(vdg)
-
-            # minimize RBF cost function
-            t0 = time.time()  # time counter
-
-            # directional x
-
-            sigma_min, sigma_max, d_sigma = 0.001, 0.1, 0
-            while d_sigma < 0.0001:
-                opt_sigma_x = fminbound(
-                    cost_eps, sigma_min, sigma_max, args=(subset_norm.T, vdx)
-                )
-                lm_min = np.abs(opt_sigma_x - sigma_min)
-                lm_max = np.abs(opt_sigma_x - sigma_max)
-
-                if lm_min < 0.0001:
-                    sigma_min = sigma_min - sigma_min / 2
-
-                elif lm_max < 0.001:
-                    sigma_max = sigma_max + sigma_max / 2
-
-                d_sigma = np.nanmin([lm_min, lm_max])
-
-            print(
-                "\rDirectional x {0}: Range sigma {1:.4f}-{2:.4f} - Opt sigma {3:.4f}".format(
-                    ix, sigma_min, sigma_max, opt_sigma_x
-                )
+            rbf_coeff, opt_sigma = self._calc_opt_sigma(
+                target_variable=target_var_values,
+                subset_variables=self.normalized_subset_data.values.T,
             )
+            rbf_coeffs[target_var] = rbf_coeff.flatten()
+            opt_sigmas[target_var] = opt_sigma
 
-            # directional y
-            sigma_min, sigma_max, d_sigma = 0.001, 0.1, 0
-            while d_sigma < 0.0001:
-                opt_sigma_y = fminbound(
-                    cost_eps, sigma_min, sigma_max, args=(subset_norm.T, vdy)
-                )
-                lm_min = np.abs(opt_sigma_y - sigma_min)
-                lm_max = np.abs(opt_sigma_y - sigma_max)
+        # Store the RBF coefficients and optimal sigmas
+        self._rbf_coeffs = pd.DataFrame(rbf_coeffs)
+        self._opt_sigmas = opt_sigmas
 
-                if lm_min < 0.0001:
-                    sigma_min = sigma_min - sigma_min / 2
+        # Set the is_fitted attribute to True
+        self.is_fitted = True
 
-                elif lm_max < 0.001:
-                    sigma_max = sigma_max + sigma_max / 2
-
-                d_sigma = np.nanmin([lm_min, lm_max])
-
-            print(
-                "\rDirectional x {0}: Range sigma {1:.4f}-{2:.4f} - Opt sigma {3:.4f}".format(
-                    ix, sigma_min, sigma_max, opt_sigma_y
-                )
-            )
-
-            t1 = time.time()  # optimization time
-
-            # calculate RBF coeff
-            rbf_coeff_x, _ = calc_rbf_coeff(opt_sigma_x, subset_norm.T, vdx)
-            rbf_coeff_y, _ = calc_rbf_coeff(opt_sigma_y, subset_norm.T, vdy)
-            output_dir_x.append(np.reshape(rbf_coeff_x, -1))
-            output_dir_y.append(np.reshape(rbf_coeff_y, -1))
-
-            opt_sigma_xs.append(opt_sigma_x)
-            opt_sigma_ys.append(opt_sigma_y)
-
-        if output_scalar != []:
-            df_rbf_scalar = pd.DataFrame(np.transpose(output_scalar))
-        else:
-            df_rbf_scalar = pd.DataFrame()
-            opt_sigmas = []
-
-        if output_dir_x != []:
-            df_rbf_dirx = pd.DataFrame(np.transpose(output_dir_x))
-            df_rbf_diry = pd.DataFrame(np.transpose(output_dir_y))
-        else:
-            df_rbf_dirx = pd.DataFrame()
-            df_rbf_diry = pd.DataFrame()
-            opt_sigma_x, opt_sigma_y = [], []
-
-        self.df_rbf_scalar = df_rbf_scalar
-        self.opt_sigmas_scalar = opt_sigmas
-
-        self.df_rbf_dir_x = df_rbf_dirx
-        self.df_rbf_dir_y = df_rbf_diry
-        self.opt_sigmas_dir_x = opt_sigma_xs
-        self.opt_sigmas_dir_y = opt_sigma_ys
-
-    def predict(self, *args, **kwargs):
+    def predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
         """
-        Predicts the clusters for the provided data.
-
-        Parameters
-        ----------
-        *args : list
-            Positional arguments.
-        **kwargs : dict
-            Keyword arguments.
+        Predicts the data for the provided data.
         """
 
-        pass
+        if self.is_fitted is False:
+            raise ValueError("RBF model must be fitted before predicting.")
+        self.logger.info("Reconstructing data using fitted coeeficients.")
+        return self._rbf_interpolate(dataset=dataset)
 
     def fit_predict(self, *args, **kwargs):
         """
         Fits the model to the data and predicts the clusters.
-
-        Parameters
-        ----------
-        *args : list
-            Positional arguments.
-        **kwargs : dict
-            Keyword arguments.
         """
 
         pass
