@@ -37,6 +37,7 @@ class BlueMathModel(ABC):
         self,
         data: Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset],
         replace_value=None,
+        raise_error: bool = False,
     ):
         """
         Checks for NaNs in the data and optionally replaces them.
@@ -47,11 +48,18 @@ class BlueMathModel(ABC):
             The data to check for NaNs.
         replace_value : any, optional
             The value to replace NaNs with. If None, NaNs will not be replaced.
+        raise_error : bool, optional
+            Whether to raise an error if NaNs are found. Default is False.
 
         Returns
         -------
         data : np.ndarray, pd.Series, pd.DataFrame, xr.DataArray or xr.Dataset
             The data with NaNs optionally replaced.
+
+        Raises
+        ------
+        ValueError
+            If NaNs are found and raise_error is True.
 
         Notes
         -----
@@ -61,18 +69,24 @@ class BlueMathModel(ABC):
 
         if isinstance(data, np.ndarray):
             if np.isnan(data).any():
+                if raise_error:
+                    raise ValueError("Data contains NaNs.")
                 self.logger.warning("Data contains NaNs.")
                 if replace_value is not None:
                     data = np.nan_to_num(data, nan=replace_value)
                     self.logger.info(f"NaNs replaced with {replace_value}.")
         elif isinstance(data, pd.Series) or isinstance(data, pd.DataFrame):
             if data.isnull().values.any():
+                if raise_error:
+                    raise ValueError("Data contains NaNs.")
                 self.logger.warning("Data contains NaNs.")
                 if replace_value is not None:
                     data.fillna(replace_value, inplace=True)
                     self.logger.info(f"NaNs replaced with {replace_value}.")
         elif isinstance(data, xr.DataArray) or isinstance(data, xr.Dataset):
             if data.isnull().any():
+                if raise_error:
+                    raise ValueError("Data contains NaNs.")
                 self.logger.warning("Data contains NaNs.")
                 if replace_value is not None:
                     data = data.fillna(replace_value)

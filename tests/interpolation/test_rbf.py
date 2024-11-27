@@ -39,7 +39,7 @@ class TestRBF(unittest.TestCase):
         self.rbf.fit(
             subset_data=self.subset,
             target_data=self.target,
-            # subset_directional_variables=["Dir"],
+            subset_directional_variables=["Dir"],
             target_directional_variables=["DirPred"],
         )
         prediction = self.rbf.predict(dataset=self.dataset)

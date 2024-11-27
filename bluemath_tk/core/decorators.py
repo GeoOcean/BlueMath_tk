@@ -8,10 +8,6 @@ def validate_data_mda(func):
     """
     Decorator to validate data in MDA class fit method.
 
-    It checks that the DataFrame is not None and that it is indeed a pandas DataFrame.
-    If these conditions are not met, it raises a ValueError.
-    Moreover, ensures that all directional variables have an associated custom scale factor.
-
     Parameters
     ----------
     func : callable
@@ -31,7 +27,7 @@ def validate_data_mda(func):
         custom_scale_factor: dict = {},
     ):
         # NOTE: Default custom scale factors are defined below
-        _default_custom_scale_factor = {"Dir": [0, 360]}
+        _default_custom_scale_factor = {}
         if data is None:
             raise ValueError("Data cannot be None")
         elif not isinstance(data, pd.DataFrame):
@@ -50,8 +46,8 @@ def validate_data_mda(func):
                         f"Using default custom scale factor for {directional_variable}"
                     )
                 else:
-                    raise KeyError(
-                        "All directional variables must have an associated custom scale factor"
+                    self.logger.warning(
+                        f"No custom scale factor provided for {directional_variable}, min and max values will be used"
                     )
         return func(self, data, directional_variables, custom_scale_factor)
 
@@ -61,10 +57,6 @@ def validate_data_mda(func):
 def validate_data_lhs(func):
     """
     Decorator to validate data in LHS class fit method.
-
-    It checks that the input parameters are lists of the same length
-    and that the lower bounds are less than or equal to the upper bounds.
-    If these conditions are not met, it raises a ValueError.
 
     Parameters
     ----------
@@ -112,10 +104,6 @@ def validate_data_kma(func):
     """
     Decorator to validate data in KMA class fit method.
 
-    It checks that the DataFrame is not None and that it is indeed a pandas DataFrame.
-    If these conditions are not met, it raises a ValueError.
-    Moreover, ensures that all directional variables have an associated custom scale factor.
-
     Parameters
     ----------
     func : callable
@@ -135,7 +123,7 @@ def validate_data_kma(func):
         custom_scale_factor: dict,
     ):
         # NOTE: Default custom scale factors are defined below
-        _default_custom_scale_factor = {"Dir": [0, 360]}
+        _default_custom_scale_factor = {}
         if data is None:
             raise ValueError("Data cannot be None")
         elif not isinstance(data, pd.DataFrame):
@@ -154,8 +142,8 @@ def validate_data_kma(func):
                         f"Using default custom scale factor for {directional_variable}"
                     )
                 else:
-                    raise KeyError(
-                        "All directional variables must have an associated custom scale factor"
+                    self.logger.warning(
+                        f"No custom scale factor provided for {directional_variable}, min and max values will be used"
                     )
         return func(self, data, directional_variables, custom_scale_factor)
 
@@ -165,10 +153,6 @@ def validate_data_kma(func):
 def validate_data_pca(func):
     """
     Decorator to validate data in PCA class fit method.
-
-    It checks that the Dataset is not None and that it is indeed an xarray Dataser.
-    If these conditions are not met, it raises a ValueError.
-    Moreover
 
     Parameters
     ----------
@@ -244,6 +228,74 @@ def validate_data_pca(func):
             pca_dim_for_rows,
             window_in_pca_dim_for_rows,
             value_to_replace_nans,
+        )
+
+    return wrapper
+
+
+def validate_data_rbf(func):
+    """
+    Decorator to validate data in RBF class fit method.
+
+    Parameters
+    ----------
+    func : callable
+        The function to be decorated
+
+    Returns
+    -------
+    callable
+        The decorated function
+    """
+
+    @functools.wraps(func)
+    def wrapper(
+        self,
+        subset_data: pd.DataFrame,
+        target_data: pd.DataFrame,
+        subset_directional_variables: List[str] = [],
+        target_directional_variables: List[str] = [],
+        subset_custom_scale_factor: dict = {},
+        normalize_target_data: bool = True,
+        target_custom_scale_factor: dict = {},
+    ):
+        if subset_data is None:
+            raise ValueError("Subset data cannot be None")
+        elif not isinstance(subset_data, pd.DataFrame):
+            raise TypeError("Subset data must be a pandas DataFrame")
+        if target_data is None:
+            raise ValueError("Target data cannot be None")
+        elif not isinstance(target_data, pd.DataFrame):
+            raise TypeError("Target data must be a pandas DataFrame")
+        if not isinstance(subset_directional_variables, list):
+            raise TypeError("Subset directional variables must be a list")
+        for directional_variable in subset_directional_variables:
+            if directional_variable not in subset_data.columns:
+                raise ValueError(
+                    f"Directional variable {directional_variable} not found in subset data"
+                )
+        if not isinstance(target_directional_variables, list):
+            raise TypeError("Target directional variables must be a list")
+        for directional_variable in target_directional_variables:
+            if directional_variable not in target_data.columns:
+                raise ValueError(
+                    f"Directional variable {directional_variable} not found in target data"
+                )
+        if not isinstance(subset_custom_scale_factor, dict):
+            raise TypeError("Subset custom scale factor must be a dict")
+        if not isinstance(normalize_target_data, bool):
+            raise TypeError("Normalize target data must be a bool")
+        if not isinstance(target_custom_scale_factor, dict):
+            raise TypeError("Target custom scale factor must be a dict")
+        return func(
+            self,
+            subset_data,
+            target_data,
+            subset_directional_variables,
+            target_directional_variables,
+            subset_custom_scale_factor,
+            normalize_target_data,
+            target_custom_scale_factor,
         )
 
     return wrapper

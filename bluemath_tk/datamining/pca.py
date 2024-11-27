@@ -192,20 +192,24 @@ class PCA(BaseReduction):
             data=data,
             replace_value=self.value_to_replace_nans,
         )
+        
         self.logger.info("Generating stacked data matrix")
         stacked_data_matrix = self._generate_stacked_data(
             data=data,
         )
+        
         self.logger.info("Standarizing data matrix")
         standarized_stacked_data_matrix, scaler = self.standarize(
             data=stacked_data_matrix,
             scaler=self.scaler if not is_fit else None,
         )
+        
         self.logger.info("Removing NaNs from standarized data matrix")
         standarized_stacked_data_matrix = self.check_nans(
             data=standarized_stacked_data_matrix,
             replace_value=self.value_to_replace_nans,
         )
+        
         self.logger.info("Data preprocessed successfully")
 
         if is_fit:

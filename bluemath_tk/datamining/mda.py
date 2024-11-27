@@ -136,18 +136,23 @@ class MDA(BaseClustering):
 
         Notes
         -----
+        - IMPORTANT: Data is assumed to be normalized before calling this function.
         - The function assumes that the data_variables, directional_variables, and scale_factor
         attributes have been set.
         - The function calculates the squared sum of differences for each row.
         - The calculation for directional variables is different, as it considers the minimum
-        distance between the absolute difference and the maximum scale factor minus the
-        absolute difference, effectively "wrapping around" the scale factor range.
+        distance between the absolute difference and 1 minus the absolute difference,
+        effectively "wrapping around" the normalized data range.
         """
 
         if not self.data_variables:
             raise MDAError(
                 "_normalized_distance must be called after or during fitting, not before."
             )
+        if np.minimum(np.min(array_to_compare), np.min(all_rest_data)) < 0:
+            raise MDAError("Data must be normalized before calling this function.")
+        if np.maximum(np.max(array_to_compare), np.max(all_rest_data)) > 1:
+            raise MDAError("Data must be normalized before calling this function.")
 
         diff = np.zeros(all_rest_data.shape)
 
@@ -156,10 +161,9 @@ class MDA(BaseClustering):
         for data_var in self.data_variables:
             if data_var in self.directional_variables:
                 distance = np.absolute(array_to_compare[:, ix] - all_rest_data[:, ix])
-                diff[:, ix] = (
-                    np.minimum(distance, self.scale_factor.get(data_var)[1] - distance)
-                    * 2
-                )
+                diff[:, ix] = np.minimum(
+                    distance, 1 - distance
+                )  # * 2  # self.scale_factor.get(data_var)[1]
             else:
                 diff[:, ix] = array_to_compare[:, ix] - all_rest_data[:, ix]
             ix = ix + 1
