@@ -11,6 +11,7 @@ from .operations import normalize, denormalize, standarize, destandarize
 
 
 class BlueMathModel(ABC):
+    @abstractmethod
     def __init__(self):
         self._logger = get_file_logger(name=self.__class__.__name__)
 
