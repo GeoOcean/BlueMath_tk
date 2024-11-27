@@ -193,3 +193,9 @@ class KMA(BaseClustering):
         )
 
         return self.centroids
+
+    def predict(self, *args, **kwargs):
+        return super().predict(*args, **kwargs)
+
+    def fit_predict(self, *args, **kwargs):
+        return super().fit_predict(*args, **kwargs)

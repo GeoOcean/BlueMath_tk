@@ -1,5 +1,5 @@
 import time
-from typing import List, Tuple
+from typing import List, Tuple, Callable
 import numpy as np
 import pandas as pd
 from scipy.optimize import fminbound
@@ -49,22 +49,94 @@ def thin_plate_kernel(r, const):
     return r**2 * np.log(r / const)
 
 
+class RBFError(Exception):
+    """
+    Custom exception for RBF class.
+    """
+
+    def __init__(self, message: str = "RBF error occurred."):
+        self.message = message
+        super().__init__(self.message)
+
+
 class RBF(BaseInterpolation):
     """
     Radial Basis Function (RBF) interpolation model.
-    This class provides the structure for RBF interpolation models.
+
+    Attributes
+    ----------
+    sigma_min : float
+        The minimum value for the sigma parameter.
+        This value might change in the optimization process.
+    sigma_max : float
+        The maximum value for the sigma parameter.
+        This value might change in the optimization process.
+    sigma_diff : float
+        The minimum difference between the optimal sigma and the minimum and maximum sigma values.
+    kernel : str
+        The kernel to use for the RBF model.
+    kernel_func : function
+        The kernel function to use for the RBF model.
+    smooth : float
+        The smoothness parameter.
+    subset_data : pd.DataFrame
+        The subset data used to fit the model.
+    normalized_subset_data : pd.DataFrame
+        The normalized subset data used to fit the model.
+    target_data : pd.DataFrame
+        The target data used to fit the model.
+    normalized_target_data : pd.DataFrame
+        The normalized target data used to fit the model.
+        This attribute is only set if normalize_target_data is True in the fit method.
+    subset_directional_variables : List[str]
+        The subset directional variables.
+    target_directional_variables : List[str]
+        The target directional variables.
+    subset_processed_variables : List[str]
+        The subset processed variables.
+    target_processed_variables : List[str]
+        The target processed variables.
+    subset_custom_scale_factor : dict
+        The custom scale factor for the subset data.
+    target_custom_scale_factor : dict
+        The custom scale factor for the target data.
+    subset_scale_factor : dict
+        The scale factor for the subset data.
+    target_scale_factor : dict
+        The scale factor for the target data.
+    rbf_coeffs : pd.DataFrame
+        The RBF coefficients for the target variables.
+    opt_sigmas : dict
+        The optimal sigmas for the target variables.
 
     Methods
     -------
-    fit(*args, **kwargs)
-    predict(*args, **kwargs)
-    fit_predict(*args, **kwargs)
+    fit(
+        subset_data: pd.DataFrame,
+        target_data: pd.DataFrame,
+        subset_directional_variables: List[str] = [],
+        target_directional_variables: List[str] = [],
+        subset_custom_scale_factor: dict = {},
+        normalize_target_data: bool = True,
+        target_custom_scale_factor: dict = {},
+    ) -> None
+    predict(dataset: pd.DataFrame) -> pd.DataFrame
+    fit_predict(
+        subset_data: pd.DataFrame,
+        target_data: pd.DataFrame,
+        dataset: pd.DataFrame,
+        subset_directional_variables: List[str] = [],
+        target_directional_variables: List[str] = [],
+        subset_custom_scale_factor: dict = {},
+        normalize_target_data: bool = True,
+        target_custom_scale_factor: dict = {},
+    ) -> pd.DataFrame
 
     Notes
     -----
     TODO: For the moment, this class only supports optimization for one parameter kernels.
           For this reason, we only have sigma as the parameter to optimize.
-          This sigma refers to the sigma parameter in the Gaussian kernel (but is used for all kernels if changed).
+          This sigma refers to the sigma parameter in the Gaussian kernel (but is used for all kernels).
     """
 
     rbf_kernels = {
@@ -105,6 +177,15 @@ class RBF(BaseInterpolation):
             - "thin_plate": Thin plate kernel.
         smooth : float, optional
             The smoothness parameter. Default is 1e-5.
+
+        Raises
+        ------
+        ValueError
+            If the sigma_min is not a positive float.
+            If the sigma_max is not a positive float greater than sigma_min.
+            If the sigma_diff is not a positive float.
+            If the kernel is not a string and one of the available kernels.
+            If the smooth is not a positive float.
         """
 
         super().__init__()
@@ -148,91 +229,91 @@ class RBF(BaseInterpolation):
         self._opt_sigmas: dict = {}
 
     @property
-    def sigma_min(self):
+    def sigma_min(self) -> float:
         return self._sigma_min
 
     @property
-    def sigma_max(self):
+    def sigma_max(self) -> float:
         return self._sigma_max
 
     @property
-    def sigma_diff(self):
+    def sigma_diff(self) -> float:
         return self._sigma_diff
 
     @property
-    def kernel(self):
+    def kernel(self) -> str:
         return self._kernel
 
     @property
-    def kernel_func(self):
+    def kernel_func(self) -> Callable:
         return self._kernel_func
 
     @property
-    def smooth(self):
+    def smooth(self) -> float:
         return self._smooth
 
     @property
-    def subset_data(self):
+    def subset_data(self) -> pd.DataFrame:
         return self._subset_data
 
     @property
-    def normalized_subset_data(self):
+    def normalized_subset_data(self) -> pd.DataFrame:
         return self._normalized_subset_data
 
     @property
-    def target_data(self):
+    def target_data(self) -> pd.DataFrame:
         return self._target_data
 
     @property
-    def normalized_target_data(self):
+    def normalized_target_data(self) -> pd.DataFrame:
         if self._normalized_target_data.empty:
             raise ValueError("Target data is not normalized.")
         return self._normalized_target_data
 
     @property
-    def subset_directional_variables(self):
+    def subset_directional_variables(self) -> List[str]:
         return self._subset_directional_variables
 
     @property
-    def target_directional_variables(self):
+    def target_directional_variables(self) -> List[str]:
         return self._target_directional_variables
 
     @property
-    def subset_processed_variables(self):
+    def subset_processed_variables(self) -> List[str]:
         return self._subset_processed_variables
 
     @property
-    def target_processed_variables(self):
+    def target_processed_variables(self) -> List[str]:
         return self._target_processed_variables
 
     @property
-    def subset_custom_scale_factor(self):
+    def subset_custom_scale_factor(self) -> dict:
         return self._subset_custom_scale_factor
 
     @property
-    def target_custom_scale_factor(self):
+    def target_custom_scale_factor(self) -> dict:
         return self._target_custom_scale_factor
 
     @property
-    def subset_scale_factor(self):
+    def subset_scale_factor(self) -> dict:
         return self._subset_scale_factor
 
     @property
-    def target_scale_factor(self):
+    def target_scale_factor(self) -> dict:
         return self._target_scale_factor
 
     @property
-    def rbf_coeffs(self):
+    def rbf_coeffs(self) -> pd.DataFrame:
         return self._rbf_coeffs
 
     @property
-    def opt_sigmas(self):
+    def opt_sigmas(self) -> dict:
         return self._opt_sigmas
 
     @staticmethod
     def _get_uv_components(x_deg: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
-        This function calculates the x and y components for the given directional data.
+        This function calculates the u and v components for the given directional data.
 
         Parameters
         ----------
@@ -242,7 +323,7 @@ class RBF(BaseInterpolation):
         Returns
         -------
         Tuple[np.ndarray, np.ndarray]
-            The x and y components.
+            The u and v components.
 
         Notes
         -----
@@ -253,23 +334,23 @@ class RBF(BaseInterpolation):
         x_rad = x_deg * np.pi / 180
 
         # Calculate x and y components using cosine and sine
-        xx = np.cos(x_rad)
-        xy = np.sin(x_rad)
+        xu = np.cos(x_rad)
+        xv = np.sin(x_rad)
 
-        # Return the x and y components
-        return xx, xy
+        # Return the u and v components
+        return xu, xv
 
     @staticmethod
-    def _get_degrees_from_uv(xx: np.ndarray, xy: np.ndarray) -> np.ndarray:
+    def _get_degrees_from_uv(xu: np.ndarray, xv: np.ndarray) -> np.ndarray:
         """
-        This function calculates the degrees from the x and y components.
+        This function calculates the degrees from the u and v components.
 
         Parameters
         ----------
-        xx : np.ndarray
-            The x component.
-        xy : np.ndarray
-            The y component.
+        xu : np.ndarray
+            The u component.
+        xv : np.ndarray
+            The v component.
 
         Returns
         -------
@@ -282,7 +363,7 @@ class RBF(BaseInterpolation):
         """
 
         # Calculate the degrees using the arctangent function
-        x_deg = np.arctan2(xy, xx) * 180 / np.pi
+        x_deg = np.arctan2(xv, xu) * 180 / np.pi
 
         # Adjust the degrees to be between 0 and 360
         x_deg = np.where(x_deg < 0, x_deg + 360, x_deg)
@@ -290,9 +371,35 @@ class RBF(BaseInterpolation):
         # Return the degrees
         return x_deg
 
-    def _preprocess_subset_data(self, subset_data: pd.DataFrame, is_fit: bool = True):
+    def _preprocess_subset_data(
+        self, subset_data: pd.DataFrame, is_fit: bool = True
+    ) -> pd.DataFrame:
         """
         This function preprocesses the subset data.
+
+        Parameters
+        ----------
+        subset_data : pd.DataFrame
+            The subset data to preprocess (could be a dataset to predict).
+        is_fit : bool, optional
+            Whether the data is being fit or not. Default is True.
+
+        Returns
+        -------
+        pd.DataFrame
+            The preprocessed subset data.
+
+        Raises
+        ------
+        ValueError
+            If the subset contains NaNs.
+
+        Notes
+        -----
+        - This function preprocesses the subset data by:
+            - Checking for NaNs.
+            - Preprocessing directional variables.
+            - Normalizing the data.
         """
 
         # Make copies to avoid modifying the original data
@@ -333,9 +440,33 @@ class RBF(BaseInterpolation):
         self,
         target_data: pd.DataFrame,
         normalize_target_data: bool = True,
-    ):
+    ) -> pd.DataFrame:
         """
         This function preprocesses the target data.
+
+        Parameters
+        ----------
+        target_data : pd.DataFrame
+            The target data to preprocess.
+        normalize_target_data : bool, optional
+            Whether to normalize the target data. Default is True.
+
+        Returns
+        -------
+        pd.DataFrame
+            The preprocessed target data.
+
+        Raises
+        ------
+        ValueError
+            If the target contains NaNs.
+
+        Notes
+        -----
+        - This function preprocesses the target data by:
+            - Checking for NaNs.
+            - Preprocessing directional variables.
+            - Normalizing the data.
         """
 
         # Make copies to avoid modifying the original data
@@ -365,6 +496,7 @@ class RBF(BaseInterpolation):
             self._target_data = target_data.copy()
             self._normalized_target_data = normalized_target_data.copy()
             self._target_scale_factor = target_scale_factor.copy()
+            self.logger.info("Target data preprocessed successfully")
             return normalized_target_data.copy()
 
         else:
@@ -372,6 +504,7 @@ class RBF(BaseInterpolation):
             self._target_data = target_data.copy()
             self._normalized_target_data = pd.DataFrame()
             self._target_scale_factor = {}
+            self.logger.info("Target data preprocessed successfully")
             return target_data.copy()
 
     def _rbf_assemble(self, x: np.ndarray, sigma: float) -> np.ndarray:
@@ -573,6 +706,7 @@ class RBF(BaseInterpolation):
 
         # Loop through the target variables
         for i_var, target_var in enumerate(self.target_processed_variables):
+            self.logger.info(f"Interpolating target variable {target_var}")
             rbf_coeff = self._rbf_coeffs[target_var].values
             opt_sigma = self._opt_sigmas[target_var]
             for i in range(num_points_dataset):
@@ -609,9 +743,32 @@ class RBF(BaseInterpolation):
         subset_custom_scale_factor: dict = {},
         normalize_target_data: bool = True,
         target_custom_scale_factor: dict = {},
-    ):
+    ) -> None:
         """
         Fits the model to the data.
+
+        Parameters
+        ----------
+        subset_data : pd.DataFrame
+            The subset data used to fit the model.
+        target_data : pd.DataFrame
+            The target data used to fit the model.
+        subset_directional_variables : List[str], optional
+            The subset directional variables. Default is [].
+        target_directional_variables : List[str], optional
+            The target directional variables. Default is [].
+        subset_custom_scale_factor : dict, optional
+            The custom scale factor for the subset data. Default is {}.
+        normalize_target_data : bool, optional
+            Whether to normalize the target data. Default is True.
+        target_custom_scale_factor : dict, optional
+            The custom scale factor for the target data. Default is {}.
+
+        Notes
+        -----
+        - This function fits the RBF model to the data by:
+            1. Preprocessing the subset and target data.
+            2. Calculating the optimal sigma for the target variables.
         """
 
         self._subset_directional_variables = subset_directional_variables
@@ -648,10 +805,32 @@ class RBF(BaseInterpolation):
     def predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
         """
         Predicts the data for the provided dataset.
+
+        Parameters
+        ----------
+        dataset : pd.DataFrame
+            The dataset to predict (must have same variables than subset).
+
+        Returns
+        -------
+        pd.DataFrame
+            The interpolated dataset.
+
+        Raises
+        ------
+        ValueError
+            If the model is not fitted.
+
+        Notes
+        -----
+        - This function predicts the data by:
+            1. Reconstructing the data using the fitted coefficients.
+            2. Denormalizing the target data if normalize_target_data is True.
+            3. Calculating the degrees for the target directional variables.
         """
 
         if self.is_fitted is False:
-            raise ValueError("RBF model must be fitted before predicting.")
+            raise RBFError("RBF model must be fitted before predicting.")
         self.logger.info("Reconstructing data using fitted coefficients.")
         interpolated_target = self._rbf_interpolate(dataset=dataset)
         if self.is_target_normalized:
@@ -663,14 +842,61 @@ class RBF(BaseInterpolation):
         for directional_variable in self.target_directional_variables:
             self.logger.info(f"Calculating target degrees for {directional_variable}")
             interpolated_target[directional_variable] = self._get_degrees_from_uv(
-                xx=interpolated_target[f"{directional_variable}_u"].values,
-                xy=interpolated_target[f"{directional_variable}_v"].values,
+                xu=interpolated_target[f"{directional_variable}_u"].values,
+                xv=interpolated_target[f"{directional_variable}_v"].values,
             )
         return interpolated_target
 
-    def fit_predict(self, *args, **kwargs):
+    def fit_predict(
+        self,
+        subset_data: pd.DataFrame,
+        target_data: pd.DataFrame,
+        dataset: pd.DataFrame,
+        subset_directional_variables: List[str] = [],
+        target_directional_variables: List[str] = [],
+        subset_custom_scale_factor: dict = {},
+        normalize_target_data: bool = True,
+        target_custom_scale_factor: dict = {},
+    ) -> pd.DataFrame:
         """
-        Fits the model to the data and predicts the clusters.
+        Fits the model to the subset and predicts the interpolated dataset.
+
+        Parameters
+        ----------
+        subset_data : pd.DataFrame
+            The subset data used to fit the model.
+        target_data : pd.DataFrame
+            The target data used to fit the model.
+        dataset : pd.DataFrame
+            The dataset to predict (must have same variables than subset).
+        subset_directional_variables : List[str], optional
+            The subset directional variables. Default is [].
+        target_directional_variables : List[str], optional
+            The target directional variables. Default is [].
+        subset_custom_scale_factor : dict, optional
+            The custom scale factor for the subset data. Default is {}.
+        normalize_target_data : bool, optional
+            Whether to normalize the target data. Default is True.
+        target_custom_scale_factor : dict, optional
+            The custom scale factor for the target data. Default is {}.
+
+        Returns
+        -------
+        pd.DataFrame
+            The interpolated dataset.
+
+        Notes
+        -----
+        - This function fits the model to the subset and predicts the interpolated dataset.
         """
 
-        pass
+        self.fit(
+            subset_data=subset_data,
+            target_data=target_data,
+            subset_directional_variables=subset_directional_variables,
+            target_directional_variables=target_directional_variables,
+            subset_custom_scale_factor=subset_custom_scale_factor,
+            normalize_target_data=normalize_target_data,
+            target_custom_scale_factor=target_custom_scale_factor,
+        )
+        return self.predict(dataset=dataset)

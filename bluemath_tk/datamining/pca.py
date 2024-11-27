@@ -5,7 +5,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA as PCA_, IncrementalPCA as IncrementalPCA_
 from ._base_datamining import BaseReduction
 from ..core.decorators import validate_data_pca
-from ..core.plotting.base_plotting import DefaultStaticPlotting
 
 
 class PCAError(Exception):
@@ -52,6 +51,27 @@ class PCA(BaseReduction):
         The value to replace NaNs in the dataset.
     num_cols_for_vars : int
         The number of columns for variables.
+
+    Methods
+    -------
+    fit(
+        data: xr.Dataset,
+        vars_to_stack: List[str],
+        coords_to_stack: List[str],
+        pca_dim_for_rows: str,
+        window_in_pca_dim_for_rows: List[int] = [0],
+        value_to_replace_nans: float = None,
+    ) -> None
+    transform(data: xr.Dataset) -> xr.Dataset
+    fit_transform(
+        data: xr.Dataset,
+        vars_to_stack: List[str],
+        coords_to_stack: List[str],
+        pca_dim_for_rows: str,
+        window_in_pca_dim_for_rows: List[int] = [0],
+        value_to_replace_nans: float = None,
+    ) -> xr.Dataset
+    inverse_transform(PCs: Union[np.ndarray, xr.Dataset]) -> xr.Dataset
     """
 
     def __init__(
@@ -124,7 +144,7 @@ class PCA(BaseReduction):
     def standarized_stacked_data_matrix(self) -> np.ndarray:
         return self._standarized_stacked_data_matrix
 
-    def _generate_stacked_data(self, data: xr.Dataset):
+    def _generate_stacked_data(self, data: xr.Dataset) -> np.ndarray:
         """
         Generate stacked data matrix.
 
@@ -170,9 +190,13 @@ class PCA(BaseReduction):
 
         return stacked_data_matrix
 
-    def _preprocess_data(self, data: xr.Dataset, is_fit: bool = True):
+    def _preprocess_data(self, data: xr.Dataset, is_fit: bool = True) -> np.ndarray:
         """
-        Preprocess data for PCA.
+        Preprocess data for PCA. Steps:
+        - Check NaNs and replace them if needed.
+        - Generate stacked data matrix.
+        - Standarize data matrix.
+        - Remove NaNs from standarized data matrix.
 
         Parameters
         ----------
@@ -192,24 +216,24 @@ class PCA(BaseReduction):
             data=data,
             replace_value=self.value_to_replace_nans,
         )
-        
+
         self.logger.info("Generating stacked data matrix")
         stacked_data_matrix = self._generate_stacked_data(
             data=data,
         )
-        
+
         self.logger.info("Standarizing data matrix")
         standarized_stacked_data_matrix, scaler = self.standarize(
             data=stacked_data_matrix,
             scaler=self.scaler if not is_fit else None,
         )
-        
+
         self.logger.info("Removing NaNs from standarized data matrix")
         standarized_stacked_data_matrix = self.check_nans(
             data=standarized_stacked_data_matrix,
             replace_value=self.value_to_replace_nans,
         )
-        
+
         self.logger.info("Data preprocessed successfully")
 
         if is_fit:
@@ -222,7 +246,7 @@ class PCA(BaseReduction):
 
         return standarized_stacked_data_matrix
 
-    def _reshape_EOFs(self, destandarize: bool = False):
+    def _reshape_EOFs(self, destandarize: bool = False) -> xr.Dataset:
         """
         Reshape EOFs to the original data shape.
 
@@ -269,7 +293,7 @@ class PCA(BaseReduction):
             },
         )
 
-    def _reshape_data(self, X: np.ndarray, destandarize: bool = True):
+    def _reshape_data(self, X: np.ndarray, destandarize: bool = True) -> xr.Dataset:
         """
         Reshape data to the original data shape.
 
@@ -322,7 +346,7 @@ class PCA(BaseReduction):
         pca_dim_for_rows: str,
         window_in_pca_dim_for_rows: List[int] = [0],
         value_to_replace_nans: float = None,
-    ):
+    ) -> None:
         """
         Fit PCA model to data.
 
@@ -354,7 +378,7 @@ class PCA(BaseReduction):
         self.is_fitted = True
         self.logger.info("PCA model fitted successfully")
 
-    def transform(self, data: xr.Dataset):
+    def transform(self, data: xr.Dataset) -> xr.Dataset:
         """
         Transform data using the fitted PCA model.
 
@@ -365,7 +389,7 @@ class PCA(BaseReduction):
 
         Returns
         -------
-        transformed_data : xr.Dataset
+        xr.Dataset
             The transformed data.
         """
 
@@ -394,7 +418,7 @@ class PCA(BaseReduction):
         pca_dim_for_rows: str,
         window_in_pca_dim_for_rows: List[int] = [0],
         value_to_replace_nans: float = None,
-    ):
+    ) -> xr.Dataset:
         """
         Fit and transform data using PCA model.
 
@@ -415,7 +439,7 @@ class PCA(BaseReduction):
 
         Returns
         -------
-        transformed_data : xr.Dataset
+        xr.Dataset
             The transformed data.
         """
 
@@ -430,7 +454,7 @@ class PCA(BaseReduction):
         # TODO: JAVI - Add a flag to use the already processed data??
         return self.transform(data=data)
 
-    def inverse_transform(self, PCs: Union[np.ndarray, xr.Dataset]):
+    def inverse_transform(self, PCs: Union[np.ndarray, xr.Dataset]) -> xr.Dataset:
         """
         Inverse transform data using the fitted PCA model.
 
@@ -454,18 +478,6 @@ class PCA(BaseReduction):
         self.logger.info("Inverse transforming data using PCA model")
         X_transformed = self.pca.inverse_transform(X=X)
         data_transformed = self._reshape_data(X=X_transformed, destandarize=True)
+        # Squeeze dataset and sort dimensions based on the original data
+        data_transformed = data_transformed.squeeze().transpose(*self.data.dims)
         return data_transformed
-
-    def postprocess_data(self, data: xr.Dataset = None):
-        """
-        Postprocess data after PCA.
-
-        Parameters
-        ----------
-        data : xr.Dataset, optional
-            The data to postprocess. Default is None.
-        """
-
-        self.logger.info("Postprocessing data")
-        # TODO: JAVI - Add postprocessing steps
-        self.logger.info("Data postprocessed successfully")

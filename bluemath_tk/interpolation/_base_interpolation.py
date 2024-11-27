@@ -36,7 +36,7 @@ class BaseInterpolation(BlueMathModel):
     @abstractmethod
     def predict(self, *args, **kwargs):
         """
-        Predicts the clusters for the provided data.
+        Predicts the interpolated data given a dataset.
 
         Parameters
         ----------
@@ -51,7 +51,7 @@ class BaseInterpolation(BlueMathModel):
     @abstractmethod
     def fit_predict(self, *args, **kwargs):
         """
-        Fits the model to the data and predicts the clusters.
+        Fits the model to the subset and predicts the interpolated dataset.
 
         Parameters
         ----------

@@ -149,10 +149,11 @@ class MDA(BaseClustering):
             raise MDAError(
                 "_normalized_distance must be called after or during fitting, not before."
             )
-        if np.minimum(np.min(array_to_compare), np.min(all_rest_data)) < 0:
-            raise MDAError("Data must be normalized before calling this function.")
-        if np.maximum(np.max(array_to_compare), np.max(all_rest_data)) > 1:
-            raise MDAError("Data must be normalized before calling this function.")
+        # TODO: Check if the data is normalized
+        # if np.minimum(np.min(array_to_compare), np.min(all_rest_data)) < 0:
+        #     raise MDAError("Data must be normalized before calling this function.")
+        # if np.maximum(np.max(array_to_compare), np.max(all_rest_data)) > 1:
+        #     raise MDAError("Data must be normalized before calling this function.")
 
         diff = np.zeros(all_rest_data.shape)
 

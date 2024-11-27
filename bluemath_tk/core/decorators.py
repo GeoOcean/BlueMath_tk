@@ -4,6 +4,52 @@ import pandas as pd
 import xarray as xr
 
 
+def validate_data_lhs(func):
+    """
+    Decorator to validate data in LHS class fit method.
+
+    Parameters
+    ----------
+    func : callable
+        The function to be decorated
+
+    Returns
+    -------
+    callable
+        The decorated function
+    """
+
+    @functools.wraps(func)
+    def wrapper(
+        self,
+        dimensions_names: List[str],
+        lower_bounds: List[float],
+        upper_bounds: List[float],
+        num_samples: int,
+    ):
+        if not isinstance(dimensions_names, list):
+            raise TypeError("Dimensions names must be a list")
+        if not isinstance(lower_bounds, list):
+            raise TypeError("Lower bounds must be a list")
+        if not isinstance(upper_bounds, list):
+            raise TypeError("Upper bounds must be a list")
+        if len(dimensions_names) != len(lower_bounds) or len(lower_bounds) != len(
+            upper_bounds
+        ):
+            raise ValueError(
+                "Dimensions names, lower bounds and upper bounds must have the same length"
+            )
+        if not all(
+            [lower <= upper for lower, upper in zip(lower_bounds, upper_bounds)]
+        ):
+            raise ValueError("Lower bounds must be less than or equal to upper bounds")
+        if not isinstance(num_samples, int) or num_samples <= 0:
+            raise ValueError("Variable num_samples must be integer and > 0")
+        return func(self, dimensions_names, lower_bounds, upper_bounds, num_samples)
+
+    return wrapper
+
+
 def validate_data_mda(func):
     """
     Decorator to validate data in MDA class fit method.
@@ -50,52 +96,6 @@ def validate_data_mda(func):
                         f"No custom scale factor provided for {directional_variable}, min and max values will be used"
                     )
         return func(self, data, directional_variables, custom_scale_factor)
-
-    return wrapper
-
-
-def validate_data_lhs(func):
-    """
-    Decorator to validate data in LHS class fit method.
-
-    Parameters
-    ----------
-    func : callable
-        The function to be decorated
-
-    Returns
-    -------
-    callable
-        The decorated function
-    """
-
-    @functools.wraps(func)
-    def wrapper(
-        self,
-        dimensions_names: List[str],
-        lower_bounds: List[float],
-        upper_bounds: List[float],
-        num_samples: int,
-    ):
-        if not isinstance(dimensions_names, list):
-            raise TypeError("Dimensions names must be a list")
-        if not isinstance(lower_bounds, list):
-            raise TypeError("Lower bounds must be a list")
-        if not isinstance(upper_bounds, list):
-            raise TypeError("Upper bounds must be a list")
-        if len(dimensions_names) != len(lower_bounds) or len(lower_bounds) != len(
-            upper_bounds
-        ):
-            raise ValueError(
-                "Dimensions names, lower bounds and upper bounds must have the same length"
-            )
-        if not all(
-            [lower <= upper for lower, upper in zip(lower_bounds, upper_bounds)]
-        ):
-            raise ValueError("Lower bounds must be less than or equal to upper bounds")
-        if not isinstance(num_samples, int) or num_samples <= 0:
-            raise ValueError("Variable num_samples must be integer and > 0")
-        return func(self, dimensions_names, lower_bounds, upper_bounds, num_samples)
 
     return wrapper
 
