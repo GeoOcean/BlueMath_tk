@@ -591,7 +591,7 @@ class RBF(BaseInterpolation):
                 for k in range(num_vars_subset):
                     s = (
                         s
-                        + rbf_coeff[k + num_vars_subset + 1]
+                        + rbf_coeff[k + num_points_subset + 1]
                         * normalized_dataset.values.T[k, i]
                     )
 
