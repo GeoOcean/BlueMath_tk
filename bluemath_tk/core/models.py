@@ -6,6 +6,12 @@ import pandas as pd
 import xarray as xr
 from abc import ABC, abstractmethod
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import (
+    mean_squared_error,
+    r2_score,
+    mean_absolute_error,
+    explained_variance_score,
+)
 from .logging import get_file_logger
 from .operations import normalize, denormalize, standarize, destandarize
 
@@ -13,10 +19,12 @@ from .operations import normalize, denormalize, standarize, destandarize
 class BlueMathModel(ABC):
     @abstractmethod
     def __init__(self):
-        self._logger = get_file_logger(name=self.__class__.__name__)
+        self._logger: logging.Logger = None
 
     @property
     def logger(self) -> logging.Logger:
+        if self._logger is None:
+            self._logger = get_file_logger(name=self.__class__.__name__)
         return self._logger
 
     @logger.setter
@@ -37,6 +45,7 @@ class BlueMathModel(ABC):
         self,
         data: Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset],
         replace_value=None,
+        raise_error: bool = False,
     ):
         """
         Checks for NaNs in the data and optionally replaces them.
@@ -47,11 +56,18 @@ class BlueMathModel(ABC):
             The data to check for NaNs.
         replace_value : any, optional
             The value to replace NaNs with. If None, NaNs will not be replaced.
+        raise_error : bool, optional
+            Whether to raise an error if NaNs are found. Default is False.
 
         Returns
         -------
         data : np.ndarray, pd.Series, pd.DataFrame, xr.DataArray or xr.Dataset
             The data with NaNs optionally replaced.
+
+        Raises
+        ------
+        ValueError
+            If NaNs are found and raise_error is True.
 
         Notes
         -----
@@ -61,18 +77,24 @@ class BlueMathModel(ABC):
 
         if isinstance(data, np.ndarray):
             if np.isnan(data).any():
+                if raise_error:
+                    raise ValueError("Data contains NaNs.")
                 self.logger.warning("Data contains NaNs.")
                 if replace_value is not None:
                     data = np.nan_to_num(data, nan=replace_value)
                     self.logger.info(f"NaNs replaced with {replace_value}.")
         elif isinstance(data, pd.Series) or isinstance(data, pd.DataFrame):
             if data.isnull().values.any():
+                if raise_error:
+                    raise ValueError("Data contains NaNs.")
                 self.logger.warning("Data contains NaNs.")
                 if replace_value is not None:
                     data.fillna(replace_value, inplace=True)
                     self.logger.info(f"NaNs replaced with {replace_value}.")
         elif isinstance(data, xr.DataArray) or isinstance(data, xr.Dataset):
             if data.isnull().any():
+                if raise_error:
+                    raise ValueError("Data contains NaNs.")
                 self.logger.warning("Data contains NaNs.")
                 if replace_value is not None:
                     data = data.fillna(replace_value)
@@ -178,3 +200,66 @@ class BlueMathModel(ABC):
 
         data = destandarize(standarized_data=standarized_data, scaler=scaler)
         return data
+
+    @staticmethod
+    def get_metrics(
+        data1: Union[pd.DataFrame, xr.Dataset],
+        data2: Union[pd.DataFrame, xr.Dataset],
+    ) -> pd.DataFrame:
+        """
+        Gets the metrics of the model.
+
+        Parameters
+        ----------
+        data1 : pd.DataFrame or xr.Dataset
+            The first dataset.
+        data2 : pd.DataFrame or xr.Dataset
+            The second dataset.
+
+        Returns
+        -------
+        metrics : pd.DataFrame
+            The metrics of the model.
+
+        Raises
+        ------
+        ValueError
+            If the DataFrames or Datasets have different shapes.
+        TypeError
+            If the inputs are not both DataFrames or both xarray Datasets.
+        """
+
+        if isinstance(data1, pd.DataFrame) and isinstance(data2, pd.DataFrame):
+            if data1.shape != data2.shape:
+                raise ValueError("DataFrames must have the same shape")
+            variables = data1.columns
+        elif isinstance(data1, xr.Dataset) and isinstance(data2, xr.Dataset):
+            if sorted(list(data1.dims)) != sorted(list(data2.dims)) or sorted(
+                list(data1.data_vars)
+            ) != sorted(list(data2.data_vars)):
+                raise ValueError(
+                    "Datasets must have the same dimensions, coordinates and variables"
+                )
+            variables = data1.data_vars
+        else:
+            raise TypeError(
+                "Inputs must be either both DataFrames or both xarray Datasets"
+            )
+
+        metrics = {}
+        for var in variables:
+            if isinstance(data1, pd.DataFrame):
+                y_true = data1[var]
+                y_pred = data2[var]
+            else:
+                y_true = data1[var].values.reshape(-1)
+                y_pred = data2[var].values.reshape(-1)
+
+            metrics[var] = {
+                "mean_squared_error": mean_squared_error(y_true, y_pred),
+                "r2_score": r2_score(y_true, y_pred),
+                "mean_absolute_error": mean_absolute_error(y_true, y_pred),
+                "explained_variance_score": explained_variance_score(y_true, y_pred),
+            }
+
+        return pd.DataFrame(metrics).T

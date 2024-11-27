@@ -37,12 +37,16 @@ def get_file_logger(
     >>> # 2023-10-22 14:55:23,456 - my_app_logger - INFO - This is an info message.
     >>> # 2023-10-22 14:55:23,457 - my_app_logger - WARNING - This is a warning message.
     >>> # 2023-10-22 14:55:23,458 - my_app_logger - ERROR - This is an error message.
+
+    Notes
+    -----
+    - TODO: Check a way to remove existing loggers to avoid duplicate logs.
     """
 
     # Create a logger with the specified name
     logger = logging.getLogger(name)
     logger.setLevel(level)
-    logger.propagate = False  # TODO: check as it is not preventing duplicated logs
+    logger.propagate = False  # Avoid duplicate logs
 
     # Get current date to append to logs_path
     date_str = datetime.now(pytz.timezone("Europe/Madrid")).strftime("%Y-%m-%d")
@@ -53,7 +57,7 @@ def get_file_logger(
         logs_path = os.path.join("logs", f"{name.strip()}_{date_str}.log")
     else:
         os.makedirs(os.path.dirname(logs_path))
-    # file_handler = logging.FileHandler(logs_path)
+    file_handler = logging.FileHandler(logs_path)
 
     # Also ouput logs in the console
     console_handler = logging.StreamHandler()
@@ -62,11 +66,11 @@ def get_file_logger(
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
-    # file_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
 
     # Add the file handler to the logger
-    # logger.addHandler(file_handler)
+    logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
     return logger

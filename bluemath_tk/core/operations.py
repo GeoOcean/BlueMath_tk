@@ -12,7 +12,7 @@ def normalize(
     logger: logging.Logger = None,
 ) -> Tuple[Union[pd.DataFrame, xr.Dataset], dict]:
     """
-    Normalize data to 0-1 using min max scaler approach
+    Normalize data to 0-1 using min max scaler approach.
 
     Parameters
     ----------
@@ -90,27 +90,27 @@ def normalize(
             if custom_scale_factor.get(data_var)[0] > data_var_min:
                 if logger is not None:
                     logger.warning(
-                        f"Proposed min custom scaler for {data_var} is bigger than datapoint, using smallest datapoint"
+                        f"Proposed min custom scaler for {data_var} is bigger than datapoint"  # , using smallest datapoint
                     )
                 else:
                     print(
-                        f"Proposed min custom scaler for {data_var} is bigger than datapoint, using smallest datapoint"
+                        f"Proposed min custom scaler for {data_var} is bigger than datapoint"  # , using smallest datapoint
                     )
-                scale_factor[data_var][0] = data_var_min
-            else:
-                data_var_min = custom_scale_factor.get(data_var)[0]
+            #     scale_factor[data_var][0] = data_var_min
+            # else:
+            data_var_min = custom_scale_factor.get(data_var)[0]
             if custom_scale_factor.get(data_var)[1] < data_var_max:
                 if logger is not None:
                     logger.warning(
-                        f"Proposed max custom scaler for {data_var} is lower than datapoint, using biggest datapoint"
+                        f"Proposed max custom scaler for {data_var} is lower than datapoint"  # , using biggest datapoint
                     )
                 else:
                     print(
-                        f"Proposed max custom scaler for {data_var} is lower than datapoint, using biggest datapoint"
+                        f"Proposed max custom scaler for {data_var} is lower than datapoint"  # , using biggest datapoint
                     )
-                scale_factor[data_var][1] = data_var_max
-            else:
-                data_var_max = custom_scale_factor.get(data_var)[1]
+            #     scale_factor[data_var][1] = data_var_max
+            # else:
+            data_var_max = custom_scale_factor.get(data_var)[1]
         else:
             scale_factor[data_var] = [data_var_min, data_var_max]
         normalized_data[data_var] = (normalized_data[data_var] - data_var_min) / (
