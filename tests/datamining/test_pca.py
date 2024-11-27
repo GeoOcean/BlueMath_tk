@@ -57,6 +57,18 @@ class TestPCA(unittest.TestCase):
         )
         self.assertEqual(self.pca.is_fitted, True)
 
+    def test_transform(self):
+        self.pca.fit(
+            data=self.ds,
+            vars_to_stack=["X", "Y"],
+            coords_to_stack=["coord1", "coord2"],
+            pca_dim_for_rows="coord3",
+        )
+        pcs = self.pca.transform(
+            data=self.ds,
+        )
+        self.assertEqual(pcs.PCs.shape[1], 5)
+
     def test_fit_transform(self):
         pcs = self.pca.fit_transform(
             data=self.ds,
@@ -73,10 +85,10 @@ class TestPCA(unittest.TestCase):
             coords_to_stack=["coord1", "coord2"],
             pca_dim_for_rows="coord3",
         )
-        reconstructed_ds = self.pca.inverse_transform(pcs)
+        reconstructed_ds = self.pca.inverse_transform(PCs=pcs)
         self.assertAlmostEqual(
             self.ds.isel(coord1=5, coord2=5, coord3=5),
-            reconstructed_ds.isel(coord1=5, coord2=5, coord3=5, window=0),
+            reconstructed_ds.isel(coord1=5, coord2=5, coord3=5),
         )
 
     def test_incremental_fit(self):

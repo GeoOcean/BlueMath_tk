@@ -17,7 +17,6 @@ class TestRBF(unittest.TestCase):
         self.target = pd.DataFrame(
             {
                 "HsPred": self.subset["Hs"] * 2 + self.subset["Tp"] * 3,
-                # "TpPred": self.subset["Tp"] * 1.8 + 5,
                 "DirPred": self.subset["Dir"] % 45,
             }
         )
@@ -28,22 +27,48 @@ class TestRBF(unittest.TestCase):
             kernel="gaussian",
         )
 
-    # def test_fit(self):
-    #     self.rbf.fit(
-    #         subset_data=self.subset,
-    #         target_data=self.target,
-    #     )
-    #     self.assertEqual(self.rbf.is_fitted, True)
+    def test_fit(self):
+        self.rbf.fit(
+            subset_data=self.subset,
+            subset_directional_variables=["Dir"],
+            target_data=self.target,
+            target_directional_variables=["DirPred"],
+            normalize_target_data=True,
+        )
+        self.assertTrue(self.rbf.is_fitted)
+        self.assertTrue(self.rbf.is_target_normalized)
+        self.assertIn("Dir_u", self.rbf.normalized_subset_data.columns)
+        self.assertIn("Dir_v", self.rbf.normalized_subset_data.columns)
+        self.assertIn("DirPred_u", self.rbf.normalized_target_data.columns)
+        self.assertIn("DirPred_v", self.rbf.normalized_target_data.columns)
+        self.assertFalse(self.rbf.rbf_coeffs.empty)
+        self.assertFalse(self.rbf.opt_sigmas == {})
 
     def test_predict(self):
         self.rbf.fit(
             subset_data=self.subset,
-            target_data=self.target,
             subset_directional_variables=["Dir"],
+            target_data=self.target,
             target_directional_variables=["DirPred"],
+            normalize_target_data=True,
         )
-        prediction = self.rbf.predict(dataset=self.dataset)
-        self.assertEqual(prediction.shape[0], self.dataset.shape[0])
+        predictions = self.rbf.predict(dataset=self.dataset)
+        self.assertIsInstance(predictions, pd.DataFrame)
+        self.assertIn("HsPred", predictions.columns)
+        self.assertIn("DirPred", predictions.columns)
+
+    def test_fit_predict(self):
+        predictions = self.rbf.fit_predict(
+            subset_data=self.subset,
+            subset_directional_variables=["Dir"],
+            target_data=self.target,
+            target_directional_variables=["DirPred"],
+            normalize_target_data=True,
+            dataset=self.dataset,
+        )
+        self.assertIsInstance(predictions, pd.DataFrame)
+        self.assertIn("HsPred", predictions.columns)
+        self.assertIn("DirPred", predictions.columns)
 
 
 if __name__ == "__main__":
