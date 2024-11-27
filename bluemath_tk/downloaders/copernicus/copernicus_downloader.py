@@ -8,8 +8,12 @@ from ..base_downloaders import BlueMathDownloader
 
 config = {
     "url": "https://cds.climate.copernicus.eu/api",  # /v2?
-    "key": "your-api-token",
+    "key": "5cf7efae-13fc-4085-8a98-80d82bdb55f5",
 }
+
+# javi: 5cf7efae-13fc-4085-8a98-80d82bdb55f5
+# valva: 45c9b669-4fbc-4d9b-9386-8c2c611a3c93
+# laura: c17382de-3363-47ea-9faa-ba4a9cce66b8
 
 
 class CopernicusDownloader(BlueMathDownloader):
@@ -33,7 +37,8 @@ class CopernicusDownloader(BlueMathDownloader):
 
     products_configs = {
         "ERA5": json.load(
-            open(os.path.join(os.path.dirname(__file__), "ERA5", "ERA5_config.json"))
+            # open(os.path.join(os.path.dirname(__file__), "ERA5", "ERA5_config.json"))
+            open("/home/grupos/geocean/tausiaj/BlueMath_tk/bluemath_tk/downloaders/copernicus/ERA5/ERA5_config.json")
         )
     }
 
@@ -154,7 +159,7 @@ class CopernicusDownloader(BlueMathDownloader):
         day: List[str] = None,
         time: List[str] = None,
         product_type: str = "reanalysis",
-        data_format: str = "netcdf",
+        data_format: str = "netcdf_legacy",
         download_format: str = "unarchived",
         force: bool = False,
     ) -> str:
@@ -235,6 +240,7 @@ class CopernicusDownloader(BlueMathDownloader):
 
         fully_downloaded_files: List[str] = []
         NOT_fullly_downloaded_files: List[str] = []
+        error_files: List[str] = []
 
         for variable in variables:
             for year in years:
@@ -295,36 +301,71 @@ class CopernicusDownloader(BlueMathDownloader):
                     # Create the output directory if it does not exist
                     os.makedirs(os.path.dirname(output_nc_file), exist_ok=True)
 
-                    if self.check or not force:
-                        if os.path.exists(output_nc_file):
-                            self.logger.debug(
-                                f"Checking {output_nc_file} file is complete"
-                            )
-                            nc = xr.open_dataset(output_nc_file)
-                            _, last_day = calendar.monthrange(int(year), int(month))
-                            last_hour = f"{year}-{int(month):02d}-{last_day}T23"
-                            last_hour_nc = str(nc.valid_time[-1].values)
-                            nc.close()
-                            if last_hour not in last_hour_nc:
+                    self.logger.info(f"""
+                                     
+                        Analyzing {output_nc_file}
+                                     
+                    """)
+
+                    try:
+
+                        if self.check or not force:
+                            if os.path.exists(output_nc_file):
                                 self.logger.debug(
-                                    f"{output_nc_file} ends at {last_hour_nc} instead of {last_hour}"
+                                    f"Checking {output_nc_file} file is complete"
                                 )
-                                if self.check:
-                                    NOT_fullly_downloaded_files.append(output_nc_file)
-                                else:
-                                    self.logger.debug(
-                                        f"Downloading: {variable} to {output_nc_file} because it is not complete"
+                                try:
+                                    nc = xr.open_dataset(output_nc_file)
+                                    _, last_day = calendar.monthrange(int(year), int(month))
+                                    last_hour = f"{year}-{int(month):02d}-{last_day}T23"
+                                    last_hour_nc = str(nc.valid_time[-1].values)
+                                    nc.close()
+                                    if last_hour not in last_hour_nc:
+                                        self.logger.debug(
+                                            f"{output_nc_file} ends at {last_hour_nc} instead of {last_hour}"
+                                        )
+                                        if self.check:
+                                            NOT_fullly_downloaded_files.append(output_nc_file)
+                                        else:
+                                            self.logger.debug(
+                                                f"Downloading: {variable} to {output_nc_file} because it is not complete"
+                                            )
+                                            self.client.retrieve(
+                                                name=variable_config["dataset"],
+                                                request=template_for_variable,
+                                                target=output_nc_file,
+                                            )
+                                            fully_downloaded_files.append(output_nc_file)
+                                    else:
+                                        fully_downloaded_files.append(output_nc_file)
+                                except Exception as e:
+                                    self.logger.error(
+                                        f"Error was raised opening {output_nc_file}, re-downloading..."
                                     )
-                                    self.client.retrieve(
-                                        name=variable_config["dataset"],
-                                        request=template_for_variable,
-                                        target=output_nc_file,
-                                    )
-                                    fully_downloaded_files.append(output_nc_file)
+                                    if self.check:
+                                        NOT_fullly_downloaded_files.append(output_nc_file)
+                                    else:
+                                        self.logger.debug(
+                                            f"Downloading: {variable} to {output_nc_file} because it is not complete"
+                                        )
+                                        self.client.retrieve(
+                                            name=variable_config["dataset"],
+                                            request=template_for_variable,
+                                            target=output_nc_file,
+                                        )
+                                        fully_downloaded_files.append(output_nc_file)
+                            elif self.check:
+                                NOT_fullly_downloaded_files.append(output_nc_file)
                             else:
+                                self.logger.debug(
+                                    f"Downloading: {variable} to {output_nc_file}"
+                                )
+                                self.client.retrieve(
+                                    name=variable_config["dataset"],
+                                    request=template_for_variable,
+                                    target=output_nc_file,
+                                )
                                 fully_downloaded_files.append(output_nc_file)
-                        elif self.check:
-                            NOT_fullly_downloaded_files.append(output_nc_file)
                         else:
                             self.logger.debug(
                                 f"Downloading: {variable} to {output_nc_file}"
@@ -335,22 +376,27 @@ class CopernicusDownloader(BlueMathDownloader):
                                 target=output_nc_file,
                             )
                             fully_downloaded_files.append(output_nc_file)
-                    else:
-                        self.logger.debug(
-                            f"Downloading: {variable} to {output_nc_file}"
-                        )
-                        self.client.retrieve(
-                            name=variable_config["dataset"],
-                            request=template_for_variable,
-                            target=output_nc_file,
-                        )
-                        fully_downloaded_files.append(output_nc_file)
+
+                    except Exception as e:
+
+                        self.logger.error(f"""
+                                          
+                            Skippping {output_nc_file} for {e}
+
+                        """)
+                        error_files.append(output_nc_file)
+
+        fully_downloaded_files_str = '\n'.join(fully_downloaded_files)
+        NOT_fullly_downloaded_files_str = '\n'.join(NOT_fullly_downloaded_files)
+        error_files = '\n'.join(error_files)
 
         return f"""
             Fully downloaded files:
-            {'\n'.join(fully_downloaded_files)}
+            {fully_downloaded_files_str}
             Not fully downloaded files:
-            {'\n'.join(NOT_fullly_downloaded_files)}
+            {NOT_fullly_downloaded_files_str}
+            Error files:
+            {error_files}
         """
 
 
