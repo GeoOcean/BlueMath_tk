@@ -41,6 +41,13 @@ class BlueMathModel(ABC):
         with open(model_path, "wb") as f:
             pickle.dump(self, f)
 
+    def load_model(self, model_path: str):
+        """Loads the model from a file."""
+        self.logger.info(f"Loading model from {model_path}")
+        with open(model_path, "rb") as f:
+            model = pickle.load(f)
+        return model
+
     def check_nans(
         self,
         data: Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset],
