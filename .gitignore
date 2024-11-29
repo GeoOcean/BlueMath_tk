@@ -48,7 +48,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
-tests_data/*.pkl
+tests_data/
 
 # mypy
 .mypy_cache/
