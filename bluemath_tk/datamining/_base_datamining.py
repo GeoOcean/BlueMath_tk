@@ -116,15 +116,24 @@ class BaseClustering(BlueMathModel):
     fit(*args, **kwargs)
     predict(*args, **kwargs)
     fit_predict(*args, **kwargs)
-    plot_selected_data(data_color, centroids_color, **kwargs)
+    plot_selected_centroids(
+        data_color: str = "blue",
+        centroids_color: str = "red",
+        **kwargs
+    ) -> Tuple[plt.figure, plt.axes]
+    plot_data_as_clusters(
+        data: pd.DataFrame,
+        closest_centroids: np.ndarray,
+        **kwargs
+    ) -> Tuple[plt.figure, plt.axes]
     """
 
     @abstractmethod
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     @abstractmethod
-    def fit(self, *args, **kwargs):
+    def fit(self, *args, **kwargs) -> None:
         """
         Fits the model to the data.
 
@@ -139,7 +148,7 @@ class BaseClustering(BlueMathModel):
         pass
 
     @abstractmethod
-    def predict(self, *args, **kwargs):
+    def predict(self, *args, **kwargs) -> pd.DataFrame:
         """
         Predicts the clusters for the provided data.
 
@@ -151,10 +160,10 @@ class BaseClustering(BlueMathModel):
             Keyword arguments.
         """
 
-        pass
+        return pd.DataFrame()
 
     @abstractmethod
-    def fit_predict(self, *args, **kwargs):
+    def fit_predict(self, *args, **kwargs) -> pd.DataFrame:
         """
         Fits the model to the data and predicts the clusters.
 
@@ -166,7 +175,7 @@ class BaseClustering(BlueMathModel):
             Keyword arguments.
         """
 
-        pass
+        return pd.DataFrame()
 
     def plot_selected_centroids(
         self,

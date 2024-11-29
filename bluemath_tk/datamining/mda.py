@@ -63,7 +63,7 @@ class MDA(BaseClustering):
     ...     }
     ... )
     >>> mda = MDA(num_centers=10)
-    >>> mda_centroids_df = mda.fit(
+    >>> mda_centroids_df = mda.fit_predict(
     ...     data=data,
     ...     directional_variables=['Dir'],
     ...     custom_scale_factor={'Dir': [0, 360]},
@@ -102,6 +102,7 @@ class MDA(BaseClustering):
         self.normalized_centroids: pd.DataFrame = pd.DataFrame()
         self.centroid_iterative_indices: List[int] = []
         self.centroid_real_indices: List[int] = []
+        self.is_fitted: bool = False
 
     @property
     def data(self) -> pd.DataFrame:
@@ -149,11 +150,6 @@ class MDA(BaseClustering):
             raise MDAError(
                 "_normalized_distance must be called after or during fitting, not before."
             )
-        # TODO: Check if the data is normalized
-        # if np.minimum(np.min(array_to_compare), np.min(all_rest_data)) < 0:
-        #     raise MDAError("Data must be normalized before calling this function.")
-        # if np.maximum(np.max(array_to_compare), np.max(all_rest_data)) > 1:
-        #     raise MDAError("Data must be normalized before calling this function.")
 
         diff = np.zeros(all_rest_data.shape)
 
@@ -199,7 +195,7 @@ class MDA(BaseClustering):
             Or if the data is empty.
         """
 
-        if self.normalized_centroids.empty or not self.scale_factor:
+        if self.is_fitted is False:
             raise MDAError(
                 "_nearest_indices must be called after or during fitting, not before."
             )
@@ -249,7 +245,7 @@ class MDA(BaseClustering):
             Or if the data is empty.
         """
 
-        if self.normalized_centroids.empty or not self.scale_factor:
+        if self.is_fitted is False:
             raise MDAError(
                 "_nearest_indices must be called after or during fitting, not before."
             )
@@ -312,7 +308,7 @@ class MDA(BaseClustering):
         self.directional_variables = directional_variables
         self.custom_scale_factor = custom_scale_factor
 
-        # TODO: add good explanation of fitting
+        # TODO: add good explanation for fitting
         self.logger.info(
             f"\nmda parameters: {self.data.shape[0]} --> {self.num_centers}\n"
         )
@@ -367,6 +363,9 @@ class MDA(BaseClustering):
                 )
 
             n_c = subset.shape[0]
+
+        # Set the fitted flag to True
+        self.is_fitted = True
 
         # De-normalize scalar and directional data
         self.normalized_centroids = pd.DataFrame(subset, columns=self.data_variables)
