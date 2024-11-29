@@ -80,8 +80,6 @@ def validate_data_mda(func):
             raise TypeError("Data must be a pandas DataFrame")
         if not isinstance(directional_variables, list):
             raise TypeError("Directional variables must be a list")
-        if not isinstance(custom_scale_factor, dict):
-            raise TypeError("Custom scale factor must be a dict")
         for directional_variable in directional_variables:
             if directional_variable not in custom_scale_factor:
                 if directional_variable in _default_custom_scale_factor:
@@ -95,6 +93,8 @@ def validate_data_mda(func):
                     self.logger.warning(
                         f"No custom scale factor provided for {directional_variable}, min and max values will be used"
                     )
+        if not isinstance(custom_scale_factor, dict):
+            raise TypeError("Custom scale factor must be a dict")
         return func(self, data, directional_variables, custom_scale_factor)
 
     return wrapper
@@ -119,8 +119,7 @@ def validate_data_kma(func):
     def wrapper(
         self,
         data: pd.DataFrame,
-        directional_variables: List[str],
-        custom_scale_factor: dict,
+        custom_scale_factor: dict = {},
     ):
         # NOTE: Default custom scale factors are defined below
         _default_custom_scale_factor = {}
@@ -128,24 +127,9 @@ def validate_data_kma(func):
             raise ValueError("Data cannot be None")
         elif not isinstance(data, pd.DataFrame):
             raise TypeError("Data must be a pandas DataFrame")
-        if not isinstance(directional_variables, list):
-            raise TypeError("Directional variables must be a list")
         if not isinstance(custom_scale_factor, dict):
             raise TypeError("Custom scale factor must be a dict")
-        for directional_variable in directional_variables:
-            if directional_variable not in custom_scale_factor:
-                if directional_variable in _default_custom_scale_factor:
-                    custom_scale_factor[directional_variable] = (
-                        _default_custom_scale_factor[directional_variable]
-                    )
-                    self.logger.warning(
-                        f"Using default custom scale factor for {directional_variable}"
-                    )
-                else:
-                    self.logger.warning(
-                        f"No custom scale factor provided for {directional_variable}, min and max values will be used"
-                    )
-        return func(self, data, directional_variables, custom_scale_factor)
+        return func(self, data, custom_scale_factor)
 
     return wrapper
 

@@ -32,10 +32,8 @@ class KMA(BaseClustering):
         The input data.
     _normalized_data : pd.DataFrame
         The normalized input data.
-    data_variables : list
+    data_variables : List[str]
         A list of all data variables.
-    directional_variables : list
-        A list with directional variables.
     custom_scale_factor : dict
         A dictionary of custom scale factors.
     scale_factor : dict
@@ -66,11 +64,7 @@ class KMA(BaseClustering):
     ...     }
     ... )
     >>> kma = KMA(num_clusters=5)
-    >>> kma_centroids, kma_centroids_df = kma.fit(
-    ...     data=data,
-    ...     directional_variables=['Dir'],
-    ...     custom_scale_factor={'Dir': [0, 360]},
-    ... )
+    >>> kma_centroids, kma_centroids_df = kma.fit(data=data)
     """
 
     def __init__(self, num_clusters: int, seed: int = 0) -> None:
@@ -110,8 +104,7 @@ class KMA(BaseClustering):
         )
         self._data: pd.DataFrame = pd.DataFrame()
         self._normalized_data: pd.DataFrame = pd.DataFrame()
-        self.data_variables: list = []
-        self.directional_variables: list = []
+        self.data_variables: List[str] = []
         self.custom_scale_factor: dict = {}
         self.scale_factor: dict = {}
         self.centroids: pd.DataFrame = pd.DataFrame()
@@ -134,24 +127,22 @@ class KMA(BaseClustering):
     def fit(
         self,
         data: pd.DataFrame,
-        directional_variables: List[str],
-        custom_scale_factor: dict,
+        custom_scale_factor: dict = {},
     ) -> None:
         """
         Fit the K-Means algorithm to the provided data.
 
         This method initializes centroids for the K-Means algorithm using the
-        provided dataframe, directional variables, and custom scale factor.
+        provided dataframe and custom scale factor.
         It normalizes the data, and returns the calculated centroids.
 
         Parameters
         ----------
         data : pd.DataFrame
             The input data to be used for the KMA algorithm.
-        directional_variables : List[str]
-            A list of names of the directional variables within the data.
-        custom_scale_factor : dict
+        custom_scale_factor : dict, optional
             A dictionary specifying custom scale factors for normalization.
+            Default is {}.
 
         Notes
         -----
@@ -162,8 +153,7 @@ class KMA(BaseClustering):
 
         self._data = data.copy()
         self.data_variables = list(self.data.columns)
-        self.directional_variables = directional_variables
-        self.custom_scale_factor = custom_scale_factor
+        self.custom_scale_factor = custom_scale_factor.copy()
 
         # TODO: add good explanation of fitting
         self.logger.info(
@@ -178,7 +168,7 @@ class KMA(BaseClustering):
         # Fit K-Means algorithm
         kma = self.kma.fit(self.normalized_data)
 
-        # De-normalize scalar and directional data
+        # Calculate the centroids
         self.bmus = kma.labels_
         self.normalized_centroids = pd.DataFrame(
             kma.cluster_centers_, columns=self.data_variables
@@ -212,8 +202,7 @@ class KMA(BaseClustering):
     def fit_predict(
         self,
         data: pd.DataFrame,
-        directional_variables: List[str],
-        custom_scale_factor: dict,
+        custom_scale_factor: dict = {},
     ) -> Tuple[np.ndarray, pd.DataFrame]:
         """
         Fit the K-Means algorithm to the provided data and predict the nearest centroid for each data point.
@@ -222,10 +211,9 @@ class KMA(BaseClustering):
         ----------
         data : pd.DataFrame
             The input data to be used for the KMA algorithm.
-        directional_variables : List[str]
-            A list of names of the directional variables within the data.
         custom_scale_factor : dict
             A dictionary specifying custom scale factors for normalization.
+            Default is {}.
 
         Returns
         -------
@@ -235,7 +223,6 @@ class KMA(BaseClustering):
 
         self.fit(
             data=data,
-            directional_variables=directional_variables,
             custom_scale_factor=custom_scale_factor,
         )
         y, nearest_centroids = self.predict(data=data)

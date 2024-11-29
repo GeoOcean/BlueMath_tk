@@ -293,8 +293,10 @@ class MDA(BaseClustering):
             The input data to be used for the MDA algorithm.
         directional_variables : List[str], optional
             A list of names of the directional variables within the data.
+            Default is [].
         custom_scale_factor : dict, optional
             A dictionary specifying custom scale factors for normalization.
+            Default is {}.
 
         Notes
         -----
@@ -411,8 +413,10 @@ class MDA(BaseClustering):
             The input data to be used for the MDA algorithm.
         directional_variables : List[str], optional
             A list of names of the directional variables within the data.
+            Default is [].
         custom_scale_factor : dict, optional
             A dictionary specifying custom scale factors for normalization.
+            Default is {}.
 
         Returns
         -------

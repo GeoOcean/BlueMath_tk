@@ -16,11 +16,7 @@ class TestKMA(unittest.TestCase):
         self.kma = KMA(num_clusters=10)
 
     def test_fit(self):
-        self.kma.fit(
-            data=self.df,
-            directional_variables=["Dir"],
-            custom_scale_factor={"Dir": [0, 360]},
-        )
+        self.kma.fit(data=self.df)
         self.assertIsInstance(self.kma.centroids, pd.DataFrame)
         self.assertEqual(self.kma.centroids.shape[0], 10)
 
@@ -32,25 +28,15 @@ class TestKMA(unittest.TestCase):
                 "Dir": np.random.rand(15) * 360,
             }
         )
-        self.kma.fit(
-            data=self.df,
-            directional_variables=["Dir"],
-            custom_scale_factor={},
-        )
-        nearest_centroids, nearest_centroid_df = self.kma.predict(
-            data=data_sample,
-        )
+        self.kma.fit(data=self.df)
+        nearest_centroids, nearest_centroid_df = self.kma.predict(data=data_sample)
         self.assertIsInstance(nearest_centroids, np.ndarray)
         self.assertEqual(len(nearest_centroids), 15)
         self.assertIsInstance(nearest_centroid_df, pd.DataFrame)
         self.assertEqual(nearest_centroid_df.shape[0], 15)
 
     def test_fit_predict(self):
-        nearest_centroids, nearest_centroid_df = self.kma.fit_predict(
-            data=self.df,
-            directional_variables=["Dir"],
-            custom_scale_factor={"Dir": [0, 360]},
-        )
+        nearest_centroids, nearest_centroid_df = self.kma.fit_predict(data=self.df)
         self.assertIsInstance(nearest_centroids, np.ndarray)
         self.assertEqual(len(nearest_centroids), 1000)
         self.assertIsInstance(nearest_centroid_df, pd.DataFrame)
