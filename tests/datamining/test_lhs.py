@@ -1,4 +1,5 @@
 import unittest
+import os
 import pandas as pd
 from bluemath_tk.datamining.lhs import LHS
 
@@ -19,6 +20,14 @@ class TestLHS(unittest.TestCase):
         )
         self.assertIsInstance(lhs_sampled_df, pd.DataFrame)
         self.assertEqual(lhs_sampled_df.shape[0], 100)
+
+    def test_save_model(self):
+        self.lhs.save_model("tests_data/lhs_model.pkl")
+        self.assertTrue(os.path.exists("tests_data/lhs_model.pkl"))
+
+    def test_load_model(self):
+        lhs_loaded = self.lhs.load_model("tests_data/lhs_model.pkl")
+        self.assertIsInstance(lhs_loaded, LHS)
 
 
 if __name__ == "__main__":

@@ -107,7 +107,7 @@ class LHS(BaseSampling):
         lower_bounds: List[float],
         upper_bounds: List[float],
         num_samples: int,
-    ):
+    ) -> pd.DataFrame:
         """
         Generate LHS samples.
 

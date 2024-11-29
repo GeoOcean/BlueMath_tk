@@ -18,7 +18,7 @@ class BaseSampling(BlueMathModel):
     """
 
     @abstractmethod
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     @abstractmethod
@@ -40,6 +40,70 @@ class BaseSampling(BlueMathModel):
         """
 
         return pd.DataFrame()
+
+    def plot_generated_data(
+        self,
+        data_color: str = "blue",
+        **kwargs,
+    ) -> Tuple[plt.figure, plt.axes]:
+        """
+        Plots the generated data on a scatter plot matrix.
+
+        Parameters
+        ----------
+        data_color : str, optional
+            Color for the data points. Default is "blue".
+        **kwargs : dict, optional
+            Additional keyword arguments to be passed to the scatter plot function.
+
+        Returns
+        -------
+        fig : plt.figure
+            The figure object containing the plot.
+        axes : plt.axes
+            Array of axes objects for the subplots.
+
+        Raises
+        ------
+        ValueError
+            If the data is empty.
+        """
+
+        if not self.data.empty:
+            variables_names = list(self.data.columns)
+            num_variables = len(variables_names)
+        else:
+            raise ValueError("Data must be a non-empty DataFrame with columns to plot.")
+
+        # Create figure and axes
+        default_static_plot = DefaultStaticPlotting()
+        fig, axes = default_static_plot.get_subplots(
+            nrows=num_variables - 1,
+            ncols=num_variables - 1,
+            sharex=False,
+            sharey=False,
+        )
+
+        for c1, v1 in enumerate(variables_names[1:]):
+            for c2, v2 in enumerate(variables_names[:-1]):
+                default_static_plot.plot_scatter(
+                    ax=axes[c2, c1],
+                    x=self.data[v1],
+                    y=self.data[v2],
+                    c=data_color,
+                    s=kwargs.get("s", default_static_plot.default_scatter_size),
+                    alpha=kwargs.get("alpha", 0.7),
+                )
+                if c1 == c2:
+                    axes[c2, c1].set_xlabel(variables_names[c1 + 1])
+                    axes[c2, c1].set_ylabel(variables_names[c2])
+                elif c1 > c2:
+                    axes[c2, c1].xaxis.set_ticklabels([])
+                    axes[c2, c1].yaxis.set_ticklabels([])
+                else:
+                    fig.delaxes(axes[c2, c1])
+
+        return fig, axes
 
 
 class BaseClustering(BlueMathModel):
@@ -165,7 +229,6 @@ class BaseClustering(BlueMathModel):
                     s=kwargs.get("s", default_static_plot.default_scatter_size),
                     alpha=kwargs.get("alpha", 0.7),
                 )
-                # Plot centroids in selected ax if passed
                 if self.centroids is not None:
                     default_static_plot.plot_scatter(
                         ax=axes[c2, c1],
@@ -268,5 +331,5 @@ class BaseReduction(BlueMathModel):
     """
 
     @abstractmethod
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
