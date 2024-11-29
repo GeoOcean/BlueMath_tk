@@ -63,7 +63,7 @@ class MDA(BaseClustering):
     ...     }
     ... )
     >>> mda = MDA(num_centers=10)
-    >>> mda_centroids_df = mda.fit_predict(
+    >>> mda_centroids, mda_centroids_df = mda.fit_predict(
     ...     data=data,
     ...     directional_variables=['Dir'],
     ...     custom_scale_factor={'Dir': [0, 360]},
@@ -278,7 +278,7 @@ class MDA(BaseClustering):
         data: pd.DataFrame,
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
-    ):
+    ) -> None:
         """
         Fit the Maximum Dissimilarity Algorithm (MDA) to the provided data.
 
@@ -379,7 +379,7 @@ class MDA(BaseClustering):
             data=self.normalized_data
         )
 
-    def predict(self, data: pd.DataFrame):
+    def predict(self, data: pd.DataFrame) -> Tuple[np.ndarray, pd.DataFrame]:
         """
         Predict the nearest centroid for the provided data.
 
@@ -390,7 +390,7 @@ class MDA(BaseClustering):
 
         Returns
         -------
-        self._nearest_indices(data=data) : Tuple[np.ndarray, pd.DataFrame]
+        Tuple[np.ndarray, pd.DataFrame]
             A tuple containing the nearest centroid index for each data point and the nearest centroids.
         """
 
@@ -401,7 +401,7 @@ class MDA(BaseClustering):
         data: pd.DataFrame,
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
-    ):
+    ) -> Tuple[np.ndarray, pd.DataFrame]:
         """
         Fits the MDA model to the data and predicts the nearest centroids.
 
@@ -416,7 +416,7 @@ class MDA(BaseClustering):
 
         Returns
         -------
-        self.predict(data=data) : Tuple[np.ndarray, pd.DataFrame]
+        Tuple[np.ndarray, pd.DataFrame]
             A tuple containing the nearest centroid index for each data point and the nearest centroids.
         """
 

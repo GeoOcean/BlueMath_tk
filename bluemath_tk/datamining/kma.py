@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import List
+from typing import List, Tuple
 from sklearn.cluster import KMeans
 from ._base_datamining import BaseClustering
 from ..core.decorators import validate_data_kma
@@ -66,7 +66,7 @@ class KMA(BaseClustering):
     ...     }
     ... )
     >>> kma = KMA(num_clusters=5)
-    >>> kma_centroids_df = kma.fit(
+    >>> kma_centroids, kma_centroids_df = kma.fit(
     ...     data=data,
     ...     directional_variables=['Dir'],
     ...     custom_scale_factor={'Dir': [0, 360]},
@@ -85,7 +85,7 @@ class KMA(BaseClustering):
         seed : int, optional
             The random seed to use.
             Must be greater or equal to 0.
-            Defaults to 0.
+            Default is 0.
 
         Raises
         ------
@@ -136,7 +136,7 @@ class KMA(BaseClustering):
         data: pd.DataFrame,
         directional_variables: List[str],
         custom_scale_factor: dict,
-    ):
+    ) -> None:
         """
         Fit the K-Means algorithm to the provided data.
 
@@ -152,11 +152,6 @@ class KMA(BaseClustering):
             A list of names of the directional variables within the data.
         custom_scale_factor : dict
             A dictionary specifying custom scale factors for normalization.
-
-        Returns
-        -------
-        pd.DataFrame
-            The calculated centroids of the data.
 
         Notes
         -----
@@ -192,10 +187,57 @@ class KMA(BaseClustering):
             normalized_data=self.normalized_centroids, scale_factor=self.scale_factor
         )
 
-        return self.centroids
+    def predict(self, data: pd.DataFrame) -> Tuple[np.ndarray, pd.DataFrame]:
+        """
+        Predict the nearest centroid for the provided data.
 
-    def predict(self, *args, **kwargs):
-        return super().predict(*args, **kwargs)
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The input data to be used for the prediction.
 
-    def fit_predict(self, *args, **kwargs):
-        return super().fit_predict(*args, **kwargs)
+        Returns
+        -------
+        Tuple[np.ndarray, pd.DataFrame]
+            A tuple containing the nearest centroid index for each data point and the nearest centroids.
+        """
+
+        normalized_data, _ = self.normalize(
+            data=data, custom_scale_factor=self.scale_factor
+        )
+        y = self.kma.predict(X=normalized_data)
+
+        return y, self.centroids.iloc[y]
+
+    def fit_predict(
+        self,
+        data: pd.DataFrame,
+        directional_variables: List[str],
+        custom_scale_factor: dict,
+    ) -> Tuple[np.ndarray, pd.DataFrame]:
+        """
+        Fit the K-Means algorithm to the provided data and predict the nearest centroid for each data point.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The input data to be used for the KMA algorithm.
+        directional_variables : List[str]
+            A list of names of the directional variables within the data.
+        custom_scale_factor : dict
+            A dictionary specifying custom scale factors for normalization.
+
+        Returns
+        -------
+        Tuple[pd.DataFrame, np.ndarray, pd.DataFrame]
+            A tuple containing the nearest centroid index for each data point, and the nearest centroids.
+        """
+
+        self.fit(
+            data=data,
+            directional_variables=directional_variables,
+            custom_scale_factor=custom_scale_factor,
+        )
+        y, nearest_centroids = self.predict(data=data)
+
+        return y, nearest_centroids

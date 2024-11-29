@@ -123,7 +123,7 @@ class BaseClustering(BlueMathModel):
     ) -> Tuple[plt.figure, plt.axes]
     plot_data_as_clusters(
         data: pd.DataFrame,
-        closest_centroids: np.ndarray,
+        nearest_centroids: np.ndarray,
         **kwargs
     ) -> Tuple[plt.figure, plt.axes]
     """
@@ -247,6 +247,14 @@ class BaseClustering(BlueMathModel):
                         s=kwargs.get("s", default_static_plot.default_scatter_size),
                         alpha=kwargs.get("alpha", 0.9),
                     )
+                    for i in range(self.centroids.shape[0]):
+                        axes[c2, c1].text(
+                            self.centroids[v1][i],
+                            self.centroids[v2][i],
+                            str(i + 1),
+                            fontsize=kwargs.get("fontsize", 12),
+                            fontweight=kwargs.get("fontweight", "bold"),
+                        )
                 if c1 == c2:
                     axes[c2, c1].set_xlabel(variables_names[c1 + 1])
                     axes[c2, c1].set_ylabel(variables_names[c2])
@@ -261,18 +269,18 @@ class BaseClustering(BlueMathModel):
     def plot_data_as_clusters(
         self,
         data: pd.DataFrame,
-        closest_centroids: np.ndarray,
+        nearest_centroids: np.ndarray,
         **kwargs,
     ) -> Tuple[plt.figure, plt.axes]:
         """
-        Plots data as closest clusters.
+        Plots data as nearest clusters.
 
         Parameters
         ----------
         data : pd.DataFrame
             The data to plot.
-        closest_centroids : np.ndarray
-            The closest centroids.
+        nearest_centroids : np.ndarray
+            The nearest centroids.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the scatter plot function.
 
@@ -287,13 +295,13 @@ class BaseClustering(BlueMathModel):
         if (
             not data.empty
             and list(self.data.columns) != []
-            and closest_centroids.size > 0
+            and nearest_centroids.size > 0
         ):
             variables_names = list(data.columns)
             num_variables = len(variables_names)
         else:
             raise ValueError(
-                "Data must have columns and closest centroids must have values."
+                "Data must have columns and nearest centroids must have values."
             )
 
         # Create figure and axes
@@ -305,11 +313,11 @@ class BaseClustering(BlueMathModel):
             sharey=False,
         )
 
-        # Gets colors for clusters and append to each closest centroid
+        # Gets colors for clusters and append to each nearest centroid
         colors_for_clusters = default_static_plot.get_list_of_colors_for_colormap(
-            cmap="viridis", num_colors=self.centroids.shape[0]
+            cmap="jet", num_colors=self.centroids.shape[0]
         )
-        closest_centroids_colors = [colors_for_clusters[i] for i in closest_centroids]
+        nearest_centroids_colors = [colors_for_clusters[i] for i in nearest_centroids]
 
         for c1, v1 in enumerate(variables_names[1:]):
             for c2, v2 in enumerate(variables_names[:-1]):
@@ -317,7 +325,7 @@ class BaseClustering(BlueMathModel):
                     ax=axes[c2, c1],
                     x=data[v1],
                     y=data[v2],
-                    c=closest_centroids_colors,
+                    c=nearest_centroids_colors,
                     s=kwargs.get("s", default_static_plot.default_scatter_size),
                     alpha=kwargs.get("alpha", 0.7),
                 )
