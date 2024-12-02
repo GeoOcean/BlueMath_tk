@@ -129,6 +129,9 @@ class DefaultStaticPlotting(BasePlotting):
         ax.scatter(**kwargs)
         self.set_grid(ax)
 
+    def plot_pie(self, ax, **kwargs):
+        ax.pie(**kwargs)
+
     def plot_map(self, ax, **kwargs):
         ax.set_global()
         ax.coastlines()

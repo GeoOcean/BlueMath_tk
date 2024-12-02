@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Tuple
+from typing import Tuple, List
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -209,7 +209,7 @@ class BaseClustering(BlueMathModel):
         """
 
         if (
-            list(self.data.columns) == list(self.centroids.columns)
+            len(self.data.columns) == len(self.centroids.columns)
             and list(self.data.columns) != []
         ):
             variables_names = list(self.data.columns)
@@ -350,3 +350,60 @@ class BaseReduction(BlueMathModel):
     @abstractmethod
     def __init__(self) -> None:
         super().__init__()
+
+
+class ClusteringComparator:
+    """
+    Class for comparing clustering models.
+    """
+
+    def __init__(self, list_of_models: List[BaseClustering]) -> None:
+        """
+        Initializes the ClusteringComparator class.
+        """
+
+        self.list_of_models = list_of_models
+
+    def fit(
+        self,
+        data: pd.DataFrame,
+        directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
+    ) -> None:
+        """
+        Fits the clustering models.
+        """
+
+        for model in self.list_of_models:
+            if model.__class__.__name__ == "SOM":
+                model.fit(
+                    data=data,
+                    directional_variables=directional_variables,
+                )
+            else:
+                model.fit(
+                    data=data,
+                    directional_variables=directional_variables,
+                    custom_scale_factor=custom_scale_factor,
+                )
+
+    def plot_selected_centroids(self) -> None:
+        """
+        Plots the selected centroids for the clustering models.
+        """
+
+        for model in self.list_of_models:
+            fig, axes = model.plot_selected_centroids()
+            fig.suptitle(f"Selected centroids for {model.__class__.__name__}")
+
+    def plot_data_as_clusters(self, data: pd.DataFrame) -> None:
+        """
+        Plots the data as clusters for the clustering models.
+        """
+
+        for model in self.list_of_models:
+            nearest_centroids, _ = model.predict(data=data)
+            fig, axes = model.plot_data_as_clusters(
+                data=data, nearest_centroids=nearest_centroids
+            )
+            fig.suptitle(f"Data as clusters for {model.__class__.__name__}")
