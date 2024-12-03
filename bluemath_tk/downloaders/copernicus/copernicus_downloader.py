@@ -38,7 +38,9 @@ class CopernicusDownloader(BlueMathDownloader):
     products_configs = {
         "ERA5": json.load(
             # open(os.path.join(os.path.dirname(__file__), "ERA5", "ERA5_config.json"))
-            open("/home/grupos/geocean/tausiaj/BlueMath_tk/bluemath_tk/downloaders/copernicus/ERA5/ERA5_config.json")
+            open(
+                "/home/grupos/geocean/tausiaj/BlueMath_tk/bluemath_tk/downloaders/copernicus/ERA5/ERA5_config.json"
+            )
         )
     }
 
@@ -308,7 +310,6 @@ class CopernicusDownloader(BlueMathDownloader):
                     """)
 
                     try:
-
                         if self.check or not force:
                             if os.path.exists(output_nc_file):
                                 self.logger.debug(
@@ -316,7 +317,9 @@ class CopernicusDownloader(BlueMathDownloader):
                                 )
                                 try:
                                     nc = xr.open_dataset(output_nc_file)
-                                    _, last_day = calendar.monthrange(int(year), int(month))
+                                    _, last_day = calendar.monthrange(
+                                        int(year), int(month)
+                                    )
                                     last_hour = f"{year}-{int(month):02d}-{last_day}T23"
                                     last_hour_nc = str(nc.valid_time[-1].values)
                                     nc.close()
@@ -325,7 +328,9 @@ class CopernicusDownloader(BlueMathDownloader):
                                             f"{output_nc_file} ends at {last_hour_nc} instead of {last_hour}"
                                         )
                                         if self.check:
-                                            NOT_fullly_downloaded_files.append(output_nc_file)
+                                            NOT_fullly_downloaded_files.append(
+                                                output_nc_file
+                                            )
                                         else:
                                             self.logger.debug(
                                                 f"Downloading: {variable} to {output_nc_file} because it is not complete"
@@ -335,7 +340,9 @@ class CopernicusDownloader(BlueMathDownloader):
                                                 request=template_for_variable,
                                                 target=output_nc_file,
                                             )
-                                            fully_downloaded_files.append(output_nc_file)
+                                            fully_downloaded_files.append(
+                                                output_nc_file
+                                            )
                                     else:
                                         fully_downloaded_files.append(output_nc_file)
                                 except Exception as e:
@@ -343,7 +350,9 @@ class CopernicusDownloader(BlueMathDownloader):
                                         f"Error was raised opening {output_nc_file}, re-downloading..."
                                     )
                                     if self.check:
-                                        NOT_fullly_downloaded_files.append(output_nc_file)
+                                        NOT_fullly_downloaded_files.append(
+                                            output_nc_file
+                                        )
                                     else:
                                         self.logger.debug(
                                             f"Downloading: {variable} to {output_nc_file} because it is not complete"
@@ -378,7 +387,6 @@ class CopernicusDownloader(BlueMathDownloader):
                             fully_downloaded_files.append(output_nc_file)
 
                     except Exception as e:
-
                         self.logger.error(f"""
                                           
                             Skippping {output_nc_file} for {e}
@@ -386,9 +394,9 @@ class CopernicusDownloader(BlueMathDownloader):
                         """)
                         error_files.append(output_nc_file)
 
-        fully_downloaded_files_str = '\n'.join(fully_downloaded_files)
-        NOT_fullly_downloaded_files_str = '\n'.join(NOT_fullly_downloaded_files)
-        error_files = '\n'.join(error_files)
+        fully_downloaded_files_str = "\n".join(fully_downloaded_files)
+        NOT_fullly_downloaded_files_str = "\n".join(NOT_fullly_downloaded_files)
+        error_files = "\n".join(error_files)
 
         return f"""
             Fully downloaded files:
