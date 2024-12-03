@@ -310,67 +310,6 @@ class RBF(BaseInterpolation):
     def opt_sigmas(self) -> dict:
         return self._opt_sigmas
 
-    @staticmethod
-    def _get_uv_components(x_deg: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        This function calculates the u and v components for the given directional data.
-
-        Parameters
-        ----------
-        x_deg : np.ndarray
-            The directional data in degrees.
-
-        Returns
-        -------
-        Tuple[np.ndarray, np.ndarray]
-            The u and v components.
-
-        Notes
-        -----
-        - TODO: This function can be moved to a separate utility module.
-        """
-
-        # Convert degrees to radians and adjust by subtracting from π/2
-        x_rad = x_deg * np.pi / 180
-
-        # Calculate x and y components using cosine and sine
-        xu = np.cos(x_rad)
-        xv = np.sin(x_rad)
-
-        # Return the u and v components
-        return xu, xv
-
-    @staticmethod
-    def _get_degrees_from_uv(xu: np.ndarray, xv: np.ndarray) -> np.ndarray:
-        """
-        This function calculates the degrees from the u and v components.
-
-        Parameters
-        ----------
-        xu : np.ndarray
-            The u component.
-        xv : np.ndarray
-            The v component.
-
-        Returns
-        -------
-        np.ndarray
-            The degrees.
-
-        Notes
-        -----
-        - TODO: This function can be moved to a separate utility module.
-        """
-
-        # Calculate the degrees using the arctangent function
-        x_deg = np.arctan2(xv, xu) * 180 / np.pi
-
-        # Adjust the degrees to be between 0 and 360
-        x_deg = np.where(x_deg < 0, x_deg + 360, x_deg)
-
-        # Return the degrees
-        return x_deg
-
     def _preprocess_subset_data(
         self, subset_data: pd.DataFrame, is_fit: bool = True
     ) -> pd.DataFrame:

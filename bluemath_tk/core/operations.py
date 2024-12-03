@@ -201,6 +201,7 @@ def denormalize(
     return data
 
 
+# TODO: Return pd.DataFrame or xr.Dataset depending on input type
 def standarize(
     data: Union[np.ndarray, pd.DataFrame, xr.Dataset],
     scaler: StandardScaler = None,

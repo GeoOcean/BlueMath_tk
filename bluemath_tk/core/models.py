@@ -270,3 +270,85 @@ class BlueMathModel(ABC):
             }
 
         return pd.DataFrame(metrics).T
+
+    @staticmethod
+    def _get_uv_components(x_deg: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        This method calculates the u and v components for the given directional data.
+
+        Here, we assume that the directional data is in degrees,
+            beign 0° the North direction,
+            and increasing clockwise.
+
+                   0° N
+                    |
+                    |
+        270° W <---------> 90° E
+                    |
+                    |
+                  90° S
+
+        Parameters
+        ----------
+        x_deg : np.ndarray
+            The directional data in degrees.
+
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray]
+            The u and v components.
+
+        Notes
+        -----
+        - TODO: This method can be moved to a separate utility module.
+        """
+
+        # Convert degrees to radians and adjust by subtracting from π/2
+        x_rad = x_deg * np.pi / 180
+
+        # Calculate x and y components using cosine and sine
+        xu = np.sin(x_rad)
+        xv = np.cos(x_rad)
+
+        # Return the u and v components
+        return xu, xv
+
+    @staticmethod
+    def _get_degrees_from_uv(xu: np.ndarray, xv: np.ndarray) -> np.ndarray:
+        """
+        This method calculates the degrees from the u and v components.
+
+        Here, we assume u and v represent angles between 0 and 360 degrees,
+            where 0° is the North direction,
+            and increasing clockwise.
+
+                     (u=0, v=1)
+                         |
+                         |
+        (u=-1, v=0) <---------> (u=1, v=0)
+                         |
+                         |
+                     (u=0, v=-1)
+
+        Parameters
+        ----------
+        xu : np.ndarray
+            The u component.
+        xv : np.ndarray
+            The v component.
+
+        Returns
+        -------
+        np.ndarray
+            The degrees.
+
+        Notes
+        -----
+        - TODO: This method can be moved to a separate utility module.
+        """
+
+        # Calculate the degrees using the arctangent function
+        x_deg = np.arctan2(xu, xv) * 180 / np.pi % 360
+
+        # Return the degrees
+        return x_deg

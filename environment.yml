@@ -14,7 +14,6 @@ dependencies:
   - cartopy
   - pytest
   - cdsapi
-  # PIP packages can be added belos (Avoid this)
-  # - pip
-  # - pip:
-  #   - some-package
+  # PIP packages can be added below (avoid this whenever possible)
+  - pip:
+      - minisom
