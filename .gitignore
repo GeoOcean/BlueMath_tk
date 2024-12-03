@@ -97,3 +97,4 @@ venv.bak/
 
 # Local notebooks
 notebooks/
+test_cases/
