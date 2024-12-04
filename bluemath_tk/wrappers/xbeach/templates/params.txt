@@ -1,0 +1,79 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Project: Laredo NH, Case: 000 %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% Grid parameters %%%
+
+xyfile      = laredo_x5.grd
+depfile     = bathy_000.dep.dep
+gridform    = delft3d
+posdwn      = -1
+vardx       = 1
+thetanaut   = 1
+thetamin    = 0    
+thetamax    = {{ thetamax }}
+dtheta      = {{ dtheta }}
+
+%%% Modes specification %%%
+
+wavemodel   = nonh
+sedtrans    = 0
+morphology  = 0
+nonh        = 1
+nonhq3d     = 1
+
+%%% Model time %%%
+
+tstop       = 3600
+CFL         = 0.5
+
+%%% SWE boundary conditions type %%%
+
+left        = neumann
+right       = neumann
+front       = nonh_1d
+back        = abs_2d
+
+%%% Bottom and short-wave friction %%%
+
+bedfriction = manning
+bedfricfile = friction.txt
+fw = 0.03
+
+%%% Wave boundary condition parameters %%%
+
+wbctype = vardens
+bcfile  = loclist.txt
+wbcversion   = 3 
+nspectrumloc = 4
+
+%%% Tide boundary conditions %%%
+
+zs0     = 2.624534580326932
+
+%%% Numerical parameters %%%
+
+eps         = 0.01
+
+%%% Physical constants %%%
+
+rho         = 1025
+g           = 9.81
+
+%%% Bed composition parameters %%%
+
+D50         = 0.00023
+
+%%% Output variables %%%
+
+outputformat = netcdf
+tstart       = 0
+tintg        = 1
+tintm        = 1800
+
+nglobalvar   = 1
+zs
+
+nmeanvar     = 2
+zs
+zb

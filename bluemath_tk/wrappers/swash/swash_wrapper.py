@@ -27,69 +27,48 @@ class SwashModelWrapper(BaseModelWrapper):
             templates_name=templates_name,
             model_parameters=model_parameters,
             output_dir=output_dir,
+            default_parameters=self.default_parameters,
         )
         self.set_logger_name(self.__class__.__name__)
-        for model_param, param_value in self.model_parameters.items():
-            if model_param not in self.default_parameters:
-                self.logger.warning(
-                    f"Parameter {model_param} is not in the default_parameters"
-                )
-            else:
-                if isinstance(param_value, list) and all(
-                    isinstance(item, float) for item in param_value
-                ):
-                    self.logger.info(
-                        f"Parameter {model_param} has the correct type: {type(param_value)}"
-                    )
-                else:
-                    self.logger.error(
-                        f"Parameter {model_param} has the wrong type: {type(param_value)}"
-                    )
+
+    def build_case(self, case_context: dict):
+        pass
 
     def build_cases(self, mode: str = "all_combinations"):
-        if mode == "all_combinations":
-            cases_context = self.create_cases_context_all_combinations()
-        elif mode == "one_by_one":
-            cases_context = self.create_cases_context_one_by_one()
-        else:
-            raise ValueError(f"Invalid mode: {mode}")
-        return cases_context
+        super().build_cases(mode=mode)
+
+    def run_model(self):
+        pass
 
 
 class MySwashModelWrapper(SwashModelWrapper):
     def build_cases(
         self,
-        mode: str = "all_combinations",
+        mode: str = "one_by_one",
         depth: np.ndarray = None,
         waves: np.ndarray = None,
         plants: np.ndarray = None,
     ):
         # Call the base class method to retain the original functionality
-        cases_context = super().build_cases(mode=mode)
+        super().build_cases(mode=mode)
         # Create the cases folders and render the input files
-        for case_num, case_context in enumerate(cases_context):
-            case_folder = os.path.join(self.output_dir, f"{case_num:04}")
-            os.makedirs(case_folder, exist_ok=True)
-            for template_name in self.templates_name:
-                self.render_file_from_template(
-                    template_name=template_name,
-                    context=case_context,
-                    output_filename=os.path.join(case_folder, template_name),
-                )
+        if not self.cases_context or not self.cases_dirs:
+            raise ValueError("Cases were not properly built.")
+        for case_context, case_dir in zip(self.cases_context, self.cases_dirs):
             if depth is not None:
                 # Save the depth to a file
                 self.write_array_in_file(
-                    array=depth, filename=os.path.join(case_folder, "depth.txt")
+                    array=depth, filename=os.path.join(case_dir, "depth.txt")
                 )
             if waves is not None:
                 # Save the waves to a file
                 self.write_array_in_file(
-                    array=waves, filename=os.path.join(case_folder, "waves.bnd")
+                    array=waves, filename=os.path.join(case_dir, "waves.bnd")
                 )
             if plants is not None:
                 # Save the plants to a file
                 self.write_array_in_file(
-                    array=plants, filename=os.path.join(case_folder, "plants.txt")
+                    array=plants, filename=os.path.join(case_dir, "plants.txt")
                 )
 
 

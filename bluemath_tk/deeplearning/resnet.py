@@ -1,6 +1,6 @@
 import keras
 from models import resnet_model
-from generators.mockDataGenerator import MockDataGenerator
+from generators.ncDataGenerator import DataGenerator
 
 # instantiate model class (load memory)
 model = resnet_model.get_model(
@@ -11,14 +11,17 @@ model = resnet_model.get_model(
 print(model.summary())
 
 # instantiate generator class
-train_generator = MockDataGenerator(
-    num_images=5000,
-    input_height=64,
-    input_width=64,
-    output_height=64,
-    output_width=64,
+train_generator = DataGenerator(
+    msl_path="/home/tausiaj/DATA/Comparison-ERA5/msl_spain.nc",
+    tp_path="/home/tausiaj/DATA/Comparison-ERA5/tp_spain.nc",
+    num_images=8760,
+    sequential=False,
     batch_size=1,
 )
+
+a, b = train_generator.__getitem__(1)
+print(a.shape)
+print(b.shape)
 # define oprimizer
 optimizer = keras.optimizers.AdamW
 model.compile(
