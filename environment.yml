@@ -1,4 +1,4 @@
-name: bluemath
+name: bluemath-deep
 channels:
   - conda-forge
 dependencies:
@@ -6,6 +6,8 @@ dependencies:
   - numpy
   - pandas
   - xarray
+  - netcdf4
+  - scipy
   - scikit-learn
   - matplotlib
   - qt
@@ -14,6 +16,8 @@ dependencies:
   - cartopy
   - pytest
   - cdsapi
+  - keras
+  - tensorflow
   # PIP packages can be added below (avoid this whenever possible)
   - pip:
       - minisom
