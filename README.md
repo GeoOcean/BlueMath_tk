@@ -9,15 +9,14 @@ The package also includes a set of utility functions for processing climate data
 ![Sketch](./bluemath_tk/sketch_tk.png)
 
 Link to the different sections:
-- [data](./codes/data/)
-- [datamining](./codes/datamining/)
-- [waves](./codes/waves/)
-- [predictor](./codes/predictor/)
-- [TC](./codes/TC/)
-- [distributions](./codes/distributions/)
-- [wrappers](./codes/wrappers/)
-- [risk](./codes/risk/)
-- [tide](./codes/tide/)
+- [datamining](./bluemath_tk/datamining/)
+- [waves](./bluemath_tk/waves/)
+- [predictor](./bluemath_tk/predictor/)
+- [TC](./bluemath_tk/tc/)
+- [distributions](./bluemath_tk/distributions/)
+- [wrappers](./bluemath_tk/wrappers/)
+- [risk](./bluemath_tk/risk/)
+- [tide](./bluemath_tk/tide/)
 
 ## Demos
 
@@ -34,3 +33,10 @@ This project is licensed under the MIT License. See the [license](LICENSE.txt) f
 ## Project status
 
 - UNDER DEVELOPMENT
+
+# TODOs
+
+- Add test to minisom
+- Check whole code in NNs
+- Add methods to wrappers
+- Check profiles in topo_bathy
