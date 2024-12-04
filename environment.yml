@@ -1,4 +1,4 @@
-name: bluemath-deep
+name: bluemath
 channels:
   - conda-forge
 dependencies:
@@ -21,8 +21,8 @@ dependencies:
   - jinja2
   - requests
   - aiohttp
-  - keras
-  - tensorflow
+  # - keras
+  # - tensorflow
   # PIP packages can be added below (avoid this whenever possible)
   - pip:
       - minisom
