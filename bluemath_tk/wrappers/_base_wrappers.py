@@ -83,9 +83,13 @@ class BaseModelWrapper(BlueMathModel):
         self.templates_name = templates_name
         self.model_parameters = model_parameters
         self.output_dir = output_dir
-        self.env = Environment(loader=FileSystemLoader(self.templates_dir))
+        self._env = Environment(loader=FileSystemLoader(self.templates_dir))
         self.cases_dirs: List[str] = []
         self.cases_context: List[dict] = []
+
+    @property
+    def env(self):
+        return self._env
 
     def _check_parameters_type(self, default_parameters: dict, model_parameters: dict):
         """
@@ -110,16 +114,16 @@ class BaseModelWrapper(BlueMathModel):
                     f"Parameter {model_param} is not in the default_parameters"
                 )
             else:
-                if isinstance(param_value, list) and all(
+                if isinstance(param_value, (list, np.ndarray)) and all(
                     isinstance(item, default_parameters[model_param])
                     for item in param_value
                 ):
                     self.logger.info(
-                        f"Parameter {model_param} has the correct type: {type(default_parameters[model_param])}"
+                        f"Parameter {model_param} has the correct type: {default_parameters[model_param]}"
                     )
                 else:
                     raise ValueError(
-                        f"Parameter {model_param} has the wrong type: {type(default_parameters[model_param])}"
+                        f"Parameter {model_param} has the wrong type: {default_parameters[model_param]}"
                     )
 
     def create_cases_context_one_by_one(self):
@@ -263,6 +267,7 @@ class BaseModelWrapper(BlueMathModel):
         else:
             raise ValueError(f"Invalid mode to create cases: {mode}")
         for case_num, case_context in enumerate(self.cases_context):
+            case_context["case_num"] = case_num
             case_dir = os.path.join(self.output_dir, f"{case_num:04}")
             self.cases_dirs.append(case_dir)
             os.makedirs(case_dir, exist_ok=True)
