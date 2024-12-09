@@ -8,7 +8,7 @@ from .._base_downloaders import BaseDownloader
 
 config = {
     "url": "https://cds.climate.copernicus.eu/api",  # /v2?
-    "key": "5cf7efae-13fc-4085-8a98-80d82bdb55f5",
+    "key": "c17382de-3363-47ea-9faa-ba4a9cce66b8",
 }
 
 # javi: 5cf7efae-13fc-4085-8a98-80d82bdb55f5
@@ -361,7 +361,7 @@ class CopernicusDownloader(BaseDownloader):
                                         int(year), int(month)
                                     )
                                     last_hour = f"{year}-{int(month):02d}-{last_day}T23"
-                                    last_hour_nc = str(nc.valid_time[-1].values)
+                                    last_hour_nc = str(nc.time[-1].values)
                                     nc.close()
                                     if last_hour not in last_hour_nc:
                                         self.logger.debug(
@@ -387,7 +387,7 @@ class CopernicusDownloader(BaseDownloader):
                                         fully_downloaded_files.append(output_nc_file)
                                 except Exception as e:
                                     self.logger.error(
-                                        f"Error was raised opening {output_nc_file}, re-downloading..."
+                                        f"Error was raised opening {output_nc_file} - {e}, re-downloading..."
                                     )
                                     if self.check:
                                         NOT_fullly_downloaded_files.append(

@@ -91,63 +91,6 @@
         }
     },
     "variables": {
-        "geo500": {
-            "cds_name": "geopotential",
-            "long_name": "Geopotential",
-            "nc_name": "geo500",
-            "type": "pressure",
-            "units": "m2 s-2",
-            "dataset": "reanalysis-era5-pressure-levels",
-            "pressure_level": "500"
-        },
-        "u10": {
-            "cds_name": "10m_u_component_of_wind",
-            "long_name": "10 metre U wind component",
-            "nc_name": "u10",
-            "type": "atmosphere",
-            "units": "m s-1",
-            "dataset": "reanalysis-era5-single-levels"
-        },
-        "v10": {
-            "cds_name": "10m_v_component_of_wind",
-            "long_name": "10 metre V wind component",
-            "nc_name": "v10",
-            "type": "atmosphere",
-            "units": "m s-1",
-            "dataset": "reanalysis-era5-single-levels"
-        },
-        "sst": {
-            "cds_name": "sea_surface_temperature",
-            "long_name": "Sea surface temperature",
-            "nc_name": "sst",
-            "type": "atmosphere",
-            "units": "K",
-            "dataset": "reanalysis-era5-single-levels"
-        },
-        "tp": {
-            "cds_name": "total_precipitation",
-            "long_name": "Total precipitation",
-            "nc_name": "tp",
-            "type": "atmosphere",
-            "units": "m",
-            "dataset": "reanalysis-era5-single-levels"
-        },
-        "msl": {
-            "cds_name": "mean_sea_level_pressure",
-            "long_name": "Mean sea level pressure",
-            "nc_name": "msl",
-            "type": "atmosphere",
-            "units": "Pa",
-            "dataset": "reanalysis-era5-single-levels"
-        },
-        "wmb": {
-            "cds_name": "model_bathymetry",
-            "long_name": "Model bathymetry",
-            "nc_name": "wmb",
-            "type": "ocean",
-            "units": "m",
-            "dataset": "reanalysis-era5-single-levels"
-        },
         "swh": {
             "cds_name": "significant_height_of_combined_wind_waves_and_swell",
             "long_name": "Significant height of combined wind waves and swell",
@@ -208,38 +151,6 @@
             "cds_name": "wave_spectral_directional_width_for_wind_waves",
             "long_name": "Wave spectral directional width for wind waves",
             "nc_name": "dwww",
-            "type": "ocean",
-            "units": "degrees",
-            "dataset": "reanalysis-era5-single-levels"
-        },
-        "shs": {
-            "cds_name": "significant_height_of_total_swell",
-            "long_name": "Significant height of total swell",
-            "nc_name": "shs",
-            "type": "ocean",
-            "units": "m",
-            "dataset": "reanalysis-era5-single-levels"
-        },
-        "mps": {
-            "cds_name": "mean_period_of_total_swell",
-            "long_name": "Mean period of total swell",
-            "nc_name": "mps",
-            "type": "ocean",
-            "units": "s",
-            "dataset": "reanalysis-era5-single-levels"
-        },
-        "mds": {
-            "cds_name": "mean_direction_of_total_swell",
-            "long_name": "Mean direction of total swell",
-            "nc_name": "mds",
-            "type": "ocean",
-            "units": "degrees",
-            "dataset": "reanalysis-era5-single-levels"
-        },
-        "dws": {
-            "cds_name": "wave_spectral_directional_width_for_swell",
-            "long_name": "Wave spectral directional width for total swell",
-            "nc_name": "dws",
             "type": "ocean",
             "units": "degrees",
             "dataset": "reanalysis-era5-single-levels"
