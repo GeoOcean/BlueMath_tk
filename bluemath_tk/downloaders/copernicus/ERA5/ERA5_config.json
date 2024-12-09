@@ -212,38 +212,6 @@
             "units": "degrees",
             "dataset": "reanalysis-era5-single-levels"
         },
-        "shs": {
-            "cds_name": "significant_height_of_total_swell",
-            "long_name": "Significant height of total swell",
-            "nc_name": "shs",
-            "type": "ocean",
-            "units": "m",
-            "dataset": "reanalysis-era5-single-levels"
-        },
-        "mps": {
-            "cds_name": "mean_period_of_total_swell",
-            "long_name": "Mean period of total swell",
-            "nc_name": "mps",
-            "type": "ocean",
-            "units": "s",
-            "dataset": "reanalysis-era5-single-levels"
-        },
-        "mds": {
-            "cds_name": "mean_direction_of_total_swell",
-            "long_name": "Mean direction of total swell",
-            "nc_name": "mds",
-            "type": "ocean",
-            "units": "degrees",
-            "dataset": "reanalysis-era5-single-levels"
-        },
-        "dws": {
-            "cds_name": "wave_spectral_directional_width_for_swell",
-            "long_name": "Wave spectral directional width for total swell",
-            "nc_name": "dws",
-            "type": "ocean",
-            "units": "degrees",
-            "dataset": "reanalysis-era5-single-levels"
-        },
         "p140121": {
             "cds_name": "significant_wave_height_of_first_swell_partition",
             "long_name": "Significant wave height of first swell partition",
