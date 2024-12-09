@@ -5,6 +5,7 @@ Usage: era5_download.py YEARS MONTHS [--var=<var>] [--base-path=<base-path>] [--
 era5_download.py (-h | --help | --version)
 era5_download.py --list-vars
 era5_download.py --list-datasets
+era5_download.py --show-info
 
 This script downloads ERA5 reanalysis data for multiple variables and saves them as NetCDF files.
 
@@ -25,12 +26,14 @@ Options:
   --force                   Overwrite the data in case it exists.
   --list-vars               Return a list with the available variables.
   --list-datasets           Return a list with the available datasets.
+  --show-info               Show information about the variables.
 
 Examples:
     era5_download.py 2014,2016 1,10 --var tp,sst --debug
     era5_download.py 2014,2016 1,10 --var tp,sst --debug --check
     era5_download.py --list-vars
     era5_download.py --list-datasets
+    era5_download.py --show-info
 """
 
 from docopt import docopt
@@ -57,6 +60,9 @@ if args["--list-vars"]:
 if args["--list-datasets"]:
     print(copernicus_downloader.list_datasets())
     exit()
+if args["--show-info"]:
+    print(copernicus_downloader.show_markdown_table())
+    exit()
 
 years = (
     args["YEARS"].split(",")
@@ -72,7 +78,12 @@ months = (
         range(int(args["MONTHS"].split("-")[0]), int(args["MONTHS"].split("-")[1]) + 1)
     )
 )
-variables = args["--var"].split(",") if args["--var"] else []
+# Ocean variables are used by default, as right now, DestinE program is used for atmosphere variables
+variables = (
+    args["--var"].split(",")
+    if args["--var"]
+    else copernicus_downloader.list_variables(type="ocean")
+)
 
 output = copernicus_downloader.download_data(
     variables=variables,

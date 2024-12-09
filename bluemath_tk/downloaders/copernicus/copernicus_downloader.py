@@ -4,7 +4,7 @@ from typing import List
 import calendar
 import cdsapi
 import xarray as xr
-from ..base_downloaders import BlueMathDownloader
+from .._base_downloaders import BaseDownloader
 
 config = {
     "url": "https://cds.climate.copernicus.eu/api",  # /v2?
@@ -16,7 +16,7 @@ config = {
 # laura: c17382de-3363-47ea-9faa-ba4a9cce66b8
 
 
-class CopernicusDownloader(BlueMathDownloader):
+class CopernicusDownloader(BaseDownloader):
     """
     This is the main class to download data from the Copernicus Climate Data Store.
 
@@ -37,10 +37,10 @@ class CopernicusDownloader(BlueMathDownloader):
 
     products_configs = {
         "ERA5": json.load(
-            # open(os.path.join(os.path.dirname(__file__), "ERA5", "ERA5_config.json"))
-            open(
-                "/home/grupos/geocean/tausiaj/BlueMath_tk/bluemath_tk/downloaders/copernicus/ERA5/ERA5_config.json"
-            )
+            open(os.path.join(os.path.dirname(__file__), "ERA5", "ERA5_config.json"))
+            # open(
+            #     "/home/grupos/geocean/tausiaj/BlueMath_tk/bluemath_tk/downloaders/copernicus/ERA5/ERA5_config.json"
+            # )
         )
     }
 
@@ -102,6 +102,68 @@ class CopernicusDownloader(BlueMathDownloader):
     def client(self) -> cdsapi.Client:
         return self._client
 
+    def list_variables(self, type: str = None) -> List[str]:
+        """
+        Lists the variables available for the product.
+        Filtering by type if provided.
+
+        Parameters
+        ----------
+        type : str, optional
+            The type of variables to list. Default is None.
+
+        Returns
+        -------
+        List[str]
+            The list of variables available for the product.
+        """
+
+        if type == "ocean":
+            return [
+                var_name
+                for var_name, var_info in self.product_config["variables"].items()
+                if var_info["type"] == "ocean"
+            ]
+        return list(self.product_config["variables"].keys())
+
+    def list_datasets(self) -> List[str]:
+        """
+        Lists the datasets available for the product.
+
+        Returns
+        -------
+        List[str]
+            The list of datasets available for the product.
+        """
+
+        return list(self.product_config["datasets"].keys())
+
+    def show_markdown_table(self) -> None:
+        """
+        Create a Markdown table from the configuration dictionary and print it.
+        """
+
+        # Define the table headers
+        headers = ["name", "long_name", "units", "type"]
+        header_line = "| " + " | ".join(headers) + " |"
+        separator_line = (
+            "| " + " | ".join(["-" * len(header) for header in headers]) + " |"
+        )
+
+        # Initialize the table with headers
+        table_lines = [header_line, separator_line]
+
+        # Add rows for each variable
+        for var_name, var_info in self.product_config["variables"].items():
+            long_name = var_info.get("long_name", "")
+            units = var_info.get("units", "")
+            type = var_info.get("type", "")
+            row = f"| {var_name} | {long_name} | {units} | {type} |"
+            table_lines.append(row)
+
+        # Print the table
+        print("\n".join(table_lines))
+
     def download_data(self, *args, **kwargs) -> str:
         """
         Downloads the data for the product.
@@ -128,30 +190,6 @@ class CopernicusDownloader(BlueMathDownloader):
             return self.download_data_era5(*args, **kwargs)
         else:
             raise ValueError(f"Download for product {self.product} not supported")
-
-    def list_variables(self) -> List[str]:
-        """
-        Lists the variables available for the product.
-
-        Returns
-        -------
-        List[str]
-            The list of variables available for the product.
-        """
-
-        return list(self.product_config["variables"].keys())
-
-    def list_datasets(self) -> List[str]:
-        """
-        Lists the datasets available for the product.
-
-        Returns
-        -------
-        List[str]
-            The list of datasets available for the product.
-        """
-
-        return list(self.product_config["datasets"].keys())
 
     def download_data_era5(
         self,
@@ -183,7 +221,8 @@ class CopernicusDownloader(BlueMathDownloader):
         product_type : str, optional
             The product type to download. Defaults to "reanalysis".
         data_format : str, optional
-            The data format to download. Defaults to "netcdf".
+            The data format to download. Defaults to "netcdf_legacy".
+            This format is maintained to legacy to allow Thredds server to read the files.
         download_format : str, optional
             The download format to use. Defaults to "unarchived".
         force : bool, optional
@@ -193,6 +232,7 @@ class CopernicusDownloader(BlueMathDownloader):
         -------
         str
             The message with the fully downloaded files and the not fully downloaded files.
+            Error files are also included.
 
         Raises
         ------

@@ -38,5 +38,8 @@ This project is licensed under the MIT License. See the [license](LICENSE.txt) f
 
 - Add test to minisom
 - Check whole code in NNs
-- Add methods to wrappers
+- Add methods to wrappers (build / run beutifully)
 - Check profiles in topo_bathy
+- Check climate scale data in SamoaTonga
+- K-Means default parameters
+- Format topo_bathy/profiles and waves/series
