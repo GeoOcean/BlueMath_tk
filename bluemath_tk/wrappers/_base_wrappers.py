@@ -289,7 +289,6 @@ class BaseModelWrapper(BlueMathModel):
             with open(dst, "w") as f:
                 f.write(content)
 
-    @abstractmethod
     def build_cases(self, mode: str = "all_combinations") -> None:
         """
         Create the cases folders and render the input files.
@@ -322,20 +321,6 @@ class BaseModelWrapper(BlueMathModel):
             f"{len(self.cases_dirs)} cases created in {mode} mode and saved in {self.output_dir}"
         )
 
-    @abstractmethod
-    def run_model(self, case_dir: str) -> None:
-        """
-        Run the model.
-
-        Parameters
-        ----------
-        case_dir : str
-            The directory of the case.
-        """
-
-        pass
-
-    @abstractmethod
     def run_cases(self) -> None:
         """
         Run the cases.
@@ -348,3 +333,16 @@ class BaseModelWrapper(BlueMathModel):
             self.logger.info("All cases ran successfully.")
         else:
             raise ValueError("No cases to run.")
+
+    @abstractmethod
+    def run_model(self, case_dir: str) -> None:
+        """
+        Run the model.
+
+        Parameters
+        ----------
+        case_dir : str
+            The directory of the case.
+        """
+
+        pass

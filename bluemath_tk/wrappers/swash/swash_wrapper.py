@@ -75,7 +75,7 @@ class SwashModelWrapper(BaseModelWrapper):
 
     def _convert_output_tabs_to_nc(
         self, case_id: int, output_path: str, run_path: str
-    ) -> None:
+    ) -> xr.Dataset:
         """
         Convert tab files to a netCDF file.
 
@@ -83,8 +83,13 @@ class SwashModelWrapper(BaseModelWrapper):
         ----------
         output_path : str
             The output path.
-        run_path : str
+        run_path : str + MDA
             The run path.
+
+        Returns
+        -------
+        xr.Dataset
+            The xarray Dataset.
         """
 
         df_output = self._read_tabfile(file_path=output_path)
@@ -104,7 +109,6 @@ class SwashModelWrapper(BaseModelWrapper):
         ds.coords["case_id"] = case_id
 
         return ds
-
 
     def run_model(self, case_dir: str, log_file: str = "swash_exec.log") -> None:
         """
@@ -136,46 +140,17 @@ class SwashModelWrapper(BaseModelWrapper):
         # execute command
         self._exec_bash_commands(str_cmd=cmd)
 
-    def run_cases(self) -> None:
-        return super().run_cases()
-    
 
 class VeggySwashModelWrapper(SwashModelWrapper):
     """
     Wrapper for the SWASH model with vegetation.
     """
 
-    default_parameters = {
-        "vegetation_height": float,
-        "vegetation_density": float,
-        "vegetation_drag": float,
-        "vegetation_diameter": float,
-        "vegetation_height": float,
-        "vegetation_spacing": float,
-    }
-
-    def __init__(
-        self,
-        templates_dir: str,
-        templates_name: dict,
-        model_parameters: dict,
-        output_dir: str,
-    ):
-        super().__init__(
-            templates_dir=templates_dir,
-            templates_name=templates_name,
-            model_parameters=model_parameters,
-            output_dir=output_dir,
-            default_parameters=self.default_parameters,
-        )
-        self.set_logger_name(self.__class__.__name__)
-
     def build_case(
         self,
         case_context: dict,
         case_dir: str,
         depth: np.ndarray = None,
-        waves: np.ndarray = None,
         plants: np.ndarray = None,
     ) -> None:
         if depth is not None:
@@ -183,60 +158,44 @@ class VeggySwashModelWrapper(SwashModelWrapper):
             self.write_array_in_file(
                 array=depth, filename=os.path.join(case_dir, "depth.txt")
             )
-        if waves is not None:
-            # Save the waves to a file
-            self.write_array_in_file(
-                array=waves, filename=os.path.join(case_dir, "waves.bnd")
-            )
         if plants is not None:
             # Save the plants to a file
             self.write_array_in_file(
                 array=plants, filename=os.path.join(case_dir, "plants.txt")
             )
-    def build_case_hyswash_veggy(
-        self,
-        case_context: dict,
-        case_dir: str,
-        depth: np.ndarray = None,
-        waves: np.ndarray = None,
-        plants: np.ndarray = None,
-    ) -> None:
-        if depth is not None:
-            # Save the depth to a file
-            self.write_array_in_file(
-                array=depth, filename=os.path.join(case_dir, "depth.txt")
-            )
-        if waves is not None:
-            # Save the waves to a file
-            self.write_array_in_file(
-                array=waves, filename=os.path.join(case_dir, "waves.bnd")
-            )
-        if plants is not None:
-            # Save the plants to a file
-            self.write_array_in_file(
-                array=plants, filename=os.path.join(case_dir, "plants.txt")
-            )
+        # Build the input waves
+        waves_dict = {
+            "H": case_context["Hs"],
+            "T": np.sqrt(
+                (case_context["Hs"] * 2 * np.pi) / (9.806 * case_context["Hs_L0"])
+            ),
+            "gamma": 2,
+            "warmup": 180,
+            "deltat": 1,
+            "tendc": 1800,
+        }
+        waves = series_TMA(waves=waves_dict, depth=depth[0])
+        # Save the waves to a file
+        self.write_array_in_file(
+            array=waves, filename=os.path.join(case_dir, "waves.bnd")
+        )
 
     def build_cases(
         self,
         mode: str = "all_combinations",
-        swan_type: str = "HySwan",
         depth: np.ndarray = None,
-        waves: np.ndarray = None,
         plants: np.ndarray = None,
     ) -> None:
         super().build_cases(mode=mode)
         if not self.cases_context or not self.cases_dirs:
             raise ValueError("Cases were not properly built.")
         for case_context, case_dir in zip(self.cases_context, self.cases_dirs):
-            if swan_type == "HySwashVeggy":
-                self.build_case_hyswan(
-                    case_context=case_context,
-                    case_dir=case_dir,
-                    depth=depth,
-                    waves=waves,
-                    plants=plants,
-                )
+            self.build_case(
+                case_context=case_context,
+                case_dir=case_dir,
+                depth=depth,
+                plants=plants,
+            )
 
 
 # Usage example
@@ -246,9 +205,17 @@ if __name__ == "__main__":
         "/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/wrappers/swash/templates/"
     )
     templates_name = ["input.sws"]
-    model_parameters = {
-        "vegetation_height": [1.0, 2.0, 3.0],
-    }
+    # Get 5 cases using LHS and MDA
+    lhs = LHS(num_dimensions=4)
+    lhs_data = lhs.generate(
+        dimensions_names=["Hs", "Hs_L0", "vegetation_height"],
+        lower_bounds=[0.5, 0.0, 0.0],
+        upper_bounds=[3.0, 0.05, 1.5],
+        num_samples=500,
+    )
+    mda = MDA(num_centers=5)
+    mda.fit(data=lhs_data)
+    model_parameters = mda.centroids.to_dict(orient="list")
     output_dir = "C:/Users/UsuarioUC/Documents/BlueMath_tk/tests_data/swash"
     # Create the depth
     """
@@ -259,8 +226,11 @@ if __name__ == "__main__":
     Wfore:   flume length before slope toe (m)
     """
     linear_depth = linear(dx=100, h0=10, bCrest=2, m=1, Wfore=10)
+    # Create the plants
+    plants = np.zeros(linear_depth.size)
+    plants[linear_depth < 1] = 1.0
     # Create an instance of the SWASH model wrapper
-    swan_model = SwashModelWrapper(
+    swan_model = VeggySwashModelWrapper(
         templates_dir=templates_dir,
         templates_name=templates_name,
         model_parameters=model_parameters,
