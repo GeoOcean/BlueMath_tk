@@ -1,6 +1,8 @@
 import os
 import itertools
+from abc import abstractmethod
 from typing import List
+import subprocess
 import numpy as np
 from jinja2 import Environment, FileSystemLoader
 from ..core.models import BlueMathModel
@@ -54,7 +56,7 @@ class BaseModelWrapper(BlueMathModel):
         model_parameters: dict,
         output_dir: str,
         default_parameters: dict = None,
-    ):
+    ) -> None:
         """
         Initialize the BaseModelWrapper.
 
@@ -88,10 +90,12 @@ class BaseModelWrapper(BlueMathModel):
         self.cases_context: List[dict] = []
 
     @property
-    def env(self):
+    def env(self) -> Environment:
         return self._env
 
-    def _check_parameters_type(self, default_parameters: dict, model_parameters: dict):
+    def _check_parameters_type(
+        self, default_parameters: dict, model_parameters: dict
+    ) -> None:
         """
         Check if the parameters have the correct type.
 
@@ -126,7 +130,43 @@ class BaseModelWrapper(BlueMathModel):
                         f"Parameter {model_param} has the wrong type: {default_parameters[model_param]}"
                     )
 
-    def create_cases_context_one_by_one(self):
+    def _exec_bash_commands(
+        str_cmd: str, out_file: str = None, err_file: str = None
+    ) -> None:
+        """
+        Execute bash commands.
+
+        Parameters
+        ----------
+        str_cmd : str
+            The bash command.
+        out_file : str, optional
+            The name of the output file. If None, the output will be printed in the terminal.
+            Default is None.
+        err_file : str, optional
+            The name of the error file. If None, the error will be printed in the terminal.
+            Default is None.
+        """
+
+        _stdout = None
+        _stderr = None
+
+        if out_file:
+            _stdout = open(out_file, "w")
+        if err_file:
+            _stderr = open(err_file, "w")
+
+        s = subprocess.Popen(str_cmd, shell=True, stdout=_stdout, stderr=_stderr)
+        s.wait()
+
+        if out_file:
+            _stdout.flush()
+            _stdout.close()
+        if err_file:
+            _stderr.flush()
+            _stderr.close()
+
+    def create_cases_context_one_by_one(self) -> List[dict]:
         """
         Create an array of dictionaries with the combinations of values from the
         input dictionary, one by one.
@@ -155,7 +195,7 @@ class BaseModelWrapper(BlueMathModel):
 
         return array_of_contexts
 
-    def create_cases_context_all_combinations(self):
+    def create_cases_context_all_combinations(self) -> List[dict]:
         """
         Create an array of dictionaries with each possible combination of values
         from the input dictionary.
@@ -179,7 +219,7 @@ class BaseModelWrapper(BlueMathModel):
 
     def render_file_from_template(
         self, template_name: str, context: dict, output_filename: str = None
-    ):
+    ) -> None:
         """
         Render a file from a template.
 
@@ -202,7 +242,7 @@ class BaseModelWrapper(BlueMathModel):
         with open(output_filename, "w") as f:
             f.write(rendered_content)
 
-    def write_array_in_file(self, array: np.ndarray, filename: str):
+    def write_array_in_file(self, array: np.ndarray, filename: str) -> None:
         """
         Write an array in a file.
 
@@ -224,7 +264,7 @@ class BaseModelWrapper(BlueMathModel):
             else:
                 raise ValueError("Only 1D and 2D arrays are supported")
 
-    def copy_files(self, src: str, dst: str):
+    def copy_files(self, src: str, dst: str) -> None:
         """
         Copy file(s) from source to destination.
 
@@ -249,7 +289,8 @@ class BaseModelWrapper(BlueMathModel):
             with open(dst, "w") as f:
                 f.write(content)
 
-    def build_cases(self, mode: str = "all_combinations"):
+    @abstractmethod
+    def build_cases(self, mode: str = "all_combinations") -> None:
         """
         Create the cases folders and render the input files.
 
@@ -281,11 +322,29 @@ class BaseModelWrapper(BlueMathModel):
             f"{len(self.cases_dirs)} cases created in {mode} mode and saved in {self.output_dir}"
         )
 
-    def run_cases(self):
+    @abstractmethod
+    def run_model(self, case_dir: str) -> None:
+        """
+        Run the model.
+
+        Parameters
+        ----------
+        case_dir : str
+            The directory of the case.
+        """
+
+        pass
+
+    @abstractmethod
+    def run_cases(self) -> None:
         """
         Run the cases.
         """
 
         if self.cases_dirs:
             for case_dir in self.cases_dirs:
+                self.logger.info(f"Running case in {case_dir}")
                 self.run_model(case_dir)
+            self.logger.info("All cases ran successfully.")
+        else:
+            raise ValueError("No cases to run.")

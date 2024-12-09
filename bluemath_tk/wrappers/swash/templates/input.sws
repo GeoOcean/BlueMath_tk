@@ -1,5 +1,5 @@
-$Project name '{{ project_name }}' '{{ case_id }}'
-PROJECT 'PEPE'
+$ Project name
+PROJECT '{{ case_id }}'
 $
 $Set water level
 SET LEVEL=1.0
@@ -11,7 +11,7 @@ $Computational grid: geographic location, size, resolution and orientation
 CGRID 0 0 0 1399 0 1567 0
 $
 $Multi-layered mode
-VERT {{ num_layers }}
+VERT 1
 $
 $Reading bathymetry values from file
 INPGRID BOTTOM 0 0 0 1399 0 1.00 1
