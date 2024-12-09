@@ -46,10 +46,6 @@ These are the variables currently available for download. If a new variable is r
 | mpww    | Mean period of wind waves                           | s       | ocean      |
 | mdww    | Mean direction of wind waves                        | degrees | ocean      |
 | dwww    | Wave spectral directional width for wind waves      | degrees | ocean      |
-| shs     | Significant height of total swell                   | m       | ocean      |
-| mps     | Mean period of total swell                          | s       | ocean      |
-| mds     | Mean direction of total swell                       | degrees | ocean      |
-| dws     | Wave spectral directional width for total swell     | degrees | ocean      |
 | p140121 | Significant wave height of first swell partition    | m       | ocean      |
 | p140124 | Significant wave height of second swell partition   | m       | ocean      |
 | p140127 | Significant wave height of third swell partition    | m       | ocean      |
