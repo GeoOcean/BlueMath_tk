@@ -6,7 +6,7 @@ The package also includes a set of utility functions for processing climate data
 
 ## Main contents
 
-![Sketch](./bluemath_tk/sketch_tk.png)
+![Sketch](./docs/sketch_tk.png)
 
 Link to the different sections:
 - [datamining](./bluemath_tk/datamining/)

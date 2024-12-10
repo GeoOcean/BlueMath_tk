@@ -1,12 +1,24 @@
-import os
-import numpy as np
-from bluemath_tk.wrappers._base_wrappers import BaseModelWrapper
+from .._base_wrappers import BaseModelWrapper
 
 
 class XBeachModelWrapper(BaseModelWrapper):
     """
     Wrapper for the XBeach model.
     https://xbeach.readthedocs.io/en/latest/
+
+    Attributes
+    ----------
+    xbeach_exec : str
+        The XBeach executable path.
+    default_parameters : dict
+        The default parameters type for the model.
+
+    Methods
+    -------
+    set_xbeach_exec(xbeach_exec: str) -> None
+        Set the XBeach executable path.
+    run_model() -> None
+        Run the XBeach model for the specified case.
     """
 
     default_parameters = {
@@ -19,7 +31,22 @@ class XBeachModelWrapper(BaseModelWrapper):
         templates_name: dict,
         model_parameters: dict,
         output_dir: str,
-    ):
+    ) -> None:
+        """
+        Initialize the SWASH model wrapper.
+
+        Parameters
+        ----------
+        templates_dir : str
+            The directory where the templates are stored.
+        templates_name : list
+            The names of the templates.
+        model_parameters : dict
+            The parameters to be used in the templates.
+        output_dir : str
+            The directory where the output files will be saved.
+        """
+
         super().__init__(
             templates_dir=templates_dir,
             templates_name=templates_name,
@@ -28,76 +55,14 @@ class XBeachModelWrapper(BaseModelWrapper):
             default_parameters=self.default_parameters,
         )
         self.set_logger_name(self.__class__.__name__)
+        self._xbeach_exec = None
 
-    def build_case(self, case_context: dict):
+    @property
+    def xbeach_exec(self) -> str:
+        return self._xbeach_exec
+
+    def set_xbeach_exec(self, xbeach_exec: str) -> None:
+        self._xbeach_exec = xbeach_exec
+
+    def run_model(self) -> None:
         pass
-
-    def build_cases(self, mode: str = "all_combinations"):
-        super().build_cases(mode=mode)
-
-    def run_model(self):
-        pass
-
-
-class MyXBeachModelWrapper(XBeachModelWrapper):
-    def build_cases(
-        self,
-        mode: str = "all_combinations",
-        grd: str = None,
-        bathy: np.ndarray = None,
-        friction: np.ndarray = None,
-    ):
-        # Call the base class method to retain the original functionality
-        super().build_cases(mode=mode)
-        # Create the cases folders and render the input files
-        if not self.cases_context or not self.cases_dirs:
-            raise ValueError("Cases were not properly built.")
-        for case_context, case_dir in zip(self.cases_context, self.cases_dirs):
-            if grd is not None:
-                # copy the grd file to the case folder
-                self.copy_files(
-                    src=grd, dst=os.path.join(case_dir, os.path.basename(grd))
-                )
-            if bathy is not None:
-                # Save the bathymetry to a file
-                self.write_array_in_file(
-                    array=bathy, filename=os.path.join(case_dir, "bathy_000.dep")
-                )
-            if friction is not None:
-                # Save the friction to a file
-                self.write_array_in_file(
-                    array=friction, filename=os.path.join(case_dir, "friction.txt")
-                )
-
-
-# Usage example
-if __name__ == "__main__":
-    # Define the input parameters
-    templates_dir = (
-        "/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/wrappers/xbeach/templates/"
-    )
-    templates_name = ["params.txt", "loclist.txt"]
-    model_parameters = {
-        "thetamax": [360],
-        "dtheta": [4, 50, 6],
-        "spectra": ["JONSWAP", "DIAZIN"],
-    }
-    output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/xbeach/"
-    # Create the bathymetry
-    bathy = np.random.randn(100, 100)
-    # Create the friction
-    friction = np.random.randn(100, 100)
-    # Create an instance of the XBEACH model wrapper
-    swan_model = MyXBeachModelWrapper(
-        templates_dir=templates_dir,
-        templates_name=templates_name,
-        model_parameters=model_parameters,
-        output_dir=output_dir,
-    )
-    # Build the input files
-    swan_model.build_cases(
-        mode="all_combinations",
-        grd="/home/tausiaj/Downloads/caso_XB/laredo_x5.grd",
-        bathy=bathy,
-        friction=friction,
-    )
