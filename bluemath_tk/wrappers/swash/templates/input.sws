@@ -1,5 +1,5 @@
 $ Project name
-PROJECT '{{ case_id }}'
+PROJECT '{{ case_num }}'
 $
 $Set water level
 SET LEVEL=1.0

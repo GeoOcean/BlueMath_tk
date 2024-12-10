@@ -16,7 +16,7 @@ class BaseModelWrapper(BlueMathModel):
     ----------
     templates_dir : str
         The directory where the templates are stored.
-    templates_name : list
+    templates_name : List[str]
         The names of the templates.
     model_parameters : dict
         The parameters to be used in the templates.
@@ -31,6 +31,10 @@ class BaseModelWrapper(BlueMathModel):
 
     Methods
     -------
+    _check_parameters_type(default_parameters, model_parameters)
+        Check if the parameters have the correct type.
+    _exec_bash_commands(str_cmd, out_file=None, err_file=None)
+        Execute bash commands.
     create_cases_context_one_by_one()
         Create an array of dictionaries with the combinations of values from the
         input dictionary, one by one.
@@ -47,6 +51,8 @@ class BaseModelWrapper(BlueMathModel):
         Create the cases folders and render the input files.
     run_cases()
         Run the cases.
+    run_model(case_dir)
+        Run the model for a specific case (abstract method).
     """
 
     def __init__(
@@ -71,7 +77,7 @@ class BaseModelWrapper(BlueMathModel):
         output_dir : str
             The directory where the output files will be saved.
         default_parameters : dict, optional
-            The default parameters for the model. If None, the parameters will
+            The default parameters type for the model. If None, the parameters will
             not be checked.
             Default is None.
         """
@@ -98,11 +104,14 @@ class BaseModelWrapper(BlueMathModel):
     ) -> None:
         """
         Check if the parameters have the correct type.
+        This function is called in the __init__ method of the BaseModelWrapper,
+        but default_parameters are defined in the child classes.
+        This way, child classes can define default types for parameters.
 
         Parameters
         ----------
         default_parameters : dict
-            The default parameters for the model.
+            The default parameters type for the model.
         model_parameters : dict
             The parameters to be used in the templates.
 
@@ -130,6 +139,7 @@ class BaseModelWrapper(BlueMathModel):
                         f"Parameter {model_param} has the wrong type: {default_parameters[model_param]}"
                     )
 
+    @staticmethod
     def _exec_bash_commands(
         str_cmd: str, out_file: str = None, err_file: str = None
     ) -> None:
@@ -329,7 +339,7 @@ class BaseModelWrapper(BlueMathModel):
         if self.cases_dirs:
             for case_dir in self.cases_dirs:
                 self.logger.info(f"Running case in {case_dir}")
-                self.run_model(case_dir)
+                self.run_model(case_dir=case_dir)
             self.logger.info("All cases ran successfully.")
         else:
             raise ValueError("No cases to run.")

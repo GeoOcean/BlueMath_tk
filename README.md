@@ -42,3 +42,4 @@ This project is licensed under the MIT License. See the [license](LICENSE.txt) f
 - Check climate scale data in SamoaTonga
 - K-Means default parameters
 - Format topo_bathy/profiles and waves/series
+- Descomentar crontab, que ya funcionan los sh

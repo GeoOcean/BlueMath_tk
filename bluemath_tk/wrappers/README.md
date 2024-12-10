@@ -8,13 +8,9 @@ For more detailed information, refer to the specific class implementations and t
 
 The `BaseModelWrapper` class serves as the base class for all model wrappers. It provides common functionality that can be extended by specific model wrappers.
 
-::: bluemath_tk.wrappers._base_wrappers
-
 ## SwashModelWrapper
 
 The `SwashModelWrapper` class is a specific implementation of the `BaseModelWrapper` for the SWASH model. It extends the base functionality to handle SWASH-specific requirements.
-
-::: bluemath_tk.wrappers.swash.swash_wrapper
 
 ### Example Usage
 

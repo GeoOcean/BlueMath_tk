@@ -14,6 +14,24 @@ class SwashModelWrapper(BaseModelWrapper):
     """
     Wrapper for the SWASH model.
     https://swash.sourceforge.io/online_doc/swashuse/swashuse.html#input-and-output-files
+
+    Attributes
+    ----------
+    swash_exec : str
+        The SWASH executable path.
+    default_parameters : dict
+        The default parameters type for the model.
+
+    Methods
+    -------
+    set_swash_exec(swash_exec: str) -> None
+        Set the SWASH executable path.
+    _read_tabfile(file_path: str) -> pd.DataFrame
+        Read a tab file and return a pandas DataFrame.
+    _convert_output_tabs_to_nc(case_id: int, output_path: str, run_path: str) -> xr.Dataset
+        Convert output tabs files to a netCDF file.
+    run_model(case_dir: str, log_file: str = "swash_exec.log") -> None
+        Run the SWASH model for the specified case.
     """
 
     default_parameters = {
@@ -27,6 +45,21 @@ class SwashModelWrapper(BaseModelWrapper):
         model_parameters: dict,
         output_dir: str,
     ):
+        """
+        Initialize the SWASH model wrapper.
+
+        Parameters
+        ----------
+        templates_dir : str
+            The directory where the templates are stored.
+        templates_name : list
+            The names of the templates.
+        model_parameters : dict
+            The parameters to be used in the templates.
+        output_dir : str
+            The directory where the output files will be saved.
+        """
+
         super().__init__(
             templates_dir=templates_dir,
             templates_name=templates_name,
@@ -132,9 +165,9 @@ class SwashModelWrapper(BaseModelWrapper):
         # check if windows OS
         is_win = sys.platform.startswith("win")
         if is_win:
-            cmd = "cd {0} && {1} input".format(case_dir, self.swan_exec)
+            cmd = "cd {0} && {1} input".format(case_dir, self.swash_exec)
         else:
-            cmd = "cd {0} && {1} -input input.sws".format(case_dir, self.swan_exec)
+            cmd = "cd {0} && {1} -input input.sws".format(case_dir, self.swash_exec)
         # redirect output
         cmd += f" 2>&1 > {log_file}"
         # execute command
@@ -153,10 +186,25 @@ class VeggySwashModelWrapper(SwashModelWrapper):
         depth: np.ndarray = None,
         plants: np.ndarray = None,
     ) -> None:
+        """
+        Build the input files for a case.
+
+        Parameters
+        ----------
+        case_context : dict
+            The case context.
+        case_dir : str
+            The case directory.
+        depth : np.ndarray, optional
+            The depth array. Default is None.
+        plants : np.ndarray, optional
+            The plants array. Default is None.
+        """
+
         if depth is not None:
             # Save the depth to a file
             self.write_array_in_file(
-                array=depth, filename=os.path.join(case_dir, "depth.txt")
+                array=depth, filename=os.path.join(case_dir, "depth.bot")
             )
         if plants is not None:
             # Save the plants to a file
@@ -186,6 +234,24 @@ class VeggySwashModelWrapper(SwashModelWrapper):
         depth: np.ndarray = None,
         plants: np.ndarray = None,
     ) -> None:
+        """
+        Build the input files for all cases.
+
+        Parameters
+        ----------
+        mode : str, optional
+            The mode to build the cases. Default is "all_combinations".
+        depth : np.ndarray, optional
+            The depth array. Default is None.
+        plants : np.ndarray, optional
+            The plants array. Default is None.
+
+        Raises
+        ------
+        ValueError
+            If the cases were not properly built
+        """
+
         super().build_cases(mode=mode)
         if not self.cases_context or not self.cases_dirs:
             raise ValueError("Cases were not properly built.")
@@ -206,7 +272,7 @@ if __name__ == "__main__":
     )
     templates_name = ["input.sws"]
     # Get 5 cases using LHS and MDA
-    lhs = LHS(num_dimensions=4)
+    lhs = LHS(num_dimensions=3)
     lhs_data = lhs.generate(
         dimensions_names=["Hs", "Hs_L0", "vegetation_height"],
         lower_bounds=[0.5, 0.0, 0.0],
@@ -216,7 +282,7 @@ if __name__ == "__main__":
     mda = MDA(num_centers=5)
     mda.fit(data=lhs_data)
     model_parameters = mda.centroids.to_dict(orient="list")
-    output_dir = "C:/Users/UsuarioUC/Documents/BlueMath_tk/tests_data/swash"
+    output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/swash/"
     # Create the depth
     """
     dx:      bathymetry mesh resolution at x axes (m)
@@ -225,10 +291,10 @@ if __name__ == "__main__":
     m:       profile slope
     Wfore:   flume length before slope toe (m)
     """
-    linear_depth = linear(dx=100, h0=10, bCrest=2, m=1, Wfore=10)
+    linear_depth = linear(dx=0.05, h0=10, bCrest=5, m=1, Wfore=10)
     # Create the plants
     plants = np.zeros(linear_depth.size)
-    plants[linear_depth < 1] = 1.0
+    plants[(linear_depth < 1) & (linear_depth > 0)] = 1.0
     # Create an instance of the SWASH model wrapper
     swan_model = VeggySwashModelWrapper(
         templates_dir=templates_dir,
@@ -237,4 +303,10 @@ if __name__ == "__main__":
         output_dir=output_dir,
     )
     # Build the input files
-    swan_model.build_cases(mode="all_combinations", depth=linear_depth)
+    swan_model.build_cases(mode="one_by_one", depth=linear_depth, plants=plants)
+    # Set the SWASH executable
+    swan_model.set_swash_exec(
+        "/home/tausiaj/GeoOcean-Execs/SWASH-10.05-Linux/bin/swashrun"
+    )
+    # Run the model
+    swan_model.run_cases()
