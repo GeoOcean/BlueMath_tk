@@ -6,7 +6,7 @@ The package also includes a set of utility functions for processing climate data
 
 ## Main contents
 
-![Sketch](./bluemath_tk/sketch_tk.png)
+![Sketch](./docs/sketch_tk.png)
 
 Link to the different sections:
 - [datamining](./bluemath_tk/datamining/)
@@ -39,7 +39,7 @@ This project is licensed under the MIT License. See the [license](LICENSE.txt) f
 - Add test to minisom
 - Check whole code in NNs
 - Add methods to wrappers (build / run beutifully)
-- Check profiles in topo_bathy
 - Check climate scale data in SamoaTonga
 - K-Means default parameters
 - Format topo_bathy/profiles and waves/series
+- Descomentar crontab, que ya funcionan los sh
