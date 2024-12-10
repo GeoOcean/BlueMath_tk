@@ -2,7 +2,8 @@ site_name: BlueMath {Toolkit}
 
 nav:
   - Home: index.md
-  - Installation: install.md
+  - Installation: installation.md
+  - Conttribute: contribute.md
   - Wrappers:
       - Intro: wrappers/intro.md
 
