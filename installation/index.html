@@ -12,7 +12,7 @@
         <link rel="prev" href="..">
       
       
-        <link rel="next" href="../wrappers/intro/">
+        <link rel="next" href="../contribute/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -242,6 +242,26 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../contribute/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Conttribute
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
     
@@ -250,10 +270,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -264,8 +284,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             Wrappers
           </label>
@@ -333,16 +353,36 @@
 
 
 <h1 id="installation">Installation</h1>
-<p>To install BlueMath, run:</p>
-<div class="codehilite"><pre><span></span><code>conda enc create -f environment.yml
+<p>BlueMath is still not available via <code>pip</code> or <code>conda</code>.</p>
+<p>To test its capabilities locally, please run the following commands:</p>
+<ol>
+<li>Clone the repository from GitHub:</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/GeoOcean/BlueMath_tk.git
 </code></pre></div>
 
-<p>Then activate the environment using:</p>
-<div class="codehilite"><pre><span></span><code>conda activate bluemath
+<ol>
+<li>Move inside the directory to install everything:</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>BlueMath_th
 </code></pre></div>
 
-<p>And finally, install package in development mode:</p>
-<div class="codehilite"><pre><span></span><code>pip install -e .
+<ol>
+<li>Create a compatible conda environment:</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>environment.yml
+</code></pre></div>
+
+<ol>
+<li>Then activate the environment using:</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>conda<span class="w"> </span>activate<span class="w"> </span>bluemath
+</code></pre></div>
+
+<ol>
+<li>Finally, install package in development mode:</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
 </code></pre></div>
 
 
