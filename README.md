@@ -36,8 +36,8 @@ This project is licensed under the MIT License. See the [license](LICENSE.txt) f
 
 # TODOs
 
-- Add test to minisom
 - Check whole code in NNs
 - Check climate scale data in SamoaTonga
-- K-Means default parameters
+- Add logs to datamining classes.
 - Descomentar crontab, que ya funcionan los sh
+- Add ERA5 spectra download.

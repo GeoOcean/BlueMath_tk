@@ -73,7 +73,7 @@ class SOM(BaseClustering):
     ...     directional_variables=['Dir'],
     ... )
 
-    TODOs
+    TODO
     -----
     - Add option to normalize data?
     """
@@ -202,7 +202,7 @@ class SOM(BaseClustering):
         else:
             data, _ = self.standarize(data=data, scaler=self.scaler)
 
-        return self.som.activation_response(data=data)
+        return self.som.activation_response(data=data.values)
 
     def get_centroids_probs_for_labels(
         self, data: pd.DataFrame, labels: List[str]
@@ -212,8 +212,16 @@ class SOM(BaseClustering):
         """
 
         # TODO: JAVI: Could this method be implemented in more datamining classes?
+        data = data.copy()  # Avoid modifying the original data to predict
+        for directional_variable in self.directional_variables:
+            u_comp, v_comp = self.get_uv_components(
+                x_deg=data[directional_variable].values
+            )
+            data[f"{directional_variable}_u"] = u_comp
+            data[f"{directional_variable}_v"] = v_comp
+            data.drop(columns=[directional_variable], inplace=True)
         standarized_data, _ = self.standarize(data=data, scaler=self.scaler)
-        dict_with_probs = self.som.labels_map(standarized_data, labels)
+        dict_with_probs = self.som.labels_map(standarized_data.values, labels)
         return pd.DataFrame(dict_with_probs).T.sort_index()
 
     def plot_centroids_probs_for_labels(
@@ -265,7 +273,7 @@ class SOM(BaseClustering):
         self._data = data.copy()
         self.directional_variables = directional_variables.copy()
         for directional_variable in self.directional_variables:
-            u_comp, v_comp = self._get_uv_components(
+            u_comp, v_comp = self.get_uv_components(
                 x_deg=self.data[directional_variable].values
             )
             self.data[f"{directional_variable}_u"] = u_comp
@@ -282,16 +290,16 @@ class SOM(BaseClustering):
         self._standarized_data, self.scaler = self.standarize(data=self.data_to_fit)
 
         # Train the SOM model
-        self.som.train(data=self.standarized_data, num_iteration=num_iteration)
+        self.som.train(data=self.standarized_data.values, num_iteration=num_iteration)
 
         # Save winner neurons and calculate centroids values
         data_and_winners = self.data.copy()
         data_and_winners["winner_neurons"] = self._get_winner_neurons(
-            standarized_data=self.standarized_data
+            standarized_data=self.standarized_data.values
         )
         self.centroids = data_and_winners.groupby("winner_neurons").mean()
         for directional_variable in self.directional_variables:
-            self.centroids[directional_variable] = self._get_degrees_from_uv(
+            self.centroids[directional_variable] = self.get_degrees_from_uv(
                 xu=self.centroids[f"{directional_variable}_u"].values,
                 xv=self.centroids[f"{directional_variable}_v"].values,
             )
@@ -318,14 +326,16 @@ class SOM(BaseClustering):
             raise SOMError("SOM model is not fitted.")
         data = data.copy()  # Avoid modifying the original data to predict
         for directional_variable in self.directional_variables:
-            u_comp, v_comp = self._get_uv_components(
+            u_comp, v_comp = self.get_uv_components(
                 x_deg=data[directional_variable].values
             )
             data[f"{directional_variable}_u"] = u_comp
             data[f"{directional_variable}_v"] = v_comp
             data.drop(columns=[directional_variable], inplace=True)
         standarized_data, _ = self.standarize(data=data, scaler=self.scaler)
-        winner_neurons = self._get_winner_neurons(standarized_data=standarized_data)
+        winner_neurons = self._get_winner_neurons(
+            standarized_data=standarized_data.values
+        )
 
         return winner_neurons, self.centroids.iloc[winner_neurons]
 
