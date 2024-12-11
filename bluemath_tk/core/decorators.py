@@ -263,6 +263,7 @@ def validate_data_rbf(func):
         subset_custom_scale_factor: dict = {},
         normalize_target_data: bool = True,
         target_custom_scale_factor: dict = {},
+        num_threads: int = None,
     ):
         if subset_data is None:
             raise ValueError("Subset data cannot be None")
@@ -292,6 +293,9 @@ def validate_data_rbf(func):
             raise TypeError("Normalize target data must be a bool")
         if not isinstance(target_custom_scale_factor, dict):
             raise TypeError("Target custom scale factor must be a dict")
+        if num_threads is not None:
+            if not isinstance(num_threads, int) or num_threads <= 0:
+                raise ValueError("Number of threads must be integer and > 0")
         return func(
             self,
             subset_data,
@@ -301,6 +305,7 @@ def validate_data_rbf(func):
             subset_custom_scale_factor,
             normalize_target_data,
             target_custom_scale_factor,
+            num_threads,
         )
 
     return wrapper

@@ -349,7 +349,7 @@ class RBF(BaseInterpolation):
 
         self.logger.info("Preprocessing subset data")
         for directional_variable in self.subset_directional_variables:
-            var_u_component, var_y_component = self._get_uv_components(
+            var_u_component, var_y_component = self.get_uv_components(
                 x_deg=subset_data[directional_variable].values
             )
             subset_data[f"{directional_variable}_u"] = var_u_component
@@ -416,7 +416,7 @@ class RBF(BaseInterpolation):
 
         self.logger.info("Preprocessing target data")
         for directional_variable in self.target_directional_variables:
-            var_u_component, var_y_component = self._get_uv_components(
+            var_u_component, var_y_component = self.get_uv_components(
                 x_deg=target_data[directional_variable].values
             )
             target_data[f"{directional_variable}_u"] = var_u_component
@@ -682,6 +682,7 @@ class RBF(BaseInterpolation):
         subset_custom_scale_factor: dict = {},
         normalize_target_data: bool = True,
         target_custom_scale_factor: dict = {},
+        num_threads: int = None,
     ) -> None:
         """
         Fits the model to the data.
@@ -702,13 +703,21 @@ class RBF(BaseInterpolation):
             Whether to normalize the target data. Default is True.
         target_custom_scale_factor : dict, optional
             The custom scale factor for the target data. Default is {}.
+        num_threads : int, optional
+            The number of threads to use for the optimization. Default is None.
 
         Notes
         -----
         - This function fits the RBF model to the data by:
             1. Preprocessing the subset and target data.
             2. Calculating the optimal sigma for the target variables.
+            3. Storing the RBF coefficients and optimal sigmas.
+        - The number of threads to use for the optimization can be specified.
         """
+
+        if num_threads is not None:
+            self.set_num_processors_to_use(num_processors=num_threads)
+            self.logger.info(f"Using {num_threads} threads for optimization.")
 
         self._subset_directional_variables = subset_directional_variables
         self._target_directional_variables = target_directional_variables
@@ -780,7 +789,7 @@ class RBF(BaseInterpolation):
             )
         for directional_variable in self.target_directional_variables:
             self.logger.info(f"Calculating target degrees for {directional_variable}")
-            interpolated_target[directional_variable] = self._get_degrees_from_uv(
+            interpolated_target[directional_variable] = self.get_degrees_from_uv(
                 xu=interpolated_target[f"{directional_variable}_u"].values,
                 xv=interpolated_target[f"{directional_variable}_v"].values,
             )
@@ -796,6 +805,7 @@ class RBF(BaseInterpolation):
         subset_custom_scale_factor: dict = {},
         normalize_target_data: bool = True,
         target_custom_scale_factor: dict = {},
+        num_threads: int = None,
     ) -> pd.DataFrame:
         """
         Fits the model to the subset and predicts the interpolated dataset.
@@ -818,6 +828,8 @@ class RBF(BaseInterpolation):
             Whether to normalize the target data. Default is True.
         target_custom_scale_factor : dict, optional
             The custom scale factor for the target data. Default is {}.
+        num_threads : int, optional
+            The number of threads to use for the optimization. Default is None.
 
         Returns
         -------
@@ -837,5 +849,7 @@ class RBF(BaseInterpolation):
             subset_custom_scale_factor=subset_custom_scale_factor,
             normalize_target_data=normalize_target_data,
             target_custom_scale_factor=target_custom_scale_factor,
+            num_threads=num_threads,
         )
+
         return self.predict(dataset=dataset)
