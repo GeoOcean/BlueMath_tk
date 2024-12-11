@@ -65,6 +65,7 @@ class TestRBF(unittest.TestCase):
             target_directional_variables=["DirPred"],
             normalize_target_data=True,
             dataset=self.dataset,
+            num_threads=6,
         )
         self.assertIsInstance(predictions, pd.DataFrame)
         self.assertIn("HsPred", predictions.columns)

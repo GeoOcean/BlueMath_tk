@@ -4,6 +4,14 @@ nav:
   - Home: index.md
   - Installation: installation.md
   - Contribute: contribute.md
+  - Datamining:
+      - Introduction: datamining/intro.md
+      - Sampling: datamining/sampling_datamining.md
+      - Clustering: datamining/clustering_datamining.md
+      - Reduction: datamining/reduction_datamining.md
+  - Interpolation:
+      - Itroduction: interpolation/intro.md
+      - Radial Basis Functions: interpolation/rbf_interpolation.md
   - Wrappers:
       - Intro: wrappers/intro.md
 

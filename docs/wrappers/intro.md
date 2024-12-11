@@ -1,4 +1,4 @@
-# Model Wrappers
+# Numerical Model Wrappers
 
 This section provides general documentation for the model wrappers usage. The wrappers are designed to facilitate the interaction with various numerical models by providing a consistent interface for setting parameters, running simulations, and processing outputs.
 
