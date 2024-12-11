@@ -4,7 +4,7 @@ The Interpolation package in this repository provides tools and algorithms for e
 
 ## Radial Basis Function (RBF) Model
 
-The Radial Basis Function (RBF) model is a powerful interpolation method that uses radial basis functions to approximate the underlying function of the data. RBF interpolation is particularly useful for multidimensional data and can handle irregularly spaced data points.
+The [`Radial Basis Function (RBF)`](rbf_interpolation.md) model is a powerful interpolation method that uses radial basis functions to approximate the underlying function of the data. RBF interpolation is particularly useful for multidimensional data and can handle irregularly spaced data points.
 
 ### Key Features of the RBF Model
 
