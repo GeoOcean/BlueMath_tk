@@ -80,7 +80,14 @@ class KMA(BaseClustering):
     - Add customization for the K-Means algorithm.
     """
 
-    def __init__(self, num_clusters: int, seed: int = 0) -> None:
+    def __init__(
+        self,
+        num_clusters: int,
+        seed: int = 0,
+        init: str = "k-means++",
+        n_init: str = "auto",
+        algorithm: str = "lloyd",
+    ) -> None:
         """
         Initializes the KMA class.
 
@@ -93,6 +100,12 @@ class KMA(BaseClustering):
             The random seed to use.
             Must be greater or equal to 0.
             Default is 0.
+        n_init : str, optional
+            The number of initializations to perform.
+            Default is "k-means++".
+        algorithm : str, optional
+            The algorithm to use.
+            Default is "lloyd".
 
         Raises
         ------
@@ -113,7 +126,11 @@ class KMA(BaseClustering):
             raise ValueError("Variable seed must be >= 0")
         # TODO: check random_state and n_init
         self._kma = KMeans(
-            n_clusters=self.num_clusters, random_state=self.seed, n_init="auto"
+            n_clusters=self.num_clusters,
+            random_state=self.seed,
+            init=init,
+            n_init=n_init,
+            algorithm=algorithm,
         )
         self._data: pd.DataFrame = pd.DataFrame()
         self._normalized_data: pd.DataFrame = pd.DataFrame()
@@ -172,13 +189,13 @@ class KMA(BaseClustering):
         Notes
         -----
         - The function assumes that the data is validated by the `validate_data_kma`
-        decorator before execution.
+          decorator before execution.
         """
 
         self._data = data.copy()
         self.directional_variables = directional_variables.copy()
         for directional_variable in self.directional_variables:
-            u_comp, v_comp = self._get_uv_components(
+            u_comp, v_comp = self.get_uv_components(
                 x_deg=self.data[directional_variable].values
             )
             self.data[f"{directional_variable}_u"] = u_comp
@@ -209,7 +226,7 @@ class KMA(BaseClustering):
             normalized_data=self.normalized_centroids, scale_factor=self.scale_factor
         )
         for directional_variable in self.directional_variables:
-            self.centroids[directional_variable] = self._get_degrees_from_uv(
+            self.centroids[directional_variable] = self.get_degrees_from_uv(
                 xu=self.centroids[f"{directional_variable}_u"].values,
                 xv=self.centroids[f"{directional_variable}_v"].values,
             )
@@ -236,7 +253,7 @@ class KMA(BaseClustering):
             raise KMAError("KMA model is not fitted.")
         data = data.copy()  # Avoid modifying the original data to predict
         for directional_variable in self.directional_variables:
-            u_comp, v_comp = self._get_uv_components(
+            u_comp, v_comp = self.get_uv_components(
                 x_deg=data[directional_variable].values
             )
             data[f"{directional_variable}_u"] = u_comp

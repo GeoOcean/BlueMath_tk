@@ -50,7 +50,7 @@ def normalize(
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from bluemath_tk.core.data import normalize
+    >>> from bluemath_tk.core.operations import normalize
     >>> df = pd.DataFrame(
     ...     {
     ...         "Hs": np.random.rand(1000) * 7,
@@ -153,7 +153,7 @@ def denormalize(
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from bluemath_tk.core.data import denormalize
+    >>> from bluemath_tk.core.operation import denormalize
     >>> df = pd.DataFrame(
     ...     {
     ...         "Hs": np.random.rand(1000),
@@ -169,7 +169,7 @@ def denormalize(
     >>> denormalized_data = denormalize(normalized_data=df, scale_factor=scale_factor)
     >>> import numpy as np
     >>> import xarray as xr
-    >>> from bluemath_tk.core.data import denormalize
+    >>> from bluemath_tk.core.operations import denormalize
     >>> ds = xr.Dataset(
     ...     {
     ...         "Hs": (("time",), np.random.rand(1000)),
@@ -201,7 +201,6 @@ def denormalize(
     return data
 
 
-# TODO: Return pd.DataFrame or xr.Dataset depending on input type
 def standarize(
     data: Union[np.ndarray, pd.DataFrame, xr.Dataset],
     scaler: StandardScaler = None,
@@ -226,13 +225,27 @@ def standarize(
     Examples
     --------
     >>> import numpy as np
-    >>> from bluemath_tk.core.data import standarize
+    >>> from bluemath_tk.core.operations import standarize
     >>> data = np.random.rand(1000, 3) * 10.0
     >>> standarized_data, scaler = standarize(data=data)
     """
 
     scaler = scaler or StandardScaler()
-    standarized_data = scaler.fit_transform(X=data)
+    if isinstance(data, np.ndarray):
+        standarized_data = scaler.fit_transform(X=data)
+        return standarized_data, scaler
+    elif isinstance(data, pd.DataFrame):
+        standarized_data = scaler.fit_transform(X=data.values)
+        standarized_data = pd.DataFrame(standarized_data, columns=data.columns)
+    elif isinstance(data, xr.Dataset):
+        standarized_data = scaler.fit_transform(X=data.to_array().values)
+        standarized_data = xr.Dataset(
+            {
+                var_name: (tuple(data.coords), standarized_data[i_var])
+                for i_var, var_name in enumerate(data.data_vars)
+            },
+            coords=data.coords,
+        )
     return standarized_data, scaler
 
 
@@ -264,5 +277,92 @@ def destandarize(
     >>> data = destandarize(standarized_data=standarized_data, scaler=scaler)
     """
 
-    data = scaler.inverse_transform(X=standarized_data)
+    if isinstance(standarized_data, np.ndarray):
+        data = scaler.inverse_transform(X=standarized_data)
+    elif isinstance(standarized_data, pd.DataFrame):
+        data = scaler.inverse_transform(X=standarized_data.values)
+        data = pd.DataFrame(data, columns=standarized_data.columns)
+    elif isinstance(standarized_data, xr.Dataset):
+        data = scaler.inverse_transform(X=standarized_data.to_array().values)
+        data = xr.Dataset(
+            {
+                var_name: (tuple(standarized_data.coords), data[i_var])
+                for i_var, var_name in enumerate(standarized_data.data_vars)
+            },
+            coords=standarized_data.coords,
+        )
     return data
+
+
+def get_uv_components(x_deg: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    This method calculates the u and v components for the given directional data.
+
+    Here, we assume that the directional data is in degrees,
+        beign 0° the North direction,
+        and increasing clockwise.
+
+                0° N
+                |
+                |
+    270° W <---------> 90° E
+                |
+                |
+                90° S
+
+    Parameters
+    ----------
+    x_deg : np.ndarray
+        The directional data in degrees.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        The u and v components.
+    """
+
+    # Convert degrees to radians and adjust by subtracting from π/2
+    x_rad = x_deg * np.pi / 180
+
+    # Calculate x and y components using cosine and sine
+    xu = np.sin(x_rad)
+    xv = np.cos(x_rad)
+
+    # Return the u and v components
+    return xu, xv
+
+
+def get_degrees_from_uv(xu: np.ndarray, xv: np.ndarray) -> np.ndarray:
+    """
+    This method calculates the degrees from the u and v components.
+
+    Here, we assume u and v represent angles between 0 and 360 degrees,
+        where 0° is the North direction,
+        and increasing clockwise.
+
+                 (u=0, v=1)
+                     |
+                     |
+    (u=-1, v=0) <---------> (u=1, v=0)
+                     |
+                     |
+                 (u=0, v=-1)
+
+    Parameters
+    ----------
+    xu : np.ndarray
+        The u component.
+    xv : np.ndarray
+        The v component.
+
+    Returns
+    -------
+    np.ndarray
+        The degrees.
+    """
+
+    # Calculate the degrees using the arctangent function
+    x_deg = np.arctan2(xu, xv) * 180 / np.pi % 360
+
+    # Return the degrees
+    return x_deg

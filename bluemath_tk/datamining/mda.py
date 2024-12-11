@@ -297,7 +297,7 @@ class MDA(BaseClustering):
         self._data = data.copy()
         self.directional_variables = directional_variables.copy()
         for directional_variable in self.directional_variables:
-            u_comp, v_comp = self._get_uv_components(
+            u_comp, v_comp = self.get_uv_components(
                 x_deg=self.data[directional_variable].values
             )
             self.data[f"{directional_variable}_u"] = u_comp
@@ -368,7 +368,7 @@ class MDA(BaseClustering):
             normalized_data=self.normalized_centroids, scale_factor=self.scale_factor
         )
         for directional_variable in self.directional_variables:
-            self.centroids[directional_variable] = self._get_degrees_from_uv(
+            self.centroids[directional_variable] = self.get_degrees_from_uv(
                 xu=self.centroids[f"{directional_variable}_u"].values,
                 xv=self.centroids[f"{directional_variable}_v"].values,
             )
@@ -400,7 +400,7 @@ class MDA(BaseClustering):
             raise MDAError("MDA model is not fitted.")
         data = data.copy()  # Avoid modifying the original data to predict
         for directional_variable in self.directional_variables:
-            u_comp, v_comp = self._get_uv_components(
+            u_comp, v_comp = self.get_uv_components(
                 x_deg=data[directional_variable].values
             )
             data[f"{directional_variable}_u"] = u_comp
@@ -409,6 +409,7 @@ class MDA(BaseClustering):
         normalized_data, _ = self.normalize(
             data=data, custom_scale_factor=self.scale_factor
         )
+
         return self._nearest_indices(normalized_data=normalized_data)
 
     def fit_predict(

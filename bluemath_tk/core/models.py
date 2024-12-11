@@ -1,6 +1,9 @@
+import os
+import sys
 import logging
 from typing import Union, Tuple
 import pickle
+import importlib
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -13,12 +16,39 @@ from sklearn.metrics import (
     explained_variance_score,
 )
 from .logging import get_file_logger
-from .operations import normalize, denormalize, standarize, destandarize
+from .operations import (
+    normalize,
+    denormalize,
+    standarize,
+    destandarize,
+    get_uv_components,
+    get_degrees_from_uv,
+)
 
 
 class BlueMathModel(ABC):
+    """
+    Abstract base class for handling default functionalities across the project.
+
+    Attributes
+    ----------
+    logger : logging.Logger
+        The logger object.
+
+    Methods
+    -------
+    set_logger_name(name)
+        Sets the name of the logger.
+    save_model(model_path)
+        Saves the model to a file.
+    load_model(model_path)
+        Loads the model from a file.
+    check_nans(data, replace_value, raise_error)
+        Checks for NaNs in the data and optionally replaces them.
+    """
+
     @abstractmethod
-    def __init__(self):
+    def __init__(self) -> None:
         self._logger: logging.Logger = None
 
     @property
@@ -31,17 +61,17 @@ class BlueMathModel(ABC):
     def logger(self, value: logging.Logger) -> None:
         self._logger = value
 
-    def set_logger_name(self, name: str):
+    def set_logger_name(self, name: str) -> None:
         """Sets the name of the logger."""
         self.logger = get_file_logger(name=name)
 
-    def save_model(self, model_path: str):
+    def save_model(self, model_path: str) -> None:
         """Saves the model to a file."""
         self.logger.info(f"Saving model to {model_path}")
         with open(model_path, "wb") as f:
             pickle.dump(self, f)
 
-    def load_model(self, model_path: str):
+    def load_model(self, model_path: str) -> "BlueMathModel":
         """Loads the model from a file."""
         self.logger.info(f"Loading model from {model_path}")
         with open(model_path, "rb") as f:
@@ -53,7 +83,7 @@ class BlueMathModel(ABC):
         data: Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset],
         replace_value=None,
         raise_error: bool = False,
-    ):
+    ) -> Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset]:
         """
         Checks for NaNs in the data and optionally replaces them.
 
@@ -115,6 +145,7 @@ class BlueMathModel(ABC):
     ) -> Tuple[Union[pd.DataFrame, xr.Dataset], dict]:
         """
         Normalize data to 0-1 using min max scaler approach.
+        More info in bluemath_tk.core.operations.normalize.
 
         Parameters
         ----------
@@ -141,6 +172,7 @@ class BlueMathModel(ABC):
     ) -> pd.DataFrame:
         """
         Denormalize data using provided scale_factor.
+        More info in bluemath_tk.core.operations.denormalize.
 
         Parameters
         ----------
@@ -165,6 +197,7 @@ class BlueMathModel(ABC):
     ) -> Tuple[Union[np.ndarray, pd.DataFrame, xr.Dataset], StandardScaler]:
         """
         Standarize data using StandardScaler.
+        More info in bluemath_tk.core.operations.standarize.
 
         Parameters
         ----------
@@ -191,6 +224,7 @@ class BlueMathModel(ABC):
     ) -> Union[np.ndarray, pd.DataFrame, xr.Dataset]:
         """
         Destandarize data using provided scaler.
+        More info in bluemath_tk.core.operations.destandarize.
 
         Parameters
         ----------
@@ -272,7 +306,7 @@ class BlueMathModel(ABC):
         return pd.DataFrame(metrics).T
 
     @staticmethod
-    def _get_uv_components(x_deg: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def get_uv_components(x_deg: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         This method calculates the u and v components for the given directional data.
 
@@ -297,24 +331,12 @@ class BlueMathModel(ABC):
         -------
         Tuple[np.ndarray, np.ndarray]
             The u and v components.
-
-        Notes
-        -----
-        - TODO: This method can be moved to a separate utility module.
         """
 
-        # Convert degrees to radians and adjust by subtracting from π/2
-        x_rad = x_deg * np.pi / 180
-
-        # Calculate x and y components using cosine and sine
-        xu = np.sin(x_rad)
-        xv = np.cos(x_rad)
-
-        # Return the u and v components
-        return xu, xv
+        return get_uv_components(x_deg)
 
     @staticmethod
-    def _get_degrees_from_uv(xu: np.ndarray, xv: np.ndarray) -> np.ndarray:
+    def get_degrees_from_uv(xu: np.ndarray, xv: np.ndarray) -> np.ndarray:
         """
         This method calculates the degrees from the u and v components.
 
@@ -341,14 +363,91 @@ class BlueMathModel(ABC):
         -------
         np.ndarray
             The degrees.
+        """
+
+        return get_degrees_from_uv(xu, xv)
+
+    def get_num_processors_available(self) -> int:
+        """
+        Gets the number of processors available.
+
+        Returns
+        -------
+        int
+            The number of processors available.
+
+        TODO:
+        - Check whether available processors are used or not.
+        """
+
+        return os.cpu_count()
+
+    def set_num_processors_to_use(self, num_processors: int) -> None:
+        """
+        Sets the number of processors to use for parallel processing.
+
+        Parameters
+        ----------
+        num_processors : int
+            The number of processors to use.
+            If -1, all available processors will be used.
+
+        Raises
+        ------
+        ValueError
+            If the number of processors requested exceeds the number of processors available
+        """
+
+        # Retrieve the number of processors available
+        num_processors_available = self.get_num_processors_available()
+
+        # Check if the number of processors requested is valid
+        if num_processors == -1:
+            num_processors = num_processors_available
+        elif num_processors <= 0:
+            raise ValueError("Number of processors must be greater than 0")
+        elif num_processors > num_processors_available:
+            raise ValueError(
+                f"Number of processors requested ({num_processors}) "
+                f"exceeds the number of processors available ({num_processors_available})"
+            )
+
+        # Calculate the percentage of processors to use
+        percentage = round(num_processors / num_processors_available, 2)
+        if percentage < 0.5:
+            self.logger.info(
+                f"Number of processors requested ({num_processors}) "
+                f"is less than 50% of the available processors ({num_processors_available})"
+            )
+        else:
+            self.logger.warning(
+                f"Number of processors requested ({num_processors}) "
+                f"is more than 50% of the available processors ({num_processors_available})"
+            )
+        self.logger.info(f"Using {percentage * 100}% of the available processors")
+        os.environ["OMP_NUM_THREADS"] = str(num_processors)
+
+        # Re-import numpy if it is already imported
+        if "numpy" in sys.modules:
+            importlib.reload(np)
+
+    def get_num_processors_used(self) -> int:
+        """
+        Gets the number of processors used.
+
+        Returns
+        -------
+        int
+            The number of processors used.
 
         Notes
         -----
-        - TODO: This method can be moved to a separate utility module.
+        - This method returns the number of processors used by the application.
+        - 1 is returned if the number of processors used is not set, as is the case of
+          serial processing like Python's built-in functions.
+        - Remember that if we run a parallel processing task, the number of processors used
+          will be the number of processors set by the task, ehich can be > 1.
+          Examples: np.linalg. or numerical models compiled with OpenMP or MPI.
         """
 
-        # Calculate the degrees using the arctangent function
-        x_deg = np.arctan2(xu, xv) * 180 / np.pi % 360
-
-        # Return the degrees
-        return x_deg
+        return int(os.environ.get("OMP_NUM_THREADS", 1))
