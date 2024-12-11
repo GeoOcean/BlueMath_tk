@@ -9,6 +9,10 @@
       
       
       
+        <link rel="prev" href="../clustering_datamining/">
+      
+      
+        <link rel="next" href="../../interpolation/intro/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -16,7 +20,7 @@
     
     
       
-        <title>Base wrapper - BlueMath {Toolkit}</title>
+        <title>Reduction - BlueMath {Toolkit}</title>
       
     
     
@@ -60,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#bluemath_tk.wrappers._base_wrappers" class="md-skip">
+        <a href="#bluemath_tk.datamining.pca" class="md-skip">
           Skip to content
         </a>
       
@@ -96,7 +100,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Base wrapper
+              Reduction
             
           </span>
         </div>
@@ -246,17 +250,19 @@
       
   
   
+    
   
   
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -270,7 +276,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             Datamining
@@ -284,7 +290,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../datamining/intro/" class="md-nav__link">
+      <a href="../intro/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -305,7 +311,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../datamining/sampling_datamining/" class="md-nav__link">
+      <a href="../sampling_datamining/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -326,7 +332,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../datamining/clustering_datamining/" class="md-nav__link">
+      <a href="../clustering_datamining/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -344,10 +350,28 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../datamining/reduction_datamining/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Reduction
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -356,6 +380,102 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#bluemath_tk.datamining.pca" class="md-nav__link">
+    <span class="md-ellipsis">
+      pca
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bluemath_tk.datamining.pca.PCA" class="md-nav__link">
+    <span class="md-ellipsis">
+      PCA
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PCA">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bluemath_tk.datamining.pca.PCA.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __init__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bluemath_tk.datamining.pca.PCA.fit" class="md-nav__link">
+    <span class="md-ellipsis">
+      fit
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bluemath_tk.datamining.pca.PCA.fit_transform" class="md-nav__link">
+    <span class="md-ellipsis">
+      fit_transform
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bluemath_tk.datamining.pca.PCA.inverse_transform" class="md-nav__link">
+    <span class="md-ellipsis">
+      inverse_transform
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bluemath_tk.datamining.pca.PCA.transform" class="md-nav__link">
+    <span class="md-ellipsis">
+      transform
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bluemath_tk.datamining.pca.PCAError" class="md-nav__link">
+    <span class="md-ellipsis">
+      PCAError
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -494,7 +614,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../intro/" class="md-nav__link">
+      <a href="../../wrappers/intro/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -540,26 +660,26 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#bluemath_tk.wrappers._base_wrappers" class="md-nav__link">
+  <a href="#bluemath_tk.datamining.pca" class="md-nav__link">
     <span class="md-ellipsis">
-      _base_wrappers
+      pca
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper" class="md-nav__link">
+  <a href="#bluemath_tk.datamining.pca.PCA" class="md-nav__link">
     <span class="md-ellipsis">
-      BaseModelWrapper
+      PCA
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="BaseModelWrapper">
+    <nav class="md-nav" aria-label="PCA">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.__init__" class="md-nav__link">
+  <a href="#bluemath_tk.datamining.pca.PCA.__init__" class="md-nav__link">
     <span class="md-ellipsis">
       __init__
     </span>
@@ -568,72 +688,36 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.build_cases" class="md-nav__link">
+  <a href="#bluemath_tk.datamining.pca.PCA.fit" class="md-nav__link">
     <span class="md-ellipsis">
-      build_cases
+      fit
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.copy_files" class="md-nav__link">
+  <a href="#bluemath_tk.datamining.pca.PCA.fit_transform" class="md-nav__link">
     <span class="md-ellipsis">
-      copy_files
+      fit_transform
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_all_combinations" class="md-nav__link">
+  <a href="#bluemath_tk.datamining.pca.PCA.inverse_transform" class="md-nav__link">
     <span class="md-ellipsis">
-      create_cases_context_all_combinations
+      inverse_transform
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_one_by_one" class="md-nav__link">
+  <a href="#bluemath_tk.datamining.pca.PCA.transform" class="md-nav__link">
     <span class="md-ellipsis">
-      create_cases_context_one_by_one
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.render_file_from_template" class="md-nav__link">
-    <span class="md-ellipsis">
-      render_file_from_template
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_cases" class="md-nav__link">
-    <span class="md-ellipsis">
-      run_cases
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model" class="md-nav__link">
-    <span class="md-ellipsis">
-      run_model
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.write_array_in_file" class="md-nav__link">
-    <span class="md-ellipsis">
-      write_array_in_file
+      transform
     </span>
   </a>
   
@@ -641,6 +725,15 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bluemath_tk.datamining.pca.PCAError" class="md-nav__link">
+    <span class="md-ellipsis">
+      PCAError
+    </span>
+  </a>
   
 </li>
       
@@ -659,13 +752,13 @@
                   
 
 
-  <h1>Base wrapper</h1>
+  <h1>Reduction</h1>
 
 <div class="doc doc-object doc-module">
 
 
 
-<a id="bluemath_tk.wrappers._base_wrappers"></a>
+<a id="bluemath_tk.datamining.pca"></a>
     <div class="doc doc-contents first">
 
 
@@ -688,8 +781,8 @@
 
 
 
-<h2 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper" class="doc doc-heading">
-            <code>BaseModelWrapper</code>
+<h2 id="bluemath_tk.datamining.pca.PCA" class="doc doc-heading">
+            <code>PCA</code>
 
 
 </h2>
@@ -697,10 +790,10 @@
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="bluemath_tk.core.models.BlueMathModel">BlueMathModel</span></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining._base_datamining.BaseReduction" href="../base_datamining/#bluemath_tk.datamining._base_datamining.BaseReduction">BaseReduction</a></code></p>
 
 
-        <p>Base class for numerical models wrappers.</p>
+        <p>Principal Component Analysis (PCA) class.</p>
 
 
 <p><span class="doc-section-title">Attributes:</span></p>
@@ -714,79 +807,156 @@
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.templates_dir">templates_dir</span></code></td>
+            <td><code><span title="bluemath_tk.datamining.pca.PCA.n_components">n_components</span></code></td>
+            <td>
+                  <code>int or float</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The number of components or the explained variance ratio.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="bluemath_tk.datamining.pca.PCA.is_incremental">is_incremental</span></code></td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Indicates whether Incremental PCA is used.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="bluemath_tk.datamining.pca.PCA._pca">_pca</span></code></td>
+            <td>
+                  <code><span title="sklearn.decomposition.PCA">PCA</span> or <span title="sklearn.decomposition.IncrementalPCA">IncrementalPCA</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The PCA or Incremental PCA model.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="bluemath_tk.datamining.pca.PCA.is_fitted">is_fitted</span></code></td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Indicates whether the PCA model has been fitted.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="bluemath_tk.datamining.pca.PCA._data">_data</span></code></td>
+            <td>
+                  <code><span title="xarray.Dataset">Dataset</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The original dataset.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="bluemath_tk.datamining.pca.PCA._stacked_data_matrix">_stacked_data_matrix</span></code></td>
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The stacked data matrix.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="bluemath_tk.datamining.pca.PCA._standarized_stacked_data_matrix">_standarized_stacked_data_matrix</span></code></td>
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The standardized stacked data matrix.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="bluemath_tk.datamining.pca.PCA.scaler">scaler</span></code></td>
+            <td>
+                  <code><span title="sklearn.preprocessing.StandardScaler">StandardScaler</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The scaler used for standardizing the data.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="bluemath_tk.datamining.pca.PCA.vars_to_stack">vars_to_stack</span></code></td>
+            <td>
+                  <code>list of str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The list of variables to stack.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="bluemath_tk.datamining.pca.PCA.coords_to_stack">coords_to_stack</span></code></td>
+            <td>
+                  <code>list of str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The list of coordinates to stack.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="bluemath_tk.datamining.pca.PCA.pca_dim_for_rows">pca_dim_for_rows</span></code></td>
             <td>
                   <code>str</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The directory where the templates are stored.</p>
+                <p>The dimension for rows in PCA.</p>
               </div>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.templates_name">templates_name</span></code></td>
+            <td><code><span title="bluemath_tk.datamining.pca.PCA.window_in_pca_dim_for_rows">window_in_pca_dim_for_rows</span></code></td>
             <td>
-                  <code><span title="typing.List">List</span>[str]</code>
+                  <code>list of int</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The names of the templates.</p>
+                <p>The window in PCA dimension for rows.</p>
               </div>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.model_parameters">model_parameters</span></code></td>
+            <td><code><span title="bluemath_tk.datamining.pca.PCA.value_to_replace_nans">value_to_replace_nans</span></code></td>
             <td>
-                  <code>dict</code>
+                  <code>float</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The parameters to be used in the templates.</p>
+                <p>The value to replace NaNs in the dataset.</p>
               </div>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.output_dir">output_dir</span></code></td>
+            <td><code><span title="bluemath_tk.datamining.pca.PCA.num_cols_for_vars">num_cols_for_vars</span></code></td>
             <td>
-                  <code>str</code>
+                  <code>int</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The directory where the output files will be saved.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.env">env</span></code></td>
-            <td>
-                  <code><span title="jinja2.Environment">Environment</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The Jinja2 environment.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.cases_dirs">cases_dirs</span></code></td>
-            <td>
-                  <code><span title="typing.List">List</span>[str]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The list with cases directories.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.cases_context">cases_context</span></code></td>
-            <td>
-                  <code><span title="typing.List">List</span>[dict]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The list with cases context.</p>
+                <p>The number of columns for variables.</p>
               </div>
             </td>
           </tr>
@@ -804,84 +974,60 @@
       </thead>
       <tbody>
             <tr class="doc-section-item">
-              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper._check_parameters_type">_check_parameters_type</span></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.pca.PCA.fit" href="#bluemath_tk.datamining.pca.PCA.fit">fit</a></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>Check if the parameters have the correct type.</p>
+                  <p>data: xr.Dataset,
+vars_to_stack: List[str],
+coords_to_stack: List[str],
+pca_dim_for_rows: str,
+window_in_pca_dim_for_rows: List[int] = [0],
+value_to_replace_nans: float = None,</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper._exec_bash_commands">_exec_bash_commands</span></code></td>
+              <td><code><span title="bluemath_tk.datamining.pca.PCA.) -> None">) -&gt; None</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>Execute bash commands.</p>
+                  
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_one_by_one" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_one_by_one">create_cases_context_one_by_one</a></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.pca.PCA.transform" href="#bluemath_tk.datamining.pca.PCA.transform">transform</a></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>Create an array of dictionaries with the combinations of values from the
-input dictionary, one by one.</p>
+                  
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_all_combinations" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_all_combinations">create_cases_context_all_combinations</a></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.pca.PCA.fit_transform" href="#bluemath_tk.datamining.pca.PCA.fit_transform">fit_transform</a></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>Create an array of dictionaries with each possible combination of values
-from the input dictionary.</p>
+                  <p>data: xr.Dataset,
+vars_to_stack: List[str],
+coords_to_stack: List[str],
+pca_dim_for_rows: str,
+window_in_pca_dim_for_rows: List[int] = [0],
+value_to_replace_nans: float = None,</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.render_file_from_template" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.render_file_from_template">render_file_from_template</a></code></td>
+              <td><code><span title="bluemath_tk.datamining.pca.PCA.) -> xr.Dataset">) -&gt; xr.Dataset</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>Render a file from a template.</p>
+                  
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.write_array_in_file" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.write_array_in_file">write_array_in_file</a></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.pca.PCA.inverse_transform" href="#bluemath_tk.datamining.pca.PCA.inverse_transform">inverse_transform</a></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>Write an array in a file.</p>
-                </div>
-              </td>
-            </tr>
-            <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.copy_files" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.copy_files">copy_files</a></code></td>
-              <td>
-                <div class="doc-md-description">
-                  <p>Copy file(s) from source to destination.</p>
-                </div>
-              </td>
-            </tr>
-            <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.build_cases" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.build_cases">build_cases</a></code></td>
-              <td>
-                <div class="doc-md-description">
-                  <p>Create the cases folders and render the input files.</p>
-                </div>
-              </td>
-            </tr>
-            <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_cases" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_cases">run_cases</a></code></td>
-              <td>
-                <div class="doc-md-description">
-                  <p>Run the cases.</p>
-                </div>
-              </td>
-            </tr>
-            <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model">run_model</a></code></td>
-              <td>
-                <div class="doc-md-description">
-                  <p>Run the model for a specific case (abstract method).</p>
+                  
                 </div>
               </td>
             </tr>
@@ -909,15 +1055,15 @@ from the input dictionary.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.__init__" class="doc doc-heading">
-            <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">templates_dir</span><span class="p">,</span> <span class="n">templates_name</span><span class="p">,</span> <span class="n">model_parameters</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">default_parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<h3 id="bluemath_tk.datamining.pca.PCA.__init__" class="doc doc-heading">
+            <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mf">0.98</span><span class="p">,</span> <span class="n">is_incremental</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Initialize the BaseModelWrapper.</p>
+        <p>Initialize the PCA class.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -933,14 +1079,161 @@ from the input dictionary.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>templates_dir</code>
+                <code>n_components</code>
+            </td>
+            <td>
+                  <code>int or float</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of components to keep. If 0 &lt; n_components &lt; 1, it represents the
+proportion of variance to be explained by the selected components. If
+n_components &gt;= 1, it represents the number of components to keep. Default is 0.98.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.98</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>is_incremental</code>
+            </td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, use Incremental PCA which is useful for large datasets. Default is False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ValueError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If n_components is less than or equal to 0.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>TypeError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If n_components is not an integer when it is greater than or equal to 1.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.datamining.pca.PCA.fit" class="doc doc-heading">
+            <code class=" language-python"><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">vars_to_stack</span><span class="p">,</span> <span class="n">coords_to_stack</span><span class="p">,</span> <span class="n">pca_dim_for_rows</span><span class="p">,</span> <span class="n">window_in_pca_dim_for_rows</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">value_to_replace_nans</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Fit PCA model to data.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="xarray.Dataset">Dataset</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The data to fit the PCA model.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>vars_to_stack</code>
+            </td>
+            <td>
+                  <code>list of str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The variables to stack.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>coords_to_stack</code>
+            </td>
+            <td>
+                  <code>list of str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The coordinates to stack.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pca_dim_for_rows</code>
             </td>
             <td>
                   <code>str</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The directory where the templates are stored.</p>
+                <p>The PCA dimension to maintain in rows (usually the time).</p>
               </div>
             </td>
             <td>
@@ -949,64 +1242,30 @@ from the input dictionary.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>templates_name</code>
+                <code>window_in_pca_dim_for_rows</code>
             </td>
             <td>
-                  <code>list</code>
+                  <code>list of int</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The names of the templates.</p>
+                <p>The window steps to roll the pca_dim_for_rows. Default is [0].</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>[0]</code>
             </td>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>model_parameters</code>
+                <code>value_to_replace_nans</code>
             </td>
             <td>
-                  <code>dict</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The parameters to be used in the templates.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>output_dir</code>
-            </td>
-            <td>
-                  <code>str</code>
+                  <code>float</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The directory where the output files will be saved.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>default_parameters</code>
-            </td>
-            <td>
-                  <code>dict</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The default parameters type for the model. If None, the parameters will
-not be checked.
-Default is None.</p>
+                <p>The value to replace NaNs. Default is None.</p>
               </div>
             </td>
             <td>
@@ -1023,15 +1282,15 @@ Default is None.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.build_cases" class="doc doc-heading">
-            <code class=" language-python"><span class="n">build_cases</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;all_combinations&#39;</span><span class="p">)</span></code>
+<h3 id="bluemath_tk.datamining.pca.PCA.fit_transform" class="doc doc-heading">
+            <code class=" language-python"><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">vars_to_stack</span><span class="p">,</span> <span class="n">coords_to_stack</span><span class="p">,</span> <span class="n">pca_dim_for_rows</span><span class="p">,</span> <span class="n">window_in_pca_dim_for_rows</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">value_to_replace_nans</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Create the cases folders and render the input files.</p>
+        <p>Fit and transform data using PCA model.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1047,63 +1306,14 @@ Default is None.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>mode</code>
+                <code>data</code>
             </td>
             <td>
-                  <code>str</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The mode to create the cases. Can be "all_combinations" or "one_by_one".
-Default is "all_combinations".</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;all_combinations&#39;</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.copy_files" class="doc doc-heading">
-            <code class=" language-python"><span class="n">copy_files</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Copy file(s) from source to destination.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>src</code>
-            </td>
-            <td>
-                  <code>str</code>
+                  <code><span title="xarray.Dataset">Dataset</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The source file.</p>
+                <p>The data to fit the PCA model.</p>
               </div>
             </td>
             <td>
@@ -1112,146 +1322,14 @@ Default is "all_combinations".</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>dst</code>
+                <code>vars_to_stack</code>
             </td>
             <td>
-                  <code>str</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The destination file.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_all_combinations" class="doc doc-heading">
-            <code class=" language-python"><span class="n">create_cases_context_all_combinations</span><span class="p">()</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Create an array of dictionaries with each possible combination of values
-from the input dictionary.</p>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-<th>Name</th>          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-<td><code>array_of_contexts</code></td>            <td>
-                  <code>list</code>
+                  <code>list of str</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A list of dictionaries, each representing a unique combination of
-parameter values.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_one_by_one" class="doc doc-heading">
-            <code class=" language-python"><span class="n">create_cases_context_one_by_one</span><span class="p">()</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Create an array of dictionaries with the combinations of values from the
-input dictionary, one by one.</p>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-<th>Name</th>          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-<td><code>array_of_contexts</code></td>            <td>
-                  <code>list</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>A list of dictionaries, each representing a unique combination of
-parameter values.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.render_file_from_template" class="doc doc-heading">
-            <code class=" language-python"><span class="n">render_file_from_template</span><span class="p">(</span><span class="n">template_name</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">output_filename</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Render a file from a template.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>template_name</code>
-            </td>
-            <td>
-                  <code>str</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The name of the template file.</p>
+                <p>The variables to stack.</p>
               </div>
             </td>
             <td>
@@ -1260,14 +1338,14 @@ parameter values.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>context</code>
+                <code>coords_to_stack</code>
             </td>
             <td>
-                  <code>dict</code>
+                  <code>list of str</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The context to be used in the template.</p>
+                <p>The coordinates to stack.</p>
               </div>
             </td>
             <td>
@@ -1276,16 +1354,46 @@ parameter values.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>output_filename</code>
+                <code>pca_dim_for_rows</code>
             </td>
             <td>
                   <code>str</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The name of the output file. If None, it will be saved in the output
-directory with the same name as the template.
-Default is None.</p>
+                <p>The PCA dimension to maintain in rows (usually the time).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>window_in_pca_dim_for_rows</code>
+            </td>
+            <td>
+                  <code>list of int</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The window steps to roll the pca_dim_for_rows. Default is [0].</p>
+              </div>
+            </td>
+            <td>
+                  <code>[0]</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>value_to_replace_nans</code>
+            </td>
+            <td>
+                  <code>float</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The value to replace NaNs. Default is None.</p>
               </div>
             </td>
             <td>
@@ -1295,6 +1403,29 @@ Default is None.</p>
       </tbody>
     </table>
 
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="xarray.Dataset">Dataset</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The transformed data.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
     </div>
 
 </div>
@@ -1302,36 +1433,15 @@ Default is None.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_cases" class="doc doc-heading">
-            <code class=" language-python"><span class="n">run_cases</span><span class="p">()</span></code>
+<h3 id="bluemath_tk.datamining.pca.PCA.inverse_transform" class="doc doc-heading">
+            <code class=" language-python"><span class="n">inverse_transform</span><span class="p">(</span><span class="n">PCs</span><span class="p">)</span></code>
 
 </h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Run the cases.</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model" class="doc doc-heading">
-            <code class=" language-python"><span class="n">run_model</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
-  </span>
-
-</h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Run the model.</p>
+        <p>Inverse transform data using the fitted PCA model.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1347,18 +1457,41 @@ Default is None.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>case_dir</code>
+                <code>X</code>
             </td>
             <td>
-                  <code>str</code>
+                  <code><span title="numpy.ndarray">ndarray</span> or <span title="xarray.Dataset">Dataset</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The directory of the case.</p>
+                <p>The data to inverse transform.</p>
               </div>
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>data_transformed</code></td>            <td>
+                  <code><span title="xarray.Dataset">Dataset</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The inverse transformed data.</p>
+              </div>
             </td>
           </tr>
       </tbody>
@@ -1371,15 +1504,15 @@ Default is None.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.write_array_in_file" class="doc doc-heading">
-            <code class=" language-python"><span class="n">write_array_in_file</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span></code>
+<h3 id="bluemath_tk.datamining.pca.PCA.transform" class="doc doc-heading">
+            <code class=" language-python"><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
 
 </h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Write an array in a file.</p>
+        <p>Transform data using the fitted PCA model.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1395,30 +1528,14 @@ Default is None.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>array</code>
+                <code>data</code>
             </td>
             <td>
-                  <code><span title="numpy.ndarray">ndarray</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The array to be written. Can be 1D or 2D.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>filename</code>
-            </td>
-            <td>
-                  <code>str</code>
+                  <code><span title="xarray.Dataset">Dataset</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The name of the file.</p>
+                <p>The data to transform.</p>
               </div>
             </td>
             <td>
@@ -1428,9 +1545,76 @@ Default is None.</p>
       </tbody>
     </table>
 
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="xarray.Dataset">Dataset</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The transformed data.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
     </div>
 
 </div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="bluemath_tk.datamining.pca.PCAError" class="doc doc-heading">
+            <code>PCAError</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code>Exception</code></p>
+
+
+        <p>Custom exception for PCA class.</p>
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
 
 
 
