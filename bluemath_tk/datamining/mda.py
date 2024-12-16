@@ -50,6 +50,15 @@ class MDA(BaseClustering):
     centroid_real_indices : List[int]
         The real indices of the selected centroids.
 
+    Methods
+    -------
+    fit(data, directional_variables, custom_scale_factor)
+        Fit the MDA algorithm to the provided data.
+    predict(data)
+        Predict the nearest centroid for the provided data.
+    fit_predict(data, directional_variables, custom_scale_factor)
+        Fits the MDA model to the data and predicts the nearest centroids.
+
     Notes
     -----
     - This class is designed to perform the MDA algorithm.
@@ -67,7 +76,7 @@ class MDA(BaseClustering):
     ...     }
     ... )
     >>> mda = MDA(num_centers=10)
-    >>> mda_centroids, mda_centroids_df = mda.fit_predict(
+    >>> nearest_centroids_idxs, nearest_centroids_df = mda.fit_predict(
     ...     data=data,
     ...     directional_variables=['Dir'],
     ... )
