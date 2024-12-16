@@ -266,6 +266,43 @@
   </tbody>
 </table>
 
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.mda.MDA.fit" href="#bluemath_tk.datamining.mda.MDA.fit">fit</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Fit the MDA algorithm to the provided data.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.mda.MDA.predict" href="#bluemath_tk.datamining.mda.MDA.predict">predict</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Predict the nearest centroid for the provided data.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.mda.MDA.fit_predict" href="#bluemath_tk.datamining.mda.MDA.fit_predict">fit_predict</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Fits the MDA model to the data and predicts the nearest centroids.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
 <details class="note" open>
   <summary>Notes</summary>
   <ul>
@@ -285,7 +322,7 @@
 <span class="gp">... </span>    <span class="p">}</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mda</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">num_centers</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mda_centroids</span><span class="p">,</span> <span class="n">mda_centroids_df</span> <span class="o">=</span> <span class="n">mda</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">nearest_centroids_idxs</span><span class="p">,</span> <span class="n">nearest_centroids_df</span> <span class="o">=</span> <span class="n">mda</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Dir&#39;</span><span class="p">],</span>
 <span class="gp">... </span><span class="p">)</span>
@@ -823,6 +860,43 @@ Default is {}.</p>
   </tbody>
 </table>
 
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.kma.KMA.fit" href="#bluemath_tk.datamining.kma.KMA.fit">fit</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Fit the K-Means algorithm to the provided data.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.kma.KMA.predict" href="#bluemath_tk.datamining.kma.KMA.predict">predict</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Predict the nearest centroid for the provided data.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.kma.KMA.fit_predict" href="#bluemath_tk.datamining.kma.KMA.fit_predict">fit_predict</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Fit the K-Means algorithm to the provided data and predict the nearest centroid for each data point.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
 <details class="note" open>
   <summary>Notes</summary>
   <ul>
@@ -844,15 +918,15 @@ Default is {}.</p>
 <span class="gp">... </span>    <span class="p">}</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">kma</span> <span class="o">=</span> <span class="n">KMA</span><span class="p">(</span><span class="n">num_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">kma_centroids</span><span class="p">,</span> <span class="n">kma_centroids_df</span> <span class="o">=</span> <span class="n">kma</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">nearest_centroids_idxs</span><span class="p">,</span> <span class="n">nearest_centroids_df</span> <span class="o">=</span> <span class="n">kma</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Dir&#39;</span><span class="p">],</span>
 <span class="gp">... </span><span class="p">)</span>
 </code></pre></div>
 
 
-<details class="todos" open>
-  <summary>TODOs</summary>
+<details class="todo" open>
+  <summary>TODO</summary>
   <ul>
 <li>Add customization for the K-Means algorithm.</li>
 </ul>
@@ -1407,6 +1481,67 @@ Default is {}.</p>
   </tbody>
 </table>
 
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.som.SOM.activation_response" href="#bluemath_tk.datamining.som.SOM.activation_response">activation_response</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Returns the activation response of the given data.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.som.SOM.get_centroids_probs_for_labels" href="#bluemath_tk.datamining.som.SOM.get_centroids_probs_for_labels">get_centroids_probs_for_labels</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Returns the labels map of the given data.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.som.SOM.plot_centroids_probs_for_labels" href="#bluemath_tk.datamining.som.SOM.plot_centroids_probs_for_labels">plot_centroids_probs_for_labels</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Plots the labels map of the given data.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.som.SOM.fit" href="#bluemath_tk.datamining.som.SOM.fit">fit</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Fits the SOM model to the provided data.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.som.SOM.predict" href="#bluemath_tk.datamining.som.SOM.predict">predict</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Predicts the nearest centroid for the provided data.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.som.SOM.fit_predict" href="#bluemath_tk.datamining.som.SOM.fit_predict">fit_predict</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Fit the SOM algorithm to the provided data and predict the nearest centroid for each data point.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
 <details class="note" open>
   <summary>Notes</summary>
   <ul>
@@ -1427,7 +1562,7 @@ Default is {}.</p>
 <span class="gp">... </span>    <span class="p">}</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">som</span> <span class="o">=</span> <span class="n">SOM</span><span class="p">(</span><span class="n">som_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">num_dimensions</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">som_centroids</span><span class="p">,</span> <span class="n">som_centroids_df</span> <span class="o">=</span> <span class="n">som</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">nearest_centroids_idxs</span><span class="p">,</span> <span class="n">nearest_centroids_df</span> <span class="o">=</span> <span class="n">som</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Dir&#39;</span><span class="p">],</span>
 <span class="gp">... </span><span class="p">)</span>
