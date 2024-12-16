@@ -3,7 +3,7 @@ name: Publish Python Package
 on:
   push:
     branches:
-      - main
+      - develop  # Change this to main if you are using the main branch
 
 jobs:
   build-and-publish:
