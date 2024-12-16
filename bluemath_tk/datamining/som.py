@@ -50,6 +50,21 @@ class SOM(BaseClustering):
     is_fitted : bool
         A flag to check if the SOM model is fitted.
 
+    Methods
+    -------
+    activation_response(data)
+        Returns the activation response of the given data.
+    get_centroids_probs_for_labels(data, labels)
+        Returns the labels map of the given data.
+    plot_centroids_probs_for_labels(probs_data)
+        Plots the labels map of the given data.
+    fit(data, directional_variables, num_iteration)
+        Fits the SOM model to the provided data.
+    predict(data)
+        Predicts the nearest centroid for the provided data.
+    fit_predict(data, directional_variables, num_iteration)
+        Fit the SOM algorithm to the provided data and predict the nearest centroid for each data point.
+
     Notes
     -----
     - Check MiniSom documentation for more information:
@@ -68,7 +83,7 @@ class SOM(BaseClustering):
     ...     }
     ... )
     >>> som = SOM(som_shape=(3, 3), num_dimensions=4)
-    >>> som_centroids, som_centroids_df = som.fit_predict(
+    >>> nearest_centroids_idxs, nearest_centroids_df = som.fit_predict(
     ...     data=data,
     ...     directional_variables=['Dir'],
     ... )

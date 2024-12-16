@@ -51,6 +51,15 @@ class KMA(BaseClustering):
     centroid_real_indices : np.array
         The real indices of the selected centroids.
 
+    Methods
+    -------
+    fit(data, directional_variables, custom_scale_factor)
+        Fit the K-Means algorithm to the provided data.
+    predict(data)
+        Predict the nearest centroid for the provided data.
+    fit_predict(data, directional_variables, custom_scale_factor)
+        Fit the K-Means algorithm to the provided data and predict the nearest centroid for each data point.
+
     Notes
     -----
     - The K-Means algorithm is used to cluster data points into k clusters.
@@ -70,12 +79,12 @@ class KMA(BaseClustering):
     ...     }
     ... )
     >>> kma = KMA(num_clusters=5)
-    >>> kma_centroids, kma_centroids_df = kma.fit_predict(
+    >>> nearest_centroids_idxs, nearest_centroids_df = kma.fit_predict(
     ...     data=data,
     ...     directional_variables=['Dir'],
     ... )
 
-    TODOs
+    TODO
     -----
     - Add customization for the K-Means algorithm.
     """
