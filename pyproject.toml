@@ -16,11 +16,12 @@ authors = [
 
 dynamic = ["version"]
 
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -58,10 +59,11 @@ Homepage = "https://github.com/GeoOcean/BlueMath_tk"
 Documentation = "https://geoocean.github.io/BlueMath_tk/"
 Issues = "https://github.com/GeoOcean/BlueMath_tk/issues"
 
-[tool.setuptools]
+[tool.setuptools.packages.find]
 
-packages = ["bluemath_tk"]
+where = ["bluemath_tk"]
 
 [tool.setuptools_scm]
+
 version_file = "bluemath_tk/_version.py"
 local_scheme = "no-local-version"
