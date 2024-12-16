@@ -2,8 +2,8 @@ name: Publish Python Package
 
 on:
   push:
-    branches:
-      - develop  # Change this to main if you are using the main branch
+    tags:
+      - "v*"
 
 jobs:
   build-and-publish:
