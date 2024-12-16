@@ -58,5 +58,10 @@ Homepage = "https://github.com/GeoOcean/BlueMath_tk"
 Documentation = "https://geoocean.github.io/BlueMath_tk/"
 Issues = "https://github.com/GeoOcean/BlueMath_tk/issues"
 
+[tool.setuptools]
+
+packages = ["bluemath_tk"]
+
 [tool.setuptools_scm]
 version_file = "bluemath_tk/_version.py"
+local_scheme = "no-local-version"
