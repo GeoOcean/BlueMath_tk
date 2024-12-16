@@ -4,6 +4,12 @@ Module collection for custom climate data analysis. The main objective of this P
 
 The package also includes a set of utility functions for processing climate data. To facilitate understanding of how to use these modules, simple demonstration scripts and the necessary data have been added to this repository.
 
+## Installation
+
+```sh
+pip install bluemath-tk
+```
+
 ## Main contents
 
 ![Sketch](./docs/sketch_tk.png)
@@ -33,12 +39,3 @@ This project is licensed under the MIT License. See the [license](LICENSE.txt) f
 ## Project status
 
 - UNDER DEVELOPMENT
-
-# TODOs
-
-- Check whole code in NNs
-- Check climate scale data in SamoaTonga
-- Add logs to datamining classes.
-- Descomentar crontab, que ya funcionan los sh
-- Add ERA5 spectra download.
-- Add docker, sbatch, et options in wrappers!
