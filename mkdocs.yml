@@ -10,7 +10,7 @@ nav:
       - Clustering: datamining/clustering_datamining.md
       - Reduction: datamining/reduction_datamining.md
   - Interpolation:
-      - Itroduction: interpolation/intro.md
+      - Introduction: interpolation/intro.md
       - Radial Basis Functions: interpolation/rbf_interpolation.md
   - Wrappers:
       - Intro: wrappers/intro.md
@@ -30,7 +30,11 @@ markdown_extensions:
   - codehilite
 
 theme:
-  name: "material"
+  name: readthedocs
+  highlightjs: true
+  hljs_languages:
+    - yaml
+    - rust
 
 extra:
   code-copy: true

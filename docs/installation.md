@@ -1,6 +1,6 @@
-# Installation
+# Installation for Developers
 
-BlueMath is still not available via `pip` or `conda`.
+BlueMath is already available via `pip` or `conda`.
 
 To test its capabilities locally, please run the following commands:
 
@@ -10,7 +10,7 @@ git clone https://github.com/GeoOcean/BlueMath_tk.git
 ```
 2. Move inside the directory to install everything:
 ```sh
-cd BlueMath_th
+cd BlueMath_tk
 ```
 3. Create a compatible conda environment:
 ```sh
