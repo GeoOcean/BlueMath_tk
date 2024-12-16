@@ -37,7 +37,7 @@ jobs:
       run: python -m twine upload dist/* --verbose
       env:
         TWINE_USERNAME: __token__
-        TWINE_PASSWORD: "${{ secrets.PYPI_TOKEN }}"
+        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
 
     - name: Build Conda Package
       run: |
