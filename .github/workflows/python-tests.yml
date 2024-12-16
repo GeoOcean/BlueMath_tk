@@ -1,9 +1,6 @@
-name: Python Tests on Merge/Push to main
+name: Python Tests
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
@@ -13,6 +10,7 @@ on:
 jobs:
   python-tests:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v2

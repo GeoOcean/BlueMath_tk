@@ -1,0 +1,62 @@
+[build-system]
+
+requires = ["setuptools>=60", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+
+name = "bluemath-tk"
+description = "Module collection for custom climate data analysis. The main objective of this Python package is to provide a set of statistical tools tailored for climate data analysis, with a focus on statistical classification and prediction."
+readme = "README.md"
+keywords = ["climate", "statistical", "tools"]
+license = { file = "LICENSE" }
+authors = [
+    { name = "Geomatics and Ocean Engineering Group", email = "bluemath@unican.es" },
+]
+
+dynamic = ["version"]
+
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3 :: Only",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "numpy",
+    "pandas",
+    "xarray",
+    "netcdf4",
+    "dask",
+    "zarr",
+    "scipy",
+    "scikit-learn",
+    "matplotlib",
+    "plotly",
+    "cartopy",
+    "cdsapi",
+    "jinja2",
+    "requests",
+    "aiohttp",
+    "minisom",
+]
+
+[project.optional-dependencies]
+
+docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocstrings[python]"]
+tests = ["pytest", "pytest-mock"]
+deep = ["tensorflow", "keras"]
+
+[project.urls]
+
+Homepage = "https://github.com/GeoOcean/BlueMath_tk"
+Documentation = "https://geoocean.github.io/BlueMath_tk/"
+Issues = "https://github.com/GeoOcean/BlueMath_tk/issues"
+
+[tool.setuptools_scm]
+version_file = "bluemath_tk/_version.py"

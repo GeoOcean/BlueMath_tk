@@ -1,0 +1,47 @@
+name: Publish Python Package
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set Up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Install Dependencies
+      run: |
+        pip install build setuptools-scm twine
+        conda install -c conda-forge conda-build anaconda-client
+
+    - name: Get Version
+      id: get_version
+      run: |
+        echo "version=$(python -c 'import setuptools_scm; print(setuptools_scm.get_version())')" >> $GITHUB_ENV
+      env:
+        GITHUB_ENV: ${{ github.env }}
+
+    - name: Build Python Package
+      run: python -m build
+
+    - name: Publish to PyPI
+      run: twine upload dist/*
+      env:
+        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+
+    - name: Build Conda Package
+      run: |
+        conda-build recipe/
+        anaconda upload $(conda build recipe/ --output)
+      env:
+        PKG_VERSION: ${{ env.version }}
+        ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}

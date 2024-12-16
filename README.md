@@ -41,3 +41,4 @@ This project is licensed under the MIT License. See the [license](LICENSE.txt) f
 - Add logs to datamining classes.
 - Descomentar crontab, que ya funcionan los sh
 - Add ERA5 spectra download.
+- Add docker, sbatch, et options in wrappers!
