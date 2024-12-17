@@ -1,16 +1,12 @@
 # Introduction
 
-<img src="sketch_tk.png" alt="picture" width="800"/>
+<img src="assets/sketch_tk.png" alt="picture" width="800"/>
 
 ## Installation
 
 ```sh
 pip install bluemath-tk
 ```
-
-## Project Status
-
-Package completion: 23.94%
 
 ## Authors
 
