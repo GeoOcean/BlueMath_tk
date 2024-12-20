@@ -1,0 +1,28 @@
+name: bluemath-tests
+channels:
+  - conda-forge
+dependencies:
+  - python=3.
+  - numpy
+  - pandas
+  - xarray
+  - netcdf4
+  - dask
+  - zarr
+  - scipy
+  - scikit-learn
+  - matplotlib
+  - qt
+  - pyqt
+  - plotly
+  - cartopy
+  - pytest
+  - cdsapi
+  - jinja2
+  - requests
+  - aiohttp
+  # - keras
+  # - tensorflow
+  # PIP packages can be added below (avoid this whenever possible)
+  - pip:
+      - minisom
