@@ -24,7 +24,10 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           auto-update-conda: true
-          python-version: ${{ matrix.python-version }}
+      
+      - name: Modify environment file with Python version
+        run: sed -i "s/python=[0-9.]\+/python=${{ matrix.python-version }}/" tests-environment.yml
+        
 
       - name: Create conda environment
         run: conda env create -f tests-environment.yml
