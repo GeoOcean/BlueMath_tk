@@ -27,6 +27,7 @@ share/python-wheels/
 MANIFEST
 conda-recipe/
 bluemath_tk/_version.py
+setup.py
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
