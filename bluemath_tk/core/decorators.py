@@ -71,6 +71,7 @@ def validate_data_mda(func):
         data: pd.DataFrame,
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
+        first_centroid_seed: int = None,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -80,6 +81,15 @@ def validate_data_mda(func):
             raise TypeError("Directional variables must be a list")
         if not isinstance(custom_scale_factor, dict):
             raise TypeError("Custom scale factor must be a dict")
+        if first_centroid_seed is not None:
+            if (
+                not isinstance(first_centroid_seed, int)
+                or first_centroid_seed < 0
+                or first_centroid_seed > data.shape[0]
+            ):
+                raise ValueError(
+                    "First centroid seed must be an integer >= 0 and < num of data points"
+                )
         return func(self, data, directional_variables, custom_scale_factor)
 
     return wrapper

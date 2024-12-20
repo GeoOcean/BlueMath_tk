@@ -20,6 +20,7 @@ class TestMDA(unittest.TestCase):
             data=self.df,
             directional_variables=["Dir"],
             custom_scale_factor={"Dir": [0, 360]},
+            first_centroid_seed=10,
         )
         self.assertIsInstance(self.mda.centroids, pd.DataFrame)
         self.assertEqual(self.mda.centroids.shape[0], 10)

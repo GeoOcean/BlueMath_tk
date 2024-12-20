@@ -18,28 +18,6 @@ The package also includes a set of utility functions for processing climate data
 pip install bluemath-tk
 ```
 
-## Main contents
-
-![Sketch](./docs/sketch_tk.png)
-
-Link to the different sections:
-- [datamining](./bluemath_tk/datamining/)
-- [waves](./bluemath_tk/waves/)
-- [predictor](./bluemath_tk/predictor/)
-- [TC](./bluemath_tk/tc/)
-- [distributions](./bluemath_tk/distributions/)
-- [wrappers](./bluemath_tk/wrappers/)
-- [risk](./bluemath_tk/risk/)
-- [tide](./bluemath_tk/tide/)
-
-## Demos
-
-In this repository, simple demo files showcasing the utilization of the different tools can be found in this [link](./demos). Furthermore, full examples with figures can be found in the [Bluemath - notebooks](./) repository.
-
-## Authors
-
-Codes have been developed through a collaborative effort by members of the GeoOcean group at the University of Cantabria. For inquiries, please contact Fernando Méndez at mendezf@unican.es
-
 ## License
 
 This project is licensed under the MIT License. See the [license](LICENSE.txt) file for details
