@@ -87,7 +87,9 @@ def validate_data_mda(func):
                 or first_centroid_seed < 0
                 or first_centroid_seed > data.shape[0]
             ):
-                raise ValueError("First centroid seed must be integer and >= 0")
+                raise ValueError(
+                    "First centroid seed must be an integer >= 0 and < num of data points"
+                )
         return func(self, data, directional_variables, custom_scale_factor)
 
     return wrapper

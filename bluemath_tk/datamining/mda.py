@@ -52,16 +52,12 @@ class MDA(BaseClustering):
 
     Methods
     -------
-    fit(data, directional_variables, custom_scale_factor)
+    fit(data, directional_variables, custom_scale_factor, first_centroid_seed)
         Fit the MDA algorithm to the provided data.
     predict(data)
         Predict the nearest centroid for the provided data.
-    fit_predict(data, directional_variables, custom_scale_factor)
+    fit_predict(data, directional_variables, custom_scale_factor, first_centroid_seed)
         Fits the MDA model to the data and predicts the nearest centroids.
-
-    Notes
-    -----
-    - This class is designed to perform the MDA algorithm.
 
     Examples
     --------
@@ -145,7 +141,7 @@ class MDA(BaseClustering):
 
         Returns
         -------
-        dist : np.ndarray
+        np.ndarray
             An array of squared Euclidean distances between the two arrays for each row.
 
         Raises
@@ -157,7 +153,7 @@ class MDA(BaseClustering):
         -----
         - IMPORTANT: Data is assumed to be normalized before calling this function.
         - The function assumes that the data_variables, directional_variables, and scale_factor
-        attributes have been set.
+            attributes have been set.
         - The function calculates the squared sum of differences for each row.
         - DEPRECATED: directional_distance calculation.
             distance = np.absolute(array_to_compare[:, ix] - all_rest_data[:, ix])
@@ -196,9 +192,9 @@ class MDA(BaseClustering):
 
         Returns
         -------
-        nearest_indices_array : np.ndarray
+        np.ndarray
             An array containing the index of the nearest data point to centroids.
-        normalized_data.iloc[nearest_indices_array] : pd.DataFrame
+        pd.DataFrame
             A DataFrame containing the nearest data points to centroids.
 
         Raises
@@ -240,9 +236,9 @@ class MDA(BaseClustering):
 
         Returns
         -------
-        nearest_indices_array : np.ndarray
+        np.ndarray
             An array containing the index of the nearest centroid to the data.
-        self.centroids.iloc[nearest_indices_array] : pd.DataFrame
+        pd.DataFrame
             A DataFrame containing the nearest centroids to the data.
 
         Raises
@@ -304,7 +300,8 @@ class MDA(BaseClustering):
         Notes
         -----
         - The function assumes that the data is validated by the `validate_data_mda`
-        decorator before execution.
+            decorator before execution.
+        - When first_centroid_seed is not provided, max value centroid is used.
         """
 
         self._data = data.copy()
@@ -334,8 +331,12 @@ class MDA(BaseClustering):
         # Select the point with the maximum summed value
         if first_centroid_seed is not None:
             seed = first_centroid_seed
+            self.logger.info(f"Using specified seed={seed} as first centroid.")
         else:
             seed = np.argmax(self.normalized_data.sum(axis=1).values)
+            self.logger.info(
+                f"Using max calculated value seed={seed} as first centroid."
+            )
 
         # Initialize centroids subset
         subset = np.array(
