@@ -32,6 +32,7 @@ jobs:
       - name: Run tests
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate bluemath-tk
+          conda activate bluemath-tests
+          python --version
           python -m unittest discover tests/datamining/
           python -m unittest discover tests/interpolation/
