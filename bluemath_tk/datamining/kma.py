@@ -92,7 +92,7 @@ class KMA(BaseClustering):
     def __init__(
         self,
         num_clusters: int,
-        seed: int = 0,
+        seed: int = None,
         init: str = "k-means++",
         n_init: str = "auto",
         algorithm: str = "lloyd",
@@ -129,7 +129,9 @@ class KMA(BaseClustering):
             self.num_clusters = int(num_clusters)
         else:
             raise ValueError("Variable num_clusters must be > 0")
-        if seed >= 0:
+        if seed is None:
+            self.seed = np.random.randint(0, 100)
+        elif seed >= 0:
             self.seed = int(seed)
         else:
             raise ValueError("Variable seed must be >= 0")
