@@ -27,7 +27,7 @@ class KMA(BaseClustering):
     num_clusters : int
         The number of clusters to use in the K-Means algorithm.
     seed : int
-        The random seed to use.
+        The random seed to use as initial datapoint.
     data : pd.DataFrame
         The input data.
     normalized_data : pd.DataFrame
@@ -106,8 +106,8 @@ class KMA(BaseClustering):
             The number of clusters to use in the K-Means algorithm.
             Must be greater than 0.
         seed : int, optional
-            The random seed to use.
-            Must be greater or equal to 0.
+            The random seed to use as initial datapoint.
+            Must be greater or equal to 0 and less than number of datapoints.
             Default is 0.
         n_init : str, optional
             The number of initializations to perform.
@@ -130,7 +130,7 @@ class KMA(BaseClustering):
         else:
             raise ValueError("Variable num_clusters must be > 0")
         if seed is None:
-            self.seed = np.random.randint(0, 100)
+            self.seed = None
         elif seed >= 0:
             self.seed = int(seed)
         else:
