@@ -277,6 +277,7 @@ class MDA(BaseClustering):
         data: pd.DataFrame,
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
+        first_centroid_seed: int = None,
     ) -> None:
         """
         Fit the Maximum Dissimilarity Algorithm (MDA) to the provided data.
@@ -296,6 +297,9 @@ class MDA(BaseClustering):
         custom_scale_factor : dict, optional
             A dictionary specifying custom scale factors for normalization.
             Default is {}.
+        first_centroid_seed : int, optional
+            The index of the first centroid to use in the MDA algorithm.
+            Default is None.
 
         Notes
         -----
@@ -328,7 +332,10 @@ class MDA(BaseClustering):
         # [DEPRECATED] Select the point with the maximum value in the first column of pandas dataframe
         # seed = self.normalized_data[self.normalized_data.columns[0]].idxmax()
         # Select the point with the maximum summed value
-        seed = np.argmax(self.normalized_data.sum(axis=1).values)
+        if first_centroid_seed is not None:
+            seed = first_centroid_seed
+        else:
+            seed = np.argmax(self.normalized_data.sum(axis=1).values)
 
         # Initialize centroids subset
         subset = np.array(
@@ -426,6 +433,7 @@ class MDA(BaseClustering):
         data: pd.DataFrame,
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
+        first_centroid_seed: int = None,
     ) -> Tuple[np.ndarray, pd.DataFrame]:
         """
         Fits the MDA model to the data and predicts the nearest centroids.
@@ -440,6 +448,9 @@ class MDA(BaseClustering):
         custom_scale_factor : dict, optional
             A dictionary specifying custom scale factors for normalization.
             Default is {}.
+        first_centroid_seed : int, optional
+            The index of the first centroid to use in the MDA algorithm.
+            Default is None.
 
         Returns
         -------
@@ -451,6 +462,7 @@ class MDA(BaseClustering):
             data=data,
             directional_variables=directional_variables,
             custom_scale_factor=custom_scale_factor,
+            first_centroid_seed=first_centroid_seed,
         )
 
         return self.predict(data=data)
