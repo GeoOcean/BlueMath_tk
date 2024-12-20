@@ -3,7 +3,7 @@ name: Python Tests
 on:
   pull_request:
     branches:
-      - main
+      - develop
     types:
       - opened
 
@@ -26,11 +26,10 @@ jobs:
           auto-update-conda: true
       
       - name: Modify environment file with Python version
-        run: sed -i "s/python=[0-9.]\+/python=${{ matrix.python-version }}/" tests-environment.yml
-        
+        run: sed -i "s/python=[0-9.]\+/python=${{ matrix.python-version }}/" tests/environment.yml        
 
       - name: Create conda environment
-        run: conda env create -f tests-environment.yml
+        run: conda env create -f tests/environment.yml
 
       - name: Run tests
         run: |
