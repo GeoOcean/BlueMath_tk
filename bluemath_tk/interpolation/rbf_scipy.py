@@ -1,6 +1,10 @@
 from typing import List
+import time
+import numpy as np
+from scipy.optimize import fminbound
 import pandas as pd
 from scipy.interpolate import RBFInterpolator
+from sklearn.metrics import mean_squared_error
 from ._base_interpolation import BaseInterpolation
 from ..core.decorators import validate_data_rbf
 
@@ -20,8 +24,6 @@ class RBF(BaseInterpolation):
     Radial Basis Function (RBF) interpolation model.
 
     Here, scipy's RBFInterpolator is used to interpolate the data.
-
-    class RBFInterpolator(y, d, neighbors=None, smoothing=0.0, kernel='thin_plate_spline', epsilon=None, degree=None)
     """
 
     def __init__(
@@ -152,6 +154,8 @@ class RBF(BaseInterpolation):
 
     @property
     def opt_sigmas(self) -> dict:
+        if not self._opt_sigmas:
+            raise ValueError("Specified kernel does not require optimization.")
         return self._opt_sigmas
 
     def _preprocess_subset_data(
@@ -290,6 +294,91 @@ class RBF(BaseInterpolation):
             self.logger.info("Target data preprocessed successfully")
             return target_data.copy()
 
+    def _cost_sigma(self, sigma: float, x: np.ndarray, y: np.ndarray) -> float:
+        """
+        This function is called by fminbound to minimize the cost function.
+
+        Parameters
+        ----------
+        sigma : float
+            The sigma parameter for the kernel.
+        x : np.ndarray
+            The subset data used to interpolate.
+        y : np.ndarray
+            The target data to interpolate.
+
+        Returns
+        -------
+        float
+            The cost value.
+        """
+
+        # Instantiate the RBFInterpolator
+        self._rbf = RBFInterpolator(
+            y=x,
+            d=y,
+            neighbors=self.neighbors,
+            smoothing=self.smoothing,
+            kernel=self.kernel,
+            epsilon=self.epsilon,
+            degree=self.degree,
+        )
+        predicted_y = self.rbf(x)
+        # TODO: Check if this is the correct cost function
+        cost = mean_squared_error(y, predicted_y)
+        return cost
+
+    def _calc_opt_sigma(
+        self, target_variable: np.ndarray, subset_variables: np.ndarray
+    ) -> float:
+        """
+        This function calculates the optimal sigma for the given target variable.
+
+        Parameters
+        ----------
+        target_variable : np.ndarray
+            The target variable to interpolate.
+        subset_variables : np.ndarray
+            The subset variables used to interpolate.
+
+        Returns
+        -------
+        float
+            The optimal sigma.
+        """
+
+        t0 = time.time()
+        # Initialize sigma_min, sigma_max, and d_sigma
+        sigma_min, sigma_max, d_sigma = self.sigma_min, self.sigma_max, 0
+
+        # Loop until sigma_diff is less than the specified sigma_diff
+        while d_sigma < self.sigma_diff:
+            opt_sigma = fminbound(
+                func=self._cost_sigma,
+                x1=sigma_min,
+                x2=sigma_max,
+                args=(subset_variables, target_variable),
+                disp=0,
+            )
+            lm_min = np.abs(opt_sigma - sigma_min)
+            lm_max = np.abs(opt_sigma - sigma_max)
+            if lm_min < self.sigma_diff:
+                sigma_min = sigma_min - sigma_min / 2
+            elif lm_max < self.sigma_min:
+                sigma_max = sigma_max + sigma_max / 2
+            d_sigma = np.nanmin([lm_min, lm_max])
+
+        # Calculate the time taken to optimize sigma
+        t1 = time.time()
+        self.logger.info(f"Optimal sigma: {opt_sigma} - Time: {t1 - t0:.2f} seconds")
+
+        # Calculate the RBF coefficients for the optimal sigma
+        rbf_coeff, _ = self._calc_rbf_coeff(
+            sigma=opt_sigma, x=subset_variables, y=target_variable
+        )
+
+        return rbf_coeff, opt_sigma
+
     @validate_data_rbf
     def fit(
         self,
@@ -351,20 +440,39 @@ class RBF(BaseInterpolation):
         # RBF fitting for all variables
         rbf_coeffs, opt_sigmas = {}, {}
 
-        # Instantiate the RBFInterpolator
-        self._rbf = RBFInterpolator(
-            y=subset_data.values,
-            d=target_data.values,
-            neighbors=self.neighbors,
-            smoothing=self.smoothing,
-            kernel=self.kernel,
-            epsilon=self.epsilon,
-            degree=self.degree,
-        )
-
-        # Store the RBF coefficients and optimal sigmas
-        self._rbf_coeffs = pd.DataFrame(rbf_coeffs)
-        self._opt_sigmas = opt_sigmas
+        if (
+            self.kernel == "linear"
+            or self.kernel == "thin_plate_spline"
+            or self.kernel == "cubic"
+            or self.kernel == "quintic"
+        ):
+            self.logger.info(f"""Using "{self.kernel}" kernel without optimization""")
+            # Instantiate the RBFInterpolator
+            self._rbf = RBFInterpolator(
+                y=subset_data.values,
+                d=target_data.values,
+                neighbors=self.neighbors,
+                smoothing=self.smoothing,
+                kernel=self.kernel,
+                epsilon=self.epsilon,
+                degree=self.degree,
+            )
+            # Store the RBF coefficients
+            self._rbf_coeffs = pd.DataFrame(
+                data=self.rbf._coeffs, columns=target_data.columns
+            )
+        else:
+            self.logger.info(f"""Using "{self.kernel}" kernel with optimization""")
+            # Optimize sigma for each target variable
+            for target_var in target_data.columns:
+                self.logger.info(f"Fitting RBF for variable {target_var}")
+                target_var_values = target_data[target_var].values
+                rbf_coeff, opt_sigma = self._calc_opt_sigma(
+                    target_variable=target_var_values,
+                    subset_variables=subset_data.values,
+                )
+                rbf_coeffs[target_var] = rbf_coeff.flatten()
+                opt_sigmas[target_var] = opt_sigma
 
         # Set the is_fitted attribute to True
         self.is_fitted = True
