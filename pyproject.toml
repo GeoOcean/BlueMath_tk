@@ -55,9 +55,9 @@ Homepage = "https://github.com/GeoOcean/BlueMath_tk"
 Documentation = "https://geoocean.github.io/BlueMath_tk/"
 Issues = "https://github.com/GeoOcean/BlueMath_tk/issues"
 
-[tool.setuptools.packages.find]
+[tool.spin]
 
-where = ["bluemath_tk"]
+package = "bluemath_tk"
 
 [tool.setuptools_scm]
 
