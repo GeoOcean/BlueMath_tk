@@ -1,8 +1,9 @@
 from typing import List
+import copy
 import time
 import numpy as np
-from scipy.optimize import fminbound
 import pandas as pd
+from scipy.optimize import fminbound
 from scipy.interpolate import RBFInterpolator
 from sklearn.metrics import mean_squared_error
 from ._base_interpolation import BaseInterpolation
@@ -28,11 +29,13 @@ class RBF(BaseInterpolation):
 
     def __init__(
         self,
-        neighbors: int = None,
-        smoothing: float = 0.0,
+        sigma_min: float = 0.001,
+        sigma_max: float = 0.1,
+        sigma_diff: float = 0.0001,
         kernel: str = "gaussian",
-        epsilon: float = None,
+        smoothing: float = 0.0,
         degree: int = None,
+        neighbors: int = None,
     ):
         """
         Initializes the RBF model.
@@ -40,22 +43,30 @@ class RBF(BaseInterpolation):
 
         super().__init__()
         self.set_logger_name(name=self.__class__.__name__)
-        if not isinstance(neighbors, int) and neighbors is not None:
-            raise ValueError("neighbors must be an integer.")
-        self._neighbors = neighbors
-        if not isinstance(smoothing, float):
-            raise ValueError("smoothing must be a float.")
-        self._smoothing = smoothing
+        if not isinstance(sigma_min, float) or sigma_min < 0:
+            raise ValueError("sigma_min must be a positive float.")
+        self._sigma_min = sigma_min
+        if not isinstance(sigma_max, float) or sigma_max < sigma_min:
+            raise ValueError(
+                "sigma_max must be a positive float greater than sigma_min."
+            )
+        self._sigma_max = sigma_max
+        if not isinstance(sigma_diff, float) or sigma_diff < 0:
+            raise ValueError("sigma_diff must be a positive float.")
+        self._sigma_diff = sigma_diff
         if not isinstance(kernel, str):
             raise ValueError("kernel must be a string.")
         self._kernel = kernel
-        if not isinstance(epsilon, float) and epsilon is not None:
-            raise ValueError("epsilon must be a float.")
-        self._epsilon = epsilon
+        if not isinstance(smoothing, float):
+            raise ValueError("smoothing must be a float.")
+        self._smoothing = smoothing
         if not isinstance(degree, int) and degree is not None:
             raise ValueError("degree must be an integer.")
         self._degree = degree
-        self._rbf: RBFInterpolator = None
+        if not isinstance(neighbors, int) and neighbors is not None:
+            raise ValueError("neighbors must be an integer.")
+        self._neighbors = neighbors
+        self._rbfs: dict = {}  # Dict with RBFInterpolator instances
         # Below, we initialize the attributes that will be set in the fit method
         self.is_fitted: bool = False
         self.is_target_normalized: bool = False
@@ -75,28 +86,36 @@ class RBF(BaseInterpolation):
         self._opt_sigmas: dict = {}
 
     @property
-    def neighbors(self) -> int:
-        return self._neighbors
+    def sigma_min(self) -> float:
+        return self._sigma_min
 
     @property
-    def smoothing(self) -> float:
-        return self._smoothing
+    def sigma_max(self) -> float:
+        return self._sigma_max
+
+    @property
+    def sigma_diff(self) -> float:
+        return self._sigma_diff
 
     @property
     def kernel(self) -> str:
         return self._kernel
 
     @property
-    def epsilon(self) -> float:
-        return self._epsilon
+    def smoothing(self) -> float:
+        return self._smoothing
 
     @property
     def degree(self) -> int:
         return self._degree
 
     @property
-    def rbf(self) -> RBFInterpolator:
-        return self._rbf
+    def neighbors(self) -> int:
+        return self._neighbors
+
+    @property
+    def rbfs(self) -> dict:
+        return self._rbfs
 
     @property
     def subset_data(self) -> pd.DataFrame:
@@ -169,7 +188,7 @@ class RBF(BaseInterpolation):
         subset_data : pd.DataFrame
             The subset data to preprocess (could be a dataset to predict).
         is_fit : bool, optional
-            Whether the data is being fit or not. Default is True.
+            Whether the data is to fit or not. Default is True.
 
         Returns
         -------
@@ -314,23 +333,24 @@ class RBF(BaseInterpolation):
         """
 
         # Instantiate the RBFInterpolator
-        self._rbf = RBFInterpolator(
+        rbf = RBFInterpolator(
             y=x,
             d=y,
             neighbors=self.neighbors,
             smoothing=self.smoothing,
             kernel=self.kernel,
-            epsilon=self.epsilon,
+            epsilon=sigma,
             degree=self.degree,
         )
-        predicted_y = self.rbf(x)
+        predicted_y = rbf(x)
         # TODO: Check if this is the correct cost function
         cost = mean_squared_error(y, predicted_y)
+
         return cost
 
     def _calc_opt_sigma(
         self, target_variable: np.ndarray, subset_variables: np.ndarray
-    ) -> float:
+    ) -> RBFInterpolator:
         """
         This function calculates the optimal sigma for the given target variable.
 
@@ -368,16 +388,22 @@ class RBF(BaseInterpolation):
                 sigma_max = sigma_max + sigma_max / 2
             d_sigma = np.nanmin([lm_min, lm_max])
 
+        # Save the fitted RBF for the optimal sigma
+        rbf = RBFInterpolator(
+            y=subset_variables,
+            d=target_variable,
+            neighbors=self.neighbors,
+            smoothing=self.smoothing,
+            kernel=self.kernel,
+            epsilon=opt_sigma,
+            degree=self.degree,
+        )
+
         # Calculate the time taken to optimize sigma
         t1 = time.time()
         self.logger.info(f"Optimal sigma: {opt_sigma} - Time: {t1 - t0:.2f} seconds")
 
-        # Calculate the RBF coefficients for the optimal sigma
-        rbf_coeff, _ = self._calc_rbf_coeff(
-            sigma=opt_sigma, x=subset_variables, y=target_variable
-        )
-
-        return rbf_coeff, opt_sigma
+        return rbf
 
     @validate_data_rbf
     def fit(
@@ -440,39 +466,36 @@ class RBF(BaseInterpolation):
         # RBF fitting for all variables
         rbf_coeffs, opt_sigmas = {}, {}
 
-        if (
-            self.kernel == "linear"
-            or self.kernel == "thin_plate_spline"
-            or self.kernel == "cubic"
-            or self.kernel == "quintic"
-        ):
-            self.logger.info(f"""Using "{self.kernel}" kernel without optimization""")
-            # Instantiate the RBFInterpolator
-            self._rbf = RBFInterpolator(
-                y=subset_data.values,
-                d=target_data.values,
-                neighbors=self.neighbors,
-                smoothing=self.smoothing,
-                kernel=self.kernel,
-                epsilon=self.epsilon,
-                degree=self.degree,
-            )
-            # Store the RBF coefficients
-            self._rbf_coeffs = pd.DataFrame(
-                data=self.rbf._coeffs, columns=target_data.columns
-            )
-        else:
-            self.logger.info(f"""Using "{self.kernel}" kernel with optimization""")
-            # Optimize sigma for each target variable
-            for target_var in target_data.columns:
-                self.logger.info(f"Fitting RBF for variable {target_var}")
-                target_var_values = target_data[target_var].values
-                rbf_coeff, opt_sigma = self._calc_opt_sigma(
+        # Optimize sigma for each target variable
+        for target_var in target_data.columns:
+            self.logger.info(f"Fitting RBF for variable {target_var}")
+            target_var_values = target_data[target_var].values
+            if (
+                self.kernel == "linear"
+                or self.kernel == "cubic"
+                or self.kernel == "quintic"
+                or self.kernel == "thin_plate_spline"
+            ):
+                rbf = RBFInterpolator(
+                    y=subset_data.values,
+                    d=target_var_values,
+                    neighbors=self.neighbors,
+                    smoothing=self.smoothing,
+                    kernel=self.kernel,
+                    degree=self.degree,
+                )
+            else:
+                rbf = self._calc_opt_sigma(
                     target_variable=target_var_values,
                     subset_variables=subset_data.values,
                 )
-                rbf_coeffs[target_var] = rbf_coeff.flatten()
-                opt_sigmas[target_var] = opt_sigma
+            self.rbfs[target_var] = copy.deepcopy(rbf)
+            rbf_coeffs[target_var] = rbf._coeffs.flatten()
+            opt_sigmas[target_var] = rbf._scale
+
+        # Store the RBF coefficients and optimal sigmas
+        self._rbf_coeffs = pd.DataFrame(rbf_coeffs)
+        self._opt_sigmas = opt_sigmas
 
         # Set the is_fitted attribute to True
         self.is_fitted = True
@@ -506,26 +529,42 @@ class RBF(BaseInterpolation):
 
         if self.is_fitted is False:
             raise RBFError("RBF model must be fitted before predicting.")
+
         self.logger.info("Reconstructing data using fitted coefficients.")
         normalized_dataset = self._preprocess_subset_data(
             subset_data=dataset, is_fit=False
         )
-        interpolated_target_array = self.rbf(normalized_dataset.values)
+
+        # Create an empty array to store the interpolated target data
+        interpolated_target_array = np.zeros(
+            (normalized_dataset.shape[0], len(self.target_processed_variables))
+        )
+        for target_var in self.target_processed_variables:
+            self.logger.info(f"Predicting target variable {target_var}")
+            rbf = self.rbfs[target_var]
+            interpolated_target_array[
+                :, self.target_processed_variables.index(target_var)
+            ] = rbf(normalized_dataset.values)
         interpolated_target = pd.DataFrame(
             data=interpolated_target_array, columns=self.target_processed_variables
         )
+
+        # Denormalize the target data if normalize_target_data is True
         if self.is_target_normalized:
             self.logger.info("Denormalizing target data")
             interpolated_target = self.denormalize(
                 normalized_data=interpolated_target,
                 scale_factor=self.target_scale_factor,
             )
+
+        # Calculate the degrees for the target directional variables
         for directional_variable in self.target_directional_variables:
             self.logger.info(f"Calculating target degrees for {directional_variable}")
             interpolated_target[directional_variable] = self.get_degrees_from_uv(
                 xu=interpolated_target[f"{directional_variable}_u"].values,
                 xv=interpolated_target[f"{directional_variable}_v"].values,
             )
+
         return interpolated_target
 
     def fit_predict(
