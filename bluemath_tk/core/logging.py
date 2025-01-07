@@ -37,11 +37,11 @@ def get_file_logger(
     >>> # 2023-10-22 14:55:23,456 - my_app_logger - INFO - This is an info message.
     >>> # 2023-10-22 14:55:23,457 - my_app_logger - WARNING - This is a warning message.
     >>> # 2023-10-22 14:55:23,458 - my_app_logger - ERROR - This is an error message.
-
-    Notes
-    -----
-    - TODO: Check a way to remove existing loggers to avoid duplicate logs.
     """
+
+    # If a logger with the specified name already exists, return it
+    if name in logging.Logger.manager.loggerDict:
+        return logging.getLogger(name)
 
     # Create a logger with the specified name
     logger = logging.getLogger(name)

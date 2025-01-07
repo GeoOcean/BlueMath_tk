@@ -17,15 +17,10 @@ class TestRBF(unittest.TestCase):
         self.target = pd.DataFrame(
             {
                 "HsPred": self.subset["Hs"] * 2 + self.subset["Tp"] * 3,
-                "DirPred": self.subset["Dir"] % 45,
+                "DirPred": -self.subset["Dir"],
             }
         )
-        self.rbf = RBF(
-            sigma_min=0.001,
-            sigma_max=0.1,
-            sigma_diff=0.0001,
-            kernel="gaussian",
-        )
+        self.rbf = RBF()
 
     def test_fit(self):
         self.rbf.fit(
