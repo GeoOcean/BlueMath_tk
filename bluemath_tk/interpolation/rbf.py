@@ -472,7 +472,8 @@ class RBF(BaseInterpolation):
         )
         predicted_y = rbf(x)
         # TODO: Check if this is the correct cost function
-        cost = mean_squared_error(y, predicted_y)
+        # cost = mean_squared_error(y, predicted_y)
+        cost = np.dot(y - predicted_y, y - predicted_y)
 
         return cost
 
