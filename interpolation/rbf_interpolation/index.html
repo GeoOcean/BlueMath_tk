@@ -143,8 +143,6 @@
 
 
         <p>Radial Basis Function (RBF) interpolation model.</p>
-<p>Here, scipy's RBFInterpolator is used to interpolate the data.
-https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.RBFInterpolator.html</p>
 
 
 <table class="field-list">
@@ -180,8 +178,8 @@ This value might change in the optimization process.</p>
                   (<code>float</code>)
               –
               <div class="doc-md-description">
-                <p>The minimum difference between the optimal sigma and the minimum and maximum
-sigma values.</p>
+                <p>The difference between the optimal bounded sigma and the minimum and maximum sigma values.
+If the difference is less than this value, the optimization process continues.</p>
               </div>
             </li>
             <li>
@@ -189,63 +187,30 @@ sigma values.</p>
                   (<code>str</code>)
               –
               <div class="doc-md-description">
-                <p>Type of RBF. This should be one of</p>
-<div class="codehilite"><pre><span></span><code><span class="k">-</span> &#39;linear&#39;               : ``-r``
-<span class="k">-</span> &#39;thin_plate_spline&#39;    : ``r**2 * log(r)``
-<span class="k">-</span> &#39;cubic&#39;                : ``r**3``
-<span class="k">-</span> &#39;quintic&#39;              : ``-r**5``
-<span class="k">-</span> &#39;multiquadric&#39;         : ``-sqrt(1 + r**2)``
-<span class="k">-</span> &#39;inverse_multiquadric&#39; : ``1/sqrt(1 + r**2)``
-<span class="k">-</span> &#39;inverse_quadratic&#39;    : ``1/(1 + r**2)``
-<span class="k">-</span> &#39;gaussian&#39;             : ``exp(-r**2)``
+                <p>The kernel to use for the RBF model.
+The available kernels are:</p>
+<div class="codehilite"><pre><span></span><code><span class="o">-</span><span class="w"> </span><span class="n">gaussian</span><span class="w">              </span><span class="p">:</span><span class="w"> </span><span class="err">``</span><span class="nb">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">r</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">const</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="err">``</span>
+<span class="o">-</span><span class="w"> </span><span class="n">multiquadratic</span><span class="w">        </span><span class="p">:</span><span class="w"> </span><span class="err">``</span><span class="nb">sqrt</span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">r</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">const</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="err">``</span>
+<span class="o">-</span><span class="w"> </span><span class="n">inverse</span><span class="w">               </span><span class="p">:</span><span class="w"> </span><span class="err">``</span><span class="mi">1</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">sqrt</span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">r</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">const</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="err">``</span>
+<span class="o">-</span><span class="w"> </span><span class="n">cubic</span><span class="w">                 </span><span class="p">:</span><span class="w"> </span><span class="err">``</span><span class="n">r</span><span class="o">**</span><span class="mi">3</span><span class="err">``</span>
+<span class="o">-</span><span class="w"> </span><span class="n">thin_plate</span><span class="w">            </span><span class="p">:</span><span class="w"> </span><span class="err">``</span><span class="n">r</span><span class="o">**</span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nb">log</span><span class="p">(</span><span class="n">r</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">const</span><span class="p">)</span><span class="err">``</span>
 </code></pre></div>
               </div>
             </li>
             <li>
-              <b><code>smoothing</code></b>
-                  (<code>float or (npoints, ) array_like</code>)
+              <b><code>kernel_func</code></b>
+                  (<code>function</code>)
               –
               <div class="doc-md-description">
-                <p>Smoothing parameter. The interpolant perfectly fits the data when this
-is set to 0. For large values, the interpolant approaches a least
-squares fit of a polynomial with the specified degree.</p>
+                <p>The kernel function to use for the RBF model.</p>
               </div>
             </li>
             <li>
-              <b><code>degree</code></b>
-                  (<code>int</code>)
+              <b><code>smooth</code></b>
+                  (<code>float</code>)
               –
               <div class="doc-md-description">
-                <p>Degree of the added polynomial. For some RBFs the interpolant may not
-be well-posed if the polynomial degree is too small. Those RBFs and
-their corresponding minimum degrees are</p>
-<div class="codehilite"><pre><span></span><code><span class="k">-</span> &#39;multiquadric&#39;      : 0
-<span class="k">-</span> &#39;linear&#39;            : 0
-<span class="k">-</span> &#39;thin_plate_spline&#39; : 1
-<span class="k">-</span> &#39;cubic&#39;             : 1
-<span class="k">-</span> &#39;quintic&#39;           : 2
-</code></pre></div>
-
-<p>The default value is the minimum degree for <code>kernel</code> or 0 if there is
-no minimum degree. Set this to -1 for no added polynomial.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>neighbors</code></b>
-                  (<code>int</code>)
-              –
-              <div class="doc-md-description">
-                <p>If specified, the value of the interpolant at each evaluation point
-will be computed using only this many nearest data points. All the data
-points are used by default.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>rbfs</code></b>
-                  (<code>dict</code>)
-              –
-              <div class="doc-md-description">
-                <p>Dict with RBFInterpolator instances.</p>
+                <p>The smoothness parameter.</p>
               </div>
             </li>
             <li>
@@ -377,26 +342,26 @@ This attribute is only set if normalize_target_data is True in the fit method.</
       </thead>
       <tbody>
             <tr class="doc-section-item">
-              <td><code><span title="bluemath_tk.interpolation.rbf.RBF.fit : Fits the model to the data.">fit : Fits the model to the data.</span></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.interpolation.rbf.RBF.fit" href="#bluemath_tk.interpolation.rbf.RBF.fit">fit</a></code></td>
               <td>
                 <div class="doc-md-description">
-                  
+                  <p>Fits the model to the data.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><span title="bluemath_tk.interpolation.rbf.RBF.predict : Predicts the data for the provided dataset.">predict : Predicts the data for the provided dataset.</span></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.interpolation.rbf.RBF.predict" href="#bluemath_tk.interpolation.rbf.RBF.predict">predict</a></code></td>
               <td>
                 <div class="doc-md-description">
-                  
+                  <p>Predicts the data for the provided dataset.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><span title="bluemath_tk.interpolation.rbf.RBF.fit_predict : Fits the model to the subset and predicts the interpolated dataset.">fit_predict : Fits the model to the subset and predicts the interpolated dataset.</span></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.interpolation.rbf.RBF.fit_predict" href="#bluemath_tk.interpolation.rbf.RBF.fit_predict">fit_predict</a></code></td>
               <td>
                 <div class="doc-md-description">
-                  
+                  <p>Fits the model to the subset and predicts the interpolated dataset.</p>
                 </div>
               </td>
             </tr>
@@ -404,32 +369,45 @@ This attribute is only set if normalize_target_data is True in the fit method.</
     </table>
 
 
-<details class="see-also" open>
-  <summary>See Also</summary>
-  <p>OtherInterpolationMethod</p>
-</details>
-
-<details class="references" open>
-  <summary>References</summary>
-  <p>.. [1] Fasshauer, G., 2007. Meshfree Approximation Methods with Matlab.
-    World Scientific Publishing Co.</p>
-<p>.. [2] http://amadeus.math.iit.edu/~fass/603_ch3.pdf</p>
-<p>.. [3] Wahba, G., 1990. Spline Models for Observational Data. SIAM.</p>
-<p>.. [4] http://pages.stat.wisc.edu/~wahba/stat860public/lect/lect8/lect8.pdf</p>
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>TODO: For the moment, this class only supports optimization for one parameter kernels.
+      For this reason, we only have sigma as the parameter to optimize.
+      This sigma refers to the sigma parameter in the Gaussian kernel (but is used for all kernels).</p>
+<p>Main reference for sigma optimization: https://link.springer.com/article/10.1023/A:1018975909870</p>
 </details>
 
 <p><span class="doc-section-title">Examples:</span></p>
     <div class="codehilite"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">bluemath_tk.interpolation.rbf</span> <span class="kn">import</span> <span class="n">RBF</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="p">{</span>
+<span class="gp">... </span>        <span class="s2">&quot;Hs&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">7</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;Tp&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">20</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;Dir&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">360</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="p">}</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">subset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="p">{</span>
+<span class="gp">... </span>        <span class="s2">&quot;HsPred&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Tp&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;DirPred&quot;</span><span class="p">:</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Dir&quot;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="p">}</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rbf</span> <span class="o">=</span> <span class="n">RBF</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">predictions</span> <span class="o">=</span> <span class="n">rbf</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">subset_data</span><span class="o">=</span><span class="n">subset</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">subset_directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Dir&quot;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">target_data</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">target_directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;DirPred&quot;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">normalize_target_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">num_threads</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">iteratively_update_sigma</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
 </code></pre></div>
 
-
-<details class="note" open>
-  <summary>Notes</summary>
-  <p>.. versionadded:: 1.0.3
-TODO: For the moment, this class only supports optimization for one parameter kernels.
-      For this reason, we only have sigma as the parameter to optimize.
-      This sigma refers to the sigma parameter in the Gaussian kernel (but is used for all kernels).</p>
-</details>
 
 
 
@@ -452,14 +430,13 @@ TODO: For the moment, this class only supports optimization for one parameter ke
 
 
 <h3 id="bluemath_tk.interpolation.rbf.RBF.__init__" class="doc doc-heading">
-            <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">sigma_min</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">sigma_max</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">sigma_diff</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span> <span class="n">kernel</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="n">smoothing</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">neighbors</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">sigma_min</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">sigma_max</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">sigma_diff</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span> <span class="n">sigma_opt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kernel</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">)</span></code>
 
 </h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Initializes the RBF model.</p>
 
 
 <table class="field-list">
@@ -469,79 +446,18 @@ TODO: For the moment, this class only supports optimization for one parameter ke
   </colgroup>
   <tbody valign="top">
     <tr class="field">
-      <th class="field-name">Parameters:</th>
+      <th class="field-name">Raises:</th>
       <td class="field-body">
         <ul class="first simple">
             <li>
-              <b><code>sigma_min</code></b>
-                  (<code>float</code>, default:
-                      <code>0.001</code>
-)
+                  <code>ValueError</code>
               –
               <div class="doc-md-description">
-                <p>The minimum value for the sigma parameter. Default is 0.001.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>sigma_max</code></b>
-                  (<code>float</code>, default:
-                      <code>0.1</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The maximum value for the sigma parameter. Default is 0.1.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>sigma_diff</code></b>
-                  (<code>float</code>, default:
-                      <code>0.0001</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The minimum difference between the optimal sigma and the minimum and maximum
-sigma values. Default is 0.0001.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>kernel</code></b>
-                  (<code>str</code>, default:
-                      <code>&#39;gaussian&#39;</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>Type of RBF. Default is 'gaussian'.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>smoothing</code></b>
-                  (<code>float</code>, default:
-                      <code>0.0</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>Smoothing parameter. Default is 0.0.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>degree</code></b>
-                  (<code>int</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>Degree of the added polynomial. Default is None.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>neighbors</code></b>
-                  (<code>int</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>If specified, the value of the interpolant at each evaluation point will be
-computed using only this many nearest data points. Default is None.</p>
+                <p>If the sigma_min is not a positive float.
+If the sigma_max is not a positive float greater than sigma_min.
+If the sigma_diff is not a positive float.
+If the kernel is not a string and one of the available kernels.
+If the smooth is not a positive float.</p>
               </div>
             </li>
         </ul>
@@ -557,7 +473,7 @@ computed using only this many nearest data points. Default is None.</p>
 
 
 <h3 id="bluemath_tk.interpolation.rbf.RBF.fit" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit</span><span class="p">(</span><span class="n">subset_data</span><span class="p">,</span> <span class="n">target_data</span><span class="p">,</span> <span class="n">subset_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">target_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">subset_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">normalize_target_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">target_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">num_threads</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class=" language-python"><span class="n">fit</span><span class="p">(</span><span class="n">subset_data</span><span class="p">,</span> <span class="n">target_data</span><span class="p">,</span> <span class="n">subset_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">target_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">subset_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">normalize_target_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">target_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">num_threads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iteratively_update_sigma</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
@@ -653,6 +569,16 @@ computed using only this many nearest data points. Default is None.</p>
                 <p>The number of threads to use for the optimization. Default is None.</p>
               </div>
             </li>
+            <li>
+              <b><code>iteratively_update_sigma</code></b>
+                  (<code>bool</code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to iteratively update the sigma parameter. Default is False.</p>
+              </div>
+            </li>
         </ul>
       </td>
     </tr>
@@ -679,7 +605,7 @@ computed using only this many nearest data points. Default is None.</p>
 
 
 <h3 id="bluemath_tk.interpolation.rbf.RBF.fit_predict" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit_predict</span><span class="p">(</span><span class="n">subset_data</span><span class="p">,</span> <span class="n">target_data</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">subset_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">target_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">subset_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">normalize_target_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">target_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">num_threads</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class=" language-python"><span class="n">fit_predict</span><span class="p">(</span><span class="n">subset_data</span><span class="p">,</span> <span class="n">target_data</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">subset_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">target_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">subset_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">normalize_target_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">target_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">num_threads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iteratively_update_sigma</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
@@ -781,6 +707,16 @@ computed using only this many nearest data points. Default is None.</p>
               –
               <div class="doc-md-description">
                 <p>The number of threads to use for the optimization. Default is None.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>iteratively_update_sigma</code></b>
+                  (<code>bool</code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to iteratively update the sigma parameter. Default is False.</p>
               </div>
             </li>
         </ul>
@@ -973,6 +909,87 @@ computed using only this many nearest data points. Default is None.</p>
 
 </div>
 
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="bluemath_tk.interpolation.rbf.gaussian_kernel" class="doc doc-heading">
+            <code class=" language-python"><span class="n">gaussian_kernel</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>This function calculates the Gaussian kernel for the given distance and constant.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>r</code></b>
+                  (<code>float</code>)
+              –
+              <div class="doc-md-description">
+                <p>The distance.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>const</code></b>
+                  (<code>float</code>)
+              –
+              <div class="doc-md-description">
+                <p>The constant (default name is usually sigma for gaussian kernel).</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code>float</code>
+              –
+              <div class="doc-md-description">
+                <p>The Gaussian kernel value.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <ul>
+<li>The Gaussian kernel is defined as:
+  K(r) = exp(r^2 / 2 * const^2) (https://en.wikipedia.org/wiki/Gaussian_function)</li>
+<li>Here, we are assuming the mean is 0.</li>
+</ul>
+</details>
+    </div>
+
+</div>
 
 
 
