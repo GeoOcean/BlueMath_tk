@@ -654,6 +654,8 @@ class RBF(BaseInterpolation):
                 elif lm_max < self.sigma_min:
                     sigma_max = sigma_max + sigma_max / 2
                 d_sigma = np.nanmin([lm_min, lm_max])
+            if iteratively_update_sigma:
+                self._sigma_opt = opt_sigma
 
         # Calculate the time taken to optimize sigma
         t1 = time.time()
@@ -699,27 +701,24 @@ class RBF(BaseInterpolation):
             self.logger.info(f"Interpolating target variable {target_var}")
             rbf_coeff = self._rbf_coeffs[target_var].values
             opt_sigma = self._opt_sigmas[target_var]
-            for i in range(num_points_dataset):
-                r = np.linalg.norm(
-                    np.repeat(
-                        [normalized_dataset.iloc[i].values], num_points_subset, axis=0
-                    )
-                    - self.normalized_subset_data.values,
-                    axis=1,
-                )
-                s = rbf_coeff[num_points_subset] + np.sum(
-                    rbf_coeff[:num_points_subset] * self.kernel_func(r, opt_sigma)
-                )
-
-                # linear part
-                for k in range(num_vars_subset):
-                    s = (
-                        s
-                        + rbf_coeff[k + num_points_subset + 1]
-                        * normalized_dataset.values.T[k, i]
-                    )
-
-                interpolated_array[i, i_var] = s
+            r = np.linalg.norm(
+                normalized_dataset.values[:, np.newaxis, :]
+                - self.normalized_subset_data.values[np.newaxis, :, :],
+                axis=2,
+            )
+            kernel_values = self.kernel_func(r, opt_sigma)
+            linear_part = np.dot(
+                normalized_dataset.values,
+                rbf_coeff[
+                    num_points_subset + 1 : num_points_subset + 1 + num_vars_subset
+                ].T,
+            )
+            s = (
+                rbf_coeff[num_points_subset]
+                + np.dot(kernel_values, rbf_coeff[:num_points_subset])
+                + linear_part
+            )
+            interpolated_array[:, i_var] = s
 
         return pd.DataFrame(interpolated_array, columns=self.target_processed_variables)
 
