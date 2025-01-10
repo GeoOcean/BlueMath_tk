@@ -274,6 +274,7 @@ def validate_data_rbf(func):
         normalize_target_data: bool = True,
         target_custom_scale_factor: dict = {},
         num_threads: int = None,
+        iteratively_update_sigma: bool = False,
     ):
         if subset_data is None:
             raise ValueError("Subset data cannot be None")
@@ -306,6 +307,8 @@ def validate_data_rbf(func):
         if num_threads is not None:
             if not isinstance(num_threads, int) or num_threads <= 0:
                 raise ValueError("Number of threads must be integer and > 0")
+        if not isinstance(iteratively_update_sigma, bool):
+            raise TypeError("Iteratively update sigma must be a boolean")
         return func(
             self,
             subset_data,
@@ -316,6 +319,7 @@ def validate_data_rbf(func):
             normalize_target_data,
             target_custom_scale_factor,
             num_threads,
+            iteratively_update_sigma,
         )
 
     return wrapper
