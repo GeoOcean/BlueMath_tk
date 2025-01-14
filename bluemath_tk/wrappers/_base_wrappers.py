@@ -6,6 +6,8 @@ import subprocess
 import numpy as np
 from jinja2 import Environment, FileSystemLoader
 from ..core.models import BlueMathModel
+from ._utils_wrappers import write_array_in_file, copy_files
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 class BaseModelWrapper(BlueMathModel):
@@ -49,11 +51,20 @@ class BaseModelWrapper(BlueMathModel):
         Copy file(s) from source to destination.
     build_cases(mode="all_combinations")
         Create the cases folders and render the input files.
-    run_cases()
-        Run the cases.
+    run_case(case_dir, launcher=None, script=None, params=None)
+        Run a single case based on the launcher, script, and parameters.
+    run_cases(launcher=None, script=None, params=None, parallel=False)
+        Run the cases based on the launcher, script, and parameters.
+        Parallel execution is optional.
     run_model(case_dir)
         Run the model for a specific case (abstract method).
+    run_model_with_apptainer(case_dir)
+        Run the model for a specific case using Apptainer.
+    run_model_with_docker(case_dir)
+        Run the model for a specific case using Docker.
     """
+
+    available_launchers = ["sbatch", "apptainer", "docker"]
 
     def __init__(
         self,
@@ -264,15 +275,7 @@ class BaseModelWrapper(BlueMathModel):
             The name of the file.
         """
 
-        with open(filename, "w") as f:
-            if array.ndim == 1:
-                for item in array:
-                    f.write(f"{item}\n")
-            elif array.ndim == 2:
-                for row in array:
-                    f.write(" ".join(map(str, row)) + "\n")
-            else:
-                raise ValueError("Only 1D and 2D arrays are supported")
+        write_array_in_file(array=array, filename=filename)
 
     def copy_files(self, src: str, dst: str) -> None:
         """
@@ -286,18 +289,7 @@ class BaseModelWrapper(BlueMathModel):
             The destination file.
         """
 
-        if os.path.isdir(src):
-            os.makedirs(dst, exist_ok=True)
-            for file in os.listdir(src):
-                with open(file, "r") as f:
-                    content = f.read()
-                with open(os.path.join(dst, file), "w") as f:
-                    f.write(content)
-        else:
-            with open(src, "r") as f:
-                content = f.read()
-            with open(dst, "w") as f:
-                f.write(content)
+        copy_files(src=src, dst=dst)
 
     def build_cases(self, mode: str = "all_combinations") -> None:
         """
@@ -331,18 +323,125 @@ class BaseModelWrapper(BlueMathModel):
             f"{len(self.cases_dirs)} cases created in {mode} mode and saved in {self.output_dir}"
         )
 
-    def run_cases(self) -> None:
+    def run_case(
+        self,
+        case_dir: str,
+        launcher: str = None,
+        script: str = None,
+        params: str = None,
+    ) -> None:
         """
-        Run the cases.
+        Run a single case based on the launcher, script, and parameters.
+
+        Parameters
+        ----------
+        case_dir : str
+            The case directory.
+        launcher : str, optional
+            The launcher to run the case. Default is None.
+        script : str, optional
+            The script to run the case. Default is None.
+
+        Notes
+        -----
+        - If launcher is None, the method run_model will be called.
+        - If launcher is not recognized, the method _exec_bash_commands will be called.
         """
 
-        if self.cases_dirs:
-            for case_dir in self.cases_dirs:
-                self.logger.info(f"Running case in {case_dir}")
-                self.run_model(case_dir=case_dir)
-            self.logger.info("All cases ran successfully.")
+        self.logger.info(f"Running case in {case_dir}")
+        if launcher is None:
+            self.run_model(case_dir=case_dir)
+        elif launcher == "apptainer":
+            self.run_model_with_apptainer(case_dir=case_dir)
+        elif launcher == "docker":
+            self.run_model_with_docker(case_dir=case_dir)
         else:
-            raise ValueError("No cases to run.")
+            self._exec_bash_commands(str_cmd=f"{launcher} {params} {script}")
+
+    def run_cases(
+        self,
+        launcher: str = None,
+        script: str = None,
+        params: str = None,
+        parallel: bool = False,
+    ) -> None:
+        """
+        Run the cases based on the launcher, script, and parameters.
+        Parallel execution is optional.
+
+        Parameters
+        ----------
+        launcher : str, optional
+            The launcher to run the cases. Default is None.
+        script : str, optional
+            The script to run the cases. Default is None.
+        params : str, optional
+            The parameters to run the cases. Default is None.
+        parallel : bool, optional
+            If True, the cases will be run in parallel. Default is False.
+
+        Raises
+        ------
+        ValueError
+            If the launcher is not recognized or the script does not exist.
+
+        Notes
+        -----
+        - Sbatch is the only option different from None, Apptainer, and Docker.
+        """
+
+        if launcher is not None:
+            if launcher not in self.available_launchers:
+                raise ValueError(
+                    f"Invalid launcher: {launcher}, not in {self.available_launchers}."
+                )
+        if launcher == "sbatch":
+            if not os.path.exists(script):
+                raise ValueError(f"Script {script} does not exist.")
+            self.logger.info("Running cases with sbatch.")
+            self._exec_bash_commands(str_cmd=f"{launcher} {params} {script}")
+        else:
+            if parallel:
+                num_threads = self.get_num_processors_available()
+                self.logger.info(
+                    f"Running cases in parallel with launcher={launcher}. Number of threads: {num_threads}."
+                )
+                with ThreadPoolExecutor(max_workers=num_threads) as executor:
+                    future_to_case = {
+                        executor.submit(
+                            self.run_case, case_dir, launcher, script, params
+                        ): case_dir
+                        for case_dir in self.cases_dirs
+                    }
+                    for future in as_completed(future_to_case):
+                        case_dir = future_to_case[future]
+                        try:
+                            future.result()
+                        except Exception as exc:
+                            self.logger.error(
+                                f"Case {case_dir} generated an exception: {exc}."
+                            )
+            else:
+                self.logger.info(
+                    f"Running cases sequentially with launcher={launcher}."
+                )
+                for case_dir in self.cases_dirs:
+                    try:
+                        self.run_case(
+                            case_dir=case_dir,
+                            launcher=launcher,
+                            script=script,
+                            params=params,
+                        )
+                    except Exception as exc:
+                        self.logger.error(
+                            f"Case {case_dir} generated an exception: {exc}."
+                        )
+            if launcher == "docker":
+                # Remove stopped containers after running all cases
+                remove_stopped_containers_cmd = 'docker ps -a --filter "ancestor=tausiaj/swash-image:latest" -q | xargs docker rm'
+                self._exec_bash_commands(str_cmd=remove_stopped_containers_cmd)
+            self.logger.info("All cases ran successfully.")
 
     @abstractmethod
     def run_model(self, case_dir: str) -> None:
@@ -352,7 +451,35 @@ class BaseModelWrapper(BlueMathModel):
         Parameters
         ----------
         case_dir : str
-            The directory of the case.
+            The case directory.
         """
 
         pass
+
+    def run_model_with_apptainer(self, case_dir: str) -> None:
+        """
+        Run the model for the specified case using Apptainer.
+
+        Parameters
+        ----------
+        case_dir : str
+            The case directory.
+        """
+
+        raise NotImplementedError(
+            "The method run_model_with_apptainer must be implemented."
+        )
+
+    def run_model_with_docker(self, case_dir: str) -> None:
+        """
+        Run the model for the specified case using Docker.
+
+        Parameters
+        ----------
+        case_dir : str
+            The case directory.
+        """
+
+        raise NotImplementedError(
+            "The method run_model_with_docker must be implemented."
+        )

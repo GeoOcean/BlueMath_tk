@@ -136,10 +136,10 @@ if __name__ == "__main__":
         output_dir=output_dir,
     )
     # Build the input files
-    swan_model.build_cases(mode="one_by_one", depth=linear_depth, plants=plants)
+    swan_model.build_cases(mode="all_combinations", depth=linear_depth, plants=plants)
     # Set the SWASH executable
     swan_model.set_swash_exec(
         "/home/tausiaj/GeoOcean-Execs/SWASH-10.05-Linux/bin/swashrun"
     )
     # Run the model
-    swan_model.run_cases()
+    swan_model.run_cases(parallel=True)
