@@ -49,7 +49,6 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
-tests_data/
 
 # mypy
 .mypy_cache/
@@ -99,4 +98,5 @@ venv.bak/
 # Local notebooks
 notebooks/
 test_cases/
+test_data/
 TODO.md

@@ -1,5 +1,5 @@
-$ Project name
-PROJECT '{{ case_num }}'
+$Project name
+PROJECT 'myproj' '{{ case_num }}'
 $
 $Set water level
 SET LEVEL=1.0
@@ -8,7 +8,7 @@ $(1D-mode, flume) or (2D-mode, basin)
 MODE DYNanic ONED
 COORD CARTesian
 $Computational grid: geographic location, size, resolution and orientation
-CGRID 0 0 0 1399 0 1567 0
+CGRID 0 0 0 1399 0 2892 0
 $
 $Multi-layered mode
 VERT 1
@@ -31,7 +31,7 @@ SPON E 10
 $
 $Physics
 BREAK
-VEGETATION {{ vegetation_height }} 0.5009019570650376 1 1.0
+VEGETATION 1.4849813414456121 0.5009019570650376 1 1.0
 $Numerics
 NONHYDrostatic BOX 1. PREConditioner ILU
 $
@@ -54,6 +54,6 @@ TABLE 'NOGRID' HEAD 'run.tab' TSEC RUNUP OUTPUT 0 1 SEC
 $
 $Starts computation
 TEST  1,0
-COMPUTE 000000.000 0.0168 SEC 002000.000
+COMPUTE 000000.000 0.0133 SEC 002000.000
 STOP
 $

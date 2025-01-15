@@ -156,6 +156,7 @@ class SwashModelWrapper(BaseModelWrapper):
 
         if not self.swash_exec:
             raise ValueError("The SWASH executable was not set.")
+
         # check if windows OS
         is_win = sys.platform.startswith("win")
         if is_win:
@@ -166,3 +167,50 @@ class SwashModelWrapper(BaseModelWrapper):
         cmd += f" 2>&1 > {log_file}"
         # execute command
         self._exec_bash_commands(str_cmd=cmd)
+
+    def run_model_with_apptainer(self, case_dir: str, apptainer_image: str) -> None:
+        """
+        Run the SWASH model for the specified case using Apptainer.
+
+        Parameters
+        ----------
+        case_dir : str
+            The case directory.
+        apptainer_image : str
+            The Apptainer image.
+        """
+
+        # Construct the Apptainer command
+        apptainer_cmd = f"apptainer exec --bind {case_dir}:/tmp/swash --pwd /tmp/swash {apptainer_image}  swashrun -input input.sws"
+        # Execute the Apptainer command
+        self._exec_bash_commands(str_cmd=apptainer_cmd)
+
+    def run_model_with_docker(
+        self,
+        case_dir: str,
+        docker_image: str = "tausiaj/swash-geoocean:10.05",
+        docker_out_logs: str = "docker_out.log",
+        docker_err_logs: str = "docker_err.log",
+    ) -> None:
+        """
+        Run the SWASH model for the specified case using Docker.
+
+        Parameters
+        ----------
+        case_dir : str
+            The case directory.
+        docker_image : str, optional
+            The Docker image. Default is "tausiaj/swash-geoocean:10.05".
+        docker_out_logs : str, optional
+            The Docker output log file. Default is "docker_out.log".
+        docker_err_logs : str, optional
+            The Docker error log file. Default is "docker_err.log".
+        """
+
+        # Construct the Docker command
+        # TODO: Check why --rm flag is not removing the container after execution
+        docker_cmd = f"docker run --rm -v {case_dir}:/case_dir -w /case_dir {docker_image} swashrun -input input.sws"
+        # Execute the Docker command
+        self._exec_bash_commands(
+            str_cmd=docker_cmd, out_file=docker_out_logs, err_file=docker_err_logs
+        )
