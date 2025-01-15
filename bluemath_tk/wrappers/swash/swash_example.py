@@ -25,19 +25,15 @@ class VeggySwashModelWrapper(SwashModelWrapper):
             The case context.
         case_dir : str
             The case directory.
-        depth : np.ndarray, optional
-            The depth array. Default is None.
-        plants : np.ndarray, optional
-            The plants array. Default is None.
         """
 
         # Copy test depth and plants files
         self.copy_files(
-            src="/home/tausiaj/GitHub-GeoOcean/BlueMath/test_data/swash-depth.bot",
+            src="C:/Users/UsuarioUC/Documents/BlueMath_tk/test_data/swash-depth.bot",
             dst=os.path.join(case_dir, "depth.bot"),
         )
         self.copy_files(
-            src="/home/tausiaj/GitHub-GeoOcean/BlueMath/test_data/swash-plants.txt",
+            src="C:/Users/UsuarioUC/Documents/BlueMath_tk/test_data/swash-plants.txt",
             dst=os.path.join(case_dir, "plants.txt"),
         )
         # Build the input waves
@@ -59,7 +55,7 @@ class VeggySwashModelWrapper(SwashModelWrapper):
 
     def build_cases(
         self,
-        mode: str = "all_combinations",
+        mode: str = "one_by_one",
     ) -> None:
         """
         Build the input files for all cases.
@@ -67,11 +63,7 @@ class VeggySwashModelWrapper(SwashModelWrapper):
         Parameters
         ----------
         mode : str, optional
-            The mode to build the cases. Default is "all_combinations".
-        depth : np.ndarray, optional
-            The depth array. Default is None.
-        plants : np.ndarray, optional
-            The plants array. Default is None.
+            The mode to build the cases. Default is "one_by_one".
 
         Raises
         ------
@@ -93,7 +85,7 @@ class VeggySwashModelWrapper(SwashModelWrapper):
 if __name__ == "__main__":
     # Define the input parameters
     templates_dir = (
-        "/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/wrappers/swash/templates/"
+        "C:/Users/UsuarioUC/Documents/BlueMath_tk/bluemath_tk/wrappers/swash/templates"
     )
     templates_name = ["input.sws"]
     # Get 5 cases using LHS and MDA
@@ -107,7 +99,7 @@ if __name__ == "__main__":
     mda = MDA(num_centers=5)
     mda.fit(data=lhs_data)
     model_parameters = mda.centroids.to_dict(orient="list")
-    output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/swash/"
+    output_dir = "C:/Users/UsuarioUC/Documents/BlueMath_tk/test_cases/swash/"
     # Create an instance of the SWASH model wrapper
     swan_model = VeggySwashModelWrapper(
         templates_dir=templates_dir,
@@ -117,7 +109,7 @@ if __name__ == "__main__":
     )
     # Build the input files
     swan_model.build_cases(mode="one_by_one")
-    # Set the SWASH executable
+    # Set the SWASH executable (not used if docker is used)
     swan_model.set_swash_exec(
         "/home/tausiaj/GeoOcean-Execs/SWASH-10.05-Linux/bin/swashrun"
     )

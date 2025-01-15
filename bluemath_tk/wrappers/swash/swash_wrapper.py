@@ -189,6 +189,8 @@ class SwashModelWrapper(BaseModelWrapper):
         self,
         case_dir: str,
         docker_image: str = "tausiaj/swash-geoocean:10.05",
+        docker_out_logs: str = "docker_out.log",
+        docker_err_logs: str = "docker_err.log",
     ) -> None:
         """
         Run the SWASH model for the specified case using Docker.
@@ -198,11 +200,17 @@ class SwashModelWrapper(BaseModelWrapper):
         case_dir : str
             The case directory.
         docker_image : str, optional
-            The Docker image. Default is "tausiaj/swash-image:latest".
+            The Docker image. Default is "tausiaj/swash-geoocean:10.05".
+        docker_out_logs : str, optional
+            The Docker output log file. Default is "docker_out.log".
+        docker_err_logs : str, optional
+            The Docker error log file. Default is "docker_err.log".
         """
 
         # Construct the Docker command
         # TODO: Check why --rm flag is not removing the container after execution
         docker_cmd = f"docker run --rm -v {case_dir}:/case_dir -w /case_dir {docker_image} swashrun -input input.sws"
         # Execute the Docker command
-        self._exec_bash_commands(str_cmd=docker_cmd)
+        self._exec_bash_commands(
+            str_cmd=docker_cmd, out_file=docker_out_logs, err_file=docker_err_logs
+        )
