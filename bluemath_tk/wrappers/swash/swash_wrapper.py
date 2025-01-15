@@ -188,7 +188,7 @@ class SwashModelWrapper(BaseModelWrapper):
     def run_model_with_docker(
         self,
         case_dir: str,
-        docker_image: str = "tausiaj/swash-image:latest",
+        docker_image: str = "tausiaj/swash-geoocean:10.05",
     ) -> None:
         """
         Run the SWASH model for the specified case using Docker.
