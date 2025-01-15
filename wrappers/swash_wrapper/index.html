@@ -14,7 +14,7 @@
       <script>
         // Current page data
         var mkdocs_page_name = "Swash wrapper";
-        var mkdocs_page_input_path = "wrappers/swash_wrapper.md";
+        var mkdocs_page_input_path = "wrappers\\swash_wrapper.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -365,6 +365,126 @@ https://swash.sourceforge.io/online_doc/swashuse/swashuse.html#input-and-output-
               –
               <div class="doc-md-description">
                 <p>If the SWASH executable was not set.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.run_model_with_apptainer" class="doc doc-heading">
+            <code class=" language-python"><span class="n">run_model_with_apptainer</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">apptainer_image</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Run the SWASH model for the specified case using Apptainer.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>case_dir</code></b>
+                  (<code>str</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case directory.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>apptainer_image</code></b>
+                  (<code>str</code>)
+              –
+              <div class="doc-md-description">
+                <p>The Apptainer image.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.run_model_with_docker" class="doc doc-heading">
+            <code class=" language-python"><span class="n">run_model_with_docker</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">docker_image</span><span class="o">=</span><span class="s1">&#39;tausiaj/swash-geoocean:10.05&#39;</span><span class="p">,</span> <span class="n">docker_out_logs</span><span class="o">=</span><span class="s1">&#39;docker_out.log&#39;</span><span class="p">,</span> <span class="n">docker_err_logs</span><span class="o">=</span><span class="s1">&#39;docker_err.log&#39;</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Run the SWASH model for the specified case using Docker.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>case_dir</code></b>
+                  (<code>str</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case directory.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>docker_image</code></b>
+                  (<code>str</code>, default:
+                      <code>&#39;tausiaj/swash-geoocean:10.05&#39;</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The Docker image. Default is "tausiaj/swash-geoocean:10.05".</p>
+              </div>
+            </li>
+            <li>
+              <b><code>docker_out_logs</code></b>
+                  (<code>str</code>, default:
+                      <code>&#39;docker_out.log&#39;</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The Docker output log file. Default is "docker_out.log".</p>
+              </div>
+            </li>
+            <li>
+              <b><code>docker_err_logs</code></b>
+                  (<code>str</code>, default:
+                      <code>&#39;docker_err.log&#39;</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The Docker error log file. Default is "docker_err.log".</p>
               </div>
             </li>
         </ul>

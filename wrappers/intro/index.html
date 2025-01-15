@@ -14,7 +14,7 @@
       <script>
         // Current page data
         var mkdocs_page_name = "Intro";
-        var mkdocs_page_input_path = "wrappers/intro.md";
+        var mkdocs_page_input_path = "wrappers\\intro.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -80,7 +80,7 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#swashmodelwrapper">SwashModelWrapper</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#example-usage">Example Usage</a>
+    <li class="toctree-l3"><a class="reference internal" href="#example-usage-veggyswashmodelwrapper">Example Usage (VeggySwashModelWrapper)</a>
     </li>
         </ul>
     </li>
@@ -118,12 +118,26 @@
 <p>The <a href="../base_wrapper/"><code>BaseModelWrapper</code></a> class serves as the base class for all model wrappers. It provides common functionality that can be extended by specific model wrappers.</p>
 <h2 id="swashmodelwrapper">SwashModelWrapper</h2>
 <p>The <a href="../swash_wrapper/"><code>SwashModelWrapper</code></a> class is a specific implementation of the <code>BaseModelWrapper</code> for the SWASH model. It extends the base functionality to handle SWASH-specific requirements.</p>
-<h3 id="example-usage">Example Usage</h3>
+<h3 id="example-usage-veggyswashmodelwrapper">Example Usage (VeggySwashModelWrapper)</h3>
+<p>To properly use wrappers, several bullet points must be understood:</p>
+<ol>
+<li>
+<p>As shown in the example below, your model of interest base class, <code>`SwashModelWrapper</code> in this case, can be inherited to overwrite methods and build / run cases as needed.</p>
+</li>
+<li>
+<p><code>build_case</code> method is essential to properly create the needed files to execute the model in each folder. In the example below, we copy a couple of files and then create an <em>waves</em> array that is written in another file.</p>
+</li>
+<li>
+<p>To <strong>RUN</strong> the cases, couple of methos are available: <code>run_cases</code> and <code>run_cases_with_scheduler</code>. In this section, we will focus on the <code>run_cases</code> method, for information regarding the <code>run_cases_with_scheduler</code> method, go <a href="../schedulers/">here</a>.
+Then, the <code>run_cases</code> method allows the user to run the model for the different cases, directory by directory, as it is usually done.</p>
+</li>
+</ol>
+<p>The method parameters are <code>launcher</code>, <code>script</code>, <code>params</code>, <code>parallel</code> and <code>cases_to_run</code>. Depending on the launcher, there might be some methods available, so please check if the launcher you want to use already has an  implemented method. <em>If this is the case, overwrite this method in your class if you do not want to use the implemented version.</em> If your launcher has not an implemented method, you can either implement a method to be called, or use the parameters <code>launcher</code>, <code>script</code> and <code>params</code>, as the wrapper will execute <code>launcher params script</code> in each case directory.</p>
+<p>If no <strong>launcher</strong> is specified, wrapper will try to run the model locally, so the <em>executable</em> file must be set. Other way, wrapper should raise an Error.</p>
 <div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">bluemath_tk.datamining.lhs</span> <span class="kn">import</span> <span class="n">LHS</span>
 <span class="kn">from</span> <span class="nn">bluemath_tk.datamining.mda</span> <span class="kn">import</span> <span class="n">MDA</span>
-<span class="kn">from</span> <span class="nn">bluemath_tk.topo_bathy.profiles</span> <span class="kn">import</span> <span class="n">linear</span>
 <span class="kn">from</span> <span class="nn">bluemath_tk.waves.series</span> <span class="kn">import</span> <span class="n">series_TMA</span>
 <span class="kn">from</span> <span class="nn">bluemath_tk.wrappers.swash.swash_wrapper</span> <span class="kn">import</span> <span class="n">SwashModelWrapper</span>
 
@@ -137,8 +151,6 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
         <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">depth</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">plants</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Build the input files for a case.</span>
@@ -155,16 +167,15 @@
 <span class="sd">            The plants array. Default is None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">if</span> <span class="n">depth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># Save the depth to a file</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">write_array_in_file</span><span class="p">(</span>
-                <span class="n">array</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;depth.bot&quot;</span><span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="n">plants</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># Save the plants to a file</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">write_array_in_file</span><span class="p">(</span>
-                <span class="n">array</span><span class="o">=</span><span class="n">plants</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;plants.txt&quot;</span><span class="p">)</span>
-            <span class="p">)</span>
+        <span class="c1"># Copy test depth and plants files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy_files</span><span class="p">(</span>
+            <span class="n">src</span><span class="o">=</span><span class="s2">&quot;C:/Users/UsuarioUC/Documents/BlueMath_tk/test_data/swash-depth.bot&quot;</span><span class="p">,</span>
+            <span class="n">dst</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;depth.bot&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy_files</span><span class="p">(</span>
+            <span class="n">src</span><span class="o">=</span><span class="s2">&quot;C:/Users/UsuarioUC/Documents/BlueMath_tk/test_data/swash-plants.txt&quot;</span><span class="p">,</span>
+            <span class="n">dst</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;plants.txt&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
         <span class="c1"># Build the input waves</span>
         <span class="n">waves_dict</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;H&quot;</span><span class="p">:</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">],</span>
@@ -176,7 +187,7 @@
             <span class="s2">&quot;deltat&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
             <span class="s2">&quot;tendc&quot;</span><span class="p">:</span> <span class="mi">1800</span><span class="p">,</span>
         <span class="p">}</span>
-        <span class="n">waves</span> <span class="o">=</span> <span class="n">series_TMA</span><span class="p">(</span><span class="n">waves</span><span class="o">=</span><span class="n">waves_dict</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">waves</span> <span class="o">=</span> <span class="n">series_TMA</span><span class="p">(</span><span class="n">waves</span><span class="o">=</span><span class="n">waves_dict</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
         <span class="c1"># Save the waves to a file</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write_array_in_file</span><span class="p">(</span>
             <span class="n">array</span><span class="o">=</span><span class="n">waves</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;waves.bnd&quot;</span><span class="p">)</span>
@@ -185,8 +196,6 @@
     <span class="k">def</span> <span class="nf">build_cases</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;all_combinations&quot;</span><span class="p">,</span>
-        <span class="n">depth</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">plants</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Build the input files for all cases.</span>
@@ -213,8 +222,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">build_case</span><span class="p">(</span>
                 <span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span>
                 <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span>
-                <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span>
-                <span class="n">plants</span><span class="o">=</span><span class="n">plants</span><span class="p">,</span>
             <span class="p">)</span>
 
 
@@ -222,7 +229,7 @@
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="c1"># Define the input parameters</span>
     <span class="n">templates_dir</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/wrappers/swash/templates/&quot;</span>
+        <span class="s2">&quot;C:/Users/UsuarioUC/Documents/BlueMath_tk/bluemath_tk/wrappers/swash/templates&quot;</span>
     <span class="p">)</span>
     <span class="n">templates_name</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;input.sws&quot;</span><span class="p">]</span>
     <span class="c1"># Get 5 cases using LHS and MDA</span>
@@ -236,19 +243,7 @@
     <span class="n">mda</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">num_centers</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
     <span class="n">mda</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">lhs_data</span><span class="p">)</span>
     <span class="n">model_parameters</span> <span class="o">=</span> <span class="n">mda</span><span class="o">.</span><span class="n">centroids</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;list&quot;</span><span class="p">)</span>
-    <span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/swash/&quot;</span>
-    <span class="c1"># Create the depth</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    dx:      bathymetry mesh resolution at x axes (m)</span>
-<span class="sd">    h0:      offshore depth (m)</span>
-<span class="sd">    bCrest:  beach heigh (m)</span>
-<span class="sd">    m:       profile slope</span>
-<span class="sd">    Wfore:   flume length before slope toe (m)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">linear_depth</span> <span class="o">=</span> <span class="n">linear</span><span class="p">(</span><span class="n">dx</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">h0</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">bCrest</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Wfore</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-    <span class="c1"># Create the plants</span>
-    <span class="n">plants</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">linear_depth</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
-    <span class="n">plants</span><span class="p">[(</span><span class="n">linear_depth</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">linear_depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;C:/Users/UsuarioUC/Documents/BlueMath_tk/test_cases/swash/&quot;</span>
     <span class="c1"># Create an instance of the SWASH model wrapper</span>
     <span class="n">swan_model</span> <span class="o">=</span> <span class="n">VeggySwashModelWrapper</span><span class="p">(</span>
         <span class="n">templates_dir</span><span class="o">=</span><span class="n">templates_dir</span><span class="p">,</span>
@@ -257,13 +252,13 @@
         <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="c1"># Build the input files</span>
-    <span class="n">swan_model</span><span class="o">.</span><span class="n">build_cases</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;one_by_one&quot;</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="n">linear_depth</span><span class="p">,</span> <span class="n">plants</span><span class="o">=</span><span class="n">plants</span><span class="p">)</span>
-    <span class="c1"># Set the SWASH executable</span>
+    <span class="n">swan_model</span><span class="o">.</span><span class="n">build_cases</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;one_by_one&quot;</span><span class="p">)</span>
+    <span class="c1"># Set the SWASH executable (not used if docker is used)</span>
     <span class="n">swan_model</span><span class="o">.</span><span class="n">set_swash_exec</span><span class="p">(</span>
         <span class="s2">&quot;/home/tausiaj/GeoOcean-Execs/SWASH-10.05-Linux/bin/swashrun&quot;</span>
     <span class="p">)</span>
     <span class="c1"># Run the model</span>
-    <span class="n">swan_model</span><span class="o">.</span><span class="n">run_cases</span><span class="p">()</span>
+    <span class="n">swan_model</span><span class="o">.</span><span class="n">run_cases</span><span class="p">(</span><span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;docker&quot;</span><span class="p">)</span>
 </code></pre></div>
               
             </div>
