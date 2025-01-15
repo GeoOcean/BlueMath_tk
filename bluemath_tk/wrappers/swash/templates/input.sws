@@ -1,14 +1,14 @@
 $Project name
-PROJECT '{{ case_num }}'
+PROJECT 'myproj' '{{ case_num }}'
 $
 $Set water level
-SET LEVEL=1.0040963361065678
+SET LEVEL=1.0
 $
 $(1D-mode, flume) or (2D-mode, basin)
 MODE DYNanic ONED
 COORD CARTesian
 $Computational grid: geographic location, size, resolution and orientation
-CGRID 0 0 0 1399 0 7345 0
+CGRID 0 0 0 1399 0 2892 0
 $
 $Multi-layered mode
 VERT 1
@@ -18,7 +18,7 @@ INPGRID BOTTOM 0 0 0 1399 0 1.00 1
 READINP BOTTOM 1 'depth.bot' 1 0 FREE
 $
 $Reading vegetation values from file
-INPGRID NPLANTS 0 0 0   0 1 1
+INPGRID NPLANTS 0 0 0 1399 0 1 1
 READINP NPLANTS 1 'plants.txt' 1 0 FREE
 $
 $Initial values for flow variables
@@ -31,10 +31,9 @@ SPON E 10
 $
 $Physics
 BREAK
-FRIC MANNING 0.01
-VEGETATION {{ vegetation_height }} 0.5009019570650376 1 1.0
+VEGETATION 1.4849813414456121 0.5009019570650376 1 1.0
 $Numerics
-NONHYDrostatic
+NONHYDrostatic BOX 1. PREConditioner ILU
 $
 $Output quantities
 DISCRET UPW MOM
@@ -49,12 +48,12 @@ QUANTITY XP hexp=10
 QUANT RUNUP delrp 0.01
 $
 CURVE 'line' 0 0 1399 1399 0
-TABLE 'line' HEAD 'output.tab' TSEC XP YP WATL OUTPUT 0 1 SEC
+TABLE 'line' HEAD 'output.tab' TSEC XP YP BOTL WATL QMAG OUTPUT 0 1 SEC
 $
 TABLE 'NOGRID' HEAD 'run.tab' TSEC RUNUP OUTPUT 0 1 SEC
 $
 $Starts computation
 TEST  1,0
-COMPUTE 000000.000 0.0048 SEC 003430.000
+COMPUTE 000000.000 0.0133 SEC 002000.000
 STOP
 $

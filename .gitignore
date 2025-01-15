@@ -99,4 +99,5 @@ venv.bak/
 # Local notebooks
 notebooks/
 test_cases/
+test_data/
 TODO.md

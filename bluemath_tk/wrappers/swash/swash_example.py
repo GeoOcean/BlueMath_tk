@@ -122,4 +122,4 @@ if __name__ == "__main__":
         "/home/tausiaj/GeoOcean-Execs/SWASH-10.05-Linux/bin/swashrun"
     )
     # Run the model
-    swan_model.run_cases(parallel=True)
+    swan_model.run_cases(launcher="docker")
