@@ -29,22 +29,6 @@ from .operations import (
 class BlueMathModel(ABC):
     """
     Abstract base class for handling default functionalities across the project.
-
-    Attributes
-    ----------
-    logger : logging.Logger
-        The logger object.
-
-    Methods
-    -------
-    set_logger_name(name)
-        Sets the name of the logger.
-    save_model(model_path)
-        Saves the model to a file.
-    load_model(model_path)
-        Loads the model from a file.
-    check_nans(data, replace_value, raise_error)
-        Checks for NaNs in the data and optionally replaces them.
     """
 
     @abstractmethod
@@ -55,6 +39,7 @@ class BlueMathModel(ABC):
     def logger(self) -> logging.Logger:
         if self._logger is None:
             self._logger = get_file_logger(name=self.__class__.__name__)
+
         return self._logger
 
     @logger.setter
@@ -63,20 +48,56 @@ class BlueMathModel(ABC):
 
     def set_logger_name(self, name: str) -> None:
         """Sets the name of the logger."""
+
         self.logger = get_file_logger(name=name)
 
     def save_model(self, model_path: str) -> None:
         """Saves the model to a file."""
+
         self.logger.info(f"Saving model to {model_path}")
         with open(model_path, "wb") as f:
             pickle.dump(self, f)
 
     def load_model(self, model_path: str) -> "BlueMathModel":
         """Loads the model from a file."""
+
         self.logger.info(f"Loading model from {model_path}")
         with open(model_path, "rb") as f:
             model = pickle.load(f)
+
         return model
+
+    def list_class_attributes(self) -> list:
+        """
+        Lists the attributes of the class.
+
+        Returns
+        -------
+        list
+            The attributes of the class.
+        """
+
+        return [
+            attr
+            for attr in dir(self)
+            if not callable(getattr(self, attr)) and not attr.startswith("__")
+        ]
+
+    def list_class_methods(self) -> list:
+        """
+        Lists the methods of the class.
+
+        Returns
+        -------
+        list
+            The methods of the class.
+        """
+
+        return [
+            attr
+            for attr in dir(self)
+            if callable(getattr(self, attr)) and not attr.startswith("__")
+        ]
 
     def check_nans(
         self,

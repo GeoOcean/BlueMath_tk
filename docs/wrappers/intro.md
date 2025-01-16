@@ -4,6 +4,10 @@ This section provides general documentation for the model wrappers usage. The wr
 
 For more detailed information, refer to the specific class implementations and their docstrings.
 
+| Model | URL                           | Base Class        | Documentation                        | Owner              |
+| ----- | ----------------------------- | ----------------- | ------------------------------------ | ------------------ |
+| Swash | https://swash.sourceforge.io/ | SwashModelWrapper | [swash_wrapper.md](swash_wrapper.md) | ricondoa@unican.es |
+
 ## BaseModelWrapper
 
 The [`BaseModelWrapper`](base_wrapper.md) class serves as the base class for all model wrappers. It provides common functionality that can be extended by specific model wrappers.

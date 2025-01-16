@@ -29,11 +29,11 @@ class VeggySwashModelWrapper(SwashModelWrapper):
 
         # Copy test depth and plants files
         self.copy_files(
-            src="C:/Users/UsuarioUC/Documents/BlueMath_tk/test_data/swash-depth.bot",
+            src="/home/tausiaj/GitHub-GeoOcean/BlueMath/test_data/swash-depth.bot",
             dst=os.path.join(case_dir, "depth.bot"),
         )
         self.copy_files(
-            src="C:/Users/UsuarioUC/Documents/BlueMath_tk/test_data/swash-plants.txt",
+            src="/home/tausiaj/GitHub-GeoOcean/BlueMath/test_data/swash-plants.txt",
             dst=os.path.join(case_dir, "plants.txt"),
         )
         # Build the input waves
@@ -101,17 +101,17 @@ if __name__ == "__main__":
     model_parameters = mda.centroids.to_dict(orient="list")
     output_dir = "C:/Users/UsuarioUC/Documents/BlueMath_tk/test_cases/swash/"
     # Create an instance of the SWASH model wrapper
-    swan_model = VeggySwashModelWrapper(
+    swash_model = VeggySwashModelWrapper(
         templates_dir=templates_dir,
         templates_name=templates_name,
         model_parameters=model_parameters,
         output_dir=output_dir,
     )
     # Build the input files
-    swan_model.build_cases(mode="one_by_one")
+    swash_model.build_cases(mode="one_by_one")
     # Set the SWASH executable (not used if docker is used)
-    swan_model.set_swash_exec(
+    swash_model.set_swash_exec(
         "/home/tausiaj/GeoOcean-Execs/SWASH-10.05-Linux/bin/swashrun"
     )
     # Run the model
-    swan_model.run_cases(launcher="docker")
+    swash_model.run_cases(launcher="docker")
