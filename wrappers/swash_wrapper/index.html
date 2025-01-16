@@ -14,7 +14,7 @@
       <script>
         // Current page data
         var mkdocs_page_name = "Swash wrapper";
-        var mkdocs_page_input_path = "wrappers\\swash_wrapper.md";
+        var mkdocs_page_input_path = "wrappers/swash_wrapper.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -201,7 +201,7 @@ https://swash.sourceforge.io/online_doc/swashuse/swashuse.html#input-and-output-
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><span title="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper._convert_output_tabs_to_nc">_convert_output_tabs_to_nc</span></code></td>
+              <td><code><span title="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper._convert_case_output_files_to_nc">_convert_case_output_files_to_nc</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Convert output tabs files to a netCDF file.</p>
@@ -305,6 +305,641 @@ https://swash.sourceforge.io/online_doc/swashuse/swashuse.html#input-and-output-
 <div class="doc doc-object doc-function">
 
 
+<h3 id="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_runup" class="doc doc-heading">
+            <code class=" language-python"><span class="n">calculate_runup</span><span class="p">(</span><span class="n">case_num</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">,</span> <span class="n">output_nc</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Stores runup from the output netCDF file.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>case_num</code></b>
+                  (<code>int</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case number.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>case_dir</code></b>
+                  (<code>str</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case directory.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>output_nc</code></b>
+                  (<code><span title="xarray.Dataset">Dataset</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The output netCDF file.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="xarray.Dataset">Dataset</span></code>
+              –
+              <div class="doc-md-description">
+                <p>The runup.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_runup2" class="doc doc-heading">
+            <code class=" language-python"><span class="n">calculate_runup2</span><span class="p">(</span><span class="n">case_num</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">,</span> <span class="n">output_nc</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Calculates runup 2% (Ru2) from the output netCDF file.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>output_nc</code></b>
+                  (<code><span title="xarray.Dataset">Dataset</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The output netCDF file.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="xarray.Dataset">Dataset</span></code>
+              –
+              <div class="doc-md-description">
+                <p>The runup 2% (Ru2).</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_setup" class="doc doc-heading">
+            <code class=" language-python"><span class="n">calculate_setup</span><span class="p">(</span><span class="n">case_num</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">,</span> <span class="n">output_nc</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Calculates mean setup (Msetup) from the output netCDF file.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>case_num</code></b>
+                  (<code>int</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case number.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>case_dir</code></b>
+                  (<code>str</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case directory.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>output_nc</code></b>
+                  (<code><span title="xarray.Dataset">Dataset</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The output netCDF file.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="xarray.Dataset">Dataset</span></code>
+              –
+              <div class="doc-md-description">
+                <p>The mean setup (Msetup).</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_spectral_analysis" class="doc doc-heading">
+            <code class=" language-python"><span class="n">calculate_spectral_analysis</span><span class="p">(</span><span class="n">case_num</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">,</span> <span class="n">output_nc</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Makes a water level spectral analysis (scipy.signal.welch)
+then separates incident waves, infragravity waves, very low frequency waves.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>case_num</code></b>
+                  (<code>int</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case number.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>case_dir</code></b>
+                  (<code>str</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case directory.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>output_nc</code></b>
+                  (<code><span title="xarray.Dataset">Dataset</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The output netCDF file.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="xarray.Dataset">Dataset</span></code>
+              –
+              <div class="doc-md-description">
+                <p>The spectral analysis.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_statistical_analysis" class="doc doc-heading">
+            <code class=" language-python"><span class="n">calculate_statistical_analysis</span><span class="p">(</span><span class="n">case_num</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">,</span> <span class="n">output_nc</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Calculates zero-upcrossing analysis to obtain individual wave heights (Hi) and wave periods (Ti).</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>case_num</code></b>
+                  (<code>int</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case number.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>case_dir</code></b>
+                  (<code>str</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case directory.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>output_nc</code></b>
+                  (<code><span title="xarray.Dataset">Dataset</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The output netCDF file.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="xarray.Dataset">Dataset</span></code>
+              –
+              <div class="doc-md-description">
+                <p>The statistical analysis.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.find_maximas" class="doc doc-heading">
+            <code class=" language-python"><span class="n">find_maximas</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Find the individual uprushes along the beach profile.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>x</code></b>
+                  (<code><span title="numpy.ndarray">ndarray</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The water level time series.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="typing.Tuple">Tuple</span>[<span title="numpy.ndarray">ndarray</span>, <span title="numpy.ndarray">ndarray</span>]</code>
+              –
+              <div class="doc-md-description">
+                <p>The peaks and the values of the peaks.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.join_postprocessed_files" class="doc doc-heading">
+            <code class=" language-python"><span class="n">join_postprocessed_files</span><span class="p">(</span><span class="n">postprocessed_files</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Join postprocessed files in a single Dataset.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>postprocessed_files</code></b>
+                  (<code>list</code>)
+              –
+              <div class="doc-md-description">
+                <p>The postprocessed files.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="xarray.Dataset">Dataset</span></code>
+              –
+              <div class="doc-md-description">
+                <p>The joined Dataset.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.list_available_postprocess_vars" class="doc doc-heading">
+            <code class=" language-python"><span class="n">list_available_postprocess_vars</span><span class="p">()</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>List available postprocess variables.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="typing.List">List</span>[str]</code>
+              –
+              <div class="doc-md-description">
+                <p>The available postprocess variables.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.postprocess_case" class="doc doc-heading">
+            <code class=" language-python"><span class="n">postprocess_case</span><span class="p">(</span><span class="n">case_num</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">,</span> <span class="n">output_vars</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Convert tab ouput files to netCDF file.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>case_num</code></b>
+                  (<code>int</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case number.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>case_dir</code></b>
+                  (<code>str</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case directory.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>output_vars</code></b>
+                  (<code>list</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The output variables to postprocess. Default is None.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="xarray.Dataset">Dataset</span></code>
+              –
+              <div class="doc-md-description">
+                <p>The postprocessed Dataset.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.run_model" class="doc doc-heading">
             <code class=" language-python"><span class="n">run_model</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">log_file</span><span class="o">=</span><span class="s1">&#39;swash_exec.log&#39;</span><span class="p">)</span></code>
 
@@ -380,7 +1015,7 @@ https://swash.sourceforge.io/online_doc/swashuse/swashuse.html#input-and-output-
 
 
 <h3 id="bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.run_model_with_apptainer" class="doc doc-heading">
-            <code class=" language-python"><span class="n">run_model_with_apptainer</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">apptainer_image</span><span class="p">)</span></code>
+            <code class=" language-python"><span class="n">run_model_with_apptainer</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">apptainer_image</span><span class="p">,</span> <span class="n">apptainer_out_logs</span><span class="o">=</span><span class="s1">&#39;apptainer_out.log&#39;</span><span class="p">,</span> <span class="n">apptainer_err_logs</span><span class="o">=</span><span class="s1">&#39;apptainer_err.log&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -414,6 +1049,26 @@ https://swash.sourceforge.io/online_doc/swashuse/swashuse.html#input-and-output-
               –
               <div class="doc-md-description">
                 <p>The Apptainer image.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>apptainer_out_logs</code></b>
+                  (<code>str</code>, default:
+                      <code>&#39;apptainer_out.log&#39;</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The Apptainer output log file. Default is "apptainer_out.log".</p>
+              </div>
+            </li>
+            <li>
+              <b><code>apptainer_err_logs</code></b>
+                  (<code>str</code>, default:
+                      <code>&#39;apptainer_err.log&#39;</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The Apptainer error log file. Default is "apptainer_err.log".</p>
               </div>
             </li>
         </ul>

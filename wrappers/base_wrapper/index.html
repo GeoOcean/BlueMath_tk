@@ -14,7 +14,7 @@
       <script>
         // Current page data
         var mkdocs_page_name = "Base wrapper";
-        var mkdocs_page_input_path = "wrappers\\base_wrapper.md";
+        var mkdocs_page_input_path = "wrappers/base_wrapper.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -272,28 +272,10 @@
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_one_by_one" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_one_by_one">create_cases_context_one_by_one</a></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.set_cases_dirs_from_output_dir" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.set_cases_dirs_from_output_dir">set_cases_dirs_from_output_dir</a></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>Create an array of dictionaries with the combinations of values from the
-input dictionary, one by one.</p>
-                </div>
-              </td>
-            </tr>
-            <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_all_combinations" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_all_combinations">create_cases_context_all_combinations</a></code></td>
-              <td>
-                <div class="doc-md-description">
-                  <p>Create an array of dictionaries with each possible combination of values
-from the input dictionary.</p>
-                </div>
-              </td>
-            </tr>
-            <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.render_file_from_template" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.render_file_from_template">render_file_from_template</a></code></td>
-              <td>
-                <div class="doc-md-description">
-                  <p>Render a file from a template.</p>
+                  <p>Set the cases directories from the output directory.</p>
                 </div>
               </td>
             </tr>
@@ -314,10 +296,60 @@ from the input dictionary.</p>
               </td>
             </tr>
             <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.render_file_from_template" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.render_file_from_template">render_file_from_template</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Render a file from a template.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_one_by_one" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_one_by_one">create_cases_context_one_by_one</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Create an array of dictionaries with the combinations of values from the
+input dictionary, one by one.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_all_combinations" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_all_combinations">create_cases_context_all_combinations</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Create an array of dictionaries with each possible combination of values
+from the input dictionary.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
               <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.build_cases" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.build_cases">build_cases</a></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Create the cases folders and render the input files.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model">run_model</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Run the model for a specific case.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_apptainer" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_apptainer">run_model_with_apptainer</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Run the model for a specific case using Apptainer.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_docker" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_docker">run_model_with_docker</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Run the model for a specific case using Docker.</p>
                 </div>
               </td>
             </tr>
@@ -347,26 +379,26 @@ Parallel execution is optional.</p>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model">run_model</a></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.postprocess_case" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.postprocess_case">postprocess_case</a></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>Run the model for a specific case.</p>
+                  <p>Postprocess the model output for a specific case.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_apptainer" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_apptainer">run_model_with_apptainer</a></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.join_postprocessed_files" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.join_postprocessed_files">join_postprocessed_files</a></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>Run the model for a specific case using Apptainer.</p>
+                  <p>Join the postprocessed files.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_docker" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_docker">run_model_with_docker</a></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.postprocess_cases" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.postprocess_cases">postprocess_cases</a></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>Run the model for a specific case using Docker.</p>
+                  <p>Postprocess the model output.</p>
                 </div>
               </td>
             </tr>
@@ -425,7 +457,7 @@ Parallel execution is optional.</p>
             </li>
             <li>
               <b><code>templates_name</code></b>
-                  (<code>list</code>)
+                  (<code><span title="typing.List">List</span>[str]</code>)
               –
               <div class="doc-md-description">
                 <p>The names of the templates.</p>
@@ -500,7 +532,7 @@ Default is None.</p>
               –
               <div class="doc-md-description">
                 <p>The mode to create the cases. Can be "all_combinations" or "one_by_one".
-Default is "all_combinations".</p>
+Default is "one_by_one".</p>
               </div>
             </li>
         </ul>
@@ -587,8 +619,8 @@ from the input dictionary.</p>
       <td class="field-body">
         <ul class="first simple">
             <li>
-<b><code>array_of_contexts</code></b>(                  <code>list</code>
-)              –
+                  <code><span title="typing.List">List</span>[dict]</code>
+              –
               <div class="doc-md-description">
                 <p>A list of dictionaries, each representing a unique combination of
 parameter values.</p>
@@ -629,11 +661,52 @@ input dictionary, one by one.</p>
       <td class="field-body">
         <ul class="first simple">
             <li>
-<b><code>array_of_contexts</code></b>(                  <code>list</code>
-)              –
+                  <code><span title="typing.List">List</span>[dict]</code>
+              –
               <div class="doc-md-description">
                 <p>A list of dictionaries, each representing a unique combination of
 parameter values.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.join_postprocessed_files" class="doc doc-heading">
+            <code class=" language-python"><span class="n">join_postprocessed_files</span><span class="p">(</span><span class="n">postprocessed_files</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Join the postprocessed files.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>postprocessed_files</code></b>
+                  (<code><span title="typing.List">List</span>[<span title="xarray.Dataset">Dataset</span>]</code>)
+              –
+              <div class="doc-md-description">
+                <p>The list with the postprocessed files.</p>
               </div>
             </li>
         </ul>
@@ -670,7 +743,7 @@ parameter values.</p>
       <td class="field-body">
         <ul class="first simple">
             <li>
-                  <code>list</code>
+                  <code><span title="typing.List">List</span>[str]</code>
               –
               <div class="doc-md-description">
                 <p>A list with the available launchers.</p>
@@ -710,10 +783,125 @@ parameter values.</p>
       <td class="field-body">
         <ul class="first simple">
             <li>
-                  <code>list</code>
+                  <code><span title="typing.List">List</span>[str]</code>
               –
               <div class="doc-md-description">
                 <p>A list with the available schedulers.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.postprocess_case" class="doc doc-heading">
+            <code class=" language-python"><span class="n">postprocess_case</span><span class="p">(</span><span class="n">case_num</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Postprocess the model output.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>case_num</code></b>
+                  (<code>int</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case number.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>case_dir</code></b>
+                  (<code>str</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case directory.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.postprocess_cases" class="doc doc-heading">
+            <code class=" language-python"><span class="n">postprocess_cases</span><span class="p">(</span><span class="n">cases_to_postprocess</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Postprocess the model output.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>cases_to_postprocess</code></b>
+                  (<code><span title="typing.List">List</span>[int]</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The list with the cases to postprocess. Default is None.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="xarray.Dataset">Dataset</span> or <span title="typing.List">List</span>[<span title="xarray.Dataset">Dataset</span>]</code>
+              –
+              <div class="doc-md-description">
+                <p>The postprocessed file or the list with the postprocessed files.</p>
               </div>
             </li>
         </ul>
@@ -838,6 +1026,16 @@ Default is None.</p>
                 <p>The script to run the case. Default is None.</p>
               </div>
             </li>
+            <li>
+              <b><code>params</code></b>
+                  (<code>str</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The parameters to run the case. Default is None.</p>
+              </div>
+            </li>
         </ul>
       </td>
     </tr>
@@ -867,7 +1065,8 @@ Default is None.</p>
     <div class="doc doc-contents ">
 
         <p>Run the cases based on the launcher, script, and parameters.
-Parallel execution is optional.</p>
+Parallel execution is optional.
+Cases to run can be specified.</p>
 
 
 <table class="field-list">
@@ -1048,11 +1247,7 @@ Parallel execution is optional.</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model" class="doc doc-heading">
-            <code class=" language-python"><span class="n">run_model</span><span class="p">()</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
-  </span>
+            <code class=" language-python"><span class="n">run_model</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1061,6 +1256,30 @@ Parallel execution is optional.</p>
 
         <p>Run the model.</p>
 
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>case_dir</code></b>
+                  (<code>str</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case directory.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
     </div>
 
 </div>
@@ -1069,11 +1288,7 @@ Parallel execution is optional.</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_apptainer" class="doc doc-heading">
-            <code class=" language-python"><span class="n">run_model_with_apptainer</span><span class="p">()</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
-  </span>
+            <code class=" language-python"><span class="n">run_model_with_apptainer</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1082,6 +1297,30 @@ Parallel execution is optional.</p>
 
         <p>Run the model for the specified case using Apptainer.</p>
 
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>case_dir</code></b>
+                  (<code>str</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case directory.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
     </div>
 
 </div>
@@ -1090,11 +1329,7 @@ Parallel execution is optional.</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_docker" class="doc doc-heading">
-            <code class=" language-python"><span class="n">run_model_with_docker</span><span class="p">()</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
-  </span>
+            <code class=" language-python"><span class="n">run_model_with_docker</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1102,6 +1337,47 @@ Parallel execution is optional.</p>
     <div class="doc doc-contents ">
 
         <p>Run the model for the specified case using Docker.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>case_dir</code></b>
+                  (<code>str</code>)
+              –
+              <div class="doc-md-description">
+                <p>The case directory.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.set_cases_dirs_from_output_dir" class="doc doc-heading">
+            <code class=" language-python"><span class="n">set_cases_dirs_from_output_dir</span><span class="p">()</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Set the cases directories from the output directory.</p>
 
     </div>
 
