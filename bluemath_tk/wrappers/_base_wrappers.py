@@ -1,7 +1,7 @@
 import os
 import copy
 import itertools
-from typing import List
+from typing import List, Union
 import subprocess
 import numpy as np
 import xarray as xr
@@ -616,7 +616,7 @@ class BaseModelWrapper(BlueMathModel):
 
     def postprocess_cases(
         self, cases_to_postprocess: List[int] = None
-    ) -> xr.Dataset or List[xr.Dataset]:  # type: ignore
+    ) -> Union[xr.Dataset, List[xr.Dataset]]:
         """
         Postprocess the model output.
 
