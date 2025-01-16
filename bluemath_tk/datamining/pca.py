@@ -51,27 +51,59 @@ class PCA(BaseReduction):
         The value to replace NaNs in the dataset.
     num_cols_for_vars : int
         The number of columns for variables.
+    eofs : xr.Dataset
+        The Empirical Orthogonal Functions (EOFs).
+    explained_variance_ratio : np.ndarray
+        The explained variance ratio.
+    cumulative_explained_variance_ratio : np.ndarray
+        The cumulative explained variance ratio.
 
     Methods
     -------
-    fit(
-        data: xr.Dataset,
-        vars_to_stack: List[str],
-        coords_to_stack: List[str],
-        pca_dim_for_rows: str,
-        window_in_pca_dim_for_rows: List[int] = [0],
-        value_to_replace_nans: float = None,
-    ) -> None
-    transform(data: xr.Dataset) -> xr.Dataset
-    fit_transform(
-        data: xr.Dataset,
-        vars_to_stack: List[str],
-        coords_to_stack: List[str],
-        pca_dim_for_rows: str,
-        window_in_pca_dim_for_rows: List[int] = [0],
-        value_to_replace_nans: float = None,
-    ) -> xr.Dataset
-    inverse_transform(PCs: Union[np.ndarray, xr.Dataset]) -> xr.Dataset
+    _generate_stacked_data
+        Generate stacked data matrix.
+    _preprocess_data
+        Preprocess data for PCA.
+    _reshape_EOFs
+        Reshape EOFs to the original data shape.
+    _reshape_data
+        Reshape data to the original data shape.
+    fit
+        Fit PCA model to data.
+    transform
+        Transform data using the fitted PCA model.
+    fit_transform
+        Fit and transform data using PCA model.
+    inverse_transform
+        Inverse transform data using the fitted PCA model.
+
+    Examples
+    --------
+    >>> from bluemath_tk.core.data.sample_data import get_2d_dataset
+    >>> from bluemath_tk.datamining.pca import PCA
+    >>> ds = get_2d_dataset()
+    >>> pca = PCA(n_components=5)
+    >>> pca.fit(
+    ...     data=ds,
+    ...     vars_to_stack=["X", "Y"],
+    ...     coords_to_stack=["coord1", "coord2"],
+    ...     pca_dim_for_rows="coord3",
+    ... )
+    >>> pcs = pca.transform(
+    ...     data=ds,
+    ... )
+    >>> reconstructed_ds = pca.inverse_transform(PCs=pcs)
+    >>> eofs = pca.eofs
+    >>> explained_variance_ratio = pca.explained_variance_ratio
+    >>> cumulative_explained_variance_ratio = pca.cumulative_explained_variance_ratio
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+
+    [2] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.IncrementalPCA.html
+
+    [3] https://www.sciencedirect.com/science/article/abs/pii/S0378383911000676
     """
 
     def __init__(
@@ -96,6 +128,16 @@ class PCA(BaseReduction):
         TypeError
             If n_components is not an integer when it is greater than or equal to 1.
         """
+
+        initial_msg = f"""
+        -------------------------------------------------------------------
+        | Initializing PCA reduction model with the following parameters:
+        |    - n_components: {n_components}
+        |    - is_incremental: {is_incremental}
+        | For more information, please refer to the documentation.
+        -------------------------------------------------------------------
+        """
+        print(initial_msg)
 
         super().__init__()
         self.set_logger_name(name=self.__class__.__name__)
@@ -143,6 +185,22 @@ class PCA(BaseReduction):
     @property
     def standarized_stacked_data_matrix(self) -> np.ndarray:
         return self._standarized_stacked_data_matrix
+
+    @property
+    def eofs(self) -> xr.Dataset:
+        return self._reshape_EOFs(destandarize=True)
+
+    @property
+    def explained_variance_ratio(self) -> np.ndarray:
+        return self.pca.explained_variance_ratio_
+
+    @property
+    def cumulative_explained_variance_ratio(self) -> np.ndarray:
+        return (
+            np.cumsum(self.explained_variance_ratio)
+            / np.sum(self.explained_variance_ratio)
+            * 100.0
+        )
 
     def _generate_stacked_data(self, data: xr.Dataset) -> np.ndarray:
         """
@@ -378,7 +436,7 @@ class PCA(BaseReduction):
         self.is_fitted = True
         self.logger.info("PCA model fitted successfully")
 
-    def transform(self, data: xr.Dataset) -> xr.Dataset:
+    def transform(self, data: xr.Dataset, after_fitting: bool = False) -> xr.Dataset:
         """
         Transform data using the fitted PCA model.
 
@@ -386,6 +444,8 @@ class PCA(BaseReduction):
         ----------
         data : xr.Dataset
             The data to transform.
+        after_fitting : bool, optional
+            If True, use the already processed data. Default is False.
 
         Returns
         -------
@@ -395,11 +455,17 @@ class PCA(BaseReduction):
 
         if self.is_fitted is False:
             raise PCAError("PCA model must be fitted before transforming data")
-        self.logger.info("Transforming data using PCA model")
-        processed_data = self._preprocess_data(
-            data=data[self.vars_to_stack], is_fit=False
-        )
+
+        if not after_fitting:
+            self.logger.info("Transforming data using PCA model")
+            processed_data = self._preprocess_data(
+                data=data[self.vars_to_stack], is_fit=False
+            )
+        else:
+            processed_data = self.standarized_stacked_data_matrix.copy()
+
         transformed_data = self.pca.transform(X=processed_data)
+
         return xr.Dataset(
             {
                 "PCs": ((self.pca_dim_for_rows, "n_component"), transformed_data),
@@ -408,7 +474,7 @@ class PCA(BaseReduction):
                 self.pca_dim_for_rows: data[self.pca_dim_for_rows],
                 "n_component": np.arange(self.pca.n_components_),
             },
-        )
+        ).squeeze()  # Remove window dimension if it is not used
 
     def fit_transform(
         self,
@@ -451,8 +517,7 @@ class PCA(BaseReduction):
             window_in_pca_dim_for_rows=window_in_pca_dim_for_rows,
             value_to_replace_nans=value_to_replace_nans,
         )
-        # TODO: JAVI - Add a flag to use the already processed data??
-        return self.transform(data=data)
+        return self.transform(data=data, after_fitting=True)
 
     def inverse_transform(self, PCs: Union[np.ndarray, xr.Dataset]) -> xr.Dataset:
         """
@@ -471,6 +536,7 @@ class PCA(BaseReduction):
 
         if self.is_fitted is False:
             raise PCAError("PCA model must be fitted before inverse transforming data")
+
         if isinstance(PCs, xr.Dataset):
             X = PCs["PCs"].values
         elif isinstance(PCs, np.ndarray):

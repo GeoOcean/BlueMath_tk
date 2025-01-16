@@ -120,11 +120,11 @@ class RBF(BaseInterpolation):
 
     Methods
     -------
-    fit(...) :
+    fit :
         Fits the model to the data.
-    predict(...) :
+    predict :
         Predicts the data for the provided dataset.
-    fit_predict(...) :
+    fit_predict :
         Fits the model to the subset and predicts the interpolated dataset.
 
     Notes
