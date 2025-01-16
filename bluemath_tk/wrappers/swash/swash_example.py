@@ -85,7 +85,7 @@ class VeggySwashModelWrapper(SwashModelWrapper):
 if __name__ == "__main__":
     # Define the input parameters
     templates_dir = (
-        "C:/Users/UsuarioUC/Documents/BlueMath_tk/bluemath_tk/wrappers/swash/templates"
+        "/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/wrappers/swash/templates/"
     )
     templates_name = ["input.sws"]
     # Get 5 cases using LHS and MDA
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     mda = MDA(num_centers=5)
     mda.fit(data=lhs_data)
     model_parameters = mda.centroids.to_dict(orient="list")
-    output_dir = "C:/Users/UsuarioUC/Documents/BlueMath_tk/test_cases/swash/"
+    output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/swash/"
     # Create an instance of the SWASH model wrapper
     swash_model = VeggySwashModelWrapper(
         templates_dir=templates_dir,
@@ -114,4 +114,4 @@ if __name__ == "__main__":
         "/home/tausiaj/GeoOcean-Execs/SWASH-10.05-Linux/bin/swashrun"
     )
     # Run the model
-    swash_model.run_cases(launcher="docker")
+    swash_model.run_cases(launcher="docker", parallel=True)

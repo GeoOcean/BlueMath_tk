@@ -162,7 +162,7 @@ class SwashModelWrapper(BaseModelWrapper):
     def run_model_with_docker(
         self,
         case_dir: str,
-        docker_image: str = "tausiaj/swash-geoocean:10.05",
+        docker_image: str = "tausiaj/swash-geoocean:11.01",
         docker_out_logs: str = "docker_out.log",
         docker_err_logs: str = "docker_err.log",
     ) -> None:
@@ -174,7 +174,7 @@ class SwashModelWrapper(BaseModelWrapper):
         case_dir : str
             The case directory.
         docker_image : str, optional
-            The Docker image. Default is "tausiaj/swash-geoocean:10.05".
+            The Docker image. Default is "tausiaj/swash-geoocean:11.01".
         docker_out_logs : str, optional
             The Docker output log file. Default is "docker_out.log".
         docker_err_logs : str, optional
