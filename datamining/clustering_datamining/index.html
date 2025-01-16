@@ -14,7 +14,7 @@
       <script>
         // Current page data
         var mkdocs_page_name = "Clustering";
-        var mkdocs_page_input_path = "datamining/clustering_datamining.md";
+        var mkdocs_page_input_path = "datamining\\clustering_datamining.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -304,22 +304,22 @@
 
 
 <p><span class="doc-section-title">Examples:</span></p>
-    <div class="codehilite"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">bluemath_tk.datamining.mda</span> <span class="kn">import</span> <span class="n">MDA</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="p">{</span>
-<span class="gp">... </span>        <span class="s1">&#39;Hs&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">7</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;Tp&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">20</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;Dir&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">360</span>
-<span class="gp">... </span>    <span class="p">}</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mda</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">num_centers</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">nearest_centroids_idxs</span><span class="p">,</span> <span class="n">nearest_centroids_df</span> <span class="o">=</span> <span class="n">mda</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Dir&#39;</span><span class="p">],</span>
-<span class="gp">... </span><span class="p">)</span>
-</code></pre></div>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">bluemath_tk.datamining.mda</span> <span class="kn">import</span> <span class="n">MDA</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">... </span>    <span class="p">{</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">... </span>        <span class="s1">&#39;Hs&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">7</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">... </span>        <span class="s1">&#39;Tp&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">20</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">... </span>        <span class="s1">&#39;Dir&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">360</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="gp">... </span>    <span class="p">}</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="gp">... </span><span class="p">)</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">mda</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">num_centers</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">nearest_centroids_idxs</span><span class="p">,</span> <span class="n">nearest_centroids_df</span> <span class="o">=</span> <span class="n">mda</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="gp">... </span>    <span class="n">directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Dir&#39;</span><span class="p">],</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="gp">... </span><span class="p">)</span>
+</span></code></pre></div>
 
 
 
@@ -343,7 +343,7 @@
 
 
 <h3 id="bluemath_tk.datamining.mda.MDA.__init__" class="doc doc-heading">
-            <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">num_centers</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">num_centers</span><span class="p">)</span></code>
 
 </h3>
 
@@ -408,7 +408,7 @@ Must be greater than 0.</p>
 
 
 <h3 id="bluemath_tk.datamining.mda.MDA.fit" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">first_centroid_seed</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">first_centroid_seed</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -495,7 +495,7 @@ Default is None.</p>
 
 
 <h3 id="bluemath_tk.datamining.mda.MDA.fit_predict" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit_predict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">first_centroid_seed</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">fit_predict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">first_centroid_seed</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -592,7 +592,7 @@ Default is None.</p>
 
 
 <h3 id="bluemath_tk.datamining.mda.MDA.predict" class="doc doc-heading">
-            <code class=" language-python"><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
 
 </h3>
 
@@ -923,22 +923,22 @@ Default is None.</p>
 </details>
 
 <p><span class="doc-section-title">Examples:</span></p>
-    <div class="codehilite"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">bluemath_tk.datamining.kma</span> <span class="kn">import</span> <span class="n">KMA</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="p">{</span>
-<span class="gp">... </span>        <span class="s1">&#39;Hs&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">7</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;Tp&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">20</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;Dir&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">360</span>
-<span class="gp">... </span>    <span class="p">}</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">kma</span> <span class="o">=</span> <span class="n">KMA</span><span class="p">(</span><span class="n">num_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">nearest_centroids_idxs</span><span class="p">,</span> <span class="n">nearest_centroids_df</span> <span class="o">=</span> <span class="n">kma</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Dir&#39;</span><span class="p">],</span>
-<span class="gp">... </span><span class="p">)</span>
-</code></pre></div>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">bluemath_tk.datamining.kma</span> <span class="kn">import</span> <span class="n">KMA</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">... </span>    <span class="p">{</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">... </span>        <span class="s1">&#39;Hs&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">7</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">... </span>        <span class="s1">&#39;Tp&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">20</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">... </span>        <span class="s1">&#39;Dir&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">360</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="gp">... </span>    <span class="p">}</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="gp">... </span><span class="p">)</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">kma</span> <span class="o">=</span> <span class="n">KMA</span><span class="p">(</span><span class="n">num_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">nearest_centroids_idxs</span><span class="p">,</span> <span class="n">nearest_centroids_df</span> <span class="o">=</span> <span class="n">kma</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="gp">... </span>    <span class="n">directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Dir&#39;</span><span class="p">],</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="gp">... </span><span class="p">)</span>
+</span></code></pre></div>
 
 
 <details class="todo" open>
@@ -969,7 +969,7 @@ Default is None.</p>
 
 
 <h3 id="bluemath_tk.datamining.kma.KMA.__init__" class="doc doc-heading">
-            <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">num_clusters</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="s1">&#39;k-means++&#39;</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;lloyd&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">num_clusters</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="s1">&#39;k-means++&#39;</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;lloyd&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1069,7 +1069,7 @@ Or if seed is not greater or equal to 0.</p>
 
 
 <h3 id="bluemath_tk.datamining.kma.KMA.fit" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">custom_scale_factor</span><span class="o">=</span><span class="p">{})</span></code>
+            <code class="highlight language-python"><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">custom_scale_factor</span><span class="o">=</span><span class="p">{})</span></code>
 
 </h3>
 
@@ -1143,7 +1143,7 @@ Default is {}.</p>
 
 
 <h3 id="bluemath_tk.datamining.kma.KMA.fit_predict" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit_predict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">custom_scale_factor</span><span class="o">=</span><span class="p">{})</span></code>
+            <code class="highlight language-python"><span class="n">fit_predict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">custom_scale_factor</span><span class="o">=</span><span class="p">{})</span></code>
 
 </h3>
 
@@ -1229,7 +1229,7 @@ Default is {}.</p>
 
 
 <h3 id="bluemath_tk.datamining.kma.KMA.predict" class="doc doc-heading">
-            <code class=" language-python"><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1567,22 +1567,22 @@ Default is {}.</p>
 </details>
 
 <p><span class="doc-section-title">Examples:</span></p>
-    <div class="codehilite"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">bluemath_tk.datamining.som</span> <span class="kn">import</span> <span class="n">SOM</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="p">{</span>
-<span class="gp">... </span>        <span class="s1">&#39;Hs&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">7</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;Tp&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">20</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s1">&#39;Dir&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">360</span>
-<span class="gp">... </span>    <span class="p">}</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">som</span> <span class="o">=</span> <span class="n">SOM</span><span class="p">(</span><span class="n">som_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">num_dimensions</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">nearest_centroids_idxs</span><span class="p">,</span> <span class="n">nearest_centroids_df</span> <span class="o">=</span> <span class="n">som</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Dir&#39;</span><span class="p">],</span>
-<span class="gp">... </span><span class="p">)</span>
-</code></pre></div>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">bluemath_tk.datamining.som</span> <span class="kn">import</span> <span class="n">SOM</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">... </span>    <span class="p">{</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">... </span>        <span class="s1">&#39;Hs&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">7</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">... </span>        <span class="s1">&#39;Tp&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">20</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">... </span>        <span class="s1">&#39;Dir&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">360</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="gp">... </span>    <span class="p">}</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="gp">... </span><span class="p">)</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">som</span> <span class="o">=</span> <span class="n">SOM</span><span class="p">(</span><span class="n">som_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">num_dimensions</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">nearest_centroids_idxs</span><span class="p">,</span> <span class="n">nearest_centroids_df</span> <span class="o">=</span> <span class="n">som</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="gp">... </span>    <span class="n">directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Dir&#39;</span><span class="p">],</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="gp">... </span><span class="p">)</span>
+</span></code></pre></div>
 
 
 <details class="todo" open>
@@ -1612,7 +1612,7 @@ Default is {}.</p>
 
 
 <h3 id="bluemath_tk.datamining.som.SOM.distance_map" class="doc doc-heading">
-            <code class=" language-python"><span class="n">distance_map</span></code>
+            <code class="highlight language-python"><span class="n">distance_map</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
@@ -1634,7 +1634,7 @@ Default is {}.</p>
 
 
 <h3 id="bluemath_tk.datamining.som.SOM.__init__" class="doc doc-heading">
-            <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">som_shape</span><span class="p">,</span> <span class="n">num_dimensions</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">decay_function</span><span class="o">=</span><span class="s1">&#39;asymptotic_decay&#39;</span><span class="p">,</span> <span class="n">neighborhood_function</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="n">topology</span><span class="o">=</span><span class="s1">&#39;rectangular&#39;</span><span class="p">,</span> <span class="n">activation_distance</span><span class="o">=</span><span class="s1">&#39;euclidean&#39;</span><span class="p">,</span> <span class="n">random_seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sigma_decay_function</span><span class="o">=</span><span class="s1">&#39;asymptotic_decay&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">som_shape</span><span class="p">,</span> <span class="n">num_dimensions</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">decay_function</span><span class="o">=</span><span class="s1">&#39;asymptotic_decay&#39;</span><span class="p">,</span> <span class="n">neighborhood_function</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="n">topology</span><span class="o">=</span><span class="s1">&#39;rectangular&#39;</span><span class="p">,</span> <span class="n">activation_distance</span><span class="o">=</span><span class="s1">&#39;euclidean&#39;</span><span class="p">,</span> <span class="n">random_seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sigma_decay_function</span><span class="o">=</span><span class="s1">&#39;asymptotic_decay&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1719,7 +1719,7 @@ Or if the number of dimensions is not an integer.</p>
 
 
 <h3 id="bluemath_tk.datamining.som.SOM.activation_response" class="doc doc-heading">
-            <code class=" language-python"><span class="n">activation_response</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">activation_response</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1736,7 +1736,7 @@ Or if the number of dimensions is not an integer.</p>
 
 
 <h3 id="bluemath_tk.datamining.som.SOM.fit" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">num_iteration</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">num_iteration</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1807,7 +1807,7 @@ decorator before execution.</li>
 
 
 <h3 id="bluemath_tk.datamining.som.SOM.fit_predict" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit_predict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">num_iteration</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">fit_predict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">num_iteration</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1893,7 +1893,7 @@ Default is 1000.</p>
 
 
 <h3 id="bluemath_tk.datamining.som.SOM.get_centroids_probs_for_labels" class="doc doc-heading">
-            <code class=" language-python"><span class="n">get_centroids_probs_for_labels</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_centroids_probs_for_labels</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1910,7 +1910,7 @@ Default is 1000.</p>
 
 
 <h3 id="bluemath_tk.datamining.som.SOM.plot_centroids_probs_for_labels" class="doc doc-heading">
-            <code class=" language-python"><span class="n">plot_centroids_probs_for_labels</span><span class="p">(</span><span class="n">probs_data</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">plot_centroids_probs_for_labels</span><span class="p">(</span><span class="n">probs_data</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1927,7 +1927,7 @@ Default is 1000.</p>
 
 
 <h3 id="bluemath_tk.datamining.som.SOM.predict" class="doc doc-heading">
-            <code class=" language-python"><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
 
 </h3>
 
