@@ -25,7 +25,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-conda-recipe/
 bluemath_tk/_version.py
 
 # PyInstaller

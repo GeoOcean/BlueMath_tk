@@ -23,7 +23,7 @@ class PCA(BaseReduction):
 
     Attributes
     ----------
-    n_components : int or float
+    n_components : Union[int, float]
         The number of components or the explained variance ratio.
     is_incremental : bool
         Indicates whether Incremental PCA is used.
@@ -53,6 +53,8 @@ class PCA(BaseReduction):
         The number of columns for variables.
     eofs : xr.Dataset
         The Empirical Orthogonal Functions (EOFs).
+    explained_variance : np.ndarray
+        The explained variance.
     explained_variance_ratio : np.ndarray
         The explained variance ratio.
     cumulative_explained_variance_ratio : np.ndarray
@@ -60,21 +62,21 @@ class PCA(BaseReduction):
 
     Methods
     -------
-    _generate_stacked_data
+    _generate_stacked_data : np.ndarray
         Generate stacked data matrix.
-    _preprocess_data
+    _preprocess_data : np.ndarray
         Preprocess data for PCA.
-    _reshape_EOFs
+    _reshape_EOFs : xr.Dataset
         Reshape EOFs to the original data shape.
-    _reshape_data
+    _reshape_data : xr.Dataset
         Reshape data to the original data shape.
-    fit
+    fit : None
         Fit PCA model to data.
-    transform
+    transform : xr.Dataset
         Transform data using the fitted PCA model.
-    fit_transform
+    fit_transform : xr.Dataset
         Fit and transform data using PCA model.
-    inverse_transform
+    inverse_transform : xr.Dataset
         Inverse transform data using the fitted PCA model.
 
     Examples
@@ -94,6 +96,7 @@ class PCA(BaseReduction):
     ... )
     >>> reconstructed_ds = pca.inverse_transform(PCs=pcs)
     >>> eofs = pca.eofs
+    >>> explained_variance = pca.explained_variance
     >>> explained_variance_ratio = pca.explained_variance_ratio
     >>> cumulative_explained_variance_ratio = pca.cumulative_explained_variance_ratio
 
@@ -191,6 +194,10 @@ class PCA(BaseReduction):
         return self._reshape_EOFs(destandarize=True)
 
     @property
+    def explained_variance(self) -> np.ndarray:
+        return self.pca.explained_variance_
+
+    @property
     def explained_variance_ratio(self) -> np.ndarray:
         return self.pca.explained_variance_ratio_
 
@@ -213,7 +220,7 @@ class PCA(BaseReduction):
 
         Returns
         -------
-        stacked_data_matrix : np.ndarray
+        np.ndarray
             The stacked data matrix
         """
 
@@ -265,7 +272,7 @@ class PCA(BaseReduction):
 
         Returns
         -------
-        standarized_stacked_data_matrix : np.ndarray
+        np.ndarray
             The standarized stacked data matrix.
         """
 
@@ -517,6 +524,7 @@ class PCA(BaseReduction):
             window_in_pca_dim_for_rows=window_in_pca_dim_for_rows,
             value_to_replace_nans=value_to_replace_nans,
         )
+
         return self.transform(data=data, after_fitting=True)
 
     def inverse_transform(self, PCs: Union[np.ndarray, xr.Dataset]) -> xr.Dataset:
@@ -530,7 +538,7 @@ class PCA(BaseReduction):
 
         Returns
         -------
-        data_transformed : xr.Dataset
+        xr.Dataset
             The inverse transformed data.
         """
 
@@ -541,9 +549,11 @@ class PCA(BaseReduction):
             X = PCs["PCs"].values
         elif isinstance(PCs, np.ndarray):
             X = PCs
+
         self.logger.info("Inverse transforming data using PCA model")
         X_transformed = self.pca.inverse_transform(X=X)
         data_transformed = self._reshape_data(X=X_transformed, destandarize=True)
         # Squeeze dataset and sort dimensions based on the original data
-        data_transformed = data_transformed.squeeze().transpose(*self.data.dims)
+        data_transformed = data_transformed.transpose(*self.data.dims, "window")
+
         return data_transformed

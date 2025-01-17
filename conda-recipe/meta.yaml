@@ -1,0 +1,90 @@
+package:
+  name: "bluemath-tk"
+  version: "1.0.7"
+
+source:
+  url: "https://files.pythonhosted.org/packages/47/fa/7006eae5696d5e853da3ccf8d4eead0dcba34256e08dafa52cc5dbcdef4a/bluemath_tk-1.0.7.tar.gz"
+
+build:
+  number: 0
+  script: "{{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation"
+
+requirements:
+  host:
+    - aiohttp
+    - cartopy
+    - cdsapi
+    - dask
+    - jinja2
+    - matplotlib
+    - minisom
+    - netcdf4
+    - numpy
+    - pandas
+    - pip
+    - plotly
+    - python
+    - requests
+    - scikit-learn
+    - scipy
+    - xarray
+    - zarr
+  run:
+    - aiohttp
+    - cartopy
+    - cdsapi
+    - dask
+    - jinja2
+    - matplotlib
+    - minisom
+    - netcdf4
+    - numpy
+    - pandas
+    - plotly
+    - python
+    - requests
+    - scikit-learn
+    - scipy
+    - xarray
+    - zarr
+
+test:
+  imports:
+    - bluemath_tk
+    - bluemath_tk.core
+    - bluemath_tk.core.data
+    - bluemath_tk.core.plotting
+    - bluemath_tk.datamining
+    - bluemath_tk.deeplearning
+    - bluemath_tk.deeplearning.generators
+    - bluemath_tk.deeplearning.models
+    - bluemath_tk.distributions
+    - bluemath_tk.downloaders
+    - bluemath_tk.downloaders.copernicus
+    - bluemath_tk.interpolation
+    - bluemath_tk.predictor
+    - bluemath_tk.risk
+    - bluemath_tk.tc
+    - bluemath_tk.tide
+    - bluemath_tk.topo_bathy
+    - bluemath_tk.waves
+    - bluemath_tk.wrappers
+    - bluemath_tk.wrappers.cgwave
+    - bluemath_tk.wrappers.delft3d
+    - bluemath_tk.wrappers.lisflood
+    - bluemath_tk.wrappers.schism
+    - bluemath_tk.wrappers.swan
+    - bluemath_tk.wrappers.swash
+    - bluemath_tk.wrappers.xbeach
+
+about:
+  home: "https://github.com/GeoOcean/BlueMath_tk"
+  license_family: MIT
+  license_file: LICENSE
+  summary: "Module collection for custom climate data analysis. The main objective of this Python package is to provide a set of statistical tools tailored for climate data analysis, with a focus on statistical classification and prediction."
+  doc_url: "https://geoocean.github.io/BlueMath_tk/"
+  dev_url: "https://github.com/GeoOcean/BlueMath_tk/tree/develop"
+
+extra:
+  recipe-maintainers:
+    - tausiaj

@@ -14,7 +14,10 @@ class BaseSampling(BlueMathModel):
 
     Methods
     -------
-    generate(*args, **kwargs)
+    generate : pd.DataFrame
+        Generates samples.
+    plot_generated_data : Tuple[plt.figure, plt.axes]
+        Plots the generated data on a scatter plot matrix.
     """
 
     @abstractmethod
@@ -58,9 +61,9 @@ class BaseSampling(BlueMathModel):
 
         Returns
         -------
-        fig : plt.figure
+        plt.figure
             The figure object containing the plot.
-        axes : plt.axes
+        plt.axes
             Array of axes objects for the subplots.
 
         Raises
@@ -113,19 +116,16 @@ class BaseClustering(BlueMathModel):
 
     Methods
     -------
-    fit(*args, **kwargs)
-    predict(*args, **kwargs)
-    fit_predict(*args, **kwargs)
-    plot_selected_centroids(
-        data_color: str = "blue",
-        centroids_color: str = "red",
-        **kwargs
-    ) -> Tuple[plt.figure, plt.axes]
-    plot_data_as_clusters(
-        data: pd.DataFrame,
-        nearest_centroids: np.ndarray,
-        **kwargs
-    ) -> Tuple[plt.figure, plt.axes]
+    fit : None
+        Fits the model to the data.
+    predict : pd.DataFrame
+        Predicts the clusters for the provided data.
+    fit_predict : pd.DataFrame
+        Fits the model to the data and predicts the clusters.
+    plot_selected_centroids : Tuple[plt.figure, plt.axes]
+        Plots data and selected centroids on a scatter plot matrix.
+    plot_data_as_clusters : Tuple[plt.figure, plt.axes]
+        Plots data as nearest clusters.
     """
 
     @abstractmethod
@@ -158,6 +158,11 @@ class BaseClustering(BlueMathModel):
             Positional arguments.
         **kwargs : dict
             Keyword arguments.
+
+        Returns
+        -------
+        pd.DataFrame
+            The predicted clusters.
         """
 
         return pd.DataFrame()
@@ -173,6 +178,11 @@ class BaseClustering(BlueMathModel):
             Positional arguments.
         **kwargs : dict
             Keyword arguments.
+
+        Returns
+        -------
+        pd.DataFrame
+            The predicted clusters.
         """
 
         return pd.DataFrame()
@@ -197,9 +207,9 @@ class BaseClustering(BlueMathModel):
 
         Returns
         -------
-        fig : plt.figure
+        plt.figure
             The figure object containing the plot.
-        axes : plt.axes
+        plt.axes
             Array of axes objects for the subplots.
 
         Raises
@@ -286,9 +296,9 @@ class BaseClustering(BlueMathModel):
 
         Returns
         -------
-        fig : plt.figure
+        plt.figure
             The figure object containing the plot.
-        axes : plt.axes
+        plt.axes
             The axes object for the plot.
         """
 
