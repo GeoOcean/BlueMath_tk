@@ -39,17 +39,17 @@ class BlueMathModel(ABC):
     def logger(self) -> logging.Logger:
         if self._logger is None:
             self._logger = get_file_logger(name=self.__class__.__name__)
-
         return self._logger
 
     @logger.setter
     def logger(self, value: logging.Logger) -> None:
         self._logger = value
 
-    def set_logger_name(self, name: str) -> None:
+    def set_logger_name(self, name: str, level: str = "INFO") -> None:
         """Sets the name of the logger."""
 
         self.logger = get_file_logger(name=name)
+        self.logger.setLevel(level)
 
     def save_model(self, model_path: str) -> None:
         """Saves the model to a file."""

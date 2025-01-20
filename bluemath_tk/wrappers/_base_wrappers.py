@@ -17,10 +17,6 @@ class BaseModelWrapper(BlueMathModel):
 
     Attributes
     ----------
-    available_launchers : List[str]
-        The available launchers.
-    available_schedulers : List[str]
-        The available schedulers.
     templates_dir : str
         The directory where the templates are stored.
     templates_name : List[str]
@@ -44,8 +40,6 @@ class BaseModelWrapper(BlueMathModel):
         Execute bash commands.
     list_available_launchers()
         List the available launchers.
-    list_available_schedulers()
-        List the available schedulers.
     set_cases_dirs_from_output_dir()
         Set the cases directories from the output directory.
     write_array_in_file(array, filename)
@@ -62,19 +56,9 @@ class BaseModelWrapper(BlueMathModel):
         from the input dictionary.
     build_cases(mode="one_by_one")
         Create the cases folders and render the input files.
-    run_model()
-        Run the model for a specific case.
-    run_model_with_apptainer()
-        Run the model for a specific case using Apptainer.
-    run_model_with_docker()
-        Run the model for a specific case using Docker.
-    run_case(case_dir, launcher=None, script=None, params=None)
-        Run a single case based on the launcher, script, and parameters.
-    run_cases(launcher=None, script=None, params=None, parallel=False)
-        Run the cases based on the launcher, script, and parameters.
+    run_cases(launcher=None, cases_to_run=None, parallel=False)
+        Run the cases based on the launcher specified.
         Parallel execution is optional.
-    run_cases_with_scheduler(scheduler, script, params=None)
-        Run the cases based on the scheduler, script, and parameters.
     postprocess_case(case_num, case_dir)
         Postprocess the model output for a specific case.
     join_postprocessed_files(postprocessed_files)
@@ -83,15 +67,12 @@ class BaseModelWrapper(BlueMathModel):
         Postprocess the model output.
     """
 
-    available_launchers = ["bash", "sh", "./", "apptainer", "docker", "qsub"]
-    available_schedulers = ["sbatch"]
-
     def __init__(
         self,
         templates_dir: str,
-        templates_name: List[str],
         model_parameters: dict,
         output_dir: str,
+        templates_name: List[str] = "all",
         default_parameters: dict = None,
     ) -> None:
         """
@@ -101,12 +82,12 @@ class BaseModelWrapper(BlueMathModel):
         ----------
         templates_dir : str
             The directory where the templates are stored.
-        templates_name : List[str]
-            The names of the templates.
         model_parameters : dict
             The parameters to be used in the templates.
         output_dir : str
             The directory where the output files will be saved.
+        templates_name : List[str], optional
+            The names of the templates. Default is "all".
         default_parameters : dict, optional
             The default parameters type for the model. If None, the parameters will
             not be checked.
@@ -119,10 +100,17 @@ class BaseModelWrapper(BlueMathModel):
                 default_parameters=default_parameters, model_parameters=model_parameters
             )
         self.templates_dir = templates_dir
-        self.templates_name = templates_name
         self.model_parameters = model_parameters
         self.output_dir = output_dir
         self._env = Environment(loader=FileSystemLoader(self.templates_dir))
+        if templates_name == "all":
+            self.logger.warning(
+                f"Templates name is 'all', so all templates in {self.templates_dir} will be used."
+            )
+            self.templates_name = self.env.list_templates()
+            self.logger.info(f"Templates names: {self.templates_name}")
+        else:
+            self.templates_name = templates_name
         self.cases_dirs: List[str] = []
         self.cases_context: List[dict] = []
 
@@ -207,29 +195,20 @@ class BaseModelWrapper(BlueMathModel):
             _stderr.flush()
             _stderr.close()
 
-    def list_available_launchers(self) -> List[str]:
+    def list_available_launchers(self) -> dict:
         """
         List the available launchers.
 
         Returns
         -------
-        List[str]
+        dict
             A list with the available launchers.
         """
 
-        return self.available_launchers
-
-    def list_available_schedulers(self) -> List[str]:
-        """
-        List the available schedulers.
-
-        Returns
-        -------
-        List[str]
-            A list with the available schedulers.
-        """
-
-        return self.available_schedulers
+        if hasattr(self, "available_launchers"):
+            return self.available_launchers
+        else:
+            raise AttributeError("The attribute available_launchers is not defined.")
 
     def set_cases_dirs_from_output_dir(self) -> None:
         """
@@ -384,124 +363,29 @@ class BaseModelWrapper(BlueMathModel):
             f"{len(self.cases_dirs)} cases created in {mode} mode and saved in {self.output_dir}"
         )
 
-    def run_model(self, case_dir: str) -> None:
-        """
-        Run the model.
-
-        Parameters
-        ----------
-        case_dir : str
-            The case directory.
-        """
-
-        raise NotImplementedError("The method run_model must be implemented.")
-
-    def run_model_with_apptainer(self, case_dir: str) -> None:
-        """
-        Run the model for the specified case using Apptainer.
-
-        Parameters
-        ----------
-        case_dir : str
-            The case directory.
-        """
-
-        raise NotImplementedError(
-            "The method run_model_with_apptainer must be implemented."
-        )
-
-    def run_model_with_docker(self, case_dir: str) -> None:
-        """
-        Run the model for the specified case using Docker.
-
-        Parameters
-        ----------
-        case_dir : str
-            The case directory.
-        """
-
-        raise NotImplementedError(
-            "The method run_model_with_docker must be implemented."
-        )
-
-    def run_case(
-        self,
-        case_dir: str,
-        launcher: str = None,
-        script: str = None,
-        params: str = None,
-    ) -> None:
-        """
-        Run a single case based on the launcher, script, and parameters.
-
-        Parameters
-        ----------
-        case_dir : str
-            The case directory.
-        launcher : str, optional
-            The launcher to run the case. Default is None.
-        script : str, optional
-            The script to run the case. Default is None.
-        params : str, optional
-            The parameters to run the case. Default is None.
-
-        Notes
-        -----
-        - If launcher is None, the method run_model will be called.
-        - If launcher is not recognized, the method _exec_bash_commands will be called.
-        """
-
-        self.logger.info(f"Running case in {case_dir}")
-        if launcher is None:
-            self.run_model(case_dir=case_dir)
-        elif launcher == "apptainer":
-            self.run_model_with_apptainer(case_dir=case_dir)
-        elif launcher == "docker":
-            self.run_model_with_docker(case_dir=case_dir)
-        else:
-            self._exec_bash_commands(str_cmd=f"{launcher} {params} {script}")
-
     def run_cases(
         self,
-        launcher: str = None,
-        script: str = None,
-        params: str = None,
+        launcher: str,
         parallel: bool = False,
         cases_to_run: List[int] = None,
     ) -> None:
         """
-        Run the cases based on the launcher, script, and parameters.
+        Run the cases based on the launcher specified.
         Parallel execution is optional.
         Cases to run can be specified.
 
         Parameters
         ----------
-        launcher : str, optional
-            The launcher to run the cases. Default is None.
-        script : str, optional
-            The script to run the cases. Default is None.
-        params : str, optional
-            The parameters to run the cases. Default is None.
+        launcher : str
+            The launcher to run the cases.
         parallel : bool, optional
             If True, the cases will be run in parallel. Default is False.
         cases_to_run : List[int], optional
             The list with the cases to run. Default is None.
-
-        Raises
-        ------
-        ValueError
-            If the launcher is not recognized or the script does not exist.
         """
 
-        if launcher is not None:
-            if launcher not in self.available_launchers:
-                raise ValueError(
-                    f"Invalid launcher: {launcher}, not in {self.available_launchers}."
-                )
-        else:
-            self.logger.warning(
-                "Launcher is None, so the method run_model will be called."
-            )
+        # Get launcher command from the available launchers
+        launcher = self.list_available_launchers().get(launcher, launcher)
 
         if cases_to_run is not None:
             self.logger.warning(
@@ -510,79 +394,73 @@ class BaseModelWrapper(BlueMathModel):
             cases_dir_to_run = [self.cases_dirs[case] for case in cases_to_run]
         else:
             cases_dir_to_run = copy.deepcopy(self.cases_dirs)
+        cases_exec_commands = [
+            launcher.replace("$case_dir", case_dir) for case_dir in cases_dir_to_run
+        ]
 
         if parallel:
             num_threads = self.get_num_processors_available()
-            self.logger.info(
+            self.logger.debug(
                 f"Running cases in parallel with launcher={launcher}. Number of threads: {num_threads}."
             )
             with ThreadPoolExecutor(max_workers=num_threads) as executor:
                 future_to_case = {
                     executor.submit(
-                        self.run_case, case_dir, launcher, script, params
-                    ): case_dir
-                    for case_dir in cases_dir_to_run
+                        self._exec_bash_commands, case_exec_command
+                    ): case_exec_command
+                    for case_exec_command in cases_exec_commands
                 }
                 for future in as_completed(future_to_case):
-                    case_dir = future_to_case[future]
+                    case_exec_command = future_to_case[future]
                     try:
                         future.result()
                     except Exception as exc:
                         self.logger.error(
-                            f"Case {case_dir} generated an exception: {exc}."
+                            f"Job {case_exec_command} generated an exception: {exc}."
                         )
         else:
             self.logger.info(f"Running cases sequentially with launcher={launcher}.")
-            for case_dir in cases_dir_to_run:
+            for case_exec_command in cases_exec_commands:
                 try:
-                    self.run_case(
-                        case_dir=case_dir,
-                        launcher=launcher,
-                        script=script,
-                        params=params,
+                    self._exec_bash_commands(
+                        str_cmd=case_exec_command,
                     )
                 except Exception as exc:
-                    self.logger.error(f"Case {case_dir} generated an exception: {exc}.")
+                    self.logger.error(
+                        f"Job {case_exec_command} generated an exception: {exc}."
+                    )
 
-        if launcher == "docker":
-            # Remove stopped containers after running all cases
+        if launcher == "docker" or "docker" in launcher:
+            # TODO: ALWAYS remove ALL stopped containers after running all cases
             remove_stopped_containers_cmd = 'docker ps -a --filter "ancestor=tausiaj/swash-image:latest" -q | xargs docker rm'
             self._exec_bash_commands(str_cmd=remove_stopped_containers_cmd)
 
         self.logger.info("All cases ran successfully.")
 
-    def run_cases_with_scheduler(
+    def run_cases_bulk(
         self,
-        scheduler: str,
-        script: str,
-        params: str = None,
+        launcher: str,
     ) -> None:
         """
         Run the cases based on the scheduler, script, and parameters.
 
         Parameters
         ----------
-        scheduler : str
-            The scheduler to run the cases.
-        script : str
-            The script to run the cases.
-        params : str, optional
-            The parameters to run the cases. Default is None.
+        launcher : str
+            The launcher to run the cases.
 
         Raises
         ------
         ValueError
-            If the scheduler is not recognized or the script does not exist.
+            If the launcher is not recognized or the script does not exist.
         """
 
-        if scheduler not in self.available_schedulers:
+        if launcher not in self.list_available_launchers():
             raise ValueError(
-                f"Invalid scheduler: {scheduler}, not in {self.available_schedulers}."
+                f"Invalid launcher: {launcher}, not in {self.list_available_launchers()}."
             )
-        if not os.path.exists(script):
-            raise ValueError(f"Script {script} does not exist.")
-        self.logger.info(f"Running cases with scheduler={scheduler}.")
-        self._exec_bash_commands(str_cmd=f"{scheduler} {params} {script}")
+        self.logger.info(f"Running cases with launcher={launcher}.")
+        self._exec_bash_commands(str_cmd=launcher)
 
     def postprocess_case(self, case_num: int, case_dir: str) -> None:
         """

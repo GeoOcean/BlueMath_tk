@@ -1,4 +1,3 @@
-import sys
 import os
 from typing import Tuple, List
 import numpy as np
@@ -30,12 +29,15 @@ class SwashModelWrapper(BaseModelWrapper):
         Read a tab file and return a pandas DataFrame.
     _convert_case_output_files_to_nc(case_id: int, output_path: str, run_path: str) -> xr.Dataset
         Convert output tabs files to a netCDF file.
-    run_model(case_dir: str, log_file: str = "swash_exec.log") -> None
-        Run the SWASH model for the specified case.
     """
 
     default_parameters = {
         "vegetation_height": float,
+    }
+
+    available_launchers = {
+        "bash": "cd $case_dir && swashrun -input input.sws",
+        "docker": "docker run --rm -v $case_dir:/case_dir -w /case_dir tausiaj/swash-geoocean:11.01 swashrun -input input.sws",
     }
 
     postprocess_functions = {
@@ -49,9 +51,10 @@ class SwashModelWrapper(BaseModelWrapper):
     def __init__(
         self,
         templates_dir: str,
-        templates_name: dict,
         model_parameters: dict,
         output_dir: str,
+        templates_name: dict = "all",
+        debug: bool = False,
     ) -> None:
         """
         Initialize the SWASH model wrapper.
@@ -60,12 +63,14 @@ class SwashModelWrapper(BaseModelWrapper):
         ----------
         templates_dir : str
             The directory where the templates are stored.
-        templates_name : list
-            The names of the templates.
         model_parameters : dict
             The parameters to be used in the templates.
         output_dir : str
             The directory where the output files will be saved.
+        templates_name : list, optional
+            The names of the templates. Default is "all".
+        debug : bool, optional
+            The debug mode. Default is False.
         """
 
         super().__init__(
@@ -75,7 +80,9 @@ class SwashModelWrapper(BaseModelWrapper):
             output_dir=output_dir,
             default_parameters=self.default_parameters,
         )
-        self.set_logger_name(self.__class__.__name__)
+        self.set_logger_name(
+            name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
+        )
         self._swash_exec: str = None
 
     @property
@@ -96,100 +103,6 @@ class SwashModelWrapper(BaseModelWrapper):
         """
 
         return list(self.postprocess_functions.keys())
-
-    def run_model(self, case_dir: str, log_file: str = "swash_exec.log") -> None:
-        """
-        Run the SWASH model for the specified case.
-
-        Parameters
-        ----------
-        case_dir : str
-            The case directory.
-        log_file : str, optional
-            The log file name. Default is "swash_exec.log".
-
-        Raises
-        ------
-        ValueError
-            If the SWASH executable was not set.
-        """
-
-        if not self.swash_exec:
-            raise ValueError("The SWASH executable was not set.")
-
-        # check if windows OS
-        is_win = sys.platform.startswith("win")
-        if is_win:
-            cmd = "cd {0} && {1} input".format(case_dir, self.swash_exec)
-        else:
-            cmd = "cd {0} && {1} -input input.sws".format(case_dir, self.swash_exec)
-        # redirect output
-        cmd += f" 2>&1 > {log_file}"
-        # execute command
-        self._exec_bash_commands(str_cmd=cmd)
-
-    def run_model_with_apptainer(
-        self,
-        case_dir: str,
-        apptainer_image: str,
-        apptainer_out_logs: str = "apptainer_out.log",
-        apptainer_err_logs: str = "apptainer_err.log",
-    ) -> None:
-        """
-        Run the SWASH model for the specified case using Apptainer.
-
-        Parameters
-        ----------
-        case_dir : str
-            The case directory.
-        apptainer_image : str
-            The Apptainer image.
-        apptainer_out_logs : str, optional
-            The Apptainer output log file. Default is "apptainer_out.log".
-        apptainer_err_logs : str, optional
-            The Apptainer error log file. Default is "apptainer_err.log".
-        """
-
-        # Construct the Apptainer command
-        apptainer_cmd = f"apptainer exec --bind {case_dir}:/tmp/swash --pwd /tmp/swash {apptainer_image}  swashrun -input input.sws"
-        # Execute the Apptainer command
-        self._exec_bash_commands(
-            str_cmd=apptainer_cmd,
-            out_file=os.path.join(case_dir, apptainer_out_logs),
-            err_file=os.path.join(case_dir, apptainer_err_logs),
-        )
-
-    def run_model_with_docker(
-        self,
-        case_dir: str,
-        docker_image: str = "tausiaj/swash-geoocean:11.01",
-        docker_out_logs: str = "docker_out.log",
-        docker_err_logs: str = "docker_err.log",
-    ) -> None:
-        """
-        Run the SWASH model for the specified case using Docker.
-
-        Parameters
-        ----------
-        case_dir : str
-            The case directory.
-        docker_image : str, optional
-            The Docker image. Default is "tausiaj/swash-geoocean:11.01".
-        docker_out_logs : str, optional
-            The Docker output log file. Default is "docker_out.log".
-        docker_err_logs : str, optional
-            The Docker error log file. Default is "docker_err.log".
-        """
-
-        # Construct the Docker command
-        # TODO: Check why --rm flag is not removing the container after execution
-        docker_cmd = f"docker run --rm -v {case_dir}:/case_dir -w /case_dir {docker_image} swashrun -input input.sws"
-        # Execute the Docker command
-        self._exec_bash_commands(
-            str_cmd=docker_cmd,
-            out_file=os.path.join(case_dir, docker_out_logs),
-            err_file=os.path.join(case_dir, docker_err_logs),
-        )
 
     @staticmethod
     def _read_tabfile(file_path: str) -> pd.DataFrame:

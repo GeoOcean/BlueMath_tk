@@ -2,10 +2,11 @@ import os
 from datetime import datetime
 import pytz
 import logging
+from typing import Union
 
 
 def get_file_logger(
-    name: str, logs_path: str = None, level: int = logging.INFO
+    name: str, logs_path: str = None, level: Union[int, str] = "INFO"
 ) -> logging.Logger:
     """
     Creates and returns a logger that writes log messages to a file.
@@ -16,8 +17,8 @@ def get_file_logger(
         The name of the logger.
     logs_path : str, optional
         The file path where the log messages will be written (default is None).
-    level : int, optional
-        The logging level (default is logging.INFO).
+    level : Union[int, str], optional
+        The logging level (default is "INFO").
 
     Returns
     -------
