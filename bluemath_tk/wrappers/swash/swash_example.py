@@ -27,7 +27,6 @@ class VeggySwashModelWrapper(SwashModelWrapper):
             The case directory.
         """
 
-        self.logger.debug("AAAAAAAAAAAAAAAAAAAAA")
         # Build the input waves
         waves_dict = {
             "H": case_context["Hs"],

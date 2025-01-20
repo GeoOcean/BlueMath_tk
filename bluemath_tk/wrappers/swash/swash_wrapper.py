@@ -16,19 +16,42 @@ class SwashModelWrapper(BaseModelWrapper):
 
     Attributes
     ----------
+    default_parameters : dict
+        The default parameters type for the wrapper.
+    available_launchers : dict
+        The available launchers for the wrapper.
+    postprocess_functions : dict
+        The postprocess functions for the wrapper.
     swash_exec : str
         The SWASH executable path.
-    default_parameters : dict
-        The default parameters type for the model.
 
     Methods
     -------
-    set_swash_exec(swash_exec: str) -> None
-        Set the SWASH executable path.
-    _read_tabfile(file_path: str) -> pd.DataFrame
+    set_swash_exec -> None
+        Sets the SWASH executable path.
+    list_available_postprocess_vars -> List[str]
+        List available postprocess variables.
+    _read_tabfile -> pd.DataFrame
         Read a tab file and return a pandas DataFrame.
-    _convert_case_output_files_to_nc(case_id: int, output_path: str, run_path: str) -> xr.Dataset
-        Convert output tabs files to a netCDF file.
+    _convert_case_output_files_to_nc -> xr.Dataset
+        Convert tab files to netCDF file.
+    postprocess_case -> xr.Dataset
+        Convert tab ouput files to netCDF file.
+    join_postprocessed_files -> xr.Dataset
+        Join postprocessed files in a single Dataset.
+    find_maximas -> Tuple[np.ndarray, np.ndarray]
+        Find the individual maxima of an array.
+    calculate_runup2 -> xr.Dataset
+        Calculates runup 2% (Ru2) from the output netCDF file.
+    calculate_runup -> xr.Dataset
+        Stores runup from the output netCDF file.
+    calculate_setup -> xr.Dataset
+        Calculates mean setup (Msetup) from the output netCDF file.
+    calculate_statistical_analysis -> xr.Dataset
+        Calculates zero-upcrossing analysis to obtain individual wave heights (Hi) and wave periods (Ti).
+    calculate_spectral_analysis -> xr.Dataset
+        Makes a water level spectral analysis (scipy.signal.welch)
+        then separates incident waves, infragravity waves, very low frequency waves.
     """
 
     default_parameters = {
@@ -54,30 +77,17 @@ class SwashModelWrapper(BaseModelWrapper):
         model_parameters: dict,
         output_dir: str,
         templates_name: dict = "all",
-        debug: bool = False,
+        debug: bool = True,
     ) -> None:
         """
         Initialize the SWASH model wrapper.
-
-        Parameters
-        ----------
-        templates_dir : str
-            The directory where the templates are stored.
-        model_parameters : dict
-            The parameters to be used in the templates.
-        output_dir : str
-            The directory where the output files will be saved.
-        templates_name : list, optional
-            The names of the templates. Default is "all".
-        debug : bool, optional
-            The debug mode. Default is False.
         """
 
         super().__init__(
             templates_dir=templates_dir,
-            templates_name=templates_name,
             model_parameters=model_parameters,
             output_dir=output_dir,
+            templates_name=templates_name,
             default_parameters=self.default_parameters,
         )
         self.set_logger_name(
@@ -252,12 +262,12 @@ class SwashModelWrapper(BaseModelWrapper):
 
     def find_maximas(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Find the individual uprushes along the beach profile.
+        Find the individual maxima of an array.
 
         Parameters
         ----------
         x : np.ndarray
-            The water level time series.
+            The array (should be the water level time series).
 
         Returns
         -------

@@ -19,14 +19,14 @@ class BaseModelWrapper(BlueMathModel):
     ----------
     templates_dir : str
         The directory where the templates are stored.
-    templates_name : List[str]
-        The names of the templates.
     model_parameters : dict
         The parameters to be used in the templates.
     output_dir : str
         The directory where the output files will be saved.
     env : Environment
         The Jinja2 environment.
+    templates_name : List[str]
+        The names of the templates.
     cases_dirs : List[str]
         The list with cases directories.
     cases_context : List[dict]
@@ -77,21 +77,6 @@ class BaseModelWrapper(BlueMathModel):
     ) -> None:
         """
         Initialize the BaseModelWrapper.
-
-        Parameters
-        ----------
-        templates_dir : str
-            The directory where the templates are stored.
-        model_parameters : dict
-            The parameters to be used in the templates.
-        output_dir : str
-            The directory where the output files will be saved.
-        templates_name : List[str], optional
-            The names of the templates. Default is "all".
-        default_parameters : dict, optional
-            The default parameters type for the model. If None, the parameters will
-            not be checked.
-            Default is None.
         """
 
         super().__init__()

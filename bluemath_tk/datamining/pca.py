@@ -62,21 +62,21 @@ class PCA(BaseReduction):
 
     Methods
     -------
-    _generate_stacked_data : np.ndarray
+    _generate_stacked_data -> np.ndarray
         Generate stacked data matrix.
-    _preprocess_data : np.ndarray
+    _preprocess_data -> np.ndarray
         Preprocess data for PCA.
-    _reshape_EOFs : xr.Dataset
+    _reshape_EOFs -> xr.Dataset
         Reshape EOFs to the original data shape.
-    _reshape_data : xr.Dataset
+    _reshape_data -> xr.Dataset
         Reshape data to the original data shape.
-    fit : None
+    fit -> None
         Fit PCA model to data.
-    transform : xr.Dataset
+    transform -> xr.Dataset
         Transform data using the fitted PCA model.
-    fit_transform : xr.Dataset
+    fit_transform -> xr.Dataset
         Fit and transform data using PCA model.
-    inverse_transform : xr.Dataset
+    inverse_transform -> xr.Dataset
         Inverse transform data using the fitted PCA model.
 
     Examples

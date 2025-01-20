@@ -22,7 +22,7 @@ def get_file_logger(
 
     Returns
     -------
-    logger: logging.Logger
+    logging.Logger
         Configured logger instance.
 
     Examples
