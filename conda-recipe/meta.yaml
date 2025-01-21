@@ -1,9 +1,10 @@
 package:
   name: "bluemath-tk"
-  version: "1.0.7"
+  version: "1.0.8"
 
 source:
-  url: "https://files.pythonhosted.org/packages/47/fa/7006eae5696d5e853da3ccf8d4eead0dcba34256e08dafa52cc5dbcdef4a/bluemath_tk-1.0.7.tar.gz"
+  url: "https://files.pythonhosted.org/packages/14/24/cd088462d2ee4766f1c4aac0e94b702f6e663c228108aae1c3e71d50c24d/bluemath_tk-1.0.8.tar.gz"
+  sha256: 74f1cbe19b5103e3173f4722a4a2a8e41c612dadc161922432c07f9a2f443527
 
 build:
   number: 0
@@ -56,8 +57,6 @@ test:
     - bluemath_tk.core.plotting
     - bluemath_tk.datamining
     - bluemath_tk.deeplearning
-    - bluemath_tk.deeplearning.generators
-    - bluemath_tk.deeplearning.models
     - bluemath_tk.distributions
     - bluemath_tk.downloaders
     - bluemath_tk.downloaders.copernicus
@@ -69,21 +68,14 @@ test:
     - bluemath_tk.topo_bathy
     - bluemath_tk.waves
     - bluemath_tk.wrappers
-    - bluemath_tk.wrappers.cgwave
-    - bluemath_tk.wrappers.delft3d
-    - bluemath_tk.wrappers.lisflood
-    - bluemath_tk.wrappers.schism
-    - bluemath_tk.wrappers.swan
-    - bluemath_tk.wrappers.swash
-    - bluemath_tk.wrappers.xbeach
 
 about:
   home: "https://github.com/GeoOcean/BlueMath_tk"
   license_family: MIT
   license_file: LICENSE
   summary: "Module collection for custom climate data analysis. The main objective of this Python package is to provide a set of statistical tools tailored for climate data analysis, with a focus on statistical classification and prediction."
-  doc_url: "https://geoocean.github.io/BlueMath_tk/"
-  dev_url: "https://github.com/GeoOcean/BlueMath_tk/tree/develop"
+  doc_url: https://geoocean.github.io/BlueMath_tk/
+  dev_url: https://github.com/GeoOcean/BlueMath_tk/tree/develop
 
 extra:
   recipe-maintainers:
