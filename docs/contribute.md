@@ -70,3 +70,46 @@ By contributing to the BlueMath package, you agree that your contributions will 
 If you have any questions or need further assistance, feel free to reach out to the maintainers.
 
 Thank you for your contributions and support!
+
+## Documentation
+
+When creating new `python` code, it is essential to properly document all new classes and functions. Below, we show how the **docstrings** of classes should look, so the community can properly learn how to use **BlueMath**.
+
+Code example:
+```python
+import numpy as np
+
+class HyWavesExample:
+    """
+    This class implements a HyWaves Metamodel Example for nearshore wave propagations.
+
+    Attributes
+    ----------
+    waves_model : str
+        The waves numerical model to use.
+    statistical_model : str, optional
+        The statistical model to use. Default is "MDA".
+
+    Methods
+    -------
+    run_model -> np.ndarray
+        Runs the waves numerical model and returns the output.
+    """
+
+    def __init__(self, waves_model: str, statistical_model: str = "MDA") -> None:
+        self.waves_model = waves_model
+        self.statistical_model = statistical_model
+
+    def run_model(self, launcher: str) -> np.ndarray:
+        """
+        Runs the numerical waves model.
+
+        Parameters
+        ----------
+        launcher : str
+            The launcher to use.
+        """
+
+        self.run_model(launcher=launcher, model=self.waves_model)
+        return self.get_model_ouput()
+```

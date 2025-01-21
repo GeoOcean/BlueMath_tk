@@ -348,6 +348,25 @@ class BaseModelWrapper(BlueMathModel):
             f"{len(self.cases_dirs)} cases created in {mode} mode and saved in {self.output_dir}"
         )
 
+    def run_case(self, case_dir: str, launcher: str) -> None:
+        """
+        Run the case based on the launcher specified.
+
+        Parameters
+        ----------
+        case_dir : str
+            The case directory.
+        launcher : str
+            The launcher to run the case.
+        """
+
+        # Get launcher command from the available launchers
+        launcher = self.list_available_launchers().get(launcher, launcher)
+
+        self.logger.info(f"Running case in {case_dir} with launcher={launcher}.")
+        os.chdir(case_dir)
+        self._exec_bash_commands(str_cmd=launcher)
+
     def run_cases(
         self,
         launcher: str,
@@ -379,9 +398,6 @@ class BaseModelWrapper(BlueMathModel):
             cases_dir_to_run = [self.cases_dirs[case] for case in cases_to_run]
         else:
             cases_dir_to_run = copy.deepcopy(self.cases_dirs)
-        cases_exec_commands = [
-            launcher.replace("$case_dir", case_dir) for case_dir in cases_dir_to_run
-        ]
 
         if parallel:
             num_threads = self.get_num_processors_available()
@@ -390,29 +406,28 @@ class BaseModelWrapper(BlueMathModel):
             )
             with ThreadPoolExecutor(max_workers=num_threads) as executor:
                 future_to_case = {
-                    executor.submit(
-                        self._exec_bash_commands, case_exec_command
-                    ): case_exec_command
-                    for case_exec_command in cases_exec_commands
+                    executor.submit(self.run_case, case_dir, launcher): case_dir
+                    for case_dir in cases_dir_to_run
                 }
                 for future in as_completed(future_to_case):
-                    case_exec_command = future_to_case[future]
+                    case_dir = future_to_case[future]
                     try:
                         future.result()
                     except Exception as exc:
                         self.logger.error(
-                            f"Job {case_exec_command} generated an exception: {exc}."
+                            f"Job for {case_dir} generated an exception: {exc}."
                         )
         else:
             self.logger.info(f"Running cases sequentially with launcher={launcher}.")
-            for case_exec_command in cases_exec_commands:
+            for case_dir in cases_dir_to_run:
                 try:
-                    self._exec_bash_commands(
-                        str_cmd=case_exec_command,
+                    self.run_case(
+                        case_dir=case_dir,
+                        launcher=launcher,
                     )
                 except Exception as exc:
                     self.logger.error(
-                        f"Job {case_exec_command} generated an exception: {exc}."
+                        f"Job for {case_dir} generated an exception: {exc}."
                     )
 
         if launcher == "docker" or "docker" in launcher:
@@ -427,23 +442,14 @@ class BaseModelWrapper(BlueMathModel):
         launcher: str,
     ) -> None:
         """
-        Run the cases based on the scheduler, script, and parameters.
+        Run the cases based on the launcher specified.
 
         Parameters
         ----------
         launcher : str
             The launcher to run the cases.
-
-        Raises
-        ------
-        ValueError
-            If the launcher is not recognized or the script does not exist.
         """
 
-        if launcher not in self.list_available_launchers():
-            raise ValueError(
-                f"Invalid launcher: {launcher}, not in {self.list_available_launchers()}."
-            )
         self.logger.info(f"Running cases with launcher={launcher}.")
         self._exec_bash_commands(str_cmd=launcher)
 

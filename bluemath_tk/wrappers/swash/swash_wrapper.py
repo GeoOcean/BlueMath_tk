@@ -59,8 +59,9 @@ class SwashModelWrapper(BaseModelWrapper):
     }
 
     available_launchers = {
-        "bash": "cd $case_dir && swashrun -input input.sws",
-        "docker": "docker run --rm -v $case_dir:/case_dir -w /case_dir tausiaj/swash-geoocean:11.01 swashrun -input input.sws",
+        "bash": "swashrun -input input.sws",
+        "docker": "docker run --rm -v .:/case_dir -w /case_dir tausiaj/swash-geoocean:11.01 swashrun -input input.sws",
+        "geoocean-cluster": "launchSwash.sh",
     }
 
     postprocess_functions = {
