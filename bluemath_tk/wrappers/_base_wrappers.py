@@ -34,36 +34,41 @@ class BaseModelWrapper(BlueMathModel):
 
     Methods
     -------
-    _check_parameters_type(default_parameters, model_parameters)
+    _check_parameters_type -> None
         Check if the parameters have the correct type.
-    _exec_bash_commands(str_cmd, out_file=None, err_file=None)
+    _exec_bash_commands -> None
         Execute bash commands.
-    list_available_launchers()
+    list_available_launchers -> dict
         List the available launchers.
-    set_cases_dirs_from_output_dir()
+    set_cases_dirs_from_output_dir -> None
         Set the cases directories from the output directory.
-    write_array_in_file(array, filename)
+    write_array_in_file -> None
         Write an array in a file.
-    copy_files(src, dst)
+    copy_files -> None
         Copy file(s) from source to destination.
-    render_file_from_template(template_name, context, output_filename=None)
+    render_file_from_template -> None
         Render a file from a template.
-    create_cases_context_one_by_one()
+    create_cases_context_one_by_one -> List[dict]
         Create an array of dictionaries with the combinations of values from the
         input dictionary, one by one.
-    create_cases_context_all_combinations()
+    create_cases_context_all_combinations -> List[dict]
         Create an array of dictionaries with each possible combination of values
         from the input dictionary.
-    build_cases(mode="one_by_one")
+    build_cases -> None
         Create the cases folders and render the input files.
-    run_cases(launcher=None, cases_to_run=None, parallel=False)
+    run_case -> None
+        Run the case based on the launcher specified.
+    run_cases -> None
         Run the cases based on the launcher specified.
         Parallel execution is optional.
-    postprocess_case(case_num, case_dir)
+        Cases to run can be specified.
+    run_cases_bulk -> None
+        Run the cases based on the launcher specified.
+    postprocess_case -> None
         Postprocess the model output for a specific case.
-    join_postprocessed_files(postprocessed_files)
+    join_postprocessed_files -> xr.Dataset
         Join the postprocessed files.
-    postprocess_cases(cases_to_postprocess=None)
+    postprocess_cases -> Union[xr.Dataset, List[xr.Dataset]]
         Postprocess the model output.
     """
 
@@ -348,7 +353,13 @@ class BaseModelWrapper(BlueMathModel):
             f"{len(self.cases_dirs)} cases created in {mode} mode and saved in {self.output_dir}"
         )
 
-    def run_case(self, case_dir: str, launcher: str) -> None:
+    def run_case(
+        self,
+        case_dir: str,
+        launcher: str,
+        ouput_log_file: str = "wrapper_out.log",
+        error_log_file: str = "wrapper_error.log",
+    ) -> None:
         """
         Run the case based on the launcher specified.
 
@@ -358,14 +369,23 @@ class BaseModelWrapper(BlueMathModel):
             The case directory.
         launcher : str
             The launcher to run the case.
+        ouput_log_file : str, optional
+            The name of the output log file. Default is "wrapper_out.log".
+        error_log_file : str, optional
+            The name of the error log file. Default is "wrapper_error.log".
         """
 
         # Get launcher command from the available launchers
         launcher = self.list_available_launchers().get(launcher, launcher)
 
+        # Run the case in the case directory
         self.logger.info(f"Running case in {case_dir} with launcher={launcher}.")
         os.chdir(case_dir)
-        self._exec_bash_commands(str_cmd=launcher)
+        self._exec_bash_commands(
+            str_cmd=launcher,
+            out_file=ouput_log_file,
+            err_file=error_log_file,
+        )
 
     def run_cases(
         self,

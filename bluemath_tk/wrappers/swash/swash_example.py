@@ -92,18 +92,14 @@ if __name__ == "__main__":
     model_parameters = mda.centroids.to_dict(orient="list")
     output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/swash/"
     # Create an instance of the SWASH model wrapper
-    swash_model = VeggySwashModelWrapper(
+    swash_wrapper = VeggySwashModelWrapper(
         templates_dir=templates_dir,
         model_parameters=model_parameters,
         output_dir=output_dir,
     )
     # Build the input files
-    swash_model.build_cases(mode="one_by_one")
+    swash_wrapper.build_cases(mode="one_by_one")
     # List available launchers
-    print(swash_model.list_available_launchers())
-    # Set the SWASH executable (not used if docker is used)
-    swash_model.set_swash_exec(
-        "/home/tausiaj/GeoOcean-Execs/SWASH-10.05-Linux/bin/swashrun"
-    )
+    print(swash_wrapper.list_available_launchers())
     # Run the model
-    swash_model.run_cases(launcher="bash", parallel=True)
+    swash_wrapper.run_cases(launcher="bash", parallel=True)

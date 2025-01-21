@@ -1,3 +1,0 @@
-# Schedulers documentation
-
-Under development...

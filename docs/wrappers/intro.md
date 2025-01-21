@@ -4,9 +4,10 @@ This section provides general documentation for the model wrappers usage. The wr
 
 For more detailed information, refer to the specific class implementations and their docstrings.
 
-| Model | URL                           | Base Class        | Documentation                        | Owner              |
-| ----- | ----------------------------- | ----------------- | ------------------------------------ | ------------------ |
-| Swash | https://swash.sourceforge.io/ | SwashModelWrapper | [swash_wrapper.md](swash_wrapper.md) | ricondoa@unican.es |
+| Model   | URL                                 | Base Class          | Documentation                            | Owner              |
+| ------- | ----------------------------------- | ------------------- | ---------------------------------------- | ------------------ |
+| Swash   | https://swash.sourceforge.io/       | SwashModelWrapper   | [swash_wrapper.md](swash_wrapper.md)     | ricondoa@unican.es |
+| Delft3d | https://oss.deltares.nl/web/delft3d | Delft3dModelWrapper | [delft3d_wrapper.md](delft3d_wrapper.md) | faugeree@unican.es |
 
 ## BaseModelWrapper
 
@@ -24,12 +25,10 @@ To properly use wrappers, several bullet points must be understood:
 
 2. `build_case` method is essential to properly create the needed files to execute the model in each folder. In the example below, we copy a couple of files and then create an *waves* array that is written in another file.
 
-3. To **RUN** the cases, couple of methos are available: `run_cases` and `run_cases_with_scheduler`. In this section, we will focus on the `run_cases` method, for information regarding the `run_cases_with_scheduler` method, go [here](schedulers.md).
+3. To **RUN** the cases, couple of methods are available: `run_cases` and `run_cases_bulk`. In this section, we will focus on the `run_cases` method, for information regarding the `run_cases_bulk` method, go [here](https://hungry-shrimp-0cf.notion.site/Running-numerical-models-in-GeoOcean-cluster-182b51e03c48806d9aacefd36b7785a8).
 Then, the `run_cases` method allows the user to run the model for the different cases, directory by directory, as it is usually done.
 
-The method parameters are `launcher`, `script`, `params`, `parallel` and `cases_to_run`. Depending on the launcher, there might be some methods available, so please check if the launcher you want to use already has an  implemented method. *If this is the case, overwrite this method in your class if you do not want to use the implemented version.* If your launcher has not an implemented method, you can either implement a method to be called, or use the parameters `launcher`, `script` and `params`, as the wrapper will execute `launcher params script` in each case directory.
-
-If no **launcher** is specified, wrapper will try to run the model locally, so the *executable* file must be set. Other way, wrapper should raise an Error.
+The method parameters are `launcher`, `parallel` and `cases_to_run`. Depending on the wrapper, there might be some **default launchers available**, so please check if the launcher you want to use is there.
 
 ```python
 import os
@@ -59,21 +58,8 @@ class VeggySwashModelWrapper(SwashModelWrapper):
             The case context.
         case_dir : str
             The case directory.
-        depth : np.ndarray, optional
-            The depth array. Default is None.
-        plants : np.ndarray, optional
-            The plants array. Default is None.
         """
 
-        # Copy test depth and plants files
-        self.copy_files(
-            src="C:/Users/UsuarioUC/Documents/BlueMath_tk/test_data/swash-depth.bot",
-            dst=os.path.join(case_dir, "depth.bot"),
-        )
-        self.copy_files(
-            src="C:/Users/UsuarioUC/Documents/BlueMath_tk/test_data/swash-plants.txt",
-            dst=os.path.join(case_dir, "plants.txt"),
-        )
         # Build the input waves
         waves_dict = {
             "H": case_context["Hs"],
@@ -93,7 +79,7 @@ class VeggySwashModelWrapper(SwashModelWrapper):
 
     def build_cases(
         self,
-        mode: str = "all_combinations",
+        mode: str = "one_by_one",
     ) -> None:
         """
         Build the input files for all cases.
@@ -101,11 +87,7 @@ class VeggySwashModelWrapper(SwashModelWrapper):
         Parameters
         ----------
         mode : str, optional
-            The mode to build the cases. Default is "all_combinations".
-        depth : np.ndarray, optional
-            The depth array. Default is None.
-        plants : np.ndarray, optional
-            The plants array. Default is None.
+            The mode to build the cases. Default is "one_by_one".
 
         Raises
         ------
@@ -127,9 +109,8 @@ class VeggySwashModelWrapper(SwashModelWrapper):
 if __name__ == "__main__":
     # Define the input parameters
     templates_dir = (
-        "C:/Users/UsuarioUC/Documents/BlueMath_tk/bluemath_tk/wrappers/swash/templates"
+        "/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/wrappers/swash/templates/"
     )
-    templates_name = ["input.sws"]
     # Get 5 cases using LHS and MDA
     lhs = LHS(num_dimensions=3)
     lhs_data = lhs.generate(
@@ -139,22 +120,20 @@ if __name__ == "__main__":
         num_samples=500,
     )
     mda = MDA(num_centers=5)
+    mda.logger.setLevel("DEBUG")
     mda.fit(data=lhs_data)
     model_parameters = mda.centroids.to_dict(orient="list")
-    output_dir = "C:/Users/UsuarioUC/Documents/BlueMath_tk/test_cases/swash/"
+    output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/swash/"
     # Create an instance of the SWASH model wrapper
-    swan_model = VeggySwashModelWrapper(
+    swash_wrapper = VeggySwashModelWrapper(
         templates_dir=templates_dir,
-        templates_name=templates_name,
         model_parameters=model_parameters,
         output_dir=output_dir,
     )
     # Build the input files
-    swan_model.build_cases(mode="one_by_one")
-    # Set the SWASH executable (not used if docker is used)
-    swan_model.set_swash_exec(
-        "/home/tausiaj/GeoOcean-Execs/SWASH-10.05-Linux/bin/swashrun"
-    )
+    swash_wrapper.build_cases(mode="one_by_one")
+    # List available launchers
+    print(swash_wrapper.list_available_launchers())
     # Run the model
-    swan_model.run_cases(launcher="docker")
+    swash_wrapper.run_cases(launcher="bash", parallel=True)
 ```

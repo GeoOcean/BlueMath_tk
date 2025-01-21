@@ -22,13 +22,9 @@ class SwashModelWrapper(BaseModelWrapper):
         The available launchers for the wrapper.
     postprocess_functions : dict
         The postprocess functions for the wrapper.
-    swash_exec : str
-        The SWASH executable path.
 
     Methods
     -------
-    set_swash_exec -> None
-        Sets the SWASH executable path.
     list_available_postprocess_vars -> List[str]
         List available postprocess variables.
     _read_tabfile -> pd.DataFrame
@@ -94,14 +90,6 @@ class SwashModelWrapper(BaseModelWrapper):
         self.set_logger_name(
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
         )
-        self._swash_exec: str = None
-
-    @property
-    def swash_exec(self) -> str:
-        return self._swash_exec
-
-    def set_swash_exec(self, swash_exec: str) -> None:
-        self._swash_exec = swash_exec
 
     def list_available_postprocess_vars(self) -> List[str]:
         """
