@@ -157,7 +157,7 @@
         <ul class="first simple">
             <li>
               <b><code>n_components</code></b>
-                  (<code>int or float</code>)
+                  (<code><span title="typing.Union">Union</span>[int, float]</code>)
               –
               <div class="doc-md-description">
                 <p>The number of components or the explained variance ratio.</p>
@@ -267,6 +267,38 @@
                 <p>The number of columns for variables.</p>
               </div>
             </li>
+            <li>
+              <b><code>eofs</code></b>
+                  (<code><span title="xarray.Dataset">Dataset</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The Empirical Orthogonal Functions (EOFs).</p>
+              </div>
+            </li>
+            <li>
+              <b><code>explained_variance</code></b>
+                  (<code><span title="numpy.ndarray">ndarray</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The explained variance.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>explained_variance_ratio</code></b>
+                  (<code><span title="numpy.ndarray">ndarray</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The explained variance ratio.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>cumulative_explained_variance_ratio</code></b>
+                  (<code><span title="numpy.ndarray">ndarray</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The cumulative explained variance ratio.</p>
+              </div>
+            </li>
         </ul>
       </td>
     </tr>
@@ -283,66 +315,101 @@
       </thead>
       <tbody>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.pca.PCA.fit" href="#bluemath_tk.datamining.pca.PCA.fit">fit</a></code></td>
+              <td><code><span title="bluemath_tk.datamining.pca.PCA._generate_stacked_data -> np.ndarray">_generate_stacked_data -&gt; np.ndarray</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>data: xr.Dataset,
-vars_to_stack: List[str],
-coords_to_stack: List[str],
-pca_dim_for_rows: str,
-window_in_pca_dim_for_rows: List[int] = [0],
-value_to_replace_nans: float = None,</p>
+                  <p>Generate stacked data matrix.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><span title="bluemath_tk.datamining.pca.PCA.) -> None">) -&gt; None</span></code></td>
+              <td><code><span title="bluemath_tk.datamining.pca.PCA._preprocess_data -> np.ndarray">_preprocess_data -&gt; np.ndarray</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  
+                  <p>Preprocess data for PCA.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.pca.PCA.transform" href="#bluemath_tk.datamining.pca.PCA.transform">transform</a></code></td>
+              <td><code><span title="bluemath_tk.datamining.pca.PCA._reshape_EOFs -> xr.Dataset">_reshape_EOFs -&gt; xr.Dataset</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  
+                  <p>Reshape EOFs to the original data shape.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.pca.PCA.fit_transform" href="#bluemath_tk.datamining.pca.PCA.fit_transform">fit_transform</a></code></td>
+              <td><code><span title="bluemath_tk.datamining.pca.PCA._reshape_data -> xr.Dataset">_reshape_data -&gt; xr.Dataset</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>data: xr.Dataset,
-vars_to_stack: List[str],
-coords_to_stack: List[str],
-pca_dim_for_rows: str,
-window_in_pca_dim_for_rows: List[int] = [0],
-value_to_replace_nans: float = None,</p>
+                  <p>Reshape data to the original data shape.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><span title="bluemath_tk.datamining.pca.PCA.) -> xr.Dataset">) -&gt; xr.Dataset</span></code></td>
+              <td><code><span title="bluemath_tk.datamining.pca.PCA.fit -> None">fit -&gt; None</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  
+                  <p>Fit PCA model to data.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining.pca.PCA.inverse_transform" href="#bluemath_tk.datamining.pca.PCA.inverse_transform">inverse_transform</a></code></td>
+              <td><code><span title="bluemath_tk.datamining.pca.PCA.transform -> xr.Dataset">transform -&gt; xr.Dataset</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  
+                  <p>Transform data using the fitted PCA model.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><span title="bluemath_tk.datamining.pca.PCA.fit_transform -> xr.Dataset">fit_transform -&gt; xr.Dataset</span></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Fit and transform data using PCA model.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><span title="bluemath_tk.datamining.pca.PCA.inverse_transform -> xr.Dataset">inverse_transform -&gt; xr.Dataset</span></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Inverse transform data using the fitted PCA model.</p>
                 </div>
               </td>
             </tr>
       </tbody>
     </table>
 
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">bluemath_tk.core.data.sample_data</span> <span class="kn">import</span> <span class="n">get_2d_dataset</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">bluemath_tk.datamining.pca</span> <span class="kn">import</span> <span class="n">PCA</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">get_2d_dataset</span><span class="p">()</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pca</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">ds</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">... </span>    <span class="n">vars_to_stack</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">],</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">... </span>    <span class="n">coords_to_stack</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;coord1&quot;</span><span class="p">,</span> <span class="s2">&quot;coord2&quot;</span><span class="p">],</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="gp">... </span>    <span class="n">pca_dim_for_rows</span><span class="o">=</span><span class="s2">&quot;coord3&quot;</span><span class="p">,</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="gp">... </span><span class="p">)</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pcs</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">ds</span><span class="p">,</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="gp">... </span><span class="p">)</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">reconstructed_ds</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">PCs</span><span class="o">=</span><span class="n">pcs</span><span class="p">)</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">eofs</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">eofs</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">explained_variance</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">explained_variance</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">explained_variance_ratio</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">explained_variance_ratio</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">cumulative_explained_variance_ratio</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">cumulative_explained_variance_ratio</span>
+</span></code></pre></div>
+
+
+<details class="references" open>
+  <summary>References</summary>
+  <p>[1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html</p>
+<p>[2] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.IncrementalPCA.html</p>
+<p>[3] https://www.sciencedirect.com/science/article/abs/pii/S0378383911000676</p>
+</details>
 
 
 
@@ -365,7 +432,7 @@ value_to_replace_nans: float = None,</p>
 
 
 <h3 id="bluemath_tk.datamining.pca.PCA.__init__" class="doc doc-heading">
-            <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mf">0.98</span><span class="p">,</span> <span class="n">is_incremental</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mf">0.98</span><span class="p">,</span> <span class="n">is_incremental</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
@@ -450,7 +517,7 @@ n_components &gt;= 1, it represents the number of components to keep. Default is
 
 
 <h3 id="bluemath_tk.datamining.pca.PCA.fit" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">vars_to_stack</span><span class="p">,</span> <span class="n">coords_to_stack</span><span class="p">,</span> <span class="n">pca_dim_for_rows</span><span class="p">,</span> <span class="n">window_in_pca_dim_for_rows</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">value_to_replace_nans</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">vars_to_stack</span><span class="p">,</span> <span class="n">coords_to_stack</span><span class="p">,</span> <span class="n">pca_dim_for_rows</span><span class="p">,</span> <span class="n">window_in_pca_dim_for_rows</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">value_to_replace_nans</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -535,7 +602,7 @@ n_components &gt;= 1, it represents the number of components to keep. Default is
 
 
 <h3 id="bluemath_tk.datamining.pca.PCA.fit_transform" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">vars_to_stack</span><span class="p">,</span> <span class="n">coords_to_stack</span><span class="p">,</span> <span class="n">pca_dim_for_rows</span><span class="p">,</span> <span class="n">window_in_pca_dim_for_rows</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">value_to_replace_nans</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">vars_to_stack</span><span class="p">,</span> <span class="n">coords_to_stack</span><span class="p">,</span> <span class="n">pca_dim_for_rows</span><span class="p">,</span> <span class="n">window_in_pca_dim_for_rows</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">value_to_replace_nans</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -643,7 +710,7 @@ n_components &gt;= 1, it represents the number of components to keep. Default is
 
 
 <h3 id="bluemath_tk.datamining.pca.PCA.inverse_transform" class="doc doc-heading">
-            <code class=" language-python"><span class="n">inverse_transform</span><span class="p">(</span><span class="n">PCs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">inverse_transform</span><span class="p">(</span><span class="n">PCs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -688,8 +755,8 @@ n_components &gt;= 1, it represents the number of components to keep. Default is
       <td class="field-body">
         <ul class="first simple">
             <li>
-<b><code>data_transformed</code></b>(                  <code><span title="xarray.Dataset">Dataset</span></code>
-)              –
+                  <code><span title="xarray.Dataset">Dataset</span></code>
+              –
               <div class="doc-md-description">
                 <p>The inverse transformed data.</p>
               </div>
@@ -707,7 +774,7 @@ n_components &gt;= 1, it represents the number of components to keep. Default is
 
 
 <h3 id="bluemath_tk.datamining.pca.PCA.transform" class="doc doc-heading">
-            <code class=" language-python"><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">after_fitting</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
@@ -733,6 +800,16 @@ n_components &gt;= 1, it represents the number of components to keep. Default is
               –
               <div class="doc-md-description">
                 <p>The data to transform.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>after_fitting</code></b>
+                  (<code>bool</code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>If True, use the already processed data. Default is False.</p>
               </div>
             </li>
         </ul>

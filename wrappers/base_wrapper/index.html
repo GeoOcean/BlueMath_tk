@@ -153,35 +153,11 @@
       <td class="field-body">
         <ul class="first simple">
             <li>
-              <b><code>available_launchers</code></b>
-                  (<code><span title="typing.List">List</span>[str]</code>)
-              –
-              <div class="doc-md-description">
-                <p>The available launchers.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>available_schedulers</code></b>
-                  (<code><span title="typing.List">List</span>[str]</code>)
-              –
-              <div class="doc-md-description">
-                <p>The available schedulers.</p>
-              </div>
-            </li>
-            <li>
               <b><code>templates_dir</code></b>
                   (<code>str</code>)
               –
               <div class="doc-md-description">
                 <p>The directory where the templates are stored.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>templates_name</code></b>
-                  (<code><span title="typing.List">List</span>[str]</code>)
-              –
-              <div class="doc-md-description">
-                <p>The names of the templates.</p>
               </div>
             </li>
             <li>
@@ -206,6 +182,14 @@
               –
               <div class="doc-md-description">
                 <p>The Jinja2 environment.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>templates_name</code></b>
+                  (<code><span title="typing.List">List</span>[str]</code>)
+              –
+              <div class="doc-md-description">
+                <p>The names of the templates.</p>
               </div>
             </li>
             <li>
@@ -240,7 +224,7 @@
       </thead>
       <tbody>
             <tr class="doc-section-item">
-              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper._check_parameters_type">_check_parameters_type</span></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper._check_parameters_type -> None">_check_parameters_type -&gt; None</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Check if the parameters have the correct type.</p>
@@ -248,7 +232,7 @@
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper._exec_bash_commands">_exec_bash_commands</span></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper._exec_bash_commands -> None">_exec_bash_commands -&gt; None</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Execute bash commands.</p>
@@ -256,7 +240,7 @@
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.list_available_launchers" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.list_available_launchers">list_available_launchers</a></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.list_available_launchers -> dict">list_available_launchers -&gt; dict</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>List the available launchers.</p>
@@ -264,15 +248,7 @@
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.list_available_schedulers" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.list_available_schedulers">list_available_schedulers</a></code></td>
-              <td>
-                <div class="doc-md-description">
-                  <p>List the available schedulers.</p>
-                </div>
-              </td>
-            </tr>
-            <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.set_cases_dirs_from_output_dir" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.set_cases_dirs_from_output_dir">set_cases_dirs_from_output_dir</a></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.set_cases_dirs_from_output_dir -> None">set_cases_dirs_from_output_dir -&gt; None</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Set the cases directories from the output directory.</p>
@@ -280,7 +256,7 @@
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.write_array_in_file" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.write_array_in_file">write_array_in_file</a></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.write_array_in_file -> None">write_array_in_file -&gt; None</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Write an array in a file.</p>
@@ -288,7 +264,7 @@
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.copy_files" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.copy_files">copy_files</a></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.copy_files -> None">copy_files -&gt; None</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Copy file(s) from source to destination.</p>
@@ -296,7 +272,7 @@
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.render_file_from_template" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.render_file_from_template">render_file_from_template</a></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.render_file_from_template -> None">render_file_from_template -&gt; None</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Render a file from a template.</p>
@@ -304,7 +280,7 @@
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_one_by_one" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_one_by_one">create_cases_context_one_by_one</a></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_one_by_one -> List[dict]">create_cases_context_one_by_one -&gt; List[dict]</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Create an array of dictionaries with the combinations of values from the
@@ -313,7 +289,7 @@ input dictionary, one by one.</p>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_all_combinations" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_all_combinations">create_cases_context_all_combinations</a></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_all_combinations -> List[dict]">create_cases_context_all_combinations -&gt; List[dict]</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Create an array of dictionaries with each possible combination of values
@@ -322,7 +298,7 @@ from the input dictionary.</p>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.build_cases" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.build_cases">build_cases</a></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.build_cases -> None">build_cases -&gt; None</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Create the cases folders and render the input files.</p>
@@ -330,56 +306,33 @@ from the input dictionary.</p>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model">run_model</a></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_case -> None">run_case -&gt; None</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>Run the model for a specific case.</p>
+                  <p>Run the case based on the launcher specified.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_apptainer" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_apptainer">run_model_with_apptainer</a></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_cases -> None">run_cases -&gt; None</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>Run the model for a specific case using Apptainer.</p>
+                  <p>Run the cases based on the launcher specified.
+Parallel execution is optional.
+Cases to run can be specified.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_docker" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_docker">run_model_with_docker</a></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_cases_bulk -> None">run_cases_bulk -&gt; None</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>Run the model for a specific case using Docker.</p>
+                  <p>Run the cases based on the launcher specified.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_case" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_case">run_case</a></code></td>
-              <td>
-                <div class="doc-md-description">
-                  <p>Run a single case based on the launcher, script, and parameters.</p>
-                </div>
-              </td>
-            </tr>
-            <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_cases" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_cases">run_cases</a></code></td>
-              <td>
-                <div class="doc-md-description">
-                  <p>Run the cases based on the launcher, script, and parameters.
-Parallel execution is optional.</p>
-                </div>
-              </td>
-            </tr>
-            <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_cases_with_scheduler" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_cases_with_scheduler">run_cases_with_scheduler</a></code></td>
-              <td>
-                <div class="doc-md-description">
-                  <p>Run the cases based on the scheduler, script, and parameters.</p>
-                </div>
-              </td>
-            </tr>
-            <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.postprocess_case" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.postprocess_case">postprocess_case</a></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.postprocess_case -> None">postprocess_case -&gt; None</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Postprocess the model output for a specific case.</p>
@@ -387,7 +340,7 @@ Parallel execution is optional.</p>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.join_postprocessed_files" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.join_postprocessed_files">join_postprocessed_files</a></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.join_postprocessed_files -> xr.Dataset">join_postprocessed_files -&gt; xr.Dataset</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Join the postprocessed files.</p>
@@ -395,7 +348,7 @@ Parallel execution is optional.</p>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.postprocess_cases" href="#bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.postprocess_cases">postprocess_cases</a></code></td>
+              <td><code><span title="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.postprocess_cases -> Union[xr.Dataset, List[xr.Dataset]]">postprocess_cases -&gt; Union[xr.Dataset, List[xr.Dataset]]</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Postprocess the model output.</p>
@@ -427,7 +380,7 @@ Parallel execution is optional.</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.__init__" class="doc doc-heading">
-            <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">templates_dir</span><span class="p">,</span> <span class="n">templates_name</span><span class="p">,</span> <span class="n">model_parameters</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">default_parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">templates_dir</span><span class="p">,</span> <span class="n">model_parameters</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">templates_name</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">default_parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -436,66 +389,6 @@ Parallel execution is optional.</p>
 
         <p>Initialize the BaseModelWrapper.</p>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>templates_dir</code></b>
-                  (<code>str</code>)
-              –
-              <div class="doc-md-description">
-                <p>The directory where the templates are stored.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>templates_name</code></b>
-                  (<code><span title="typing.List">List</span>[str]</code>)
-              –
-              <div class="doc-md-description">
-                <p>The names of the templates.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>model_parameters</code></b>
-                  (<code>dict</code>)
-              –
-              <div class="doc-md-description">
-                <p>The parameters to be used in the templates.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>output_dir</code></b>
-                  (<code>str</code>)
-              –
-              <div class="doc-md-description">
-                <p>The directory where the output files will be saved.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>default_parameters</code></b>
-                  (<code>dict</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The default parameters type for the model. If None, the parameters will
-not be checked.
-Default is None.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
     </div>
 
 </div>
@@ -504,7 +397,7 @@ Default is None.</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.build_cases" class="doc doc-heading">
-            <code class=" language-python"><span class="n">build_cases</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;one_by_one&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">build_cases</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;one_by_one&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -548,7 +441,7 @@ Default is "one_by_one".</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.copy_files" class="doc doc-heading">
-            <code class=" language-python"><span class="n">copy_files</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">copy_files</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span></code>
 
 </h3>
 
@@ -597,7 +490,7 @@ Default is "one_by_one".</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_all_combinations" class="doc doc-heading">
-            <code class=" language-python"><span class="n">create_cases_context_all_combinations</span><span class="p">()</span></code>
+            <code class="highlight language-python"><span class="n">create_cases_context_all_combinations</span><span class="p">()</span></code>
 
 </h3>
 
@@ -639,7 +532,7 @@ parameter values.</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.create_cases_context_one_by_one" class="doc doc-heading">
-            <code class=" language-python"><span class="n">create_cases_context_one_by_one</span><span class="p">()</span></code>
+            <code class="highlight language-python"><span class="n">create_cases_context_one_by_one</span><span class="p">()</span></code>
 
 </h3>
 
@@ -681,7 +574,7 @@ parameter values.</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.join_postprocessed_files" class="doc doc-heading">
-            <code class=" language-python"><span class="n">join_postprocessed_files</span><span class="p">(</span><span class="n">postprocessed_files</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">join_postprocessed_files</span><span class="p">(</span><span class="n">postprocessed_files</span><span class="p">)</span></code>
 
 </h3>
 
@@ -722,7 +615,7 @@ parameter values.</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.list_available_launchers" class="doc doc-heading">
-            <code class=" language-python"><span class="n">list_available_launchers</span><span class="p">()</span></code>
+            <code class="highlight language-python"><span class="n">list_available_launchers</span><span class="p">()</span></code>
 
 </h3>
 
@@ -743,7 +636,7 @@ parameter values.</p>
       <td class="field-body">
         <ul class="first simple">
             <li>
-                  <code><span title="typing.List">List</span>[str]</code>
+                  <code>dict</code>
               –
               <div class="doc-md-description">
                 <p>A list with the available launchers.</p>
@@ -761,48 +654,8 @@ parameter values.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.list_available_schedulers" class="doc doc-heading">
-            <code class=" language-python"><span class="n">list_available_schedulers</span><span class="p">()</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>List the available schedulers.</p>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Returns:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-                  <code><span title="typing.List">List</span>[str]</code>
-              –
-              <div class="doc-md-description">
-                <p>A list with the available schedulers.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.postprocess_case" class="doc doc-heading">
-            <code class=" language-python"><span class="n">postprocess_case</span><span class="p">(</span><span class="n">case_num</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">postprocess_case</span><span class="p">(</span><span class="n">case_num</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">)</span></code>
 
 </h3>
 
@@ -851,7 +704,7 @@ parameter values.</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.postprocess_cases" class="doc doc-heading">
-            <code class=" language-python"><span class="n">postprocess_cases</span><span class="p">(</span><span class="n">cases_to_postprocess</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">postprocess_cases</span><span class="p">(</span><span class="n">cases_to_postprocess</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -917,7 +770,7 @@ parameter values.</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.render_file_from_template" class="doc doc-heading">
-            <code class=" language-python"><span class="n">render_file_from_template</span><span class="p">(</span><span class="n">template_name</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">output_filename</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">render_file_from_template</span><span class="p">(</span><span class="n">template_name</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">output_filename</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -978,14 +831,14 @@ Default is None.</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_case" class="doc doc-heading">
-            <code class=" language-python"><span class="n">run_case</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">run_case</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">launcher</span><span class="p">,</span> <span class="n">ouput_log_file</span><span class="o">=</span><span class="s1">&#39;wrapper_out.log&#39;</span><span class="p">,</span> <span class="n">error_log_file</span><span class="o">=</span><span class="s1">&#39;wrapper_error.log&#39;</span><span class="p">)</span></code>
 
 </h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Run a single case based on the launcher, script, and parameters.</p>
+        <p>Run the case based on the launcher specified.</p>
 
 
 <table class="field-list">
@@ -1008,32 +861,30 @@ Default is None.</p>
             </li>
             <li>
               <b><code>launcher</code></b>
-                  (<code>str</code>, default:
-                      <code>None</code>
-)
+                  (<code>str</code>)
               –
               <div class="doc-md-description">
-                <p>The launcher to run the case. Default is None.</p>
+                <p>The launcher to run the case.</p>
               </div>
             </li>
             <li>
-              <b><code>script</code></b>
+              <b><code>ouput_log_file</code></b>
                   (<code>str</code>, default:
-                      <code>None</code>
+                      <code>&#39;wrapper_out.log&#39;</code>
 )
               –
               <div class="doc-md-description">
-                <p>The script to run the case. Default is None.</p>
+                <p>The name of the output log file. Default is "wrapper_out.log".</p>
               </div>
             </li>
             <li>
-              <b><code>params</code></b>
+              <b><code>error_log_file</code></b>
                   (<code>str</code>, default:
-                      <code>None</code>
+                      <code>&#39;wrapper_error.log&#39;</code>
 )
               –
               <div class="doc-md-description">
-                <p>The parameters to run the case. Default is None.</p>
+                <p>The name of the error log file. Default is "wrapper_error.log".</p>
               </div>
             </li>
         </ul>
@@ -1041,14 +892,6 @@ Default is None.</p>
     </tr>
   </tbody>
 </table>
-
-<details class="note" open>
-  <summary>Notes</summary>
-  <ul>
-<li>If launcher is None, the method run_model will be called.</li>
-<li>If launcher is not recognized, the method _exec_bash_commands will be called.</li>
-</ul>
-</details>
     </div>
 
 </div>
@@ -1057,14 +900,14 @@ Default is None.</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_cases" class="doc doc-heading">
-            <code class=" language-python"><span class="n">run_cases</span><span class="p">(</span><span class="n">launcher</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cases_to_run</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">run_cases</span><span class="p">(</span><span class="n">launcher</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cases_to_run</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Run the cases based on the launcher, script, and parameters.
+        <p>Run the cases based on the launcher specified.
 Parallel execution is optional.
 Cases to run can be specified.</p>
 
@@ -1081,32 +924,10 @@ Cases to run can be specified.</p>
         <ul class="first simple">
             <li>
               <b><code>launcher</code></b>
-                  (<code>str</code>, default:
-                      <code>None</code>
-)
+                  (<code>str</code>)
               –
               <div class="doc-md-description">
-                <p>The launcher to run the cases. Default is None.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>script</code></b>
-                  (<code>str</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The script to run the cases. Default is None.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>params</code></b>
-                  (<code>str</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The parameters to run the cases. Default is None.</p>
+                <p>The launcher to run the cases.</p>
               </div>
             </li>
             <li>
@@ -1134,29 +955,6 @@ Cases to run can be specified.</p>
     </tr>
   </tbody>
 </table>
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Raises:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-                  <code>ValueError</code>
-              –
-              <div class="doc-md-description">
-                <p>If the launcher is not recognized or the script does not exist.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
     </div>
 
 </div>
@@ -1164,15 +962,15 @@ Cases to run can be specified.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_cases_with_scheduler" class="doc doc-heading">
-            <code class=" language-python"><span class="n">run_cases_with_scheduler</span><span class="p">(</span><span class="n">scheduler</span><span class="p">,</span> <span class="n">script</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_cases_bulk" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">run_cases_bulk</span><span class="p">(</span><span class="n">launcher</span><span class="p">)</span></code>
 
 </h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Run the cases based on the scheduler, script, and parameters.</p>
+        <p>Run the cases based on the launcher specified.</p>
 
 
 <table class="field-list">
@@ -1186,175 +984,11 @@ Cases to run can be specified.</p>
       <td class="field-body">
         <ul class="first simple">
             <li>
-              <b><code>scheduler</code></b>
+              <b><code>launcher</code></b>
                   (<code>str</code>)
               –
               <div class="doc-md-description">
-                <p>The scheduler to run the cases.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>script</code></b>
-                  (<code>str</code>)
-              –
-              <div class="doc-md-description">
-                <p>The script to run the cases.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>params</code></b>
-                  (<code>str</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The parameters to run the cases. Default is None.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Raises:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-                  <code>ValueError</code>
-              –
-              <div class="doc-md-description">
-                <p>If the scheduler is not recognized or the script does not exist.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model" class="doc doc-heading">
-            <code class=" language-python"><span class="n">run_model</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Run the model.</p>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>case_dir</code></b>
-                  (<code>str</code>)
-              –
-              <div class="doc-md-description">
-                <p>The case directory.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_apptainer" class="doc doc-heading">
-            <code class=" language-python"><span class="n">run_model_with_apptainer</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Run the model for the specified case using Apptainer.</p>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>case_dir</code></b>
-                  (<code>str</code>)
-              –
-              <div class="doc-md-description">
-                <p>The case directory.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.run_model_with_docker" class="doc doc-heading">
-            <code class=" language-python"><span class="n">run_model_with_docker</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Run the model for the specified case using Docker.</p>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>case_dir</code></b>
-                  (<code>str</code>)
-              –
-              <div class="doc-md-description">
-                <p>The case directory.</p>
+                <p>The launcher to run the cases.</p>
               </div>
             </li>
         </ul>
@@ -1370,7 +1004,7 @@ Cases to run can be specified.</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.set_cases_dirs_from_output_dir" class="doc doc-heading">
-            <code class=" language-python"><span class="n">set_cases_dirs_from_output_dir</span><span class="p">()</span></code>
+            <code class="highlight language-python"><span class="n">set_cases_dirs_from_output_dir</span><span class="p">()</span></code>
 
 </h3>
 
@@ -1387,7 +1021,7 @@ Cases to run can be specified.</p>
 
 
 <h3 id="bluemath_tk.wrappers._base_wrappers.BaseModelWrapper.write_array_in_file" class="doc doc-heading">
-            <code class=" language-python"><span class="n">write_array_in_file</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">write_array_in_file</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span></code>
 
 </h3>
 

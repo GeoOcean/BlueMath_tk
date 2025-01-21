@@ -153,62 +153,42 @@ This class provides the basic structure for all clustering models.</p>
       </thead>
       <tbody>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining._base_datamining.BaseClustering.fit" href="#bluemath_tk.datamining._base_datamining.BaseClustering.fit">fit</a></code></td>
+              <td><code><span title="bluemath_tk.datamining._base_datamining.BaseClustering.fit : None">fit : None</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  
+                  <p>Fits the model to the data.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining._base_datamining.BaseClustering.predict" href="#bluemath_tk.datamining._base_datamining.BaseClustering.predict">predict</a></code></td>
+              <td><code><span title="bluemath_tk.datamining._base_datamining.BaseClustering.predict : pd.DataFrame">predict : pd.DataFrame</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  
+                  <p>Predicts the clusters for the provided data.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining._base_datamining.BaseClustering.fit_predict" href="#bluemath_tk.datamining._base_datamining.BaseClustering.fit_predict">fit_predict</a></code></td>
+              <td><code><span title="bluemath_tk.datamining._base_datamining.BaseClustering.fit_predict : pd.DataFrame">fit_predict : pd.DataFrame</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  
+                  <p>Fits the model to the data and predicts the clusters.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining._base_datamining.BaseClustering.plot_selected_centroids" href="#bluemath_tk.datamining._base_datamining.BaseClustering.plot_selected_centroids">plot_selected_centroids</a></code></td>
+              <td><code><span title="bluemath_tk.datamining._base_datamining.BaseClustering.plot_selected_centroids : Tuple[plt.figure, plt.axes]">plot_selected_centroids : Tuple[plt.figure, plt.axes]</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  <p>data_color: str = "blue",
-centroids_color: str = "red",
-**kwargs</p>
+                  <p>Plots data and selected centroids on a scatter plot matrix.</p>
                 </div>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><span title="bluemath_tk.datamining._base_datamining.BaseClustering.) -> Tuple[plt.figure, plt.axes]">) -&gt; Tuple[plt.figure, plt.axes]</span></code></td>
+              <td><code><span title="bluemath_tk.datamining._base_datamining.BaseClustering.plot_data_as_clusters : Tuple[plt.figure, plt.axes]">plot_data_as_clusters : Tuple[plt.figure, plt.axes]</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  
-                </div>
-              </td>
-            </tr>
-            <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining._base_datamining.BaseClustering.plot_data_as_clusters" href="#bluemath_tk.datamining._base_datamining.BaseClustering.plot_data_as_clusters">plot_data_as_clusters</a></code></td>
-              <td>
-                <div class="doc-md-description">
-                  <p>data: pd.DataFrame,
-nearest_centroids: np.ndarray,
-**kwargs</p>
-                </div>
-              </td>
-            </tr>
-            <tr class="doc-section-item">
-              <td><code><span title="bluemath_tk.datamining._base_datamining.BaseClustering.) -> Tuple[plt.figure, plt.axes]">) -&gt; Tuple[plt.figure, plt.axes]</span></code></td>
-              <td>
-                <div class="doc-md-description">
-                  
+                  <p>Plots data as nearest clusters.</p>
                 </div>
               </td>
             </tr>
@@ -237,7 +217,7 @@ nearest_centroids: np.ndarray,
 
 
 <h3 id="bluemath_tk.datamining._base_datamining.BaseClustering.fit" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">fit</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
@@ -294,7 +274,7 @@ nearest_centroids: np.ndarray,
 
 
 <h3 id="bluemath_tk.datamining._base_datamining.BaseClustering.fit_predict" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit_predict</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">fit_predict</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
@@ -343,6 +323,29 @@ nearest_centroids: np.ndarray,
     </tr>
   </tbody>
 </table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+              –
+              <div class="doc-md-description">
+                <p>The predicted clusters.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
     </div>
 
 </div>
@@ -351,7 +354,7 @@ nearest_centroids: np.ndarray,
 
 
 <h3 id="bluemath_tk.datamining._base_datamining.BaseClustering.plot_data_as_clusters" class="doc doc-heading">
-            <code class=" language-python"><span class="n">plot_data_as_clusters</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">nearest_centroids</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">plot_data_as_clusters</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">nearest_centroids</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -414,15 +417,15 @@ nearest_centroids: np.ndarray,
       <td class="field-body">
         <ul class="first simple">
             <li>
-<b><code>fig</code></b>(                  <code><span title="matplotlib.pyplot.figure">figure</span></code>
-)              –
+                  <code><span title="matplotlib.pyplot.figure">figure</span></code>
+              –
               <div class="doc-md-description">
                 <p>The figure object containing the plot.</p>
               </div>
             </li>
             <li>
-<b><code>axes</code></b>(                  <code><span title="matplotlib.pyplot.axes">axes</span></code>
-)              –
+                  <code><span title="matplotlib.pyplot.axes">axes</span></code>
+              –
               <div class="doc-md-description">
                 <p>The axes object for the plot.</p>
               </div>
@@ -440,7 +443,7 @@ nearest_centroids: np.ndarray,
 
 
 <h3 id="bluemath_tk.datamining._base_datamining.BaseClustering.plot_selected_centroids" class="doc doc-heading">
-            <code class=" language-python"><span class="n">plot_selected_centroids</span><span class="p">(</span><span class="n">data_color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">centroids_color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">plot_selected_centroids</span><span class="p">(</span><span class="n">data_color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">centroids_color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -507,15 +510,15 @@ nearest_centroids: np.ndarray,
       <td class="field-body">
         <ul class="first simple">
             <li>
-<b><code>fig</code></b>(                  <code><span title="matplotlib.pyplot.figure">figure</span></code>
-)              –
+                  <code><span title="matplotlib.pyplot.figure">figure</span></code>
+              –
               <div class="doc-md-description">
                 <p>The figure object containing the plot.</p>
               </div>
             </li>
             <li>
-<b><code>axes</code></b>(                  <code><span title="matplotlib.pyplot.axes">axes</span></code>
-)              –
+                  <code><span title="matplotlib.pyplot.axes">axes</span></code>
+              –
               <div class="doc-md-description">
                 <p>Array of axes objects for the subplots.</p>
               </div>
@@ -556,7 +559,7 @@ nearest_centroids: np.ndarray,
 
 
 <h3 id="bluemath_tk.datamining._base_datamining.BaseClustering.predict" class="doc doc-heading">
-            <code class=" language-python"><span class="n">predict</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">predict</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
@@ -598,6 +601,29 @@ nearest_centroids: np.ndarray,
               –
               <div class="doc-md-description">
                 <p>Keyword arguments.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+              –
+              <div class="doc-md-description">
+                <p>The predicted clusters.</p>
               </div>
             </li>
         </ul>
@@ -692,10 +718,18 @@ This class provides the basic structure for all sampling models.</p>
       </thead>
       <tbody>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.datamining._base_datamining.BaseSampling.generate" href="#bluemath_tk.datamining._base_datamining.BaseSampling.generate">generate</a></code></td>
+              <td><code><span title="bluemath_tk.datamining._base_datamining.BaseSampling.generate : pd.DataFrame">generate : pd.DataFrame</span></code></td>
               <td>
                 <div class="doc-md-description">
-                  
+                  <p>Generates samples.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><span title="bluemath_tk.datamining._base_datamining.BaseSampling.plot_generated_data : Tuple[plt.figure, plt.axes]">plot_generated_data : Tuple[plt.figure, plt.axes]</span></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Plots the generated data on a scatter plot matrix.</p>
                 </div>
               </td>
             </tr>
@@ -724,7 +758,7 @@ This class provides the basic structure for all sampling models.</p>
 
 
 <h3 id="bluemath_tk.datamining._base_datamining.BaseSampling.generate" class="doc doc-heading">
-            <code class=" language-python"><span class="n">generate</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">generate</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
@@ -804,7 +838,7 @@ This class provides the basic structure for all sampling models.</p>
 
 
 <h3 id="bluemath_tk.datamining._base_datamining.BaseSampling.plot_generated_data" class="doc doc-heading">
-            <code class=" language-python"><span class="n">plot_generated_data</span><span class="p">(</span><span class="n">data_color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">plot_generated_data</span><span class="p">(</span><span class="n">data_color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -861,15 +895,15 @@ This class provides the basic structure for all sampling models.</p>
       <td class="field-body">
         <ul class="first simple">
             <li>
-<b><code>fig</code></b>(                  <code><span title="matplotlib.pyplot.figure">figure</span></code>
-)              –
+                  <code><span title="matplotlib.pyplot.figure">figure</span></code>
+              –
               <div class="doc-md-description">
                 <p>The figure object containing the plot.</p>
               </div>
             </li>
             <li>
-<b><code>axes</code></b>(                  <code><span title="matplotlib.pyplot.axes">axes</span></code>
-)              –
+                  <code><span title="matplotlib.pyplot.axes">axes</span></code>
+              –
               <div class="doc-md-description">
                 <p>Array of axes objects for the subplots.</p>
               </div>
@@ -952,7 +986,7 @@ This class provides the basic structure for all sampling models.</p>
 
 
 <h3 id="bluemath_tk.datamining._base_datamining.ClusteringComparator.__init__" class="doc doc-heading">
-            <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">list_of_models</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">list_of_models</span><span class="p">)</span></code>
 
 </h3>
 
@@ -969,7 +1003,7 @@ This class provides the basic structure for all sampling models.</p>
 
 
 <h3 id="bluemath_tk.datamining._base_datamining.ClusteringComparator.fit" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">custom_scale_factor</span><span class="o">=</span><span class="p">{})</span></code>
+            <code class="highlight language-python"><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">custom_scale_factor</span><span class="o">=</span><span class="p">{})</span></code>
 
 </h3>
 
@@ -986,7 +1020,7 @@ This class provides the basic structure for all sampling models.</p>
 
 
 <h3 id="bluemath_tk.datamining._base_datamining.ClusteringComparator.plot_data_as_clusters" class="doc doc-heading">
-            <code class=" language-python"><span class="n">plot_data_as_clusters</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">plot_data_as_clusters</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1003,7 +1037,7 @@ This class provides the basic structure for all sampling models.</p>
 
 
 <h3 id="bluemath_tk.datamining._base_datamining.ClusteringComparator.plot_selected_centroids" class="doc doc-heading">
-            <code class=" language-python"><span class="n">plot_selected_centroids</span><span class="p">()</span></code>
+            <code class="highlight language-python"><span class="n">plot_selected_centroids</span><span class="p">()</span></code>
 
 </h3>
 

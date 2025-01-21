@@ -342,7 +342,7 @@ This attribute is only set if normalize_target_data is True in the fit method.</
       </thead>
       <tbody>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.interpolation.rbf.RBF.fit" href="#bluemath_tk.interpolation.rbf.RBF.fit">fit</a></code></td>
+              <td><code><span title="bluemath_tk.interpolation.rbf.RBF.fit :">fit :</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Fits the model to the data.</p>
@@ -350,7 +350,7 @@ This attribute is only set if normalize_target_data is True in the fit method.</
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.interpolation.rbf.RBF.predict" href="#bluemath_tk.interpolation.rbf.RBF.predict">predict</a></code></td>
+              <td><code><span title="bluemath_tk.interpolation.rbf.RBF.predict :">predict :</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Predicts the data for the provided dataset.</p>
@@ -358,7 +358,7 @@ This attribute is only set if normalize_target_data is True in the fit method.</
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="bluemath_tk.interpolation.rbf.RBF.fit_predict" href="#bluemath_tk.interpolation.rbf.RBF.fit_predict">fit_predict</a></code></td>
+              <td><code><span title="bluemath_tk.interpolation.rbf.RBF.fit_predict :">fit_predict :</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Fits the model to the subset and predicts the interpolated dataset.</p>
@@ -378,35 +378,35 @@ This attribute is only set if normalize_target_data is True in the fit method.</
 </details>
 
 <p><span class="doc-section-title">Examples:</span></p>
-    <div class="codehilite"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">bluemath_tk.interpolation.rbf</span> <span class="kn">import</span> <span class="n">RBF</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="p">{</span>
-<span class="gp">... </span>        <span class="s2">&quot;Hs&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">7</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s2">&quot;Tp&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">20</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s2">&quot;Dir&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">360</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="p">}</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">subset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">target</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="p">{</span>
-<span class="gp">... </span>        <span class="s2">&quot;HsPred&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Tp&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span>
-<span class="gp">... </span>        <span class="s2">&quot;DirPred&quot;</span><span class="p">:</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Dir&quot;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="p">}</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">rbf</span> <span class="o">=</span> <span class="n">RBF</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">predictions</span> <span class="o">=</span> <span class="n">rbf</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">subset_data</span><span class="o">=</span><span class="n">subset</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">subset_directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Dir&quot;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">target_data</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">target_directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;DirPred&quot;</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">normalize_target_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">num_threads</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">iteratively_update_sigma</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<span class="gp">... </span><span class="p">)</span>
-</code></pre></div>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">bluemath_tk.interpolation.rbf</span> <span class="kn">import</span> <span class="n">RBF</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">... </span>    <span class="p">{</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">... </span>        <span class="s2">&quot;Hs&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">7</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">... </span>        <span class="s2">&quot;Tp&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">20</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">... </span>        <span class="s2">&quot;Dir&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">360</span><span class="p">,</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="gp">... </span>    <span class="p">}</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="gp">... </span><span class="p">)</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">subset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">target</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="gp">... </span>    <span class="p">{</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="gp">... </span>        <span class="s2">&quot;HsPred&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Tp&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="gp">... </span>        <span class="s2">&quot;DirPred&quot;</span><span class="p">:</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Dir&quot;</span><span class="p">],</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="gp">... </span>    <span class="p">}</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="gp">... </span><span class="p">)</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">rbf</span> <span class="o">=</span> <span class="n">RBF</span><span class="p">()</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">predictions</span> <span class="o">=</span> <span class="n">rbf</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="gp">... </span>    <span class="n">subset_data</span><span class="o">=</span><span class="n">subset</span><span class="p">,</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="gp">... </span>    <span class="n">subset_directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Dir&quot;</span><span class="p">],</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="gp">... </span>    <span class="n">target_data</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="gp">... </span>    <span class="n">target_directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;DirPred&quot;</span><span class="p">],</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="gp">... </span>    <span class="n">normalize_target_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="gp">... </span>    <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="gp">... </span>    <span class="n">num_threads</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="gp">... </span>    <span class="n">iteratively_update_sigma</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="gp">... </span><span class="p">)</span>
+</span></code></pre></div>
 
 
 
@@ -430,7 +430,7 @@ This attribute is only set if normalize_target_data is True in the fit method.</
 
 
 <h3 id="bluemath_tk.interpolation.rbf.RBF.__init__" class="doc doc-heading">
-            <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">sigma_min</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">sigma_max</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">sigma_diff</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span> <span class="n">sigma_opt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kernel</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">sigma_min</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">sigma_max</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">sigma_diff</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span> <span class="n">sigma_opt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kernel</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">)</span></code>
 
 </h3>
 
@@ -473,7 +473,7 @@ If the smooth is not a positive float.</p>
 
 
 <h3 id="bluemath_tk.interpolation.rbf.RBF.fit" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit</span><span class="p">(</span><span class="n">subset_data</span><span class="p">,</span> <span class="n">target_data</span><span class="p">,</span> <span class="n">subset_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">target_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">subset_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">normalize_target_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">target_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">num_threads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iteratively_update_sigma</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">fit</span><span class="p">(</span><span class="n">subset_data</span><span class="p">,</span> <span class="n">target_data</span><span class="p">,</span> <span class="n">subset_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">target_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">subset_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">normalize_target_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">target_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">num_threads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iteratively_update_sigma</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
@@ -605,7 +605,7 @@ If the smooth is not a positive float.</p>
 
 
 <h3 id="bluemath_tk.interpolation.rbf.RBF.fit_predict" class="doc doc-heading">
-            <code class=" language-python"><span class="n">fit_predict</span><span class="p">(</span><span class="n">subset_data</span><span class="p">,</span> <span class="n">target_data</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">subset_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">target_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">subset_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">normalize_target_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">target_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">num_threads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iteratively_update_sigma</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">fit_predict</span><span class="p">(</span><span class="n">subset_data</span><span class="p">,</span> <span class="n">target_data</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">subset_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">target_directional_variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">subset_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">normalize_target_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">target_custom_scale_factor</span><span class="o">=</span><span class="p">{},</span> <span class="n">num_threads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iteratively_update_sigma</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
@@ -762,7 +762,7 @@ If the smooth is not a positive float.</p>
 
 
 <h3 id="bluemath_tk.interpolation.rbf.RBF.predict" class="doc doc-heading">
-            <code class=" language-python"><span class="n">predict</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">predict</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span></code>
 
 </h3>
 
@@ -914,7 +914,7 @@ If the smooth is not a positive float.</p>
 
 
 <h2 id="bluemath_tk.interpolation.rbf.gaussian_kernel" class="doc doc-heading">
-            <code class=" language-python"><span class="n">gaussian_kernel</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">gaussian_kernel</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span></code>
 
 </h2>
 
