@@ -471,6 +471,7 @@ class BaseModelWrapper(BlueMathModel):
         """
 
         self.logger.info(f"Running cases with launcher={launcher}.")
+        os.chdir(self.output_dir)
         self._exec_bash_commands(str_cmd=launcher)
 
     def postprocess_case(self, case_num: int, case_dir: str) -> None:
