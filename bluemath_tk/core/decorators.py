@@ -90,7 +90,7 @@ def validate_data_mda(func):
                 raise ValueError(
                     "First centroid seed must be an integer >= 0 and < num of data points"
                 )
-        return func(self, data, directional_variables, custom_scale_factor)
+        return func(self, data, directional_variables, custom_scale_factor, first_centroid_seed)
 
     return wrapper
 
