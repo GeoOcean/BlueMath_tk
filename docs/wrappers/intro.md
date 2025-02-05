@@ -7,6 +7,7 @@ For more detailed information, refer to the specific class implementations and t
 | Model   | URL                                 | Base Class          | Documentation                            | Owner              |
 | ------- | ----------------------------------- | ------------------- | ---------------------------------------- | ------------------ |
 | Swash   | https://swash.sourceforge.io/       | SwashModelWrapper   | [swash_wrapper.md](swash_wrapper.md)     | ricondoa@unican.es |
+| Swan    | https://swan.sourceforge.io/        | SwanModelWrapper    | [swan_wrapper.md](swan_wrapper.md)       | bellidog@unican.es |
 | Delft3d | https://oss.deltares.nl/web/delft3d | Delft3dModelWrapper | [delft3d_wrapper.md](delft3d_wrapper.md) | faugeree@unican.es |
 
 ## BaseModelWrapper

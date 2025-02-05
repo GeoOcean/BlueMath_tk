@@ -22,8 +22,8 @@ class SwanModelWrapper(BaseModelWrapper):
     }
 
     available_launchers = {
-        "bash": "swanrun -input input.sws",
-        "docker": "docker run --rm -v .:/case_dir -w /case_dir tausiaj/swan-geoocean:41.51 swanrun -input input.sws",
+        "bash": "swanrun -input input",
+        "docker": "docker run --rm -v .:/case_dir -w /case_dir tausiaj/swan-geoocean:41.51 swanrun -input input",
     }
 
     def __init__(
@@ -35,7 +35,7 @@ class SwanModelWrapper(BaseModelWrapper):
         debug: bool = True,
     ) -> None:
         """
-        Initialize the SWASH model wrapper.
+        Initialize the SWAN model wrapper.
         """
 
         super().__init__(
