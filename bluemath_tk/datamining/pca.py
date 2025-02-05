@@ -1,10 +1,13 @@
+from typing import List, Union
+
 import numpy as np
 import xarray as xr
-from typing import Union, List
+from sklearn.decomposition import PCA as PCA_
+from sklearn.decomposition import IncrementalPCA as IncrementalPCA_
 from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA as PCA_, IncrementalPCA as IncrementalPCA_
-from ._base_datamining import BaseReduction
+
 from ..core.decorators import validate_data_pca
+from ._base_datamining import BaseReduction
 
 
 class PCAError(Exception):
@@ -27,30 +30,36 @@ class PCA(BaseReduction):
         The number of components or the explained variance ratio.
     is_incremental : bool
         Indicates whether Incremental PCA is used.
-    _pca : PCA_ or IncrementalPCA_
+    _pca : Union[PCA_, IncrementalPCA_]
         The PCA or Incremental PCA model.
     is_fitted : bool
         Indicates whether the PCA model has been fitted.
     _data : xr.Dataset
         The original dataset.
+    _postprocessed_data : xr.Dataset
+        The postprocessed dataset.
     _stacked_data_matrix : np.ndarray
         The stacked data matrix.
     _standarized_stacked_data_matrix : np.ndarray
         The standardized stacked data matrix.
     scaler : StandardScaler
         The scaler used for standardizing the data.
-    vars_to_stack : list of str
+    vars_to_stack : List[str]
         The list of variables to stack.
-    coords_to_stack : list of str
+    coords_to_stack : List[str]
         The list of coordinates to stack.
     pca_dim_for_rows : str
         The dimension for rows in PCA.
-    window_in_pca_dim_for_rows : list of int
-        The window in PCA dimension for rows.
-    value_to_replace_nans : float
-        The value to replace NaNs in the dataset.
+    windows_in_pca_dim_for_rows : dict
+        The windows in PCA dimension for rows.
+    value_to_replace_nans : dict
+        The values to replace NaNs in the dataset.
+    nan_threshold_to_drop : dict
+        The threshold percentage to drop NaNs for each variable.
     num_cols_for_vars : int
         The number of columns for variables.
+    pcs : xr.Dataset
+        The Principal Components (PCs).
     eofs : xr.Dataset
         The Empirical Orthogonal Functions (EOFs).
     explained_variance : np.ndarray
@@ -110,7 +119,10 @@ class PCA(BaseReduction):
     """
 
     def __init__(
-        self, n_components: Union[int, float] = 0.98, is_incremental: bool = False
+        self,
+        n_components: Union[int, float] = 0.98,
+        is_incremental: bool = False,
+        debug: bool = False,
     ):
         """
         Initialize the PCA class.
@@ -123,6 +135,8 @@ class PCA(BaseReduction):
             n_components >= 1, it represents the number of components to keep. Default is 0.98.
         is_incremental : bool, optional
             If True, use Incremental PCA which is useful for large datasets. Default is False.
+        debug : bool, optional
+            If True, enable debug mode. Default is False.
 
         Raises
         ------
@@ -143,7 +157,9 @@ class PCA(BaseReduction):
         print(initial_msg)
 
         super().__init__()
-        self.set_logger_name(name=self.__class__.__name__)
+        self.set_logger_name(
+            name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
+        )
         if n_components <= 0:
             raise ValueError("Number of components must be greater than 0.")
         elif n_components >= 1:
@@ -156,22 +172,26 @@ class PCA(BaseReduction):
         if is_incremental:
             self.logger.info("Using Incremental PCA")
             self._pca = IncrementalPCA_(n_components=self.n_components)
-            self.is_fitted: bool = False
         else:
             self.logger.info("Using PCA")
             self._pca = PCA_(n_components=self.n_components)
-            self.is_fitted: bool = False
+        self.is_fitted: bool = False
         self.is_incremental = is_incremental
         self._data: xr.Dataset = xr.Dataset()
+        self._window_processed_data: xr.Dataset = xr.Dataset()
         self._stacked_data_matrix: np.ndarray = np.array([])
         self._standarized_stacked_data_matrix: np.ndarray = np.array([])
         self.scaler: StandardScaler = StandardScaler()
         self.vars_to_stack: List[str] = []
+        self.window_stacked_vars: List[str] = []
         self.coords_to_stack: List[str] = []
         self.pca_dim_for_rows: str = None
-        self.window_in_pca_dim_for_rows: List[int] = [0]
-        self.value_to_replace_nans: float = None
+        self.windows_in_pca_dim_for_rows: dict = {}
+        self.value_to_replace_nans: dict = {}
+        self.nan_threshold_to_drop: dict = {}
+        self.not_nan_positions: dict = {}
         self.num_cols_for_vars: int = None
+        self.pcs: xr.Dataset = xr.Dataset()
 
     @property
     def pca(self) -> Union[PCA_, IncrementalPCA_]:
@@ -180,6 +200,10 @@ class PCA(BaseReduction):
     @property
     def data(self) -> xr.Dataset:
         return self._data
+
+    @property
+    def window_processed_data(self) -> xr.Dataset:
+        return self._window_processed_data
 
     @property
     def stacked_data_matrix(self) -> np.ndarray:
@@ -191,7 +215,7 @@ class PCA(BaseReduction):
 
     @property
     def eofs(self) -> xr.Dataset:
-        return self._reshape_EOFs(destandarize=True)
+        return self._reshape_EOFs(destandarize=False)
 
     @property
     def explained_variance(self) -> np.ndarray:
@@ -227,30 +251,36 @@ class PCA(BaseReduction):
         self.logger.info(
             f"Generating data matrix with variables to stack: {self.vars_to_stack} and coordinates to stack: {self.coords_to_stack}"
         )
-        num_cols_for_vars = 1
+
+        self.num_cols_for_vars = 1
         for coord_to_stack in self.coords_to_stack:
-            num_cols_for_vars *= len(data[coord_to_stack])
+            self.num_cols_for_vars *= len(data[coord_to_stack])
         tmp_stacked_data = data.stack(positions=self.coords_to_stack)
-        if (
-            len(self.window_in_pca_dim_for_rows) != 0
-            or self.window_in_pca_dim_for_rows[0] != 0
-        ):
-            self.logger.info(f"Rolling over coordinate: {self.pca_dim_for_rows}")
-            tmp_stacked_data = xr.concat(
-                [
-                    tmp_stacked_data.shift({self.pca_dim_for_rows: i})
-                    for i in self.window_in_pca_dim_for_rows
-                ],
-                dim="positions",
+
+        cleaned_vars_to_stack = []
+        for var_to_clean in self.window_stacked_vars:
+            var_to_clean_values = tmp_stacked_data[var_to_clean].values
+            not_nan_positions = np.where(
+                np.mean(np.isnan(var_to_clean_values), axis=0)
+                < self.nan_threshold_to_drop.get(
+                    var_to_clean, 0.05
+                )  # TODO: Add to docstring
+            )[0]
+            self.logger.debug(
+                f"Replacing NaNs for variable: {var_to_clean} with value: {self.value_to_replace_nans.get(var_to_clean)}"
             )
-        self.num_cols_for_vars = num_cols_for_vars * len(
-            self.window_in_pca_dim_for_rows
-        )
+            cleaned_var = self.check_nans(
+                data=var_to_clean_values[:, not_nan_positions],
+                replace_value=self.value_to_replace_nans.get(var_to_clean),
+            )
+            cleaned_vars_to_stack.append(cleaned_var)
+            self.not_nan_positions[var_to_clean] = not_nan_positions
+
         stacked_data_matrix = np.hstack(
-            [tmp_stacked_data[var].values for var in self.vars_to_stack]
+            [cleaned_var for cleaned_var in cleaned_vars_to_stack]
         )
         self.logger.info(
-            f"Data matrix generated successfully with shape: {self._stacked_data_matrix.shape}"
+            f"Data matrix generated successfully with shape: {stacked_data_matrix.shape}"
         )
 
         return stacked_data_matrix
@@ -258,10 +288,9 @@ class PCA(BaseReduction):
     def _preprocess_data(self, data: xr.Dataset, is_fit: bool = True) -> np.ndarray:
         """
         Preprocess data for PCA. Steps:
-        - Check NaNs and replace them if needed.
+        - Add windows in PCA dimension for rows.
         - Generate stacked data matrix.
         - Standarize data matrix.
-        - Remove NaNs from standarized data matrix.
 
         Parameters
         ----------
@@ -276,15 +305,22 @@ class PCA(BaseReduction):
             The standarized stacked data matrix.
         """
 
-        self.logger.info("Preprocessing data")
-        data = self.check_nans(
-            data=data,
-            replace_value=self.value_to_replace_nans,
-        )
+        window_processed_data = data.copy()
+        if self.windows_in_pca_dim_for_rows is not None:
+            self.logger.info("Adding windows in PCA dimension for rows")
+            for variable, windows in self.windows_in_pca_dim_for_rows.items():
+                self.logger.info(f"Adding windows: {windows} for variable: {variable}")
+                for window in windows:
+                    window_processed_data[f"{variable}_{window}"] = (
+                        window_processed_data[variable].shift(
+                            {self.pca_dim_for_rows: window}
+                        )
+                    )
+            self.window_stacked_vars = list(window_processed_data.data_vars)
 
         self.logger.info("Generating stacked data matrix")
         stacked_data_matrix = self._generate_stacked_data(
-            data=data,
+            data=window_processed_data,
         )
 
         self.logger.info("Standarizing data matrix")
@@ -293,16 +329,11 @@ class PCA(BaseReduction):
             scaler=self.scaler if not is_fit else None,
         )
 
-        self.logger.info("Removing NaNs from standarized data matrix")
-        standarized_stacked_data_matrix = self.check_nans(
-            data=standarized_stacked_data_matrix,
-            replace_value=self.value_to_replace_nans,
-        )
-
         self.logger.info("Data preprocessed successfully")
 
         if is_fit:
             self._data = data.copy()
+            self._window_processed_data = window_processed_data.copy()
             self._stacked_data_matrix = stacked_data_matrix.copy()
             self._standarized_stacked_data_matrix = (
                 standarized_stacked_data_matrix.copy()
@@ -327,32 +358,47 @@ class PCA(BaseReduction):
         """
 
         EOFs = self.pca.components_  # Get Empirical Orthogonal Functions (EOFs)
+
         if destandarize:
             EOFs = self.scaler.inverse_transform(EOFs)
-        EOFs_reshaped_vars_arrays = np.array_split(
-            EOFs, len(self.vars_to_stack), axis=1
+
+        # Create a full of nans array with shape time, vars * cols
+        nan_EOFs = np.full(
+            (
+                self.pca.n_components_,
+                self.num_cols_for_vars * len(self.window_stacked_vars),
+            ),
+            np.nan,
         )
-        coords_to_stack_shape = [
-            len(self.window_in_pca_dim_for_rows),
-            self.pca.n_components_,
-        ] + [self.data[coord].shape[0] for coord in self.coords_to_stack]
+        # Fill the nan_EOFs array with the EOFs values
+        filled_EOFs = 0
+        for iev, eof_var in enumerate(self.window_stacked_vars):
+            eofs_to_fill = len(self.not_nan_positions[eof_var])
+            nan_EOFs[
+                :, self.not_nan_positions[eof_var] + (iev * self.num_cols_for_vars)
+            ] = EOFs[:, filled_EOFs : filled_EOFs + eofs_to_fill]
+            filled_EOFs += eofs_to_fill
+
+        # Reshape the nan_EOFs array to the original data shape
+        EOFs_reshaped_vars_arrays = np.array_split(
+            nan_EOFs, len(self.window_stacked_vars), axis=1
+        )
+        coords_to_stack_shape = [self.pca.n_components_] + [
+            self.data[coord].shape[0] for coord in self.coords_to_stack
+        ]
         EOFs_reshaped_vars_dict = {
             var: (
-                ["window", "n_component", *self.coords_to_stack],
-                np.array(
-                    np.array_split(
-                        EOF_reshaped_var, len(self.window_in_pca_dim_for_rows), axis=1
-                    )
-                ).reshape(*coords_to_stack_shape),
+                ["n_component", *self.coords_to_stack],
+                np.array(EOF_reshaped_var).reshape(*coords_to_stack_shape),
             )
             for var, EOF_reshaped_var in zip(
-                self.vars_to_stack, EOFs_reshaped_vars_arrays
+                self.window_stacked_vars, EOFs_reshaped_vars_arrays
             )
         }
+
         return xr.Dataset(
             EOFs_reshaped_vars_dict,
             coords={
-                "window": self.window_in_pca_dim_for_rows,
                 "n_component": np.arange(self.pca.n_components_),
                 **{coord: self.data[coord] for coord in self.coords_to_stack},
             },
@@ -377,26 +423,44 @@ class PCA(BaseReduction):
 
         if destandarize:
             X = self.scaler.inverse_transform(X)
-        X_reshaped_vars_arrays = np.array_split(X, len(self.vars_to_stack), axis=1)
-        coords_to_stack_shape = [
-            len(self.window_in_pca_dim_for_rows),
-            self.data[self.pca_dim_for_rows].shape[0],
-        ] + [self.data[coord].shape[0] for coord in self.coords_to_stack]
+
+        # Create a full of nans array with shape time, vars * cols
+        nan_X = np.full(
+            (
+                X.shape[0],
+                self.num_cols_for_vars * len(self.window_stacked_vars),
+            ),
+            np.nan,
+        )
+        # Fill the nan_X array with the X values
+        filled_X = 0
+        for iev, x_var in enumerate(self.window_stacked_vars):
+            x_to_fill = len(self.not_nan_positions[x_var])
+            nan_X[:, self.not_nan_positions[x_var] + (iev * self.num_cols_for_vars)] = (
+                X[:, filled_X : filled_X + x_to_fill]
+            )
+            filled_X += x_to_fill
+
+        # Reshape the nan_X array to the original data shape
+        X_reshaped_vars_arrays = np.array_split(
+            nan_X, len(self.window_stacked_vars), axis=1
+        )
+        coords_to_stack_shape = [X.shape[0]] + [
+            self.data[coord].shape[0] for coord in self.coords_to_stack
+        ]
         X_reshaped_vars_dict = {
             var: (
-                ["window", self.pca_dim_for_rows, *self.coords_to_stack],
-                np.array(
-                    np.array_split(
-                        X_reshaped_var, len(self.window_in_pca_dim_for_rows), axis=1
-                    )
-                ).reshape(*coords_to_stack_shape),
+                [self.pca_dim_for_rows, *self.coords_to_stack],
+                np.array(X_reshaped_var).reshape(*coords_to_stack_shape),
             )
-            for var, X_reshaped_var in zip(self.vars_to_stack, X_reshaped_vars_arrays)
+            for var, X_reshaped_var in zip(
+                self.window_stacked_vars, X_reshaped_vars_arrays
+            )
         }
+
         return xr.Dataset(
             X_reshaped_vars_dict,
             coords={
-                "window": self.window_in_pca_dim_for_rows,
                 self.pca_dim_for_rows: self.data[self.pca_dim_for_rows],
                 **{coord: self.data[coord] for coord in self.coords_to_stack},
             },
@@ -409,8 +473,9 @@ class PCA(BaseReduction):
         vars_to_stack: List[str],
         coords_to_stack: List[str],
         pca_dim_for_rows: str,
-        window_in_pca_dim_for_rows: List[int] = [0],
-        value_to_replace_nans: float = None,
+        windows_in_pca_dim_for_rows: dict = {},
+        value_to_replace_nans: dict = {},
+        nan_threshold_to_drop: dict = {},
     ) -> None:
         """
         Fit PCA model to data.
@@ -425,17 +490,22 @@ class PCA(BaseReduction):
             The coordinates to stack.
         pca_dim_for_rows : str
             The PCA dimension to maintain in rows (usually the time).
-        window_in_pca_dim_for_rows : list of int, optional
-            The window steps to roll the pca_dim_for_rows. Default is [0].
-        value_to_replace_nans : float, optional
-            The value to replace NaNs. Default is None.
+        windows_in_pca_dim_for_rows : dict, optional
+            The window steps to roll the pca_dim_for_rows for each variable. Default is {}.
+        value_to_replace_nans : dict, optional
+            The value to replace NaNs for each variable. Default is {}.
+        nan_threshold_to_drop : dict, optional
+            The threshold percentage to drop NaNs for each variable.
+            By default, variables with more than 95% of NaNs are dropped.
+            Default is {}.
         """
 
-        self.vars_to_stack = vars_to_stack
-        self.coords_to_stack = coords_to_stack
+        self.vars_to_stack = vars_to_stack.copy()
+        self.coords_to_stack = coords_to_stack.copy()
         self.pca_dim_for_rows = pca_dim_for_rows
-        self.window_in_pca_dim_for_rows = window_in_pca_dim_for_rows
-        self.value_to_replace_nans = value_to_replace_nans
+        self.windows_in_pca_dim_for_rows = windows_in_pca_dim_for_rows.copy()
+        self.value_to_replace_nans = value_to_replace_nans.copy()
+        self.nan_threshold_to_drop = nan_threshold_to_drop.copy()
 
         self._preprocess_data(data=data[self.vars_to_stack], is_fit=True)
         self.logger.info("Fitting PCA model")
@@ -473,7 +543,8 @@ class PCA(BaseReduction):
 
         transformed_data = self.pca.transform(X=processed_data)
 
-        return xr.Dataset(
+        # Save the Principal Components (PCs) in an xr.Dataset
+        self.pcs = xr.Dataset(
             {
                 "PCs": ((self.pca_dim_for_rows, "n_component"), transformed_data),
             },
@@ -481,7 +552,9 @@ class PCA(BaseReduction):
                 self.pca_dim_for_rows: data[self.pca_dim_for_rows],
                 "n_component": np.arange(self.pca.n_components_),
             },
-        ).squeeze()  # Remove window dimension if it is not used
+        )
+
+        return self.pcs.copy()
 
     def fit_transform(
         self,
@@ -489,8 +562,9 @@ class PCA(BaseReduction):
         vars_to_stack: List[str],
         coords_to_stack: List[str],
         pca_dim_for_rows: str,
-        window_in_pca_dim_for_rows: List[int] = [0],
-        value_to_replace_nans: float = None,
+        windows_in_pca_dim_for_rows: dict = {},
+        value_to_replace_nans: dict = {},
+        nan_threshold_to_drop: dict = {},
     ) -> xr.Dataset:
         """
         Fit and transform data using PCA model.
@@ -505,10 +579,14 @@ class PCA(BaseReduction):
             The coordinates to stack.
         pca_dim_for_rows : str
             The PCA dimension to maintain in rows (usually the time).
-        window_in_pca_dim_for_rows : list of int, optional
-            The window steps to roll the pca_dim_for_rows. Default is [0].
-        value_to_replace_nans : float, optional
-            The value to replace NaNs. Default is None.
+        windows_in_pca_dim_for_rows : dict, optional
+            The window steps to roll the pca_dim_for_rows for each variable. Default is {}.
+        value_to_replace_nans : dict, optional
+            The value to replace NaNs for each variable. Default is {}.
+        nan_threshold_to_drop : dict, optional
+            The threshold percentage to drop NaNs for each variable.
+            By default, variables with more than 95% of NaNs are dropped.
+            Default is {}.
 
         Returns
         -------
@@ -521,8 +599,9 @@ class PCA(BaseReduction):
             vars_to_stack=vars_to_stack,
             coords_to_stack=coords_to_stack,
             pca_dim_for_rows=pca_dim_for_rows,
-            window_in_pca_dim_for_rows=window_in_pca_dim_for_rows,
+            windows_in_pca_dim_for_rows=windows_in_pca_dim_for_rows,
             value_to_replace_nans=value_to_replace_nans,
+            nan_threshold_to_drop=nan_threshold_to_drop,
         )
 
         return self.transform(data=data, after_fitting=True)
@@ -553,7 +632,7 @@ class PCA(BaseReduction):
         self.logger.info("Inverse transforming data using PCA model")
         X_transformed = self.pca.inverse_transform(X=X)
         data_transformed = self._reshape_data(X=X_transformed, destandarize=True)
-        # Squeeze dataset and sort dimensions based on the original data
-        data_transformed = data_transformed.transpose(*self.data.dims, "window")
+        # Transpose dimensions based on the original data
+        data_transformed = data_transformed.transpose(*self.data.dims)
 
         return data_transformed

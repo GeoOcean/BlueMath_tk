@@ -1,7 +1,7 @@
 import os
 import sys
 import logging
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 import pickle
 import importlib
 import numpy as np
@@ -34,6 +34,23 @@ class BlueMathModel(ABC):
     @abstractmethod
     def __init__(self) -> None:
         self._logger: logging.Logger = None
+        self._exclude_attributes: List[str] = ["_logger"]
+
+    def __getstate__(self):
+        """Exclude certain attributes from being pickled."""
+
+        state = self.__dict__.copy()
+        for attr in self._exclude_attributes:
+            if attr in state:
+                del state[attr]
+        # Iterate through the state attributes, warning about xr.Datasets
+        for key, value in state.items():
+            if isinstance(value, xr.Dataset) or isinstance(value, xr.DataArray):
+                self.logger.warning(
+                    f"Attribute {key} is an xarray Dataset / Dataarray and will be pickled!"
+                )
+
+        return state
 
     @property
     def logger(self) -> logging.Logger:
@@ -51,10 +68,12 @@ class BlueMathModel(ABC):
         self.logger = get_file_logger(name=name)
         self.logger.setLevel(level)
 
-    def save_model(self, model_path: str) -> None:
+    def save_model(self, model_path: str, exclude_attributes: List[str] = None) -> None:
         """Saves the model to a file."""
 
         self.logger.info(f"Saving model to {model_path}")
+        if exclude_attributes is not None:
+            self._exclude_attributes += exclude_attributes
         with open(model_path, "wb") as f:
             pickle.dump(self, f)
 
@@ -131,6 +150,11 @@ class BlueMathModel(ABC):
         -----
         - This method is intended to be used in classes that inherit from the BlueMathModel class.
         - The method checks for NaNs in the data and optionally replaces them with the specified value.
+
+        TODO
+        ----
+        - Add support for Dask arrays and DataFrames.
+        - Add interpolation, moving average, or other methods to replace NaNs.
         """
 
         if isinstance(data, np.ndarray):
@@ -159,6 +183,7 @@ class BlueMathModel(ABC):
                     self.logger.info(f"NaNs replaced with {replace_value}.")
         else:
             self.logger.warning("Data type not supported for NaN check.")
+
         return data
 
     def normalize(

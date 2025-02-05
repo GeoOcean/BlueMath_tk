@@ -12,11 +12,7 @@ class BasePlotting(ABC):
     """
 
     def __init__(self):
-        self.default_line_color = "blue"
-        self.default_line_style = "-"
-        self.default_scatter_color = "red"
-        self.default_scatter_size = 10
-        self.default_marker = "o"
+        pass
 
     @abstractmethod
     def plot_line(self, x, y):
@@ -24,6 +20,7 @@ class BasePlotting(ABC):
         Abstract method for plotting a line.
         Should be implemented by subclasses.
         """
+
         pass
 
     @abstractmethod
@@ -32,6 +29,7 @@ class BasePlotting(ABC):
         Abstract method for plotting a scatter plot.
         Should be implemented by subclasses.
         """
+
         pass
 
     @abstractmethod
@@ -40,6 +38,7 @@ class BasePlotting(ABC):
         Abstract method for plotting a map.
         Should be implemented by subclasses.
         """
+
         pass
 
     def get_list_of_colors_for_colormap(
@@ -63,6 +62,7 @@ class BasePlotting(ABC):
 
         if isinstance(cmap, str):
             cmap = plt.get_cmap(cmap)
+
         return [cmap(i) for i in range(0, 256, 256 // num_colors)]
 
 
@@ -74,33 +74,26 @@ class DefaultStaticPlotting(BasePlotting):
     # Class-level dictionary for default settings
     templates = {
         "default": {
-            "line_color": "blue",
-            "line_style": "-",
-            "scatter_color": "red",
-            "scatter_size": 10,
-            "marker": "o",
+            "line": {
+                "color": "blue",
+                "line_style": "-",
+            },
+            "scatter": {
+                "color": "red",
+                "size": 10,
+                "marker": "o",
+            },
         }
     }
 
-    def __init__(self, **kwargs):
+    def __init__(self, template: str = "default") -> None:
         """
         Initialize an instance of the DefaultStaticPlotting class.
 
         Parameters
         ----------
-        **kwargs : dict
-            Keyword arguments to override default settings.
-            Valid keys are:
-            - template: str, name of the template to use, defaults to "default"
-            - line_color: str, color of the line, defaults to blue
-            - line_style: str, style of the line, defaults to solid line
-            - scatter_color: str, color of the scatter plot, defaults to red
-            - scatter_size: int, size of the scatter plot, defaults to 10
-            - marker: str, marker of the scatter plot, defaults to circle
-
-        Returns
-        -------
-        None
+        template : str
+            The template to use for the plotting settings. Default is "default".
 
         Notes
         -----
@@ -108,25 +101,41 @@ class DefaultStaticPlotting(BasePlotting):
         - If a keyword argument is provided, it will override the corresponding default setting.
         - Any other provided keyword arguments will be set as instance attributes.
         """
+
         super().__init__()
         # Update instance attributes with either default template or passed-in values / template
-        for key, value in self.templates.get(
-            kwargs.get("template", "default"), self.templates.get("default")
-        ).items():
-            setattr(self, key, kwargs.get(key, value))
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        for key, value in self.templates.get(template, "default").items():
+            setattr(self, f"{key}_defaults", value)
 
     def get_subplots(self, **kwargs):
         fig, ax = plt.subplots(**kwargs)
         return fig, ax
 
     def plot_line(self, ax, **kwargs):
-        ax.plot(**kwargs)
+        c = kwargs.get("c", self.line_defaults.get("color"))
+        kwargs.pop("c", None)
+        ls = kwargs.get("ls", self.line_defaults.get("line_style"))
+        kwargs.pop("ls", None)
+        ax.plot(
+            c=c,
+            ls=ls,
+            **kwargs,
+        )
         self.set_grid(ax)
 
     def plot_scatter(self, ax, **kwargs):
-        ax.scatter(**kwargs)
+        c = kwargs.get("c", self.scatter_defaults.get("color"))
+        kwargs.pop("c", None)
+        s = kwargs.get("s", self.scatter_defaults.get("size"))
+        kwargs.pop("s", None)
+        marker = kwargs.get("marker", self.scatter_defaults.get("marker"))
+        kwargs.pop("marker", None)
+        ax.scatter(
+            c=c,
+            s=s,
+            marker=marker,
+            **kwargs,
+        )
         self.set_grid(ax)
 
     def plot_pie(self, ax, **kwargs):
@@ -174,8 +183,9 @@ class DefaultStaticPlotting(BasePlotting):
 
 
 if __name__ == "__main__":
-    plotting = DefaultStaticPlotting()
-    plotting.get_subplots(figsize=(10, 6))
+    static = DefaultStaticPlotting()
+    fig, ax = static.get_subplots()
+    static.plot_line(ax, x=[1, 2, 3], y=[4, 5, 6])
 
 
 class DefaultInteractivePlotting(BasePlotting):

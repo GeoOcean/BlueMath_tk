@@ -3,6 +3,7 @@ from typing import List, Tuple, Callable
 import numpy as np
 import pandas as pd
 from scipy.optimize import fminbound, fmin
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from ._base_interpolation import BaseInterpolation
 from ..core.decorators import validate_data_rbf
 
@@ -768,10 +769,6 @@ class RBF(BaseInterpolation):
         - The number of threads to use for the optimization can be specified.
         """
 
-        if num_threads is not None:
-            self.set_num_processors_to_use(num_processors=num_threads)
-            self.logger.info(f"Using {num_threads} threads for optimization.")
-
         self._subset_directional_variables = subset_directional_variables
         self._target_directional_variables = target_directional_variables
         self._subset_custom_scale_factor = subset_custom_scale_factor
@@ -786,16 +783,41 @@ class RBF(BaseInterpolation):
         # RBF fitting for all variables
         rbf_coeffs, opt_sigmas = {}, {}
 
-        for target_var in target_data.columns:
-            self.logger.info(f"Fitting RBF for variable {target_var}")
-            target_var_values = target_data[target_var].values
-            rbf_coeff, opt_sigma = self._calc_opt_sigma(
-                target_variable=target_var_values,
-                subset_variables=subset_data.values.T,
-                iteratively_update_sigma=iteratively_update_sigma,
-            )
-            rbf_coeffs[target_var] = rbf_coeff.flatten()
-            opt_sigmas[target_var] = opt_sigma
+        if num_threads is not None:
+            # self.set_num_processors_to_use(num_processors=num_threads)
+            num_threads = min(num_threads, self.get_num_processors_available())
+            self.logger.info(f"Using {num_threads} threads for optimization.")
+            with ThreadPoolExecutor(max_workers=num_threads) as executor:
+                rbf_variable_calculation = {
+                    executor.submit(
+                        self._calc_opt_sigma,
+                        target_data[target_var].values,
+                        subset_data.values.T,
+                        iteratively_update_sigma,
+                    ): target_var
+                    for target_var in target_data.columns
+                }
+                for future in as_completed(rbf_variable_calculation):
+                    rbf_variable = rbf_variable_calculation[future]
+                    try:
+                        rbf_coeff, opt_sigma = future.result()
+                        rbf_coeffs[rbf_variable] = rbf_coeff.flatten()
+                        opt_sigmas[rbf_variable] = opt_sigma
+                    except Exception as exc:
+                        self.logger.error(
+                            f"Job for {rbf_variable} generated an exception: {exc}."
+                        )
+        else:
+            for target_var in target_data.columns:
+                self.logger.info(f"Fitting RBF for variable {target_var}")
+                target_var_values = target_data[target_var].values
+                rbf_coeff, opt_sigma = self._calc_opt_sigma(
+                    target_variable=target_var_values,
+                    subset_variables=subset_data.values.T,
+                    iteratively_update_sigma=iteratively_update_sigma,
+                )
+                rbf_coeffs[target_var] = rbf_coeff.flatten()
+                opt_sigmas[target_var] = opt_sigma
 
         # Store the RBF coefficients and optimal sigmas
         self._rbf_coeffs = pd.DataFrame(rbf_coeffs)

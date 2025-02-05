@@ -90,7 +90,9 @@ def validate_data_mda(func):
                 raise ValueError(
                     "First centroid seed must be an integer >= 0 and < num of data points"
                 )
-        return func(self, data, directional_variables, custom_scale_factor, first_centroid_seed)
+        return func(
+            self, data, directional_variables, custom_scale_factor, first_centroid_seed
+        )
 
     return wrapper
 
@@ -187,12 +189,11 @@ def validate_data_pca(func):
         vars_to_stack: List[str],
         coords_to_stack: List[str],
         pca_dim_for_rows: str,
-        window_in_pca_dim_for_rows: List[int] = [0],
-        value_to_replace_nans: float = None,
+        windows_in_pca_dim_for_rows: dict = {},
+        value_to_replace_nans: dict = {},
+        nan_threshold_to_drop: dict = {},
     ):
-        if data is None:
-            raise ValueError("Data cannot be None")
-        elif not isinstance(data, xr.Dataset):
+        if not isinstance(data, xr.Dataset):
             raise TypeError("Data must be an xarray Dataset")
         # Check that all vars_to_stack are in the data
         if not isinstance(vars_to_stack, list) or len(vars_to_stack) == 0:
@@ -224,25 +225,30 @@ def validate_data_pca(func):
             raise ValueError(
                 "PCA dimension for rows must be a string and found in the data dimensions"
             )
-        if window_in_pca_dim_for_rows is not None:
-            if (
-                not isinstance(window_in_pca_dim_for_rows, list)
-                or len(window_in_pca_dim_for_rows) == 0
-            ):
-                raise ValueError(
-                    "Window in PCA dimension for rows must be a non-empty list"
-                )
-        if value_to_replace_nans is not None:
-            if not isinstance(value_to_replace_nans, float):
-                raise ValueError("Value to replace NaNs must be float")
+        for variable, windows in windows_in_pca_dim_for_rows.items():
+            if variable not in vars_to_stack:
+                raise ValueError(f"Variable {variable} not found in vars_to_stack")
+            if not isinstance(windows, list):
+                raise TypeError("Windows must be a list")
+            if not all([isinstance(window, int) and window > 0 for window in windows]):
+                raise ValueError("Windows must be a list of integers > 0")
+        for variable, _ in value_to_replace_nans.items():
+            if variable not in vars_to_stack:
+                raise ValueError(f"Variable {variable} not found in vars_to_stack")
+        for variable, threshold in nan_threshold_to_drop.items():
+            if variable not in vars_to_stack:
+                raise ValueError(f"Variable {variable} not found in vars_to_stack")
+            if not isinstance(threshold, float) or threshold < 0 or threshold > 1:
+                raise ValueError("Threshold must be a float between 0 and 1")
         return func(
             self,
             data,
             vars_to_stack,
             coords_to_stack,
             pca_dim_for_rows,
-            window_in_pca_dim_for_rows,
+            windows_in_pca_dim_for_rows,
             value_to_replace_nans,
+            nan_threshold_to_drop,
         )
 
     return wrapper

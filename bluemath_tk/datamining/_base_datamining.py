@@ -94,8 +94,7 @@ class BaseSampling(BlueMathModel):
                     x=self.data[v1],
                     y=self.data[v2],
                     c=data_color,
-                    s=kwargs.get("s", default_static_plot.default_scatter_size),
-                    alpha=kwargs.get("alpha", 0.7),
+                    **kwargs,
                 )
                 if c1 == c2:
                     axes[c2, c1].set_xlabel(variables_names[c1 + 1])
@@ -245,8 +244,8 @@ class BaseClustering(BlueMathModel):
                     x=self.data[v1],
                     y=self.data[v2],
                     c=data_color,
-                    s=kwargs.get("s", default_static_plot.default_scatter_size),
-                    alpha=kwargs.get("alpha", 0.7),
+                    alpha=0.6,
+                    **kwargs,
                 )
                 if self.centroids is not None:
                     default_static_plot.plot_scatter(
@@ -254,16 +253,16 @@ class BaseClustering(BlueMathModel):
                         x=self.centroids[v1],
                         y=self.centroids[v2],
                         c=centroids_color,
-                        s=kwargs.get("s", default_static_plot.default_scatter_size),
-                        alpha=kwargs.get("alpha", 0.9),
+                        alpha=0.9,
+                        **kwargs,
                     )
                     for i in range(self.centroids.shape[0]):
                         axes[c2, c1].text(
                             self.centroids[v1][i],
                             self.centroids[v2][i],
                             str(i + 1),
-                            fontsize=kwargs.get("fontsize", 12),
-                            fontweight=kwargs.get("fontweight", "bold"),
+                            fontsize=12,
+                            fontweight="bold",
                         )
                 if c1 == c2:
                     axes[c2, c1].set_xlabel(variables_names[c1 + 1])
@@ -336,8 +335,8 @@ class BaseClustering(BlueMathModel):
                     x=data[v1],
                     y=data[v2],
                     c=nearest_centroids_colors,
-                    s=kwargs.get("s", default_static_plot.default_scatter_size),
-                    alpha=kwargs.get("alpha", 0.7),
+                    alpha=0.9,
+                    **kwargs,
                 )
                 if c1 == c2:
                     axes[c2, c1].set_xlabel(variables_names[c1 + 1])
