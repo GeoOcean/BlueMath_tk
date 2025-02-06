@@ -41,6 +41,9 @@ dependencies = [
     "requests",
     "aiohttp",
     "minisom",
+    "statsmodels",
+    "regionmask",
+    "wavespectra",
 ]
 
 [project.optional-dependencies]

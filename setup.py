@@ -35,6 +35,9 @@ setup(
         "requests",
         "aiohttp",
         "minisom",
+        "statsmodels",
+        "regionmask",
+        "wavespectra",
     ],
     classifiers=["Programming Language :: Python :: 3.11"],
     python_requires=">=3.11",  # Specify the Python version required
