@@ -121,7 +121,7 @@ class BlueMathModel(ABC):
     def check_nans(
         self,
         data: Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset],
-        replace_value=None,
+        replace_value: Union[float, callable] = None,
         raise_error: bool = False,
     ) -> Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset]:
         """
@@ -131,8 +131,10 @@ class BlueMathModel(ABC):
         ----------
         data : np.ndarray, pd.Series, pd.DataFrame, xr.DataArray or xr.Dataset
             The data to check for NaNs.
-        replace_value : any, optional
+        replace_value : float or callable, optional
             The value to replace NaNs with. If None, NaNs will not be replaced.
+            If a callable is provided, it will be called and the result will be returned.
+            Default is None.
         raise_error : bool, optional
             Whether to raise an error if NaNs are found. Default is False.
 
@@ -150,13 +152,12 @@ class BlueMathModel(ABC):
         -----
         - This method is intended to be used in classes that inherit from the BlueMathModel class.
         - The method checks for NaNs in the data and optionally replaces them with the specified value.
-
-        TODO
-        ----
-        - Add support for Dask arrays and DataFrames.
-        - Add interpolation, moving average, or other methods to replace NaNs.
         """
 
+        # If replace_value is a callable, just call and return it
+        if callable(replace_value):
+            self.logger.debug(f"Replace value is a callable. Calling {replace_value}.")
+            return replace_value(data)
         if isinstance(data, np.ndarray):
             if np.isnan(data).any():
                 if raise_error:

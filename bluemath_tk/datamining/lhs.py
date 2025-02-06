@@ -1,8 +1,10 @@
-import pandas as pd
 from typing import List
+
+import pandas as pd
 from scipy.stats import qmc
-from ._base_datamining import BaseSampling
+
 from ..core.decorators import validate_data_lhs
+from ._base_datamining import BaseSampling
 
 
 class LHSError(Exception):

@@ -1,14 +1,16 @@
-import os
 import copy
 import itertools
-from typing import List, Union
+import os
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List, Union
+
 import numpy as np
 import xarray as xr
 from jinja2 import Environment, FileSystemLoader
-from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from ..core.models import BlueMathModel
-from ._utils_wrappers import write_array_in_file, copy_files
+from ._utils_wrappers import copy_files, write_array_in_file
 
 
 class BaseModelWrapper(BlueMathModel):

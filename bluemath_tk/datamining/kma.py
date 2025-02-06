@@ -1,9 +1,11 @@
+from typing import List, Tuple
+
 import numpy as np
 import pandas as pd
-from typing import List, Tuple
 from sklearn.cluster import KMeans
-from ._base_datamining import BaseClustering
+
 from ..core.decorators import validate_data_kma
+from ._base_datamining import BaseClustering
 
 
 class KMAError(Exception):
