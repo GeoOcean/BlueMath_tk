@@ -34,7 +34,7 @@ class BlueMathModel(ABC):
     @abstractmethod
     def __init__(self) -> None:
         self._logger: logging.Logger = None
-        self._exclude_attributes: List[str] = ["_logger"]
+        self._exclude_attributes: List[str] = []
 
     def __getstate__(self):
         """Exclude certain attributes from being pickled."""

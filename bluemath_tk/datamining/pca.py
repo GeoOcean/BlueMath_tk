@@ -482,13 +482,7 @@ class PCA(BaseReduction):
             )
         }
 
-        return xr.Dataset(
-            X_reshaped_vars_dict,
-            coords={
-                self.pca_dim_for_rows: self.data[self.pca_dim_for_rows],
-                **{coord: self.data[coord] for coord in self.coords_to_stack},
-            },
-        )
+        return X_reshaped_vars_dict
 
     @validate_data_pca
     def fit(
@@ -671,7 +665,15 @@ class PCA(BaseReduction):
 
         self.logger.info("Inverse transforming data using PCA model")
         X_transformed = self.pca.inverse_transform(X=X)
-        data_transformed = self._reshape_data(X=X_transformed, destandarize=True)
+        data_reshaped_vars_dict = self._reshape_data(X=X_transformed, destandarize=True)
+        # Create xarray Dataset with the transformed data
+        data_transformed = xr.Dataset(
+            data_reshaped_vars_dict,
+            coords={
+                self.pca_dim_for_rows: PCs[self.pca_dim_for_rows].values,
+                **{coord: self.data[coord] for coord in self.coords_to_stack},
+            },
+        )
         # Transpose dimensions based on the original data
         data_transformed = data_transformed.transpose(*self.data.dims)
 
