@@ -669,7 +669,54 @@ class RBF(BaseInterpolation):
 
         return rbf_coeff, opt_sigma
 
-    def _rbf_interpolate(self, dataset: pd.DataFrame) -> pd.DataFrame:
+    def _rbf_variable_interpolation(
+        self,
+        normalized_dataset: pd.DataFrame,
+        opt_sigma: float,
+        rbf_coeff: np.ndarray,
+        num_points_subset: int,
+        num_vars_subset: int,
+    ) -> np.ndarray:
+        """
+        Interpolates the surface for a variable.
+
+        normalized_dataset : pd.DataFrame
+            The normalized dataset.
+        opt_sigma : float
+            The optimal sigma calculated for variable.
+        rbf_coeff : np.ndarray
+            The fitted coefficients for variable.
+        num_points_subset : int
+            The number of points used in the fitting.
+        num_vars_subset : int
+            The number of variables used in the fitting.
+
+        np.ndarray
+            The interpolated variable.
+        """
+
+        r = np.linalg.norm(
+            normalized_dataset.values[:, np.newaxis, :]
+            - self.normalized_subset_data.values[np.newaxis, :, :],
+            axis=2,
+        )
+        kernel_values = self.kernel_func(r, opt_sigma)
+        linear_part = np.dot(
+            normalized_dataset.values,
+            rbf_coeff[
+                num_points_subset + 1 : num_points_subset + 1 + num_vars_subset
+            ].T,
+        )
+
+        return (
+            rbf_coeff[num_points_subset]
+            + np.dot(kernel_values, rbf_coeff[:num_points_subset])
+            + linear_part
+        )
+
+    def _rbf_interpolate(
+        self, dataset: pd.DataFrame, num_threads: int = None
+    ) -> pd.DataFrame:
         """
         This function interpolates the dataset.
 
@@ -677,6 +724,8 @@ class RBF(BaseInterpolation):
         ----------
         dataset : pd.DataFrame
             The dataset to interpolate (must have same variables as subset).
+        num_threads : int, optional
+            The number of threads to use for the interpolation. Default is None.
 
         Returns
         -------
@@ -698,28 +747,42 @@ class RBF(BaseInterpolation):
         )
 
         # Loop through the target variables
-        for i_var, target_var in enumerate(self.target_processed_variables):
-            self.logger.info(f"Interpolating target variable {target_var}")
-            rbf_coeff = self._rbf_coeffs[target_var].values
-            opt_sigma = self._opt_sigmas[target_var]
-            r = np.linalg.norm(
-                normalized_dataset.values[:, np.newaxis, :]
-                - self.normalized_subset_data.values[np.newaxis, :, :],
-                axis=2,
-            )
-            kernel_values = self.kernel_func(r, opt_sigma)
-            linear_part = np.dot(
-                normalized_dataset.values,
-                rbf_coeff[
-                    num_points_subset + 1 : num_points_subset + 1 + num_vars_subset
-                ].T,
-            )
-            s = (
-                rbf_coeff[num_points_subset]
-                + np.dot(kernel_values, rbf_coeff[:num_points_subset])
-                + linear_part
-            )
-            interpolated_array[:, i_var] = s
+        if num_threads is not None:
+            # self.set_num_processors_to_use(num_processors=num_threads)
+            num_threads = min(num_threads, self.get_num_processors_available())
+            self.logger.info(f"Using {num_threads} threads for interpolation.")
+            with ThreadPoolExecutor(max_workers=num_threads) as executor:
+                rbf_variable_calculation = {
+                    executor.submit(
+                        self._rbf_variable_interpolation,
+                        normalized_dataset,
+                        self._opt_sigmas[target_var],
+                        self._rbf_coeffs[target_var].values,
+                        num_points_subset,
+                        num_vars_subset,
+                    ): (i_var, target_var)
+                    for i_var, target_var in enumerate(self.target_processed_variables)
+                }
+                for future in as_completed(rbf_variable_calculation):
+                    i_rbf_var, rbf_variable = rbf_variable_calculation[future]
+                    try:
+                        interpolated_var = future.result()
+                        interpolated_array[:, i_rbf_var] = interpolated_array
+                    except Exception as exc:
+                        self.logger.error(
+                            f"Job for {rbf_variable} generated an exception: {exc}."
+                        )
+        else:
+            for i_var, target_var in enumerate(self.target_processed_variables):
+                self.logger.info(f"Interpolating target variable {target_var}")
+                interpolated_var = self._rbf_variable_interpolation(
+                    normalized_dataset=normalized_dataset,
+                    opt_sigma=self._opt_sigmas[target_var],
+                    rbf_coeff=self._rbf_coeffs[target_var].values,
+                    num_points_subset=num_points_subset,
+                    num_vars_subset=num_vars_subset,
+                )
+                interpolated_array[:, i_var] = interpolated_var
 
         return pd.DataFrame(interpolated_array, columns=self.target_processed_variables)
 
@@ -826,7 +889,7 @@ class RBF(BaseInterpolation):
         # Set the is_fitted attribute to True
         self.is_fitted = True
 
-    def predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
+    def predict(self, dataset: pd.DataFrame, num_threads: int = None) -> pd.DataFrame:
         """
         Predicts the data for the provided dataset.
 
@@ -834,6 +897,8 @@ class RBF(BaseInterpolation):
         ----------
         dataset : pd.DataFrame
             The dataset to predict (must have same variables than subset).
+        num_threads : int, optional
+            The number of threads to use for the interpolation. Default is None.
 
         Returns
         -------
@@ -857,7 +922,9 @@ class RBF(BaseInterpolation):
             raise RBFError("RBF model must be fitted before predicting.")
 
         self.logger.info("Reconstructing data using fitted coefficients.")
-        interpolated_target = self._rbf_interpolate(dataset=dataset)
+        interpolated_target = self._rbf_interpolate(
+            dataset=dataset, num_threads=num_threads
+        )
         if self.is_target_normalized:
             self.logger.info("Denormalizing target data")
             interpolated_target = self.denormalize(
@@ -870,6 +937,7 @@ class RBF(BaseInterpolation):
                 xu=interpolated_target[f"{directional_variable}_u"].values,
                 xv=interpolated_target[f"{directional_variable}_v"].values,
             )
+
         return interpolated_target
 
     def fit_predict(
@@ -933,4 +1001,4 @@ class RBF(BaseInterpolation):
             iteratively_update_sigma=iteratively_update_sigma,
         )
 
-        return self.predict(dataset=dataset)
+        return self.predict(dataset=dataset, num_threads=num_threads)

@@ -34,18 +34,20 @@ class PCA(BaseReduction):
         The PCA or Incremental PCA model.
     is_fitted : bool
         Indicates whether the PCA model has been fitted.
-    _data : xr.Dataset
+    data : xr.Dataset
         The original dataset.
-    _postprocessed_data : xr.Dataset
-        The postprocessed dataset.
-    _stacked_data_matrix : np.ndarray
+    window_processed_data : xr.Dataset
+        The windows processed dataset.
+    stacked_data_matrix : np.ndarray
         The stacked data matrix.
-    _standarized_stacked_data_matrix : np.ndarray
+    standarized_stacked_data_matrix : np.ndarray
         The standardized stacked data matrix.
     scaler : StandardScaler
         The scaler used for standardizing the data.
     vars_to_stack : List[str]
         The list of variables to stack.
+    window_stacked_vars : List[str]
+        The list of variables with windows.
     coords_to_stack : List[str]
         The list of coordinates to stack.
     pca_dim_for_rows : str
@@ -93,12 +95,19 @@ class PCA(BaseReduction):
     >>> from bluemath_tk.core.data.sample_data import get_2d_dataset
     >>> from bluemath_tk.datamining.pca import PCA
     >>> ds = get_2d_dataset()
-    >>> pca = PCA(n_components=5)
+    >>> pca = PCA(
+    ...     n_components=5,
+    ...     is_incremental=False,
+    ...     debug=True,
+    ... )
     >>> pca.fit(
     ...     data=ds,
     ...     vars_to_stack=["X", "Y"],
     ...     coords_to_stack=["coord1", "coord2"],
     ...     pca_dim_for_rows="coord3",
+    ...     windows_in_pca_dim_for_rows={"X": [1, 2, 3]},
+    ...     value_to_replace_nans={"X": 0.0},
+    ...     nan_threshold_to_drop={"X": 0.95},
     ... )
     >>> pcs = pca.transform(
     ...     data=ds,
@@ -108,6 +117,8 @@ class PCA(BaseReduction):
     >>> explained_variance = pca.explained_variance
     >>> explained_variance_ratio = pca.explained_variance_ratio
     >>> cumulative_explained_variance_ratio = pca.cumulative_explained_variance_ratio
+    >>> # Save the full class in a pickle file
+    >>> pca.save_model("pca_model.pkl")
 
     References
     ----------
@@ -260,18 +271,31 @@ class PCA(BaseReduction):
         cleaned_vars_to_stack = []
         for var_to_clean in self.window_stacked_vars:
             var_to_clean_values = tmp_stacked_data[var_to_clean].values
+            # Drop variables with more than 90% of NaNs if not specified
+            var_to_clean_threshold = self.nan_threshold_to_drop.get(
+                var_to_clean,
+                self.nan_threshold_to_drop.get(
+                    var_to_clean[:-2],
+                    self.nan_threshold_to_drop.get(var_to_clean[:-3], 0.90),
+                ),
+            )
             not_nan_positions = np.where(
-                np.mean(np.isnan(var_to_clean_values), axis=0)
-                < self.nan_threshold_to_drop.get(
-                    var_to_clean, 0.05
-                )  # TODO: Add to docstring
+                np.mean(~np.isnan(var_to_clean_values), axis=0) > var_to_clean_threshold
             )[0]
+            # Replace NaNs with the value specified in value_to_replace_nans
+            # If not specified, try to get the value from the variable name, deleting window suffixes
+            var_value_to_replace_nans = self.value_to_replace_nans.get(
+                var_to_clean,
+                self.value_to_replace_nans.get(
+                    var_to_clean[:-2], self.value_to_replace_nans.get(var_to_clean[:-3])
+                ),
+            )
             self.logger.debug(
-                f"Replacing NaNs for variable: {var_to_clean} with value: {self.value_to_replace_nans.get(var_to_clean)}"
+                f"Replacing NaNs for variable: {var_to_clean} with value: {var_value_to_replace_nans}"
             )
             cleaned_var = self.check_nans(
                 data=var_to_clean_values[:, not_nan_positions],
-                replace_value=self.value_to_replace_nans.get(var_to_clean),
+                replace_value=var_value_to_replace_nans,
             )
             cleaned_vars_to_stack.append(cleaned_var)
             self.not_nan_positions[var_to_clean] = not_nan_positions
@@ -496,8 +520,15 @@ class PCA(BaseReduction):
             The value to replace NaNs for each variable. Default is {}.
         nan_threshold_to_drop : dict, optional
             The threshold percentage to drop NaNs for each variable.
-            By default, variables with more than 95% of NaNs are dropped.
+            By default, variables with more than 90% of NaNs are dropped.
             Default is {}.
+
+        Notes
+        -----
+        For both value_to_replace_nans and nan_threshold_to_drop, the keys are the variables,
+        and the suffixes for the windows are considered.
+        Example: if you have variable "X", and apply windows [1, 2, 3], you can use "X_1", "X_2", "X_3".
+        Nevertheless, you can also use the original variable name "X" to apply the same value for all windows.
         """
 
         self.vars_to_stack = vars_to_stack.copy()
@@ -585,13 +616,20 @@ class PCA(BaseReduction):
             The value to replace NaNs for each variable. Default is {}.
         nan_threshold_to_drop : dict, optional
             The threshold percentage to drop NaNs for each variable.
-            By default, variables with more than 95% of NaNs are dropped.
+            By default, variables with more than 90% of NaNs are dropped.
             Default is {}.
 
         Returns
         -------
         xr.Dataset
-            The transformed data.
+            The transformed data representing the Principal Components (PCs).
+
+        Notes
+        -----
+        For both value_to_replace_nans and nan_threshold_to_drop, the keys are the variables,
+        and the suffixes for the windows are considered.
+        Example: if you have variable "X", and apply windows [1, 2, 3], you can use "X_1", "X_2", "X_3".
+        Nevertheless, you can also use the original variable name "X" to apply the same value for all windows.
         """
 
         self.fit(
@@ -626,6 +664,8 @@ class PCA(BaseReduction):
 
         if isinstance(PCs, xr.Dataset):
             X = PCs["PCs"].values
+        elif isinstance(PCs, xr.DataArray):
+            X = PCs.values
         elif isinstance(PCs, np.ndarray):
             X = PCs
 

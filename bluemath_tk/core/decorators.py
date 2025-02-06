@@ -226,18 +226,11 @@ def validate_data_pca(func):
                 "PCA dimension for rows must be a string and found in the data dimensions"
             )
         for variable, windows in windows_in_pca_dim_for_rows.items():
-            if variable not in vars_to_stack:
-                raise ValueError(f"Variable {variable} not found in vars_to_stack")
             if not isinstance(windows, list):
                 raise TypeError("Windows must be a list")
             if not all([isinstance(window, int) and window > 0 for window in windows]):
                 raise ValueError("Windows must be a list of integers > 0")
-        for variable, _ in value_to_replace_nans.items():
-            if variable not in vars_to_stack:
-                raise ValueError(f"Variable {variable} not found in vars_to_stack")
         for variable, threshold in nan_threshold_to_drop.items():
-            if variable not in vars_to_stack:
-                raise ValueError(f"Variable {variable} not found in vars_to_stack")
             if not isinstance(threshold, float) or threshold < 0 or threshold > 1:
                 raise ValueError("Threshold must be a float between 0 and 1")
         return func(

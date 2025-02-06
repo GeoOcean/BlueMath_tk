@@ -29,6 +29,7 @@ class TestRBF(unittest.TestCase):
             target_data=self.target,
             target_directional_variables=["DirPred"],
             normalize_target_data=True,
+            num_threads=4,
         )
         self.assertTrue(self.rbf.is_fitted)
         self.assertTrue(self.rbf.is_target_normalized)
