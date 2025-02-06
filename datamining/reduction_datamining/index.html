@@ -173,7 +173,7 @@
             </li>
             <li>
               <b><code>_pca</code></b>
-                  (<code><span title="sklearn.decomposition.PCA">PCA</span> or <span title="sklearn.decomposition.IncrementalPCA">IncrementalPCA</span></code>)
+                  (<code><span title="typing.Union">Union</span>[<span title="sklearn.decomposition.PCA">PCA</span>, <span title="sklearn.decomposition.IncrementalPCA">IncrementalPCA</span>]</code>)
               –
               <div class="doc-md-description">
                 <p>The PCA or Incremental PCA model.</p>
@@ -188,7 +188,7 @@
               </div>
             </li>
             <li>
-              <b><code>_data</code></b>
+              <b><code>data</code></b>
                   (<code><span title="xarray.Dataset">Dataset</span></code>)
               –
               <div class="doc-md-description">
@@ -196,7 +196,15 @@
               </div>
             </li>
             <li>
-              <b><code>_stacked_data_matrix</code></b>
+              <b><code>window_processed_data</code></b>
+                  (<code><span title="xarray.Dataset">Dataset</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The windows processed dataset.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>stacked_data_matrix</code></b>
                   (<code><span title="numpy.ndarray">ndarray</span></code>)
               –
               <div class="doc-md-description">
@@ -204,7 +212,7 @@
               </div>
             </li>
             <li>
-              <b><code>_standarized_stacked_data_matrix</code></b>
+              <b><code>standarized_stacked_data_matrix</code></b>
                   (<code><span title="numpy.ndarray">ndarray</span></code>)
               –
               <div class="doc-md-description">
@@ -221,15 +229,23 @@
             </li>
             <li>
               <b><code>vars_to_stack</code></b>
-                  (<code>list of str</code>)
+                  (<code><span title="typing.List">List</span>[str]</code>)
               –
               <div class="doc-md-description">
                 <p>The list of variables to stack.</p>
               </div>
             </li>
             <li>
+              <b><code>window_stacked_vars</code></b>
+                  (<code><span title="typing.List">List</span>[str]</code>)
+              –
+              <div class="doc-md-description">
+                <p>The list of variables with windows.</p>
+              </div>
+            </li>
+            <li>
               <b><code>coords_to_stack</code></b>
-                  (<code>list of str</code>)
+                  (<code><span title="typing.List">List</span>[str]</code>)
               –
               <div class="doc-md-description">
                 <p>The list of coordinates to stack.</p>
@@ -244,19 +260,27 @@
               </div>
             </li>
             <li>
-              <b><code>window_in_pca_dim_for_rows</code></b>
-                  (<code>list of int</code>)
+              <b><code>windows_in_pca_dim_for_rows</code></b>
+                  (<code>dict</code>)
               –
               <div class="doc-md-description">
-                <p>The window in PCA dimension for rows.</p>
+                <p>The windows in PCA dimension for rows.</p>
               </div>
             </li>
             <li>
               <b><code>value_to_replace_nans</code></b>
-                  (<code>float</code>)
+                  (<code>dict</code>)
               –
               <div class="doc-md-description">
-                <p>The value to replace NaNs in the dataset.</p>
+                <p>The values to replace NaNs in the dataset.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>nan_threshold_to_drop</code></b>
+                  (<code>dict</code>)
+              –
+              <div class="doc-md-description">
+                <p>The threshold percentage to drop NaNs for each variable.</p>
               </div>
             </li>
             <li>
@@ -265,6 +289,14 @@
               –
               <div class="doc-md-description">
                 <p>The number of columns for variables.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>pcs</code></b>
+                  (<code><span title="xarray.Dataset">Dataset</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The Principal Components (PCs).</p>
               </div>
             </li>
             <li>
@@ -386,21 +418,30 @@
     <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">bluemath_tk.core.data.sample_data</span> <span class="kn">import</span> <span class="n">get_2d_dataset</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">bluemath_tk.datamining.pca</span> <span class="kn">import</span> <span class="n">PCA</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">get_2d_dataset</span><span class="p">()</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pca</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">ds</span><span class="p">,</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">... </span>    <span class="n">vars_to_stack</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">],</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">... </span>    <span class="n">coords_to_stack</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;coord1&quot;</span><span class="p">,</span> <span class="s2">&quot;coord2&quot;</span><span class="p">],</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="gp">... </span>    <span class="n">pca_dim_for_rows</span><span class="o">=</span><span class="s2">&quot;coord3&quot;</span><span class="p">,</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="gp">... </span><span class="p">)</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pcs</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">ds</span><span class="p">,</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="gp">... </span><span class="p">)</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">reconstructed_ds</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">PCs</span><span class="o">=</span><span class="n">pcs</span><span class="p">)</span>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">eofs</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">eofs</span>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">explained_variance</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">explained_variance</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">explained_variance_ratio</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">explained_variance_ratio</span>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">cumulative_explained_variance_ratio</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">cumulative_explained_variance_ratio</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">... </span>    <span class="n">n_components</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">... </span>    <span class="n">is_incremental</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">... </span>    <span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">... </span><span class="p">)</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pca</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">ds</span><span class="p">,</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="gp">... </span>    <span class="n">vars_to_stack</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">],</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="gp">... </span>    <span class="n">coords_to_stack</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;coord1&quot;</span><span class="p">,</span> <span class="s2">&quot;coord2&quot;</span><span class="p">],</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="gp">... </span>    <span class="n">pca_dim_for_rows</span><span class="o">=</span><span class="s2">&quot;coord3&quot;</span><span class="p">,</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="gp">... </span>    <span class="n">windows_in_pca_dim_for_rows</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;X&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]},</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="gp">... </span>    <span class="n">value_to_replace_nans</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;X&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="gp">... </span>    <span class="n">nan_threshold_to_drop</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;X&quot;</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">},</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="gp">... </span><span class="p">)</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pcs</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">ds</span><span class="p">,</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="gp">... </span><span class="p">)</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">reconstructed_ds</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">PCs</span><span class="o">=</span><span class="n">pcs</span><span class="p">)</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">eofs</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">eofs</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">explained_variance</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">explained_variance</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">explained_variance_ratio</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">explained_variance_ratio</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">cumulative_explained_variance_ratio</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">cumulative_explained_variance_ratio</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Save the full class in a pickle file</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">pca</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="s2">&quot;pca_model.pkl&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 
 
@@ -432,7 +473,7 @@
 
 
 <h3 id="bluemath_tk.datamining.pca.PCA.__init__" class="doc doc-heading">
-            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mf">0.98</span><span class="p">,</span> <span class="n">is_incremental</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mf">0.98</span><span class="p">,</span> <span class="n">is_incremental</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
@@ -472,6 +513,16 @@ n_components &gt;= 1, it represents the number of components to keep. Default is
               –
               <div class="doc-md-description">
                 <p>If True, use Incremental PCA which is useful for large datasets. Default is False.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>debug</code></b>
+                  (<code>bool</code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>If True, enable debug mode. Default is False.</p>
               </div>
             </li>
         </ul>
@@ -517,7 +568,7 @@ n_components &gt;= 1, it represents the number of components to keep. Default is
 
 
 <h3 id="bluemath_tk.datamining.pca.PCA.fit" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">vars_to_stack</span><span class="p">,</span> <span class="n">coords_to_stack</span><span class="p">,</span> <span class="n">pca_dim_for_rows</span><span class="p">,</span> <span class="n">window_in_pca_dim_for_rows</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">value_to_replace_nans</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">vars_to_stack</span><span class="p">,</span> <span class="n">coords_to_stack</span><span class="p">,</span> <span class="n">pca_dim_for_rows</span><span class="p">,</span> <span class="n">windows_in_pca_dim_for_rows</span><span class="o">=</span><span class="p">{},</span> <span class="n">value_to_replace_nans</span><span class="o">=</span><span class="p">{},</span> <span class="n">nan_threshold_to_drop</span><span class="o">=</span><span class="p">{})</span></code>
 
 </h3>
 
@@ -570,23 +621,35 @@ n_components &gt;= 1, it represents the number of components to keep. Default is
               </div>
             </li>
             <li>
-              <b><code>window_in_pca_dim_for_rows</code></b>
-                  (<code>list of int</code>, default:
-                      <code>[0]</code>
+              <b><code>windows_in_pca_dim_for_rows</code></b>
+                  (<code>dict</code>, default:
+                      <code>{}</code>
 )
               –
               <div class="doc-md-description">
-                <p>The window steps to roll the pca_dim_for_rows. Default is [0].</p>
+                <p>The window steps to roll the pca_dim_for_rows for each variable. Default is {}.</p>
               </div>
             </li>
             <li>
               <b><code>value_to_replace_nans</code></b>
-                  (<code>float</code>, default:
-                      <code>None</code>
+                  (<code>dict</code>, default:
+                      <code>{}</code>
 )
               –
               <div class="doc-md-description">
-                <p>The value to replace NaNs. Default is None.</p>
+                <p>The value to replace NaNs for each variable. Default is {}.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>nan_threshold_to_drop</code></b>
+                  (<code>dict</code>, default:
+                      <code>{}</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The threshold percentage to drop NaNs for each variable.
+By default, variables with more than 90% of NaNs are dropped.
+Default is {}.</p>
               </div>
             </li>
         </ul>
@@ -594,6 +657,14 @@ n_components &gt;= 1, it represents the number of components to keep. Default is
     </tr>
   </tbody>
 </table>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>For both value_to_replace_nans and nan_threshold_to_drop, the keys are the variables,
+and the suffixes for the windows are considered.
+Example: if you have variable "X", and apply windows [1, 2, 3], you can use "X_1", "X_2", "X_3".
+Nevertheless, you can also use the original variable name "X" to apply the same value for all windows.</p>
+</details>
     </div>
 
 </div>
@@ -602,7 +673,7 @@ n_components &gt;= 1, it represents the number of components to keep. Default is
 
 
 <h3 id="bluemath_tk.datamining.pca.PCA.fit_transform" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">vars_to_stack</span><span class="p">,</span> <span class="n">coords_to_stack</span><span class="p">,</span> <span class="n">pca_dim_for_rows</span><span class="p">,</span> <span class="n">window_in_pca_dim_for_rows</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">value_to_replace_nans</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">fit_transform</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">vars_to_stack</span><span class="p">,</span> <span class="n">coords_to_stack</span><span class="p">,</span> <span class="n">pca_dim_for_rows</span><span class="p">,</span> <span class="n">windows_in_pca_dim_for_rows</span><span class="o">=</span><span class="p">{},</span> <span class="n">value_to_replace_nans</span><span class="o">=</span><span class="p">{},</span> <span class="n">nan_threshold_to_drop</span><span class="o">=</span><span class="p">{})</span></code>
 
 </h3>
 
@@ -655,23 +726,35 @@ n_components &gt;= 1, it represents the number of components to keep. Default is
               </div>
             </li>
             <li>
-              <b><code>window_in_pca_dim_for_rows</code></b>
-                  (<code>list of int</code>, default:
-                      <code>[0]</code>
+              <b><code>windows_in_pca_dim_for_rows</code></b>
+                  (<code>dict</code>, default:
+                      <code>{}</code>
 )
               –
               <div class="doc-md-description">
-                <p>The window steps to roll the pca_dim_for_rows. Default is [0].</p>
+                <p>The window steps to roll the pca_dim_for_rows for each variable. Default is {}.</p>
               </div>
             </li>
             <li>
               <b><code>value_to_replace_nans</code></b>
-                  (<code>float</code>, default:
-                      <code>None</code>
+                  (<code>dict</code>, default:
+                      <code>{}</code>
 )
               –
               <div class="doc-md-description">
-                <p>The value to replace NaNs. Default is None.</p>
+                <p>The value to replace NaNs for each variable. Default is {}.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>nan_threshold_to_drop</code></b>
+                  (<code>dict</code>, default:
+                      <code>{}</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The threshold percentage to drop NaNs for each variable.
+By default, variables with more than 90% of NaNs are dropped.
+Default is {}.</p>
               </div>
             </li>
         </ul>
@@ -694,7 +777,7 @@ n_components &gt;= 1, it represents the number of components to keep. Default is
                   <code><span title="xarray.Dataset">Dataset</span></code>
               –
               <div class="doc-md-description">
-                <p>The transformed data.</p>
+                <p>The transformed data representing the Principal Components (PCs).</p>
               </div>
             </li>
         </ul>
@@ -702,6 +785,14 @@ n_components &gt;= 1, it represents the number of components to keep. Default is
     </tr>
   </tbody>
 </table>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>For both value_to_replace_nans and nan_threshold_to_drop, the keys are the variables,
+and the suffixes for the windows are considered.
+Example: if you have variable "X", and apply windows [1, 2, 3], you can use "X_1", "X_2", "X_3".
+Nevertheless, you can also use the original variable name "X" to apply the same value for all windows.</p>
+</details>
     </div>
 
 </div>

@@ -762,7 +762,7 @@ If the smooth is not a positive float.</p>
 
 
 <h3 id="bluemath_tk.interpolation.rbf.RBF.predict" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">predict</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">predict</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">num_threads</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -788,6 +788,16 @@ If the smooth is not a positive float.</p>
               –
               <div class="doc-md-description">
                 <p>The dataset to predict (must have same variables than subset).</p>
+              </div>
+            </li>
+            <li>
+              <b><code>num_threads</code></b>
+                  (<code>int</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The number of threads to use for the interpolation. Default is None.</p>
               </div>
             </li>
         </ul>
