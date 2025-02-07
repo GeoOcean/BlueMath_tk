@@ -1,5 +1,6 @@
 import logging
-from typing import Union, Tuple
+from typing import Tuple, Union
+
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -206,7 +207,7 @@ def standarize(
     scaler: StandardScaler = None,
 ) -> Tuple[Union[np.ndarray, pd.DataFrame, xr.Dataset], StandardScaler]:
     """
-    Standarize data to have mean 0 and variance 1
+    Standarize data to have mean 0 and std 1.
 
     Parameters
     ----------

@@ -5,6 +5,7 @@ import xarray as xr
 from sklearn.decomposition import PCA as PCA_
 from sklearn.decomposition import IncrementalPCA as IncrementalPCA_
 from sklearn.preprocessing import StandardScaler
+import cartopy.crs as ccrs
 
 from ..core.decorators import validate_data_pca
 from ._base_datamining import BaseReduction
@@ -30,26 +31,29 @@ class PCA(BaseReduction):
         The number of components or the explained variance ratio.
     is_incremental : bool
         Indicates whether Incremental PCA is used.
-    _pca : Union[PCA_, IncrementalPCA_]
+    pca : Union[PCA_, IncrementalPCA_]
         The PCA or Incremental PCA model.
     is_fitted : bool
         Indicates whether the PCA model has been fitted.
     data : xr.Dataset
-        The original dataset.
+        The original dataset used in fitting.
     window_processed_data : xr.Dataset
-        The windows processed dataset.
+        The windows processed dataset used in fitting. Windows refer to the rolling
+        windows in the PCA row dimension.
     stacked_data_matrix : np.ndarray
         The stacked data matrix.
     standarized_stacked_data_matrix : np.ndarray
-        The standardized stacked data matrix.
+        The standardized stacked data matrix, in case the data is standardized.
     scaler : StandardScaler
-        The scaler used for standardizing the data.
+        The scaler used for standardizing the data, in case the data is standardized.
     vars_to_stack : List[str]
         The list of variables to stack.
     window_stacked_vars : List[str]
         The list of variables with windows.
     coords_to_stack : List[str]
         The list of coordinates to stack.
+    coords_values : dict
+        The values of the data coordinates used in fitting.
     pca_dim_for_rows : str
         The dimension for rows in PCA.
     windows_in_pca_dim_for_rows : dict
@@ -64,6 +68,7 @@ class PCA(BaseReduction):
         The Principal Components (PCs).
     eofs : xr.Dataset
         The Empirical Orthogonal Functions (EOFs).
+        If destandarized EOFs are needed, call self._reshape_EOFs(destandarize=True).
     explained_variance : np.ndarray
         The explained variance.
     explained_variance_ratio : np.ndarray
@@ -196,13 +201,22 @@ class PCA(BaseReduction):
         self.vars_to_stack: List[str] = []
         self.window_stacked_vars: List[str] = []
         self.coords_to_stack: List[str] = []
+        self.coords_values: dict = {}
         self.pca_dim_for_rows: str = None
         self.windows_in_pca_dim_for_rows: dict = {}
         self.value_to_replace_nans: dict = {}
         self.nan_threshold_to_drop: dict = {}
         self.not_nan_positions: dict = {}
         self.num_cols_for_vars: int = None
-        self.pcs: xr.Dataset = xr.Dataset()
+        self.pcs: xr.Dataset = None
+
+        # Exclude attributes from beign saved with pca.save_model()
+        self._exclude_attributes = [
+            # "_data",
+            "_window_processed_data",
+            # "_stacked_data_matrix",
+            # "_standarized_stacked_data_matrix",
+        ]
 
     @property
     def pca(self) -> Union[PCA_, IncrementalPCA_]:
@@ -309,7 +323,9 @@ class PCA(BaseReduction):
 
         return stacked_data_matrix
 
-    def _preprocess_data(self, data: xr.Dataset, is_fit: bool = True) -> np.ndarray:
+    def _preprocess_data(
+        self, data: xr.Dataset, is_fit: bool = True, scale_data: bool = True
+    ) -> np.ndarray:
         """
         Preprocess data for PCA. Steps:
         - Add windows in PCA dimension for rows.
@@ -322,6 +338,8 @@ class PCA(BaseReduction):
             The data to preprocess.
         is_fit : bool, optional
             If True, set the data. Default is True.
+        scale_data : bool, optional
+            If True, scale the data. Default is True.
 
         Returns
         -------
@@ -347,17 +365,25 @@ class PCA(BaseReduction):
             data=window_processed_data,
         )
 
-        self.logger.info("Standarizing data matrix")
-        standarized_stacked_data_matrix, scaler = self.standarize(
-            data=stacked_data_matrix,
-            scaler=self.scaler if not is_fit else None,
-        )
+        if scale_data:
+            self.logger.info("Standarizing data matrix")
+            standarized_stacked_data_matrix, scaler = self.standarize(
+                data=stacked_data_matrix,
+                scaler=self.scaler if not is_fit else None,
+            )
+        else:
+            self.logger.warning("Data is not standarized")
+            standarized_stacked_data_matrix = stacked_data_matrix.copy()
+            scaler = None
 
         self.logger.info("Data preprocessed successfully")
 
         if is_fit:
             self._data = data.copy()
             self._window_processed_data = window_processed_data.copy()
+            self.coords_values = {
+                coord: data[coord].values for coord in self.coords_to_stack
+            }
             self._stacked_data_matrix = stacked_data_matrix.copy()
             self._standarized_stacked_data_matrix = (
                 standarized_stacked_data_matrix.copy()
@@ -384,7 +410,13 @@ class PCA(BaseReduction):
         EOFs = self.pca.components_  # Get Empirical Orthogonal Functions (EOFs)
 
         if destandarize:
-            EOFs = self.scaler.inverse_transform(EOFs)
+            if self.pcs is None:
+                raise PCAError(
+                    "No Principal Components (PCs) found. Please transform some data first."
+                )
+            else:
+                # Inverse transform the EOFs using stds from the PCs
+                EOFs = EOFs * self.pcs["stds"].values.reshape(-1, 1)
 
         # Create a full of nans array with shape time, vars * cols
         nan_EOFs = np.full(
@@ -408,7 +440,7 @@ class PCA(BaseReduction):
             nan_EOFs, len(self.window_stacked_vars), axis=1
         )
         coords_to_stack_shape = [self.pca.n_components_] + [
-            self.data[coord].shape[0] for coord in self.coords_to_stack
+            len(self.coords_values[coord]) for coord in self.coords_to_stack
         ]
         EOFs_reshaped_vars_dict = {
             var: (
@@ -424,7 +456,7 @@ class PCA(BaseReduction):
             EOFs_reshaped_vars_dict,
             coords={
                 "n_component": np.arange(self.pca.n_components_),
-                **{coord: self.data[coord] for coord in self.coords_to_stack},
+                **{coord: self.coords_values[coord] for coord in self.coords_to_stack},
             },
         )
 
@@ -445,7 +477,7 @@ class PCA(BaseReduction):
             The reshaped data.
         """
 
-        if destandarize:
+        if destandarize and self.scaler is not None:
             X = self.scaler.inverse_transform(X)
 
         # Create a full of nans array with shape time, vars * cols
@@ -470,7 +502,7 @@ class PCA(BaseReduction):
             nan_X, len(self.window_stacked_vars), axis=1
         )
         coords_to_stack_shape = [X.shape[0]] + [
-            self.data[coord].shape[0] for coord in self.coords_to_stack
+            len(self.coords_values[coord]) for coord in self.coords_to_stack
         ]
         X_reshaped_vars_dict = {
             var: (
@@ -494,6 +526,7 @@ class PCA(BaseReduction):
         windows_in_pca_dim_for_rows: dict = {},
         value_to_replace_nans: dict = {},
         nan_threshold_to_drop: dict = {},
+        scale_data: bool = True,
     ) -> None:
         """
         Fit PCA model to data.
@@ -516,6 +549,8 @@ class PCA(BaseReduction):
             The threshold percentage to drop NaNs for each variable.
             By default, variables with more than 90% of NaNs are dropped.
             Default is {}.
+        scale_data : bool, optional
+            If True, scale the data. Default is True.
 
         Notes
         -----
@@ -532,7 +567,9 @@ class PCA(BaseReduction):
         self.value_to_replace_nans = value_to_replace_nans.copy()
         self.nan_threshold_to_drop = nan_threshold_to_drop.copy()
 
-        self._preprocess_data(data=data[self.vars_to_stack], is_fit=True)
+        self._preprocess_data(
+            data=data[self.vars_to_stack], is_fit=True, scale_data=scale_data
+        )
         self.logger.info("Fitting PCA model")
         self.pca.fit(X=self.standarized_stacked_data_matrix)
         self.is_fitted = True
@@ -548,6 +585,7 @@ class PCA(BaseReduction):
             The data to transform.
         after_fitting : bool, optional
             If True, use the already processed data. Default is False.
+            This is just used in the fit_transform method!
 
         Returns
         -------
@@ -561,7 +599,9 @@ class PCA(BaseReduction):
         if not after_fitting:
             self.logger.info("Transforming data using PCA model")
             processed_data = self._preprocess_data(
-                data=data[self.vars_to_stack], is_fit=False
+                data=data[self.vars_to_stack],
+                is_fit=False,
+                scale_data=self.scaler is not None,
             )
         else:
             processed_data = self.standarized_stacked_data_matrix.copy()
@@ -572,6 +612,7 @@ class PCA(BaseReduction):
         self.pcs = xr.Dataset(
             {
                 "PCs": ((self.pca_dim_for_rows, "n_component"), transformed_data),
+                "stds": (("n_component",), np.std(transformed_data, axis=0)),
             },
             coords={
                 self.pca_dim_for_rows: data[self.pca_dim_for_rows],
@@ -590,6 +631,7 @@ class PCA(BaseReduction):
         windows_in_pca_dim_for_rows: dict = {},
         value_to_replace_nans: dict = {},
         nan_threshold_to_drop: dict = {},
+        scale_data: bool = True,
     ) -> xr.Dataset:
         """
         Fit and transform data using PCA model.
@@ -612,6 +654,8 @@ class PCA(BaseReduction):
             The threshold percentage to drop NaNs for each variable.
             By default, variables with more than 90% of NaNs are dropped.
             Default is {}.
+        scale_data : bool, optional
+            If True, scale the data. Default is True.
 
         Returns
         -------
@@ -634,18 +678,19 @@ class PCA(BaseReduction):
             windows_in_pca_dim_for_rows=windows_in_pca_dim_for_rows,
             value_to_replace_nans=value_to_replace_nans,
             nan_threshold_to_drop=nan_threshold_to_drop,
+            scale_data=scale_data,
         )
 
         return self.transform(data=data, after_fitting=True)
 
-    def inverse_transform(self, PCs: Union[np.ndarray, xr.Dataset]) -> xr.Dataset:
+    def inverse_transform(self, PCs: Union[xr.DataArray, xr.Dataset]) -> xr.Dataset:
         """
         Inverse transform data using the fitted PCA model.
 
         Parameters
         ----------
-        X : np.ndarray or xr.Dataset
-            The data to inverse transform.
+        PCs : Union[xr.DataArray, xr.Dataset]
+            The data to inverse transform. It should be the Principal Components (PCs).
 
         Returns
         -------
@@ -660,21 +705,99 @@ class PCA(BaseReduction):
             X = PCs["PCs"].values
         elif isinstance(PCs, xr.DataArray):
             X = PCs.values
-        elif isinstance(PCs, np.ndarray):
-            X = PCs
 
         self.logger.info("Inverse transforming data using PCA model")
         X_transformed = self.pca.inverse_transform(X=X)
         data_reshaped_vars_dict = self._reshape_data(X=X_transformed, destandarize=True)
+
         # Create xarray Dataset with the transformed data
         data_transformed = xr.Dataset(
             data_reshaped_vars_dict,
             coords={
                 self.pca_dim_for_rows: PCs[self.pca_dim_for_rows].values,
-                **{coord: self.data[coord] for coord in self.coords_to_stack},
+                **{coord: self.coords_values[coord] for coord in self.coords_to_stack},
             },
         )
-        # Transpose dimensions based on the original data
-        data_transformed = data_transformed.transpose(*self.data.dims)
 
         return data_transformed
+
+    def plot_pcs(self, num_pcs: int, pcs: xr.Dataset = None) -> None:
+        """
+        Plot the Principal Components (PCs).
+
+        Parameters
+        ----------
+        num_pcs : int
+            The number of Principal Components (PCs) to plot.
+        pcs : xr.Dataset, optional
+            The Principal Components (PCs) to plot.
+        """
+
+        if pcs is None:
+            if self.pcs is None:
+                raise PCAError(
+                    "No Principal Components (PCs) found. Please transform some data first."
+                )
+            self.logger.info("Using the Principal Components (PCs) from the class")
+            pcs = self.pcs
+
+        _ = (
+            pcs["PCs"]
+            .isel(n_component=slice(0, num_pcs))
+            .plot.line(
+                x=self.pca_dim_for_rows,
+                hue="n_component",
+            )
+        )
+
+    def plot_eofs(
+        self,
+        vars_to_plot: List[str],
+        num_eofs: int,
+        destandarize: bool = False,
+        map_center: tuple = None,
+    ) -> None:
+        """
+        Plot the Empirical Orthogonal Functions (EOFs).
+
+        Parameters
+        ----------
+        vars_to_plot : List[str]
+            The variables to plot.
+        num_eofs : int
+            The number of EOFs to plot.
+        destandarize : bool, optional
+            If True, destandarize the EOFs. Default is False.
+        map_center : tuple, optional
+            The center of the map. Default is None.
+            First value is the longitude (-180, 180), and the second value is the latitude (-90, 90).
+        """
+
+        if self.is_fitted is False:
+            raise PCAError("PCA model must be fitted before plotting EOFs.")
+
+        eofs = self._reshape_EOFs(destandarize=destandarize).isel(
+            n_component=slice(0, num_eofs)
+        )
+
+        for var in vars_to_plot:
+            if map_center:
+                p_var = eofs[var].plot(
+                    col="n_component",
+                    col_wrap=3,
+                    transform=ccrs.PlateCarree(),
+                    subplot_kws={"projection": ccrs.Orthographic(*map_center)},
+                )
+                for i, ax in enumerate(p_var.axes.flat):
+                    ax.coastlines()
+                    ax.gridlines()
+                    # ax.set_global()
+                    # ax.stock_img()
+                    ax.set_title(f"EOF {i + 1}")
+            else:
+                p_var = eofs[var].plot(
+                    col="n_component",
+                    col_wrap=3,
+                )
+                for i, ax in enumerate(p_var.axes.flat):
+                    ax.set_title(f"EOF {i + 1}")

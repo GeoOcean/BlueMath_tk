@@ -1,5 +1,7 @@
 import unittest
+
 import numpy as np
+
 from bluemath_tk.core.data.sample_data import get_2d_dataset
 from bluemath_tk.datamining.pca import PCA
 
@@ -66,6 +68,7 @@ class TestPCA(unittest.TestCase):
             vars_to_stack=["X", "Y"],
             coords_to_stack=["coord1", "coord2"],
             pca_dim_for_rows="coord3",
+            scale_data=False,
         )
         reconstructed_ds = self.pca.inverse_transform(PCs=pcs.isel(coord3=slice(0, 5)))
         self.assertAlmostEqual(

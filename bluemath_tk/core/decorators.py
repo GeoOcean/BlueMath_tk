@@ -1,5 +1,6 @@
 import functools
 from typing import List
+
 import pandas as pd
 import xarray as xr
 
@@ -192,6 +193,7 @@ def validate_data_pca(func):
         windows_in_pca_dim_for_rows: dict = {},
         value_to_replace_nans: dict = {},
         nan_threshold_to_drop: dict = {},
+        scale_data: bool = True,
     ):
         if not isinstance(data, xr.Dataset):
             raise TypeError("Data must be an xarray Dataset")
@@ -242,6 +244,7 @@ def validate_data_pca(func):
             windows_in_pca_dim_for_rows,
             value_to_replace_nans,
             nan_threshold_to_drop,
+            scale_data,
         )
 
     return wrapper
