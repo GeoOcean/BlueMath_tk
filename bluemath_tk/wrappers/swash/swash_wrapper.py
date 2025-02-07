@@ -166,7 +166,7 @@ class SwashModelWrapper(BaseModelWrapper):
         # merge output files to one xarray.Dataset
         ds = xr.merge([ds_ouput, ds_run], compat="no_conflicts")
 
-        # assign correct coordinate case_id
+        # assign correct coordinate case_num
         ds.coords["case_num"] = case_num
 
         return ds
