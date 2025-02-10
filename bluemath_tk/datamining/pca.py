@@ -252,11 +252,7 @@ class PCA(BaseReduction):
 
     @property
     def cumulative_explained_variance_ratio(self) -> np.ndarray:
-        return (
-            np.cumsum(self.explained_variance_ratio)
-            / np.sum(self.explained_variance_ratio)
-            * 100.0
-        )
+        return np.cumsum(self.explained_variance_ratio)
 
     def _generate_stacked_data(self, data: xr.Dataset) -> np.ndarray:
         """
