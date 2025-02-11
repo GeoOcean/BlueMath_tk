@@ -66,6 +66,7 @@ class SwashModelWrapper(BaseModelWrapper):
         "Msetup": "calculate_setup",
         "Hrms": "calculate_statistical_analysis",
         "Hfreqs": "calculate_spectral_analysis",
+        "Watlev": "get_waterlevel",
     }
 
     def __init__(
@@ -268,6 +269,30 @@ class SwashModelWrapper(BaseModelWrapper):
 
         return peaks, x[peaks]
 
+    def get_waterlevel(
+        self, case_num: int, case_dir: str, output_nc: xr.Dataset
+    ) -> xr.Dataset:
+        """
+        Get water level from the output netCDF file.
+
+        Parameters
+        ----------
+        case_num : int
+            The case number.
+        case_dir : str
+            The case directory.
+        output_nc : xr.Dataset
+            The output netCDF file.
+
+        Returns
+        -------
+        xr.Dataset
+            The water level.
+        """
+
+        # get water level
+        return output_nc[["Watlev"]].squeeze()
+
     def calculate_runup2(
         self, case_num: int, case_dir: str, output_nc: xr.Dataset
     ) -> xr.Dataset:
@@ -276,6 +301,10 @@ class SwashModelWrapper(BaseModelWrapper):
 
         Parameters
         ----------
+        case_num : int
+            The case number.
+        case_dir : str
+            The case directory.
         output_nc : xr.Dataset
             The output netCDF file.
 
