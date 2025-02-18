@@ -38,6 +38,7 @@ setup(
         "statsmodels",
         "regionmask",
         "wavespectra",
+        "cmocean",
     ],
     classifiers=["Programming Language :: Python :: 3.11"],
     python_requires=">=3.11",  # Specify the Python version required
