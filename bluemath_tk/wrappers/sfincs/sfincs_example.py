@@ -134,7 +134,7 @@ if __name__ == "__main__":
     # Load swan model parameters
     model_parameters = {"waterlevel": [5.0, 20.0, 50.0, 100.0]}
     # Create an instance of the SWAN model wrapper
-    sfincs_wrapper = SfincsModelWrapper(
+    sfincs_wrapper = SfincsPabloModelWrapper(
         templates_dir=templates_dir,
         model_parameters=model_parameters,
         output_dir=output_dir,

@@ -552,10 +552,15 @@ class BaseModelWrapper(BlueMathModel):
         postprocessed_files = []
         for case_num, case_dir in zip(cases_to_postprocess, cases_dir_to_postprocess):
             self.logger.info(f"Postprocessing case {case_num} in {case_dir}.")
-            postprocessed_file = self.postprocess_case(
-                case_num=case_num, case_dir=case_dir
-            )
-            postprocessed_files.append(postprocessed_file)
+            try:
+                postprocessed_file = self.postprocess_case(
+                    case_num=case_num, case_dir=case_dir
+                )
+                postprocessed_files.append(postprocessed_file)
+            except Exception as e:
+                self.logger.error(
+                    f"Ouput not postprocessed for case {case_num}. Error: {e}."
+                )
 
         try:
             return self.join_postprocessed_files(

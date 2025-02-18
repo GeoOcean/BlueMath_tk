@@ -1,12 +1,16 @@
+import logging
 import os
 from datetime import datetime
-import pytz
-import logging
 from typing import Union
+
+import pytz
 
 
 def get_file_logger(
-    name: str, logs_path: str = None, level: Union[int, str] = "INFO"
+    name: str,
+    logs_path: str = None,
+    level: Union[int, str] = "INFO",
+    console: bool = True,
 ) -> logging.Logger:
     """
     Creates and returns a logger that writes log messages to a file.
@@ -16,9 +20,11 @@ def get_file_logger(
     name : str
         The name of the logger.
     logs_path : str, optional
-        The file path where the log messages will be written (default is None).
+        The file path where the log messages will be written. Default is None.
     level : Union[int, str], optional
-        The logging level (default is "INFO").
+        The logging level. Default is "INFO".
+    console : bool
+        Whether to add or not console / terminal logs. Default is True.
 
     Returns
     -------
@@ -60,18 +66,19 @@ def get_file_logger(
         os.makedirs(os.path.dirname(logs_path))
     file_handler = logging.FileHandler(logs_path)
 
-    # Also ouput logs in the console
-    console_handler = logging.StreamHandler()
-
     # Define a logging format
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
 
     # Add the file handler to the logger
     logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
+
+    # Also ouput logs in the console if requested
+    if console:
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
 
     return logger

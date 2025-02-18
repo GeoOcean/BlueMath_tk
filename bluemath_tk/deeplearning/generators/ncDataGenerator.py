@@ -1,6 +1,6 @@
+import keras.utils
 import numpy as np
 import xarray as xr
-import keras.utils
 
 
 class DataGenerator(keras.utils.Sequence):
@@ -49,7 +49,6 @@ class DataGenerator(keras.utils.Sequence):
         self.counter = 0
 
     def __getitem__(self, idx):
-
         # prepare the resulting array
         inputs = np.zeros((self.batch_size, 64, 64, 1))
         outputs = np.zeros((self.batch_size, 64, 64, 1))

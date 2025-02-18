@@ -64,11 +64,12 @@ class BlueMathModel(ABC):
     def logger(self, value: logging.Logger) -> None:
         self._logger = value
 
-    def set_logger_name(self, name: str, level: str = "INFO") -> None:
+    def set_logger_name(
+        self, name: str, level: str = "INFO", console: bool = True
+    ) -> None:
         """Sets the name of the logger."""
 
-        self.logger = get_file_logger(name=name)
-        self.logger.setLevel(level)
+        self.logger = get_file_logger(name=name, level=level, console=console)
 
     def save_model(self, model_path: str, exclude_attributes: List[str] = None) -> None:
         """Saves the model to a file."""
@@ -243,6 +244,7 @@ class BlueMathModel(ABC):
         self,
         data: Union[np.ndarray, pd.DataFrame, xr.Dataset],
         scaler: StandardScaler = None,
+        transform: bool = False,
     ) -> Tuple[Union[np.ndarray, pd.DataFrame, xr.Dataset], StandardScaler]:
         """
         Standarize data using StandardScaler.
@@ -254,6 +256,8 @@ class BlueMathModel(ABC):
             Input data to be standarized.
         scaler : StandardScaler, optional
             Scaler object to use for standarization. Default is None.
+        transform : bool
+            Whether to just transform the data. Default to False.
 
         Returns
         -------
@@ -263,7 +267,9 @@ class BlueMathModel(ABC):
             Scaler object used for standarization.
         """
 
-        standarized_data, scaler = standarize(data=data, scaler=scaler)
+        standarized_data, scaler = standarize(
+            data=data, scaler=scaler, transform=transform
+        )
         return standarized_data, scaler
 
     def destandarize(

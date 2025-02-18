@@ -135,7 +135,10 @@ class SwanModelWrapper(BaseModelWrapper):
         return ds
 
     def postprocess_case(
-        self, case_num: int, case_dir: str, output_vars: List[str] = None
+        self,
+        case_num: int,
+        case_dir: str,
+        output_vars: List[str] = ["Hsig", "Tm02", "Dir"],
     ) -> xr.Dataset:
         """
         Convert mat ouput files to netCDF file.
@@ -162,7 +165,7 @@ class SwanModelWrapper(BaseModelWrapper):
         output_nc_path = os.path.join(case_dir, "output.nc")
         if not os.path.exists(output_nc_path):
             # Convert tab files to netCDF file
-            output_path = os.path.join(case_dir, "output_main.mat")
+            output_path = os.path.join(case_dir, "output.mat")
             output_nc = self._convert_case_output_files_to_nc(
                 case_num=case_num,
                 output_path=output_path,

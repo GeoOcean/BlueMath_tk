@@ -1,11 +1,11 @@
 from typing import List, Union
 
+import cartopy.crs as ccrs
 import numpy as np
 import xarray as xr
 from sklearn.decomposition import PCA as PCA_
 from sklearn.decomposition import IncrementalPCA as IncrementalPCA_
 from sklearn.preprocessing import StandardScaler
-import cartopy.crs as ccrs
 
 from ..core.decorators import validate_data_pca
 from ._base_datamining import BaseReduction
@@ -366,6 +366,7 @@ class PCA(BaseReduction):
             standarized_stacked_data_matrix, scaler = self.standarize(
                 data=stacked_data_matrix,
                 scaler=self.scaler if not is_fit else None,
+                transform=not is_fit,
             )
         else:
             self.logger.warning("Data is not standarized")

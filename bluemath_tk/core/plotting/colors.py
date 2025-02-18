@@ -1,6 +1,9 @@
+import cmocean
 import matplotlib.colors as mcolors
-from matplotlib import cm
 import numpy as np
+from matplotlib import cm
+from matplotlib import pyplot as plt
+from matplotlib.colors import ListedColormap
 
 default_colors = [
     "#636EFA",
@@ -232,3 +235,35 @@ def GetFamsColors(num_fams):
         np_colors_rgb = colors_interp(num_fams)  # interpolate
 
     return np_colors_rgb
+
+
+def colormap_bathy(topat, topag):  # maximum topo, minimum bati
+    """
+    returns custom colormap for bathymetry plot
+    """
+
+    colors2 = "YlGnBu_r"
+    colors1 = cmocean.cm.turbid
+
+    bottom = plt.get_cmap(colors2, -topag * 100)
+    top = plt.get_cmap(colors1, topat * 100)
+
+    newcolors = np.vstack(
+        (
+            bottom(np.linspace(0, 0.8, -topag * 100)),
+            top(np.linspace(0.1, 1, topat * 100)),
+        )
+    )
+
+    return ListedColormap(newcolors)
+
+
+def colormap_spectra():
+    top = cm.get_cmap("RdBu", 128)
+    bottom = cm.get_cmap("rainbow", 128)
+    newcolors = np.vstack(
+        (top(np.linspace(0.5, 0.8, 50)), bottom(np.linspace(0.2, 1, 128)))
+    )
+    newcmp = ListedColormap(newcolors, name="newcmp")
+
+    return newcmp

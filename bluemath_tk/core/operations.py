@@ -205,6 +205,7 @@ def denormalize(
 def standarize(
     data: Union[np.ndarray, pd.DataFrame, xr.Dataset],
     scaler: StandardScaler = None,
+    transform: bool = False,
 ) -> Tuple[Union[np.ndarray, pd.DataFrame, xr.Dataset], StandardScaler]:
     """
     Standarize data to have mean 0 and std 1.
@@ -215,6 +216,8 @@ def standarize(
         Input data to be standarized.
     scaler : StandardScaler, optional
         Scaler object to use for standarization. Default is None.
+    transform : bool
+        Whether to just transform the data. Default to False.
 
     Returns
     -------
@@ -233,13 +236,21 @@ def standarize(
 
     scaler = scaler or StandardScaler()
     if isinstance(data, np.ndarray):
-        standarized_data = scaler.fit_transform(X=data)
-        return standarized_data, scaler
+        if transform:
+            standarized_data = scaler.transform(X=data)
+        else:
+            standarized_data = scaler.fit_transform(X=data)
     elif isinstance(data, pd.DataFrame):
-        standarized_data = scaler.fit_transform(X=data.values)
+        if transform:
+            standarized_data = scaler.transform(X=data.values)
+        else:
+            standarized_data = scaler.fit_transform(X=data.values)
         standarized_data = pd.DataFrame(standarized_data, columns=data.columns)
     elif isinstance(data, xr.Dataset):
-        standarized_data = scaler.fit_transform(X=data.to_array().values)
+        if transform:
+            standarized_data = scaler.transform(X=data.to_array().values)
+        else:
+            standarized_data = scaler.fit_transform(X=data.to_array().values)
         standarized_data = xr.Dataset(
             {
                 var_name: (tuple(data.coords), standarized_data[i_var])
