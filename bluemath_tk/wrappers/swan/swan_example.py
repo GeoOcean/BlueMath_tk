@@ -12,61 +12,166 @@ from bluemath_tk.waves.binwaves import (
 from bluemath_tk.wrappers.swan.swan_wrapper import SwanModelWrapper
 
 example_directions = [
+    1.5,
+    4.5,
     7.5,
+    10.5,
+    13.5,
+    16.5,
+    19.5,
     22.5,
+    25.5,
+    28.5,
+    31.5,
+    34.5,
     37.5,
+    40.5,
+    43.5,
+    46.5,
+    49.5,
     52.5,
+    55.5,
+    58.5,
+    61.5,
+    64.5,
     67.5,
+    70.5,
+    73.5,
+    76.5,
+    79.5,
     82.5,
+    85.5,
+    88.5,
+    91.5,
+    94.5,
     97.5,
+    100.5,
+    103.5,
+    106.5,
+    109.5,
     112.5,
+    115.5,
+    118.5,
+    121.5,
+    124.5,
     127.5,
+    130.5,
+    133.5,
+    136.5,
+    139.5,
     142.5,
+    145.5,
+    148.5,
+    151.5,
+    154.5,
     157.5,
+    160.5,
+    163.5,
+    166.5,
+    169.5,
     172.5,
+    175.5,
+    178.5,
+    181.5,
+    184.5,
     187.5,
+    190.5,
+    193.5,
+    196.5,
+    199.5,
     202.5,
+    205.5,
+    208.5,
+    211.5,
+    214.5,
     217.5,
+    220.5,
+    223.5,
+    226.5,
+    229.5,
     232.5,
+    235.5,
+    238.5,
+    241.5,
+    244.5,
     247.5,
+    250.5,
+    253.5,
+    256.5,
+    259.5,
     262.5,
+    265.5,
+    268.5,
+    271.5,
+    274.5,
     277.5,
+    280.5,
+    283.5,
+    286.5,
+    289.5,
     292.5,
+    295.5,
+    298.5,
+    301.5,
+    304.5,
     307.5,
+    310.5,
+    313.5,
+    316.5,
+    319.5,
     322.5,
+    325.5,
+    328.5,
+    331.5,
+    334.5,
     337.5,
+    340.5,
+    343.5,
+    346.5,
+    349.5,
     352.5,
+    355.5,
+    358.5,
 ]
 example_frequencies = [
-    0.035,
-    0.0385,
-    0.042349998,
-    0.046585,
-    0.051243503,
-    0.05636785,
-    0.062004633,
-    0.068205096,
-    0.07502561,
-    0.082528174,
-    0.090780996,
-    0.099859096,
-    0.10984501,
-    0.120829515,
-    0.13291247,
-    0.14620373,
-    0.1608241,
-    0.17690653,
-    0.19459718,
-    0.21405691,
-    0.2354626,
-    0.25900885,
-    0.28490975,
-    0.31340075,
-    0.3447408,
-    0.37921488,
-    0.4171364,
-    0.45885003,
-    0.50473505,
+    0.03,
+    0.033,
+    0.0363,
+    0.0399,
+    0.0438,
+    0.0482,
+    0.053,
+    0.0582,
+    0.064,
+    0.0704,
+    0.0774,
+    0.0851,
+    0.0935,
+    0.1028,
+    0.1131,
+    0.1243,
+    0.1367,
+    0.1503,
+    0.1652,
+    0.1816,
+    0.1997,
+    0.2195,
+    0.2413,
+    0.2653,
+    0.2917,
+    0.3207,
+    0.3526,
+    0.3876,
+    0.4262,
+    0.4685,
+    0.5151,
+    0.5663,
+    0.6226,
+    0.6845,
+    0.7525,
+    0.8273,
+    0.9096,
+    1.0,
 ]
 
 
@@ -74,7 +179,6 @@ class BinWavesWrapper(SwanModelWrapper):
     """ """
 
     def build_case(self, case_dir: str, case_context: dict):
-        self.logger.info(f"Saving spectrum for {case_dir}")
         input_spectrum = construct_partition(
             freq_name="jonswap",
             freq_kwargs={
@@ -105,13 +209,12 @@ if __name__ == "__main__":
     templates_dir = (
         "/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/wrappers/swan/templates/"
     )
-    templates_name = ["input.swn", "depth_main.dat", "buoys.loc"]
-    output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/swan/javi/"
+    templates_name = ["input.swn", "depth_main_cantabria.dat", "buoys.loc"]
+    output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/swan/CAN/"
     # Load swan model parameters
     model_parameters = (
         xr.open_dataset("/home/tausiaj/GitHub-GeoOcean/BlueMath/test_data/subset.nc")
         .to_dataframe()
-        .iloc[::60]
         .to_dict(orient="list")
     )
     # Create an instance of the SWAN model wrapper
@@ -126,11 +229,11 @@ if __name__ == "__main__":
     # List available launchers
     print(swan_wrapper.list_available_launchers())
     # Run the model
-    swan_wrapper.run_cases(launcher="docker", parallel=True)
+    # swan_wrapper.run_cases(launcher="docker", parallel=True)
     # Post-process the output files
-    postprocessed_ds = swan_wrapper.postprocess_cases()
-    postprocessed_ds.to_netcdf(op.join(swan_wrapper.output_dir, "waves_part.nc"))
-    print(postprocessed_ds)
+    # postprocessed_ds = swan_wrapper.postprocess_cases()
+    # postprocessed_ds.to_netcdf(op.join(swan_wrapper.output_dir, "waves_part.nc"))
+    # print(postprocessed_ds)
     # # Load spectra example
     # spectra = xr.open_dataset(
     #     "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_data/Waves_Cantabria_356.08_43.82.nc"

@@ -1,0 +1,39 @@
+$*************************HEADING************************
+$
+PROJ 'KIR' '{{ case_num }}'
+$
+$********************MODEL INPUT*************************
+$
+MODE STAT
+COORDINATES SPHERICAL CCM
+SET level=0   NAUTICAL
+$
+CGRID REGULAR 172.777083333 1.2445833332999998 0 0.5199999999995271 0.41999999999999105 103 83 CIRCLE 120 0.03 1.0 
+$
+INPGRID BOTTOM REGULAR 172.777083333 1.2445833332999998 0 104 84 0.0049999999999954525 0.004999999999999893
+READINP BOTTOM 1 'depth_main.dat' 1 0 FREE
+$
+BOUnd SHAPespec JONswap {{ gamma }} PEAK DSPR DEGR
+BOUndspec SIDE N CONstant PAR {{ hs }} {{ tp }} {{ dir }} {{ spr }}
+BOUndspec SIDE E CONstant PAR {{ hs }} {{ tp }} {{ dir }} {{ spr }}
+BOUndspec SIDE W CONstant PAR {{ hs }} {{ tp }} {{ dir }} {{ spr }}
+BOUndspec SIDE S CONstant PAR {{ hs }} {{ tp }} {{ dir }} {{ spr }}
+$ {% if dir < 45 %}BOU SIDE N CON FILE 'input_spectra.bnd' 2
+$ {% elif dir < 135 %}BOU SIDE E CON FILE 'input_spectra.bnd' 2
+$ {% elif dir < 225 %}BOU SIDE S CON FILE 'input_spectra.bnd' 2
+$ {% elif dir < 315 %}BOU SIDE W CON FILE 'input_spectra.bnd' 2
+$ {% else %}BOU SIDE N CON FILE 'input_spectra.bnd' 2{% endif %}
+$
+FRICTION JONSWAP
+BREAKING
+$
+OFF QUAD
+$
+POINTS 'BUOYS' FILE 'buoys.loc'
+SPECOUT 'BUOYS' SPEC2D 'output.spec'
+BLOCK 'COMPGRID' NOHEAD 'output.mat' LAY 3 XP YP HSIGN TM02 TPS DIR PDIR DSPR PTHSIGN PTRTP PTDIR PTDSPR
+$
+TEST  1,0
+COMPUTE 
+STOP
+$
