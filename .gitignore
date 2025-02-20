@@ -73,10 +73,13 @@ instance/
 .scrapy
 
 # Sphinx documentation
+docs/
 docs/_build/
 
 # MkDocs documentation (production)
 site/
+mkdocs.yml
+mk-docs/
 
 # PyCharm
 .idea/
