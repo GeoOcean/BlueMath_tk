@@ -1,1 +1,0 @@
-::: bluemath_tk.wrappers.swan.swan_wrapper
