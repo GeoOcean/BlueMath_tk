@@ -2,6 +2,7 @@ from typing import List, Union
 
 import cartopy.crs as ccrs
 import numpy as np
+import pandas as pd
 import xarray as xr
 from sklearn.decomposition import PCA as PCA_
 from sklearn.decomposition import IncrementalPCA as IncrementalPCA_
@@ -75,6 +76,8 @@ class PCA(BaseReduction):
         The explained variance ratio.
     cumulative_explained_variance_ratio : np.ndarray
         The cumulative explained variance ratio.
+    pcs_df : pd.DataFrame
+        The fitting PCs (self.pcs) as a pandas DataFrame.
 
     Methods
     -------
@@ -97,33 +100,41 @@ class PCA(BaseReduction):
 
     Examples
     --------
-    >>> from bluemath_tk.core.data.sample_data import get_2d_dataset
-    >>> from bluemath_tk.datamining.pca import PCA
-    >>> ds = get_2d_dataset()
-    >>> pca = PCA(
-    ...     n_components=5,
-    ...     is_incremental=False,
-    ...     debug=True,
-    ... )
-    >>> pca.fit(
-    ...     data=ds,
-    ...     vars_to_stack=["X", "Y"],
-    ...     coords_to_stack=["coord1", "coord2"],
-    ...     pca_dim_for_rows="coord3",
-    ...     windows_in_pca_dim_for_rows={"X": [1, 2, 3]},
-    ...     value_to_replace_nans={"X": 0.0},
-    ...     nan_threshold_to_drop={"X": 0.95},
-    ... )
-    >>> pcs = pca.transform(
-    ...     data=ds,
-    ... )
-    >>> reconstructed_ds = pca.inverse_transform(PCs=pcs)
-    >>> eofs = pca.eofs
-    >>> explained_variance = pca.explained_variance
-    >>> explained_variance_ratio = pca.explained_variance_ratio
-    >>> cumulative_explained_variance_ratio = pca.cumulative_explained_variance_ratio
-    >>> # Save the full class in a pickle file
-    >>> pca.save_model("pca_model.pkl")
+    .. jupyter-execute::
+
+        from bluemath_tk.core.data.sample_data import get_2d_dataset
+        from bluemath_tk.datamining.pca import PCA
+
+        ds = get_2d_dataset()
+
+        pca = PCA(
+            n_components=5,
+            is_incremental=False,
+            debug=True,
+        )
+        pca.fit(
+            data=ds,
+            vars_to_stack=["X", "Y"],
+            coords_to_stack=["coord1", "coord2"],
+            pca_dim_for_rows="coord3",
+            windows_in_pca_dim_for_rows={"X": [1, 2, 3]},
+            value_to_replace_nans={"X": 0.0},
+            nan_threshold_to_drop={"X": 0.95},
+        )
+        pcs = pca.transform(
+            data=ds,
+        )
+        reconstructed_ds = pca.inverse_transform(PCs=pcs)
+        eofs = pca.eofs
+        explained_variance = pca.explained_variance
+        explained_variance_ratio = pca.explained_variance_ratio
+        cumulative_explained_variance_ratio = pca.cumulative_explained_variance_ratio
+
+        # Save the full class in a pickle file
+        pca.save_model("pca_model.pkl")
+
+        # Plot the calculated EOFs
+        pca.plot_eofs(vars_to_plot=["X", "Y"], num_eofs=3)
 
     References
     ----------
@@ -212,10 +223,10 @@ class PCA(BaseReduction):
 
         # Exclude attributes from beign saved with pca.save_model()
         self._exclude_attributes = [
-            # "_data",
+            "_data",
             "_window_processed_data",
-            # "_stacked_data_matrix",
-            # "_standarized_stacked_data_matrix",
+            "_stacked_data_matrix",
+            "_standarized_stacked_data_matrix",
         ]
 
     @property
@@ -253,6 +264,19 @@ class PCA(BaseReduction):
     @property
     def cumulative_explained_variance_ratio(self) -> np.ndarray:
         return np.cumsum(self.explained_variance_ratio)
+
+    @property
+    def pcs_df(self) -> pd.DataFrame:
+        if self.pcs is not None:
+            return pd.DataFrame(
+                data=self.pcs["PCs"].values,
+                columns=[f"PC{i + 1}" for i in range(self.pca.n_components_)],
+                index=self.pcs[self.pca_dim_for_rows].values,
+            )
+        else:
+            raise PCAError(
+                "PCA model must be fitted and transformed before calling pcs_df"
+            )
 
     def _generate_stacked_data(self, data: xr.Dataset) -> np.ndarray:
         """
@@ -606,7 +630,7 @@ class PCA(BaseReduction):
         transformed_data = self.pca.transform(X=processed_data)
 
         # Save the Principal Components (PCs) in an xr.Dataset
-        self.pcs = xr.Dataset(
+        pcs = xr.Dataset(
             {
                 "PCs": ((self.pca_dim_for_rows, "n_component"), transformed_data),
                 "stds": (("n_component",), np.std(transformed_data, axis=0)),
@@ -616,8 +640,10 @@ class PCA(BaseReduction):
                 "n_component": np.arange(self.pca.n_components_),
             },
         )
+        if after_fitting:
+            self.pcs = pcs.copy()
 
-        return self.pcs.copy()
+        return pcs
 
     def fit_transform(
         self,
@@ -736,7 +762,7 @@ class PCA(BaseReduction):
                     "No Principal Components (PCs) found. Please transform some data first."
                 )
             self.logger.info("Using the Principal Components (PCs) from the class")
-            pcs = self.pcs
+            pcs = self.pcs.copy()
 
         _ = (
             pcs["PCs"]

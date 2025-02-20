@@ -422,7 +422,7 @@ class BaseModelWrapper(BlueMathModel):
             cases_dir_to_run = copy.deepcopy(self.cases_dirs)
 
         if parallel:
-            num_threads = self.get_num_processors_available()
+            num_threads = 5  # self.get_num_processors_available()
             self.logger.debug(
                 f"Running cases in parallel with launcher={launcher}. Number of threads: {num_threads}."
             )
