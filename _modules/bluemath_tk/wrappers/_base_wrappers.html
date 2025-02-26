@@ -1,0 +1,722 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.wrappers._base_wrappers &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.wrappers._base_wrappers</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.wrappers._base_wrappers</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadPoolExecutor</span><span class="p">,</span> <span class="n">as_completed</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jinja2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">FileSystemLoader</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">BlueMathModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._utils_wrappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">copy_files</span><span class="p">,</span> <span class="n">write_array_in_file</span>
+
+
+<div class="viewcode-block" id="BaseModelWrapper">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseModelWrapper</span><span class="p">(</span><span class="n">BlueMathModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for numerical models wrappers.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    templates_dir : str</span>
+<span class="sd">        The directory where the templates are stored.</span>
+<span class="sd">    model_parameters : dict</span>
+<span class="sd">        The parameters to be used in the templates.</span>
+<span class="sd">    output_dir : str</span>
+<span class="sd">        The directory where the output files will be saved.</span>
+<span class="sd">    env : Environment</span>
+<span class="sd">        The Jinja2 environment.</span>
+<span class="sd">    templates_name : List[str]</span>
+<span class="sd">        The names of the templates.</span>
+<span class="sd">    cases_dirs : List[str]</span>
+<span class="sd">        The list with cases directories.</span>
+<span class="sd">    cases_context : List[dict]</span>
+<span class="sd">        The list with cases context.</span>
+
+<span class="sd">    Methods</span>
+<span class="sd">    -------</span>
+<span class="sd">    _check_parameters_type -&gt; None</span>
+<span class="sd">        Check if the parameters have the correct type.</span>
+<span class="sd">    _exec_bash_commands -&gt; None</span>
+<span class="sd">        Execute bash commands.</span>
+<span class="sd">    list_available_launchers -&gt; dict</span>
+<span class="sd">        List the available launchers.</span>
+<span class="sd">    set_cases_dirs_from_output_dir -&gt; None</span>
+<span class="sd">        Set the cases directories from the output directory.</span>
+<span class="sd">    write_array_in_file -&gt; None</span>
+<span class="sd">        Write an array in a file.</span>
+<span class="sd">    copy_files -&gt; None</span>
+<span class="sd">        Copy file(s) from source to destination.</span>
+<span class="sd">    render_file_from_template -&gt; None</span>
+<span class="sd">        Render a file from a template.</span>
+<span class="sd">    create_cases_context_one_by_one -&gt; List[dict]</span>
+<span class="sd">        Create an array of dictionaries with the combinations of values from the</span>
+<span class="sd">        input dictionary, one by one.</span>
+<span class="sd">    create_cases_context_all_combinations -&gt; List[dict]</span>
+<span class="sd">        Create an array of dictionaries with each possible combination of values</span>
+<span class="sd">        from the input dictionary.</span>
+<span class="sd">    build_cases -&gt; None</span>
+<span class="sd">        Create the cases folders and render the input files.</span>
+<span class="sd">    run_case -&gt; None</span>
+<span class="sd">        Run the case based on the launcher specified.</span>
+<span class="sd">    run_cases -&gt; None</span>
+<span class="sd">        Run the cases based on the launcher specified.</span>
+<span class="sd">        Parallel execution is optional.</span>
+<span class="sd">        Cases to run can be specified.</span>
+<span class="sd">    run_cases_bulk -&gt; None</span>
+<span class="sd">        Run the cases based on the launcher specified.</span>
+<span class="sd">    postprocess_case -&gt; None</span>
+<span class="sd">        Postprocess the model output for a specific case.</span>
+<span class="sd">    join_postprocessed_files -&gt; xr.Dataset</span>
+<span class="sd">        Join the postprocessed files.</span>
+<span class="sd">    postprocess_cases -&gt; Union[xr.Dataset, List[xr.Dataset]]</span>
+<span class="sd">        Postprocess the model output.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">templates_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">model_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">templates_name</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+        <span class="n">default_parameters</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the BaseModelWrapper.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">default_parameters</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_parameters_type</span><span class="p">(</span>
+                <span class="n">default_parameters</span><span class="o">=</span><span class="n">default_parameters</span><span class="p">,</span> <span class="n">model_parameters</span><span class="o">=</span><span class="n">model_parameters</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">templates_dir</span> <span class="o">=</span> <span class="n">templates_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_parameters</span> <span class="o">=</span> <span class="n">model_parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span> <span class="o">=</span> <span class="n">output_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_env</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">loader</span><span class="o">=</span><span class="n">FileSystemLoader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">templates_dir</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">templates_name</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Templates name is &#39;all&#39;, so all templates in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">templates_dir</span><span class="si">}</span><span class="s2"> will be used.&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">templates_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">list_templates</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Templates names: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">templates_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">templates_name</span> <span class="o">=</span> <span class="n">templates_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cases_context</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">env</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_parameters_type</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">default_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">model_parameters</span><span class="p">:</span> <span class="nb">dict</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if the parameters have the correct type.</span>
+<span class="sd">        This function is called in the __init__ method of the BaseModelWrapper,</span>
+<span class="sd">        but default_parameters are defined in the child classes.</span>
+<span class="sd">        This way, child classes can define default types for parameters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        default_parameters : dict</span>
+<span class="sd">            The default parameters type for the model.</span>
+<span class="sd">        model_parameters : dict</span>
+<span class="sd">            The parameters to be used in the templates.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If a parameter has the wrong type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">model_param</span><span class="p">,</span> <span class="n">param_value</span> <span class="ow">in</span> <span class="n">model_parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">model_param</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">default_parameters</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Parameter </span><span class="si">{</span><span class="n">model_param</span><span class="si">}</span><span class="s2"> is not in the default_parameters&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param_value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+                    <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">default_parameters</span><span class="p">[</span><span class="n">model_param</span><span class="p">])</span>
+                    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">param_value</span>
+                <span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Parameter </span><span class="si">{</span><span class="n">model_param</span><span class="si">}</span><span class="s2"> has the correct type: </span><span class="si">{</span><span class="n">default_parameters</span><span class="p">[</span><span class="n">model_param</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Parameter </span><span class="si">{</span><span class="n">model_param</span><span class="si">}</span><span class="s2"> has the wrong type: </span><span class="si">{</span><span class="n">default_parameters</span><span class="p">[</span><span class="n">model_param</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_exec_bash_commands</span><span class="p">(</span>
+        <span class="n">str_cmd</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">out_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">err_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute bash commands.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        str_cmd : str</span>
+<span class="sd">            The bash command.</span>
+<span class="sd">        out_file : str, optional</span>
+<span class="sd">            The name of the output file. If None, the output will be printed in the terminal.</span>
+<span class="sd">            Default is None.</span>
+<span class="sd">        err_file : str, optional</span>
+<span class="sd">            The name of the error file. If None, the error will be printed in the terminal.</span>
+<span class="sd">            Default is None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">_stdout</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">_stderr</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">out_file</span><span class="p">:</span>
+            <span class="n">_stdout</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">err_file</span><span class="p">:</span>
+            <span class="n">_stderr</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">err_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+
+        <span class="n">s</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">str_cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">_stdout</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">_stderr</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">out_file</span><span class="p">:</span>
+            <span class="n">_stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="n">_stdout</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">err_file</span><span class="p">:</span>
+            <span class="n">_stderr</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="n">_stderr</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<div class="viewcode-block" id="BaseModelWrapper.list_available_launchers">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper.list_available_launchers">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_available_launchers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        List the available launchers.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A list with the available launchers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;available_launchers&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_launchers</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;The attribute available_launchers is not defined.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseModelWrapper.set_cases_dirs_from_output_dir">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper.set_cases_dirs_from_output_dir">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_cases_dirs_from_output_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the cases directories from the output directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Cases directories already set... resetting.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">case_dir</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cases directories set from </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseModelWrapper.write_array_in_file">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper.write_array_in_file">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_array_in_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write an array in a file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        array : np.ndarray</span>
+<span class="sd">            The array to be written. Can be 1D or 2D.</span>
+<span class="sd">        filename : str</span>
+<span class="sd">            The name of the file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">write_array_in_file</span><span class="p">(</span><span class="n">array</span><span class="o">=</span><span class="n">array</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseModelWrapper.copy_files">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper.copy_files">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dst</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Copy file(s) from source to destination.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        src : str</span>
+<span class="sd">            The source file.</span>
+<span class="sd">        dst : str</span>
+<span class="sd">            The destination file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">copy_files</span><span class="p">(</span><span class="n">src</span><span class="o">=</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="o">=</span><span class="n">dst</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseModelWrapper.render_file_from_template">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper.render_file_from_template">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">render_file_from_template</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">template_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">output_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Render a file from a template.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        template_name : str</span>
+<span class="sd">            The name of the template file.</span>
+<span class="sd">        context : dict</span>
+<span class="sd">            The context to be used in the template.</span>
+<span class="sd">        output_filename : str, optional</span>
+<span class="sd">            The name of the output file. If None, it will be saved in the output</span>
+<span class="sd">            directory with the same name as the template.</span>
+<span class="sd">            Default is None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">template</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">get_template</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">template_name</span><span class="p">)</span>
+        <span class="n">rendered_content</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">output_filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">output_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">template_name</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_filename</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">rendered_content</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseModelWrapper.create_cases_context_one_by_one">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper.create_cases_context_one_by_one">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_cases_context_one_by_one</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create an array of dictionaries with the combinations of values from the</span>
+<span class="sd">        input dictionary, one by one.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        List[dict]</span>
+<span class="sd">            A list of dictionaries, each representing a unique combination of</span>
+<span class="sd">            parameter values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">num_cases</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_parameters</span><span class="o">.</span><span class="n">values</span><span class="p">())))</span>
+        <span class="n">array_of_contexts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">!=</span> <span class="n">num_cases</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;All parameters must have the same number of values in one_by_one mode, check </span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">case_num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_cases</span><span class="p">):</span>
+            <span class="n">case_context</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">param</span><span class="p">:</span> <span class="n">values</span><span class="p">[</span><span class="n">case_num</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+            <span class="n">array_of_contexts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">case_context</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">array_of_contexts</span></div>
+
+
+<div class="viewcode-block" id="BaseModelWrapper.create_cases_context_all_combinations">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper.create_cases_context_all_combinations">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_cases_context_all_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create an array of dictionaries with each possible combination of values</span>
+<span class="sd">        from the input dictionary.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        List[dict]</span>
+<span class="sd">            A list of dictionaries, each representing a unique combination of</span>
+<span class="sd">            parameter values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_parameters</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="n">combinations</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">)</span>
+
+        <span class="n">array_of_contexts</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">combination</span><span class="p">))</span> <span class="k">for</span> <span class="n">combination</span> <span class="ow">in</span> <span class="n">combinations</span>
+        <span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">array_of_contexts</span></div>
+
+
+<div class="viewcode-block" id="BaseModelWrapper.build_cases">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper.build_cases">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;one_by_one&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create the cases folders and render the input files.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mode : str, optional</span>
+<span class="sd">            The mode to create the cases. Can be &quot;all_combinations&quot; or &quot;one_by_one&quot;.</span>
+<span class="sd">            Default is &quot;one_by_one&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;all_combinations&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cases_context</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_cases_context_all_combinations</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;one_by_one&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cases_context</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_cases_context_one_by_one</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid mode to create cases: </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">case_num</span><span class="p">,</span> <span class="n">case_context</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cases_context</span><span class="p">):</span>
+            <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;case_num&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">case_num</span>
+            <span class="n">case_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">case_num</span><span class="si">:</span><span class="s2">04</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">template_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">templates_name</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">render_file_from_template</span><span class="p">(</span>
+                    <span class="n">template_name</span><span class="o">=</span><span class="n">template_name</span><span class="p">,</span>
+                    <span class="n">context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span>
+                    <span class="n">output_filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">template_name</span><span class="p">),</span>
+                <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">)</span><span class="si">}</span><span class="s2"> cases created in </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2"> mode and saved in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseModelWrapper.run_case">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper.run_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_case</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">launcher</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ouput_log_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;wrapper_out.log&quot;</span><span class="p">,</span>
+        <span class="n">error_log_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;wrapper_error.log&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the case based on the launcher specified.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        launcher : str</span>
+<span class="sd">            The launcher to run the case.</span>
+<span class="sd">        ouput_log_file : str, optional</span>
+<span class="sd">            The name of the output log file. Default is &quot;wrapper_out.log&quot;.</span>
+<span class="sd">        error_log_file : str, optional</span>
+<span class="sd">            The name of the error log file. Default is &quot;wrapper_error.log&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Get launcher command from the available launchers</span>
+        <span class="n">launcher</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_available_launchers</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">launcher</span><span class="p">,</span> <span class="n">launcher</span><span class="p">)</span>
+
+        <span class="c1"># Run the case in the case directory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running case in </span><span class="si">{</span><span class="n">case_dir</span><span class="si">}</span><span class="s2"> with launcher=</span><span class="si">{</span><span class="n">launcher</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exec_bash_commands</span><span class="p">(</span>
+            <span class="n">str_cmd</span><span class="o">=</span><span class="n">launcher</span><span class="p">,</span>
+            <span class="n">out_file</span><span class="o">=</span><span class="n">ouput_log_file</span><span class="p">,</span>
+            <span class="n">err_file</span><span class="o">=</span><span class="n">error_log_file</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseModelWrapper.run_cases">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper.run_cases">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_cases</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">launcher</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">parallel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">cases_to_run</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the cases based on the launcher specified.</span>
+<span class="sd">        Parallel execution is optional.</span>
+<span class="sd">        Cases to run can be specified.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        launcher : str</span>
+<span class="sd">            The launcher to run the cases.</span>
+<span class="sd">        parallel : bool, optional</span>
+<span class="sd">            If True, the cases will be run in parallel. Default is False.</span>
+<span class="sd">        cases_to_run : List[int], optional</span>
+<span class="sd">            The list with the cases to run. Default is None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Get launcher command from the available launchers</span>
+        <span class="n">launcher</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_available_launchers</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">launcher</span><span class="p">,</span> <span class="n">launcher</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">cases_to_run</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Cases to run was specified, so just </span><span class="si">{</span><span class="n">cases_to_run</span><span class="si">}</span><span class="s2"> will be run.&quot;</span>
+            <span class="p">)</span>
+            <span class="n">cases_dir_to_run</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">[</span><span class="n">case</span><span class="p">]</span> <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="n">cases_to_run</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cases_dir_to_run</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">parallel</span><span class="p">:</span>
+            <span class="n">num_threads</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_num_processors_available</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Running cases in parallel with launcher=</span><span class="si">{</span><span class="n">launcher</span><span class="si">}</span><span class="s2">. Number of threads: </span><span class="si">{</span><span class="n">num_threads</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+            <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">num_threads</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+                <span class="n">future_to_case</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_case</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">,</span> <span class="n">launcher</span><span class="p">):</span> <span class="n">case_dir</span>
+                    <span class="k">for</span> <span class="n">case_dir</span> <span class="ow">in</span> <span class="n">cases_dir_to_run</span>
+                <span class="p">}</span>
+                <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">as_completed</span><span class="p">(</span><span class="n">future_to_case</span><span class="p">):</span>
+                    <span class="n">case_dir</span> <span class="o">=</span> <span class="n">future_to_case</span><span class="p">[</span><span class="n">future</span><span class="p">]</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Job for </span><span class="si">{</span><span class="n">case_dir</span><span class="si">}</span><span class="s2"> generated an exception: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">.&quot;</span>
+                        <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running cases sequentially with launcher=</span><span class="si">{</span><span class="n">launcher</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">case_dir</span> <span class="ow">in</span> <span class="n">cases_dir_to_run</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">run_case</span><span class="p">(</span>
+                        <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span>
+                        <span class="n">launcher</span><span class="o">=</span><span class="n">launcher</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Job for </span><span class="si">{</span><span class="n">case_dir</span><span class="si">}</span><span class="s2"> generated an exception: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">.&quot;</span>
+                    <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">launcher</span> <span class="o">==</span> <span class="s2">&quot;docker&quot;</span> <span class="ow">or</span> <span class="s2">&quot;docker&quot;</span> <span class="ow">in</span> <span class="n">launcher</span><span class="p">:</span>
+            <span class="c1"># TODO: ALWAYS remove ALL stopped containers after running all cases</span>
+            <span class="n">remove_stopped_containers_cmd</span> <span class="o">=</span> <span class="s1">&#39;docker ps -a --filter &quot;ancestor=tausiaj/swash-image:latest&quot; -q | xargs docker rm&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_exec_bash_commands</span><span class="p">(</span><span class="n">str_cmd</span><span class="o">=</span><span class="n">remove_stopped_containers_cmd</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;All cases ran successfully.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseModelWrapper.run_cases_bulk">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper.run_cases_bulk">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_cases_bulk</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">launcher</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the cases based on the launcher specified.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        launcher : str</span>
+<span class="sd">            The launcher to run the cases.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running cases with launcher=</span><span class="si">{</span><span class="n">launcher</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exec_bash_commands</span><span class="p">(</span><span class="n">str_cmd</span><span class="o">=</span><span class="n">launcher</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseModelWrapper.postprocess_case">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper.postprocess_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">postprocess_case</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Postprocess the model output.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_num : int</span>
+<span class="sd">            The case number.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;The method postprocess_case must be implemented.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseModelWrapper.join_postprocessed_files">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper.join_postprocessed_files">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">join_postprocessed_files</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">postprocessed_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Join the postprocessed files.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        postprocessed_files : List[xr.Dataset]</span>
+<span class="sd">            The list with the postprocessed files.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;The method join_postprocessed_files must be implemented.&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseModelWrapper.postprocess_cases">
+<a class="viewcode-back" href="../../../bluemath_tk.wrappers.html#bluemath_tk.wrappers.BaseModelWrapper.postprocess_cases">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">postprocess_cases</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cases_to_postprocess</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Postprocess the model output.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cases_to_postprocess : List[int], optional</span>
+<span class="sd">            The list with the cases to postprocess. Default is None.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        xr.Dataset or List[xr.Dataset]</span>
+<span class="sd">            The postprocessed file or the list with the postprocessed files.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># TODO: Check if this option is necessary</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">&quot;output_postprocessed.nc&quot;</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Output postprocessed file already exists. Skipping postprocessing.&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">&quot;output_postprocessed.nc&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Cases directories are not set and will be searched from the output directory.&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_cases_dirs_from_output_dir</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">cases_to_postprocess</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Cases to postprocess was specified, so just </span><span class="si">{</span><span class="n">cases_to_postprocess</span><span class="si">}</span><span class="s2"> will be postprocessed.&quot;</span>
+            <span class="p">)</span>
+            <span class="n">cases_dir_to_postprocess</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">[</span><span class="n">case</span><span class="p">]</span> <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="n">cases_to_postprocess</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cases_to_postprocess</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">)))</span>
+            <span class="n">cases_dir_to_postprocess</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">)</span>
+
+        <span class="n">postprocessed_files</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">case_num</span><span class="p">,</span> <span class="n">case_dir</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cases_to_postprocess</span><span class="p">,</span> <span class="n">cases_dir_to_postprocess</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Postprocessing case </span><span class="si">{</span><span class="n">case_num</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">case_dir</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">postprocessed_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">postprocess_case</span><span class="p">(</span>
+                    <span class="n">case_num</span><span class="o">=</span><span class="n">case_num</span><span class="p">,</span> <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span>
+                <span class="p">)</span>
+                <span class="n">postprocessed_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">postprocessed_file</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Ouput not postprocessed for case </span><span class="si">{</span><span class="n">case_num</span><span class="si">}</span><span class="s2">. Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">join_postprocessed_files</span><span class="p">(</span>
+                <span class="n">postprocessed_files</span><span class="o">=</span><span class="n">postprocessed_files</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">NotImplementedError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error joining postprocessed files: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">postprocessed_files</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
