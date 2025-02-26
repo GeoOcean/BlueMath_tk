@@ -73,8 +73,9 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/
 docs/_build/
+docs/logs/
+docs/*.pkl
 
 # MkDocs documentation (production)
 site/

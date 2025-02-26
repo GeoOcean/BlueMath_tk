@@ -24,6 +24,7 @@ setup(
         "xarray",
         "netcdf4",
         "dask",
+        "distributed",
         "zarr",
         "scipy",
         "scikit-learn",
@@ -39,6 +40,7 @@ setup(
         "regionmask",
         "wavespectra",
         "cmocean",
+        "hydromt-sfincs",
     ],
     classifiers=["Programming Language :: Python :: 3.11"],
     python_requires=">=3.11",  # Specify the Python version required
