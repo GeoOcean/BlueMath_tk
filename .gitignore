@@ -75,6 +75,7 @@ instance/
 # Sphinx documentation
 docs/_build/
 docs/logs/
+docs/jupyter_execute/
 docs/*.pkl
 
 # MkDocs documentation (production)
