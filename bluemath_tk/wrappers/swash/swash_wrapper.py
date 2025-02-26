@@ -55,8 +55,10 @@ class SwashModelWrapper(BaseModelWrapper):
     }
 
     available_launchers = {
-        "bash": "swashrun -input input.sws",
-        "docker": "docker run --rm -v .:/case_dir -w /case_dir tausiaj/swash-geoocean:11.01 swashrun -input input.sws",
+        "serial": "swash_serial.exe",
+        "mpi": "mpirun -np 2 swash_mpi.exe",
+        "docker_serial": "docker run --rm -v .:/case_dir -w /case_dir geoocean/rocky8 swash_serial.exe",
+        "docker_mpi": "docker run --rm -v .:/case_dir -w /case_dir geoocean/rocky8 mpirun -np 2 swash_mpi.exe",
         "geoocean-cluster": "launchSwash.sh",
     }
 
