@@ -49,7 +49,6 @@ dependencies = [
 [project.optional-dependencies]
 
 docs = ["sphinx", "sphinx-rtd-theme", "jupyter-sphinx"]
-tests = ["pytest", "pytest-mock"]
 deep = ["tensorflow", "keras"]
 num-models = ["hydromt-sfincs"]
 

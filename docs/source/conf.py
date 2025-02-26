@@ -18,7 +18,6 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     "sphinx.ext.doctest",
-    "matplotlib.sphinxext.plot_directive",
     "jupyter_sphinx",
 ]
 
