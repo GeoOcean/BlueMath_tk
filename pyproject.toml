@@ -44,6 +44,7 @@ dependencies = [
     "statsmodels",
     "regionmask",
     "wavespectra",
+    "cdsapi",
 ]
 
 [project.optional-dependencies]
