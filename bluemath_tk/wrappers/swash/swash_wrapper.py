@@ -1,12 +1,14 @@
 import os
-from typing import Tuple, List
+from typing import List, Tuple
+
 import numpy as np
 import pandas as pd
 import xarray as xr
 from scipy.signal import find_peaks
-from .._base_wrappers import BaseModelWrapper
+
 from ...waves.spectra import spectral_analysis
 from ...waves.statistics import upcrossing
+from .._base_wrappers import BaseModelWrapper
 
 
 class SwashModelWrapper(BaseModelWrapper):

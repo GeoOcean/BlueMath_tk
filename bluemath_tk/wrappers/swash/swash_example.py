@@ -1,5 +1,7 @@
 import os
+
 import numpy as np
+
 from bluemath_tk.datamining.lhs import LHS
 from bluemath_tk.datamining.mda import MDA
 from bluemath_tk.waves.series import series_TMA

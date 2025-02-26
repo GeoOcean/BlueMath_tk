@@ -452,11 +452,6 @@ class BaseModelWrapper(BlueMathModel):
                         f"Job for {case_dir} generated an exception: {exc}."
                     )
 
-        if launcher == "docker" or "docker" in launcher:
-            # TODO: ALWAYS remove ALL stopped containers after running all cases
-            remove_stopped_containers_cmd = 'docker ps -a --filter "ancestor=tausiaj/swash-image:latest" -q | xargs docker rm'
-            self._exec_bash_commands(str_cmd=remove_stopped_containers_cmd)
-
         self.logger.info("All cases ran successfully.")
 
     def run_cases_bulk(

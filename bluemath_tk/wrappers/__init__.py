@@ -12,15 +12,17 @@ Status: Under development (Working)
 from ._base_wrappers import BaseModelWrapper
 from ._utils_wrappers import copy_files, write_array_in_file
 from .delft3d.delft3d_wrapper import Delft3dModelWrapper
+from .sfincs.sfincs_wrapper import SfincsModelWrapper
 from .swan.swan_wrapper import SwanModelWrapper
 from .swash.swash_wrapper import SwashModelWrapper
 
 # Optionally, define the module's `__all__` variable to control what gets imported when using `from module import *`.
 __all__ = [
     "BaseModelWrapper",
-    "write_array_in_file",
     "copy_files",
-    "SwashModelWrapper",
-    "SwanModelWrapper",
+    "write_array_in_file",
     "Delft3dModelWrapper",
+    "SfincsModelWrapper",
+    "SwanModelWrapper",
+    "SwashModelWrapper",
 ]
