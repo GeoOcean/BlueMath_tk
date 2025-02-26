@@ -235,7 +235,9 @@ laura_frequencies = [
 
 
 def transform_CAWCR_WS(
-    cawcr_dataset: xr.Dataset, available_case_num: np.ndarray
+    cawcr_dataset: xr.Dataset,
+    subset_parameters: dict,
+    available_case_num: np.ndarray,
 ) -> xr.Dataset:
     """
     Transform the wave spectra from CAWCR format to binwaves format.
@@ -244,6 +246,8 @@ def transform_CAWCR_WS(
     ----------
     cawcr_dataset : xr.Dataset
         The wave spectra dataset in CAWCR format.
+    subset_parameters : dict
+        A dictionary containing parameters for the subset processing.
     available_case_num : np.ndarray
         The available case numbers.
 
@@ -264,8 +268,8 @@ def transform_CAWCR_WS(
     case_num_spectra = []
     for case_num, case_dir, case_freq in zip(
         available_case_num,
-        np.array(model_parameters.get("dir"))[available_case_num],
-        np.array(model_parameters.get("freq"))[available_case_num],
+        np.array(subset_parameters.get("dir"))[available_case_num],
+        np.array(subset_parameters.get("freq"))[available_case_num],
     ):
         case_num_spectra.append(
             ds.efth.sel(freq=case_freq, dir=case_dir, method="nearest").expand_dims(

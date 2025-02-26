@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -71,17 +71,17 @@ def generate_swan_cases(
 
 
 def process_kp_coefficients(
-    list_of_input_spectra: list[str],
-    list_of_output_spectra: list[str],
+    list_of_input_spectra: List[str],
+    list_of_output_spectra: List[str],
 ) -> xr.Dataset:
     """
     Process the kp coefficients from the output and input spectra.
 
     Parameters
     ----------
-    list_of_input_spectra : list[str]
+    list_of_input_spectra : List[str]
         The list of input spectra files.
-    list_of_output_spectra : list[str]
+    list_of_output_spectra : List[str]
         The list of output spectra files.
 
     Returns

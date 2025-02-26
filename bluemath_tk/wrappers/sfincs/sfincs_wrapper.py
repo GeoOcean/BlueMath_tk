@@ -16,7 +16,7 @@ class SfincsModelWrapper(BaseModelWrapper):
     default_parameters = {}
 
     available_launchers = {
-        "docker": "docker run --rm -v .:/case_dir -w /case_dir tausiaj/sfincs-geoocean:1.0 sfincs",
+        "docker": "docker run --rm -v .:/case_dir -w /case_dir deltares/sfincs-cpu",
         "cluster": "launchSfincs.sh",
     }
 
