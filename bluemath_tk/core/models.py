@@ -435,7 +435,7 @@ class BlueMathModel(ABC):
         - Check whether available processors are used or not.
         """
 
-        return os.cpu_count()
+        return int(os.cpu_count() * 0.5)
 
     def set_num_processors_to_use(self, num_processors: int) -> None:
         """

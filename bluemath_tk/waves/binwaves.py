@@ -3,180 +3,155 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 import xarray as xr
+from dask.diagnostics.progress import ProgressBar
 from matplotlib import cm
 from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
+from wavespectra.input.swan import read_swan
 
+from ..core.dask import setup_dask_client
 from ..core.plotting.base_plotting import DefaultStaticPlotting
 
 
-def transform_CAWCR_WS(cawcr_dataset: xr.Dataset) -> xr.Dataset:
+def generate_swan_cases(
+    frequencies_array: np.ndarray,
+    directions_array: np.ndarray,
+) -> xr.Dataset:
     """
-    Transform the wave spectra from CAWCR format to binwaves format.
+    Generate the SWAN cases monocromatic wave parameters.
 
     Parameters
     ----------
-    cawcr_dataset : xr.Dataset
-        The wave spectra dataset in CAWCR format.
+    directions_array : np.ndarray
+        The directions array.
+    frequencies_array : np.ndarray
+        The frequencies array.
 
     Returns
     -------
     xr.Dataset
-        The wave spectra dataset in binwaves format.
+        The SWAN monocromatic cases Dataset with coordinates freq and dir.
     """
 
-    ds = cawcr_dataset.rename({"frequency": "freq", "direction": "dir"})
-    ds["efth"] = ds["efth"] * np.pi / 180.0
-    ds["dir"] = ds["dir"] - 180.0
-    ds["dir"] = np.where(ds["dir"] < 0, ds["dir"] + 360, ds["dir"])
+    # Wave parameters
+    gamma = 50  # waves gamma
+    spr = 2  # waves directional spread
+
+    # Initialize data arrays for each variable
+    hs = np.zeros((len(directions_array), len(frequencies_array)))
+    tp = np.zeros((len(directions_array), len(frequencies_array)))
+    gamma_arr = np.full((len(directions_array), len(frequencies_array)), gamma)
+    spr_arr = np.full((len(directions_array), len(frequencies_array)), spr)
+
+    # Fill hs and tp arrays
+    for i, freq in enumerate(frequencies_array):
+        period = 1 / freq
+        hs_val = 1.0 if period > 5 else 0.1
+        hs[:, i] = hs_val
+        tp[:, i] = np.round(period, 4)
+
+    # Create xarray Dataset
+    ds = xr.Dataset(
+        data_vars={
+            "hs": (["dir", "freq"], hs),
+            "tp": (["dir", "freq"], tp),
+            "spr": (["dir", "freq"], spr_arr),
+            "gamma": (["dir", "freq"], gamma_arr),
+        },
+        coords={
+            "dir": directions_array,
+            "freq": frequencies_array,
+        },
+    )
+
+    # To get DataFrame if needed:
+    # df = ds.to_dataframe().reset_index()
 
     return ds
 
 
 def process_kp_coefficients(
-    swan_ds: xr.Dataset,
-    spectrum_freq: np.ndarray,
-    spectrum_dir: np.ndarray,
-    latitude: float,
-    longitude: float,
-):
+    list_of_input_spectra: list[str],
+    list_of_output_spectra: list[str],
+) -> xr.Dataset:
     """
-    This function processes the propagation coefficients for all the grid points
-    within the SWAN simulation output.
-    It takes a long time to run but it only needs to be done once per location.
+    Process the kp coefficients from the output and input spectra.
 
     Parameters
     ----------
-    swan_ds : xr.Dataset
-        The SWAN processed dataset.
-    spectrum_freq : np.ndarray
-        The frequency array.
-    spectrum_dir : np.ndarray
-        The direction array.
-    latitude : float
-        The latitude of the point of interest.
-    longitude : float
-        The longitude of the point of interest.
+    list_of_input_spectra : list[str]
+        The list of input spectra files.
+    list_of_output_spectra : list[str]
+        The list of output spectra files.
 
     Returns
     -------
     xr.Dataset
-        The propagation coefficients dataset.
+        The kp coefficients Dataset in frequency and direction.
     """
 
-    kp_matrix = np.full(
-        [
-            len(swan_ds.case_num),
-            len(spectrum_freq),
-            len(spectrum_dir),
-        ],
-        0.0,
-    )
+    output_kp_list = []
 
-    swan_point = swan_ds.sel(
-        Xp=longitude,
-        Yp=latitude,
-        method="nearest",
-    )
-    # TODO: Check if this is the correct way to handle NaN values
-    if any(np.isnan(swan_point["TPsmoo"].values)):
-        raise ValueError("NaN values found for variable TPsmoo_part")
+    for i, (input_spec_file, output_spec_file) in enumerate(
+        zip(list_of_input_spectra, list_of_output_spectra)
+    ):
+        try:
+            input_spec = read_swan(input_spec_file).squeeze().efth
+            output_spec = (
+                read_swan(output_spec_file)
+                .efth.squeeze()
+                .drop_vars("time")
+                .expand_dims({"case_num": [i]})
+            )
+            kp = output_spec / input_spec.sum(dim=["freq", "dir"])
+            output_kp_list.append(kp)
+        except Exception as e:
+            print(f"Error processing {input_spec_file} and {output_spec_file}")
+            print(e)
 
-    # Tp mask
-    swan_point_cut = swan_point[["Hsig", "TPsmoo", "Dir"]].where(
-        swan_point["TPsmoo"] > 0,
-        drop=True,
-    )
-
-    # get k,f,d
-    kfd = xr.Dataset(
-        {
-            "k": swan_point_cut.Hsig,
-            "f": 1 / swan_point_cut.TPsmoo,
-            "d": swan_point_cut.Dir,
-        }
-    )
-
-    # fill kp
-    for case_num in kfd.case_num.values:
-        kfd_c = kfd.sel(case_num=case_num)
-
-        # get k,f,d and clean nans
-        k = kfd_c.k.values
-        f = kfd_c.f.values
-        d = kfd_c.d.values
-
-        k = k[~np.isnan(f)]
-        d = d[~np.isnan(f)]
-        f = f[~np.isnan(f)]
-
-        # set case kp at point
-        for c in range(len(f)):
-            i = np.argmin(np.abs(spectrum_freq - f[c]))
-            j = np.argmin(np.abs(spectrum_dir - d[c]))
-            kp_matrix[case_num, i, j] = k[c]
-
-    return xr.Dataset(
-        {
-            "kp": (["case", "freq", "dir"], kp_matrix),
-            "swan_freqs": (["case"], 1.0 / swan_point_cut.TPsmoo),
-            "swan_dirs": (["case"], swan_point_cut.Dir),
-        },
-        coords={
-            "case": swan_ds.case_num,
-            "freq": spectrum_freq,
-            "dir": spectrum_dir,
-        },
+    return (
+        xr.concat(output_kp_list, dim="case_num")
+        .fillna(0.0)
+        .sortby("freq")
+        .sortby("dir")
     )
 
 
 def reconstruc_spectra(
-    spectra_ds: xr.Dataset,
+    offshore_spectra: xr.Dataset,
     kp_coeffs: xr.Dataset,
 ):
     """
-    Reconstruct the wave spectra using the kp coefficients.
+    Reconstruct the onshore spectra using offshore spectra and kp coefficients.
 
     Parameters
     ----------
-    spectra_ds : xr.Dataset
-        The offshore wave spectra dataset.
+    offshore_spectra : xr.Dataset
+        The offshore spectra dataset.
     kp_coeffs : xr.Dataset
-        The nearshore kp coefficients dataset.
+        The kp coefficients dataset.
 
     Returns
     -------
     xr.Dataset
-        The nearshore reconstructed wave spectra dataset.
+        The reconstructed onshore spectra dataset.
     """
 
-    EFTH = np.full(
-        np.shape(spectra_ds.efth.values),
-        0,
-    )
+    # Setup Dask client
+    client = setup_dask_client(n_workers=4, memory_limit=0.5)
 
-    for case in range(len(kp_coeffs.case)):
-        freq_, dir_ = (
-            kp_coeffs.isel(case=case).swan_freqs.values,
-            kp_coeffs.isel(case=case).swan_dirs.values,
-        )
-        efth_case = spectra_ds.sel(freq=freq_, dir=dir_, method="nearest")
-        kp_case = kp_coeffs.sortby("dir").isel(case=case)
+    try:
+        # Process with controlled chunks
+        offshore_spectra_chunked = offshore_spectra.chunk({"time": 24 * 7})
+        kp_coeffs_chunked = kp_coeffs.chunk({"site": 1})
+        with ProgressBar():
+            onshore_spectra = (
+                (offshore_spectra_chunked * kp_coeffs_chunked).sum(dim="case_num")
+            ).compute()
+        return onshore_spectra
 
-        EFTH = EFTH + (efth_case.efth * kp_case.kp**2).values
-
-    # ns_sp = off_sp.drop(("Wspeed", "Wdir", "Depth")).copy()
-
-    return xr.Dataset(
-        {
-            "efth": (["time", "freq", "dir"], EFTH),
-        },
-        coords={
-            "time": spectra_ds.time,
-            "freq": spectra_ds.freq,
-            "dir": spectra_ds.dir,
-        },
-    )
+    finally:
+        client.close()
 
 
 def plot_selected_subset_parameters(
