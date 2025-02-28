@@ -3,6 +3,7 @@ from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
+import pyproj
 import xarray as xr
 from sklearn.preprocessing import StandardScaler
 
@@ -378,3 +379,75 @@ def get_degrees_from_uv(xu: np.ndarray, xv: np.ndarray) -> np.ndarray:
 
     # Return the degrees
     return x_deg
+
+
+def convert_utm_to_lonlat(
+    utm_x: np.ndarray,
+    utm_y: np.ndarray,
+    projection: Union[int, str, dict, pyproj.CRS],
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    This method converts UTM coordinates to Longitude and Latitude.
+
+    Parameters
+    ----------
+    utm_x : np.ndarray
+        The x values in UTM.
+    utm_y : np.ndarray
+        The y values in UTM.
+    projection : int, str, dict, pyproj.CRS
+        The projection to use for the transformation.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        The longitude and latitude values.
+    """
+
+    available_projections = {
+        "SPAIN": pyproj.Proj(proj="utm", zone=30, ellps="WGS84"),
+    }
+    if isinstance(projection, str):
+        projection = available_projections.get(projection, projection)
+
+    # Create the UTM to LonLat transformer
+    lon, lat = projection(utm_x, utm_y, inverse=True)
+
+    # Return the LonLat coordinates
+    return lon, lat
+
+
+def convert_lonlat_to_utm(
+    lon: np.ndarray,
+    lat: np.ndarray,
+    projection: Union[int, str, dict, pyproj.CRS],
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    This method converts Longitude and Latitude to UTM coordinates.
+
+    Parameters
+    ----------
+    lon : np.ndarray
+        The longitude values.
+    lat : np.ndarray
+        The latitude values.
+    projection : int, str, dict, pyproj.CRS
+        The projection to use for the transformation.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        The x and y coordinates in UTM.
+    """
+
+    available_projections = {
+        "SPAIN": pyproj.Proj(proj="utm", zone=30, ellps="WGS84"),
+    }
+    if isinstance(projection, str):
+        projection = available_projections.get(projection, projection)
+
+    # Create the LonLat to UTM transformer
+    utm_x, utm_y = projection(lon, lat)
+
+    # Return the UTM coordinates
+    return utm_x, utm_y

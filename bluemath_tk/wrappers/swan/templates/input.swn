@@ -12,11 +12,10 @@ $
 INPGRID BOTTOM REGULAR 409888.026 4802179.317 0 702 359 100.0 100.0
 READINP BOTTOM 1 'depth_main_cantabria.dat' 1 0 FREE
 $
-{% if dir < 45 %}BOU SIDE N CON FILE 'input_spectra.bnd'
-{% elif dir < 135 %}BOU SIDE E CON FILE 'input_spectra.bnd'
-{% elif dir < 225 %}BOU SIDE S CON FILE 'input_spectra.bnd'
-{% elif dir < 315 %}BOU SIDE W CON FILE 'input_spectra.bnd'
-{% else %}BOU SIDE N CON FILE 'input_spectra.bnd'{% endif %}
+BOUndspec SIDE N CONstant PAR {{ hs }} {{ tp }} {{ dir }} {{ spr }}
+BOUndspec SIDE E CONstant PAR {{ hs }} {{ tp }} {{ dir }} {{ spr }}
+BOUndspec SIDE W CONstant PAR {{ hs }} {{ tp }} {{ dir }} {{ spr }}
+BOUndspec SIDE S CONstant PAR {{ hs }} {{ tp }} {{ dir }} {{ spr }}
 $
 FRICTION JONSWAP
 BREAKING
