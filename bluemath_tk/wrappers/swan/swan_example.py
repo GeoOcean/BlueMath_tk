@@ -292,13 +292,13 @@ class BinWavesWrapper(SwanModelWrapper):
         input_spectrum = construct_partition(
             freq_name="jonswap",
             freq_kwargs={
-                "freq": example_frequencies,
+                "freq": laura_frequencies,
                 "fp": 1.0 / case_context.get("tp"),
                 "hs": case_context.get("hs"),
             },
             dir_name="cartwright",
             dir_kwargs={
-                "dir": example_directions,
+                "dir": laura_directions,
                 "dm": case_context.get("dir"),
                 "dspr": case_context.get("spr"),
             },
@@ -335,7 +335,7 @@ if __name__ == "__main__":
         "/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/wrappers/swan/templates/"
     )
     templates_name = ["input.swn", "depth_main_cantabria.dat", "buoys.loc"]
-    output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/swan/CAN_mono/"
+    output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/swan/CAN_part/"
     # Generate swan model parameters
     model_parameters = (
         generate_swan_cases(
@@ -355,17 +355,17 @@ if __name__ == "__main__":
         output_dir=output_dir,
     )
     # Build the input files
-    # swan_wrapper.build_cases(mode="one_by_one")
+    swan_wrapper.build_cases(mode="one_by_one")
     # Set the cases directories from the output directory
     swan_wrapper.set_cases_dirs_from_output_dir()
     # List available launchers
-    # print(swan_wrapper.list_available_launchers())
+    print(swan_wrapper.list_available_launchers())
     # Run the model
-    # swan_wrapper.run_cases(launcher="docker", parallel=True)
+    swan_wrapper.run_cases(launcher="docker", parallel=True)
     # Post-process the output files
-    # postprocessed_ds = swan_wrapper.postprocess_cases()
-    # postprocessed_ds.to_netcdf(op.join(swan_wrapper.output_dir, "waves_part.nc"))
-    # print(postprocessed_ds)
+    postprocessed_ds = swan_wrapper.postprocess_cases()
+    postprocessed_ds.to_netcdf(op.join(swan_wrapper.output_dir, "waves_part.nc"))
+    print(postprocessed_ds)
     # Get input and ouput spectra files from self.cases_dirs
     input_files = [op.join(d, "input_spectra.bnd") for d in swan_wrapper.cases_dirs]
     output_files = [op.join(d, "output.spec") for d in swan_wrapper.cases_dirs]
