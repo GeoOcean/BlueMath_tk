@@ -138,7 +138,7 @@ def reconstruc_spectra(
     """
 
     # Setup Dask client
-    client = setup_dask_client(n_workers=4, memory_limit=0.5)
+    client = setup_dask_client(n_workers=4, memory_limit=0.2)
 
     try:
         # Process with controlled chunks
