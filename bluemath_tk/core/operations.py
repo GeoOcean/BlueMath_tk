@@ -7,6 +7,10 @@ import pyproj
 import xarray as xr
 from sklearn.preprocessing import StandardScaler
 
+available_projections = {
+    "SPAIN": pyproj.Proj(proj="utm", zone=30, ellps="WGS84"),
+}
+
 
 def normalize(
     data: Union[pd.DataFrame, xr.Dataset],
@@ -404,14 +408,24 @@ def convert_utm_to_lonlat(
         The longitude and latitude values.
     """
 
-    available_projections = {
-        "SPAIN": pyproj.Proj(proj="utm", zone=30, ellps="WGS84"),
-    }
     if isinstance(projection, str):
         projection = available_projections.get(projection, projection)
 
-    # Create the UTM to LonLat transformer
+    # Transform the UTM to LonLat coordinates
+    reshape = False
+    if utm_x.size != utm_y.size:
+        reshape_size = (utm_y.size, utm_x.size)
+        utm_x, utm_y = (
+            np.meshgrid(utm_x, utm_y)[0].reshape(-1),
+            np.meshgrid(utm_x, utm_y)[1].reshape(-1),
+        )
+        reshape = True
     lon, lat = projection(utm_x, utm_y, inverse=True)
+    if reshape:
+        lon, lat = (
+            lon.reshape(*reshape_size)[0, :],
+            lat.reshape(*reshape_size)[:, 0],
+        )
 
     # Return the LonLat coordinates
     return lon, lat
@@ -440,14 +454,77 @@ def convert_lonlat_to_utm(
         The x and y coordinates in UTM.
     """
 
-    available_projections = {
-        "SPAIN": pyproj.Proj(proj="utm", zone=30, ellps="WGS84"),
-    }
     if isinstance(projection, str):
         projection = available_projections.get(projection, projection)
 
-    # Create the LonLat to UTM transformer
+    # Transform the LonLat to UTM coordinates
+    reshape = False
+    if lon.size != lat.size:
+        reshape_size = (lat.size, lon.size)
+        lon, lat = (
+            np.meshgrid(lon, lat)[0].reshape(-1),
+            np.meshgrid(lon, lat)[1].reshape(-1),
+        )
+        reshape = True
     utm_x, utm_y = projection(lon, lat)
+    if reshape:
+        utm_x, utm_y = (
+            utm_x.reshape(*reshape_size)[0, :],
+            utm_y.reshape(*reshape_size)[:, 0],
+        )
 
     # Return the UTM coordinates
     return utm_x, utm_y
+
+
+def spatial_gradient(data: xr.DataArray) -> xr.DataArray:
+    """
+    Calculate spatial gradient of a DataArray with dimensions (time, latitude, longitude).
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Input data with dimensions (time, latitude, longitude).
+
+    Returns
+    -------
+    xr.DataArray
+        Gradient magnitude with same dimensions as input.
+
+    Notes
+    -----
+    The gradient is calculated using central differences, accounting for
+    latitude-dependent grid spacing in spherical coordinates.
+    """
+
+    # Initialize gradient array
+    var_grad = xr.zeros_like(data)
+
+    # Get latitude values in radians for spherical coordinate correction
+    lat_rad = np.pi * np.abs(data.latitude.values) / 180.0
+
+    # Calculate gradients using vectorized operations
+    for t in range(len(data.time)):
+        var_val = data.isel(time=t).values
+
+        # calculate gradient (matrix)
+        m_c = var_val[1:-1, 1:-1]
+        m_l = np.roll(var_val, -1, axis=1)[1:-1, 1:-1]
+        m_r = np.roll(var_val, +1, axis=1)[1:-1, 1:-1]
+        m_u = np.roll(var_val, -1, axis=0)[1:-1, 1:-1]
+        m_d = np.roll(var_val, +1, axis=0)[1:-1, 1:-1]
+        m_phi = lat_rad[1:-1]
+
+        dpx1 = (m_c - m_l) / np.cos(m_phi[:, None])
+        dpx2 = (m_r - m_c) / np.cos(m_phi[:, None])
+        dpy1 = m_c - m_d
+        dpy2 = m_u - m_c
+
+        vg = (dpx1**2 + dpx2**2) / 2 + (dpy1**2 + dpy2**2) / 2
+        var_grad[t, 1:-1, 1:-1] = vg
+
+    # Set attributes
+    var_grad.attrs["units"] = "m^2/s^2"
+    var_grad.attrs["name"] = "Gradient"
+
+    return var_grad
