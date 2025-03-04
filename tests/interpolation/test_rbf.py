@@ -1,6 +1,8 @@
 import unittest
+
 import numpy as np
 import pandas as pd
+
 from bluemath_tk.interpolation.rbf import RBF
 
 
@@ -29,7 +31,7 @@ class TestRBF(unittest.TestCase):
             target_data=self.target,
             target_directional_variables=["DirPred"],
             normalize_target_data=True,
-            num_threads=4,
+            num_workers=4,
         )
         self.assertTrue(self.rbf.is_fitted)
         self.assertTrue(self.rbf.is_target_normalized)
@@ -61,7 +63,7 @@ class TestRBF(unittest.TestCase):
             target_directional_variables=["DirPred"],
             normalize_target_data=True,
             dataset=self.dataset,
-            num_threads=4,
+            num_workers=4,
         )
         self.assertIsInstance(predictions, pd.DataFrame)
         self.assertIn("HsPred", predictions.columns)

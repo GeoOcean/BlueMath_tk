@@ -4,7 +4,8 @@ import os
 import pickle
 import sys
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Union
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from typing import Any, Callable, List, Tuple, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -27,6 +28,8 @@ from .operations import (
     standarize,
 )
 
+T = TypeVar("T")
+
 
 class BlueMathModel(ABC):
     """
@@ -37,6 +40,33 @@ class BlueMathModel(ABC):
     def __init__(self) -> None:
         self._logger: logging.Logger = None
         self._exclude_attributes: List[str] = []
+        self.num_workers: int = 1
+
+        # [UNDER DEVELOPMENT] Below, we try to generalise parallel processing
+        bluemath_num_workers = os.environ.get("BLUEMATH_NUM_WORKERS", None)
+        omp_num_threads = os.environ.get("OMP_NUM_THREADS", None)
+        if bluemath_num_workers is not None:
+            self.logger.warning(
+                f"Setting self.num_workers to {bluemath_num_workers} due to BLUEMATH_NUM_WORKERS. \n"
+                "Change it using self.set_num_processors_to_use method. \n"
+                "Also setting OMP_NUM_THREADS to 1, to avoid conflicts with BlueMath parallel processing."
+            )
+            self.set_num_processors_to_use(num_processors=int(bluemath_num_workers))
+            self.set_omp_num_threads(num_threads=1)
+        elif omp_num_threads is not None:
+            self.logger.warning(
+                f"Changing variable OMP_NUM_THREADS from {omp_num_threads} to 1. \n"
+                f"And setting self.num_workers to {omp_num_threads}. \n"
+                "To avoid conflicts with BlueMath parallel processing."
+            )
+            self.set_omp_num_threads(num_threads=1)
+            self.set_num_processors_to_use(num_processors=int(omp_num_threads))
+        else:
+            self.num_workers = 1  # self.get_num_processors_available()
+            self.logger.warning(
+                f"Setting self.num_workers to {self.num_workers}. \n"
+                "Change it using self.set_num_processors_to_use method."
+            )
 
     def __getstate__(self):
         """Exclude certain attributes from being pickled."""
@@ -422,6 +452,26 @@ class BlueMathModel(ABC):
 
         return get_degrees_from_uv(xu, xv)
 
+    def set_omp_num_threads(self, num_threads: int) -> None:
+        """
+        Sets the number of threads for OpenMP.
+
+        Parameters
+        ----------
+        num_threads : int
+            The number of threads.
+
+        Warning
+        -----
+        - This methos is under development.
+        """
+
+        os.environ["OMP_NUM_THREADS"] = str(num_threads)
+
+        # Re-import numpy if it is already imported
+        if "numpy" in sys.modules:
+            importlib.reload(np)
+
     def get_num_processors_available(self) -> int:
         """
         Gets the number of processors available.
@@ -431,11 +481,12 @@ class BlueMathModel(ABC):
         int
             The number of processors available.
 
-        TODO:
+        TODO
+        ----
         - Check whether available processors are used or not.
         """
 
-        return int(os.cpu_count() * 0.5)
+        return int(os.cpu_count() * 0.9)
 
     def set_num_processors_to_use(self, num_processors: int) -> None:
         """
@@ -446,11 +497,6 @@ class BlueMathModel(ABC):
         num_processors : int
             The number of processors to use.
             If -1, all available processors will be used.
-
-        Raises
-        ------
-        ValueError
-            If the number of processors requested exceeds the number of processors available
         """
 
         # Retrieve the number of processors available
@@ -462,7 +508,7 @@ class BlueMathModel(ABC):
         elif num_processors <= 0:
             raise ValueError("Number of processors must be greater than 0")
         elif num_processors > num_processors_available:
-            raise ValueError(
+            raise self.logger.warning(
                 f"Number of processors requested ({num_processors}) "
                 f"exceeds the number of processors available ({num_processors_available})"
             )
@@ -480,29 +526,73 @@ class BlueMathModel(ABC):
                 f"is more than 50% of the available processors ({num_processors_available})"
             )
         self.logger.info(f"Using {percentage * 100}% of the available processors")
-        os.environ["OMP_NUM_THREADS"] = str(num_processors)
 
-        # Re-import numpy if it is already imported
-        if "numpy" in sys.modules:
-            importlib.reload(np)
+        # Set the number of processors to use
+        self.num_workers = num_processors
 
-    def get_num_processors_used(self) -> int:
+    def parallel_execute(
+        self,
+        func: Callable,
+        items: List[Any],
+        num_workers: int,
+        cpu_intensive: bool = False,
+        **kwargs,
+    ) -> List[T]:
         """
-        Gets the number of processors used.
+        Execute a function in parallel using concurrent.futures.
+
+        Parameters
+        ----------
+        func : Callable
+            Function to execute for each item.
+        items : List[Any]
+            List of items to process.
+        num_workers : int
+            Number of parallel workers.
+        cpu_intensive : bool, optional
+            Whether the function is CPU intensive. Default is False.
+        **kwargs : dict
+            Additional keyword arguments for func.
 
         Returns
         -------
-        int
-            The number of processors used.
-
-        Notes
-        -----
-        - This method returns the number of processors used by the application.
-        - 1 is returned if the number of processors used is not set, as is the case of
-          serial processing like Python's built-in functions.
-        - Remember that if we run a parallel processing task, the number of processors used
-          will be the number of processors set by the task, ehich can be > 1.
-          Examples: np.linalg. or numerical models compiled with OpenMP or MPI.
+        List[T]
+            List of results from each function call
         """
 
-        return int(os.environ.get("OMP_NUM_THREADS", 1))
+        results = {}
+
+        if cpu_intensive:
+            self.logger.info("Using ProcessPoolExecutor for CPU intensive tasks.")
+            with ProcessPoolExecutor(max_workers=num_workers) as executor:
+                future_to_item = {
+                    executor.submit(func, *item, **kwargs)
+                    if isinstance(item, tuple)
+                    else executor.submit(func, item, **kwargs): i
+                    for i, item in enumerate(items)
+                }
+                for future in as_completed(future_to_item):
+                    i = future_to_item[future]
+                    try:
+                        result = future.result()
+                        results[i] = result
+                    except Exception as exc:
+                        self.logger.error(f"Job for {i} generated an exception: {exc}")
+        else:
+            self.logger.info("Using ThreadPoolExecutor for I/O bound tasks.")
+            with ThreadPoolExecutor(max_workers=num_workers) as executor:
+                future_to_item = {
+                    executor.submit(func, *item, **kwargs)
+                    if isinstance(item, tuple)
+                    else executor.submit(func, item, **kwargs): i
+                    for i, item in enumerate(items)
+                }
+                for future in as_completed(future_to_item):
+                    i = future_to_item[future]
+                    try:
+                        result = future.result()
+                        results[i] = result
+                    except Exception as exc:
+                        self.logger.error(f"Job for {i} generated an exception: {exc}")
+
+        return results

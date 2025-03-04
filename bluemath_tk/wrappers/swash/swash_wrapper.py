@@ -1,4 +1,5 @@
 import os
+import re
 from typing import List, Tuple
 
 import numpy as np
@@ -33,12 +34,18 @@ class SwashModelWrapper(BaseModelWrapper):
         Read a tab file and return a pandas DataFrame.
     _convert_case_output_files_to_nc -> xr.Dataset
         Convert tab files to netCDF file.
+    get_case_percentage_from_file -> float
+        Get the case percentage from the output log file.
+    monitor_cases -> pd.DataFrame
+        Monitor the cases and log relevant information.
     postprocess_case -> xr.Dataset
         Convert tab ouput files to netCDF file.
     join_postprocessed_files -> xr.Dataset
         Join postprocessed files in a single Dataset.
     find_maximas -> Tuple[np.ndarray, np.ndarray]
         Find the individual maxima of an array.
+    get_waterlevel -> xr.Dataset
+        Get water level from the output netCDF file.
     calculate_runup2 -> xr.Dataset
         Calculates runup 2% (Ru2) from the output netCDF file.
     calculate_runup -> xr.Dataset
@@ -176,11 +183,60 @@ class SwashModelWrapper(BaseModelWrapper):
 
         return ds
 
+    def get_case_percentage_from_file(self, output_log_file: str) -> str:
+        """
+        Get the case percentage from the output log file.
+
+        Parameters
+        ----------
+        output_log_file : str
+            The output log file.
+
+        Returns
+        -------
+        str
+            The case percentage.
+        """
+
+        if not os.path.exists(output_log_file):
+            return "0 %"
+
+        progress_pattern = r"\[\s*(\d+)%\]"
+        with open(output_log_file, "r") as f:
+            for line in reversed(f.readlines()):
+                match = re.search(progress_pattern, line)
+                if match:
+                    return f"{match.group(1)} %"
+
+        return "0 %"  # if no progress is found
+
+    def monitor_cases(self) -> pd.DataFrame:
+        """
+        Monitor the cases and log relevant information.
+
+        Returns
+        -------
+        pd.DataFrame
+            The cases percentage.
+        """
+
+        cases_percentage = {}
+
+        for case_dir in self.cases_dirs:
+            # TODO: Try to generalise the output log file name with launcher??
+            output_log_file = os.path.join(case_dir, "wrapper_out.log")
+            progress = self.get_case_percentage_from_file(
+                output_log_file=output_log_file
+            )
+            cases_percentage[os.path.basename(case_dir)] = progress
+
+        return pd.DataFrame(cases_percentage.items(), columns=["Case", "Percentage"])
+
     def postprocess_case(
         self, case_num: int, case_dir: str, output_vars: List[str] = None
     ) -> xr.Dataset:
         """
-        Convert tab ouput files to netCDF file.
+        Convert tab output files to netCDF file.
 
         Parameters
         ----------
@@ -196,6 +252,12 @@ class SwashModelWrapper(BaseModelWrapper):
         xr.Dataset
             The postprocessed Dataset.
         """
+
+        import warnings
+
+        warnings.filterwarnings("ignore")
+
+        self.logger.info(f"Postprocessing case {case_num} in {case_dir}.")
 
         if output_vars is None:
             self.logger.info("Postprocessing all available variables.")

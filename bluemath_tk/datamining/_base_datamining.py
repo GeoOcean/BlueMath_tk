@@ -192,6 +192,7 @@ class BaseClustering(BlueMathModel):
         self,
         data_color: str = "blue",
         centroids_color: str = "red",
+        plot_text: bool = False,
         **kwargs,
     ) -> Tuple[plt.figure, plt.axes]:
         """
@@ -203,6 +204,8 @@ class BaseClustering(BlueMathModel):
             Color for the data points. Default is "blue".
         centroids_color : str, optional
             Color for the centroid points. Default is "red".
+        plot_text : bool, optional
+            Whether to display text labels for centroids. Default is False.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the scatter plot function.
 
@@ -258,14 +261,15 @@ class BaseClustering(BlueMathModel):
                         alpha=0.9,
                         **kwargs,
                     )
-                    for i in range(self.centroids.shape[0]):
-                        axes[c2, c1].text(
-                            self.centroids[v1][i],
-                            self.centroids[v2][i],
-                            str(i + 1),
-                            fontsize=12,
-                            fontweight="bold",
-                        )
+                    if plot_text:
+                        for i in range(self.centroids.shape[0]):
+                            axes[c2, c1].text(
+                                self.centroids[v1][i],
+                                self.centroids[v2][i],
+                                str(i + 1),
+                                fontsize=12,
+                                fontweight="bold",
+                            )
                 if c1 == c2:
                     axes[c2, c1].set_xlabel(variables_names[c1 + 1])
                     axes[c2, c1].set_ylabel(variables_names[c2])
