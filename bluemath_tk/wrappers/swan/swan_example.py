@@ -355,17 +355,17 @@ if __name__ == "__main__":
         output_dir=output_dir,
     )
     # Build the input files
-    swan_wrapper.build_cases(mode="one_by_one")
+    # swan_wrapper.build_cases(mode="one_by_one")
     # Set the cases directories from the output directory
     swan_wrapper.set_cases_dirs_from_output_dir()
     # List available launchers
-    print(swan_wrapper.list_available_launchers())
+    # print(swan_wrapper.list_available_launchers())
     # Run the model
-    swan_wrapper.run_cases(launcher="docker", parallel=True)
+    # swan_wrapper.run_cases(launcher="docker", parallel=True)
     # Post-process the output files
-    postprocessed_ds = swan_wrapper.postprocess_cases()
-    postprocessed_ds.to_netcdf(op.join(swan_wrapper.output_dir, "waves_part.nc"))
-    print(postprocessed_ds)
+    # postprocessed_ds = swan_wrapper.postprocess_cases()
+    # postprocessed_ds.to_netcdf(op.join(swan_wrapper.output_dir, "waves_part.nc"))
+    # print(postprocessed_ds)
     # Get input and ouput spectra files from self.cases_dirs
     input_files = [op.join(d, "input_spectra.bnd") for d in swan_wrapper.cases_dirs]
     output_files = [op.join(d, "output.spec") for d in swan_wrapper.cases_dirs]
@@ -387,4 +387,5 @@ if __name__ == "__main__":
         offshore_spectra=offshore_spectra,
         kp_coeffs=kp_coeffs,
     )
+    onshore_spectra.to_netcdf(op.join(swan_wrapper.output_dir, "onshore_spectra.nc"))
     print(onshore_spectra)
