@@ -275,6 +275,9 @@ class RBF(BaseInterpolation):
         self._rbf_coeffs: pd.DataFrame = pd.DataFrame()
         self._opt_sigmas: dict = {}
 
+        # Exclude attributes to .save_model() method
+        self._exclude_attributes = []
+
     @property
     def sigma_min(self) -> float:
         return self._sigma_min
