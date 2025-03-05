@@ -424,13 +424,11 @@ class BaseModelWrapper(BlueMathModel):
         cases_to_run : List[int], optional
             The list with the cases to run. Default is None.
         num_workers : int, optional
-            The number of parallel workers. Default is 1.
+            The number of parallel workers. Default is None.
         """
 
         if num_workers is None:
             num_workers = self.num_workers
-        else:
-            self.num_workers = num_workers
 
         # Get launcher command from the available launchers
         launcher = self.list_available_launchers().get(launcher, launcher)
@@ -500,7 +498,7 @@ class BaseModelWrapper(BlueMathModel):
         self,
         launcher: str,
         cases_to_run: List[int] = None,
-        num_workers: int = 1,
+        num_workers: int = None,
     ) -> None:
         """
         Run the cases in the background based on the launcher specified.
@@ -514,13 +512,11 @@ class BaseModelWrapper(BlueMathModel):
         cases_to_run : List[int], optional
             The list with the cases to run. Default is None.
         num_workers : int, optional
-            The number of parallel workers. Default is 1.
+            The number of parallel workers. Default is None.
         """
 
         if num_workers is None:
             num_workers = self.num_workers
-        else:
-            self.num_workers = num_workers
 
         self.status_queue = Queue()
         self.thread = threading.Thread(
@@ -600,7 +596,7 @@ class BaseModelWrapper(BlueMathModel):
     def postprocess_cases(
         self,
         cases_to_postprocess: List[int] = None,
-        num_workers: int = 1,
+        num_workers: int = None,
         write_output_nc: bool = True,
         clean_after: bool = False,
         force: bool = False,
@@ -613,7 +609,7 @@ class BaseModelWrapper(BlueMathModel):
         cases_to_postprocess : List[int], optional
             The list with the cases to postprocess. Default is None.
         num_workers : int, optional
-            The number of parallel workers. Default is 1.
+            The number of parallel workers. Default is None.
         write_output_nc : bool, optional
             Write the output postprocessed file. Default is True.
         clean_after : bool, optional

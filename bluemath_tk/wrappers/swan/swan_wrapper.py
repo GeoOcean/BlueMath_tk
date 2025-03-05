@@ -1,6 +1,8 @@
 import os
+import re
 from typing import List
 
+import pandas as pd
 import scipy.io as sio
 import xarray as xr
 
@@ -30,6 +32,7 @@ class SwanModelWrapper(BaseModelWrapper):
     available_launchers = {
         "bash": "swanrun -input input",
         "docker": "docker run --rm -v .:/case_dir -w /case_dir tausiaj/swan-geoocean:41.51 swanrun -input input",
+        "docker_serial": "docker run --rm -v .:/case_dir -w /case_dir geoocean/rocky8 swash_serial.exe",
     }
 
     output_variables = {
@@ -133,6 +136,55 @@ class SwanModelWrapper(BaseModelWrapper):
         ds.coords["case_num"] = case_num
 
         return ds
+
+    def get_case_percentage_from_file(self, output_log_file: str) -> str:
+        """
+        Get the case percentage from the output log file.
+
+        Parameters
+        ----------
+        output_log_file : str
+            The output log file.
+
+        Returns
+        -------
+        str
+            The case percentage.
+        """
+
+        if not os.path.exists(output_log_file):
+            return "0 %"
+
+        progress_pattern = r"OK in\s+(\d+\.\d+)\s*%"
+        with open(output_log_file, "r") as f:
+            for line in reversed(f.readlines()):
+                match = re.search(progress_pattern, line)
+                if match:
+                    return f"{match.group(1)} %"
+
+        return "0 %"  # if no progress is found
+
+    def monitor_cases(self) -> pd.DataFrame:
+        """
+        Monitor the cases and log relevant information.
+
+        Returns
+        -------
+        pd.DataFrame
+            The cases percentage.
+        """
+
+        cases_percentage = {}
+
+        for case_dir in self.cases_dirs:
+            # TODO: Try to generalise the output log file name with launcher??
+            output_log_file = os.path.join(case_dir, "wrapper_out.log")
+            progress = self.get_case_percentage_from_file(
+                output_log_file=output_log_file
+            )
+            cases_percentage[os.path.basename(case_dir)] = progress
+
+        return pd.DataFrame(cases_percentage.items(), columns=["Case", "Percentage"])
 
     def postprocess_case(
         self,

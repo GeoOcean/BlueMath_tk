@@ -43,8 +43,9 @@ dependencies = [
     "minisom",
     "statsmodels",
     "regionmask",
-    "wavespectra",
     "cdsapi",
+    "ipykernel",
+    "ipywidgets",
 ]
 
 [project.optional-dependencies]
@@ -52,6 +53,7 @@ dependencies = [
 docs = ["sphinx", "sphinx-rtd-theme", "jupyter-sphinx"]
 deep = ["tensorflow", "keras"]
 num-models = ["hydromt-sfincs"]
+waves = ["wavespectra"]
 
 [project.urls]
 
