@@ -284,7 +284,8 @@ class KMA(BaseClustering):
         Returns
         -------
         Tuple[np.ndarray, pd.DataFrame]
-            A tuple containing the nearest centroid index for each data point and the nearest centroids.
+            A tuple containing the nearest centroid index for each data point,
+            and the nearest centroids.
         """
 
         if self.is_fitted is False:
@@ -310,9 +311,11 @@ class KMA(BaseClustering):
         data: pd.DataFrame,
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
+        min_number_of_points: int = None,
     ) -> Tuple[np.ndarray, pd.DataFrame]:
         """
-        Fit the K-Means algorithm to the provided data and predict the nearest centroid for each data point.
+        Fit the K-Means algorithm to the provided data and predict the nearest centroid
+        for each data point.
 
         Parameters
         ----------
@@ -324,17 +327,22 @@ class KMA(BaseClustering):
         custom_scale_factor : dict
             A dictionary specifying custom scale factors for normalization.
             Default is {}.
+        min_number_of_points : int, optional
+            The minimum number of points to consider a cluster.
+            Default is None.
 
         Returns
         -------
-        Tuple[pd.DataFrame, np.ndarray, pd.DataFrame]
-            A tuple containing the nearest centroid index for each data point, and the nearest centroids.
+        Tuple[np.ndarray, pd.DataFrame]
+            A tuple containing the nearest centroid index for each data point,
+            and the nearest centroids.
         """
 
         self.fit(
             data=data,
             directional_variables=directional_variables,
             custom_scale_factor=custom_scale_factor,
+            min_number_of_points=min_number_of_points,
         )
 
         return self.predict(data=data)

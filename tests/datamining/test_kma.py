@@ -16,7 +16,7 @@ class TestKMA(unittest.TestCase):
         self.kma = KMA(num_clusters=10)
 
     def test_fit(self):
-        self.kma.fit(data=self.df, min_number_of_points=80)
+        self.kma.fit(data=self.df, min_number_of_points=50)
         self.assertIsInstance(self.kma.centroids, pd.DataFrame)
         self.assertEqual(self.kma.centroids.shape[0], 10)
 
@@ -36,11 +36,15 @@ class TestKMA(unittest.TestCase):
         self.assertEqual(nearest_centroid_df.shape[0], 15)
 
     def test_fit_predict(self):
-        nearest_centroids, nearest_centroid_df = self.kma.fit_predict(data=self.df)
-        self.assertIsInstance(nearest_centroids, np.ndarray)
-        self.assertEqual(len(nearest_centroids), 1000)
-        self.assertIsInstance(nearest_centroid_df, pd.DataFrame)
-        self.assertEqual(nearest_centroid_df.shape[0], 1000)
+        predicted_labels, predicted_labels_df = self.kma.fit_predict(
+            data=self.df, min_number_of_points=50
+        )
+        _unique_labels, counts = np.unique(predicted_labels, return_counts=True)
+        self.assertTrue(np.all(counts >= 50))
+        self.assertIsInstance(predicted_labels, np.ndarray)
+        self.assertEqual(len(predicted_labels), 1000)
+        self.assertIsInstance(predicted_labels_df, pd.DataFrame)
+        self.assertEqual(predicted_labels_df.shape[0], 1000)
 
 
 if __name__ == "__main__":
