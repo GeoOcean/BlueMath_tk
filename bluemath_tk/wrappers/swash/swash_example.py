@@ -104,7 +104,7 @@ if __name__ == "__main__":
     # List available launchers
     print(swash_wrapper.list_available_launchers())
     # Run the model using docker_serial launcher
-    swash_wrapper.run_cases(launcher="docker_serial", num_workers=5)
+    # swash_wrapper.run_cases(launcher="docker_serial", num_workers=5)
     # Post-process the output files
-    postprocessed_data = swash_wrapper.postprocess_cases(num_workers=5)
+    postprocessed_data = swash_wrapper.postprocess_cases(num_workers=1)
     print(postprocessed_data)

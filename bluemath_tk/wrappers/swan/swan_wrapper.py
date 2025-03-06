@@ -177,7 +177,6 @@ class SwanModelWrapper(BaseModelWrapper):
         cases_percentage = {}
 
         for case_dir in self.cases_dirs:
-            # TODO: Try to generalise the output log file name with launcher??
             output_log_file = os.path.join(case_dir, "wrapper_out.log")
             progress = self.get_case_percentage_from_file(
                 output_log_file=output_log_file

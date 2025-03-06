@@ -535,7 +535,9 @@ class BaseModelWrapper(BlueMathModel):
             The status of the background thread.
         """
 
-        if self.thread.is_alive():
+        if self.thread is None:
+            return "Not started"
+        elif self.thread.is_alive():
             return "Running"
         else:
             return self.status_queue.get()
@@ -692,6 +694,7 @@ class BaseModelWrapper(BlueMathModel):
                     str_cmd=f"rm -rf {self.output_dir}/*", cwd=self.output_dir
                 )
                 self.logger.info("Clean up completed.")
+            return output_postprocessed
         except NotImplementedError as exc:
             self.logger.error(f"Error joining postprocessed files: {exc}")
             return postprocessed_files

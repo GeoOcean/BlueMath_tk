@@ -210,23 +210,25 @@ def plot_selected_subset_parameters(
     return fig, axes
 
 
-def plot_grid_cases(spectra: xr.Dataset, cases_id: np.ndarray, figsize: tuple = (8, 8)):
+def plot_selected_cases_grid(
+    frequencies: np.ndarray,
+    directions: np.ndarray,
+    figsize: Tuple[int, int] = (8, 8),
+    **kwargs,
+):
     """
-    Function to plot the cases with different colors.
+    Plot the selected subset parameters.
 
     Parameters
     ----------
-    spectra : xr.Dataset
-        The wave spectra dataset.
-    cases_id : np.ndarray
-        The cases ids for the color.
+    frequencies : np.ndarray
+        The frequencies array.
+    directions : np.ndarray
+        The directions array.
     figsize : tuple, optional
         The figure size. Default is (8, 8).
-
-    Returns
-    -------
-    plt.Figure
-        The figure.
+    **kwargs : dict, optional
+        Additional keyword arguments to be passed to the pcolormesh function.
     """
 
     # generate figure and axes
@@ -234,11 +236,13 @@ def plot_grid_cases(spectra: xr.Dataset, cases_id: np.ndarray, figsize: tuple = 
     ax = fig.add_subplot(1, 1, 1, projection="polar")
 
     # prepare data
-    x = np.append(
-        np.deg2rad(spectra.dir.values - 7.5), np.deg2rad(spectra.dir.values - 7.5)[0]
+    x = np.append(np.deg2rad(directions - 7.5), np.deg2rad(directions - 7.5)[0])
+    y = np.append(0, frequencies)
+    z = (
+        np.array(range(len(frequencies) * len(directions)))
+        .reshape(len(directions), len(frequencies))
+        .T
     )
-    y = np.append(0, spectra.freq.values)
-    z = cases_id
 
     # custom colormap
     cmn = np.vstack(
@@ -258,11 +262,12 @@ def plot_grid_cases(spectra: xr.Dataset, cases_id: np.ndarray, figsize: tuple = 
         y,
         z,
         vmin=0,
-        vmax=np.nanmax(cases_id),
+        vmax=np.nanmax(z),
         edgecolor="grey",
         linewidth=0.005,
         cmap=cmn,
         shading="flat",
+        **kwargs,
     )
 
     # customize axes
@@ -277,5 +282,3 @@ def plot_grid_cases(spectra: xr.Dataset, cases_id: np.ndarray, figsize: tuple = 
 
     # add colorbar
     plt.colorbar(p1, pad=0.1, shrink=0.7).set_label("Case ID", fontsize=16)
-
-    return fig

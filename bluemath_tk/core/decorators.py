@@ -119,6 +119,7 @@ def validate_data_kma(func):
         data: pd.DataFrame,
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
+        min_number_of_points: int = 1,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -128,7 +129,11 @@ def validate_data_kma(func):
             raise TypeError("Directional variables must be a list")
         if not isinstance(custom_scale_factor, dict):
             raise TypeError("Custom scale factor must be a dict")
-        return func(self, data, directional_variables, custom_scale_factor)
+        if not isinstance(min_number_of_points, int) or min_number_of_points <= 0:
+            raise ValueError("Minimum number of points must be integer and > 0")
+        return func(
+            self, data, directional_variables, custom_scale_factor, min_number_of_points
+        )
 
     return wrapper
 

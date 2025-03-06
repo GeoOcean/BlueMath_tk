@@ -64,7 +64,7 @@ class BlueMathModel(ABC):
         else:
             self.num_workers = 1  # self.get_num_processors_available()
             self.logger.warning(
-                f"Setting self.num_workers to {self.num_workers}. \n"
+                f"Setting self.num_workers to {self.num_workers}. "
                 "Change it using self.set_num_processors_to_use method."
             )
 
@@ -507,25 +507,10 @@ class BlueMathModel(ABC):
             num_processors = num_processors_available
         elif num_processors <= 0:
             raise ValueError("Number of processors must be greater than 0")
-        elif num_processors > num_processors_available:
-            raise self.logger.warning(
-                f"Number of processors requested ({num_processors}) "
-                f"exceeds the number of processors available ({num_processors_available})"
+        elif (num_processors - num_processors_available) < 2:
+            raise ValueError(
+                "Number of processors requested is less than 2 processors available"
             )
-
-        # Calculate the percentage of processors to use
-        percentage = round(num_processors / num_processors_available, 2)
-        if percentage < 0.5:
-            self.logger.info(
-                f"Number of processors requested ({num_processors}) "
-                f"is less than 50% of the available processors ({num_processors_available})"
-            )
-        else:
-            self.logger.warning(
-                f"Number of processors requested ({num_processors}) "
-                f"is more than 50% of the available processors ({num_processors_available})"
-            )
-        self.logger.info(f"Using {percentage * 100}% of the available processors")
 
         # Set the number of processors to use
         self.num_workers = num_processors
@@ -558,41 +543,30 @@ class BlueMathModel(ABC):
         -------
         List[T]
             List of results from each function call
+
+        Warnings
+        --------
+        - cpu_intensive = True does not work with non-pickable objects (Under development).
         """
 
         results = {}
 
-        if cpu_intensive:
-            self.logger.info("Using ProcessPoolExecutor for CPU intensive tasks.")
-            with ProcessPoolExecutor(max_workers=num_workers) as executor:
-                future_to_item = {
-                    executor.submit(func, *item, **kwargs)
-                    if isinstance(item, tuple)
-                    else executor.submit(func, item, **kwargs): i
-                    for i, item in enumerate(items)
-                }
-                for future in as_completed(future_to_item):
-                    i = future_to_item[future]
-                    try:
-                        result = future.result()
-                        results[i] = result
-                    except Exception as exc:
-                        self.logger.error(f"Job for {i} generated an exception: {exc}")
-        else:
-            self.logger.info("Using ThreadPoolExecutor for I/O bound tasks.")
-            with ThreadPoolExecutor(max_workers=num_workers) as executor:
-                future_to_item = {
-                    executor.submit(func, *item, **kwargs)
-                    if isinstance(item, tuple)
-                    else executor.submit(func, item, **kwargs): i
-                    for i, item in enumerate(items)
-                }
-                for future in as_completed(future_to_item):
-                    i = future_to_item[future]
-                    try:
-                        result = future.result()
-                        results[i] = result
-                    except Exception as exc:
-                        self.logger.error(f"Job for {i} generated an exception: {exc}")
+        executor_class = ProcessPoolExecutor if cpu_intensive else ThreadPoolExecutor
+        self.logger.info(f"Using {executor_class.__name__} for parallel execution")
+
+        with executor_class(max_workers=num_workers) as executor:
+            future_to_item = {
+                executor.submit(func, *item, **kwargs)
+                if isinstance(item, tuple)
+                else executor.submit(func, item, **kwargs): i
+                for i, item in enumerate(items)
+            }
+            for future in as_completed(future_to_item):
+                i = future_to_item[future]
+                try:
+                    result = future.result()
+                    results[i] = result
+                except Exception as exc:
+                    self.logger.error(f"Job for {i} generated an exception: {exc}")
 
         return results

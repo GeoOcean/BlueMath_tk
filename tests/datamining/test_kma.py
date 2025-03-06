@@ -16,7 +16,7 @@ class TestKMA(unittest.TestCase):
         self.kma = KMA(num_clusters=10)
 
     def test_fit(self):
-        self.kma.fit(data=self.df)
+        self.kma.fit(data=self.df, min_number_of_points=80)
         self.assertIsInstance(self.kma.centroids, pd.DataFrame)
         self.assertEqual(self.kma.centroids.shape[0], 10)
 

@@ -223,7 +223,6 @@ class SwashModelWrapper(BaseModelWrapper):
         cases_percentage = {}
 
         for case_dir in self.cases_dirs:
-            # TODO: Try to generalise the output log file name with launcher??
             output_log_file = os.path.join(case_dir, "wrapper_out.log")
             progress = self.get_case_percentage_from_file(
                 output_log_file=output_log_file
@@ -271,7 +270,7 @@ class SwashModelWrapper(BaseModelWrapper):
             output_nc = self._convert_case_output_files_to_nc(
                 case_num=case_num, output_path=output_path, run_path=run_path
             )
-            output_nc.to_netcdf(os.path.join(case_dir, "output.nc"))
+            output_nc.to_netcdf(output_nc_path)
         else:
             self.logger.info("Reading existing output.nc file.")
             output_nc = xr.open_dataset(output_nc_path)
