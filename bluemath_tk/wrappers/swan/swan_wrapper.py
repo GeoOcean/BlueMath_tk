@@ -31,8 +31,7 @@ class SwanModelWrapper(BaseModelWrapper):
 
     available_launchers = {
         "bash": "swanrun -input input",
-        "docker": "docker run --rm -v .:/case_dir -w /case_dir tausiaj/swan-geoocean:41.51 swanrun -input input",
-        "docker_serial": "docker run --rm -v .:/case_dir -w /case_dir geoocean/rocky8 swash_serial.exe",
+        "docker_serial": "docker run --rm -v .:/case_dir -w /case_dir geoocean/rocky8 swan_serial.exe",
     }
 
     output_variables = {

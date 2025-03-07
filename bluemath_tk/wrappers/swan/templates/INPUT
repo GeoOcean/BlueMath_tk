@@ -10,7 +10,7 @@ $
 CGRID REGULAR 410000 4802379 0 70000 35620 698 354 CIRCLE 120 0.03 1.0 
 $
 INPGRID BOTTOM REGULAR 409888.026 4802179.317 0 702 359 100.0 100.0
-READINP BOTTOM 1 'depth_main_cantabria.dat' 1 0 FREE
+READINP BOTTOM 1 'depth.dat' 1 0 FREE
 $
 BOUndspec SIDE N CONstant PAR {{ hs }} {{ tp }} {{ dir }} {{ spr }}
 BOUndspec SIDE E CONstant PAR {{ hs }} {{ tp }} {{ dir }} {{ spr }}
