@@ -1,0 +1,508 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.wrappers.swan.swan_example &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/thebelab.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.wrappers.swan.swan_example</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.wrappers.swan.swan_example</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">op</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">wavespectra</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">wavespectra.construct</span><span class="w"> </span><span class="kn">import</span> <span class="n">construct_partition</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bluemath_tk.waves.binwaves</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">generate_swan_cases</span><span class="p">,</span>
+    <span class="n">process_kp_coefficients</span><span class="p">,</span>
+    <span class="n">reconstruc_spectra</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bluemath_tk.wrappers.swan.swan_wrapper</span><span class="w"> </span><span class="kn">import</span> <span class="n">SwanModelWrapper</span>
+
+<span class="n">example_directions</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mf">1.5</span><span class="p">,</span>
+    <span class="mf">4.5</span><span class="p">,</span>
+    <span class="mf">7.5</span><span class="p">,</span>
+    <span class="mf">10.5</span><span class="p">,</span>
+    <span class="mf">13.5</span><span class="p">,</span>
+    <span class="mf">16.5</span><span class="p">,</span>
+    <span class="mf">19.5</span><span class="p">,</span>
+    <span class="mf">22.5</span><span class="p">,</span>
+    <span class="mf">25.5</span><span class="p">,</span>
+    <span class="mf">28.5</span><span class="p">,</span>
+    <span class="mf">31.5</span><span class="p">,</span>
+    <span class="mf">34.5</span><span class="p">,</span>
+    <span class="mf">37.5</span><span class="p">,</span>
+    <span class="mf">40.5</span><span class="p">,</span>
+    <span class="mf">43.5</span><span class="p">,</span>
+    <span class="mf">46.5</span><span class="p">,</span>
+    <span class="mf">49.5</span><span class="p">,</span>
+    <span class="mf">52.5</span><span class="p">,</span>
+    <span class="mf">55.5</span><span class="p">,</span>
+    <span class="mf">58.5</span><span class="p">,</span>
+    <span class="mf">61.5</span><span class="p">,</span>
+    <span class="mf">64.5</span><span class="p">,</span>
+    <span class="mf">67.5</span><span class="p">,</span>
+    <span class="mf">70.5</span><span class="p">,</span>
+    <span class="mf">73.5</span><span class="p">,</span>
+    <span class="mf">76.5</span><span class="p">,</span>
+    <span class="mf">79.5</span><span class="p">,</span>
+    <span class="mf">82.5</span><span class="p">,</span>
+    <span class="mf">85.5</span><span class="p">,</span>
+    <span class="mf">88.5</span><span class="p">,</span>
+    <span class="mf">91.5</span><span class="p">,</span>
+    <span class="mf">94.5</span><span class="p">,</span>
+    <span class="mf">97.5</span><span class="p">,</span>
+    <span class="mf">100.5</span><span class="p">,</span>
+    <span class="mf">103.5</span><span class="p">,</span>
+    <span class="mf">106.5</span><span class="p">,</span>
+    <span class="mf">109.5</span><span class="p">,</span>
+    <span class="mf">112.5</span><span class="p">,</span>
+    <span class="mf">115.5</span><span class="p">,</span>
+    <span class="mf">118.5</span><span class="p">,</span>
+    <span class="mf">121.5</span><span class="p">,</span>
+    <span class="mf">124.5</span><span class="p">,</span>
+    <span class="mf">127.5</span><span class="p">,</span>
+    <span class="mf">130.5</span><span class="p">,</span>
+    <span class="mf">133.5</span><span class="p">,</span>
+    <span class="mf">136.5</span><span class="p">,</span>
+    <span class="mf">139.5</span><span class="p">,</span>
+    <span class="mf">142.5</span><span class="p">,</span>
+    <span class="mf">145.5</span><span class="p">,</span>
+    <span class="mf">148.5</span><span class="p">,</span>
+    <span class="mf">151.5</span><span class="p">,</span>
+    <span class="mf">154.5</span><span class="p">,</span>
+    <span class="mf">157.5</span><span class="p">,</span>
+    <span class="mf">160.5</span><span class="p">,</span>
+    <span class="mf">163.5</span><span class="p">,</span>
+    <span class="mf">166.5</span><span class="p">,</span>
+    <span class="mf">169.5</span><span class="p">,</span>
+    <span class="mf">172.5</span><span class="p">,</span>
+    <span class="mf">175.5</span><span class="p">,</span>
+    <span class="mf">178.5</span><span class="p">,</span>
+    <span class="mf">181.5</span><span class="p">,</span>
+    <span class="mf">184.5</span><span class="p">,</span>
+    <span class="mf">187.5</span><span class="p">,</span>
+    <span class="mf">190.5</span><span class="p">,</span>
+    <span class="mf">193.5</span><span class="p">,</span>
+    <span class="mf">196.5</span><span class="p">,</span>
+    <span class="mf">199.5</span><span class="p">,</span>
+    <span class="mf">202.5</span><span class="p">,</span>
+    <span class="mf">205.5</span><span class="p">,</span>
+    <span class="mf">208.5</span><span class="p">,</span>
+    <span class="mf">211.5</span><span class="p">,</span>
+    <span class="mf">214.5</span><span class="p">,</span>
+    <span class="mf">217.5</span><span class="p">,</span>
+    <span class="mf">220.5</span><span class="p">,</span>
+    <span class="mf">223.5</span><span class="p">,</span>
+    <span class="mf">226.5</span><span class="p">,</span>
+    <span class="mf">229.5</span><span class="p">,</span>
+    <span class="mf">232.5</span><span class="p">,</span>
+    <span class="mf">235.5</span><span class="p">,</span>
+    <span class="mf">238.5</span><span class="p">,</span>
+    <span class="mf">241.5</span><span class="p">,</span>
+    <span class="mf">244.5</span><span class="p">,</span>
+    <span class="mf">247.5</span><span class="p">,</span>
+    <span class="mf">250.5</span><span class="p">,</span>
+    <span class="mf">253.5</span><span class="p">,</span>
+    <span class="mf">256.5</span><span class="p">,</span>
+    <span class="mf">259.5</span><span class="p">,</span>
+    <span class="mf">262.5</span><span class="p">,</span>
+    <span class="mf">265.5</span><span class="p">,</span>
+    <span class="mf">268.5</span><span class="p">,</span>
+    <span class="mf">271.5</span><span class="p">,</span>
+    <span class="mf">274.5</span><span class="p">,</span>
+    <span class="mf">277.5</span><span class="p">,</span>
+    <span class="mf">280.5</span><span class="p">,</span>
+    <span class="mf">283.5</span><span class="p">,</span>
+    <span class="mf">286.5</span><span class="p">,</span>
+    <span class="mf">289.5</span><span class="p">,</span>
+    <span class="mf">292.5</span><span class="p">,</span>
+    <span class="mf">295.5</span><span class="p">,</span>
+    <span class="mf">298.5</span><span class="p">,</span>
+    <span class="mf">301.5</span><span class="p">,</span>
+    <span class="mf">304.5</span><span class="p">,</span>
+    <span class="mf">307.5</span><span class="p">,</span>
+    <span class="mf">310.5</span><span class="p">,</span>
+    <span class="mf">313.5</span><span class="p">,</span>
+    <span class="mf">316.5</span><span class="p">,</span>
+    <span class="mf">319.5</span><span class="p">,</span>
+    <span class="mf">322.5</span><span class="p">,</span>
+    <span class="mf">325.5</span><span class="p">,</span>
+    <span class="mf">328.5</span><span class="p">,</span>
+    <span class="mf">331.5</span><span class="p">,</span>
+    <span class="mf">334.5</span><span class="p">,</span>
+    <span class="mf">337.5</span><span class="p">,</span>
+    <span class="mf">340.5</span><span class="p">,</span>
+    <span class="mf">343.5</span><span class="p">,</span>
+    <span class="mf">346.5</span><span class="p">,</span>
+    <span class="mf">349.5</span><span class="p">,</span>
+    <span class="mf">352.5</span><span class="p">,</span>
+    <span class="mf">355.5</span><span class="p">,</span>
+    <span class="mf">358.5</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">example_frequencies</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mf">0.03</span><span class="p">,</span>
+    <span class="mf">0.033</span><span class="p">,</span>
+    <span class="mf">0.0363</span><span class="p">,</span>
+    <span class="mf">0.0399</span><span class="p">,</span>
+    <span class="mf">0.0438</span><span class="p">,</span>
+    <span class="mf">0.0482</span><span class="p">,</span>
+    <span class="mf">0.053</span><span class="p">,</span>
+    <span class="mf">0.0582</span><span class="p">,</span>
+    <span class="mf">0.064</span><span class="p">,</span>
+    <span class="mf">0.0704</span><span class="p">,</span>
+    <span class="mf">0.0774</span><span class="p">,</span>
+    <span class="mf">0.0851</span><span class="p">,</span>
+    <span class="mf">0.0935</span><span class="p">,</span>
+    <span class="mf">0.1028</span><span class="p">,</span>
+    <span class="mf">0.1131</span><span class="p">,</span>
+    <span class="mf">0.1243</span><span class="p">,</span>
+    <span class="mf">0.1367</span><span class="p">,</span>
+    <span class="mf">0.1503</span><span class="p">,</span>
+    <span class="mf">0.1652</span><span class="p">,</span>
+    <span class="mf">0.1816</span><span class="p">,</span>
+    <span class="mf">0.1997</span><span class="p">,</span>
+    <span class="mf">0.2195</span><span class="p">,</span>
+    <span class="mf">0.2413</span><span class="p">,</span>
+    <span class="mf">0.2653</span><span class="p">,</span>
+    <span class="mf">0.2917</span><span class="p">,</span>
+    <span class="mf">0.3207</span><span class="p">,</span>
+    <span class="mf">0.3526</span><span class="p">,</span>
+    <span class="mf">0.3876</span><span class="p">,</span>
+    <span class="mf">0.4262</span><span class="p">,</span>
+    <span class="mf">0.4685</span><span class="p">,</span>
+    <span class="mf">0.5151</span><span class="p">,</span>
+    <span class="mf">0.5663</span><span class="p">,</span>
+    <span class="mf">0.6226</span><span class="p">,</span>
+    <span class="mf">0.6845</span><span class="p">,</span>
+    <span class="mf">0.7525</span><span class="p">,</span>
+    <span class="mf">0.8273</span><span class="p">,</span>
+    <span class="mf">0.9096</span><span class="p">,</span>
+    <span class="mf">1.0</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">laura_directions</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mf">262.5</span><span class="p">,</span>
+    <span class="mf">247.5</span><span class="p">,</span>
+    <span class="mf">232.5</span><span class="p">,</span>
+    <span class="mf">217.5</span><span class="p">,</span>
+    <span class="mf">202.5</span><span class="p">,</span>
+    <span class="mf">187.5</span><span class="p">,</span>
+    <span class="mf">172.5</span><span class="p">,</span>
+    <span class="mf">157.5</span><span class="p">,</span>
+    <span class="mf">142.5</span><span class="p">,</span>
+    <span class="mf">127.5</span><span class="p">,</span>
+    <span class="mf">112.5</span><span class="p">,</span>
+    <span class="mf">97.5</span><span class="p">,</span>
+    <span class="mf">82.5</span><span class="p">,</span>
+    <span class="mf">67.5</span><span class="p">,</span>
+    <span class="mf">52.5</span><span class="p">,</span>
+    <span class="mf">37.5</span><span class="p">,</span>
+    <span class="mf">22.5</span><span class="p">,</span>
+    <span class="mf">7.5</span><span class="p">,</span>
+    <span class="mf">352.5</span><span class="p">,</span>
+    <span class="mf">337.5</span><span class="p">,</span>
+    <span class="mf">322.5</span><span class="p">,</span>
+    <span class="mf">307.5</span><span class="p">,</span>
+    <span class="mf">292.5</span><span class="p">,</span>
+    <span class="mf">277.5</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">laura_frequencies</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mf">0.03500004</span><span class="p">,</span>
+    <span class="mf">0.03850004</span><span class="p">,</span>
+    <span class="mf">0.04234991</span><span class="p">,</span>
+    <span class="mf">0.04658508</span><span class="p">,</span>
+    <span class="mf">0.05124342</span><span class="p">,</span>
+    <span class="mf">0.05636788</span><span class="p">,</span>
+    <span class="mf">0.06200474</span><span class="p">,</span>
+    <span class="mf">0.06820491</span><span class="p">,</span>
+    <span class="mf">0.07502551</span><span class="p">,</span>
+    <span class="mf">0.082528</span><span class="p">,</span>
+    <span class="mf">0.09078117</span><span class="p">,</span>
+    <span class="mf">0.0998592</span><span class="p">,</span>
+    <span class="mf">0.10984545</span><span class="p">,</span>
+    <span class="mf">0.12082986</span><span class="p">,</span>
+    <span class="mf">0.13291333</span><span class="p">,</span>
+    <span class="mf">0.14620311</span><span class="p">,</span>
+    <span class="mf">0.16082342</span><span class="p">,</span>
+    <span class="mf">0.17690661</span><span class="p">,</span>
+    <span class="mf">0.19459796</span><span class="p">,</span>
+    <span class="mf">0.21405484</span><span class="p">,</span>
+    <span class="mf">0.23546032</span><span class="p">,</span>
+    <span class="mf">0.25900697</span><span class="p">,</span>
+    <span class="mf">0.2849084</span><span class="p">,</span>
+    <span class="mf">0.31340103</span><span class="p">,</span>
+    <span class="mf">0.34474437</span><span class="p">,</span>
+    <span class="mf">0.37921881</span><span class="p">,</span>
+    <span class="mf">0.41713594</span><span class="p">,</span>
+    <span class="mf">0.45884188</span><span class="p">,</span>
+    <span class="mf">0.5047446</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="transform_CAWCR_WS">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_example.transform_CAWCR_WS">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">transform_CAWCR_WS</span><span class="p">(</span>
+    <span class="n">cawcr_dataset</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+    <span class="n">subset_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">available_case_num</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transform the wave spectra from CAWCR format to binwaves format.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cawcr_dataset : xr.Dataset</span>
+<span class="sd">        The wave spectra dataset in CAWCR format.</span>
+<span class="sd">    subset_parameters : dict</span>
+<span class="sd">        A dictionary containing parameters for the subset processing.</span>
+<span class="sd">    available_case_num : np.ndarray</span>
+<span class="sd">        The available case numbers.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    xr.Dataset</span>
+<span class="sd">        The wave spectra dataset in binwaves format.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># First, reproject the wave spectra to the binwaves format</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">cawcr_dataset</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;frequency&quot;</span><span class="p">:</span> <span class="s2">&quot;freq&quot;</span><span class="p">,</span> <span class="s2">&quot;direction&quot;</span><span class="p">:</span> <span class="s2">&quot;dir&quot;</span><span class="p">})</span>
+    <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;efth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;efth&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span>
+    <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;dir&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;dir&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="mf">180.0</span>
+    <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;dir&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;dir&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;dir&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">360</span><span class="p">,</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;dir&quot;</span><span class="p">])</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">sortby</span><span class="p">(</span><span class="s2">&quot;dir&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">sortby</span><span class="p">(</span><span class="s2">&quot;freq&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Second, reproject into the available case numbers dimension</span>
+    <span class="n">case_num_spectra</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">case_num</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">,</span> <span class="n">case_freq</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+        <span class="n">available_case_num</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">subset_parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dir&quot;</span><span class="p">))[</span><span class="n">available_case_num</span><span class="p">],</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">subset_parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;freq&quot;</span><span class="p">))[</span><span class="n">available_case_num</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="n">case_num_spectra</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ds</span><span class="o">.</span><span class="n">efth</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="n">case_freq</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;nearest&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">&quot;case_num&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">case_num</span><span class="p">]}</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">ds_case_num</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">xr</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">case_num_spectra</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s2">&quot;case_num&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">(</span><span class="s2">&quot;dir&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">(</span><span class="s2">&quot;freq&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ds</span><span class="p">,</span> <span class="n">ds_case_num</span></div>
+
+
+
+<div class="viewcode-block" id="BinWavesWrapper">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_example.BinWavesWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BinWavesWrapper</span><span class="p">(</span><span class="n">SwanModelWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper example for the BinWaves model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BinWavesWrapper.build_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_example.BinWavesWrapper.build_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_case</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">input_spectrum</span> <span class="o">=</span> <span class="n">construct_partition</span><span class="p">(</span>
+            <span class="n">freq_name</span><span class="o">=</span><span class="s2">&quot;jonswap&quot;</span><span class="p">,</span>
+            <span class="n">freq_kwargs</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;freq&quot;</span><span class="p">:</span> <span class="n">example_frequencies</span><span class="p">,</span>
+                <span class="s2">&quot;fp&quot;</span><span class="p">:</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tp&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;hs&quot;</span><span class="p">:</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hs&quot;</span><span class="p">),</span>
+            <span class="p">},</span>
+            <span class="n">dir_name</span><span class="o">=</span><span class="s2">&quot;cartwright&quot;</span><span class="p">,</span>
+            <span class="n">dir_kwargs</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;dir&quot;</span><span class="p">:</span> <span class="n">example_directions</span><span class="p">,</span>
+                <span class="s2">&quot;dm&quot;</span><span class="p">:</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dir&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;dspr&quot;</span><span class="p">:</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;spr&quot;</span><span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">argmax_bin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">input_spectrum</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">mono_spec_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">input_spectrum</span><span class="o">.</span><span class="n">freq</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">input_spectrum</span><span class="o">.</span><span class="n">dir</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">mono_spec_array</span><span class="p">[</span><span class="n">argmax_bin</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_spectrum</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;freq&quot;</span><span class="p">,</span> <span class="s2">&quot;dir&quot;</span><span class="p">])</span>
+        <span class="n">mono_spec_array</span> <span class="o">=</span> <span class="n">mono_spec_array</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+            <span class="n">input_spectrum</span><span class="o">.</span><span class="n">freq</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">input_spectrum</span><span class="o">.</span><span class="n">dir</span><span class="o">.</span><span class="n">size</span>
+        <span class="p">)</span>
+        <span class="n">mono_input_spectrum</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;efth&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;freq&quot;</span><span class="p">,</span> <span class="s2">&quot;dir&quot;</span><span class="p">],</span> <span class="n">mono_spec_array</span><span class="p">),</span>
+            <span class="p">},</span>
+            <span class="n">coords</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;freq&quot;</span><span class="p">:</span> <span class="n">input_spectrum</span><span class="o">.</span><span class="n">freq</span><span class="p">,</span>
+                <span class="s2">&quot;dir&quot;</span><span class="p">:</span> <span class="n">input_spectrum</span><span class="o">.</span><span class="n">dir</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">wavespectra</span><span class="o">.</span><span class="n">SpecDataset</span><span class="p">(</span><span class="n">mono_input_spectrum</span><span class="p">)</span><span class="o">.</span><span class="n">to_swan</span><span class="p">(</span>
+            <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;input_spectra.bnd&quot;</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BinWavesWrapper.build_cases">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_example.BinWavesWrapper.build_cases">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;one_by_one&quot;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">build_cases</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">case_dir</span><span class="p">,</span> <span class="n">case_context</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cases_context</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">build_case</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">case_context</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># Usage example</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Define the input templates and output directory</span>
+    <span class="n">templates_dir</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/wrappers/swan/templates/&quot;</span>
+    <span class="p">)</span>
+    <span class="n">templates_name</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;input.swn&quot;</span><span class="p">,</span> <span class="s2">&quot;depth_main_cantabria.dat&quot;</span><span class="p">,</span> <span class="s2">&quot;buoys.loc&quot;</span><span class="p">]</span>
+    <span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/swan/CAN_mono/&quot;</span>
+    <span class="c1"># Generate swan model parameters</span>
+    <span class="n">model_parameters</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">generate_swan_cases</span><span class="p">(</span>
+            <span class="n">directions_array</span><span class="o">=</span><span class="n">laura_directions</span><span class="p">,</span>
+            <span class="n">frequencies_array</span><span class="o">=</span><span class="n">laura_frequencies</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;list&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="c1"># Create an instance of the SWAN model wrapper</span>
+    <span class="n">swan_wrapper</span> <span class="o">=</span> <span class="n">BinWavesWrapper</span><span class="p">(</span>
+        <span class="n">templates_dir</span><span class="o">=</span><span class="n">templates_dir</span><span class="p">,</span>
+        <span class="n">templates_name</span><span class="o">=</span><span class="n">templates_name</span><span class="p">,</span>
+        <span class="n">model_parameters</span><span class="o">=</span><span class="n">model_parameters</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Build the input files</span>
+    <span class="c1"># swan_wrapper.build_cases(mode=&quot;one_by_one&quot;)</span>
+    <span class="c1"># Set the cases directories from the output directory</span>
+    <span class="n">swan_wrapper</span><span class="o">.</span><span class="n">set_cases_dirs_from_output_dir</span><span class="p">()</span>
+    <span class="c1"># List available launchers</span>
+    <span class="c1"># print(swan_wrapper.list_available_launchers())</span>
+    <span class="c1"># Run the model</span>
+    <span class="c1"># swan_wrapper.run_cases(launcher=&quot;docker&quot;, parallel=True)</span>
+    <span class="c1"># Post-process the output files</span>
+    <span class="c1"># postprocessed_ds = swan_wrapper.postprocess_cases()</span>
+    <span class="c1"># postprocessed_ds.to_netcdf(op.join(swan_wrapper.output_dir, &quot;waves_part.nc&quot;))</span>
+    <span class="c1"># print(postprocessed_ds)</span>
+    <span class="c1"># Get input and ouput spectra files from self.cases_dirs</span>
+    <span class="n">input_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s2">&quot;input_spectra.bnd&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">swan_wrapper</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">]</span>
+    <span class="n">output_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s2">&quot;output.spec&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">swan_wrapper</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">]</span>
+    <span class="c1"># Extract binwaves kp coeffs</span>
+    <span class="n">kp_coeffs</span> <span class="o">=</span> <span class="n">process_kp_coefficients</span><span class="p">(</span>
+        <span class="n">list_of_input_spectra</span><span class="o">=</span><span class="n">input_files</span><span class="p">,</span>
+        <span class="n">list_of_output_spectra</span><span class="o">=</span><span class="n">output_files</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Load interest spectra</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">offshore_spectra</span> <span class="o">=</span> <span class="n">transform_CAWCR_WS</span><span class="p">(</span>
+        <span class="n">cawcr_dataset</span><span class="o">=</span><span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span>
+            <span class="s2">&quot;/home/tausiaj/GitHub-GeoOcean/BlueMath/test_data/ERA5_full.nc&quot;</span>
+        <span class="p">),</span>
+        <span class="n">subset_parameters</span><span class="o">=</span><span class="n">model_parameters</span><span class="p">,</span>
+        <span class="n">available_case_num</span><span class="o">=</span><span class="n">kp_coeffs</span><span class="o">.</span><span class="n">case_num</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Reconstruct spectra</span>
+    <span class="n">onshore_spectra</span> <span class="o">=</span> <span class="n">reconstruc_spectra</span><span class="p">(</span>
+        <span class="n">offshore_spectra</span><span class="o">=</span><span class="n">offshore_spectra</span><span class="p">,</span>
+        <span class="n">kp_coeffs</span><span class="o">=</span><span class="n">kp_coeffs</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">onshore_spectra</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

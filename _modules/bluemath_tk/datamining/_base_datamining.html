@@ -1,0 +1,568 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.datamining._base_datamining &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.datamining._base_datamining</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.datamining._base_datamining</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">BlueMathModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.plotting.base_plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultStaticPlotting</span>
+
+
+<div class="viewcode-block" id="BaseSampling">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.BaseSampling">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseSampling</span><span class="p">(</span><span class="n">BlueMathModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for all sampling BlueMath models.</span>
+<span class="sd">    This class provides the basic structure for all sampling models.</span>
+
+<span class="sd">    Methods</span>
+<span class="sd">    -------</span>
+<span class="sd">    generate : pd.DataFrame</span>
+<span class="sd">        Generates samples.</span>
+<span class="sd">    plot_generated_data : Tuple[plt.figure, plt.axes]</span>
+<span class="sd">        Plots the generated data on a scatter plot matrix.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+<div class="viewcode-block" id="BaseSampling.generate">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.BaseSampling.generate">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates samples.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        *args : list</span>
+<span class="sd">            Positional arguments.</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Keyword arguments.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            The generated samples.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="BaseSampling.plot_generated_data">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.BaseSampling.plot_generated_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_generated_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;blue&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plots the generated data on a scatter plot matrix.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data_color : str, optional</span>
+<span class="sd">            Color for the data points. Default is &quot;blue&quot;.</span>
+<span class="sd">        **kwargs : dict, optional</span>
+<span class="sd">            Additional keyword arguments to be passed to the scatter plot function.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        plt.figure</span>
+<span class="sd">            The figure object containing the plot.</span>
+<span class="sd">        plt.axes</span>
+<span class="sd">            Array of axes objects for the subplots.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the data is empty.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="n">variables_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+            <span class="n">num_variables</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">variables_names</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Data must be a non-empty DataFrame with columns to plot.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Create figure and axes</span>
+        <span class="n">default_static_plot</span> <span class="o">=</span> <span class="n">DefaultStaticPlotting</span><span class="p">()</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">default_static_plot</span><span class="o">.</span><span class="n">get_subplots</span><span class="p">(</span>
+            <span class="n">nrows</span><span class="o">=</span><span class="n">num_variables</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">ncols</span><span class="o">=</span><span class="n">num_variables</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">sharex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">sharey</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">c1</span><span class="p">,</span> <span class="n">v1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">variables_names</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="k">for</span> <span class="n">c2</span><span class="p">,</span> <span class="n">v2</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">variables_names</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">default_static_plot</span><span class="o">.</span><span class="n">plot_scatter</span><span class="p">(</span>
+                    <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">],</span>
+                    <span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">v1</span><span class="p">],</span>
+                    <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">v2</span><span class="p">],</span>
+                    <span class="n">c</span><span class="o">=</span><span class="n">data_color</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">c1</span> <span class="o">==</span> <span class="n">c2</span><span class="p">:</span>
+                    <span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">variables_names</span><span class="p">[</span><span class="n">c1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+                    <span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">variables_names</span><span class="p">[</span><span class="n">c2</span><span class="p">])</span>
+                <span class="k">elif</span> <span class="n">c1</span> <span class="o">&gt;</span> <span class="n">c2</span><span class="p">:</span>
+                    <span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_ticklabels</span><span class="p">([])</span>
+                    <span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticklabels</span><span class="p">([])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">fig</span><span class="o">.</span><span class="n">delaxes</span><span class="p">(</span><span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="BaseClustering">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.BaseClustering">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseClustering</span><span class="p">(</span><span class="n">BlueMathModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for all clustering BlueMath models.</span>
+<span class="sd">    This class provides the basic structure for all clustering models.</span>
+
+<span class="sd">    Methods</span>
+<span class="sd">    -------</span>
+<span class="sd">    fit : None</span>
+<span class="sd">        Fits the model to the data.</span>
+<span class="sd">    predict : pd.DataFrame</span>
+<span class="sd">        Predicts the clusters for the provided data.</span>
+<span class="sd">    fit_predict : pd.DataFrame</span>
+<span class="sd">        Fits the model to the data and predicts the clusters.</span>
+<span class="sd">    plot_selected_centroids : Tuple[plt.figure, plt.axes]</span>
+<span class="sd">        Plots data and selected centroids on a scatter plot matrix.</span>
+<span class="sd">    plot_data_as_clusters : Tuple[plt.figure, plt.axes]</span>
+<span class="sd">        Plots data as nearest clusters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+<div class="viewcode-block" id="BaseClustering.fit">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.BaseClustering.fit">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fits the model to the data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        *args : list</span>
+<span class="sd">            Positional arguments.</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Keyword arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="BaseClustering.predict">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.BaseClustering.predict">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Predicts the clusters for the provided data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        *args : list</span>
+<span class="sd">            Positional arguments.</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Keyword arguments.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            The predicted clusters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="BaseClustering.fit_predict">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.BaseClustering.fit_predict">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit_predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fits the model to the data and predicts the clusters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        *args : list</span>
+<span class="sd">            Positional arguments.</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Keyword arguments.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            The predicted clusters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="BaseClustering.plot_selected_centroids">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.BaseClustering.plot_selected_centroids">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_selected_centroids</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;blue&quot;</span><span class="p">,</span>
+        <span class="n">centroids_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;red&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plots data and selected centroids on a scatter plot matrix.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data_color : str, optional</span>
+<span class="sd">            Color for the data points. Default is &quot;blue&quot;.</span>
+<span class="sd">        centroids_color : str, optional</span>
+<span class="sd">            Color for the centroid points. Default is &quot;red&quot;.</span>
+<span class="sd">        **kwargs : dict, optional</span>
+<span class="sd">            Additional keyword arguments to be passed to the scatter plot function.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        plt.figure</span>
+<span class="sd">            The figure object containing the plot.</span>
+<span class="sd">        plt.axes</span>
+<span class="sd">            Array of axes objects for the subplots.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the data and centroids do not have the same number of columns or if the columns are empty.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">!=</span> <span class="p">[]</span>
+        <span class="p">):</span>
+            <span class="n">variables_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+            <span class="n">num_variables</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">variables_names</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Data and centroids must have the same number of columns &gt; 0.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Create figure and axes</span>
+        <span class="n">default_static_plot</span> <span class="o">=</span> <span class="n">DefaultStaticPlotting</span><span class="p">()</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">default_static_plot</span><span class="o">.</span><span class="n">get_subplots</span><span class="p">(</span>
+            <span class="n">nrows</span><span class="o">=</span><span class="n">num_variables</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">ncols</span><span class="o">=</span><span class="n">num_variables</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">sharex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">sharey</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">c1</span><span class="p">,</span> <span class="n">v1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">variables_names</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="k">for</span> <span class="n">c2</span><span class="p">,</span> <span class="n">v2</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">variables_names</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">default_static_plot</span><span class="o">.</span><span class="n">plot_scatter</span><span class="p">(</span>
+                    <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">],</span>
+                    <span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">v1</span><span class="p">],</span>
+                    <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">v2</span><span class="p">],</span>
+                    <span class="n">c</span><span class="o">=</span><span class="n">data_color</span><span class="p">,</span>
+                    <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">centroids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">default_static_plot</span><span class="o">.</span><span class="n">plot_scatter</span><span class="p">(</span>
+                        <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">],</span>
+                        <span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="p">[</span><span class="n">v1</span><span class="p">],</span>
+                        <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="p">[</span><span class="n">v2</span><span class="p">],</span>
+                        <span class="n">c</span><span class="o">=</span><span class="n">centroids_color</span><span class="p">,</span>
+                        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                        <span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="p">[</span><span class="n">v1</span><span class="p">][</span><span class="n">i</span><span class="p">],</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="p">[</span><span class="n">v2</span><span class="p">][</span><span class="n">i</span><span class="p">],</span>
+                            <span class="nb">str</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                            <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+                            <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span>
+                        <span class="p">)</span>
+                <span class="k">if</span> <span class="n">c1</span> <span class="o">==</span> <span class="n">c2</span><span class="p">:</span>
+                    <span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">variables_names</span><span class="p">[</span><span class="n">c1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+                    <span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">variables_names</span><span class="p">[</span><span class="n">c2</span><span class="p">])</span>
+                <span class="k">elif</span> <span class="n">c1</span> <span class="o">&gt;</span> <span class="n">c2</span><span class="p">:</span>
+                    <span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_ticklabels</span><span class="p">([])</span>
+                    <span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticklabels</span><span class="p">([])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">fig</span><span class="o">.</span><span class="n">delaxes</span><span class="p">(</span><span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span></div>
+
+
+<div class="viewcode-block" id="BaseClustering.plot_data_as_clusters">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.BaseClustering.plot_data_as_clusters">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_data_as_clusters</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">nearest_centroids</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plots data as nearest clusters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : pd.DataFrame</span>
+<span class="sd">            The data to plot.</span>
+<span class="sd">        nearest_centroids : np.ndarray</span>
+<span class="sd">            The nearest centroids.</span>
+<span class="sd">        **kwargs : dict, optional</span>
+<span class="sd">            Additional keyword arguments to be passed to the scatter plot function.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        plt.figure</span>
+<span class="sd">            The figure object containing the plot.</span>
+<span class="sd">        plt.axes</span>
+<span class="sd">            The axes object for the plot.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">empty</span>
+            <span class="ow">and</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">!=</span> <span class="p">[]</span>
+            <span class="ow">and</span> <span class="n">nearest_centroids</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">):</span>
+            <span class="n">variables_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+            <span class="n">num_variables</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">variables_names</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Data must have columns and nearest centroids must have values.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Create figure and axes</span>
+        <span class="n">default_static_plot</span> <span class="o">=</span> <span class="n">DefaultStaticPlotting</span><span class="p">()</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">default_static_plot</span><span class="o">.</span><span class="n">get_subplots</span><span class="p">(</span>
+            <span class="n">nrows</span><span class="o">=</span><span class="n">num_variables</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">ncols</span><span class="o">=</span><span class="n">num_variables</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">sharex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">sharey</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Gets colors for clusters and append to each nearest centroid</span>
+        <span class="n">colors_for_clusters</span> <span class="o">=</span> <span class="n">default_static_plot</span><span class="o">.</span><span class="n">get_list_of_colors_for_colormap</span><span class="p">(</span>
+            <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;jet&quot;</span><span class="p">,</span> <span class="n">num_colors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">nearest_centroids_colors</span> <span class="o">=</span> <span class="p">[</span><span class="n">colors_for_clusters</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">nearest_centroids</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">c1</span><span class="p">,</span> <span class="n">v1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">variables_names</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="k">for</span> <span class="n">c2</span><span class="p">,</span> <span class="n">v2</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">variables_names</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">default_static_plot</span><span class="o">.</span><span class="n">plot_scatter</span><span class="p">(</span>
+                    <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">],</span>
+                    <span class="n">x</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="n">v1</span><span class="p">],</span>
+                    <span class="n">y</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="n">v2</span><span class="p">],</span>
+                    <span class="n">c</span><span class="o">=</span><span class="n">nearest_centroids_colors</span><span class="p">,</span>
+                    <span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">c1</span> <span class="o">==</span> <span class="n">c2</span><span class="p">:</span>
+                    <span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">variables_names</span><span class="p">[</span><span class="n">c1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+                    <span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">variables_names</span><span class="p">[</span><span class="n">c2</span><span class="p">])</span>
+                <span class="k">elif</span> <span class="n">c1</span> <span class="o">&gt;</span> <span class="n">c2</span><span class="p">:</span>
+                    <span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_ticklabels</span><span class="p">([])</span>
+                    <span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">]</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticklabels</span><span class="p">([])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">fig</span><span class="o">.</span><span class="n">delaxes</span><span class="p">(</span><span class="n">axes</span><span class="p">[</span><span class="n">c2</span><span class="p">,</span> <span class="n">c1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="BaseReduction">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.BaseReduction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseReduction</span><span class="p">(</span><span class="n">BlueMathModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for all dimensionality reduction BlueMath models.</span>
+<span class="sd">    This class provides the basic structure for all dimensionality reduction models.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="ClusteringComparator">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.ClusteringComparator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ClusteringComparator</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for comparing clustering models.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_of_models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseClustering</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the ClusteringComparator class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_of_models</span> <span class="o">=</span> <span class="n">list_of_models</span>
+
+<div class="viewcode-block" id="ClusteringComparator.fit">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.ClusteringComparator.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">directional_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">custom_scale_factor</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fits the clustering models.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_of_models</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;SOM&quot;</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+                    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+                    <span class="n">directional_variables</span><span class="o">=</span><span class="n">directional_variables</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+                    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+                    <span class="n">directional_variables</span><span class="o">=</span><span class="n">directional_variables</span><span class="p">,</span>
+                    <span class="n">custom_scale_factor</span><span class="o">=</span><span class="n">custom_scale_factor</span><span class="p">,</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ClusteringComparator.plot_selected_centroids">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.ClusteringComparator.plot_selected_centroids">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_selected_centroids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plots the selected centroids for the clustering models.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_of_models</span><span class="p">:</span>
+            <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">plot_selected_centroids</span><span class="p">()</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Selected centroids for </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ClusteringComparator.plot_data_as_clusters">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.ClusteringComparator.plot_data_as_clusters">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_data_as_clusters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plots the data as clusters for the clustering models.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_of_models</span><span class="p">:</span>
+            <span class="n">nearest_centroids</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">plot_data_as_clusters</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">nearest_centroids</span><span class="o">=</span><span class="n">nearest_centroids</span>
+            <span class="p">)</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data as clusters for </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
