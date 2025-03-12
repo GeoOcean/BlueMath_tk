@@ -46,7 +46,8 @@ class VeggySwashModelWrapper(SwashModelWrapper):
         waves_dict = {
             "H": case_context["Hs"],
             "T": np.sqrt(
-                (case_context["Hs"] * 2 * np.pi) / (9.806 * case_context["Hs_L0"])
+                (case_context["Hs"] * 2 * np.pi)
+                / (self.gravity * case_context["Hs_L0"])
             ),
             "gamma": self.gamma,
             "warmup": self.warmup,
@@ -65,7 +66,7 @@ class VeggySwashModelWrapper(SwashModelWrapper):
         _L, _k, c = waves_dispersion(T=waves_dict["T"], h=self.depth_array[0])
         # comp_dx = L1 / np.abs(self.depth[0]) # MAL: Hecho por JAvi y Valva
         dx = L1 / self.n_nodes_per_wavelength
-        deltc = 0.5 * dx / (np.sqrt(9.81 * self.depth_array[0]) + np.abs(c))
+        deltc = 0.5 * dx / (np.sqrt(self.gravity * self.depth_array[0]) + np.abs(c))
         mxc = int(self.xlenc / dx)
 
         # Update the case context
@@ -106,7 +107,8 @@ class ChySwashModelWrapper(SwashModelWrapper):
         waves_dict = {
             "H": case_context["Hs"],
             "T": np.sqrt(
-                (case_context["Hs"] * 2 * np.pi) / (9.806 * case_context["Hs_L0"])
+                (case_context["Hs"] * 2 * np.pi)
+                / (self.gravity * case_context["Hs_L0"])
             ),
             "gamma": self.gamma,
             "warmup": self.warmup,
@@ -130,7 +132,7 @@ class ChySwashModelWrapper(SwashModelWrapper):
         _L, _k, c = waves_dispersion(T=waves_dict["T"], h=self.depth_array[0])
         # comp_dx = L1 / np.abs(self.depth[0]) # MAL: Hecho por JAvi y Valva
         dx = L1 / self.n_nodes_per_wavelength
-        deltc = 0.5 * dx / (np.sqrt(9.81 * self.depth_array[0]) + np.abs(c))
+        deltc = 0.5 * dx / (np.sqrt(self.gravity * self.depth_array[0]) + np.abs(c))
         mxc = int(self.xlenc / dx)
 
         # Update the case context

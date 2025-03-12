@@ -12,6 +12,8 @@ from ...waves.spectra import spectral_analysis
 from ...waves.statistics import upcrossing
 from .._base_wrappers import BaseModelWrapper
 
+np.random.seed(42)  # TODO: check global behavior.
+
 
 class SwashModelWrapper(BaseModelWrapper):
     """

@@ -10,6 +10,7 @@ from typing import Any, Callable, List, Tuple, TypeVar, Union
 import numpy as np
 import pandas as pd
 import xarray as xr
+from scipy import constants
 from sklearn.metrics import (
     explained_variance_score,
     mean_absolute_error,
@@ -35,6 +36,8 @@ class BlueMathModel(ABC):
     """
     Abstract base class for handling default functionalities across the project.
     """
+
+    gravity = constants.g
 
     @abstractmethod
     def __init__(self) -> None:
