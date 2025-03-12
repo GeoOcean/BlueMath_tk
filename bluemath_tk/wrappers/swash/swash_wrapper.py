@@ -1,4 +1,5 @@
 import os
+import os.path as op
 import re
 from typing import List, Tuple
 
@@ -25,9 +26,27 @@ class SwashModelWrapper(BaseModelWrapper):
         The available launchers for the wrapper.
     postprocess_functions : dict
         The postprocess functions for the wrapper.
+    depth_array : np.ndarray
+        The depth array (working for 1D arrays for the moment).
+    xlenc : int
+       The length in meters of the computational domain.
+    mxc : int
+        The number of computational cells.
+    mxinp : int
+        The number of input points.
+    dxinp : float
+        The input points spacing (to calculate the meters).
+    n_nodes_per_wavelength : int
+        The number of nodes per wavelength.
+    deltc : float
+        The time step (DeltaT).
+    tendc : float
+        The total computation time.
 
     Methods
     -------
+    build_cases -> None
+        Create the cases folders and render the input files.
     list_available_postprocess_vars -> List[str]
         List available postprocess variables.
     _read_tabfile -> pd.DataFrame
@@ -85,6 +104,11 @@ class SwashModelWrapper(BaseModelWrapper):
         templates_dir: str,
         model_parameters: dict,
         output_dir: str,
+        depth_array: np.ndarray,
+        dxinp: float,
+        n_nodes_per_wavelength: int,
+        tendc: int,
+        warmup: int = 0,
         templates_name: dict = "all",
         debug: bool = True,
     ) -> None:
@@ -101,6 +125,53 @@ class SwashModelWrapper(BaseModelWrapper):
         )
         self.set_logger_name(
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
+        )
+        self.depth_array = depth_array
+        self.mxinp = len(depth_array) - 1
+        self.dxinp = dxinp
+        self.xlenc = int(self.mxinp * self.dxinp)
+        self.mxc: int = None
+        self.n_nodes_per_wavelength = n_nodes_per_wavelength
+        self.tendc = tendc
+        self.warmup = warmup
+
+    def build_cases(
+        self,
+        mode: str = "one_by_one",
+    ) -> None:
+        """
+        Create the cases folders and render the input files.
+
+        Parameters
+        ----------
+        mode : str, optional
+            The mode to create the cases. Can be "all_combinations" or "one_by_one".
+            Default is "one_by_one".
+        """
+
+        if mode == "all_combinations":
+            self.cases_context = self.create_cases_context_all_combinations()
+        elif mode == "one_by_one":
+            self.cases_context = self.create_cases_context_one_by_one()
+        else:
+            raise ValueError(f"Invalid mode to create cases: {mode}")
+        for case_num, case_context in enumerate(self.cases_context):
+            case_context["case_num"] = f"{case_num:04}"
+            case_dir = op.join(self.output_dir, f"{case_num:04}")
+            self.cases_dirs.append(case_dir)
+            os.makedirs(case_dir, exist_ok=True)
+            self.build_case(
+                case_context=case_context,
+                case_dir=case_dir,
+            )
+            for template_name in self.templates_name:
+                self.render_file_from_template(
+                    template_name=template_name,
+                    context=case_context,
+                    output_filename=op.join(case_dir, template_name),
+                )
+        self.logger.info(
+            f"{len(self.cases_dirs)} cases created in {mode} mode and saved in {self.output_dir}"
         )
 
     def list_available_postprocess_vars(self) -> List[str]:

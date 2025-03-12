@@ -30,8 +30,9 @@ class SwanModelWrapper(BaseModelWrapper):
     }
 
     available_launchers = {
-        "bash": "swanrun -input input",
+        "serial": "swan_serial.exe",
         "docker_serial": "docker run --rm -v .:/case_dir -w /case_dir geoocean/rocky8 swan_serial.exe",
+        "geoocean-cluster": "launchSwan.sh",
     }
 
     output_variables = {
@@ -159,6 +160,8 @@ class SwanModelWrapper(BaseModelWrapper):
             for line in reversed(f.readlines()):
                 match = re.search(progress_pattern, line)
                 if match:
+                    if float(match.group(1)) > 99.5:
+                        return "100 %"
                     return f"{match.group(1)} %"
 
         return "0 %"  # if no progress is found
