@@ -1,3 +1,4 @@
+import os
 from typing import List, Tuple
 
 import numpy as np
@@ -120,6 +121,9 @@ def process_kp_coefficients(
 def reconstruc_spectra(
     offshore_spectra: xr.Dataset,
     kp_coeffs: xr.Dataset,
+    num_workers: int = None,
+    memory_limit: float = 0.5,
+    chunk_sizes: dict = {"time": 24},
 ):
     """
     Reconstruct the onshore spectra using offshore spectra and kp coefficients.
@@ -130,6 +134,12 @@ def reconstruc_spectra(
         The offshore spectra dataset.
     kp_coeffs : xr.Dataset
         The kp coefficients dataset.
+    num_workers : int, optional
+        The number of workers to use. Default is None.
+    memory_limit : float, optional
+        The memory limit to use. Default is 0.5.
+    chunk_sizes : dict, optional
+        The chunk sizes to use. Default is {"time": 24}.
 
     Returns
     -------
@@ -138,11 +148,15 @@ def reconstruc_spectra(
     """
 
     # Setup Dask client
-    client = setup_dask_client(n_workers=4, memory_limit=0.2)
+    if num_workers is None:
+        num_workers = os.environ.get("BLUEMATH_NUM_WORKERS", 2)
+    client = setup_dask_client(n_workers=num_workers, memory_limit=memory_limit)
 
     try:
         # Process with controlled chunks
-        offshore_spectra_chunked = offshore_spectra.chunk({"time": 24 * 7})
+        offshore_spectra_chunked = offshore_spectra.chunk(
+            {"time": chunk_sizes.get("time", 24)}
+        )
         kp_coeffs_chunked = kp_coeffs.chunk({"site": 1})
         with ProgressBar():
             onshore_spectra = (
