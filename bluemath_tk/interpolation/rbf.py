@@ -2,6 +2,7 @@ import time
 from typing import Callable, List, Tuple
 
 import numpy as np
+import dask.array as da
 import pandas as pd
 from scipy.optimize import fmin, fminbound
 
@@ -277,6 +278,9 @@ class RBF(BaseInterpolation):
 
         # Exclude attributes to .save_model() method
         self._exclude_attributes = []
+
+        # Row chunks for parallel computation
+        self.row_chunks: int = None
 
     @property
     def sigma_min(self) -> float:
@@ -714,24 +718,50 @@ class RBF(BaseInterpolation):
             The interpolated variable.
         """
 
-        r = np.linalg.norm(
-            normalized_dataset.values[:, np.newaxis, :]
-            - self.normalized_subset_data.values[np.newaxis, :, :],
-            axis=2,
-        )
-        kernel_values = self.kernel_func(r, opt_sigma)
-        linear_part = np.dot(
-            normalized_dataset.values,
-            rbf_coeff[
-                num_points_subset + 1 : num_points_subset + 1 + num_vars_subset
-            ].T,
-        )
+        # Calculate optimal chunk size based on memory
+        norm_dataset = normalized_dataset.values
+        norm_subset = self.normalized_subset_data.values
 
-        return (
-            rbf_coeff[num_points_subset]
-            + np.dot(kernel_values, rbf_coeff[:num_points_subset])
-            + linear_part
-        )
+        if self.row_chunks is not None:
+            chunks = (min(self.row_chunks, norm_dataset.shape[0]), -1)
+            self.logger.info(f"Using row chunks of size {chunks[0]}")
+        # elif self.num_workers > 1:
+        #     chunks = (norm_dataset.shape[0] // self.num_workers, -1)
+        else:
+            chunks = (norm_dataset.shape[0], -1)
+
+        # Convert to dask arrays for large operations
+        d_dataset = da.from_array(norm_dataset, chunks=chunks)
+        d_subset = da.from_array(norm_subset)
+
+        # Split computation into chunks
+        result = []
+        for i in range(0, len(d_dataset), chunks[0]):
+            chunk = d_dataset[i : i + chunks[0]]
+
+            # Calculate r for this chunk
+            r_chunk = da.linalg.norm(chunk[:, None, :] - d_subset[None, :, :], axis=2)
+
+            # Apply kernel and dot product
+            kernel_values = self.kernel_func(r_chunk, opt_sigma)
+
+            # Compute this chunk's result
+            chunk_result = (
+                rbf_coeff[num_points_subset]
+                + da.dot(kernel_values, rbf_coeff[:num_points_subset])
+                + da.dot(
+                    chunk,
+                    rbf_coeff[
+                        num_points_subset + 1 : num_points_subset + 1 + num_vars_subset
+                    ].T,
+                )
+            )
+
+            # Compute and append
+            result.append(chunk_result.compute())
+
+        # Combine results
+        return np.concatenate(result)
 
     def _rbf_interpolate(
         self, dataset: pd.DataFrame, num_workers: int = None

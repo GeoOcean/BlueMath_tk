@@ -507,7 +507,7 @@ class BlueMathModel(ABC):
             num_processors = num_processors_available
         elif num_processors <= 0:
             raise ValueError("Number of processors must be greater than 0")
-        elif (num_processors - num_processors_available) < 2:
+        elif (num_processors_available - num_processors) < 2:
             raise ValueError(
                 "Number of processors requested is less than 2 processors available"
             )
