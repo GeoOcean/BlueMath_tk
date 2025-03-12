@@ -508,7 +508,7 @@ class BlueMathModel(ABC):
         elif num_processors <= 0:
             raise ValueError("Number of processors must be greater than 0")
         elif (num_processors_available - num_processors) < 2:
-            raise ValueError(
+            self.logger.warning(
                 "Number of processors requested is less than 2 processors available"
             )
 
