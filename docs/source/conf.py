@@ -19,6 +19,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.doctest",
     "jupyter_sphinx",
+    "myst_parser",
 ]
 
 templates_path = ["_templates"]

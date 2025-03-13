@@ -162,6 +162,7 @@ class RBF(BaseInterpolation):
         )
 
         rbf = RBF()
+
         predictions = rbf.fit_predict(
             subset_data=subset,
             subset_directional_variables=["Dir"],
@@ -172,11 +173,7 @@ class RBF(BaseInterpolation):
             num_workers=4,
             iteratively_update_sigma=True,
         )
-
-        rbf.get_metrics(
-            data1=target,
-            data2=predictions.drop(columns=["DirPred_u", "DirPred_v"], inplace=False),
-        )
+        print(predictions.head())
 
     References
     ----------
