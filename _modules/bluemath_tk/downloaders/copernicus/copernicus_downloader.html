@@ -1,0 +1,583 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.downloaders.copernicus.copernicus_downloader &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/thebelab.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.downloaders.copernicus.copernicus_downloader</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.downloaders.copernicus.copernicus_downloader</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">calendar</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">cdsapi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.._base_downloaders</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseDownloader</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cds.climate.copernicus.eu/api&quot;</span><span class="p">,</span>  <span class="c1"># /v2?</span>
+    <span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="s2">&quot;your-api-token&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="CopernicusDownloader">
+<a class="viewcode-back" href="../../../../bluemath_tk.downloaders.copernicus.html#bluemath_tk.downloaders.CopernicusDownloader">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CopernicusDownloader</span><span class="p">(</span><span class="n">BaseDownloader</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This is the main class to download data from the Copernicus Climate Data Store.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    product : str</span>
+<span class="sd">        The product to download data from. Currently only ERA5 is supported.</span>
+<span class="sd">    product_config : dict</span>
+<span class="sd">        The configuration for the product to download data from.</span>
+<span class="sd">    client : cdsapi.Client</span>
+<span class="sd">        The client to interact with the Copernicus Climate Data Store API.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    - The configuration for the products is stored in the `products_configs` attribute.</span>
+<span class="sd">    - The configuration for the ERA5 product is stored in the `ERA5` folder.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">products_configs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;ERA5&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+            <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;ERA5&quot;</span><span class="p">,</span> <span class="s2">&quot;ERA5_config.json&quot;</span><span class="p">))</span>
+            <span class="c1"># open(</span>
+            <span class="c1">#     &quot;/home/grupos/geocean/tausiaj/BlueMath_tk/bluemath_tk/downloaders/copernicus/ERA5/ERA5_config.json&quot;</span>
+            <span class="c1"># )</span>
+        <span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">product</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">base_path_to_download</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">check</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This is the constructor for the CopernicusDownloader class.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        product : str</span>
+<span class="sd">            The product to download data from. Currently only ERA5 is supported.</span>
+<span class="sd">        base_path_to_download : str</span>
+<span class="sd">            The base path to download the data to.</span>
+<span class="sd">        token : str, optional</span>
+<span class="sd">            The API token to use to download data. Defaults to None.</span>
+<span class="sd">        debug : bool, optional</span>
+<span class="sd">            Whether to run in debug mode. Defaults to True.</span>
+<span class="sd">        check : bool, optional</span>
+<span class="sd">            Whether to just check the data. Defaults to False.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the product configuration is not found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">base_path_to_download</span><span class="o">=</span><span class="n">base_path_to_download</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="n">debug</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="n">check</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_product</span> <span class="o">=</span> <span class="n">product</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_product_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">products_configs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">product</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_product_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s2"> configuration not found&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_logger_name</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CopernicusDownloader - </span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">cdsapi</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span>
+                <span class="n">url</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;url&quot;</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="n">token</span> <span class="ow">or</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;key&quot;</span><span class="p">],</span> <span class="n">debug</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">debug</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;---- DOWNLOADING DATA ----&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;---- CHECKING DATA ----&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">product</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_product</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">product_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_product_config</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">cdsapi</span><span class="o">.</span><span class="n">Client</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span>
+
+<div class="viewcode-block" id="CopernicusDownloader.list_variables">
+<a class="viewcode-back" href="../../../../bluemath_tk.downloaders.copernicus.html#bluemath_tk.downloaders.CopernicusDownloader.list_variables">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Lists the variables available for the product.</span>
+<span class="sd">        Filtering by type if provided.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        type : str, optional</span>
+<span class="sd">            The type of variables to list. Default is None.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        List[str]</span>
+<span class="sd">            The list of variables available for the product.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;ocean&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">var_name</span>
+                <span class="k">for</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">var_info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">product_config</span><span class="p">[</span><span class="s2">&quot;variables&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">var_info</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;ocean&quot;</span>
+            <span class="p">]</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">product_config</span><span class="p">[</span><span class="s2">&quot;variables&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="CopernicusDownloader.list_datasets">
+<a class="viewcode-back" href="../../../../bluemath_tk.downloaders.copernicus.html#bluemath_tk.downloaders.CopernicusDownloader.list_datasets">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Lists the datasets available for the product.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        List[str]</span>
+<span class="sd">            The list of datasets available for the product.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">product_config</span><span class="p">[</span><span class="s2">&quot;datasets&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="CopernicusDownloader.show_markdown_table">
+<a class="viewcode-back" href="../../../../bluemath_tk.downloaders.copernicus.html#bluemath_tk.downloaders.CopernicusDownloader.show_markdown_table">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">show_markdown_table</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a Markdown table from the configuration dictionary and print it.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Define the table headers</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;long_name&quot;</span><span class="p">,</span> <span class="s2">&quot;units&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">]</span>
+        <span class="n">header_line</span> <span class="o">=</span> <span class="s2">&quot;| &quot;</span> <span class="o">+</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; |&quot;</span>
+        <span class="n">separator_line</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;| &quot;</span> <span class="o">+</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">)</span> <span class="k">for</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot; |&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Initialize the table with headers</span>
+        <span class="n">table_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">header_line</span><span class="p">,</span> <span class="n">separator_line</span><span class="p">]</span>
+
+        <span class="c1"># Add rows for each variable</span>
+        <span class="k">for</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">var_info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">product_config</span><span class="p">[</span><span class="s2">&quot;variables&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">long_name</span> <span class="o">=</span> <span class="n">var_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;long_name&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">units</span> <span class="o">=</span> <span class="n">var_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;units&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="nb">type</span> <span class="o">=</span> <span class="n">var_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;| </span><span class="si">{</span><span class="n">var_name</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">long_name</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">units</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s2"> |&quot;</span>
+            <span class="n">table_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+        <span class="c1"># Print the table</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">table_lines</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CopernicusDownloader.download_data">
+<a class="viewcode-back" href="../../../../bluemath_tk.downloaders.copernicus.html#bluemath_tk.downloaders.CopernicusDownloader.download_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Downloads the data for the product.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        *args</span>
+<span class="sd">            The arguments to pass to the download function.</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            The keyword arguments to pass to the download function.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            The message with the fully downloaded files and the not fully downloaded files.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the product is not supported.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">product</span> <span class="o">==</span> <span class="s2">&quot;ERA5&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">download_data_era5</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Download for product </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">product</span><span class="si">}</span><span class="s2"> not supported&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CopernicusDownloader.download_data_era5">
+<a class="viewcode-back" href="../../../../bluemath_tk.downloaders.copernicus.html#bluemath_tk.downloaders.CopernicusDownloader.download_data_era5">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_data_era5</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">years</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">months</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">day</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">product_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;reanalysis&quot;</span><span class="p">,</span>
+        <span class="n">data_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;netcdf_legacy&quot;</span><span class="p">,</span>
+        <span class="n">download_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;unarchived&quot;</span><span class="p">,</span>
+        <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Downloads the data for the ERA5 product.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        variables : List[str]</span>
+<span class="sd">            The list of variables to download.</span>
+<span class="sd">        years : List[str]</span>
+<span class="sd">            The list of years to download.</span>
+<span class="sd">        months : List[str]</span>
+<span class="sd">            The list of months to download.</span>
+<span class="sd">        day : List[str], optional</span>
+<span class="sd">            The list of days to download. Defaults to None.</span>
+<span class="sd">        time : List[str], optional</span>
+<span class="sd">            The list of times to download. Defaults to None.</span>
+<span class="sd">        product_type : str, optional</span>
+<span class="sd">            The product type to download. Defaults to &quot;reanalysis&quot;.</span>
+<span class="sd">        data_format : str, optional</span>
+<span class="sd">            The data format to download. Defaults to &quot;netcdf_legacy&quot;.</span>
+<span class="sd">            This format is maintained to legacy to allow Thredds server to read the files.</span>
+<span class="sd">        download_format : str, optional</span>
+<span class="sd">            The download format to use. Defaults to &quot;unarchived&quot;.</span>
+<span class="sd">        force : bool, optional</span>
+<span class="sd">            Whether to force the download. Defaults to False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            The message with the fully downloaded files and the not fully downloaded files.</span>
+<span class="sd">            Error files are also included.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the variables, years, months, day, time, product_type, data_format, or download_format are not valid</span>
+<span class="sd">            or if the force is not a boolean.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - The variables, years, months, day, and time must be lists of strings.</span>
+<span class="sd">        - The product_type, data_format, and download_format must be strings.</span>
+<span class="sd">        - The force must be a boolean.</span>
+<span class="sd">        - Leave variables empty to download all variables.</span>
+<span class="sd">        - Leave day empty to download all days.</span>
+<span class="sd">        - Leave time empty to download all times.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Variables must be a list of strings&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">variables</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">product_config</span><span class="p">[</span><span class="s2">&quot;variables&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Variables not provided. Using </span><span class="si">{</span><span class="n">variables</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">years</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">years</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Years must be a non-empty list of strings&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">months</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">months</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Months must be a non-empty list of strings&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">day</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">day</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">day</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Day must be a non-empty list of strings&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">day</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">day</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">day</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">)]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Day not provided. Using </span><span class="si">{</span><span class="n">day</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Time must be a non-empty list of strings&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">hour</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">:00&quot;</span> <span class="k">for</span> <span class="n">hour</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">24</span><span class="p">)]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Time not provided. Using </span><span class="si">{</span><span class="n">time</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">product_type</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Product type must be a string&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_format</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Data format must be a string&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">download_format</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Download format must be a string&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">force</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Force must be a boolean&quot;</span><span class="p">)</span>
+
+        <span class="n">fully_downloaded_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">NOT_fullly_downloaded_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">error_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">year</span> <span class="ow">in</span> <span class="n">years</span><span class="p">:</span>
+                <span class="n">year</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">year</span><span class="p">)</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">&quot;</span>  <span class="c1"># Ensure year is 4 digits</span>
+                <span class="k">for</span> <span class="n">month</span> <span class="ow">in</span> <span class="n">months</span><span class="p">:</span>
+                    <span class="n">month</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">month</span><span class="p">)</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">&quot;</span>  <span class="c1"># Ensure month is 2 digits</span>
+                    <span class="n">variable_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">product_config</span><span class="p">[</span><span class="s2">&quot;variables&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">variable_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Variable </span><span class="si">{</span><span class="n">variable</span><span class="si">}</span><span class="s2"> not found in product configuration file&quot;</span>
+                        <span class="p">)</span>
+                        <span class="k">continue</span>
+                    <span class="n">variable_dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">product_config</span><span class="p">[</span><span class="s2">&quot;datasets&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                        <span class="n">variable_config</span><span class="p">[</span><span class="s2">&quot;dataset&quot;</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">variable_dataset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Dataset </span><span class="si">{</span><span class="n">variable_config</span><span class="p">[</span><span class="s1">&#39;dataset&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> not found in product configuration file&quot;</span>
+                        <span class="p">)</span>
+                        <span class="k">continue</span>
+
+                    <span class="n">template_for_variable</span> <span class="o">=</span> <span class="n">variable_dataset</span><span class="p">[</span><span class="s2">&quot;template&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">template_for_variable</span><span class="p">[</span><span class="s2">&quot;variable&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">variable_config</span><span class="p">[</span><span class="s2">&quot;cds_name&quot;</span><span class="p">]</span>
+                    <span class="n">template_for_variable</span><span class="p">[</span><span class="s2">&quot;year&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">year</span>
+                    <span class="n">template_for_variable</span><span class="p">[</span><span class="s2">&quot;month&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">month</span>
+                    <span class="n">template_for_variable</span><span class="p">[</span><span class="s2">&quot;day&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">day</span>
+                    <span class="n">template_for_variable</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span>
+                    <span class="n">template_for_variable</span><span class="p">[</span><span class="s2">&quot;product_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">product_type</span>
+                    <span class="n">template_for_variable</span><span class="p">[</span><span class="s2">&quot;data_format&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_format</span>
+                    <span class="n">template_for_variable</span><span class="p">[</span><span class="s2">&quot;download_format&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">download_format</span>
+
+                    <span class="n">skip_because_of_manadatory_fields</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">for</span> <span class="n">mandatory_field</span> <span class="ow">in</span> <span class="n">variable_dataset</span><span class="p">[</span><span class="s2">&quot;mandatory_fields&quot;</span><span class="p">]:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">template_for_variable</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mandatory_field</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                                <span class="n">template_for_variable</span><span class="p">[</span><span class="n">mandatory_field</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                                    <span class="n">variable_config</span><span class="p">[</span><span class="n">mandatory_field</span><span class="p">]</span>
+                                <span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">&quot;Mandotory field </span><span class="si">{</span><span class="n">mandatory_field</span><span class="si">}</span><span class="s2"> not found in variable configuration file for </span><span class="si">{</span><span class="n">variable</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="p">)</span>
+                            <span class="n">skip_because_of_manadatory_fields</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">if</span> <span class="n">skip_because_of_manadatory_fields</span><span class="p">:</span>
+                        <span class="k">continue</span>
+
+                    <span class="c1"># Create the output file name once request is properly formatted</span>
+                    <span class="n">output_nc_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">base_path_to_download</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">product</span><span class="p">,</span>
+                        <span class="n">variable_config</span><span class="p">[</span><span class="s2">&quot;dataset&quot;</span><span class="p">],</span>
+                        <span class="n">variable_config</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span>
+                        <span class="n">product_type</span><span class="p">,</span>
+                        <span class="n">variable_config</span><span class="p">[</span><span class="s2">&quot;nc_name&quot;</span><span class="p">],</span>
+                        <span class="n">year</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">variable_config</span><span class="p">[</span><span class="s1">&#39;nc_name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">year</span><span class="si">}{</span><span class="n">month</span><span class="si">}</span><span class="s2">.nc&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="c1"># Create the output directory if it does not exist</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">output_nc_file</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                                     </span>
+<span class="s2">                        Analyzing </span><span class="si">{</span><span class="n">output_nc_file</span><span class="si">}</span>
+<span class="s2">                                     </span>
+<span class="s2">                    &quot;&quot;&quot;</span><span class="p">)</span>
+
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">force</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_nc_file</span><span class="p">):</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                                    <span class="sa">f</span><span class="s2">&quot;Checking </span><span class="si">{</span><span class="n">output_nc_file</span><span class="si">}</span><span class="s2"> file is complete&quot;</span>
+                                <span class="p">)</span>
+                                <span class="k">try</span><span class="p">:</span>
+                                    <span class="n">nc</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">output_nc_file</span><span class="p">)</span>
+                                    <span class="n">_</span><span class="p">,</span> <span class="n">last_day</span> <span class="o">=</span> <span class="n">calendar</span><span class="o">.</span><span class="n">monthrange</span><span class="p">(</span>
+                                        <span class="nb">int</span><span class="p">(</span><span class="n">year</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">month</span><span class="p">)</span>
+                                    <span class="p">)</span>
+                                    <span class="n">last_hour</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">month</span><span class="p">)</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">last_day</span><span class="si">}</span><span class="s2">T23&quot;</span>
+                                    <span class="n">last_hour_nc</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">nc</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+                                    <span class="n">nc</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                                    <span class="k">if</span> <span class="n">last_hour</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">last_hour_nc</span><span class="p">:</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_nc_file</span><span class="si">}</span><span class="s2"> ends at </span><span class="si">{</span><span class="n">last_hour_nc</span><span class="si">}</span><span class="s2"> instead of </span><span class="si">{</span><span class="n">last_hour</span><span class="si">}</span><span class="s2">&quot;</span>
+                                        <span class="p">)</span>
+                                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="p">:</span>
+                                            <span class="n">NOT_fullly_downloaded_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                                <span class="n">output_nc_file</span>
+                                            <span class="p">)</span>
+                                        <span class="k">else</span><span class="p">:</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                                                <span class="sa">f</span><span class="s2">&quot;Downloading: </span><span class="si">{</span><span class="n">variable</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">output_nc_file</span><span class="si">}</span><span class="s2"> because it is not complete&quot;</span>
+                                            <span class="p">)</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span>
+                                                <span class="n">name</span><span class="o">=</span><span class="n">variable_config</span><span class="p">[</span><span class="s2">&quot;dataset&quot;</span><span class="p">],</span>
+                                                <span class="n">request</span><span class="o">=</span><span class="n">template_for_variable</span><span class="p">,</span>
+                                                <span class="n">target</span><span class="o">=</span><span class="n">output_nc_file</span><span class="p">,</span>
+                                            <span class="p">)</span>
+                                            <span class="n">fully_downloaded_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                                <span class="n">output_nc_file</span>
+                                            <span class="p">)</span>
+                                    <span class="k">else</span><span class="p">:</span>
+                                        <span class="n">fully_downloaded_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output_nc_file</span><span class="p">)</span>
+                                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                                        <span class="sa">f</span><span class="s2">&quot;Error was raised opening </span><span class="si">{</span><span class="n">output_nc_file</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">, re-downloading...&quot;</span>
+                                    <span class="p">)</span>
+                                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="p">:</span>
+                                        <span class="n">NOT_fullly_downloaded_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                            <span class="n">output_nc_file</span>
+                                        <span class="p">)</span>
+                                    <span class="k">else</span><span class="p">:</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                                            <span class="sa">f</span><span class="s2">&quot;Downloading: </span><span class="si">{</span><span class="n">variable</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">output_nc_file</span><span class="si">}</span><span class="s2"> because it is not complete&quot;</span>
+                                        <span class="p">)</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span>
+                                            <span class="n">name</span><span class="o">=</span><span class="n">variable_config</span><span class="p">[</span><span class="s2">&quot;dataset&quot;</span><span class="p">],</span>
+                                            <span class="n">request</span><span class="o">=</span><span class="n">template_for_variable</span><span class="p">,</span>
+                                            <span class="n">target</span><span class="o">=</span><span class="n">output_nc_file</span><span class="p">,</span>
+                                        <span class="p">)</span>
+                                        <span class="n">fully_downloaded_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output_nc_file</span><span class="p">)</span>
+                            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="p">:</span>
+                                <span class="n">NOT_fullly_downloaded_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output_nc_file</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                                    <span class="sa">f</span><span class="s2">&quot;Downloading: </span><span class="si">{</span><span class="n">variable</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">output_nc_file</span><span class="si">}</span><span class="s2">&quot;</span>
+                                <span class="p">)</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span>
+                                    <span class="n">name</span><span class="o">=</span><span class="n">variable_config</span><span class="p">[</span><span class="s2">&quot;dataset&quot;</span><span class="p">],</span>
+                                    <span class="n">request</span><span class="o">=</span><span class="n">template_for_variable</span><span class="p">,</span>
+                                    <span class="n">target</span><span class="o">=</span><span class="n">output_nc_file</span><span class="p">,</span>
+                                <span class="p">)</span>
+                                <span class="n">fully_downloaded_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output_nc_file</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">&quot;Downloading: </span><span class="si">{</span><span class="n">variable</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">output_nc_file</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="p">)</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span>
+                                <span class="n">name</span><span class="o">=</span><span class="n">variable_config</span><span class="p">[</span><span class="s2">&quot;dataset&quot;</span><span class="p">],</span>
+                                <span class="n">request</span><span class="o">=</span><span class="n">template_for_variable</span><span class="p">,</span>
+                                <span class="n">target</span><span class="o">=</span><span class="n">output_nc_file</span><span class="p">,</span>
+                            <span class="p">)</span>
+                            <span class="n">fully_downloaded_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output_nc_file</span><span class="p">)</span>
+
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                                          </span>
+<span class="s2">                            Skippping </span><span class="si">{</span><span class="n">output_nc_file</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">e</span><span class="si">}</span>
+
+<span class="s2">                        &quot;&quot;&quot;</span><span class="p">)</span>
+                        <span class="n">error_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output_nc_file</span><span class="p">)</span>
+
+        <span class="n">fully_downloaded_files_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fully_downloaded_files</span><span class="p">)</span>
+        <span class="n">NOT_fullly_downloaded_files_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">NOT_fullly_downloaded_files</span><span class="p">)</span>
+        <span class="n">error_files</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">error_files</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            Fully downloaded files:</span>
+<span class="s2">            </span><span class="si">{</span><span class="n">fully_downloaded_files_str</span><span class="si">}</span>
+<span class="s2">            Not fully downloaded files:</span>
+<span class="s2">            </span><span class="si">{</span><span class="n">NOT_fullly_downloaded_files_str</span><span class="si">}</span>
+<span class="s2">            Error files:</span>
+<span class="s2">            </span><span class="si">{</span><span class="n">error_files</span><span class="si">}</span>
+<span class="s2">        &quot;&quot;&quot;</span></div>
+</div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">copernicus_downloader</span> <span class="o">=</span> <span class="n">CopernicusDownloader</span><span class="p">(</span>
+        <span class="n">product</span><span class="o">=</span><span class="s2">&quot;ERA5&quot;</span><span class="p">,</span>
+        <span class="n">base_path_to_download</span><span class="o">=</span><span class="s2">&quot;/home/tausiaj/DATA/Copernicus/&quot;</span><span class="p">,</span>
+        <span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">copernicus_downloader</span><span class="o">.</span><span class="n">download_data</span><span class="p">(</span>
+        <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;geo500&quot;</span><span class="p">,</span> <span class="s2">&quot;tp&quot;</span><span class="p">,</span> <span class="s2">&quot;p140122&quot;</span><span class="p">],</span> <span class="n">years</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;2021&quot;</span><span class="p">],</span> <span class="n">months</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;01&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

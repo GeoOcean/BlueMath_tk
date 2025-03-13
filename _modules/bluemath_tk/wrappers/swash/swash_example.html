@@ -1,0 +1,311 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.wrappers.swash.swash_example &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/thebelab.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.wrappers.swash.swash_example</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.wrappers.swash.swash_example</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bluemath_tk.datamining.lhs</span><span class="w"> </span><span class="kn">import</span> <span class="n">LHS</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bluemath_tk.datamining.mda</span><span class="w"> </span><span class="kn">import</span> <span class="n">MDA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bluemath_tk.waves.series</span><span class="w"> </span><span class="kn">import</span> <span class="n">series_TMA</span><span class="p">,</span> <span class="n">waves_dispersion</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bluemath_tk.wrappers.swash.swash_wrapper</span><span class="w"> </span><span class="kn">import</span> <span class="n">SwashModelWrapper</span>
+
+
+<div class="viewcode-block" id="convert_seconds_to_hour_minutes_seconds">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_example.convert_seconds_to_hour_minutes_seconds">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_seconds_to_hour_minutes_seconds</span><span class="p">(</span><span class="n">seconds</span><span class="p">):</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="n">seconds</span> <span class="o">%</span> <span class="p">(</span><span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">)</span>
+    <span class="n">hour</span> <span class="o">=</span> <span class="n">seconds</span> <span class="o">//</span> <span class="mi">3600</span>
+    <span class="n">seconds</span> <span class="o">%=</span> <span class="mi">3600</span>
+    <span class="n">minutes</span> <span class="o">=</span> <span class="n">seconds</span> <span class="o">//</span> <span class="mi">60</span>
+    <span class="n">seconds</span> <span class="o">%=</span> <span class="mi">60</span>
+
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">hour</span><span class="p">))</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="si">}{</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">minutes</span><span class="p">))</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="si">}{</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">seconds</span><span class="p">))</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">.000&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="VeggySwashModelWrapper">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_example.VeggySwashModelWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">VeggySwashModelWrapper</span><span class="p">(</span><span class="n">SwashModelWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper for the SWASH model with vegetation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">gamma</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">deltat</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="VeggySwashModelWrapper.build_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_example.VeggySwashModelWrapper.build_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_case</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the input files for a case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Build the input waves</span>
+        <span class="n">waves_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;H&quot;</span><span class="p">:</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+                <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gravity</span> <span class="o">*</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Hs_L0&quot;</span><span class="p">])</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;gamma&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span>
+            <span class="s2">&quot;warmup&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">warmup</span><span class="p">,</span>
+            <span class="s2">&quot;deltat&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">deltat</span><span class="p">,</span>
+            <span class="s2">&quot;tendc&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tendc</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">waves</span> <span class="o">=</span> <span class="n">series_TMA</span><span class="p">(</span><span class="n">waves</span><span class="o">=</span><span class="n">waves_dict</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">depth_array</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="c1"># Save the waves to a file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_array_in_file</span><span class="p">(</span>
+            <span class="n">array</span><span class="o">=</span><span class="n">waves</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;waves.bnd&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Calculate computational parameters</span>
+        <span class="n">tendc</span> <span class="o">=</span> <span class="n">convert_seconds_to_hour_minutes_seconds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tendc</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">warmup</span><span class="p">)</span>
+        <span class="n">L1</span><span class="p">,</span> <span class="n">_k1</span><span class="p">,</span> <span class="n">_c1</span> <span class="o">=</span> <span class="n">waves_dispersion</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="n">waves_dict</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">],</span> <span class="n">h</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">_L</span><span class="p">,</span> <span class="n">_k</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">waves_dispersion</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="n">waves_dict</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">],</span> <span class="n">h</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">depth_array</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="c1"># comp_dx = L1 / np.abs(self.depth[0]) # MAL: Hecho por JAvi y Valva</span>
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">L1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_nodes_per_wavelength</span>
+        <span class="n">deltc</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">dx</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gravity</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_array</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+        <span class="n">mxc</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xlenc</span> <span class="o">/</span> <span class="n">dx</span><span class="p">)</span>
+
+        <span class="c1"># Update the case context</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;xlenc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlenc</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;mxc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mxc</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;mxinp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mxinp</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;dxinp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dxinp</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;deltc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">deltc</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;tendc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tendc</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ChySwashModelWrapper">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_example.ChySwashModelWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChySwashModelWrapper</span><span class="p">(</span><span class="n">SwashModelWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper for the SWASH model with vegetation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">gamma</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">deltat</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">default_Cf</span> <span class="o">=</span> <span class="mf">0.002</span>
+
+<div class="viewcode-block" id="ChySwashModelWrapper.build_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_example.ChySwashModelWrapper.build_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_case</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the input files for a case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Build the input waves</span>
+        <span class="n">waves_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;H&quot;</span><span class="p">:</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+                <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gravity</span> <span class="o">*</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Hs_L0&quot;</span><span class="p">])</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;gamma&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span>
+            <span class="s2">&quot;warmup&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">warmup</span><span class="p">,</span>
+            <span class="s2">&quot;deltat&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">deltat</span><span class="p">,</span>
+            <span class="s2">&quot;tendc&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tendc</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">waves</span> <span class="o">=</span> <span class="n">series_TMA</span><span class="p">(</span><span class="n">waves</span><span class="o">=</span><span class="n">waves_dict</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">depth_array</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="c1"># Save the waves to a file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_array_in_file</span><span class="p">(</span>
+            <span class="n">array</span><span class="o">=</span><span class="n">waves</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;waves.bnd&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Build the input friction file</span>
+        <span class="n">friction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth_array</span><span class="p">)))</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_Cf</span>
+        <span class="c1"># friction[int(self.Cf_init):int(self.Cf_end)] = case_context[&quot;Cf&quot;]</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;friction.txt&quot;</span><span class="p">),</span> <span class="n">friction</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.6f</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Calculate computational parameters</span>
+        <span class="n">tendc</span> <span class="o">=</span> <span class="n">convert_seconds_to_hour_minutes_seconds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tendc</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">warmup</span><span class="p">)</span>
+        <span class="n">L1</span><span class="p">,</span> <span class="n">_k1</span><span class="p">,</span> <span class="n">_c1</span> <span class="o">=</span> <span class="n">waves_dispersion</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="n">waves_dict</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">],</span> <span class="n">h</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">_L</span><span class="p">,</span> <span class="n">_k</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">waves_dispersion</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="n">waves_dict</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">],</span> <span class="n">h</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">depth_array</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="c1"># comp_dx = L1 / np.abs(self.depth[0]) # MAL: Hecho por JAvi y Valva</span>
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">L1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_nodes_per_wavelength</span>
+        <span class="n">deltc</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">dx</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gravity</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_array</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+        <span class="n">mxc</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xlenc</span> <span class="o">/</span> <span class="n">dx</span><span class="p">)</span>
+
+        <span class="c1"># Update the case context</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;xlenc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlenc</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;mxc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mxc</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;mxinp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mxinp</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;dxinp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dxinp</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;deltc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">deltc</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;tendc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tendc</span></div>
+</div>
+
+
+
+<span class="c1"># Usage example</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Define the input parameters</span>
+    <span class="n">templates_dir</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/wrappers/swash/templates/&quot;</span>
+    <span class="p">)</span>
+    <span class="c1"># Get 5 cases using LHS and MDA</span>
+    <span class="n">lhs</span> <span class="o">=</span> <span class="n">LHS</span><span class="p">(</span><span class="n">num_dimensions</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">lhs_data</span> <span class="o">=</span> <span class="n">lhs</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+        <span class="n">dimensions_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">,</span> <span class="s2">&quot;Hs_L0&quot;</span><span class="p">,</span> <span class="s2">&quot;vegetation_height&quot;</span><span class="p">],</span>
+        <span class="n">lower_bounds</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+        <span class="n">upper_bounds</span><span class="o">=</span><span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span>
+        <span class="n">num_samples</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">mda</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">num_centers</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">mda</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">)</span>
+    <span class="n">mda</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">lhs_data</span><span class="p">)</span>
+    <span class="n">model_parameters</span> <span class="o">=</span> <span class="n">mda</span><span class="o">.</span><span class="n">centroids</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;list&quot;</span><span class="p">)</span>
+    <span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/swash/&quot;</span>
+    <span class="c1"># Create an instance of the SWASH model wrapper</span>
+    <span class="n">swash_wrapper</span> <span class="o">=</span> <span class="n">VeggySwashModelWrapper</span><span class="p">(</span>
+        <span class="n">templates_dir</span><span class="o">=</span><span class="n">templates_dir</span><span class="p">,</span>
+        <span class="n">model_parameters</span><span class="o">=</span><span class="n">model_parameters</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+        <span class="n">depth_array</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span>
+            <span class="s2">&quot;/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/wrappers/swash/templates/depth.bot&quot;</span>
+        <span class="p">),</span>
+        <span class="n">dxinp</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">n_nodes_per_wavelength</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+        <span class="n">tendc</span><span class="o">=</span><span class="mi">7200</span><span class="p">,</span>
+        <span class="n">warmup</span><span class="o">=</span><span class="mi">7200</span> <span class="o">*</span> <span class="mf">0.15</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Build the input files</span>
+    <span class="n">swash_wrapper</span><span class="o">.</span><span class="n">build_cases</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;one_by_one&quot;</span><span class="p">)</span>
+    <span class="c1"># List available launchers</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">swash_wrapper</span><span class="o">.</span><span class="n">list_available_launchers</span><span class="p">())</span>
+    <span class="c1"># Run the model using docker_serial launcher</span>
+    <span class="c1"># swash_wrapper.run_cases(launcher=&quot;docker_serial&quot;, num_workers=5)</span>
+    <span class="c1"># Post-process the output files</span>
+    <span class="c1"># postprocessed_data = swash_wrapper.postprocess_cases(num_workers=1)</span>
+    <span class="c1"># print(postprocessed_data)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
