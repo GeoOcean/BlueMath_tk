@@ -1,11 +1,13 @@
 from typing import List, Tuple
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from minisom import MiniSom
 from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
-from ..core.plotting.base_plotting import DefaultStaticPlotting
+
 from ..core.decorators import validate_data_som
+from ..core.plotting.base_plotting import DefaultStaticPlotting
 from ._base_datamining import BaseClustering
 
 

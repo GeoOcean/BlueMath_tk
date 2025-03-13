@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12"]
       fail-fast: false
 
     steps:
@@ -26,15 +26,15 @@ jobs:
           auto-update-conda: true
       
       - name: Modify environment file with Python version
-        run: sed -i "s/python=[0-9.]\+/python=${{ matrix.python-version }}/" tests/environment.yml        
+        run: sed -i "s/python=[0-9.]\+/python=${{ matrix.python-version }}/" environment.yml        
 
       - name: Create conda environment
-        run: conda env create -f tests/environment.yml
+        run: conda env create -f environment.yml
 
       - name: Run tests
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate bluemath-tests
+          conda activate bluemath-tk
           python --version
           python -m unittest discover tests/datamining/
           python -m unittest discover tests/interpolation/

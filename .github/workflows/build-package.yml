@@ -1,4 +1,4 @@
-name: Publish Python Package
+name: Build and Publish Package
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - "v*"
 
 jobs:
-  build-and-publish:
+  build-and-publish-package:
     runs-on: ubuntu-latest
 
     steps:

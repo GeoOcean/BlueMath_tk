@@ -396,7 +396,23 @@ def series_regular_bichromatic(waves):
 
 
 def waves_dispersion(T, h):
-    "Solve the wave dispersion relation"
+    """
+    Solve the wave dispersion relation to calculate the wavelength (L), wave number (k), and phase speed (c).
+    Parameters
+    ----------
+    T : float
+        Wave period in seconds.
+    h : float
+        Water depth in meters.
+    Returns
+    -------
+    L : float
+        Wavelength in meters.
+    k : float
+        Wave number in radians per meter.
+    c : float
+        Phase speed in meters per second.
+    """
 
     L1 = 1
     L2 = ((9.81 * T**2) / 2 * np.pi) * np.tanh(h * 2 * np.pi / L1)

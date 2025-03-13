@@ -1,10 +1,13 @@
 import time
-from typing import List, Tuple, Callable
+from typing import Callable, List, Tuple
+
 import numpy as np
+import dask.array as da
 import pandas as pd
-from scipy.optimize import fminbound, fmin
-from ._base_interpolation import BaseInterpolation
+from scipy.optimize import fmin, fminbound
+
 from ..core.decorators import validate_data_rbf
+from ._base_interpolation import BaseInterpolation
 
 
 def gaussian_kernel(r: float, const: float) -> float:
@@ -120,11 +123,11 @@ class RBF(BaseInterpolation):
 
     Methods
     -------
-    fit :
+    fit -> None
         Fits the model to the data.
-    predict :
+    predict -> pd.DataFrame
         Predicts the data for the provided dataset.
-    fit_predict :
+    fit_predict -> pd.DataFrame
         Fits the model to the subset and predicts the interpolated dataset.
 
     Notes
@@ -137,34 +140,46 @@ class RBF(BaseInterpolation):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> import pandas as pd
-    >>> from bluemath_tk.interpolation.rbf import RBF
-    >>> dataset = pd.DataFrame(
-    ...     {
-    ...         "Hs": np.random.rand(1000) * 7,
-    ...         "Tp": np.random.rand(1000) * 20,
-    ...         "Dir": np.random.rand(1000) * 360,
-    ...     }
-    ... )
-    >>> subset = dataset.sample(frac=0.25)
-    >>> target = pd.DataFrame(
-    ...     {
-    ...         "HsPred": self.subset["Hs"] * 2 + self.subset["Tp"] * 3,
-    ...         "DirPred": - self.subset["Dir"],
-    ...     }
-    ... )
-    >>> rbf = RBF()
-    >>> predictions = rbf.fit_predict(
-    ...     subset_data=subset,
-    ...     subset_directional_variables=["Dir"],
-    ...     target_data=target,
-    ...     target_directional_variables=["DirPred"],
-    ...     normalize_target_data=True,
-    ...     dataset=dataset,
-    ...     num_threads=4,
-    ...     iteratively_update_sigma=True,
-    ... )
+    .. jupyter-execute::
+
+        import numpy as np
+        import pandas as pd
+        from bluemath_tk.interpolation.rbf import RBF
+
+        dataset = pd.DataFrame(
+            {
+                "Hs": np.random.rand(1000) * 7,
+                "Tp": np.random.rand(1000) * 20,
+                "Dir": np.random.rand(1000) * 360,
+            }
+        )
+        subset = dataset.sample(frac=0.25)
+        target = pd.DataFrame(
+            {
+                "HsPred": subset["Hs"] * 2 + subset["Tp"] * 3,
+                "DirPred": - subset["Dir"],
+            }
+        )
+
+        rbf = RBF()
+
+        predictions = rbf.fit_predict(
+            subset_data=subset,
+            subset_directional_variables=["Dir"],
+            target_data=target,
+            target_directional_variables=["DirPred"],
+            normalize_target_data=True,
+            dataset=dataset,
+            num_workers=4,
+            iteratively_update_sigma=True,
+        )
+        print(predictions.head())
+
+    References
+    ----------
+    [1] https://en.wikipedia.org/wiki/Radial_basis_function
+    [2] https://en.wikipedia.org/wiki/Gaussian_function
+    [3] https://link.springer.com/article/10.1023/A:1018975909870
     """
 
     rbf_kernels = {
@@ -257,6 +272,12 @@ class RBF(BaseInterpolation):
         self._target_scale_factor: dict = {}
         self._rbf_coeffs: pd.DataFrame = pd.DataFrame()
         self._opt_sigmas: dict = {}
+
+        # Exclude attributes to .save_model() method
+        self._exclude_attributes = []
+
+        # Row chunks for parallel computation
+        self.row_chunks: int = None
 
     @property
     def sigma_min(self) -> float:
@@ -634,7 +655,7 @@ class RBF(BaseInterpolation):
                 x0=self.sigma_opt,
                 args=(subset_variables, target_variable),
                 disp=0,
-            )
+            )[0]
             if iteratively_update_sigma:
                 self._sigma_opt = opt_sigma
         else:
@@ -668,7 +689,80 @@ class RBF(BaseInterpolation):
 
         return rbf_coeff, opt_sigma
 
-    def _rbf_interpolate(self, dataset: pd.DataFrame) -> pd.DataFrame:
+    def _rbf_variable_interpolation(
+        self,
+        opt_sigma: float,
+        rbf_coeff: np.ndarray,
+        normalized_dataset: pd.DataFrame,
+        num_points_subset: int,
+        num_vars_subset: int,
+    ) -> np.ndarray:
+        """
+        Interpolates the surface for a variable.
+
+        opt_sigma : float
+            The optimal sigma calculated for variable.
+        rbf_coeff : np.ndarray
+            The fitted coefficients for variable.
+        normalized_dataset : pd.DataFrame
+            The normalized dataset.
+        num_points_subset : int
+            The number of points used in the fitting.
+        num_vars_subset : int
+            The number of variables used in the fitting.
+
+        np.ndarray
+            The interpolated variable.
+        """
+
+        # Calculate optimal chunk size based on memory
+        norm_dataset = normalized_dataset.values
+        norm_subset = self.normalized_subset_data.values
+
+        if self.row_chunks is not None:
+            chunks = (min(self.row_chunks, norm_dataset.shape[0]), -1)
+            self.logger.info(f"Using row chunks of size {chunks[0]}")
+        # elif self.num_workers > 1:
+        #     chunks = (norm_dataset.shape[0] // self.num_workers, -1)
+        else:
+            chunks = (norm_dataset.shape[0], -1)
+
+        # Convert to dask arrays for large operations
+        d_dataset = da.from_array(norm_dataset, chunks=chunks)
+        d_subset = da.from_array(norm_subset)
+
+        # Split computation into chunks
+        result = []
+        for i in range(0, len(d_dataset), chunks[0]):
+            chunk = d_dataset[i : i + chunks[0]]
+
+            # Calculate r for this chunk
+            r_chunk = da.linalg.norm(chunk[:, None, :] - d_subset[None, :, :], axis=2)
+
+            # Apply kernel and dot product
+            kernel_values = self.kernel_func(r_chunk, opt_sigma)
+
+            # Compute this chunk's result
+            chunk_result = (
+                rbf_coeff[num_points_subset]
+                + da.dot(kernel_values, rbf_coeff[:num_points_subset])
+                + da.dot(
+                    chunk,
+                    rbf_coeff[
+                        num_points_subset + 1 : num_points_subset + 1 + num_vars_subset
+                    ].T,
+                )
+            )
+
+            # Compute and append
+            result.append(chunk_result.compute())
+
+        # Combine results
+        return np.concatenate(result)
+
+    def _rbf_interpolate(
+        self, dataset: pd.DataFrame, num_workers: int = None
+    ) -> pd.DataFrame:
         """
         This function interpolates the dataset.
 
@@ -676,6 +770,8 @@ class RBF(BaseInterpolation):
         ----------
         dataset : pd.DataFrame
             The dataset to interpolate (must have same variables as subset).
+        num_workers : int, optional
+            The number of workers to use for the interpolation. Default is None.
 
         Returns
         -------
@@ -697,28 +793,40 @@ class RBF(BaseInterpolation):
         )
 
         # Loop through the target variables
-        for i_var, target_var in enumerate(self.target_processed_variables):
-            self.logger.info(f"Interpolating target variable {target_var}")
-            rbf_coeff = self._rbf_coeffs[target_var].values
-            opt_sigma = self._opt_sigmas[target_var]
-            r = np.linalg.norm(
-                normalized_dataset.values[:, np.newaxis, :]
-                - self.normalized_subset_data.values[np.newaxis, :, :],
-                axis=2,
+        if num_workers > 1:
+            self.logger.info(
+                f"Interpolating target variables using parallel execution and num_workers={num_workers}"
             )
-            kernel_values = self.kernel_func(r, opt_sigma)
-            linear_part = np.dot(
-                normalized_dataset.values,
-                rbf_coeff[
-                    num_points_subset + 1 : num_points_subset + 1 + num_vars_subset
-                ].T,
+            rbf_interpolated_vars = self.parallel_execute(
+                func=self._rbf_variable_interpolation,
+                items=zip(
+                    [
+                        self._opt_sigmas[target_var]
+                        for target_var in self.target_processed_variables
+                    ],
+                    [
+                        self._rbf_coeffs[target_var].values
+                        for target_var in self.target_processed_variables
+                    ],
+                ),
+                num_workers=num_workers,
+                normalized_dataset=normalized_dataset,
+                num_points_subset=num_points_subset,
+                num_vars_subset=num_vars_subset,
             )
-            s = (
-                rbf_coeff[num_points_subset]
-                + np.dot(kernel_values, rbf_coeff[:num_points_subset])
-                + linear_part
-            )
-            interpolated_array[:, i_var] = s
+            for i_var, interpolated_var in rbf_interpolated_vars.items():
+                interpolated_array[:, i_var] = interpolated_var
+        else:
+            for i_var, target_var in enumerate(self.target_processed_variables):
+                self.logger.info(f"Interpolating target variable {target_var}")
+                interpolated_var = self._rbf_variable_interpolation(
+                    normalized_dataset=normalized_dataset,
+                    opt_sigma=self._opt_sigmas[target_var],
+                    rbf_coeff=self._rbf_coeffs[target_var].values,
+                    num_points_subset=num_points_subset,
+                    num_vars_subset=num_vars_subset,
+                )
+                interpolated_array[:, i_var] = interpolated_var
 
         return pd.DataFrame(interpolated_array, columns=self.target_processed_variables)
 
@@ -732,7 +840,7 @@ class RBF(BaseInterpolation):
         subset_custom_scale_factor: dict = {},
         normalize_target_data: bool = True,
         target_custom_scale_factor: dict = {},
-        num_threads: int = None,
+        num_workers: int = None,
         iteratively_update_sigma: bool = False,
     ) -> None:
         """
@@ -754,8 +862,8 @@ class RBF(BaseInterpolation):
             Whether to normalize the target data. Default is True.
         target_custom_scale_factor : dict, optional
             The custom scale factor for the target data. Default is {}.
-        num_threads : int, optional
-            The number of threads to use for the optimization. Default is None.
+        num_workers : int, optional
+            The number of workers to use for the optimization. Default is None.
         iteratively_update_sigma : bool, optional
             Whether to iteratively update the sigma parameter. Default is False.
 
@@ -768,10 +876,6 @@ class RBF(BaseInterpolation):
         - The number of threads to use for the optimization can be specified.
         """
 
-        if num_threads is not None:
-            self.set_num_processors_to_use(num_processors=num_threads)
-            self.logger.info(f"Using {num_threads} threads for optimization.")
-
         self._subset_directional_variables = subset_directional_variables
         self._target_directional_variables = target_directional_variables
         self._subset_custom_scale_factor = subset_custom_scale_factor
@@ -782,20 +886,41 @@ class RBF(BaseInterpolation):
             normalize_target_data=normalize_target_data,
         )
 
+        if num_workers is None:
+            num_workers = self.num_workers
+
         self.logger.info("Fitting RBF model to the data")
         # RBF fitting for all variables
         rbf_coeffs, opt_sigmas = {}, {}
 
-        for target_var in target_data.columns:
-            self.logger.info(f"Fitting RBF for variable {target_var}")
-            target_var_values = target_data[target_var].values
-            rbf_coeff, opt_sigma = self._calc_opt_sigma(
-                target_variable=target_var_values,
+        if num_workers > 1:
+            self.logger.info(
+                f"Fitting RBF model using parallel execution and num_workers={num_workers}"
+            )
+            rbf_coeffs_and_sigmas = self.parallel_execute(
+                func=self._calc_opt_sigma,
+                items=[
+                    target_data[target_var].values for target_var in target_data.columns
+                ],
+                num_workers=num_workers,
                 subset_variables=subset_data.values.T,
                 iteratively_update_sigma=iteratively_update_sigma,
             )
-            rbf_coeffs[target_var] = rbf_coeff.flatten()
-            opt_sigmas[target_var] = opt_sigma
+            for i_target_var, (rbf_coeff, opt_sigma) in rbf_coeffs_and_sigmas.items():
+                target_var = target_data.columns[i_target_var]
+                rbf_coeffs[target_var] = rbf_coeff.flatten()
+                opt_sigmas[target_var] = opt_sigma
+        else:
+            for target_var in target_data.columns:
+                self.logger.info(f"Fitting RBF for variable {target_var}")
+                target_var_values = target_data[target_var].values
+                rbf_coeff, opt_sigma = self._calc_opt_sigma(
+                    target_variable=target_var_values,
+                    subset_variables=subset_data.values.T,
+                    iteratively_update_sigma=iteratively_update_sigma,
+                )
+                rbf_coeffs[target_var] = rbf_coeff.flatten()
+                opt_sigmas[target_var] = opt_sigma
 
         # Store the RBF coefficients and optimal sigmas
         self._rbf_coeffs = pd.DataFrame(rbf_coeffs)
@@ -804,7 +929,7 @@ class RBF(BaseInterpolation):
         # Set the is_fitted attribute to True
         self.is_fitted = True
 
-    def predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
+    def predict(self, dataset: pd.DataFrame, num_workers: int = None) -> pd.DataFrame:
         """
         Predicts the data for the provided dataset.
 
@@ -812,6 +937,8 @@ class RBF(BaseInterpolation):
         ----------
         dataset : pd.DataFrame
             The dataset to predict (must have same variables than subset).
+        num_workers : int, optional
+            The number of workers to use for the interpolation. Default is None.
 
         Returns
         -------
@@ -834,8 +961,13 @@ class RBF(BaseInterpolation):
         if self.is_fitted is False:
             raise RBFError("RBF model must be fitted before predicting.")
 
+        if num_workers is None:
+            num_workers = self.num_workers
+
         self.logger.info("Reconstructing data using fitted coefficients.")
-        interpolated_target = self._rbf_interpolate(dataset=dataset)
+        interpolated_target = self._rbf_interpolate(
+            dataset=dataset, num_workers=num_workers
+        )
         if self.is_target_normalized:
             self.logger.info("Denormalizing target data")
             interpolated_target = self.denormalize(
@@ -848,6 +980,7 @@ class RBF(BaseInterpolation):
                 xu=interpolated_target[f"{directional_variable}_u"].values,
                 xv=interpolated_target[f"{directional_variable}_v"].values,
             )
+
         return interpolated_target
 
     def fit_predict(
@@ -860,7 +993,7 @@ class RBF(BaseInterpolation):
         subset_custom_scale_factor: dict = {},
         normalize_target_data: bool = True,
         target_custom_scale_factor: dict = {},
-        num_threads: int = None,
+        num_workers: int = None,
         iteratively_update_sigma: bool = False,
     ) -> pd.DataFrame:
         """
@@ -884,8 +1017,8 @@ class RBF(BaseInterpolation):
             Whether to normalize the target data. Default is True.
         target_custom_scale_factor : dict, optional
             The custom scale factor for the target data. Default is {}.
-        num_threads : int, optional
-            The number of threads to use for the optimization. Default is None.
+        num_workers : int, optional
+            The number of workers to use for the optimization. Default is None.
         iteratively_update_sigma : bool, optional
             Whether to iteratively update the sigma parameter. Default is False.
 
@@ -899,6 +1032,9 @@ class RBF(BaseInterpolation):
         - This function fits the model to the subset and predicts the interpolated dataset.
         """
 
+        if num_workers is None:
+            num_workers = self.num_workers
+
         self.fit(
             subset_data=subset_data,
             target_data=target_data,
@@ -907,8 +1043,8 @@ class RBF(BaseInterpolation):
             subset_custom_scale_factor=subset_custom_scale_factor,
             normalize_target_data=normalize_target_data,
             target_custom_scale_factor=target_custom_scale_factor,
-            num_threads=num_threads,
+            num_workers=num_workers,
             iteratively_update_sigma=iteratively_update_sigma,
         )
 
-        return self.predict(dataset=dataset)
+        return self.predict(dataset=dataset, num_workers=num_workers)

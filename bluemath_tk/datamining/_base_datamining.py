@@ -1,8 +1,10 @@
 from abc import abstractmethod
-from typing import Tuple, List
+from typing import List, Tuple
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+
 from ..core.models import BlueMathModel
 from ..core.plotting.base_plotting import DefaultStaticPlotting
 
@@ -94,8 +96,7 @@ class BaseSampling(BlueMathModel):
                     x=self.data[v1],
                     y=self.data[v2],
                     c=data_color,
-                    s=kwargs.get("s", default_static_plot.default_scatter_size),
-                    alpha=kwargs.get("alpha", 0.7),
+                    **kwargs,
                 )
                 if c1 == c2:
                     axes[c2, c1].set_xlabel(variables_names[c1 + 1])
@@ -191,6 +192,7 @@ class BaseClustering(BlueMathModel):
         self,
         data_color: str = "blue",
         centroids_color: str = "red",
+        plot_text: bool = False,
         **kwargs,
     ) -> Tuple[plt.figure, plt.axes]:
         """
@@ -202,6 +204,8 @@ class BaseClustering(BlueMathModel):
             Color for the data points. Default is "blue".
         centroids_color : str, optional
             Color for the centroid points. Default is "red".
+        plot_text : bool, optional
+            Whether to display text labels for centroids. Default is False.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the scatter plot function.
 
@@ -245,8 +249,8 @@ class BaseClustering(BlueMathModel):
                     x=self.data[v1],
                     y=self.data[v2],
                     c=data_color,
-                    s=kwargs.get("s", default_static_plot.default_scatter_size),
-                    alpha=kwargs.get("alpha", 0.7),
+                    alpha=0.6,
+                    **kwargs,
                 )
                 if self.centroids is not None:
                     default_static_plot.plot_scatter(
@@ -254,17 +258,18 @@ class BaseClustering(BlueMathModel):
                         x=self.centroids[v1],
                         y=self.centroids[v2],
                         c=centroids_color,
-                        s=kwargs.get("s", default_static_plot.default_scatter_size),
-                        alpha=kwargs.get("alpha", 0.9),
+                        alpha=0.9,
+                        **kwargs,
                     )
-                    for i in range(self.centroids.shape[0]):
-                        axes[c2, c1].text(
-                            self.centroids[v1][i],
-                            self.centroids[v2][i],
-                            str(i + 1),
-                            fontsize=kwargs.get("fontsize", 12),
-                            fontweight=kwargs.get("fontweight", "bold"),
-                        )
+                    if plot_text:
+                        for i in range(self.centroids.shape[0]):
+                            axes[c2, c1].text(
+                                self.centroids[v1][i],
+                                self.centroids[v2][i],
+                                str(i + 1),
+                                fontsize=12,
+                                fontweight="bold",
+                            )
                 if c1 == c2:
                     axes[c2, c1].set_xlabel(variables_names[c1 + 1])
                     axes[c2, c1].set_ylabel(variables_names[c2])
@@ -336,8 +341,8 @@ class BaseClustering(BlueMathModel):
                     x=data[v1],
                     y=data[v2],
                     c=nearest_centroids_colors,
-                    s=kwargs.get("s", default_static_plot.default_scatter_size),
-                    alpha=kwargs.get("alpha", 0.7),
+                    alpha=0.9,
+                    **kwargs,
                 )
                 if c1 == c2:
                     axes[c2, c1].set_xlabel(variables_names[c1 + 1])

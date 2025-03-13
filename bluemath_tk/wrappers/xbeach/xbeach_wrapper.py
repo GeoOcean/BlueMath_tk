@@ -31,7 +31,7 @@ class XBeachModelWrapper(BaseModelWrapper):
         debug: bool = True,
     ) -> None:
         """
-        Initialize the SWASH model wrapper.
+        Initialize the XBeach model wrapper.
         """
 
         super().__init__(

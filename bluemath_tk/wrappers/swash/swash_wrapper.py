@@ -1,12 +1,18 @@
 import os
-from typing import Tuple, List
+import os.path as op
+import re
+from typing import List, Tuple
+
 import numpy as np
 import pandas as pd
 import xarray as xr
 from scipy.signal import find_peaks
-from .._base_wrappers import BaseModelWrapper
+
 from ...waves.spectra import spectral_analysis
 from ...waves.statistics import upcrossing
+from .._base_wrappers import BaseModelWrapper
+
+np.random.seed(42)  # TODO: check global behavior.
 
 
 class SwashModelWrapper(BaseModelWrapper):
@@ -22,21 +28,45 @@ class SwashModelWrapper(BaseModelWrapper):
         The available launchers for the wrapper.
     postprocess_functions : dict
         The postprocess functions for the wrapper.
+    depth_array : np.ndarray
+        The depth array (working for 1D arrays for the moment).
+    xlenc : int
+       The length in meters of the computational domain.
+    mxc : int
+        The number of computational cells.
+    mxinp : int
+        The number of input points.
+    dxinp : float
+        The input points spacing (to calculate the meters).
+    n_nodes_per_wavelength : int
+        The number of nodes per wavelength.
+    deltc : float
+        The time step (DeltaT).
+    tendc : float
+        The total computation time.
 
     Methods
     -------
+    build_cases -> None
+        Create the cases folders and render the input files.
     list_available_postprocess_vars -> List[str]
         List available postprocess variables.
     _read_tabfile -> pd.DataFrame
         Read a tab file and return a pandas DataFrame.
     _convert_case_output_files_to_nc -> xr.Dataset
         Convert tab files to netCDF file.
+    get_case_percentage_from_file -> float
+        Get the case percentage from the output log file.
+    monitor_cases -> pd.DataFrame
+        Monitor the cases and log relevant information.
     postprocess_case -> xr.Dataset
         Convert tab ouput files to netCDF file.
     join_postprocessed_files -> xr.Dataset
         Join postprocessed files in a single Dataset.
     find_maximas -> Tuple[np.ndarray, np.ndarray]
         Find the individual maxima of an array.
+    get_waterlevel -> xr.Dataset
+        Get water level from the output netCDF file.
     calculate_runup2 -> xr.Dataset
         Calculates runup 2% (Ru2) from the output netCDF file.
     calculate_runup -> xr.Dataset
@@ -55,8 +85,10 @@ class SwashModelWrapper(BaseModelWrapper):
     }
 
     available_launchers = {
-        "bash": "swashrun -input input.sws",
-        "docker": "docker run --rm -v .:/case_dir -w /case_dir tausiaj/swash-geoocean:11.01 swashrun -input input.sws",
+        "serial": "swash_serial.exe",
+        "mpi": "mpirun -np 2 swash_mpi.exe",
+        "docker_serial": "docker run --rm -v .:/case_dir -w /case_dir geoocean/rocky8 swash_serial.exe",
+        "docker_mpi": "docker run --rm -v .:/case_dir -w /case_dir geoocean/rocky8 mpirun -np 2 swash_mpi.exe",
         "geoocean-cluster": "launchSwash.sh",
     }
 
@@ -66,6 +98,7 @@ class SwashModelWrapper(BaseModelWrapper):
         "Msetup": "calculate_setup",
         "Hrms": "calculate_statistical_analysis",
         "Hfreqs": "calculate_spectral_analysis",
+        "Watlev": "get_waterlevel",
     }
 
     def __init__(
@@ -73,6 +106,11 @@ class SwashModelWrapper(BaseModelWrapper):
         templates_dir: str,
         model_parameters: dict,
         output_dir: str,
+        depth_array: np.ndarray,
+        dxinp: float,
+        n_nodes_per_wavelength: int,
+        tendc: int,
+        warmup: int = 0,
         templates_name: dict = "all",
         debug: bool = True,
     ) -> None:
@@ -89,6 +127,53 @@ class SwashModelWrapper(BaseModelWrapper):
         )
         self.set_logger_name(
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
+        )
+        self.depth_array = depth_array
+        self.mxinp = len(depth_array) - 1
+        self.dxinp = dxinp
+        self.xlenc = int(self.mxinp * self.dxinp)
+        self.mxc: int = None
+        self.n_nodes_per_wavelength = n_nodes_per_wavelength
+        self.tendc = tendc
+        self.warmup = warmup
+
+    def build_cases(
+        self,
+        mode: str = "one_by_one",
+    ) -> None:
+        """
+        Create the cases folders and render the input files.
+
+        Parameters
+        ----------
+        mode : str, optional
+            The mode to create the cases. Can be "all_combinations" or "one_by_one".
+            Default is "one_by_one".
+        """
+
+        if mode == "all_combinations":
+            self.cases_context = self.create_cases_context_all_combinations()
+        elif mode == "one_by_one":
+            self.cases_context = self.create_cases_context_one_by_one()
+        else:
+            raise ValueError(f"Invalid mode to create cases: {mode}")
+        for case_num, case_context in enumerate(self.cases_context):
+            case_context["case_num"] = f"{case_num:04}"
+            case_dir = op.join(self.output_dir, f"{case_num:04}")
+            self.cases_dirs.append(case_dir)
+            os.makedirs(case_dir, exist_ok=True)
+            self.build_case(
+                case_context=case_context,
+                case_dir=case_dir,
+            )
+            for template_name in self.templates_name:
+                self.render_file_from_template(
+                    template_name=template_name,
+                    context=case_context,
+                    output_filename=op.join(case_dir, template_name),
+                )
+        self.logger.info(
+            f"{len(self.cases_dirs)} cases created in {mode} mode and saved in {self.output_dir}"
         )
 
     def list_available_postprocess_vars(self) -> List[str]:
@@ -166,16 +251,64 @@ class SwashModelWrapper(BaseModelWrapper):
         # merge output files to one xarray.Dataset
         ds = xr.merge([ds_ouput, ds_run], compat="no_conflicts")
 
-        # assign correct coordinate case_id
+        # assign correct coordinate case_num
         ds.coords["case_num"] = case_num
 
         return ds
+
+    def get_case_percentage_from_file(self, output_log_file: str) -> str:
+        """
+        Get the case percentage from the output log file.
+
+        Parameters
+        ----------
+        output_log_file : str
+            The output log file.
+
+        Returns
+        -------
+        str
+            The case percentage.
+        """
+
+        if not os.path.exists(output_log_file):
+            return "0 %"
+
+        progress_pattern = r"\[\s*(\d+)%\]"
+        with open(output_log_file, "r") as f:
+            for line in reversed(f.readlines()):
+                match = re.search(progress_pattern, line)
+                if match:
+                    return f"{match.group(1)} %"
+
+        return "0 %"  # if no progress is found
+
+    def monitor_cases(self) -> pd.DataFrame:
+        """
+        Monitor the cases and log relevant information.
+
+        Returns
+        -------
+        pd.DataFrame
+            The cases percentage.
+        """
+
+        cases_percentage = {}
+
+        for case_dir in self.cases_dirs:
+            output_log_file = os.path.join(case_dir, "wrapper_out.log")
+            progress = self.get_case_percentage_from_file(
+                output_log_file=output_log_file
+            )
+            cases_percentage[os.path.basename(case_dir)] = progress
+
+        return pd.DataFrame(cases_percentage.items(), columns=["Case", "Percentage"])
 
     def postprocess_case(
         self, case_num: int, case_dir: str, output_vars: List[str] = None
     ) -> xr.Dataset:
         """
-        Convert tab ouput files to netCDF file.
+        Convert tab output files to netCDF file.
 
         Parameters
         ----------
@@ -192,6 +325,12 @@ class SwashModelWrapper(BaseModelWrapper):
             The postprocessed Dataset.
         """
 
+        import warnings
+
+        warnings.filterwarnings("ignore")
+
+        self.logger.info(f"Postprocessing case {case_num} in {case_dir}.")
+
         if output_vars is None:
             self.logger.info("Postprocessing all available variables.")
             output_vars = list(self.postprocess_functions.keys())
@@ -204,7 +343,7 @@ class SwashModelWrapper(BaseModelWrapper):
             output_nc = self._convert_case_output_files_to_nc(
                 case_num=case_num, output_path=output_path, run_path=run_path
             )
-            output_nc.to_netcdf(os.path.join(case_dir, "output.nc"))
+            output_nc.to_netcdf(output_nc_path)
         else:
             self.logger.info("Reading existing output.nc file.")
             output_nc = xr.open_dataset(output_nc_path)
@@ -268,6 +407,30 @@ class SwashModelWrapper(BaseModelWrapper):
 
         return peaks, x[peaks]
 
+    def get_waterlevel(
+        self, case_num: int, case_dir: str, output_nc: xr.Dataset
+    ) -> xr.Dataset:
+        """
+        Get water level from the output netCDF file.
+
+        Parameters
+        ----------
+        case_num : int
+            The case number.
+        case_dir : str
+            The case directory.
+        output_nc : xr.Dataset
+            The output netCDF file.
+
+        Returns
+        -------
+        xr.Dataset
+            The water level.
+        """
+
+        # get water level
+        return output_nc[["Watlev"]].squeeze()
+
     def calculate_runup2(
         self, case_num: int, case_dir: str, output_nc: xr.Dataset
     ) -> xr.Dataset:
@@ -276,6 +439,10 @@ class SwashModelWrapper(BaseModelWrapper):
 
         Parameters
         ----------
+        case_num : int
+            The case number.
+        case_dir : str
+            The case directory.
         output_nc : xr.Dataset
             The output netCDF file.
 

@@ -30,24 +30,30 @@ dependencies = [
     "xarray",
     "netcdf4",
     "dask",
+    "distributed",
     "zarr",
     "scipy",
     "scikit-learn",
     "matplotlib",
     "plotly",
     "cartopy",
-    "cdsapi",
     "jinja2",
     "requests",
     "aiohttp",
     "minisom",
+    "statsmodels",
+    "regionmask",
+    "cdsapi",
+    "ipykernel",
+    "ipywidgets",
 ]
 
 [project.optional-dependencies]
 
-docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocstrings[python]"]
-tests = ["pytest", "pytest-mock"]
+docs = ["sphinx", "sphinx-rtd-theme", "jupyter-sphinx", "myst-parser"]
 deep = ["tensorflow", "keras"]
+num-models = ["hydromt-sfincs"]
+waves = ["wavespectra"]
 
 [project.urls]
 

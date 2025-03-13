@@ -1,8 +1,10 @@
+from typing import List, Tuple
+
 import numpy as np
 import pandas as pd
-from typing import List, Tuple
-from ._base_datamining import BaseClustering
+
 from ..core.decorators import validate_data_mda
+from ._base_datamining import BaseClustering
 
 
 class MDAError(Exception):

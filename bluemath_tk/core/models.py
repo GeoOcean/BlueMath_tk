@@ -1,29 +1,35 @@
-import os
-import sys
-import logging
-from typing import Union, Tuple
-import pickle
 import importlib
+import logging
+import os
+import pickle
+import sys
+from abc import ABC, abstractmethod
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from typing import Any, Callable, List, Tuple, TypeVar, Union
+
 import numpy as np
 import pandas as pd
 import xarray as xr
-from abc import ABC, abstractmethod
-from sklearn.preprocessing import StandardScaler
+from scipy import constants
 from sklearn.metrics import (
+    explained_variance_score,
+    mean_absolute_error,
     mean_squared_error,
     r2_score,
-    mean_absolute_error,
-    explained_variance_score,
 )
+from sklearn.preprocessing import StandardScaler
+
 from .logging import get_file_logger
 from .operations import (
-    normalize,
     denormalize,
-    standarize,
     destandarize,
-    get_uv_components,
     get_degrees_from_uv,
+    get_uv_components,
+    normalize,
+    standarize,
 )
+
+T = TypeVar("T")
 
 
 class BlueMathModel(ABC):
@@ -31,9 +37,55 @@ class BlueMathModel(ABC):
     Abstract base class for handling default functionalities across the project.
     """
 
+    gravity = constants.g
+
     @abstractmethod
     def __init__(self) -> None:
         self._logger: logging.Logger = None
+        self._exclude_attributes: List[str] = []
+        self.num_workers: int = 1
+
+        # [UNDER DEVELOPMENT] Below, we try to generalise parallel processing
+        bluemath_num_workers = os.environ.get("BLUEMATH_NUM_WORKERS", None)
+        omp_num_threads = os.environ.get("OMP_NUM_THREADS", None)
+        if bluemath_num_workers is not None:
+            self.logger.warning(
+                f"Setting self.num_workers to {bluemath_num_workers} due to BLUEMATH_NUM_WORKERS. \n"
+                "Change it using self.set_num_processors_to_use method. \n"
+                "Also setting OMP_NUM_THREADS to 1, to avoid conflicts with BlueMath parallel processing."
+            )
+            self.set_num_processors_to_use(num_processors=int(bluemath_num_workers))
+            self.set_omp_num_threads(num_threads=1)
+        elif omp_num_threads is not None:
+            self.logger.warning(
+                f"Changing variable OMP_NUM_THREADS from {omp_num_threads} to 1. \n"
+                f"And setting self.num_workers to {omp_num_threads}. \n"
+                "To avoid conflicts with BlueMath parallel processing."
+            )
+            self.set_omp_num_threads(num_threads=1)
+            self.set_num_processors_to_use(num_processors=int(omp_num_threads))
+        else:
+            self.num_workers = 1  # self.get_num_processors_available()
+            self.logger.warning(
+                f"Setting self.num_workers to {self.num_workers}. "
+                "Change it using self.set_num_processors_to_use method."
+            )
+
+    def __getstate__(self):
+        """Exclude certain attributes from being pickled."""
+
+        state = self.__dict__.copy()
+        for attr in self._exclude_attributes:
+            if attr in state:
+                del state[attr]
+        # Iterate through the state attributes, warning about xr.Datasets
+        for key, value in state.items():
+            if isinstance(value, xr.Dataset) or isinstance(value, xr.DataArray):
+                self.logger.warning(
+                    f"Attribute {key} is an xarray Dataset / Dataarray and will be pickled!"
+                )
+
+        return state
 
     @property
     def logger(self) -> logging.Logger:
@@ -45,16 +97,19 @@ class BlueMathModel(ABC):
     def logger(self, value: logging.Logger) -> None:
         self._logger = value
 
-    def set_logger_name(self, name: str, level: str = "INFO") -> None:
+    def set_logger_name(
+        self, name: str, level: str = "INFO", console: bool = True
+    ) -> None:
         """Sets the name of the logger."""
 
-        self.logger = get_file_logger(name=name)
-        self.logger.setLevel(level)
+        self.logger = get_file_logger(name=name, level=level, console=console)
 
-    def save_model(self, model_path: str) -> None:
+    def save_model(self, model_path: str, exclude_attributes: List[str] = None) -> None:
         """Saves the model to a file."""
 
         self.logger.info(f"Saving model to {model_path}")
+        if exclude_attributes is not None:
+            self._exclude_attributes += exclude_attributes
         with open(model_path, "wb") as f:
             pickle.dump(self, f)
 
@@ -102,7 +157,7 @@ class BlueMathModel(ABC):
     def check_nans(
         self,
         data: Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset],
-        replace_value=None,
+        replace_value: Union[float, callable] = None,
         raise_error: bool = False,
     ) -> Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset]:
         """
@@ -112,8 +167,10 @@ class BlueMathModel(ABC):
         ----------
         data : np.ndarray, pd.Series, pd.DataFrame, xr.DataArray or xr.Dataset
             The data to check for NaNs.
-        replace_value : any, optional
+        replace_value : float or callable, optional
             The value to replace NaNs with. If None, NaNs will not be replaced.
+            If a callable is provided, it will be called and the result will be returned.
+            Default is None.
         raise_error : bool, optional
             Whether to raise an error if NaNs are found. Default is False.
 
@@ -133,6 +190,10 @@ class BlueMathModel(ABC):
         - The method checks for NaNs in the data and optionally replaces them with the specified value.
         """
 
+        # If replace_value is a callable, just call and return it
+        if callable(replace_value):
+            self.logger.debug(f"Replace value is a callable. Calling {replace_value}.")
+            return replace_value(data)
         if isinstance(data, np.ndarray):
             if np.isnan(data).any():
                 if raise_error:
@@ -159,6 +220,7 @@ class BlueMathModel(ABC):
                     self.logger.info(f"NaNs replaced with {replace_value}.")
         else:
             self.logger.warning("Data type not supported for NaN check.")
+
         return data
 
     def normalize(
@@ -215,6 +277,7 @@ class BlueMathModel(ABC):
         self,
         data: Union[np.ndarray, pd.DataFrame, xr.Dataset],
         scaler: StandardScaler = None,
+        transform: bool = False,
     ) -> Tuple[Union[np.ndarray, pd.DataFrame, xr.Dataset], StandardScaler]:
         """
         Standarize data using StandardScaler.
@@ -226,6 +289,8 @@ class BlueMathModel(ABC):
             Input data to be standarized.
         scaler : StandardScaler, optional
             Scaler object to use for standarization. Default is None.
+        transform : bool
+            Whether to just transform the data. Default to False.
 
         Returns
         -------
@@ -235,7 +300,9 @@ class BlueMathModel(ABC):
             Scaler object used for standarization.
         """
 
-        standarized_data, scaler = standarize(data=data, scaler=scaler)
+        standarized_data, scaler = standarize(
+            data=data, scaler=scaler, transform=transform
+        )
         return standarized_data, scaler
 
     def destandarize(
@@ -388,6 +455,26 @@ class BlueMathModel(ABC):
 
         return get_degrees_from_uv(xu, xv)
 
+    def set_omp_num_threads(self, num_threads: int) -> None:
+        """
+        Sets the number of threads for OpenMP.
+
+        Parameters
+        ----------
+        num_threads : int
+            The number of threads.
+
+        Warning
+        -----
+        - This methos is under development.
+        """
+
+        os.environ["OMP_NUM_THREADS"] = str(num_threads)
+
+        # Re-import numpy if it is already imported
+        if "numpy" in sys.modules:
+            importlib.reload(np)
+
     def get_num_processors_available(self) -> int:
         """
         Gets the number of processors available.
@@ -397,11 +484,12 @@ class BlueMathModel(ABC):
         int
             The number of processors available.
 
-        TODO:
+        TODO
+        ----
         - Check whether available processors are used or not.
         """
 
-        return os.cpu_count()
+        return int(os.cpu_count() * 0.9)
 
     def set_num_processors_to_use(self, num_processors: int) -> None:
         """
@@ -412,11 +500,6 @@ class BlueMathModel(ABC):
         num_processors : int
             The number of processors to use.
             If -1, all available processors will be used.
-
-        Raises
-        ------
-        ValueError
-            If the number of processors requested exceeds the number of processors available
         """
 
         # Retrieve the number of processors available
@@ -427,48 +510,66 @@ class BlueMathModel(ABC):
             num_processors = num_processors_available
         elif num_processors <= 0:
             raise ValueError("Number of processors must be greater than 0")
-        elif num_processors > num_processors_available:
-            raise ValueError(
-                f"Number of processors requested ({num_processors}) "
-                f"exceeds the number of processors available ({num_processors_available})"
-            )
-
-        # Calculate the percentage of processors to use
-        percentage = round(num_processors / num_processors_available, 2)
-        if percentage < 0.5:
-            self.logger.info(
-                f"Number of processors requested ({num_processors}) "
-                f"is less than 50% of the available processors ({num_processors_available})"
-            )
-        else:
+        elif (num_processors_available - num_processors) < 2:
             self.logger.warning(
-                f"Number of processors requested ({num_processors}) "
-                f"is more than 50% of the available processors ({num_processors_available})"
+                "Number of processors requested is less than 2 processors available"
             )
-        self.logger.info(f"Using {percentage * 100}% of the available processors")
-        os.environ["OMP_NUM_THREADS"] = str(num_processors)
 
-        # Re-import numpy if it is already imported
-        if "numpy" in sys.modules:
-            importlib.reload(np)
+        # Set the number of processors to use
+        self.num_workers = num_processors
 
-    def get_num_processors_used(self) -> int:
+    def parallel_execute(
+        self,
+        func: Callable,
+        items: List[Any],
+        num_workers: int,
+        cpu_intensive: bool = False,
+        **kwargs,
+    ) -> List[T]:
         """
-        Gets the number of processors used.
+        Execute a function in parallel using concurrent.futures.
+
+        Parameters
+        ----------
+        func : Callable
+            Function to execute for each item.
+        items : List[Any]
+            List of items to process.
+        num_workers : int
+            Number of parallel workers.
+        cpu_intensive : bool, optional
+            Whether the function is CPU intensive. Default is False.
+        **kwargs : dict
+            Additional keyword arguments for func.
 
         Returns
         -------
-        int
-            The number of processors used.
+        List[T]
+            List of results from each function call
 
-        Notes
-        -----
-        - This method returns the number of processors used by the application.
-        - 1 is returned if the number of processors used is not set, as is the case of
-          serial processing like Python's built-in functions.
-        - Remember that if we run a parallel processing task, the number of processors used
-          will be the number of processors set by the task, ehich can be > 1.
-          Examples: np.linalg. or numerical models compiled with OpenMP or MPI.
+        Warnings
+        --------
+        - cpu_intensive = True does not work with non-pickable objects (Under development).
         """
 
-        return int(os.environ.get("OMP_NUM_THREADS", 1))
+        results = {}
+
+        executor_class = ProcessPoolExecutor if cpu_intensive else ThreadPoolExecutor
+        self.logger.info(f"Using {executor_class.__name__} for parallel execution")
+
+        with executor_class(max_workers=num_workers) as executor:
+            future_to_item = {
+                executor.submit(func, *item, **kwargs)
+                if isinstance(item, tuple)
+                else executor.submit(func, item, **kwargs): i
+                for i, item in enumerate(items)
+            }
+            for future in as_completed(future_to_item):
+                i = future_to_item[future]
+                try:
+                    result = future.result()
+                    results[i] = result
+                except Exception as exc:
+                    self.logger.error(f"Job for {i} generated an exception: {exc}")
+
+        return results

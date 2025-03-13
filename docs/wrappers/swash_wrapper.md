@@ -1,1 +1,0 @@
-::: bluemath_tk.wrappers.swash.swash_wrapper

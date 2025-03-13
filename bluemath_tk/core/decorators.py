@@ -1,5 +1,6 @@
 import functools
 from typing import List
+
 import pandas as pd
 import xarray as xr
 
@@ -90,7 +91,9 @@ def validate_data_mda(func):
                 raise ValueError(
                     "First centroid seed must be an integer >= 0 and < num of data points"
                 )
-        return func(self, data, directional_variables, custom_scale_factor)
+        return func(
+            self, data, directional_variables, custom_scale_factor, first_centroid_seed
+        )
 
     return wrapper
 
@@ -116,6 +119,7 @@ def validate_data_kma(func):
         data: pd.DataFrame,
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
+        min_number_of_points: int = None,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -125,7 +129,12 @@ def validate_data_kma(func):
             raise TypeError("Directional variables must be a list")
         if not isinstance(custom_scale_factor, dict):
             raise TypeError("Custom scale factor must be a dict")
-        return func(self, data, directional_variables, custom_scale_factor)
+        if min_number_of_points is not None:
+            if not isinstance(min_number_of_points, int) or min_number_of_points <= 0:
+                raise ValueError("Minimum number of points must be integer and > 0")
+        return func(
+            self, data, directional_variables, custom_scale_factor, min_number_of_points
+        )
 
     return wrapper
 
@@ -187,12 +196,12 @@ def validate_data_pca(func):
         vars_to_stack: List[str],
         coords_to_stack: List[str],
         pca_dim_for_rows: str,
-        window_in_pca_dim_for_rows: List[int] = [0],
-        value_to_replace_nans: float = None,
+        windows_in_pca_dim_for_rows: dict = {},
+        value_to_replace_nans: dict = {},
+        nan_threshold_to_drop: dict = {},
+        scale_data: bool = True,
     ):
-        if data is None:
-            raise ValueError("Data cannot be None")
-        elif not isinstance(data, xr.Dataset):
+        if not isinstance(data, xr.Dataset):
             raise TypeError("Data must be an xarray Dataset")
         # Check that all vars_to_stack are in the data
         if not isinstance(vars_to_stack, list) or len(vars_to_stack) == 0:
@@ -224,25 +233,24 @@ def validate_data_pca(func):
             raise ValueError(
                 "PCA dimension for rows must be a string and found in the data dimensions"
             )
-        if window_in_pca_dim_for_rows is not None:
-            if (
-                not isinstance(window_in_pca_dim_for_rows, list)
-                or len(window_in_pca_dim_for_rows) == 0
-            ):
-                raise ValueError(
-                    "Window in PCA dimension for rows must be a non-empty list"
-                )
-        if value_to_replace_nans is not None:
-            if not isinstance(value_to_replace_nans, float):
-                raise ValueError("Value to replace NaNs must be float")
+        for variable, windows in windows_in_pca_dim_for_rows.items():
+            if not isinstance(windows, list):
+                raise TypeError("Windows must be a list")
+            if not all([isinstance(window, int) and window > 0 for window in windows]):
+                raise ValueError("Windows must be a list of integers > 0")
+        for variable, threshold in nan_threshold_to_drop.items():
+            if not isinstance(threshold, float) or threshold < 0 or threshold > 1:
+                raise ValueError("Threshold must be a float between 0 and 1")
         return func(
             self,
             data,
             vars_to_stack,
             coords_to_stack,
             pca_dim_for_rows,
-            window_in_pca_dim_for_rows,
+            windows_in_pca_dim_for_rows,
             value_to_replace_nans,
+            nan_threshold_to_drop,
+            scale_data,
         )
 
     return wrapper
@@ -273,7 +281,7 @@ def validate_data_rbf(func):
         subset_custom_scale_factor: dict = {},
         normalize_target_data: bool = True,
         target_custom_scale_factor: dict = {},
-        num_threads: int = None,
+        num_workers: int = None,
         iteratively_update_sigma: bool = False,
     ):
         if subset_data is None:
@@ -304,9 +312,9 @@ def validate_data_rbf(func):
             raise TypeError("Normalize target data must be a bool")
         if not isinstance(target_custom_scale_factor, dict):
             raise TypeError("Target custom scale factor must be a dict")
-        if num_threads is not None:
-            if not isinstance(num_threads, int) or num_threads <= 0:
-                raise ValueError("Number of threads must be integer and > 0")
+        if num_workers is not None:
+            if not isinstance(num_workers, int) or num_workers <= 0:
+                raise ValueError("Number of workers must be integer and > 0")
         if not isinstance(iteratively_update_sigma, bool):
             raise TypeError("Iteratively update sigma must be a boolean")
         return func(
@@ -318,7 +326,7 @@ def validate_data_rbf(func):
             subset_custom_scale_factor,
             normalize_target_data,
             target_custom_scale_factor,
-            num_threads,
+            num_workers,
             iteratively_update_sigma,
         )
 

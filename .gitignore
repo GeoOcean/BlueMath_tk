@@ -74,9 +74,14 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/logs/
+docs/jupyter_execute/
+docs/*.pkl
 
 # MkDocs documentation (production)
 site/
+mkdocs.yml
+mk-docs/
 
 # PyCharm
 .idea/
@@ -99,3 +104,4 @@ notebooks/
 test_cases/
 test_data/
 TODO.md
+newsletter.py

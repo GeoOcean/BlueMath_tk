@@ -1,5 +1,7 @@
 import os
+
 import numpy as np
+
 from bluemath_tk.wrappers.xbeach import XBeachModelWrapper
 
 

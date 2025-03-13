@@ -1,14 +1,18 @@
-import os
 import copy
 import itertools
-from typing import List, Union
+import os
+import os.path as op
 import subprocess
+import threading
+from queue import Queue
+from typing import List, Union
+
 import numpy as np
 import xarray as xr
 from jinja2 import Environment, FileSystemLoader
-from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from ..core.models import BlueMathModel
-from ._utils_wrappers import write_array_in_file, copy_files
+from ._utils_wrappers import copy_files, write_array_in_file
 
 
 class BaseModelWrapper(BlueMathModel):
@@ -103,6 +107,8 @@ class BaseModelWrapper(BlueMathModel):
             self.templates_name = templates_name
         self.cases_dirs: List[str] = []
         self.cases_context: List[dict] = []
+        self.thread: threading.Thread = None
+        self.status_queue: Queue = None
 
     @property
     def env(self) -> Environment:
@@ -148,9 +154,8 @@ class BaseModelWrapper(BlueMathModel):
                         f"Parameter {model_param} has the wrong type: {default_parameters[model_param]}"
                     )
 
-    @staticmethod
     def _exec_bash_commands(
-        str_cmd: str, out_file: str = None, err_file: str = None
+        self, str_cmd: str, out_file: str = None, err_file: str = None, cwd: str = None
     ) -> None:
         """
         Execute bash commands.
@@ -165,6 +170,8 @@ class BaseModelWrapper(BlueMathModel):
         err_file : str, optional
             The name of the error file. If None, the error will be printed in the terminal.
             Default is None.
+        cwd : str, optional
+            The current working directory. Default is None.
         """
 
         _stdout = None
@@ -175,8 +182,18 @@ class BaseModelWrapper(BlueMathModel):
         if err_file:
             _stderr = open(err_file, "w")
 
-        s = subprocess.Popen(str_cmd, shell=True, stdout=_stdout, stderr=_stderr)
-        s.wait()
+        try:
+            _s = subprocess.run(
+                str_cmd,
+                shell=True,
+                stdout=_stdout,
+                stderr=_stderr,
+                cwd=cwd,
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            self.logger.error(f"Error running command: {str_cmd}")
+            self.logger.error(f"Error: {e}")
 
         if out_file:
             _stdout.flush()
@@ -210,7 +227,7 @@ class BaseModelWrapper(BlueMathModel):
 
         self.cases_dirs = sorted(
             [
-                os.path.join(self.output_dir, case_dir)
+                op.join(self.output_dir, case_dir)
                 for case_dir in os.listdir(self.output_dir)
             ]
         )
@@ -266,7 +283,7 @@ class BaseModelWrapper(BlueMathModel):
         template = self.env.get_template(name=template_name)
         rendered_content = template.render(context)
         if output_filename is None:
-            output_filename = os.path.join(self.output_dir, template_name)
+            output_filename = op.join(self.output_dir, template_name)
         with open(output_filename, "w") as f:
             f.write(rendered_content)
 
@@ -340,14 +357,14 @@ class BaseModelWrapper(BlueMathModel):
             raise ValueError(f"Invalid mode to create cases: {mode}")
         for case_num, case_context in enumerate(self.cases_context):
             case_context["case_num"] = case_num
-            case_dir = os.path.join(self.output_dir, f"{case_num:04}")
+            case_dir = op.join(self.output_dir, f"{case_num:04}")
             self.cases_dirs.append(case_dir)
             os.makedirs(case_dir, exist_ok=True)
             for template_name in self.templates_name:
                 self.render_file_from_template(
                     template_name=template_name,
                     context=case_context,
-                    output_filename=os.path.join(case_dir, template_name),
+                    output_filename=op.join(case_dir, template_name),
                 )
         self.logger.info(
             f"{len(self.cases_dirs)} cases created in {mode} mode and saved in {self.output_dir}"
@@ -380,33 +397,38 @@ class BaseModelWrapper(BlueMathModel):
 
         # Run the case in the case directory
         self.logger.info(f"Running case in {case_dir} with launcher={launcher}.")
-        os.chdir(case_dir)
+        ouput_log_file = op.join(case_dir, ouput_log_file)
+        error_log_file = op.join(case_dir, error_log_file)
         self._exec_bash_commands(
             str_cmd=launcher,
             out_file=ouput_log_file,
             err_file=error_log_file,
+            cwd=case_dir,
         )
 
     def run_cases(
         self,
         launcher: str,
-        parallel: bool = False,
         cases_to_run: List[int] = None,
+        num_workers: int = None,
     ) -> None:
         """
         Run the cases based on the launcher specified.
-        Parallel execution is optional.
         Cases to run can be specified.
+        Parallel execution is optional by modifying the num_workers parameter.
 
         Parameters
         ----------
         launcher : str
             The launcher to run the cases.
-        parallel : bool, optional
-            If True, the cases will be run in parallel. Default is False.
         cases_to_run : List[int], optional
             The list with the cases to run. Default is None.
+        num_workers : int, optional
+            The number of parallel workers. Default is None.
         """
+
+        if num_workers is None:
+            num_workers = self.num_workers
 
         # Get launcher command from the available launchers
         launcher = self.list_available_launchers().get(launcher, launcher)
@@ -419,24 +441,16 @@ class BaseModelWrapper(BlueMathModel):
         else:
             cases_dir_to_run = copy.deepcopy(self.cases_dirs)
 
-        if parallel:
-            num_threads = self.get_num_processors_available()
+        if num_workers > 1:
             self.logger.debug(
-                f"Running cases in parallel with launcher={launcher}. Number of threads: {num_threads}."
+                f"Running cases in parallel with launcher={launcher}. Number of workers: {num_workers}."
             )
-            with ThreadPoolExecutor(max_workers=num_threads) as executor:
-                future_to_case = {
-                    executor.submit(self.run_case, case_dir, launcher): case_dir
-                    for case_dir in cases_dir_to_run
-                }
-                for future in as_completed(future_to_case):
-                    case_dir = future_to_case[future]
-                    try:
-                        future.result()
-                    except Exception as exc:
-                        self.logger.error(
-                            f"Job for {case_dir} generated an exception: {exc}."
-                        )
+            _results = self.parallel_execute(
+                func=self.run_case,
+                items=cases_dir_to_run,
+                num_workers=num_workers,
+                launcher=launcher,
+            )
         else:
             self.logger.info(f"Running cases sequentially with launcher={launcher}.")
             for case_dir in cases_dir_to_run:
@@ -450,12 +464,83 @@ class BaseModelWrapper(BlueMathModel):
                         f"Job for {case_dir} generated an exception: {exc}."
                     )
 
-        if launcher == "docker" or "docker" in launcher:
-            # TODO: ALWAYS remove ALL stopped containers after running all cases
-            remove_stopped_containers_cmd = 'docker ps -a --filter "ancestor=tausiaj/swash-image:latest" -q | xargs docker rm'
-            self._exec_bash_commands(str_cmd=remove_stopped_containers_cmd)
+        self.logger.info("All cases executed.")
 
-        self.logger.info("All cases ran successfully.")
+    def _run_cases_with_status(
+        self,
+        launcher: str,
+        cases_to_run: List[int],
+        num_workers: int,
+        status_queue: Queue,
+    ) -> None:
+        """
+        Run the cases and update the status queue.
+
+        Parameters
+        ----------
+        launcher : str
+            The launcher to run the cases.
+        cases_to_run : List[int]
+            The list with the cases to run.
+        num_workers : int
+            The number of parallel workers.
+        status_queue : Queue
+            The queue to update the status.
+        """
+
+        try:
+            self.run_cases(launcher, cases_to_run, num_workers)
+            status_queue.put("Completed")
+        except Exception as e:
+            status_queue.put(f"Error: {e}")
+
+    def run_cases_in_background(
+        self,
+        launcher: str,
+        cases_to_run: List[int] = None,
+        num_workers: int = None,
+    ) -> None:
+        """
+        Run the cases in the background based on the launcher specified.
+        Cases to run can be specified.
+        Parallel execution is optional by modifying the num_workers parameter.
+
+        Parameters
+        ----------
+        launcher : str
+            The launcher to run the cases.
+        cases_to_run : List[int], optional
+            The list with the cases to run. Default is None.
+        num_workers : int, optional
+            The number of parallel workers. Default is None.
+        """
+
+        if num_workers is None:
+            num_workers = self.num_workers
+
+        self.status_queue = Queue()
+        self.thread = threading.Thread(
+            target=self._run_cases_with_status,
+            args=(launcher, cases_to_run, num_workers, self.status_queue),
+        )
+        self.thread.start()
+
+    def get_thread_status(self) -> str:
+        """
+        Get the status of the background thread.
+
+        Returns
+        -------
+        str
+            The status of the background thread.
+        """
+
+        if self.thread is None:
+            return "Not started"
+        elif self.thread.is_alive():
+            return "Running"
+        else:
+            return self.status_queue.get()
 
     def run_cases_bulk(
         self,
@@ -471,8 +556,14 @@ class BaseModelWrapper(BlueMathModel):
         """
 
         self.logger.info(f"Running cases with launcher={launcher}.")
-        os.chdir(self.output_dir)
-        self._exec_bash_commands(str_cmd=launcher)
+        self._exec_bash_commands(str_cmd=launcher, cwd=self.output_dir)
+
+    def monitor_cases(self) -> None:
+        """
+        Return the status of the cases.
+        """
+
+        raise NotImplementedError("The method monitor_cases must be implemented.")
 
     def postprocess_case(self, case_num: int, case_dir: str) -> None:
         """
@@ -505,7 +596,12 @@ class BaseModelWrapper(BlueMathModel):
         )
 
     def postprocess_cases(
-        self, cases_to_postprocess: List[int] = None
+        self,
+        cases_to_postprocess: List[int] = None,
+        num_workers: int = None,
+        write_output_nc: bool = True,
+        clean_after: bool = False,
+        force: bool = False,
     ) -> Union[xr.Dataset, List[xr.Dataset]]:
         """
         Postprocess the model output.
@@ -514,6 +610,14 @@ class BaseModelWrapper(BlueMathModel):
         ----------
         cases_to_postprocess : List[int], optional
             The list with the cases to postprocess. Default is None.
+        num_workers : int, optional
+            The number of parallel workers. Default is None.
+        write_output_nc : bool, optional
+            Write the output postprocessed file. Default is True.
+        clean_after : bool, optional
+            Clean the cases directories after postprocessing. Default is False.
+        force : bool, optional
+            Force the postprocessing. Default is False.
 
         Returns
         -------
@@ -521,14 +625,17 @@ class BaseModelWrapper(BlueMathModel):
             The postprocessed file or the list with the postprocessed files.
         """
 
-        # TODO: Check if this option is necessary
-        if os.path.exists(os.path.join(self.output_dir, "output_postprocessed.nc")):
+        if num_workers is None:
+            num_workers = self.num_workers
+
+        output_postprocessed_file_path = op.join(
+            self.output_dir, "output_postprocessed.nc"
+        )
+        if op.exists(output_postprocessed_file_path) and not force:
             self.logger.warning(
                 "Output postprocessed file already exists. Skipping postprocessing."
             )
-            return xr.open_dataset(
-                os.path.join(self.output_dir, "output_postprocessed.nc")
-            )
+            return xr.open_dataset(output_postprocessed_file_path)
 
         if not self.cases_dirs:
             self.logger.warning(
@@ -540,6 +647,9 @@ class BaseModelWrapper(BlueMathModel):
             self.logger.warning(
                 f"Cases to postprocess was specified, so just {cases_to_postprocess} will be postprocessed."
             )
+            self.logger.warning(
+                "Remember you can just use postprocess_case method to postprocess a single case."
+            )
             cases_dir_to_postprocess = [
                 self.cases_dirs[case] for case in cases_to_postprocess
             ]
@@ -547,18 +657,44 @@ class BaseModelWrapper(BlueMathModel):
             cases_to_postprocess = list(range(len(self.cases_dirs)))
             cases_dir_to_postprocess = copy.deepcopy(self.cases_dirs)
 
-        postprocessed_files = []
-        for case_num, case_dir in zip(cases_to_postprocess, cases_dir_to_postprocess):
-            self.logger.info(f"Postprocessing case {case_num} in {case_dir}.")
-            postprocessed_file = self.postprocess_case(
-                case_num=case_num, case_dir=case_dir
+        if num_workers > 1:
+            postprocessed_files = self.parallel_execute(
+                func=self.postprocess_case,
+                items=zip(cases_to_postprocess, cases_dir_to_postprocess),
+                num_workers=num_workers,
             )
-            postprocessed_files.append(postprocessed_file)
+            postprocessed_files = list(postprocessed_files.values())
+        else:
+            postprocessed_files = []
+            for case_num, case_dir in zip(
+                cases_to_postprocess, cases_dir_to_postprocess
+            ):
+                try:
+                    postprocessed_file = self.postprocess_case(
+                        case_num=case_num, case_dir=case_dir
+                    )
+                    postprocessed_files.append(postprocessed_file)
+                except Exception as e:
+                    self.logger.error(
+                        f"Output not postprocessed for case {case_num}. Error: {e}."
+                    )
 
         try:
-            return self.join_postprocessed_files(
+            output_postprocessed = self.join_postprocessed_files(
                 postprocessed_files=postprocessed_files
             )
+            if write_output_nc:
+                self.logger.info(
+                    f"Writing output postprocessed file to {output_postprocessed_file_path}."
+                )
+                output_postprocessed.to_netcdf(output_postprocessed_file_path)
+            if clean_after:
+                self.logger.warning("Cleaning up all cases dirs.")
+                self._exec_bash_commands(
+                    str_cmd=f"rm -rf {self.output_dir}/*", cwd=self.output_dir
+                )
+                self.logger.info("Clean up completed.")
+            return output_postprocessed
         except NotImplementedError as exc:
             self.logger.error(f"Error joining postprocessed files: {exc}")
             return postprocessed_files
