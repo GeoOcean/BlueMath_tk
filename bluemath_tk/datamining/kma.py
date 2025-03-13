@@ -304,7 +304,9 @@ class KMA(BaseClustering):
         )
         y = self.kma.predict(X=normalized_data)
 
-        return y, self.centroids.iloc[y]
+        return pd.DataFrame(
+            y, columns=["kma_bmus"], index=data.index
+        ), self.centroids.iloc[y]
 
     def fit_predict(
         self,
