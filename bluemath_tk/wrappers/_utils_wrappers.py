@@ -45,7 +45,7 @@ def copy_files(src: str, dst: str) -> None:
             with open(os.path.join(dst, file), "w") as f:
                 f.write(content)
     else:
-        with open(src, "r") as f:
+        with open(src, "rb") as f:
             content = f.read()
-        with open(dst, "w") as f:
+        with open(dst, "wb") as f:
             f.write(content)
