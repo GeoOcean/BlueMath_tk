@@ -23,8 +23,10 @@ class BaseModelWrapper(BlueMathModel):
     ----------
     templates_dir : str
         The directory where the templates are stored.
-    model_parameters : dict
+    metamodel_parameters : dict
         The parameters to be used in the templates.
+    fixed_parameters : dict
+        The fixed parameters for the model.
     output_dir : str
         The directory where the output files will be saved.
     env : Environment
@@ -79,7 +81,8 @@ class BaseModelWrapper(BlueMathModel):
     def __init__(
         self,
         templates_dir: str,
-        model_parameters: dict,
+        metamodel_parameters: dict,
+        fixed_parameters: dict,
         output_dir: str,
         templates_name: List[str] = "all",
         default_parameters: dict = None,
@@ -91,14 +94,15 @@ class BaseModelWrapper(BlueMathModel):
         super().__init__()
         if default_parameters is not None:
             self._check_parameters_type(
-                default_parameters=default_parameters, model_parameters=model_parameters
+                default_parameters=default_parameters, metamodel_parameters=metamodel_parameters
             )
         self.templates_dir = templates_dir
-        self.model_parameters = model_parameters
+        self.metamodel_parameters = metamodel_parameters
+        self.fixed_parameters = fixed_parameters
         self.output_dir = output_dir
         self._env = Environment(loader=FileSystemLoader(self.templates_dir))
         if templates_name == "all":
-            self.logger.warning(
+            self.logger.info(
                 f"Templates name is 'all', so all templates in {self.templates_dir} will be used."
             )
             self.templates_name = self.env.list_templates()
@@ -115,7 +119,7 @@ class BaseModelWrapper(BlueMathModel):
         return self._env
 
     def _check_parameters_type(
-        self, default_parameters: dict, model_parameters: dict
+        self, default_parameters: dict, metamodel_parameters: dict
     ) -> None:
         """
         Check if the parameters have the correct type.
@@ -127,7 +131,7 @@ class BaseModelWrapper(BlueMathModel):
         ----------
         default_parameters : dict
             The default parameters type for the model.
-        model_parameters : dict
+        metamodel_parameters : dict
             The parameters to be used in the templates.
 
         Raises
@@ -136,7 +140,7 @@ class BaseModelWrapper(BlueMathModel):
             If a parameter has the wrong type.
         """
 
-        for model_param, param_value in model_parameters.items():
+        for model_param, param_value in metamodel_parameters.items():
             if model_param not in default_parameters:
                 self.logger.warning(
                     f"Parameter {model_param} is not in the default_parameters"
@@ -299,9 +303,9 @@ class BaseModelWrapper(BlueMathModel):
             parameter values.
         """
 
-        num_cases = len(next(iter(self.model_parameters.values())))
+        num_cases = len(next(iter(self.metamodel_parameters.values())))
         array_of_contexts = []
-        for param, values in self.model_parameters.items():
+        for param, values in self.metamodel_parameters.items():
             if len(values) != num_cases:
                 raise ValueError(
                     f"All parameters must have the same number of values in one_by_one mode, check {param}"
@@ -310,7 +314,7 @@ class BaseModelWrapper(BlueMathModel):
         for case_num in range(num_cases):
             case_context = {
                 param: values[case_num]
-                for param, values in self.model_parameters.items()
+                for param, values in self.metamodel_parameters.items()
             }
             array_of_contexts.append(case_context)
 
@@ -328,8 +332,8 @@ class BaseModelWrapper(BlueMathModel):
             parameter values.
         """
 
-        keys = self.model_parameters.keys()
-        values = self.model_parameters.values()
+        keys = self.metamodel_parameters.keys()
+        values = self.metamodel_parameters.values()
         combinations = itertools.product(*values)
 
         array_of_contexts = [

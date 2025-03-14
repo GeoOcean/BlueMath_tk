@@ -64,7 +64,6 @@ class VeggySwashModelWrapper(SwashModelWrapper):
         tendc = convert_seconds_to_hour_minutes_seconds(self.tendc + self.warmup)
         L1, _k1, _c1 = waves_dispersion(T=waves_dict["T"], h=1.0)
         _L, _k, c = waves_dispersion(T=waves_dict["T"], h=self.depth_array[0])
-        # comp_dx = L1 / np.abs(self.depth[0]) # MAL: Hecho por JAvi y Valva
         dx = L1 / self.n_nodes_per_wavelength
         deltc = 0.5 * dx / (np.sqrt(self.gravity * self.depth_array[0]) + np.abs(c))
         mxc = int(self.xlenc / dx)
@@ -122,18 +121,24 @@ class ChySwashModelWrapper(SwashModelWrapper):
         )
 
         # Build the input friction file
-        friction = np.ones((len(self.depth_array))) * self.default_Cf
-        # friction[int(self.Cf_init):int(self.Cf_end)] = case_context["Cf"]
+        # If case_context["Cf"] is not provided, use self.default_Cf. Otherwise, use the provided value.
+        friction = np.ones((len(self.depth_array))) * self.fixed_parameters["default_Cf"]
+        friction[int(self.fixed_parameters["Cf_ini"]):int(self.fixed_parameters["Cf_fin"])] =case_context["Cf"]
         np.savetxt(os.path.join(case_dir, "friction.txt"), friction, fmt="%.6f")
 
         # Calculate computational parameters
+        # Assuming there is always 1m of setup due to (IG, VLF)
         tendc = convert_seconds_to_hour_minutes_seconds(self.tendc + self.warmup)
         L1, _k1, _c1 = waves_dispersion(T=waves_dict["T"], h=1.0)
         _L, _k, c = waves_dispersion(T=waves_dict["T"], h=self.depth_array[0])
-        # comp_dx = L1 / np.abs(self.depth[0]) # MAL: Hecho por JAvi y Valva
+
         dx = L1 / self.n_nodes_per_wavelength
+
+        # Computational time step
         deltc = 0.5 * dx / (np.sqrt(self.gravity * self.depth_array[0]) + np.abs(c))
-        mxc = int(self.xlenc / dx)
+
+        # computational grid modifications
+        mxc = int(self.mxinp / dx)
 
         # Update the case context
         case_context["xlenc"] = self.xlenc
@@ -142,6 +147,7 @@ class ChySwashModelWrapper(SwashModelWrapper):
         case_context["dxinp"] = self.dxinp
         case_context["deltc"] = deltc
         case_context["tendc"] = tendc
+
 
 
 # Usage example
@@ -161,12 +167,12 @@ if __name__ == "__main__":
     mda = MDA(num_centers=5)
     mda.logger.setLevel("DEBUG")
     mda.fit(data=lhs_data)
-    model_parameters = mda.centroids.to_dict(orient="list")
+    metametametametamodel_parameters = mda.centroids.to_dict(orient="list")
     output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/swash/"
     # Create an instance of the SWASH model wrapper
     swash_wrapper = VeggySwashModelWrapper(
         templates_dir=templates_dir,
-        model_parameters=model_parameters,
+        metametametametamodel_parameters=metametametametamodel_parameters,
         output_dir=output_dir,
         depth_array=np.loadtxt(
             "/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/wrappers/swash/templates/depth.bot"

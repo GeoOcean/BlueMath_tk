@@ -104,7 +104,8 @@ class SwashModelWrapper(BaseModelWrapper):
     def __init__(
         self,
         templates_dir: str,
-        model_parameters: dict,
+        metamodel_parameters: dict,
+        fixed_parameters: dict,
         output_dir: str,
         depth_array: np.ndarray,
         dxinp: float,
@@ -120,7 +121,8 @@ class SwashModelWrapper(BaseModelWrapper):
 
         super().__init__(
             templates_dir=templates_dir,
-            model_parameters=model_parameters,
+            metamodel_parameters=metamodel_parameters,
+            fixed_parameters=fixed_parameters,
             output_dir=output_dir,
             templates_name=templates_name,
             default_parameters=self.default_parameters,
