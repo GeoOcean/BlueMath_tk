@@ -81,6 +81,8 @@ class XWT(BlueMathModel, BlueMathPipeline):
     def __init__(self, steps: Dict[str, BlueMathModel]) -> None:
         """
         Initialize the XWT.
+
+        # TODO: Add check for resampling frequency of the data.
         """
 
         super().__init__()
