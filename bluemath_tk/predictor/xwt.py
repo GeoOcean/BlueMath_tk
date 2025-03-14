@@ -1,4 +1,4 @@
-import os
+from datetime import datetime, timedelta
 from typing import Any, Dict
 
 import cartopy.crs as ccrs
@@ -9,9 +9,8 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from matplotlib.axes import Axes
-from dask.diagnostics import ProgressBar
+from matplotlib.collections import Collection
 
-from ..core.dask import setup_dask_client
 from ..core.decorators import validate_data_xwt
 from ..core.models import BlueMathModel
 from ..core.pipeline import BlueMathPipeline
@@ -25,15 +24,12 @@ config_variables = get_config_variables()
 def get_dynamic_estela_predictor(
     data: xr.Dataset,
     estela: xr.Dataset,
-    check_interpolation: bool = False,
-    num_workers: int = None,
-    memory_limit: float = 0.5,
-    chunk_sizes: dict = {"time": 365},
+    check_interpolation: bool = True,
 ) -> xr.Dataset:
     """
     Transform an xarray dataset of longitude, latitude, and time into one where
     each longitude, latitude value at each time is replaced by the corresponding
-    time - t, where t is specified in estela.
+    time - t, where t is specified in the estela dataset.
 
     Parameters
     ----------
@@ -42,13 +38,7 @@ def get_dynamic_estela_predictor(
     estela : xr.Dataset
         The dataset containing the t values with dimensions longitude and latitude.
     check_interpolation : bool, optional
-        Whether to check if the data is interpolated. Default is False.
-    num_workers : int, optional
-        The number of workers to use. Default is None.
-    memory_limit : float, optional
-        The memory limit to use. Default is 0.5.
-    chunk_sizes : dict, optional
-        The chunk sizes to use. Default is {"time": 24}.
+        Whether to check if the data is interpolated. Default is True.
 
     Returns
     -------
@@ -56,44 +46,31 @@ def get_dynamic_estela_predictor(
         The transformed dataset.
     """
 
-    # Setup Dask client
-    if num_workers is None:
-        num_workers = os.environ.get("BLUEMATH_NUM_WORKERS", 2)
-    client = setup_dask_client(n_workers=num_workers, memory_limit=memory_limit)
+    if check_interpolation:
+        if (
+            "longitude" not in data.dims
+            or "latitude" not in data.dims
+            or "time" not in data.dims
+        ):
+            raise ValueError("Data must have longitude, latitude, and time dimensions.")
+        if "longitude" not in estela.dims or "latitude" not in estela.dims:
+            raise ValueError("Estela must have longitude and latitude dimensions.")
+        estela = estela.interp_like(data)  # TODO: Check NaNs interpolation
+    data = data.where(estela.estela_mask == 1.0, np.nan).copy()
+    estela_traveltimes = estela.where(estela.estela_mask, np.nan).traveltime.astype(int)
+    estela_max_traveltime = estela_traveltimes.max().values
+    for traveltime in range(estela_max_traveltime):
+        data = data.where(estela_traveltimes != traveltime, data.shift(time=traveltime))
 
-    try:
-        # Process with controlled chunks
-        if check_interpolation:
-            # Check both data and estela have the same lon, lat, and time dimensions
-            if (
-                "longitude" not in data.dims
-                or "latitude" not in data.dims
-                or "time" not in data.dims
-            ):
-                raise ValueError(
-                    "Data must have longitude, latitude, and time dimensions."
-                )
-            if "longitude" not in estela.dims or "latitude" not in estela.dims:
-                raise ValueError("Estela must have longitude and latitude dimensions.")
-            with ProgressBar():
-                data = (
-                    data.chunk({"time": chunk_sizes.get("time", 365)})
-                    .interp_like(estela)
-                    .compute()
-                )
-        data = data.where(estela.estela_mask == 1.0, np.nan).copy()
-        estela_traveltimes = estela.where(estela.estela_mask, np.nan).traveltime.astype(
-            int
-        )
-        estela_max_traveltime = estela_traveltimes.max().values
-        for traveltime in range(estela_max_traveltime):
-            data = data.where(
-                estela_traveltimes != traveltime, data.shift(time=traveltime)
-            )
-        return data
+    return data
 
-    finally:
-        client.close()
+
+class XWTError(Exception):
+    """Custom exception for XWT class."""
+
+    def __init__(self, message="XWT error occurred."):
+        self.message = message
+        super().__init__(self.message)
 
 
 class XWT(BlueMathModel, BlueMathPipeline):
@@ -101,7 +78,7 @@ class XWT(BlueMathModel, BlueMathPipeline):
     Xly Weather Types (XWT) class.
     """
 
-    def __init__(self, steps: Dict[str, BlueMathModel]):
+    def __init__(self, steps: Dict[str, BlueMathModel]) -> None:
         """
         Initialize the XWT.
         """
@@ -113,7 +90,10 @@ class XWT(BlueMathModel, BlueMathPipeline):
         self.steps = steps
         self._data: xr.Dataset = None
         self.num_clusters: int = None
-        self.kma_bmus: xr.Dataset = None
+        self.kma_bmus: pd.DataFrame = None
+
+        # Exclude attributes from being saved
+        self._exclude_attributes = ["_data"]
 
     @property
     def data(self) -> xr.Dataset:
@@ -131,7 +111,7 @@ class XWT(BlueMathModel, BlueMathPipeline):
         return clusters_probs
 
     @property
-    def monthly_clusters_probs_df(self) -> pd.DataFrame:
+    def clusters_monthly_probs_df(self) -> pd.DataFrame:
         """
         Calculate the monthly probabilities for each XWT.
         """
@@ -147,7 +127,7 @@ class XWT(BlueMathModel, BlueMathPipeline):
         return monthly_probs
 
     @property
-    def seasonal_clusters_probs_df(self) -> pd.DataFrame:
+    def clusters_seasonal_probs_df(self) -> pd.DataFrame:
         """
         Calculate the seasonal probabilities for each XWT.
         """
@@ -177,12 +157,33 @@ class XWT(BlueMathModel, BlueMathPipeline):
 
         return seasonal_probs
 
+    @property
+    def clusters_perpetual_year_probs_df(self) -> pd.DataFrame:
+        """
+        Calculate the perpetual year probabilities for each XWT.
+        """
+
+        # Calculate probabilities for each natural day in the year
+        natural_day_probs = (
+            self.kma_bmus.groupby(self.kma_bmus.index.dayofyear)["kma_bmus"]
+            .value_counts(normalize=True)
+            .unstack()
+            .fillna(0)
+        )
+        # Set index to be the datetime first day of month
+        natural_day_probs.index = [
+            datetime(2000, 1, 1) + timedelta(days=i - 1)
+            for i in natural_day_probs.index
+        ]
+
+        return natural_day_probs
+
     @validate_data_xwt
     def fit(
         self,
         data: xr.Dataset,
         fit_params: Dict[str, Dict[str, Any]] = {},
-    ):
+    ) -> None:
         """
         Fit the XWT model.
         """
@@ -228,7 +229,7 @@ class XWT(BlueMathModel, BlueMathPipeline):
 
     def plot_xwts(
         self, var_to_plot: str, anomaly: bool = False, map_center: tuple = None
-    ):
+    ) -> None:
         """
         Plot the XWTs.
         """
@@ -298,9 +299,18 @@ class XWT(BlueMathModel, BlueMathPipeline):
         )
 
     def axplot_wt_probs(
-        self, ax, wt_probs, ttl="", vmin=0, vmax=0.1, cmap="Blues", caxis="black"
-    ):
-        "axes plot WT cluster probabilities"
+        self,
+        ax: Axes,
+        wt_probs: np.ndarray,
+        ttl: str = "",
+        vmin: float = 0.0,
+        vmax: float = 0.1,
+        cmap: str = "Blues",
+        caxis: str = "black",
+    ) -> Collection:
+        """
+        Axes plot WT cluster probabilities.
+        """
 
         # clsuter transition plot
         pc = ax.pcolor(
@@ -329,8 +339,12 @@ class XWT(BlueMathModel, BlueMathPipeline):
 
         return pc
 
-    def axplot_wt_hist(self, ax, bmus, n_clusters, ttl=""):
-        "axes plot WT cluster count histogram"
+    def axplot_wt_hist(
+        self, ax: Axes, bmus: np.ndarray, n_clusters: int, ttl: str = ""
+    ) -> None:
+        """
+        Axes plot WT cluster count histogram.
+        """
 
         # cluster transition plot
         ax.hist(bmus, bins=np.arange(1, n_clusters + 2), edgecolor="k")
@@ -342,15 +356,14 @@ class XWT(BlueMathModel, BlueMathPipeline):
         ax.set_xticklabels(np.arange(1, n_clusters + 1))
         ax.set_xlim([1, n_clusters + 1])
         ax.tick_params(axis="both", which="major", labelsize=6)
-
         ax.set_title(ttl, {"fontsize": 10, "fontweight": "bold"})
 
-    def plot_dwts_probs(self, vmax=0.15, vmax_seasonality=0.15):
+    def plot_dwts_probs(
+        self, vmax: float = 0.15, vmax_seasonality: float = 0.15
+    ) -> None:
         """
-        Plot Daily Weather Types bmus probabilities
+        Plot Daily Weather Types bmus probabilities.
         """
-
-        wt_set = np.arange(self.num_clusters) + 1
 
         # Best rows cols combination
         if self.num_clusters > 3:
@@ -378,7 +391,6 @@ class XWT(BlueMathModel, BlueMathPipeline):
             (11, "November", gs[2, 6]),
             (12, "December", gs[0, 3]),
         ]
-
         l_3months = [
             ([12, 1, 2], "DJF", gs[3, 3]),
             ([3, 4, 5], "MAM", gs[3, 4]),
@@ -389,7 +401,6 @@ class XWT(BlueMathModel, BlueMathPipeline):
         # plot total probabilities
         c_T = self.clusters_probs_df.values
         C_T = np.reshape(c_T, (n_rows, n_cols))
-
         ax_probs_T = plt.subplot(gs[:2, :2])
         pc = self.axplot_wt_probs(ax_probs_T, C_T, ttl="DWT Probabilities")
 
@@ -402,11 +413,8 @@ class XWT(BlueMathModel, BlueMathPipeline):
         # plot probabilities by month
         for m_ix, m_name, m_gs in l_months:
             try:
-                # get probs matrix
-                # c_M = self.ClusterProbs_Month(bmus, bmus_time, wt_set, m_ix)
-                c_M = self.monthly_clusters_probs_df.loc[m_ix].values
+                c_M = self.clusters_monthly_probs_df.loc[m_ix].values
                 C_M = np.reshape(c_M, (n_rows, n_cols))
-                # plot axes
                 ax_M = plt.subplot(m_gs)
                 self.axplot_wt_probs(ax_M, C_M, ttl=m_name, vmax=vmax)
             except Exception as e:
@@ -415,12 +423,8 @@ class XWT(BlueMathModel, BlueMathPipeline):
         # plot probabilities by 3 month sets
         for m_ix, m_name, m_gs in l_3months:
             try:
-                # get probs matrix
-                # c_M = self.ClusterProbs_Month(bmus, bmus_time, wt_set, m_ix)
-                c_M = self.seasonal_clusters_probs_df.loc[m_name].values
+                c_M = self.clusters_seasonal_probs_df.loc[m_name].values
                 C_M = np.reshape(c_M, (n_rows, n_cols))
-
-                # plot axes
                 ax_M = plt.subplot(m_gs)
                 self.axplot_wt_probs(
                     ax_M, C_M, ttl=m_name, vmax=vmax_seasonality, cmap="Greens"
@@ -434,104 +438,23 @@ class XWT(BlueMathModel, BlueMathPipeline):
         cb = fig.colorbar(pc, cax=cbar_ax, cmap="Blues")
         cb.ax.tick_params(labelsize=8)
 
-    def Generate_PerpYear_Matrix(
-        self, num_clusters, bmus_values, bmus_dates, num_sim=1, month_ini=1
-    ):
+    def plot_perpetual_year(self) -> None:
         """
-        Calculates and returns matrix for stacked bar plotting
-
-        bmus_dates - datetime.datetime (only works if daily resolution)
-        bmus_values has to be 2D (time, nsim)
+        Plot perpetual year bmus probabilities.
         """
 
-        # generate perpetual year list
-        list_pyear = self.GenOneYearDaily(month_ini=month_ini)
+        # Get cluster colors for stacked bar plot
+        cluster_colors = get_cluster_colors(self.num_clusters)
+        cluster_colors_list = [
+            tuple(cluster_colors[cluster, :]) for cluster in range(self.num_clusters)
+        ]
 
-        # generate aux arrays
-        m_plot = np.zeros((num_clusters, len(list_pyear))) * np.nan
-        bmus_dates_months = np.array([pd.to_datetime(d).month for d in bmus_dates])
-        bmus_dates_days = np.array([pd.to_datetime(d).day for d in bmus_dates])
-
-        # sort data
-        for i, dpy in enumerate(list_pyear):
-            _, s = np.where(
-                [(bmus_dates_months == dpy.month) & (bmus_dates_days == dpy.day)]
-            )
-
-            b = bmus_values[s]
-            b = b.flatten()
-
-            for j in range(num_clusters):
-                _, bb = np.where([(j + 1 == b)])  # j+1 starts at 1 bmus value!
-
-                m_plot[j, i] = float(len(bb) / float(num_sim)) / len(s)
-
-        return m_plot
-
-    def GenOneYearDaily(self, yy=1981, month_ini=1):
-        "returns one generic year in a list of datetimes. Daily resolution"
-
-        dp1 = datetime(yy, month_ini, 1)
-        dp2 = dp1 + timedelta(days=365)
-
-        return [dp1 + timedelta(days=i) for i in range((dp2 - dp1).days)]
-
-    def plot_perpetual_year(self):
-        num_clusters = len(self.dwt_centroids.bmus)
-        bmus_values = self.data.bmus.values
-        bmus_dates = self.data.time.values
-        month_ini = 1
-        p_site = self.p_site
-
-        "axes plot bmus perpetual year"
-
-        # get cluster colors for stacked bar plot
-        np_colors_int = get_cluster_colors(num_clusters)
-
-        # generate dateticks
-        x_val = self.GenOneYearDaily(month_ini=month_ini)
-
-        # generate plot matrix
-        m_plot = self.Generate_PerpYear_Matrix(
-            num_clusters, bmus_values + 1, bmus_dates, month_ini=month_ini
-        )
-
+        # Plot perpetual year bmus
         fig, ax = plt.subplots(1, figsize=(15, 5))
-
-        # plot stacked bars
-        bottom_val = np.zeros(m_plot[1, :].shape)
-        for r in range(num_clusters):
-            row_val = m_plot[r, :]
-            ax.bar(
-                x_val,
-                row_val,
-                bottom=bottom_val,
-                width=1,
-                color=np.array([np_colors_int[r]]),
-                alpha=0.7,
-            )
-
-            # store bottom
-            bottom_val += row_val
-
-        # customize  axis
-        months = mdates.MonthLocator()
-        monthsFmt = mdates.DateFormatter("%b")
-
-        ax.set_xlim(x_val[0], x_val[-1])
-        ax.xaxis.set_major_locator(months)
-        ax.xaxis.set_major_formatter(monthsFmt)
+        self.clusters_perpetual_year_probs_df.plot.area(
+            ax=ax,
+            stacked=True,
+            color=cluster_colors_list,
+            legend=False,
+        )
         ax.set_ylim(0, 1)
-        ax.set_ylabel("")
-
-        fig.savefig(op.join(p_site, "plot_perpetual_year.png"), bbox_inches="tight")
-        with open(op.join(p_site, "plot_perpetual_year.pkl"), "wb") as f:
-            pickle.dump(fig, f)
-
-
-class DWTError(Exception):
-    """Custom exception for DWT class."""
-
-    def __init__(self, message="DWT error occurred."):
-        self.message = message
-        super().__init__(self.message)
