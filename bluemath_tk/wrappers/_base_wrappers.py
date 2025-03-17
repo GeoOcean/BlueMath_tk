@@ -8,6 +8,7 @@ from queue import Queue
 from typing import List, Union
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 from jinja2 import Environment, FileSystemLoader
 
@@ -37,6 +38,10 @@ class BaseModelWrapper(BlueMathModel):
         The list with cases directories.
     cases_context : List[dict]
         The list with cases context.
+    thread : threading.Thread
+        The thread for background execution.
+    status_queue : Queue
+        The queue to update the status.
 
     Methods
     -------
@@ -46,6 +51,8 @@ class BaseModelWrapper(BlueMathModel):
         Execute bash commands.
     list_available_launchers -> dict
         List the available launchers.
+    list_default_parameters -> pd.DataFrame
+        List the default parameters.
     set_cases_dirs_from_output_dir -> None
         Set the cases directories from the output directory.
     write_array_in_file -> None
@@ -60,6 +67,8 @@ class BaseModelWrapper(BlueMathModel):
     create_cases_context_all_combinations -> List[dict]
         Create an array of dictionaries with each possible combination of values
         from the input dictionary.
+    build_case -> None
+        Build the input files for a case.
     build_cases -> None
         Create the cases folders and render the input files.
     run_case -> None
@@ -93,8 +102,10 @@ class BaseModelWrapper(BlueMathModel):
 
         super().__init__()
         if default_parameters is not None:
-            self._check_parameters_type(
-                default_parameters=default_parameters, metamodel_parameters=metamodel_parameters
+            fixed_parameters = self._check_parameters_type(
+                default_parameters=default_parameters,
+                metamodel_parameters=metamodel_parameters,
+                fixed_parameters=fixed_parameters,
             )
         self.templates_dir = templates_dir
         self.metamodel_parameters = metamodel_parameters
@@ -119,20 +130,13 @@ class BaseModelWrapper(BlueMathModel):
         return self._env
 
     def _check_parameters_type(
-        self, default_parameters: dict, metamodel_parameters: dict
+        self,
+        default_parameters: dict,
+        metamodel_parameters: dict,
+        fixed_parameters: dict,
     ) -> None:
         """
-        Check if the parameters have the correct type.
-        This function is called in the __init__ method of the BaseModelWrapper,
-        but default_parameters are defined in the child classes.
-        This way, child classes can define default types for parameters.
-
-        Parameters
-        ----------
-        default_parameters : dict
-            The default parameters type for the model.
-        metamodel_parameters : dict
-            The parameters to be used in the templates.
+        TODO: Add docstring.
 
         Raises
         ------
@@ -140,23 +144,31 @@ class BaseModelWrapper(BlueMathModel):
             If a parameter has the wrong type.
         """
 
-        for model_param, param_value in metamodel_parameters.items():
-            if model_param not in default_parameters:
+        for metamodel_param, param_value in metamodel_parameters.items():
+            if metamodel_param not in default_parameters:
                 self.logger.warning(
-                    f"Parameter {model_param} is not in the default_parameters"
+                    f"Parameter {metamodel_param} is not in the default_parameters"
                 )
             else:
                 if isinstance(param_value, (list, np.ndarray)) and all(
-                    isinstance(item, default_parameters[model_param])
+                    isinstance(item, default_parameters[metamodel_param]["type"])
                     for item in param_value
                 ):
                     self.logger.info(
-                        f"Parameter {model_param} has the correct type: {default_parameters[model_param]}"
+                        f"Parameter {metamodel_param} has the correct type: {default_parameters[metamodel_param]}"
                     )
                 else:
                     raise ValueError(
-                        f"Parameter {model_param} has the wrong type: {default_parameters[model_param]}"
+                        f"Parameter {metamodel_param} has the wrong type: {default_parameters[metamodel_param]}"
                     )
+        for default_param, param_info in default_parameters.items():
+            if (
+                default_param not in fixed_parameters
+                and param_info.get("value") is not None
+            ):
+                fixed_parameters[default_param] = param_info.get("value")
+
+        return fixed_parameters
 
     def _exec_bash_commands(
         self, str_cmd: str, out_file: str = None, err_file: str = None, cwd: str = None
@@ -220,6 +232,23 @@ class BaseModelWrapper(BlueMathModel):
             return self.available_launchers
         else:
             raise AttributeError("The attribute available_launchers is not defined.")
+
+    def list_default_parameters(self) -> pd.DataFrame:
+        """
+        List the default parameters.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame with the default parameters.
+        """
+
+        if hasattr(self, "default_parameters"):
+            return pd.DataFrame(self.default_parameters)
+        else:
+            raise AttributeError(
+                "The attribute default_parameters is not defined in the child class."
+            )
 
     def set_cases_dirs_from_output_dir(self) -> None:
         """
@@ -342,6 +371,24 @@ class BaseModelWrapper(BlueMathModel):
 
         return array_of_contexts
 
+    def build_case(
+        self,
+        case_context: dict,
+        case_dir: str,
+    ) -> None:
+        """
+        Build the input files for a case.
+
+        Parameters
+        ----------
+        case_context : dict
+            The case context.
+        case_dir : str
+            The case directory.
+        """
+
+        pass
+
     def build_cases(self, mode: str = "one_by_one") -> None:
         """
         Create the cases folders and render the input files.
@@ -364,6 +411,11 @@ class BaseModelWrapper(BlueMathModel):
             case_dir = op.join(self.output_dir, f"{case_num:04}")
             self.cases_dirs.append(case_dir)
             os.makedirs(case_dir, exist_ok=True)
+            self.build_case(
+                case_context=case_context,
+                case_dir=case_dir,
+            )
+            case_context.update(self.fixed_parameters)
             for template_name in self.templates_name:
                 self.render_file_from_template(
                     template_name=template_name,
