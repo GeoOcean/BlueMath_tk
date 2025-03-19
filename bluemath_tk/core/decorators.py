@@ -120,6 +120,7 @@ def validate_data_kma(func):
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
         min_number_of_points: int = None,
+        normalize_data: bool = True,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -132,6 +133,8 @@ def validate_data_kma(func):
         if min_number_of_points is not None:
             if not isinstance(min_number_of_points, int) or min_number_of_points <= 0:
                 raise ValueError("Minimum number of points must be integer and > 0")
+        if not isinstance(normalize_data, bool):
+            raise TypeError("Normalize data must be a boolean")
         return func(
             self, data, directional_variables, custom_scale_factor, min_number_of_points
         )
@@ -359,7 +362,7 @@ def validate_data_xwt(func):
         if "time" not in data.dims:
             raise ValueError(
                 'Time dimension with name "time" not found in data, rename and re-fit'
-            )
+            )  # TODO: check time is actually datetime
         if not isinstance(fit_params, dict):
             raise TypeError("Fit params must be a dict")
         if "pca" not in fit_params:

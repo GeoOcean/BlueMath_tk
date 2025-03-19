@@ -305,6 +305,8 @@ class PCA(BaseReduction):
         cleaned_vars_to_stack = []
         for var_to_clean in self.window_stacked_vars:
             var_to_clean_values = tmp_stacked_data[var_to_clean].values
+            if var_to_clean_values.ndim == 1:
+                var_to_clean_values = var_to_clean_values.reshape(-1, 1)
             # Drop variables with more than 90% of NaNs if not specified
             var_to_clean_threshold = self.nan_threshold_to_drop.get(
                 var_to_clean,
@@ -675,7 +677,7 @@ class PCA(BaseReduction):
             The value to replace NaNs for each variable. Default is {}.
         nan_threshold_to_drop : dict, optional
             The threshold percentage to drop NaNs for each variable.
-            By default, variables with more than 90% of NaNs are dropped.
+            By default, variables with more than 10% of NaNs are dropped.
             Default is {}.
         scale_data : bool, optional
             If True, scale the data. Default is True.

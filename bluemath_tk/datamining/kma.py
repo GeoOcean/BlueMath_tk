@@ -30,12 +30,6 @@ class KMA(BaseClustering):
         The number of clusters to use in the K-Means algorithm.
     seed : int
         The random seed to use as initial datapoint.
-    data : pd.DataFrame
-        The input data.
-    normalized_data : pd.DataFrame
-        The normalized input data.
-    data_to_fit : pd.DataFrame
-        The data to fit the K-Means algorithm.
     data_variables : List[str]
         A list with all data variables.
     directional_variables : List[str]
@@ -52,16 +46,6 @@ class KMA(BaseClustering):
         The selected normalized centroids.
     centroid_real_indices : np.array
         The real indices of the selected centroids.
-
-    Methods
-    -------
-    fit -> None
-        Fit the K-Means algorithm to the provided data.
-    predict -> Tuple[np.ndarray, pd.DataFrame]
-        Predict the nearest centroid for the provided data.
-    fit_predict -> Tuple[np.ndarray, pd.DataFrame]
-        Fit the K-Means algorithm to the provided data and predict the nearest
-        centroid for each data point.
 
     Notes
     -----
@@ -119,7 +103,8 @@ class KMA(BaseClustering):
         """
 
         super().__init__()
-        self.set_logger_name(name=self.__class__.__name__)
+        self.set_logger_name(name=self.__class__.__name__, console=False)
+
         if num_clusters > 0:
             self.num_clusters = int(num_clusters)
         else:
@@ -130,7 +115,6 @@ class KMA(BaseClustering):
             self.seed = int(seed)
         else:
             raise ValueError("Variable seed must be >= 0")
-        # TODO: check random_state and n_init
         self._kma = KMeans(
             n_clusters=self.num_clusters,
             random_state=self.seed,
@@ -139,6 +123,7 @@ class KMA(BaseClustering):
             f"KMA object created with {self.num_clusters} clusters and seed {self.seed}."
             "To customize kma, do self.kma = dict(n_clusters=..., random_state=..., etc)"
         )
+
         self._data: pd.DataFrame = pd.DataFrame()
         self._normalized_data: pd.DataFrame = pd.DataFrame()
         self._data_to_fit: pd.DataFrame = pd.DataFrame()
@@ -163,19 +148,31 @@ class KMA(BaseClustering):
         return self._kma
 
     @kma.setter
-    def kma(self, **kwargs) -> None:
+    def kma(self, kwargs) -> None:
         self._kma = KMeans(**kwargs)
 
     @property
     def data(self) -> pd.DataFrame:
+        """
+        Returns the original data used for clustering.
+        """
+
         return self._data
 
     @property
     def normalized_data(self) -> pd.DataFrame:
+        """
+        Returns the normalized data used for clustering.
+        """
+
         return self._normalized_data
 
     @property
     def data_to_fit(self) -> pd.DataFrame:
+        """
+        Returns the data used for fitting the K-Means algorithm.
+        """
+
         return self._data_to_fit
 
     @validate_data_kma
@@ -185,6 +182,7 @@ class KMA(BaseClustering):
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
         min_number_of_points: int = None,
+        normalize_data: bool = True,
     ) -> None:
         """
         Fit the K-Means algorithm to the provided data.
@@ -206,6 +204,8 @@ class KMA(BaseClustering):
         min_number_of_points : int, optional
             The minimum number of points to consider a cluster.
             Default is None.
+        normalize_data : bool, optional
+            A flag to normalize the data. Default is True.
         """
 
         self._data = data.copy()
@@ -214,10 +214,9 @@ class KMA(BaseClustering):
             u_comp, v_comp = self.get_uv_components(
                 x_deg=self.data[directional_variable].values
             )
-            self.data[f"{directional_variable}_u"] = u_comp
-            self.data[f"{directional_variable}_v"] = v_comp
+            self._data[f"{directional_variable}_u"] = u_comp
+            self._data[f"{directional_variable}_v"] = v_comp
         self.data_variables = list(self.data.columns)
-        self.custom_scale_factor = custom_scale_factor.copy()
 
         # Get just the data to be used in the fitting
         self._data_to_fit = self.data.copy()
@@ -225,6 +224,12 @@ class KMA(BaseClustering):
             self.data_to_fit.drop(columns=[directional_variable], inplace=True)
         self.fitting_variables = list(self.data_to_fit.columns)
 
+        if normalize_data:
+            self.custom_scale_factor = custom_scale_factor.copy()
+        else:
+            self.custom_scale_factor = {
+                fitting_variable: (0, 1) for fitting_variable in self.fitting_variables
+            }
         # Normalize data using custom min max scaler
         self._normalized_data, self.scale_factor = self.normalize(
             data=self.data_to_fit, custom_scale_factor=self.custom_scale_factor
@@ -235,10 +240,7 @@ class KMA(BaseClustering):
             stable_kma_child = False
             number_of_tries = 0
             while not stable_kma_child:
-                kma_child = KMeans(
-                    n_clusters=self.num_clusters,
-                    random_state=self.seed,
-                )
+                kma_child = KMeans(n_clusters=self.num_clusters)
                 predicted_labels = kma_child.fit_predict(self.normalized_data)
                 _unique_labels, counts = np.unique(predicted_labels, return_counts=True)
                 if np.all(counts >= min_number_of_points):
@@ -272,7 +274,7 @@ class KMA(BaseClustering):
         # Set the fitted flag to True
         self.is_fitted = True
 
-    def predict(self, data: pd.DataFrame) -> Tuple[np.ndarray, pd.DataFrame]:
+    def predict(self, data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Predict the nearest centroid for the provided data.
 
@@ -283,7 +285,7 @@ class KMA(BaseClustering):
 
         Returns
         -------
-        Tuple[np.ndarray, pd.DataFrame]
+        Tuple[pd.DataFrame, pd.DataFrame]
             A tuple containing the nearest centroid index for each data point,
             and the nearest centroids.
         """
@@ -314,7 +316,8 @@ class KMA(BaseClustering):
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
         min_number_of_points: int = None,
-    ) -> Tuple[np.ndarray, pd.DataFrame]:
+        normalize_data: bool = True,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Fit the K-Means algorithm to the provided data and predict the nearest centroid
         for each data point.
@@ -332,10 +335,12 @@ class KMA(BaseClustering):
         min_number_of_points : int, optional
             The minimum number of points to consider a cluster.
             Default is None.
+        normalize_data : bool, optional
+            A flag to normalize the data. Default is True.
 
         Returns
         -------
-        Tuple[np.ndarray, pd.DataFrame]
+        Tuple[pd.DataFrame, pd.DataFrame]
             A tuple containing the nearest centroid index for each data point,
             and the nearest centroids.
         """
@@ -345,6 +350,7 @@ class KMA(BaseClustering):
             directional_variables=directional_variables,
             custom_scale_factor=custom_scale_factor,
             min_number_of_points=min_number_of_points,
+            normalize_data=normalize_data,
         )
 
         return self.predict(data=data)
