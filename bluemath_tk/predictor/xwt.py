@@ -535,7 +535,7 @@ class XWT(BlueMathModel, BlueMathPipeline):
             If the kma_bmus time sampling is not daily.
         """
 
-        if self.kma_bmus.index.freq != "D":
+        if (self.kma_bmus.index[-1] - self.kma_bmus.index[-2]) != timedelta(days=1):
             raise ValueError("The kma_bmus time sampling must be daily.")
 
         # Best rows cols combination
