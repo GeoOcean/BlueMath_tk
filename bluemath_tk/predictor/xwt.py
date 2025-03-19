@@ -574,13 +574,13 @@ class XWT(BlueMathModel, BlueMathPipeline):
         # plot total probabilities
         C_T = self.clusters_probs_df.values.reshape(n_rows, n_cols)[::-1, :]
         ax_probs_T = plt.subplot(gs[:2, :2])
-        pc = self.axplot_wt_probs(
+        pc = self._axplot_wt_probs(
             ax_probs_T, C_T, ttl="DWT Probabilities", plot_text=plot_text
         )
 
         # plot counts histogram
         ax_hist = plt.subplot(gs[2:, :3])
-        _ax_hist = self.axplot_wt_hist(ax_hist, ttl="DWT Counts")
+        _ax_hist = self._axplot_wt_hist(ax_hist, ttl="DWT Counts")
 
         # plot probabilities by month
         for m_ix, m_name, m_gs in l_months:
@@ -589,7 +589,7 @@ class XWT(BlueMathModel, BlueMathPipeline):
                     n_rows, n_cols
                 )[::-1, :]
                 ax_M = plt.subplot(m_gs)
-                self.axplot_wt_probs(
+                self._axplot_wt_probs(
                     ax_M, C_M, ttl=m_name, vmax=vmax, plot_text=plot_text
                 )
             except Exception as e:
@@ -602,7 +602,7 @@ class XWT(BlueMathModel, BlueMathPipeline):
                     n_rows, n_cols
                 )[::-1, :]
                 ax_M = plt.subplot(m_gs)
-                self.axplot_wt_probs(
+                self._axplot_wt_probs(
                     ax_M,
                     C_M,
                     ttl=m_name,

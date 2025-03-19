@@ -32,19 +32,8 @@ class PCA(BaseReduction):
         The number of components or the explained variance ratio.
     is_incremental : bool
         Indicates whether Incremental PCA is used.
-    pca : Union[PCA_, IncrementalPCA_]
-        The PCA or Incremental PCA model.
     is_fitted : bool
         Indicates whether the PCA model has been fitted.
-    data : xr.Dataset
-        The original dataset used in fitting.
-    window_processed_data : xr.Dataset
-        The windows processed dataset used in fitting. Windows refer to the rolling
-        windows in the PCA row dimension.
-    stacked_data_matrix : np.ndarray
-        The stacked data matrix.
-    standarized_stacked_data_matrix : np.ndarray
-        The standardized stacked data matrix, in case the data is standardized.
     scaler : StandardScaler
         The scaler used for standardizing the data, in case the data is standardized.
     vars_to_stack : List[str]
@@ -67,36 +56,6 @@ class PCA(BaseReduction):
         The number of columns for variables.
     pcs : xr.Dataset
         The Principal Components (PCs).
-    eofs : xr.Dataset
-        The Empirical Orthogonal Functions (EOFs).
-        If destandarized EOFs are needed, call self._reshape_EOFs(destandarize=True).
-    explained_variance : np.ndarray
-        The explained variance.
-    explained_variance_ratio : np.ndarray
-        The explained variance ratio.
-    cumulative_explained_variance_ratio : np.ndarray
-        The cumulative explained variance ratio.
-    pcs_df : pd.DataFrame
-        The fitting PCs (self.pcs) as a pandas DataFrame.
-
-    Methods
-    -------
-    _generate_stacked_data -> np.ndarray
-        Generate stacked data matrix.
-    _preprocess_data -> np.ndarray
-        Preprocess data for PCA.
-    _reshape_EOFs -> xr.Dataset
-        Reshape EOFs to the original data shape.
-    _reshape_data -> xr.Dataset
-        Reshape data to the original data shape.
-    fit -> None
-        Fit PCA model to data.
-    transform -> xr.Dataset
-        Transform data using the fitted PCA model.
-    fit_transform -> xr.Dataset
-        Fit and transform data using PCA model.
-    inverse_transform -> xr.Dataset
-        Inverse transform data using the fitted PCA model.
 
     Examples
     --------
@@ -187,6 +146,7 @@ class PCA(BaseReduction):
         self.set_logger_name(
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
         )
+
         if n_components <= 0:
             raise ValueError("Number of components must be greater than 0.")
         elif n_components >= 1:
@@ -202,6 +162,7 @@ class PCA(BaseReduction):
         else:
             self.logger.info("Using PCA")
             self._pca = PCA_(n_components=self.n_components)
+
         self.is_fitted: bool = False
         self.is_incremental = is_incremental
         self._data: xr.Dataset = xr.Dataset()
@@ -231,42 +192,82 @@ class PCA(BaseReduction):
 
     @property
     def pca(self) -> Union[PCA_, IncrementalPCA_]:
+        """
+        Returns the PCA or IncrementalPCA instance used for dimensionality reduction.
+        """
+
         return self._pca
 
     @property
     def data(self) -> xr.Dataset:
+        """
+        Returns the raw data used for PCA.
+        """
+
         return self._data
 
     @property
     def window_processed_data(self) -> xr.Dataset:
+        """
+        Return the window processed data used for PCA.
+        """
+
         return self._window_processed_data
 
     @property
     def stacked_data_matrix(self) -> np.ndarray:
+        """
+        Return the stacked data matrix.
+        """
+
         return self._stacked_data_matrix
 
     @property
     def standarized_stacked_data_matrix(self) -> np.ndarray:
+        """
+        Return the standarized stacked data matrix.
+        """
+
         return self._standarized_stacked_data_matrix
 
     @property
     def eofs(self) -> xr.Dataset:
+        """
+        Return the Empirical Orthogonal Functions (EOFs).
+        """
+
         return self._reshape_EOFs(destandarize=False)
 
     @property
     def explained_variance(self) -> np.ndarray:
+        """
+        Return the explained variance of the PCA model.
+        """
+
         return self.pca.explained_variance_
 
     @property
     def explained_variance_ratio(self) -> np.ndarray:
+        """
+        Return the explained variance ratio of the PCA model.
+        """
+
         return self.pca.explained_variance_ratio_
 
     @property
     def cumulative_explained_variance_ratio(self) -> np.ndarray:
+        """
+        Return the cumulative explained variance ratio of the PCA model.
+        """
+
         return np.cumsum(self.explained_variance_ratio)
 
     @property
     def pcs_df(self) -> pd.DataFrame:
+        """
+        Returns the principal components as a DataFrame.
+        """
+
         if self.pcs is not None:
             return pd.DataFrame(
                 data=self.pcs["PCs"].values,
