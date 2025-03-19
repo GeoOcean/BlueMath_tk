@@ -1,3 +1,4 @@
+import warnings
 from datetime import datetime, timedelta
 from typing import Any, Dict
 
@@ -11,6 +12,7 @@ import xarray as xr
 from matplotlib.axes import Axes
 from matplotlib.collections import Collection
 
+from ..core.dask import setup_dask_client
 from ..core.decorators import validate_data_xwt
 from ..core.models import BlueMathModel
 from ..core.pipeline import BlueMathPipeline
@@ -18,6 +20,7 @@ from ..core.plotting.colors import get_cluster_colors, get_config_variables
 from ..datamining.kma import KMA
 from ..datamining.pca import PCA
 
+warnings.filterwarnings("ignore")
 config_variables = get_config_variables()
 
 
@@ -36,7 +39,7 @@ def get_dynamic_estela_predictor(
     data : xr.Dataset
         The input dataset with dimensions longitude, latitude, and time.
     estela : xr.Dataset
-        The dataset containing the t values with dimensions longitude and latitude.
+        The dataset containing the F values with dimensions longitude and latitude.
     check_interpolation : bool, optional
         Whether to check if the data is interpolated. Default is True.
 
@@ -45,6 +48,8 @@ def get_dynamic_estela_predictor(
     xr.Dataset
         The transformed dataset.
     """
+
+    _dask_client = setup_dask_client(n_workers=4, memory_limit=0.25)
 
     if check_interpolation:
         if (
@@ -56,13 +61,26 @@ def get_dynamic_estela_predictor(
         if "longitude" not in estela.dims or "latitude" not in estela.dims:
             raise ValueError("Estela must have longitude and latitude dimensions.")
         estela = estela.interp_like(data)  # TODO: Check NaNs interpolation
-    data = data.where(estela.estela_mask == 1.0, np.nan).copy()
-    estela_traveltimes = estela.where(estela.estela_mask, np.nan).traveltime.astype(int)
+    data = data.chunk({"time": 365}).where(estela.F >= 0.0, np.nan)
+    estela_traveltimes = estela.where(estela.F >= 0, np.nan).traveltime.astype(int)
     estela_max_traveltime = estela_traveltimes.max().values
     for traveltime in range(estela_max_traveltime):
         data = data.where(estela_traveltimes != traveltime, data.shift(time=traveltime))
 
-    return data
+    return data.compute()
+
+
+def check_model_is_fitted(func):
+    """
+    Decorator to check if the model is fitted.
+    """
+
+    def wrapper(self, *args, **kwargs):
+        if self.kma_bmus is None:
+            raise XWTError("Fit the model before calling this property.")
+        return func(self, *args, **kwargs)
+
+    return wrapper
 
 
 class XWTError(Exception):
@@ -76,19 +94,42 @@ class XWTError(Exception):
 class XWT(BlueMathModel, BlueMathPipeline):
     """
     Xly Weather Types (XWT) class.
+
+    This class implements the XWT method to identify and classify weather patterns
+    in a dataset. The XWT method is a combination of Principal Component Analysis (PCA)
+    and K-means clustering (KMA).
+
+    Attributes
+    ----------
+    steps : Dict[str, BlueMathModel]
+        The steps of the XWT method.
+    num_clusters : int
+        The number of clusters.
+    kma_bmus : pd.DataFrame
+        The KMA best matching units (BMUs).
     """
 
     def __init__(self, steps: Dict[str, BlueMathModel]) -> None:
         """
         Initialize the XWT.
 
-        # TODO: Add check for resampling frequency of the data.
+        Parameters
+        ----------
+        steps : Dict[str, BlueMathModel]
+            The steps of the XWT method. The steps must include a PCA and a KMA model.
         """
 
         super().__init__()
         self.set_logger_name(name=self.__class__.__name__, level="INFO")
 
         # Save XWT attributes
+        if steps:
+            if (
+                not all(isinstance(step, BlueMathModel) for step in steps.values())
+                or "pca" not in steps
+                or "kma" not in steps
+            ):
+                raise XWTError("The steps must include a PCA and a KMA model.")
         self.steps = steps
         self._data: xr.Dataset = None
         self.num_clusters: int = None
@@ -102,17 +143,21 @@ class XWT(BlueMathModel, BlueMathPipeline):
         return self._data
 
     @property
+    @check_model_is_fitted
     def clusters_probs_df(self) -> pd.DataFrame:
         """
         Calculate the probabilities for each XWT.
         """
 
         # Calculate probabilities for each cluster
-        clusters_probs = self.kma_bmus["kma_bmus"].value_counts(normalize=True)
+        clusters_probs = (
+            self.kma_bmus["kma_bmus"].value_counts(normalize=True).sort_index()
+        )
 
         return clusters_probs
 
     @property
+    @check_model_is_fitted
     def clusters_monthly_probs_df(self) -> pd.DataFrame:
         """
         Calculate the monthly probabilities for each XWT.
@@ -129,6 +174,7 @@ class XWT(BlueMathModel, BlueMathPipeline):
         return monthly_probs
 
     @property
+    @check_model_is_fitted
     def clusters_seasonal_probs_df(self) -> pd.DataFrame:
         """
         Calculate the seasonal probabilities for each XWT.
@@ -160,6 +206,24 @@ class XWT(BlueMathModel, BlueMathPipeline):
         return seasonal_probs
 
     @property
+    @check_model_is_fitted
+    def clusters_annual_probs_df(self) -> pd.DataFrame:
+        """
+        Calculate the annual probabilities for each XWT.
+        """
+
+        # Calculate probabilities for each year
+        annual_probs = (
+            self.kma_bmus.groupby(self.kma_bmus.index.year)["kma_bmus"]
+            .value_counts(normalize=True)
+            .unstack()
+            .fillna(0)
+        )
+
+        return annual_probs
+
+    @property
+    @check_model_is_fitted
     def clusters_perpetual_year_probs_df(self) -> pd.DataFrame:
         """
         Calculate the perpetual year probabilities for each XWT.
@@ -187,17 +251,32 @@ class XWT(BlueMathModel, BlueMathPipeline):
         fit_params: Dict[str, Dict[str, Any]] = {},
     ) -> None:
         """
-        Fit the XWT model.
+        Fit the XWT model to the data.
+
+        Parameters
+        ----------
+        data : xr.Dataset
+            The data to fit the model to. Must be PCA formatted.
+        fit_params : Dict[str, Dict[str, Any]], optional
+            The fitting parameters for the PCA and KMA models. Default is {}.
+
+        Raises
+        ------
+        XWTError
+            If the data is not PCA formatted.
         """
 
         # Make a copy of the data to avoid modifying the original dataset
         self._data = data.copy()
 
         pca: PCA = self.steps.get("pca")
-        _pcs_ds = pca.fit_transform(
-            data=data,
-            **fit_params.get("pca", {}),
-        )
+        try:
+            _pcs_ds = pca.fit_transform(
+                data=data,
+                **fit_params.get("pca", {}),
+            )
+        except Exception as e:
+            raise XWTError(f"Error during PCA fitting: {e}")
 
         kma: KMA = self.steps.get("kma")
         self.num_clusters = kma.num_clusters
@@ -205,10 +284,11 @@ class XWT(BlueMathModel, BlueMathPipeline):
             data=pca.pcs_df,
             **fit_params.get("kma", {}),
         )
-        self.kma_bmus = kma_bmus
+        self.kma_bmus = kma_bmus + 1  # TODO: Check if this is necessary!!!
 
-        # Add the KMA bmus to the data
-        self.data["kma_bmus"] = (("time"), kma_bmus["kma_bmus"].values)
+        # Add the KMA bmus to the PCs and data
+        pca.pcs["kma_bmus"] = (("time"), self.kma_bmus["kma_bmus"].values)
+        self.data["kma_bmus"] = (("time"), self.kma_bmus["kma_bmus"].values)
 
     def plot_map_features(
         self, ax: Axes, land_color: str = cfeature.COLORS["land"]
@@ -231,9 +311,23 @@ class XWT(BlueMathModel, BlueMathPipeline):
 
     def plot_xwts(
         self, var_to_plot: str, anomaly: bool = False, map_center: tuple = None
-    ) -> None:
+    ) -> Collection:
         """
-        Plot the XWTs.
+        Plot the XWTs for a variable.
+
+        Parameters
+        ----------
+        var_to_plot : str
+            The variable to plot.
+        anomaly : bool, optional
+            Whether to plot the anomaly of the variable. Default is False.
+        map_center : tuple, optional
+            The center of the map. Default is None.
+
+        Returns
+        -------
+        Collection
+            The plot with the XWTs.
         """
 
         if anomaly:
@@ -243,6 +337,11 @@ class XWT(BlueMathModel, BlueMathPipeline):
         else:
             data_to_plot = self.data.groupby("kma_bmus").mean()[var_to_plot]
 
+        if self.num_clusters > 3:
+            col_wrap = int(np.ceil(np.sqrt(self.num_clusters)))
+        else:
+            col_wrap = self.num_clusters
+
         # Get the configuration for the variable to plot if it exists
         var_to_plot_config = config_variables.get(var_to_plot, {})
         # Get the cluster colors for each XWT
@@ -251,30 +350,30 @@ class XWT(BlueMathModel, BlueMathPipeline):
         if map_center:
             p = data_to_plot.plot(
                 col="kma_bmus",
-                col_wrap=var_to_plot_config.get("col_wrap", 6),
-                cmap=var_to_plot_config.get("cmap", "RdBu"),
-                add_colorbar=False,
-                # cbar_kwargs={
-                #     "orientation": "horizontal",
-                #     "label": var_to_plot_config.get("label", var_to_plot),
-                #     "shrink": var_to_plot_config.get("shrink", 0.8),
-                # },
+                col_wrap=col_wrap,
+                cmap=var_to_plot_config.get("cmap", "RdBu_r"),
+                cbar_kwargs={
+                    "orientation": "horizontal",
+                    "label": var_to_plot_config.get("label", var_to_plot),
+                    "shrink": var_to_plot_config.get("shrink", 0.8),
+                },
                 subplot_kws={"projection": ccrs.Orthographic(*map_center)},
                 transform=ccrs.PlateCarree(),
+                robust=True,
             )
             for ax, xwt_color in zip(p.axes.flat, xwts_colors):
                 self.plot_map_features(ax=ax, land_color=xwt_color)
         else:
             p = data_to_plot.plot(
                 col="kma_bmus",
-                col_wrap=var_to_plot_config.get("col_wrap", 6),
+                col_wrap=col_wrap,
                 cmap=var_to_plot_config.get("cmap", "RdBu"),
-                add_colorbar=False,
-                # cbar_kwargs={
-                #     "orientation": "horizontal",
-                #     "label": var_to_plot_config.get("label", var_to_plot),
-                #     "shrink": var_to_plot_config.get("shrink", 0.8),
-                # },
+                cbar_kwargs={
+                    "orientation": "horizontal",
+                    "label": var_to_plot_config.get("label", var_to_plot),
+                    "shrink": var_to_plot_config.get("shrink", 0.8),
+                },
+                robust=True,
             )
             for ax, xwt_color in zip(p.axes.flat, xwts_colors):
                 for border in ["top", "bottom", "left", "right"]:
@@ -294,13 +393,15 @@ class XWT(BlueMathModel, BlueMathPipeline):
                 transform=ax.transAxes,
             )
 
-        plt.subplots_adjust(
-            # left=0.02, right=0.98, top=0.92, bottom=0.01,
-            wspace=0.05,
-            hspace=0.05,
-        )
+        return p
 
-    def axplot_wt_probs(
+        # plt.subplots_adjust(
+        #     # left=0.02, right=0.98, top=0.92, bottom=0.01,
+        #     wspace=0.05,
+        #     hspace=0.05,
+        # )
+
+    def _axplot_wt_probs(
         self,
         ax: Axes,
         wt_probs: np.ndarray,
@@ -309,12 +410,32 @@ class XWT(BlueMathModel, BlueMathPipeline):
         vmax: float = 0.1,
         cmap: str = "Blues",
         caxis: str = "black",
+        plot_text: bool = False,
     ) -> Collection:
         """
         Axes plot WT cluster probabilities.
+
+        Parameters
+        ----------
+        ax : Axes
+            The axis to plot the WT cluster probabilities on.
+        wt_probs : np.ndarray
+            The WT cluster probabilities.
+        ttl : str, optional
+            The title of the plot. Default is "".
+        vmin : float, optional
+            The minimum value of the colorbar. Default is 0.0.
+        vmax : float, optional
+            The maximum value of the colorbar. Default is 0.1.
+        cmap : str, optional
+            The colormap to use. Default is "Blues".
+        caxis : str, optional
+            The color of the axis. Default is "black".
+        plot_text : bool, optional
+            Whether to plot the text in each cell. Default is False.
         """
 
-        # clsuter transition plot
+        # cluster transition plot
         pc = ax.pcolor(
             np.flipud(wt_probs),
             cmap=cmap,
@@ -322,6 +443,20 @@ class XWT(BlueMathModel, BlueMathPipeline):
             vmax=vmax,
             edgecolors="k",
         )
+        # plot text in each cell
+        if plot_text:
+            for i in range(wt_probs.shape[0]):
+                for j in range(wt_probs.shape[1]):
+                    ax.text(
+                        j + 0.5,
+                        wt_probs.shape[0] - 0.5 - i,
+                        f"{wt_probs[i, j]:.2f}",
+                        ha="center",
+                        va="center",
+                        fontsize=6,
+                        fontweight="bold",
+                        color="black",
+                    )
 
         # customize axes
         ax.set_xticks([])
@@ -341,31 +476,67 @@ class XWT(BlueMathModel, BlueMathPipeline):
 
         return pc
 
-    def axplot_wt_hist(
-        self, ax: Axes, bmus: np.ndarray, n_clusters: int, ttl: str = ""
-    ) -> None:
+    def _axplot_wt_hist(self, ax: Axes, ttl: str = "") -> Axes:
         """
         Axes plot WT cluster count histogram.
+
+        Parameters
+        ----------
+        ax : Axes
+            The axis to plot the WT cluster count histogram on.
+        ttl : str, optional
+            The title of the plot. Default is "".
+
+        Returns
+        -------
+        Axes
+            The axis with the WT cluster count histogram.
         """
 
         # cluster transition plot
-        ax.hist(bmus, bins=np.arange(1, n_clusters + 2), edgecolor="k")
+        ax.hist(
+            self.kma_bmus.values.reshape(-1),
+            bins=np.arange(1, self.num_clusters + 2),
+            edgecolor="k",
+        )
 
         # customize axes
         # ax.grid('y')
 
-        ax.set_xticks(np.arange(1, n_clusters + 1) + 0.5)
-        ax.set_xticklabels(np.arange(1, n_clusters + 1))
-        ax.set_xlim([1, n_clusters + 1])
+        ax.set_xticks(np.arange(1, self.num_clusters + 1) + 0.5)
+        ax.set_xticklabels(np.arange(1, self.num_clusters + 1))
+        ax.set_xlim([1, self.num_clusters + 1])
         ax.tick_params(axis="both", which="major", labelsize=6)
         ax.set_title(ttl, {"fontsize": 10, "fontweight": "bold"})
 
+        return ax
+
     def plot_dwts_probs(
-        self, vmax: float = 0.15, vmax_seasonality: float = 0.15
+        self,
+        vmax: float = 0.15,
+        vmax_seasonality: float = 0.15,
+        plot_text: bool = False,
     ) -> None:
         """
         Plot Daily Weather Types bmus probabilities.
+
+        Parameters
+        ----------
+        vmax : float, optional
+            The maximum value of the colorbar. Default is 0.15.
+        vmax_seasonality : float, optional
+            The maximum value of the colorbar for seasonality. Default is 0.15.
+        plot_text : bool, optional
+            Whether to plot the text in each cell. Default is False.
+
+        Raises
+        ------
+        ValueError
+            If the kma_bmus time sampling is not daily.
         """
+
+        if self.kma_bmus.index.freq != "D":
+            raise ValueError("The kma_bmus time sampling must be daily.")
 
         # Best rows cols combination
         if self.num_clusters > 3:
@@ -401,35 +572,43 @@ class XWT(BlueMathModel, BlueMathPipeline):
         ]
 
         # plot total probabilities
-        c_T = self.clusters_probs_df.values
-        C_T = np.reshape(c_T, (n_rows, n_cols))
+        C_T = self.clusters_probs_df.values.reshape(n_rows, n_cols)[::-1, :]
         ax_probs_T = plt.subplot(gs[:2, :2])
-        pc = self.axplot_wt_probs(ax_probs_T, C_T, ttl="DWT Probabilities")
+        pc = self.axplot_wt_probs(
+            ax_probs_T, C_T, ttl="DWT Probabilities", plot_text=plot_text
+        )
 
         # plot counts histogram
         ax_hist = plt.subplot(gs[2:, :3])
-        self.axplot_wt_hist(
-            ax_hist, self.kma_bmus.values, self.num_clusters, ttl="DWT Counts"
-        )
+        _ax_hist = self.axplot_wt_hist(ax_hist, ttl="DWT Counts")
 
         # plot probabilities by month
         for m_ix, m_name, m_gs in l_months:
             try:
-                c_M = self.clusters_monthly_probs_df.loc[m_ix].values
-                C_M = np.reshape(c_M, (n_rows, n_cols))
+                C_M = self.clusters_monthly_probs_df.loc[m_ix].values.reshape(
+                    n_rows, n_cols
+                )[::-1, :]
                 ax_M = plt.subplot(m_gs)
-                self.axplot_wt_probs(ax_M, C_M, ttl=m_name, vmax=vmax)
+                self.axplot_wt_probs(
+                    ax_M, C_M, ttl=m_name, vmax=vmax, plot_text=plot_text
+                )
             except Exception as e:
                 self.logger.error(e)
 
         # plot probabilities by 3 month sets
         for m_ix, m_name, m_gs in l_3months:
             try:
-                c_M = self.clusters_seasonal_probs_df.loc[m_name].values
-                C_M = np.reshape(c_M, (n_rows, n_cols))
+                C_M = self.clusters_seasonal_probs_df.loc[m_name].values.reshape(
+                    n_rows, n_cols
+                )[::-1, :]
                 ax_M = plt.subplot(m_gs)
                 self.axplot_wt_probs(
-                    ax_M, C_M, ttl=m_name, vmax=vmax_seasonality, cmap="Greens"
+                    ax_M,
+                    C_M,
+                    ttl=m_name,
+                    vmax=vmax_seasonality,
+                    cmap="Greens",
+                    plot_text=plot_text,
                 )
             except Exception as e:
                 self.logger.error(e)
@@ -440,9 +619,14 @@ class XWT(BlueMathModel, BlueMathPipeline):
         cb = fig.colorbar(pc, cax=cbar_ax, cmap="Blues")
         cb.ax.tick_params(labelsize=8)
 
-    def plot_perpetual_year(self) -> None:
+    def plot_perpetual_year(self) -> Axes:
         """
         Plot perpetual year bmus probabilities.
+
+        Returns
+        -------
+        Axes
+            The plot with the perpetual year bmus probabilities.
         """
 
         # Get cluster colors for stacked bar plot
@@ -460,3 +644,5 @@ class XWT(BlueMathModel, BlueMathPipeline):
             legend=False,
         )
         ax.set_ylim(0, 1)
+
+        return ax

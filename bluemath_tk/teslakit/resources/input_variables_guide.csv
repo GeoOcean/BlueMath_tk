@@ -1,0 +1,28 @@
+variable    units   dimensions          dim_delta   date_ini    date_end
+
+SST         ºC      lon,lat,time        ?           1854        2017
+
+WaterLevel  m       time                ?           1975        2014
+predicted   m       time                ?           1996        2017
+
+mjo         -       time                ?           1979        2018
+phase       -       time                ?           1979        2018
+rmm1        -       time                ?           1979        2018
+rmm2        -       time                ?           1979        2018
+
+pressure    mb      storm(lon,lat,time) -           -       -
+
+hs          m       time                3h          19790101    20161231
+phs...      m       time                3h          19790101    20161231
+tp          m       time                3h          19790101    20161231
+ptp...      m       time                3h          19790101    20161231
+l           ?       time                3h          19790101    20161231
+pl...       ?       time                3h          19790101    20161231
+dir         º       time                3h          19790101    20161231
+pdir...     º       time                3h          19790101    20161231
+spr         º       time                3h          19790101    20161231
+pspr...     º       time                3h          19790101    20161231
+wfraq       ?       time                3h          19790101    20161231
+pwfraq...   ?       time                3h          19790101    20161231
+
+
