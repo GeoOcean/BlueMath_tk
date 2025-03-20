@@ -366,7 +366,8 @@ class SwashModelWrapper(BaseModelWrapper):
         case_num: int,
         case_dir: str,
         output_vars: List[str] = None,
-        remove_nc: bool = True,
+        remove_tab: bool = False,
+        remove_nc: bool = False,
     ) -> xr.Dataset:
         """
         Convert tab output files to netCDF file.
@@ -379,8 +380,10 @@ class SwashModelWrapper(BaseModelWrapper):
             The case directory.
         output_vars : list, optional
             The output variables to postprocess. Default is None.
+        remove_tab : bool, optional
+            Remove the tab files. Default is False.
         remove_nc : bool, optional
-            Remove the netCDF file. Default is True.
+            Remove the netCDF file. Default is False.
 
         Returns
         -------
@@ -431,8 +434,9 @@ class SwashModelWrapper(BaseModelWrapper):
         ds.to_netcdf(os.path.join(case_dir, "output_postprocessed.nc"))
 
         # Remove raw files to save space
-        os.remove(output_path)
-        os.remove(run_path)
+        if remove_tab:
+            os.remove(output_path)
+            os.remove(run_path)
         if remove_nc:
             os.remove(output_nc_path)
 
