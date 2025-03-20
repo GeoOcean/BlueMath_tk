@@ -11,6 +11,7 @@ def get_file_logger(
     logs_path: str = None,
     level: Union[int, str] = "INFO",
     console: bool = True,
+    console_level: Union[int, str] = "WARNING",
 ) -> logging.Logger:
     """
     Creates and returns a logger that writes log messages to a file.
@@ -25,7 +26,8 @@ def get_file_logger(
         The logging level. Default is "INFO".
     console : bool
         Whether to add or not console / terminal logs. Default is True.
-
+    console_level : Union[int, str], optional
+        The logging level for console / terminal logs. Default is "WARNING".
     Returns
     -------
     logging.Logger
@@ -78,6 +80,7 @@ def get_file_logger(
     # Also ouput logs in the console if requested
     if console:
         console_handler = logging.StreamHandler()
+        console_handler.setLevel(console_level)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
