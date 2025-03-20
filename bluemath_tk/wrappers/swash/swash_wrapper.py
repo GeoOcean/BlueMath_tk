@@ -137,7 +137,7 @@ class SwashModelWrapper(BaseModelWrapper):
 
     postprocess_functions = {
         "Ru2": "calculate_runup2",
-        "RuDist": "calculate_runup",
+        "Runlev": "calculate_runup",
         "Msetup": "calculate_setup",
         "Hrms": "calculate_statistical_analysis",
         "Hfreqs": "calculate_spectral_analysis",
@@ -606,28 +606,50 @@ class SwashModelWrapper(BaseModelWrapper):
         # for every X coordinate in domain
         df_Hrms = pd.DataFrame()
 
+        # for x in output_nc["Xp"].values:
+        #     dsw = output_nc.sel(Xp=x)
+
+        #     # obtain series of water level
+        #     series_water = dsw["Watlev"].values
+        #     time_series = dsw["Tsec"].values
+
+        #     # perform statistical analysis
+        #     # _, Hi = upcrossing(time_series, series_water)
+        #     _, Hi = upcrossing(np.vstack([time_series, series_water]).T)
+        #     Hi = np.std(series_water)
+        #     # Calculo de Pablo Zubia 
+        #     #standard_deviation = np.std(series_water)
+
+        #     # calculate Hrms
+        #     Hrms_x = np.sqrt(np.sum(Hi**2)/len(Hi))
+        #     df_Hrms.loc[x, "Hrms"] = Hrms_x
+
+        # # convert pd DataFrame to xr Dataset
+        # df_Hrms.index.name = "Xp"
+        # ds = df_Hrms.to_xarray()
+
+        # # assign coordinate case_num
+        # ds = ds.assign_coords({"case_num": [output_nc["case_num"].values]})
+
+        # return ds
+
         for x in output_nc["Xp"].values:
             dsw = output_nc.sel(Xp=x)
 
             # obtain series of water level
-            series_water = dsw["Watlev"].values
-            time_series = dsw["Tsec"].values
-
-            # perform statistical analysis
-            # _, Hi = upcrossing(time_series, series_water)
-            _, Hi = upcrossing(np.vstack([time_series, series_water]).T)
-
-            # calculate Hrms
-            Hrms_x = np.sqrt(np.mean(Hi**2))
-            df_Hrms.loc[x, "Hrms"] = Hrms_x
+            series_water = dsw['Watlev'].values
+            #time_series = dsw['Tsec'].values
+            
+            standard_deviation = np.std(series_water)
+            Hrms_x = (2 * np.sqrt (2* standard_deviation ** 2))
+            df_Hrms.loc[x, 'Hrms'] = Hrms_x
 
         # convert pd DataFrame to xr Dataset
-        df_Hrms.index.name = "Xp"
+        df_Hrms.index.name = 'Xp'
         ds = df_Hrms.to_xarray()
 
-        # assign coordinate case_num
-        ds = ds.assign_coords({"case_num": [output_nc["case_num"].values]})
-
+        # assign coordinate case_id
+        ds = ds.assign_coords({"case_num": [output_nc["case_num"].values]})        
         return ds
 
     def calculate_spectral_analysis(
