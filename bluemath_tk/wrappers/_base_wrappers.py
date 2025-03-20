@@ -15,6 +15,16 @@ from jinja2 import Environment, FileSystemLoader
 from ..core.models import BlueMathModel
 from ._utils_wrappers import copy_files, write_array_in_file
 
+sbatch_file_example = """
+#!/bin/bash
+#SBATCH --job-name=your_job_name  # Job name
+#SBATCH --partition=geocean       # Standard output and error log
+#SBATCH --mem=4gb                 # Memory per node in GB (see also --mem-per-cpu)
+
+case_dir=$(ls | awk "NR == $SLURM_ARRAY_TASK_ID")
+yourLauncher.sh --case-dir $case_dir > $case_dir/wrapper_out.log 2> $case_dir/wrapper_error.log
+"""
+
 
 class BaseModelWrapper(BlueMathModel):
     """
@@ -389,7 +399,9 @@ class BaseModelWrapper(BlueMathModel):
 
         pass
 
-    def build_cases(self, mode: str = "one_by_one") -> None:
+    def build_cases(
+        self, mode: str = "one_by_one", cases_to_build: List[int] = None
+    ) -> None:
         """
         Create the cases folders and render the input files.
 
@@ -398,6 +410,8 @@ class BaseModelWrapper(BlueMathModel):
         mode : str, optional
             The mode to create the cases. Can be "all_combinations" or "one_by_one".
             Default is "one_by_one".
+        cases_to_build : List[int], optional
+            The list with the cases to build. Default is None.
         """
 
         if mode == "all_combinations":
@@ -406,16 +420,22 @@ class BaseModelWrapper(BlueMathModel):
             self.cases_context = self.create_cases_context_one_by_one()
         else:
             raise ValueError(f"Invalid mode to create cases: {mode}")
-        for case_num, case_context in enumerate(self.cases_context):
+
+        if cases_to_build is not None:
+            self.cases_context = [self.cases_context[i] for i in cases_to_build]
+        else:
+            cases_to_build = list(range(len(self.cases_context)))
+
+        for case_num, case_context in zip(cases_to_build, self.cases_context):
             case_context["case_num"] = case_num
             case_dir = op.join(self.output_dir, f"{case_num:04}")
             self.cases_dirs.append(case_dir)
             os.makedirs(case_dir, exist_ok=True)
+            case_context.update(self.fixed_parameters)
             self.build_case(
                 case_context=case_context,
                 case_dir=case_dir,
             )
-            case_context.update(self.fixed_parameters)
             for template_name in self.templates_name:
                 self.render_file_from_template(
                     template_name=template_name,
@@ -426,11 +446,16 @@ class BaseModelWrapper(BlueMathModel):
             f"{len(self.cases_dirs)} cases created in {mode} mode and saved in {self.output_dir}"
         )
 
+        # Save an example sbatch file in the output directory
+        with open(f"{self.output_dir}/sbatch_example.sh", "w") as file:
+            file.write(sbatch_file_example)
+        self.logger.info(f"SBATCH example file generated in {self.output_dir}")
+
     def run_case(
         self,
         case_dir: str,
         launcher: str,
-        ouput_log_file: str = "wrapper_out.log",
+        output_log_file: str = "wrapper_out.log",
         error_log_file: str = "wrapper_error.log",
     ) -> None:
         """
@@ -442,7 +467,7 @@ class BaseModelWrapper(BlueMathModel):
             The case directory.
         launcher : str
             The launcher to run the case.
-        ouput_log_file : str, optional
+        output_log_file : str, optional
             The name of the output log file. Default is "wrapper_out.log".
         error_log_file : str, optional
             The name of the error log file. Default is "wrapper_error.log".
@@ -453,11 +478,11 @@ class BaseModelWrapper(BlueMathModel):
 
         # Run the case in the case directory
         self.logger.info(f"Running case in {case_dir} with launcher={launcher}.")
-        ouput_log_file = op.join(case_dir, ouput_log_file)
+        output_log_file = op.join(case_dir, output_log_file)
         error_log_file = op.join(case_dir, error_log_file)
         self._exec_bash_commands(
             str_cmd=launcher,
-            out_file=ouput_log_file,
+            out_file=output_log_file,
             err_file=error_log_file,
             cwd=case_dir,
         )
@@ -654,35 +679,33 @@ class BaseModelWrapper(BlueMathModel):
     def postprocess_cases(
         self,
         cases_to_postprocess: List[int] = None,
-        num_workers: int = None,
         write_output_nc: bool = True,
         clean_after: bool = False,
         force: bool = False,
+        **kwargs,
     ) -> Union[xr.Dataset, List[xr.Dataset]]:
         """
         Postprocess the model output.
+        All extra keyword arguments will be passed to the postprocess_case method.
 
         Parameters
         ----------
         cases_to_postprocess : List[int], optional
             The list with the cases to postprocess. Default is None.
-        num_workers : int, optional
-            The number of parallel workers. Default is None.
         write_output_nc : bool, optional
             Write the output postprocessed file. Default is True.
         clean_after : bool, optional
             Clean the cases directories after postprocessing. Default is False.
         force : bool, optional
             Force the postprocessing. Default is False.
+        **kwargs
+            Additional keyword arguments to be passed to the postprocess_case method.
 
         Returns
         -------
         xr.Dataset or List[xr.Dataset]
             The postprocessed file or the list with the postprocessed files.
         """
-
-        if num_workers is None:
-            num_workers = self.num_workers
 
         output_postprocessed_file_path = op.join(
             self.output_dir, "output_postprocessed.nc"
@@ -713,27 +736,17 @@ class BaseModelWrapper(BlueMathModel):
             cases_to_postprocess = list(range(len(self.cases_dirs)))
             cases_dir_to_postprocess = copy.deepcopy(self.cases_dirs)
 
-        if num_workers > 1:
-            postprocessed_files = self.parallel_execute(
-                func=self.postprocess_case,
-                items=zip(cases_to_postprocess, cases_dir_to_postprocess),
-                num_workers=num_workers,
-            )
-            postprocessed_files = list(postprocessed_files.values())
-        else:
-            postprocessed_files = []
-            for case_num, case_dir in zip(
-                cases_to_postprocess, cases_dir_to_postprocess
-            ):
-                try:
-                    postprocessed_file = self.postprocess_case(
-                        case_num=case_num, case_dir=case_dir
-                    )
-                    postprocessed_files.append(postprocessed_file)
-                except Exception as e:
-                    self.logger.error(
-                        f"Output not postprocessed for case {case_num}. Error: {e}."
-                    )
+        postprocessed_files = []
+        for case_num, case_dir in zip(cases_to_postprocess, cases_dir_to_postprocess):
+            try:
+                postprocessed_file = self.postprocess_case(
+                    case_num=case_num, case_dir=case_dir, **kwargs
+                )
+                postprocessed_files.append(postprocessed_file)
+            except Exception as e:
+                self.logger.error(
+                    f"Output not postprocessed for case {case_num}. Error: {e}."
+                )
 
         try:
             output_postprocessed = self.join_postprocessed_files(
@@ -746,9 +759,9 @@ class BaseModelWrapper(BlueMathModel):
                 output_postprocessed.to_netcdf(output_postprocessed_file_path)
             if clean_after:
                 self.logger.warning("Cleaning up all cases dirs.")
-                self._exec_bash_commands(
-                    str_cmd=f"rm -rf {self.output_dir}/*", cwd=self.output_dir
-                )
+                # self._exec_bash_commands(
+                #     str_cmd=f"rm -rf {self.output_dir}/*/*", cwd=self.output_dir
+                # )
                 self.logger.info("Clean up completed.")
             return output_postprocessed
         except NotImplementedError as exc:

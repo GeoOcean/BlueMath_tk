@@ -201,10 +201,10 @@ class SwashModelWrapper(BaseModelWrapper):
                 (case_context["Hs"] * 2 * np.pi)
                 / (self.gravity * case_context["Hs_L0"])
             ),
-            "warmup": self.fixed_parameters["warmup"],
-            "comptime": self.fixed_parameters["comptime"],
-            "gamma": self.fixed_parameters["gamma"],
-            "deltat": self.fixed_parameters["deltat"],
+            "warmup": case_context["warmup"],
+            "comptime": case_context["comptime"],
+            "gamma": case_context["gamma"],
+            "deltat": case_context["deltat"],
         }
         waves = series_TMA(waves=waves_dict, depth=self.depth_array[0])
         # Save the waves to a file
@@ -216,7 +216,7 @@ class SwashModelWrapper(BaseModelWrapper):
         # Assuming there is always 1m of setup due to (IG, VLF)
         L1, _k1, _c1 = waves_dispersion(T=waves_dict["T"], h=1.0)
         _L, _k, c = waves_dispersion(T=waves_dict["T"], h=self.depth_array[0])
-        dx = L1 / self.fixed_parameters["n_nodes_per_wavelength"]
+        dx = L1 / case_context["n_nodes_per_wavelength"]
 
         # Computational time step
         deltc = 0.5 * dx / (np.sqrt(self.gravity * self.depth_array[0]) + np.abs(c))
@@ -362,7 +362,11 @@ class SwashModelWrapper(BaseModelWrapper):
         return pd.DataFrame(cases_percentage.items(), columns=["Case", "Percentage"])
 
     def postprocess_case(
-        self, case_num: int, case_dir: str, output_vars: List[str] = None
+        self,
+        case_num: int,
+        case_dir: str,
+        output_vars: List[str] = None,
+        remove_nc: bool = True,
     ) -> xr.Dataset:
         """
         Convert tab output files to netCDF file.
@@ -375,6 +379,8 @@ class SwashModelWrapper(BaseModelWrapper):
             The case directory.
         output_vars : list, optional
             The output variables to postprocess. Default is None.
+        remove_nc : bool, optional
+            Remove the netCDF file. Default is True.
 
         Returns
         -------
@@ -423,6 +429,12 @@ class SwashModelWrapper(BaseModelWrapper):
 
         # Save Dataset to netCDF file
         ds.to_netcdf(os.path.join(case_dir, "output_postprocessed.nc"))
+
+        # Remove raw files to save space
+        os.remove(output_path)
+        os.remove(run_path)
+        if remove_nc:
+            os.remove(output_nc_path)
 
         return ds
 
@@ -617,7 +629,7 @@ class SwashModelWrapper(BaseModelWrapper):
         #     # _, Hi = upcrossing(time_series, series_water)
         #     _, Hi = upcrossing(np.vstack([time_series, series_water]).T)
         #     Hi = np.std(series_water)
-        #     # Calculo de Pablo Zubia 
+        #     # Calculo de Pablo Zubia
         #     #standard_deviation = np.std(series_water)
 
         #     # calculate Hrms
@@ -637,19 +649,19 @@ class SwashModelWrapper(BaseModelWrapper):
             dsw = output_nc.sel(Xp=x)
 
             # obtain series of water level
-            series_water = dsw['Watlev'].values
-            #time_series = dsw['Tsec'].values
-            
+            series_water = dsw["Watlev"].values
+            # time_series = dsw['Tsec'].values
+
             standard_deviation = np.std(series_water)
-            Hrms_x = (2 * np.sqrt (2* standard_deviation ** 2))
-            df_Hrms.loc[x, 'Hrms'] = Hrms_x
+            Hrms_x = 2 * np.sqrt(2 * standard_deviation**2)
+            df_Hrms.loc[x, "Hrms"] = Hrms_x
 
         # convert pd DataFrame to xr Dataset
-        df_Hrms.index.name = 'Xp'
+        df_Hrms.index.name = "Xp"
         ds = df_Hrms.to_xarray()
 
         # assign coordinate case_id
-        ds = ds.assign_coords({"case_num": [output_nc["case_num"].values]})        
+        ds = ds.assign_coords({"case_num": [output_nc["case_num"].values]})
         return ds
 
     def calculate_spectral_analysis(
