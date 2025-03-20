@@ -146,7 +146,10 @@ class BaseModelWrapper(BlueMathModel):
         fixed_parameters: dict,
     ) -> None:
         """
-        TODO: Add docstring.
+        Check if the parameters have the correct type.
+        This functions checks if the parameters in the metamodel_parameters have the
+        correct type according to the default_parameters.
+        Then, it updates the fixed_parameters with the default_parameters values.
 
         Raises
         ------
