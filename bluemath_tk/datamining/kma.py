@@ -191,6 +191,8 @@ class KMA(BaseClustering):
         provided dataframe and custom scale factor.
         It normalizes the data, and returns the calculated centroids.
 
+        TODO: Implement KMA regression guided with variable.
+
         Parameters
         ----------
         data : pd.DataFrame
