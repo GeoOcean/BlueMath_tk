@@ -19,7 +19,7 @@ import xarray as xr
 import netCDF4 as nc
 
 # teslakit
-from .__init__ import __version__, __author__
+# from .__init__ import __version__, __author__
 from .io.getinfo import description
 from .io.aux_nc import StoreBugXdset
 from .io.matlab import ReadTCsSimulations, ReadMatfile, ReadNakajoMats, \

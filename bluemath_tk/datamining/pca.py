@@ -35,7 +35,7 @@ class PCA(BaseReduction):
     is_fitted : bool
         Indicates whether the PCA model has been fitted.
     scaler : StandardScaler
-        The scaler used for standardizing the data, in case the data is standardized.
+        The scaler used for standardizing the data, in case the data is standarized.
     vars_to_stack : List[str]
         The list of variables to stack.
     window_stacked_vars : List[str]
@@ -308,7 +308,6 @@ class PCA(BaseReduction):
             var_to_clean_values = tmp_stacked_data[var_to_clean].values
             if var_to_clean_values.ndim == 1:
                 var_to_clean_values = var_to_clean_values.reshape(-1, 1)
-            # Drop variables with more than 90% of NaNs if not specified
             var_to_clean_threshold = self.nan_threshold_to_drop.get(
                 var_to_clean,
                 self.nan_threshold_to_drop.get(
@@ -319,8 +318,6 @@ class PCA(BaseReduction):
             not_nan_positions = np.where(
                 np.mean(~np.isnan(var_to_clean_values), axis=0) > var_to_clean_threshold
             )[0]
-            # Replace NaNs with the value specified in value_to_replace_nans
-            # If not specified, try to get the value from the variable name, deleting window suffixes
             var_value_to_replace_nans = self.value_to_replace_nans.get(
                 var_to_clean,
                 self.value_to_replace_nans.get(
@@ -571,7 +568,7 @@ class PCA(BaseReduction):
             The value to replace NaNs for each variable. Default is {}.
         nan_threshold_to_drop : dict, optional
             The threshold percentage to drop NaNs for each variable.
-            By default, variables with more than 90% of NaNs are dropped.
+            By default, variables with less than 90% of valid values are dropped.
             Default is {}.
         scale_data : bool, optional
             If True, scale the data. Default is True.
