@@ -244,6 +244,8 @@ def validate_data_pca(func):
         for variable, threshold in nan_threshold_to_drop.items():
             if not isinstance(threshold, float) or threshold < 0 or threshold > 1:
                 raise ValueError("Threshold must be a float between 0 and 1")
+        if not isinstance(scale_data, bool):
+            raise TypeError("Scale data must be a boolean, either True or False")
         return func(
             self,
             data,
@@ -356,6 +358,7 @@ def validate_data_xwt(func):
         self,
         data: xr.Dataset,
         fit_params: Dict[str, Dict[str, Any]] = {},
+        variable_to_sort_bmus: str = None,
     ):
         if not isinstance(data, xr.Dataset):
             raise TypeError("Data must be an xarray Dataset")
@@ -367,10 +370,19 @@ def validate_data_xwt(func):
             raise TypeError("Fit params must be a dict")
         if "pca" not in fit_params:
             raise ValueError("Fit params must contain PCA parameters")
+        if variable_to_sort_bmus is not None:
+            if (
+                not isinstance(variable_to_sort_bmus, str)
+                or variable_to_sort_bmus not in data.data_vars
+            ):
+                raise TypeError(
+                    "variable_to_sort_bmus must be a string and must exist in data variables"
+                )
         return func(
             self,
             data,
             fit_params,
+            variable_to_sort_bmus,
         )
 
     return wrapper

@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.dates as mdates
-#from matplotlib.colors import DivergingNorm
+# from matplotlib.colors import DivergingNorm
 from scipy.interpolate import interp1d
 from scipy.stats import  gumbel_l, genextreme
 
@@ -48,7 +48,7 @@ def Plot_GEVParams(xda_gev_var, c_shape='bwr', c_other='hot_r', show=True):
 
         rr_pv = np.flipud(np.reshape(par_values,(ss,ss)).T)
 
-        if par == 'shape':
+        if False:  # par == 'shape':
             cl = [np.min(par_values), np.max(par_values)]
             if cl[0]>=0: cl[0]=-0.000000001
             if cl[1]<=0: cl[1]=+0.000000001
