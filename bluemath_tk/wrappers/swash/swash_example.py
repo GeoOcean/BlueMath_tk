@@ -1,187 +1,85 @@
+import inspect
 import os
+import os.path as op
 
 import numpy as np
 
 from bluemath_tk.datamining.lhs import LHS
 from bluemath_tk.datamining.mda import MDA
-from bluemath_tk.waves.series import series_TMA, waves_dispersion
 from bluemath_tk.wrappers.swash.swash_wrapper import SwashModelWrapper
-
-
-def convert_seconds_to_hour_minutes_seconds(seconds):
-    seconds = seconds % (24 * 3600)
-    hour = seconds // 3600
-    seconds %= 3600
-    minutes = seconds // 60
-    seconds %= 60
-
-    return f"{str(int(hour)).zfill(2)}{str(int(minutes)).zfill(2)}{str(int(seconds)).zfill(2)}.000"
-
-
-class VeggySwashModelWrapper(SwashModelWrapper):
-    """
-    Wrapper for the SWASH model with vegetation.
-    """
-
-    gamma: int = 2
-    deltat: int = 1
-
-    def build_case(
-        self,
-        case_context: dict,
-        case_dir: str,
-    ) -> None:
-        """
-        Build the input files for a case.
-
-        Parameters
-        ----------
-        case_context : dict
-            The case context.
-        case_dir : str
-            The case directory.
-        """
-
-        # Build the input waves
-        waves_dict = {
-            "H": case_context["Hs"],
-            "T": np.sqrt(
-                (case_context["Hs"] * 2 * np.pi)
-                / (self.gravity * case_context["Hs_L0"])
-            ),
-            "gamma": self.gamma,
-            "warmup": self.warmup,
-            "deltat": self.deltat,
-            "tendc": self.tendc,
-        }
-        waves = series_TMA(waves=waves_dict, depth=self.depth_array[0])
-        # Save the waves to a file
-        self.write_array_in_file(
-            array=waves, filename=os.path.join(case_dir, "waves.bnd")
-        )
-
-        # Calculate computational parameters
-        tendc = convert_seconds_to_hour_minutes_seconds(self.tendc + self.warmup)
-        L1, _k1, _c1 = waves_dispersion(T=waves_dict["T"], h=1.0)
-        _L, _k, c = waves_dispersion(T=waves_dict["T"], h=self.depth_array[0])
-        # comp_dx = L1 / np.abs(self.depth[0]) # MAL: Hecho por JAvi y Valva
-        dx = L1 / self.n_nodes_per_wavelength
-        deltc = 0.5 * dx / (np.sqrt(self.gravity * self.depth_array[0]) + np.abs(c))
-        mxc = int(self.xlenc / dx)
-
-        # Update the case context
-        case_context["xlenc"] = self.xlenc
-        case_context["mxc"] = mxc
-        case_context["mxinp"] = self.mxinp
-        case_context["dxinp"] = self.dxinp
-        case_context["deltc"] = deltc
-        case_context["tendc"] = tendc
 
 
 class ChySwashModelWrapper(SwashModelWrapper):
     """
-    Wrapper for the SWASH model with vegetation.
+    Wrapper for the SWASH model with friction.
     """
 
-    gamma: int = 2
-    deltat: int = 1
-    default_Cf = 0.002
+    default_Cf = 0.0002
 
     def build_case(
         self,
         case_context: dict,
         case_dir: str,
     ) -> None:
-        """
-        Build the input files for a case.
-
-        Parameters
-        ----------
-        case_context : dict
-            The case context.
-        case_dir : str
-            The case directory.
-        """
-
-        # Build the input waves
-        waves_dict = {
-            "H": case_context["Hs"],
-            "T": np.sqrt(
-                (case_context["Hs"] * 2 * np.pi)
-                / (self.gravity * case_context["Hs_L0"])
-            ),
-            "gamma": self.gamma,
-            "warmup": self.warmup,
-            "deltat": self.deltat,
-            "tendc": self.tendc,
-        }
-        waves = series_TMA(waves=waves_dict, depth=self.depth_array[0])
-        # Save the waves to a file
-        self.write_array_in_file(
-            array=waves, filename=os.path.join(case_dir, "waves.bnd")
-        )
+        super().build_case(case_context=case_context, case_dir=case_dir)
 
         # Build the input friction file
         friction = np.ones((len(self.depth_array))) * self.default_Cf
-        # friction[int(self.Cf_init):int(self.Cf_end)] = case_context["Cf"]
+        friction[
+            int(self.fixed_parameters["Cf_ini"]) : int(self.fixed_parameters["Cf_fin"])
+        ] = case_context["Cf"]
         np.savetxt(os.path.join(case_dir, "friction.txt"), friction, fmt="%.6f")
-
-        # Calculate computational parameters
-        tendc = convert_seconds_to_hour_minutes_seconds(self.tendc + self.warmup)
-        L1, _k1, _c1 = waves_dispersion(T=waves_dict["T"], h=1.0)
-        _L, _k, c = waves_dispersion(T=waves_dict["T"], h=self.depth_array[0])
-        # comp_dx = L1 / np.abs(self.depth[0]) # MAL: Hecho por JAvi y Valva
-        dx = L1 / self.n_nodes_per_wavelength
-        deltc = 0.5 * dx / (np.sqrt(self.gravity * self.depth_array[0]) + np.abs(c))
-        mxc = int(self.xlenc / dx)
-
-        # Update the case context
-        case_context["xlenc"] = self.xlenc
-        case_context["mxc"] = mxc
-        case_context["mxinp"] = self.mxinp
-        case_context["dxinp"] = self.dxinp
-        case_context["deltc"] = deltc
-        case_context["tendc"] = tendc
 
 
 # Usage example
 if __name__ == "__main__":
-    # Define the input parameters
-    templates_dir = (
-        "/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/wrappers/swash/templates/"
+    # Define the output directory
+    output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/CHY"  # CHANGE THIS TO YOUR DESIRED OUTPUT DIRECTORY!
+    # Templates directory
+    swash_file_path = op.dirname(inspect.getfile(SwashModelWrapper))
+    templates_dir = op.join(swash_file_path, "templates")
+    # Fixed parameters
+    fixed_parameters = {
+        "dxinp": 1.5,  # bathymetry grid spacing
+        "default_Cf": 0.002,  # Friction manning coefficient (m^-1/3 s)
+        "Cf_ini": 700 / 1.5,  # Friction start cell
+        "Cf_fin": 1250 / 1.5,  # Friction end cell
+        "comptime": 7200,  # Simulation duration (s)
+        "warmup": 7200 * 0.15,  # Warmup duration (s)
+        "n_nodes_per_wavelength": 60,  # number of nodes per wavelength
+    }
+    # LHS
+    variables_to_analyse_in_metamodel = ["Hs", "Hs_L0", "WL", "Cf", "Cr"]
+    lhs_parameters = {
+        "num_samples": 10000,
+        "dimensions_names": variables_to_analyse_in_metamodel,
+        "lower_bounds": [0.15, 0.0005, -0.6, 0.025, 0.4],
+        "upper_bounds": [1.6, 0.009, 0.356, 0.2, 0.8],
+    }
+    lhs = LHS(num_dimensions=len(variables_to_analyse_in_metamodel))
+    df_dataset = lhs.generate(
+        dimensions_names=lhs_parameters.get("dimensions_names"),
+        lower_bounds=lhs_parameters.get("lower_bounds"),
+        upper_bounds=lhs_parameters.get("upper_bounds"),
+        num_samples=lhs_parameters.get("num_samples"),
     )
-    # Get 5 cases using LHS and MDA
-    lhs = LHS(num_dimensions=3)
-    lhs_data = lhs.generate(
-        dimensions_names=["Hs", "Hs_L0", "vegetation_height"],
-        lower_bounds=[0.5, 0.0, 0.0],
-        upper_bounds=[3.0, 0.05, 1.5],
-        num_samples=500,
-    )
-    mda = MDA(num_centers=5)
-    mda.logger.setLevel("DEBUG")
-    mda.fit(data=lhs_data)
-    model_parameters = mda.centroids.to_dict(orient="list")
-    output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/swash/"
-    # Create an instance of the SWASH model wrapper
-    swash_wrapper = VeggySwashModelWrapper(
+    # MDA
+    mda_parameters = {"num_centers": 5}
+    mda = MDA(num_centers=mda_parameters.get("num_centers"))
+    mda.fit(data=df_dataset)
+    metamodel_parameters = mda.centroids.to_dict(orient="list")
+    # ChySwashModelWrapper
+    swash_wrapper = ChySwashModelWrapper(
         templates_dir=templates_dir,
-        model_parameters=model_parameters,
+        metamodel_parameters=metamodel_parameters,
+        fixed_parameters=fixed_parameters,
         output_dir=output_dir,
-        depth_array=np.loadtxt(
-            "/home/tausiaj/GitHub-GeoOcean/BlueMath/bluemath_tk/wrappers/swash/templates/depth.bot"
-        ),
-        dxinp=1.0,
-        n_nodes_per_wavelength=60,
-        tendc=7200,
-        warmup=7200 * 0.15,
+        depth_array=np.loadtxt(op.join(templates_dir, "depth.bot")),
     )
     # Build the input files
     swash_wrapper.build_cases(mode="one_by_one")
-    # List available launchers
-    print(swash_wrapper.list_available_launchers())
-    # Run the model using docker_serial launcher
-    # swash_wrapper.run_cases(launcher="docker_serial", num_workers=5)
-    # Post-process the output files
-    # postprocessed_data = swash_wrapper.postprocess_cases(num_workers=1)
-    # print(postprocessed_data)
+    # Run the simulations
+    swash_wrapper.run_cases(launcher="docker_serial", num_workers=5)
+    # Post-process the results
+    swash_wrapper.postprocess_cases(output_vars=["Msetup", "Hrms", "Hfreqs"])
+    print("Done!")

@@ -1,5 +1,4 @@
 import os
-import os.path as op
 import re
 from typing import List, Tuple
 
@@ -8,11 +7,22 @@ import pandas as pd
 import xarray as xr
 from scipy.signal import find_peaks
 
+from ...waves.series import series_TMA, waves_dispersion
 from ...waves.spectra import spectral_analysis
 from ...waves.statistics import upcrossing
 from .._base_wrappers import BaseModelWrapper
 
 np.random.seed(42)  # TODO: check global behavior.
+
+
+def convert_seconds_to_hour_minutes_seconds(seconds):
+    seconds = seconds % (24 * 3600)
+    hour = seconds // 3600
+    seconds %= 3600
+    minutes = seconds // 60
+    seconds %= 60
+
+    return f"{str(int(hour)).zfill(2)}{str(int(minutes)).zfill(2)}{str(int(seconds)).zfill(2)}.000"
 
 
 class SwashModelWrapper(BaseModelWrapper):
@@ -28,22 +38,6 @@ class SwashModelWrapper(BaseModelWrapper):
         The available launchers for the wrapper.
     postprocess_functions : dict
         The postprocess functions for the wrapper.
-    depth_array : np.ndarray
-        The depth array (working for 1D arrays for the moment).
-    xlenc : int
-       The length in meters of the computational domain.
-    mxc : int
-        The number of computational cells.
-    mxinp : int
-        The number of input points.
-    dxinp : float
-        The input points spacing (to calculate the meters).
-    n_nodes_per_wavelength : int
-        The number of nodes per wavelength.
-    deltc : float
-        The time step (DeltaT).
-    tendc : float
-        The total computation time.
 
     Methods
     -------
@@ -81,7 +75,56 @@ class SwashModelWrapper(BaseModelWrapper):
     """
 
     default_parameters = {
-        "vegetation_height": float,
+        "Hs": {
+            "type": float,
+            "value": None,
+            "description": "Significant wave height.",
+        },
+        "Hs_L0": {
+            "type": float,
+            "value": None,
+            "description": "Wave height at deep water.",
+        },
+        "WL": {
+            "type": float,
+            "value": None,
+            "description": "Water level.",
+        },
+        "vegetation_height": {
+            "type": float,
+            "value": None,
+            "description": "The vegetation height.",
+        },
+        "dxinp": {
+            "type": float,
+            "value": 1.0,
+            "description": "The input spacing.",
+        },
+        "n_nodes_per_wavelength": {
+            "type": int,
+            "value": 60,
+            "description": "The number of nodes per wavelength.",
+        },
+        "comptime": {
+            "type": int,
+            "value": 180,
+            "description": "The computational time.",
+        },
+        "warmup": {
+            "type": int,
+            "value": 0,
+            "description": "The warmup time.",
+        },
+        "gamma": {
+            "type": int,
+            "value": 2,
+            "description": "The gamma parameter.",
+        },
+        "deltat": {
+            "type": int,
+            "value": 1,
+            "description": "The time step.",
+        },
     }
 
     available_launchers = {
@@ -94,7 +137,7 @@ class SwashModelWrapper(BaseModelWrapper):
 
     postprocess_functions = {
         "Ru2": "calculate_runup2",
-        "RuDist": "calculate_runup",
+        "Runlev": "calculate_runup",
         "Msetup": "calculate_setup",
         "Hrms": "calculate_statistical_analysis",
         "Hfreqs": "calculate_spectral_analysis",
@@ -104,13 +147,10 @@ class SwashModelWrapper(BaseModelWrapper):
     def __init__(
         self,
         templates_dir: str,
-        model_parameters: dict,
+        metamodel_parameters: dict,
+        fixed_parameters: dict,
         output_dir: str,
         depth_array: np.ndarray,
-        dxinp: float,
-        n_nodes_per_wavelength: int,
-        tendc: int,
-        warmup: int = 0,
         templates_name: dict = "all",
         debug: bool = True,
     ) -> None:
@@ -120,7 +160,8 @@ class SwashModelWrapper(BaseModelWrapper):
 
         super().__init__(
             templates_dir=templates_dir,
-            model_parameters=model_parameters,
+            metamodel_parameters=metamodel_parameters,
+            fixed_parameters=fixed_parameters,
             output_dir=output_dir,
             templates_name=templates_name,
             default_parameters=self.default_parameters,
@@ -129,52 +170,62 @@ class SwashModelWrapper(BaseModelWrapper):
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
         )
         self.depth_array = depth_array
-        self.mxinp = len(depth_array) - 1
-        self.dxinp = dxinp
-        self.xlenc = int(self.mxinp * self.dxinp)
-        self.mxc: int = None
-        self.n_nodes_per_wavelength = n_nodes_per_wavelength
-        self.tendc = tendc
-        self.warmup = warmup
+        self.mxinp = len(self.depth_array) - 1
+        self.xlenc = int(self.mxinp * self.fixed_parameters["dxinp"])
+        self.fixed_parameters["mxinp"] = self.mxinp
+        self.fixed_parameters["xlenc"] = self.xlenc
+        self.fixed_parameters["tendc"] = convert_seconds_to_hour_minutes_seconds(
+            self.fixed_parameters["comptime"] + self.fixed_parameters["warmup"]
+        )
 
-    def build_cases(
+    def build_case(
         self,
-        mode: str = "one_by_one",
+        case_context: dict,
+        case_dir: str,
     ) -> None:
         """
-        Create the cases folders and render the input files.
+        Build the input files for a case.
 
         Parameters
         ----------
-        mode : str, optional
-            The mode to create the cases. Can be "all_combinations" or "one_by_one".
-            Default is "one_by_one".
+        case_context : dict
+            The case context.
+        case_dir : str
+            The case directory.
         """
 
-        if mode == "all_combinations":
-            self.cases_context = self.create_cases_context_all_combinations()
-        elif mode == "one_by_one":
-            self.cases_context = self.create_cases_context_one_by_one()
-        else:
-            raise ValueError(f"Invalid mode to create cases: {mode}")
-        for case_num, case_context in enumerate(self.cases_context):
-            case_context["case_num"] = f"{case_num:04}"
-            case_dir = op.join(self.output_dir, f"{case_num:04}")
-            self.cases_dirs.append(case_dir)
-            os.makedirs(case_dir, exist_ok=True)
-            self.build_case(
-                case_context=case_context,
-                case_dir=case_dir,
-            )
-            for template_name in self.templates_name:
-                self.render_file_from_template(
-                    template_name=template_name,
-                    context=case_context,
-                    output_filename=op.join(case_dir, template_name),
-                )
-        self.logger.info(
-            f"{len(self.cases_dirs)} cases created in {mode} mode and saved in {self.output_dir}"
+        # Build the input waves
+        waves_dict = {
+            "H": case_context["Hs"],
+            "T": np.sqrt(
+                (case_context["Hs"] * 2 * np.pi)
+                / (self.gravity * case_context["Hs_L0"])
+            ),
+            "warmup": case_context["warmup"],
+            "comptime": case_context["comptime"],
+            "gamma": case_context["gamma"],
+            "deltat": case_context["deltat"],
+        }
+        waves = series_TMA(waves=waves_dict, depth=self.depth_array[0])
+        # Save the waves to a file
+        self.write_array_in_file(
+            array=waves, filename=os.path.join(case_dir, "waves.bnd")
         )
+
+        # Calculate computational parameters
+        # Assuming there is always 1m of setup due to (IG, VLF)
+        L1, _k1, _c1 = waves_dispersion(T=waves_dict["T"], h=1.0)
+        _L, _k, c = waves_dispersion(T=waves_dict["T"], h=self.depth_array[0])
+        dx = L1 / case_context["n_nodes_per_wavelength"]
+
+        # Computational time step
+        deltc = 0.5 * dx / (np.sqrt(self.gravity * self.depth_array[0]) + np.abs(c))
+        # Computational grid modifications
+        mxc = int(self.mxinp / dx)
+
+        # Update the case context
+        case_context["mxc"] = mxc
+        case_context["deltc"] = deltc
 
     def list_available_postprocess_vars(self) -> List[str]:
         """
@@ -239,17 +290,23 @@ class SwashModelWrapper(BaseModelWrapper):
         """
 
         df_output = self._read_tabfile(file_path=output_path)
+        df_output[["Xp", "Yp", "Tsec"]] = df_output[["Xp", "Yp", "Tsec"]].astype(
+            int
+        )  # TODO: check if this is correct
         df_output.set_index(
             ["Xp", "Yp", "Tsec"], inplace=True
         )  # set index to Xp, Yp and Tsec
-        ds_ouput = df_output.to_xarray()
+        ds_output = df_output.to_xarray()
 
         df_run = self._read_tabfile(file_path=run_path)
+        df_run[["Tsec"]] = df_run[["Tsec"]].astype(
+            int
+        )  # TODO: check if this is correct
         df_run.set_index(["Tsec"], inplace=True)
         ds_run = df_run.to_xarray()
 
         # merge output files to one xarray.Dataset
-        ds = xr.merge([ds_ouput, ds_run], compat="no_conflicts")
+        ds = xr.merge([ds_output, ds_run], compat="no_conflicts")
 
         # assign correct coordinate case_num
         ds.coords["case_num"] = case_num
@@ -305,7 +362,12 @@ class SwashModelWrapper(BaseModelWrapper):
         return pd.DataFrame(cases_percentage.items(), columns=["Case", "Percentage"])
 
     def postprocess_case(
-        self, case_num: int, case_dir: str, output_vars: List[str] = None
+        self,
+        case_num: int,
+        case_dir: str,
+        output_vars: List[str] = None,
+        remove_tab: bool = False,
+        remove_nc: bool = False,
     ) -> xr.Dataset:
         """
         Convert tab output files to netCDF file.
@@ -318,6 +380,10 @@ class SwashModelWrapper(BaseModelWrapper):
             The case directory.
         output_vars : list, optional
             The output variables to postprocess. Default is None.
+        remove_tab : bool, optional
+            Remove the tab files. Default is False.
+        remove_nc : bool, optional
+            Remove the netCDF file. Default is False.
 
         Returns
         -------
@@ -366,6 +432,13 @@ class SwashModelWrapper(BaseModelWrapper):
 
         # Save Dataset to netCDF file
         ds.to_netcdf(os.path.join(case_dir, "output_postprocessed.nc"))
+
+        # Remove raw files to save space
+        if remove_tab:
+            os.remove(output_path)
+            os.remove(run_path)
+        if remove_nc:
+            os.remove(output_nc_path)
 
         return ds
 
@@ -549,28 +622,50 @@ class SwashModelWrapper(BaseModelWrapper):
         # for every X coordinate in domain
         df_Hrms = pd.DataFrame()
 
+        # for x in output_nc["Xp"].values:
+        #     dsw = output_nc.sel(Xp=x)
+
+        #     # obtain series of water level
+        #     series_water = dsw["Watlev"].values
+        #     time_series = dsw["Tsec"].values
+
+        #     # perform statistical analysis
+        #     # _, Hi = upcrossing(time_series, series_water)
+        #     _, Hi = upcrossing(np.vstack([time_series, series_water]).T)
+        #     Hi = np.std(series_water)
+        #     # Calculo de Pablo Zubia
+        #     #standard_deviation = np.std(series_water)
+
+        #     # calculate Hrms
+        #     Hrms_x = np.sqrt(np.sum(Hi**2)/len(Hi))
+        #     df_Hrms.loc[x, "Hrms"] = Hrms_x
+
+        # # convert pd DataFrame to xr Dataset
+        # df_Hrms.index.name = "Xp"
+        # ds = df_Hrms.to_xarray()
+
+        # # assign coordinate case_num
+        # ds = ds.assign_coords({"case_num": [output_nc["case_num"].values]})
+
+        # return ds
+
         for x in output_nc["Xp"].values:
             dsw = output_nc.sel(Xp=x)
 
             # obtain series of water level
             series_water = dsw["Watlev"].values
-            time_series = dsw["Tsec"].values
+            # time_series = dsw['Tsec'].values
 
-            # perform statistical analysis
-            # _, Hi = upcrossing(time_series, series_water)
-            _, Hi = upcrossing(np.vstack([time_series, series_water]).T)
-
-            # calculate Hrms
-            Hrms_x = np.sqrt(np.mean(Hi**2))
+            standard_deviation = np.std(series_water)
+            Hrms_x = 2 * np.sqrt(2 * standard_deviation**2)
             df_Hrms.loc[x, "Hrms"] = Hrms_x
 
         # convert pd DataFrame to xr Dataset
         df_Hrms.index.name = "Xp"
         ds = df_Hrms.to_xarray()
 
-        # assign coordinate case_num
+        # assign coordinate case_id
         ds = ds.assign_coords({"case_num": [output_nc["case_num"].values]})
-
         return ds
 
     def calculate_spectral_analysis(

@@ -8,11 +8,22 @@ from queue import Queue
 from typing import List, Union
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 from jinja2 import Environment, FileSystemLoader
 
 from ..core.models import BlueMathModel
 from ._utils_wrappers import copy_files, write_array_in_file
+
+sbatch_file_example = """
+#!/bin/bash
+#SBATCH --job-name=your_job_name  # Job name
+#SBATCH --partition=geocean       # Standard output and error log
+#SBATCH --mem=4gb                 # Memory per node in GB (see also --mem-per-cpu)
+
+case_dir=$(ls | awk "NR == $SLURM_ARRAY_TASK_ID")
+yourLauncher.sh --case-dir $case_dir > $case_dir/wrapper_out.log 2> $case_dir/wrapper_error.log
+"""
 
 
 class BaseModelWrapper(BlueMathModel):
@@ -23,8 +34,10 @@ class BaseModelWrapper(BlueMathModel):
     ----------
     templates_dir : str
         The directory where the templates are stored.
-    model_parameters : dict
+    metamodel_parameters : dict
         The parameters to be used in the templates.
+    fixed_parameters : dict
+        The fixed parameters for the model.
     output_dir : str
         The directory where the output files will be saved.
     env : Environment
@@ -35,6 +48,10 @@ class BaseModelWrapper(BlueMathModel):
         The list with cases directories.
     cases_context : List[dict]
         The list with cases context.
+    thread : threading.Thread
+        The thread for background execution.
+    status_queue : Queue
+        The queue to update the status.
 
     Methods
     -------
@@ -44,6 +61,8 @@ class BaseModelWrapper(BlueMathModel):
         Execute bash commands.
     list_available_launchers -> dict
         List the available launchers.
+    list_default_parameters -> pd.DataFrame
+        List the default parameters.
     set_cases_dirs_from_output_dir -> None
         Set the cases directories from the output directory.
     write_array_in_file -> None
@@ -58,6 +77,8 @@ class BaseModelWrapper(BlueMathModel):
     create_cases_context_all_combinations -> List[dict]
         Create an array of dictionaries with each possible combination of values
         from the input dictionary.
+    build_case -> None
+        Build the input files for a case.
     build_cases -> None
         Create the cases folders and render the input files.
     run_case -> None
@@ -79,7 +100,8 @@ class BaseModelWrapper(BlueMathModel):
     def __init__(
         self,
         templates_dir: str,
-        model_parameters: dict,
+        metamodel_parameters: dict,
+        fixed_parameters: dict,
         output_dir: str,
         templates_name: List[str] = "all",
         default_parameters: dict = None,
@@ -90,15 +112,18 @@ class BaseModelWrapper(BlueMathModel):
 
         super().__init__()
         if default_parameters is not None:
-            self._check_parameters_type(
-                default_parameters=default_parameters, model_parameters=model_parameters
+            fixed_parameters = self._check_parameters_type(
+                default_parameters=default_parameters,
+                metamodel_parameters=metamodel_parameters,
+                fixed_parameters=fixed_parameters,
             )
         self.templates_dir = templates_dir
-        self.model_parameters = model_parameters
+        self.metamodel_parameters = metamodel_parameters
+        self.fixed_parameters = fixed_parameters
         self.output_dir = output_dir
         self._env = Environment(loader=FileSystemLoader(self.templates_dir))
         if templates_name == "all":
-            self.logger.warning(
+            self.logger.info(
                 f"Templates name is 'all', so all templates in {self.templates_dir} will be used."
             )
             self.templates_name = self.env.list_templates()
@@ -115,20 +140,16 @@ class BaseModelWrapper(BlueMathModel):
         return self._env
 
     def _check_parameters_type(
-        self, default_parameters: dict, model_parameters: dict
+        self,
+        default_parameters: dict,
+        metamodel_parameters: dict,
+        fixed_parameters: dict,
     ) -> None:
         """
         Check if the parameters have the correct type.
-        This function is called in the __init__ method of the BaseModelWrapper,
-        but default_parameters are defined in the child classes.
-        This way, child classes can define default types for parameters.
-
-        Parameters
-        ----------
-        default_parameters : dict
-            The default parameters type for the model.
-        model_parameters : dict
-            The parameters to be used in the templates.
+        This functions checks if the parameters in the metamodel_parameters have the
+        correct type according to the default_parameters.
+        Then, it updates the fixed_parameters with the default_parameters values.
 
         Raises
         ------
@@ -136,23 +157,31 @@ class BaseModelWrapper(BlueMathModel):
             If a parameter has the wrong type.
         """
 
-        for model_param, param_value in model_parameters.items():
-            if model_param not in default_parameters:
+        for metamodel_param, param_value in metamodel_parameters.items():
+            if metamodel_param not in default_parameters:
                 self.logger.warning(
-                    f"Parameter {model_param} is not in the default_parameters"
+                    f"Parameter {metamodel_param} is not in the default_parameters"
                 )
             else:
                 if isinstance(param_value, (list, np.ndarray)) and all(
-                    isinstance(item, default_parameters[model_param])
+                    isinstance(item, default_parameters[metamodel_param]["type"])
                     for item in param_value
                 ):
                     self.logger.info(
-                        f"Parameter {model_param} has the correct type: {default_parameters[model_param]}"
+                        f"Parameter {metamodel_param} has the correct type: {default_parameters[metamodel_param]}"
                     )
                 else:
                     raise ValueError(
-                        f"Parameter {model_param} has the wrong type: {default_parameters[model_param]}"
+                        f"Parameter {metamodel_param} has the wrong type: {default_parameters[metamodel_param]}"
                     )
+        for default_param, param_info in default_parameters.items():
+            if (
+                default_param not in fixed_parameters
+                and param_info.get("value") is not None
+            ):
+                fixed_parameters[default_param] = param_info.get("value")
+
+        return fixed_parameters
 
     def _exec_bash_commands(
         self, str_cmd: str, out_file: str = None, err_file: str = None, cwd: str = None
@@ -216,6 +245,23 @@ class BaseModelWrapper(BlueMathModel):
             return self.available_launchers
         else:
             raise AttributeError("The attribute available_launchers is not defined.")
+
+    def list_default_parameters(self) -> pd.DataFrame:
+        """
+        List the default parameters.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame with the default parameters.
+        """
+
+        if hasattr(self, "default_parameters"):
+            return pd.DataFrame(self.default_parameters)
+        else:
+            raise AttributeError(
+                "The attribute default_parameters is not defined in the child class."
+            )
 
     def set_cases_dirs_from_output_dir(self) -> None:
         """
@@ -299,9 +345,9 @@ class BaseModelWrapper(BlueMathModel):
             parameter values.
         """
 
-        num_cases = len(next(iter(self.model_parameters.values())))
+        num_cases = len(next(iter(self.metamodel_parameters.values())))
         array_of_contexts = []
-        for param, values in self.model_parameters.items():
+        for param, values in self.metamodel_parameters.items():
             if len(values) != num_cases:
                 raise ValueError(
                     f"All parameters must have the same number of values in one_by_one mode, check {param}"
@@ -310,7 +356,7 @@ class BaseModelWrapper(BlueMathModel):
         for case_num in range(num_cases):
             case_context = {
                 param: values[case_num]
-                for param, values in self.model_parameters.items()
+                for param, values in self.metamodel_parameters.items()
             }
             array_of_contexts.append(case_context)
 
@@ -328,8 +374,8 @@ class BaseModelWrapper(BlueMathModel):
             parameter values.
         """
 
-        keys = self.model_parameters.keys()
-        values = self.model_parameters.values()
+        keys = self.metamodel_parameters.keys()
+        values = self.metamodel_parameters.values()
         combinations = itertools.product(*values)
 
         array_of_contexts = [
@@ -338,7 +384,27 @@ class BaseModelWrapper(BlueMathModel):
 
         return array_of_contexts
 
-    def build_cases(self, mode: str = "one_by_one") -> None:
+    def build_case(
+        self,
+        case_context: dict,
+        case_dir: str,
+    ) -> None:
+        """
+        Build the input files for a case.
+
+        Parameters
+        ----------
+        case_context : dict
+            The case context.
+        case_dir : str
+            The case directory.
+        """
+
+        pass
+
+    def build_cases(
+        self, mode: str = "one_by_one", cases_to_build: List[int] = None
+    ) -> None:
         """
         Create the cases folders and render the input files.
 
@@ -347,6 +413,8 @@ class BaseModelWrapper(BlueMathModel):
         mode : str, optional
             The mode to create the cases. Can be "all_combinations" or "one_by_one".
             Default is "one_by_one".
+        cases_to_build : List[int], optional
+            The list with the cases to build. Default is None.
         """
 
         if mode == "all_combinations":
@@ -355,11 +423,22 @@ class BaseModelWrapper(BlueMathModel):
             self.cases_context = self.create_cases_context_one_by_one()
         else:
             raise ValueError(f"Invalid mode to create cases: {mode}")
-        for case_num, case_context in enumerate(self.cases_context):
+
+        if cases_to_build is not None:
+            self.cases_context = [self.cases_context[i] for i in cases_to_build]
+        else:
+            cases_to_build = list(range(len(self.cases_context)))
+
+        for case_num, case_context in zip(cases_to_build, self.cases_context):
             case_context["case_num"] = case_num
             case_dir = op.join(self.output_dir, f"{case_num:04}")
             self.cases_dirs.append(case_dir)
             os.makedirs(case_dir, exist_ok=True)
+            case_context.update(self.fixed_parameters)
+            self.build_case(
+                case_context=case_context,
+                case_dir=case_dir,
+            )
             for template_name in self.templates_name:
                 self.render_file_from_template(
                     template_name=template_name,
@@ -370,11 +449,16 @@ class BaseModelWrapper(BlueMathModel):
             f"{len(self.cases_dirs)} cases created in {mode} mode and saved in {self.output_dir}"
         )
 
+        # Save an example sbatch file in the output directory
+        with open(f"{self.output_dir}/sbatch_example.sh", "w") as file:
+            file.write(sbatch_file_example)
+        self.logger.info(f"SBATCH example file generated in {self.output_dir}")
+
     def run_case(
         self,
         case_dir: str,
         launcher: str,
-        ouput_log_file: str = "wrapper_out.log",
+        output_log_file: str = "wrapper_out.log",
         error_log_file: str = "wrapper_error.log",
     ) -> None:
         """
@@ -386,7 +470,7 @@ class BaseModelWrapper(BlueMathModel):
             The case directory.
         launcher : str
             The launcher to run the case.
-        ouput_log_file : str, optional
+        output_log_file : str, optional
             The name of the output log file. Default is "wrapper_out.log".
         error_log_file : str, optional
             The name of the error log file. Default is "wrapper_error.log".
@@ -397,11 +481,11 @@ class BaseModelWrapper(BlueMathModel):
 
         # Run the case in the case directory
         self.logger.info(f"Running case in {case_dir} with launcher={launcher}.")
-        ouput_log_file = op.join(case_dir, ouput_log_file)
+        output_log_file = op.join(case_dir, output_log_file)
         error_log_file = op.join(case_dir, error_log_file)
         self._exec_bash_commands(
             str_cmd=launcher,
-            out_file=ouput_log_file,
+            out_file=output_log_file,
             err_file=error_log_file,
             cwd=case_dir,
         )
@@ -598,35 +682,33 @@ class BaseModelWrapper(BlueMathModel):
     def postprocess_cases(
         self,
         cases_to_postprocess: List[int] = None,
-        num_workers: int = None,
         write_output_nc: bool = True,
         clean_after: bool = False,
         force: bool = False,
+        **kwargs,
     ) -> Union[xr.Dataset, List[xr.Dataset]]:
         """
         Postprocess the model output.
+        All extra keyword arguments will be passed to the postprocess_case method.
 
         Parameters
         ----------
         cases_to_postprocess : List[int], optional
             The list with the cases to postprocess. Default is None.
-        num_workers : int, optional
-            The number of parallel workers. Default is None.
         write_output_nc : bool, optional
             Write the output postprocessed file. Default is True.
         clean_after : bool, optional
             Clean the cases directories after postprocessing. Default is False.
         force : bool, optional
             Force the postprocessing. Default is False.
+        **kwargs
+            Additional keyword arguments to be passed to the postprocess_case method.
 
         Returns
         -------
         xr.Dataset or List[xr.Dataset]
             The postprocessed file or the list with the postprocessed files.
         """
-
-        if num_workers is None:
-            num_workers = self.num_workers
 
         output_postprocessed_file_path = op.join(
             self.output_dir, "output_postprocessed.nc"
@@ -657,27 +739,17 @@ class BaseModelWrapper(BlueMathModel):
             cases_to_postprocess = list(range(len(self.cases_dirs)))
             cases_dir_to_postprocess = copy.deepcopy(self.cases_dirs)
 
-        if num_workers > 1:
-            postprocessed_files = self.parallel_execute(
-                func=self.postprocess_case,
-                items=zip(cases_to_postprocess, cases_dir_to_postprocess),
-                num_workers=num_workers,
-            )
-            postprocessed_files = list(postprocessed_files.values())
-        else:
-            postprocessed_files = []
-            for case_num, case_dir in zip(
-                cases_to_postprocess, cases_dir_to_postprocess
-            ):
-                try:
-                    postprocessed_file = self.postprocess_case(
-                        case_num=case_num, case_dir=case_dir
-                    )
-                    postprocessed_files.append(postprocessed_file)
-                except Exception as e:
-                    self.logger.error(
-                        f"Output not postprocessed for case {case_num}. Error: {e}."
-                    )
+        postprocessed_files = []
+        for case_num, case_dir in zip(cases_to_postprocess, cases_dir_to_postprocess):
+            try:
+                postprocessed_file = self.postprocess_case(
+                    case_num=case_num, case_dir=case_dir, **kwargs
+                )
+                postprocessed_files.append(postprocessed_file)
+            except Exception as e:
+                self.logger.error(
+                    f"Output not postprocessed for case {case_num}. Error: {e}."
+                )
 
         try:
             output_postprocessed = self.join_postprocessed_files(
@@ -690,9 +762,9 @@ class BaseModelWrapper(BlueMathModel):
                 output_postprocessed.to_netcdf(output_postprocessed_file_path)
             if clean_after:
                 self.logger.warning("Cleaning up all cases dirs.")
-                self._exec_bash_commands(
-                    str_cmd=f"rm -rf {self.output_dir}/*", cwd=self.output_dir
-                )
+                # self._exec_bash_commands(
+                #     str_cmd=f"rm -rf {self.output_dir}/*/*", cwd=self.output_dir
+                # )
                 self.logger.info("Clean up completed.")
             return output_postprocessed
         except NotImplementedError as exc:
