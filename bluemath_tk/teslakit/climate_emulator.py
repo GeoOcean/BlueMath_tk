@@ -35,7 +35,7 @@ from .statistical import Empirical_ICDF
 from .extremes import FitGEV_KMA_Frechet, Smooth_GEV_Shape, ACOV
 from .io.aux_nc import StoreBugXdset
 
-# from .database import clean_files
+from .database import clean_files
 from .plotting.extremes import (
     Plot_GEVParams,
     Plot_ChromosomesProbs,
@@ -151,11 +151,11 @@ class Climate_Emulator(object):
         EMP_vn = ["Dir"]
 
         # mount family_variable lists
-        # for f in fams:
-        #     for v in GEV_vn:
-        #         l_GEV_vars.append('{0}_{1}'.format(f,v))
-        #     for v in EMP_vn:
-        #         l_EMP_vars.append('{0}_{1}'.format(f,v))
+        for f in fams:
+            for v in GEV_vn:
+                l_GEV_vars.append("{0}_{1}".format(f, v))
+            for v in EMP_vn:
+                l_EMP_vars.append("{0}_{1}".format(f, v))
 
         # now add extra variables to GEV list
         if "extra_variables" in config.keys():
@@ -219,7 +219,7 @@ class Climate_Emulator(object):
         print("Max. Storms PROXY: {0}".format(proxy))
 
         # store TCs WTs waves
-        # WVS_TCs = WVS.where(~np.isnan(WVS.TC_category), drop=True)
+        WVS_TCs = WVS.copy()  # WVS.where(~np.isnan(WVS.TC_category), drop=True)
 
         # TODO select waves without TCs ?
         # WVS = WVS.where(np.isnan(WVS.TC_category), drop=True)
@@ -480,7 +480,7 @@ class Climate_Emulator(object):
 
         vars_gev = self.vars_GEV
         bmus = xds_KMA_MS.bmus.values[:]
-        # cenEOFs = xds_KMA_MS.cenEOFs.values[:]
+        cenEOFs = xds_KMA_MS.cenEOFs.values[:]
         n_clusters = len(xds_KMA_MS.n_clusters)
 
         xds_GEV_Par = xr.Dataset(
@@ -1133,10 +1133,9 @@ class Climate_Emulator(object):
 
         # waves families - variables (sorted for simulation output)
         wvs_fams = self.fams
-        wvs_fams_vars = wvs_fams  # EDITTED!!
-        # [
-        #     ("{0}_{1}".format(f, vn)) for f in wvs_fams for vn in ["Hs", "Tp", "Dir"]
-        # ]
+        wvs_fams_vars = [
+            ("{0}_{1}".format(f, vn)) for f in wvs_fams for vn in ["Hs", "Tp", "Dir"]
+        ]
 
         # extra variables (optional)
         vars_extra = self.extra_variables

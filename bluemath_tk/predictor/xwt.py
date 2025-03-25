@@ -137,7 +137,6 @@ class XWT(BlueMathModel, BlueMathPipeline):
         self._data: xr.Dataset = None
         self.num_clusters: int = None
         self.kma_bmus: pd.DataFrame = None
-        self.sorted_bmus: np.ndarray = None
 
         # Exclude attributes from being saved
         self._exclude_attributes = ["_data"]
@@ -293,13 +292,10 @@ class XWT(BlueMathModel, BlueMathPipeline):
         )
         self.kma_bmus = kma_bmus + 1  # TODO: Check if this is necessary!!!
 
-        # Add the KMA bmus to the PCs and data
-        pca.pcs["kma_bmus"] = (("time"), self.kma_bmus["kma_bmus"].values)
-        self.data["kma_bmus"] = (("time"), self.kma_bmus["kma_bmus"].values)
-
         # Re-sort kma clusters based on variable if specified
         if variable_to_sort_bmus:
-            self.sorted_bmus = (
+            pca.pcs["kma_bmus"] = (("time"), self.kma_bmus["kma_bmus"].values)
+            sorted_bmus = (
                 pca.inverse_transform(
                     PCs=pca.pcs.groupby("kma_bmus")
                     .mean()
@@ -309,6 +305,14 @@ class XWT(BlueMathModel, BlueMathPipeline):
                 .sortby(variable_to_sort_bmus)[f"{pca.pca_dim_for_rows}"]
                 .values
             )
+            sorted_bmus_mapping = dict(
+                zip(sorted_bmus, range(1, self.num_clusters + 1))
+            )
+            self.kma_bmus.replace(sorted_bmus_mapping, inplace=True)
+
+        # Add the KMA bmus to the PCs and data
+        pca.pcs["kma_bmus"] = (("time"), self.kma_bmus["kma_bmus"].values)
+        self.data["kma_bmus"] = (("time"), self.kma_bmus["kma_bmus"].values)
 
     def plot_map_features(
         self, ax: Axes, land_color: str = cfeature.COLORS["land"]
@@ -356,9 +360,6 @@ class XWT(BlueMathModel, BlueMathPipeline):
             ] - self.data[var_to_plot].mean("time")
         else:
             data_to_plot = self.data.groupby("kma_bmus").mean()[var_to_plot]
-
-        if self.sorted_bmus is not None:
-            data_to_plot = data_to_plot.sel(kma_bmus=self.sorted_bmus)
 
         if self.num_clusters > 3:
             col_wrap = int(np.ceil(np.sqrt(self.num_clusters)))
@@ -605,10 +606,7 @@ class XWT(BlueMathModel, BlueMathPipeline):
         ]
 
         # plot total probabilities
-        if self.sorted_bmus is not None:
-            c_T = self.clusters_probs_df.loc[self.sorted_bmus].values
-        else:
-            c_T = self.clusters_probs_df.values
+        c_T = self.clusters_probs_df.values
         C_T = c_T.reshape(n_rows, n_cols)
         ax_probs_T = plt.subplot(gs[:2, :2])
         pc = self._axplot_wt_probs(
@@ -622,12 +620,7 @@ class XWT(BlueMathModel, BlueMathPipeline):
         # plot probabilities by month
         for m_ix, m_name, m_gs in l_months:
             try:
-                if self.sorted_bmus is not None:
-                    c_M = self.clusters_monthly_probs_df.loc[
-                        m_ix, self.sorted_bmus
-                    ].values
-                else:
-                    c_M = self.clusters_monthly_probs_df.loc[m_ix, :].values
+                c_M = self.clusters_monthly_probs_df.loc[m_ix, :].values
                 C_M = c_M.reshape(n_rows, n_cols)
                 ax_M = plt.subplot(m_gs)
                 self._axplot_wt_probs(
@@ -639,12 +632,7 @@ class XWT(BlueMathModel, BlueMathPipeline):
         # plot probabilities by 3 month sets
         for m_ix, m_name, m_gs in l_3months:
             try:
-                if self.sorted_bmus is not None:
-                    c_M = self.clusters_seasonal_probs_df.loc[
-                        m_name, self.sorted_bmus
-                    ].values
-                else:
-                    c_M = self.clusters_seasonal_probs_df.loc[m_name, :].values
+                c_M = self.clusters_seasonal_probs_df.loc[m_name, :].values
                 C_M = c_M.reshape(n_rows, n_cols)
                 ax_M = plt.subplot(m_gs)
                 self._axplot_wt_probs(
@@ -682,12 +670,7 @@ class XWT(BlueMathModel, BlueMathPipeline):
 
         # Plot perpetual year bmus
         fig, ax = plt.subplots(1, figsize=(15, 5))
-        if self.sorted_bmus is not None:
-            clusters_perpetual_year_probs_df = (
-                self.clusters_perpetual_year_probs_df.loc[:, self.sorted_bmus]
-            )
-        else:
-            clusters_perpetual_year_probs_df = self.clusters_perpetual_year_probs_df
+        clusters_perpetual_year_probs_df = self.clusters_perpetual_year_probs_df
         clusters_perpetual_year_probs_df.plot.area(
             ax=ax,
             stacked=True,
