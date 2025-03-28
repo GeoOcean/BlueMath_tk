@@ -1,5 +1,5 @@
 $Project name
-PROJECT 'molokai' '{{ case_num }}'
+PROJECT 'NAME' '{{ case_num }}'
 $
 $Set water level
 SET LEVEL={{ WL }}

@@ -169,6 +169,7 @@ class SwashModelWrapper(BaseModelWrapper):
         self.set_logger_name(
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
         )
+
         self.depth_array = depth_array
         self.mxinp = len(self.depth_array) - 1
         self.xlenc = int(self.mxinp * self.fixed_parameters["dxinp"])

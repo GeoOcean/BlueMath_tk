@@ -2,11 +2,13 @@ import os
 import re
 from typing import List
 
+import numpy as np
 import pandas as pd
 import scipy.io as sio
 import xarray as xr
 
 from .._base_wrappers import BaseModelWrapper
+from .._utils_wrappers import write_array_in_file
 
 
 class SwanModelWrapper(BaseModelWrapper):
@@ -23,10 +25,41 @@ class SwanModelWrapper(BaseModelWrapper):
     """
 
     default_parameters = {
-        "hs": float,
-        "tp": float,
-        "dir": float,
-        "spr": float,
+        "Hs": {
+            "type": float,
+            "value": None,
+            "description": "Significant wave height.",
+        },
+        "Tp": {
+            "type": float,
+            "value": None,
+            "description": "Wave peak period.",
+        },
+        "Dir": {
+            "type": float,
+            "value": None,
+            "description": "Wave direction.",
+        },
+        "Spr": {
+            "type": float,
+            "value": None,
+            "description": "Directional spread.",
+        },
+        "mdc": {
+            "type": int,
+            "value": 24,
+            "description": "Spectral directional discretization.",
+        },
+        "flow": {
+            "type": float,
+            "value": 0.03,
+            "description": "Low values for frequency.",
+        },
+        "fhigh": {
+            "type": float,
+            "value": 0.5,
+            "description": "High value for frequency.",
+        },
     }
 
     available_launchers = {
@@ -69,9 +102,11 @@ class SwanModelWrapper(BaseModelWrapper):
     def __init__(
         self,
         templates_dir: str,
-        model_parameters: dict,
+        metamodel_parameters: dict,
+        fixed_parameters: dict,
         output_dir: str,
         templates_name: dict = "all",
+        depth_array: np.ndarray = None,
         debug: bool = True,
     ) -> None:
         """
@@ -80,7 +115,8 @@ class SwanModelWrapper(BaseModelWrapper):
 
         super().__init__(
             templates_dir=templates_dir,
-            model_parameters=model_parameters,
+            metamodel_parameters=metamodel_parameters,
+            fixed_parameters=fixed_parameters,
             output_dir=output_dir,
             templates_name=templates_name,
             default_parameters=self.default_parameters,
@@ -88,6 +124,29 @@ class SwanModelWrapper(BaseModelWrapper):
         self.set_logger_name(
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
         )
+
+        self.depth_array = np.round(depth_array, 2)
+
+    def build_case(
+        self,
+        case_context: dict,
+        case_dir: str,
+    ) -> None:
+        """
+        Build the input files for a case.
+
+        Parameters
+        ----------
+        case_context : dict
+            The case context.
+        case_dir : str
+            The case directory.
+        """
+
+        # Save depth array to file
+        if self.depth_array is not None:
+            depth_file = os.path.join(case_dir, "depth.dat")
+            write_array_in_file(array=self.depth_array, filename=depth_file)
 
     def list_available_output_variables(self) -> List[str]:
         """
