@@ -324,6 +324,7 @@ class KMA(BaseClustering):
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
         min_number_of_points: int = None,
+        max_number_of_iterations: int = 10,
         normalize_data: bool = True,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
@@ -343,6 +344,10 @@ class KMA(BaseClustering):
         min_number_of_points : int, optional
             The minimum number of points to consider a cluster.
             Default is None.
+        max_number_of_iterations : int, optional
+            The maximum number of iterations for the K-Means algorithm.
+            This is used when min_number_of_points is not None.
+            Default is 10.
         normalize_data : bool, optional
             A flag to normalize the data. Default is True.
 
@@ -358,6 +363,7 @@ class KMA(BaseClustering):
             directional_variables=directional_variables,
             custom_scale_factor=custom_scale_factor,
             min_number_of_points=min_number_of_points,
+            max_number_of_iterations=max_number_of_iterations,
             normalize_data=normalize_data,
         )
 
