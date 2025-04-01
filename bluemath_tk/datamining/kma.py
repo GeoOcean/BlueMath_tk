@@ -182,6 +182,7 @@ class KMA(BaseClustering):
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
         min_number_of_points: int = None,
+        max_number_of_iterations: int = 10,
         normalize_data: bool = True,
     ) -> None:
         """
@@ -206,6 +207,10 @@ class KMA(BaseClustering):
         min_number_of_points : int, optional
             The minimum number of points to consider a cluster.
             Default is None.
+        max_number_of_iterations : int, optional
+            The maximum number of iterations for the K-Means algorithm.
+            This is used when min_number_of_points is not None.
+            Default is 10.
         normalize_data : bool, optional
             A flag to normalize the data. Default is True.
         """
@@ -248,9 +253,10 @@ class KMA(BaseClustering):
                 if np.all(counts >= min_number_of_points):
                     stable_kma_child = True
                 number_of_tries += 1
-                if number_of_tries > 10:
+                if number_of_tries > max_number_of_iterations:
                     raise ValueError(
-                        "Failed to find a stable K-Means configuration after 10 attempts."
+                        f"Failed to find a stable K-Means configuration after {max_number_of_iterations} attempts."
+                        "Change max_number_of_iterations or min_number_of_points."
                     )
             self.logger.info(
                 f"Found a stable K-Means configuration after {number_of_tries} attempts."
@@ -318,6 +324,7 @@ class KMA(BaseClustering):
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
         min_number_of_points: int = None,
+        max_number_of_iterations: int = 10,
         normalize_data: bool = True,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
@@ -337,6 +344,10 @@ class KMA(BaseClustering):
         min_number_of_points : int, optional
             The minimum number of points to consider a cluster.
             Default is None.
+        max_number_of_iterations : int, optional
+            The maximum number of iterations for the K-Means algorithm.
+            This is used when min_number_of_points is not None.
+            Default is 10.
         normalize_data : bool, optional
             A flag to normalize the data. Default is True.
 
@@ -352,6 +363,7 @@ class KMA(BaseClustering):
             directional_variables=directional_variables,
             custom_scale_factor=custom_scale_factor,
             min_number_of_points=min_number_of_points,
+            max_number_of_iterations=max_number_of_iterations,
             normalize_data=normalize_data,
         )
 

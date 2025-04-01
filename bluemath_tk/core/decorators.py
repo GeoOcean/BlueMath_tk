@@ -120,6 +120,7 @@ def validate_data_kma(func):
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
         min_number_of_points: int = None,
+        max_number_of_iterations: int = 10,
         normalize_data: bool = True,
     ):
         if data is None:
@@ -133,6 +134,11 @@ def validate_data_kma(func):
         if min_number_of_points is not None:
             if not isinstance(min_number_of_points, int) or min_number_of_points <= 0:
                 raise ValueError("Minimum number of points must be integer and > 0")
+        if (
+            not isinstance(max_number_of_iterations, int)
+            or max_number_of_iterations <= 0
+        ):
+            raise ValueError("Maximum number of iterations must be integer and > 0")
         if not isinstance(normalize_data, bool):
             raise TypeError("Normalize data must be a boolean")
         return func(

@@ -286,6 +286,8 @@ class XWT(BlueMathModel, BlueMathPipeline):
 
         kma: KMA = self.steps.get("kma")
         self.num_clusters = kma.num_clusters
+        # TODO: standarize PCs by first PC variance
+        # pca.pcs_df / pca.pcs.stds.isel(n_component=0).values
         kma_bmus, _kma_bmus_df = kma.fit_predict(
             data=pca.pcs_df,
             **fit_params.get("kma", {}),

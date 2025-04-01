@@ -110,12 +110,11 @@ def process_kp_coefficients(
             print(f"Error processing {input_spec_file} and {output_spec_file}")
             print(e)
 
-    return (
-        xr.concat(output_kp_list, dim="case_num")
-        .fillna(0.0)
-        .sortby("freq")
-        .sortby("dir")
-    )
+    # Concat files one by one
+    concatened_kp = output_kp_list[0]
+    for file in output_kp_list[1:]:
+        concatened_kp = xr.concat([concatened_kp, file], dim="case_num")
+    return concatened_kp.fillna(0.0).sortby("freq").sortby("dir")
 
 
 def reconstruc_spectra(
@@ -149,15 +148,15 @@ def reconstruc_spectra(
 
     # Setup Dask client
     if num_workers is None:
-        num_workers = os.environ.get("BLUEMATH_NUM_WORKERS", 2)
+        num_workers = os.environ.get("BLUEMATH_NUM_WORKERS", 4)
     client = setup_dask_client(n_workers=num_workers, memory_limit=memory_limit)
 
     try:
         # Process with controlled chunks
         offshore_spectra_chunked = offshore_spectra.chunk(
-            {"time": chunk_sizes.get("time", 24)}
+            {"time": chunk_sizes.get("time", 24 * 7)}
         )
-        kp_coeffs_chunked = kp_coeffs.chunk({"site": 1})
+        kp_coeffs_chunked = kp_coeffs.chunk({"site": 10})
         with ProgressBar():
             onshore_spectra = (
                 (offshore_spectra_chunked * kp_coeffs_chunked).sum(dim="case_num")
@@ -250,7 +249,7 @@ def plot_selected_cases_grid(
     ax = fig.add_subplot(1, 1, 1, projection="polar")
 
     # prepare data
-    x = np.append(np.deg2rad(directions - 7.5), np.deg2rad(directions - 7.5)[0])
+    x = np.append(np.deg2rad(directions), np.deg2rad(directions)[0])
     y = np.append(0, frequencies)
     z = (
         np.array(range(len(frequencies) * len(directions)))
