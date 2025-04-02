@@ -275,6 +275,7 @@ class BaseModelWrapper(BlueMathModel):
             [
                 op.join(self.output_dir, case_dir)
                 for case_dir in os.listdir(self.output_dir)
+                if op.isdir(op.join(self.output_dir, case_dir))
             ]
         )
 

@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import List, Tuple
 
@@ -123,6 +124,7 @@ def reconstruc_spectra(
     num_workers: int = None,
     memory_limit: float = 0.5,
     chunk_sizes: dict = {"time": 24},
+    verbose: bool = False,
 ):
     """
     Reconstruct the onshore spectra using offshore spectra and kp coefficients.
@@ -145,6 +147,17 @@ def reconstruc_spectra(
     xr.Dataset
         The reconstructed onshore spectra dataset.
     """
+
+    if not verbose:
+        # Suppress Dask logs
+        logging.getLogger("distributed").setLevel(logging.ERROR)
+        logging.getLogger("distributed.client").setLevel(logging.ERROR)
+        logging.getLogger("distributed.scheduler").setLevel(logging.ERROR)
+        logging.getLogger("distributed.worker").setLevel(logging.ERROR)
+        logging.getLogger("distributed.nanny").setLevel(logging.ERROR)
+        # Also suppress bokeh and tornado logs that Dask uses
+        logging.getLogger("bokeh").setLevel(logging.ERROR)
+        logging.getLogger("tornado").setLevel(logging.ERROR)
 
     # Setup Dask client
     if num_workers is None:
