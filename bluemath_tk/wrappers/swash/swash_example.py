@@ -34,7 +34,7 @@ class ChySwashModelWrapper(SwashModelWrapper):
 # Usage example
 if __name__ == "__main__":
     # Define the output directory
-    output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath/test_cases/CHY"  # CHANGE THIS TO YOUR DESIRED OUTPUT DIRECTORY!
+    output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath_tk/test_cases/CHY"  # CHANGE THIS TO YOUR DESIRED OUTPUT DIRECTORY!
     # Templates directory
     swash_file_path = op.dirname(inspect.getfile(SwashModelWrapper))
     templates_dir = op.join(swash_file_path, "templates")

@@ -1,6 +1,6 @@
 import os
 import re
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -341,32 +341,78 @@ class SwashModelWrapper(BaseModelWrapper):
 
         return "0 %"  # if no progress is found
 
-    def monitor_cases(self) -> pd.DataFrame:
+    def monitor_cases(self, value_counts: str = None) -> Union[pd.DataFrame, dict]:
         """
         Monitor the cases and log relevant information.
 
+        Parameters
+        ----------
+        value_counts : str, optional
+            The value counts to be returned.
+            If "simple", it returns a dictionary with the number of cases in each status.
+            If "cases", it returns a dictionary with the cases in each status.
+            Default is None.
+
         Returns
         -------
-        pd.DataFrame
-            The cases percentage.
+        Union[pd.DataFrame, dict]
+            The cases status as a pandas DataFrame or a dictionary with aggregated info.
         """
 
         cases_percentage = {}
 
         for case_dir in self.cases_dirs:
-            output_log_file = os.path.join(case_dir, "wrapper_out.log")
-            progress = self.get_case_percentage_from_file(
-                output_log_file=output_log_file
-            )
-            cases_percentage[os.path.basename(case_dir)] = progress
+            case_dir_name = os.path.basename(case_dir)
+            if os.path.exists(os.path.join(case_dir, "Errfile")):
+                cases_percentage[case_dir_name] = "Errfile"
+            elif os.path.exists(os.path.join(case_dir, "norm_end")):
+                cases_percentage[case_dir_name] = "END"
+            else:
+                run_tab_file = os.path.join(case_dir, "run.tab")
+                if os.path.exists(run_tab_file):
+                    run_tab = self._read_tabfile(file_path=run_tab_file)
+                    if run_tab.isnull().values.any():
+                        cases_percentage[case_dir_name] = "NaN"
+                        continue
+                else:
+                    cases_percentage[case_dir_name] = "No run.tab"
+                    continue
+                output_log_file = os.path.join(case_dir, "wrapper_out.log")
+                progress = self.get_case_percentage_from_file(
+                    output_log_file=output_log_file
+                )
+                cases_percentage[case_dir_name] = progress
 
-        return pd.DataFrame(cases_percentage.items(), columns=["Case", "Percentage"])
+        full_monitorization_df = pd.DataFrame(
+            cases_percentage.items(), columns=["Case", "Percentage"]
+        )
+        if value_counts:
+            value_counts_df = full_monitorization_df.set_index("Case").value_counts()
+            if value_counts == "simple":
+                return value_counts_df
+            value_counts_unique_values = [
+                run_type[0] for run_type in value_counts_df.index.values
+            ]
+            value_counts_dict = {
+                run_type: list(
+                    full_monitorization_df.where(
+                        full_monitorization_df["Percentage"] == run_type
+                    )
+                    .dropna()["Case"]
+                    .values
+                )
+                for run_type in value_counts_unique_values
+            }
+            return value_counts_dict
+        else:
+            return full_monitorization_df
 
     def postprocess_case(
         self,
         case_num: int,
         case_dir: str,
         output_vars: List[str] = None,
+        force: bool = False,
         remove_tab: bool = False,
         remove_nc: bool = False,
     ) -> xr.Dataset:
@@ -379,6 +425,8 @@ class SwashModelWrapper(BaseModelWrapper):
             The case number.
         case_dir : str
             The case directory.
+        force : bool, optional
+            Force the postprocessing, re-creating the output.nc file. Default is False.
         output_vars : list, optional
             The output variables to postprocess. Default is None.
         remove_tab : bool, optional
@@ -403,13 +451,15 @@ class SwashModelWrapper(BaseModelWrapper):
             output_vars = list(self.postprocess_functions.keys())
 
         output_nc_path = os.path.join(case_dir, "output.nc")
-        if not os.path.exists(output_nc_path):
+        if not os.path.exists(output_nc_path) or force:
             # Convert tab files to netCDF file
             output_path = os.path.join(case_dir, "output.tab")
             run_path = os.path.join(case_dir, "run.tab")
             output_nc = self._convert_case_output_files_to_nc(
                 case_num=case_num, output_path=output_path, run_path=run_path
             )
+            if os.path.exists(output_nc_path):
+                os.remove(output_nc_path)
             output_nc.to_netcdf(output_nc_path)
         else:
             self.logger.info("Reading existing output.nc file.")
@@ -432,7 +482,10 @@ class SwashModelWrapper(BaseModelWrapper):
         ds = xr.merge(var_ds_list, compat="no_conflicts")
 
         # Save Dataset to netCDF file
-        ds.to_netcdf(os.path.join(case_dir, "output_postprocessed.nc"))
+        processed_nc_path = os.path.join(case_dir, "output_postprocessed.nc")
+        if os.path.exists(processed_nc_path):
+            os.remove(processed_nc_path)
+        ds.to_netcdf(processed_nc_path)
 
         # Remove raw files to save space
         if remove_tab:

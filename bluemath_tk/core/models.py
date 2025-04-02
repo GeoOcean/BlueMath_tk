@@ -49,7 +49,7 @@ class BlueMathModel(ABC):
         bluemath_num_workers = os.environ.get("BLUEMATH_NUM_WORKERS", None)
         omp_num_threads = os.environ.get("OMP_NUM_THREADS", None)
         if bluemath_num_workers is not None:
-            self.logger.warning(
+            self.logger.info(
                 f"Setting self.num_workers to {bluemath_num_workers} due to BLUEMATH_NUM_WORKERS. \n"
                 "Change it using self.set_num_processors_to_use method. \n"
                 "Also setting OMP_NUM_THREADS to 1, to avoid conflicts with BlueMath parallel processing."
@@ -57,7 +57,7 @@ class BlueMathModel(ABC):
             self.set_num_processors_to_use(num_processors=int(bluemath_num_workers))
             self.set_omp_num_threads(num_threads=1)
         elif omp_num_threads is not None:
-            self.logger.warning(
+            self.logger.info(
                 f"Changing variable OMP_NUM_THREADS from {omp_num_threads} to 1. \n"
                 f"And setting self.num_workers to {omp_num_threads}. \n"
                 "To avoid conflicts with BlueMath parallel processing."
@@ -66,7 +66,7 @@ class BlueMathModel(ABC):
             self.set_num_processors_to_use(num_processors=int(omp_num_threads))
         else:
             self.num_workers = 1  # self.get_num_processors_available()
-            self.logger.warning(
+            self.logger.info(
                 f"Setting self.num_workers to {self.num_workers}. "
                 "Change it using self.set_num_processors_to_use method."
             )
@@ -511,8 +511,8 @@ class BlueMathModel(ABC):
         elif num_processors <= 0:
             raise ValueError("Number of processors must be greater than 0")
         elif (num_processors_available - num_processors) < 2:
-            self.logger.warning(
-                "Number of processors requested is less than 2 processors available"
+            self.logger.info(
+                "Number of processors requested leaves less than 2 processors available"
             )
 
         # Set the number of processors to use

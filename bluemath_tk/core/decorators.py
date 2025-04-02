@@ -142,7 +142,13 @@ def validate_data_kma(func):
         if not isinstance(normalize_data, bool):
             raise TypeError("Normalize data must be a boolean")
         return func(
-            self, data, directional_variables, custom_scale_factor, min_number_of_points
+            self,
+            data,
+            directional_variables,
+            custom_scale_factor,
+            min_number_of_points,
+            max_number_of_iterations,
+            normalize_data,
         )
 
     return wrapper
