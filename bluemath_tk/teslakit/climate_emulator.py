@@ -1175,7 +1175,7 @@ class Climate_Emulator(object):
                 # solve normal inverse CDF for each active chromosome
                 ipbs = 0  # prob_sim aux. index
                 sim_row = np.zeros(srl)
-                for i_c in np.where(crm == 1)[0]:
+                for i_c in np.where(np.atleast_1d(crm) == 1)[0]:
                     # random sampled GEV
                     rd = np.random.randint(0, len(xds_GEV_Par_Sampled.simulation))
                     xds_GEV_Par = xds_GEV_Par_Sampled.isel(simulation=rd)

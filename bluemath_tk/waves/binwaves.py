@@ -141,6 +141,10 @@ def reconstruc_spectra(
         The memory limit to use. Default is 0.5.
     chunk_sizes : dict, optional
         The chunk sizes to use. Default is {"time": 24}.
+    verbose : bool, optional
+        Whether to print verbose output. Default is False.
+        If False, Dask logs are suppressed.
+        If True, Dask logs are shown.
 
     Returns
     -------

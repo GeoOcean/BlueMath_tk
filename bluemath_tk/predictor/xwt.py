@@ -1,3 +1,4 @@
+import logging
 import warnings
 from datetime import datetime, timedelta
 from typing import Any, Dict
@@ -28,6 +29,7 @@ def get_dynamic_estela_predictor(
     data: xr.Dataset,
     estela: xr.Dataset,
     check_interpolation: bool = True,
+    verbose: bool = False,
 ) -> xr.Dataset:
     """
     Transform an xarray dataset of longitude, latitude, and time into one where
@@ -45,6 +47,10 @@ def get_dynamic_estela_predictor(
         The dataset containing the F values with dimensions longitude and latitude.
     check_interpolation : bool, optional
         Whether to check if the data is interpolated. Default is True.
+    verbose : bool, optional
+        Whether to print verbose output. Default is False.
+        If False, Dask logs are suppressed.
+        If True, Dask logs are shown.
 
     Returns
     -------
@@ -52,6 +58,18 @@ def get_dynamic_estela_predictor(
         The transformed dataset.
     """
 
+    if not verbose:
+        # Suppress Dask logs
+        logging.getLogger("distributed").setLevel(logging.ERROR)
+        logging.getLogger("distributed.client").setLevel(logging.ERROR)
+        logging.getLogger("distributed.scheduler").setLevel(logging.ERROR)
+        logging.getLogger("distributed.worker").setLevel(logging.ERROR)
+        logging.getLogger("distributed.nanny").setLevel(logging.ERROR)
+        # Also suppress bokeh and tornado logs that Dask uses
+        logging.getLogger("bokeh").setLevel(logging.ERROR)
+        logging.getLogger("tornado").setLevel(logging.ERROR)
+
+    # TODO: Add customization for dask client
     _dask_client = setup_dask_client(n_workers=4, memory_limit=0.25)
 
     if check_interpolation:
