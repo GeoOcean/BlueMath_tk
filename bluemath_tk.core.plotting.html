@@ -1,0 +1,369 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.core.plotting package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.datamining package" href="bluemath_tk.datamining.html" />
+    <link rel="prev" title="bluemath_tk.core.data package" href="bluemath_tk.core.data.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tc.html">bluemath_tk.tc package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.core.plotting package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.core.plotting.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-core-plotting-package">
+<h1>bluemath_tk.core.plotting package<a class="headerlink" href="#bluemath-tk-core-plotting-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.core.plotting.base_plotting">
+<span id="bluemath-tk-core-plotting-base-plotting-module"></span><h2>bluemath_tk.core.plotting.base_plotting module<a class="headerlink" href="#module-bluemath_tk.core.plotting.base_plotting" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.BasePlotting">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.core.plotting.base_plotting.</span></span><span class="sig-name descname"><span class="pre">BasePlotting</span></span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#BasePlotting"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.BasePlotting" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for handling default plotting functionalities across the project.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.BasePlotting.get_list_of_colors_for_colormap">
+<span class="sig-name descname"><span class="pre">get_list_of_colors_for_colormap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Colormap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_colors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#BasePlotting.get_list_of_colors_for_colormap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.BasePlotting.get_list_of_colors_for_colormap" title="Link to this definition"></a></dt>
+<dd><p>Get a list of colors from a colormap.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cmap</strong> (<em>str</em><em> or </em><em>Colormap</em>) – The colormap to use.</p></li>
+<li><p><strong>num_colors</strong> (<em>int</em>) – The number of colors to generate.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of colors generated from the colormap.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.BasePlotting.plot_line">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">plot_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#BasePlotting.plot_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.BasePlotting.plot_line" title="Link to this definition"></a></dt>
+<dd><p>Abstract method for plotting a line.
+Should be implemented by subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.BasePlotting.plot_map">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">plot_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">markers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#BasePlotting.plot_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.BasePlotting.plot_map" title="Link to this definition"></a></dt>
+<dd><p>Abstract method for plotting a map.
+Should be implemented by subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.BasePlotting.plot_scatter">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">plot_scatter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#BasePlotting.plot_scatter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.BasePlotting.plot_scatter" title="Link to this definition"></a></dt>
+<dd><p>Abstract method for plotting a scatter plot.
+Should be implemented by subclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultInteractivePlotting">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.core.plotting.base_plotting.</span></span><span class="sig-name descname"><span class="pre">DefaultInteractivePlotting</span></span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultInteractivePlotting"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultInteractivePlotting" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bluemath_tk.core.plotting.base_plotting.BasePlotting" title="bluemath_tk.core.plotting.base_plotting.BasePlotting"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePlotting</span></code></a></p>
+<p>Concrete implementation of BasePlotting with interactive plotting behaviors.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultInteractivePlotting.plot_line">
+<span class="sig-name descname"><span class="pre">plot_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultInteractivePlotting.plot_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultInteractivePlotting.plot_line" title="Link to this definition"></a></dt>
+<dd><p>Abstract method for plotting a line.
+Should be implemented by subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultInteractivePlotting.plot_map">
+<span class="sig-name descname"><span class="pre">plot_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">markers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultInteractivePlotting.plot_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultInteractivePlotting.plot_map" title="Link to this definition"></a></dt>
+<dd><p>Abstract method for plotting a map.
+Should be implemented by subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultInteractivePlotting.plot_scatter">
+<span class="sig-name descname"><span class="pre">plot_scatter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultInteractivePlotting.plot_scatter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultInteractivePlotting.plot_scatter" title="Link to this definition"></a></dt>
+<dd><p>Abstract method for plotting a scatter plot.
+Should be implemented by subclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.core.plotting.base_plotting.</span></span><span class="sig-name descname"><span class="pre">DefaultStaticPlotting</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'default'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultStaticPlotting"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bluemath_tk.core.plotting.base_plotting.BasePlotting" title="bluemath_tk.core.plotting.base_plotting.BasePlotting"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePlotting</span></code></a></p>
+<p>Concrete implementation of BasePlotting with static plotting behaviors.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.get_subplot">
+<span class="sig-name descname"><span class="pre">get_subplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">figsize</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultStaticPlotting.get_subplot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.get_subplot" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.get_subplots">
+<span class="sig-name descname"><span class="pre">get_subplots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultStaticPlotting.get_subplots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.get_subplots" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.plot_line">
+<span class="sig-name descname"><span class="pre">plot_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultStaticPlotting.plot_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.plot_line" title="Link to this definition"></a></dt>
+<dd><p>Abstract method for plotting a line.
+Should be implemented by subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.plot_map">
+<span class="sig-name descname"><span class="pre">plot_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultStaticPlotting.plot_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.plot_map" title="Link to this definition"></a></dt>
+<dd><p>Abstract method for plotting a map.
+Should be implemented by subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.plot_pie">
+<span class="sig-name descname"><span class="pre">plot_pie</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultStaticPlotting.plot_pie"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.plot_pie" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.plot_scatter">
+<span class="sig-name descname"><span class="pre">plot_scatter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultStaticPlotting.plot_scatter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.plot_scatter" title="Link to this definition"></a></dt>
+<dd><p>Abstract method for plotting a scatter plot.
+Should be implemented by subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.set_grid">
+<span class="sig-name descname"><span class="pre">set_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultStaticPlotting.set_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.set_grid" title="Link to this definition"></a></dt>
+<dd><p>Sets the grid for a given axis.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.set_title">
+<span class="sig-name descname"><span class="pre">set_title</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Plot</span> <span class="pre">Title'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultStaticPlotting.set_title"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.set_title" title="Link to this definition"></a></dt>
+<dd><p>Sets the title for a given axis.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.set_xlabel">
+<span class="sig-name descname"><span class="pre">set_xlabel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlabel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'X-axis'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultStaticPlotting.set_xlabel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.set_xlabel" title="Link to this definition"></a></dt>
+<dd><p>Sets the x-axis label for a given axis.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.set_xlim">
+<span class="sig-name descname"><span class="pre">set_xlim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xmax</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultStaticPlotting.set_xlim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.set_xlim" title="Link to this definition"></a></dt>
+<dd><p>Sets the x-axis limits for a given axis.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.set_ylabel">
+<span class="sig-name descname"><span class="pre">set_ylabel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylabel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Y-axis'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultStaticPlotting.set_ylabel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.set_ylabel" title="Link to this definition"></a></dt>
+<dd><p>Sets the y-axis label for a given axis.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.set_ylim">
+<span class="sig-name descname"><span class="pre">set_ylim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymax</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/base_plotting.html#DefaultStaticPlotting.set_ylim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.set_ylim" title="Link to this definition"></a></dt>
+<dd><p>Sets the y-axis limits for a given axis.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.templates">
+<span class="sig-name descname"><span class="pre">templates</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default':</span> <span class="pre">{'line':</span> <span class="pre">{'color':</span> <span class="pre">'blue',</span> <span class="pre">'line_style':</span> <span class="pre">'-'},</span> <span class="pre">'scatter':</span> <span class="pre">{'color':</span> <span class="pre">'red',</span> <span class="pre">'marker':</span> <span class="pre">'o',</span> <span class="pre">'size':</span> <span class="pre">10}}}</span></em><a class="headerlink" href="#bluemath_tk.core.plotting.base_plotting.DefaultStaticPlotting.templates" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.core.plotting.colors">
+<span id="bluemath-tk-core-plotting-colors-module"></span><h2>bluemath_tk.core.plotting.colors module<a class="headerlink" href="#module-bluemath_tk.core.plotting.colors" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.colors.GetFamsColors">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.core.plotting.colors.</span></span><span class="sig-name descname"><span class="pre">GetFamsColors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_fams</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/colors.html#GetFamsColors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.colors.GetFamsColors" title="Link to this definition"></a></dt>
+<dd><p>Choose colors or Interpolate custom colormap to number of waves families</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.colors.colormap_bathy">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.core.plotting.colors.</span></span><span class="sig-name descname"><span class="pre">colormap_bathy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/colors.html#colormap_bathy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.colors.colormap_bathy" title="Link to this definition"></a></dt>
+<dd><p>returns custom colormap for bathymetry plot</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.colors.colormap_spectra">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.core.plotting.colors.</span></span><span class="sig-name descname"><span class="pre">colormap_spectra</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/colors.html#colormap_spectra"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.colors.colormap_spectra" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.colors.colors_awt">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.core.plotting.colors.</span></span><span class="sig-name descname"><span class="pre">colors_awt</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/colors.html#colors_awt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.colors.colors_awt" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.colors.colors_dwt">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.core.plotting.colors.</span></span><span class="sig-name descname"><span class="pre">colors_dwt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_clusters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/colors.html#colors_dwt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.colors.colors_dwt" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.colors.colors_fams_3">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.core.plotting.colors.</span></span><span class="sig-name descname"><span class="pre">colors_fams_3</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/colors.html#colors_fams_3"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.colors.colors_fams_3" title="Link to this definition"></a></dt>
+<dd><p>custom colors for 3 waves families</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.colors.colors_interp">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.core.plotting.colors.</span></span><span class="sig-name descname"><span class="pre">colors_interp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_clusters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/colors.html#colors_interp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.colors.colors_interp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.colors.colors_mjo">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.core.plotting.colors.</span></span><span class="sig-name descname"><span class="pre">colors_mjo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/colors.html#colors_mjo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.colors.colors_mjo" title="Link to this definition"></a></dt>
+<dd><p>custom colors for MJO 25 categories</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.colors.get_cluster_colors">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.core.plotting.colors.</span></span><span class="sig-name descname"><span class="pre">get_cluster_colors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_clusters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/colors.html#get_cluster_colors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.colors.get_cluster_colors" title="Link to this definition"></a></dt>
+<dd><p>Choose colors or Interpolate custom colormap to number of clusters</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.core.plotting.colors.get_config_variables">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.core.plotting.colors.</span></span><span class="sig-name descname"><span class="pre">get_config_variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/core/plotting/colors.html#get_config_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.core.plotting.colors.get_config_variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-bluemath_tk.core.plotting">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bluemath_tk.core.plotting" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.core.data.html" class="btn btn-neutral float-left" title="bluemath_tk.core.data package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.datamining.html" class="btn btn-neutral float-right" title="bluemath_tk.datamining package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
