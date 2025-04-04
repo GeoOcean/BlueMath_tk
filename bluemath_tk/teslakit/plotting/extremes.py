@@ -48,11 +48,13 @@ def Plot_GEVParams(xda_gev_var, c_shape='bwr', c_other='hot_r', show=True):
 
         rr_pv = np.flipud(np.reshape(par_values,(ss,ss)).T)
 
-        if False:  # par == 'shape':
-            cl = [np.min(par_values), np.max(par_values)]
+        if par == 'shape':
+            max_value = max(abs(np.min(par_values)), abs(np.max(par_values)))
+            cl = [-max_value, max_value]
             if cl[0]>=0: cl[0]=-0.000000001
             if cl[1]<=0: cl[1]=+0.000000001
-            norm = DivergingNorm(vmin=cl[0], vcenter=0, vmax=cl[1])
+            # norm = DivergingNorm(vmin=cl[0], vcenter=0, vmax=cl[1])
+            norm = None
             cma = c_shape
 
         else:

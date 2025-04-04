@@ -394,7 +394,7 @@ class XWT(BlueMathModel, BlueMathPipeline):
         # Create figure with enough space at bottom for colorbar
         fig = plt.figure(figsize=(15, 16))
         gs = gridspec.GridSpec(
-            col_wrap + 1,
+            col_wrap,
             col_wrap,
             wspace=0.05,
             hspace=0.05,
@@ -445,7 +445,8 @@ class XWT(BlueMathModel, BlueMathPipeline):
                 transform=ax.transAxes,
             )
 
-        cbar_ax = fig.add_subplot(gs[-1, :])
+        # Add colorbar in little custom axes at the bottom
+        cbar_ax = fig.add_axes([0.3, 0.05, 0.4, 0.02])
         _cb = fig.colorbar(
             p,
             cax=cbar_ax,
