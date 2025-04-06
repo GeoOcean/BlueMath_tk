@@ -20,7 +20,7 @@ pip install bluemath-tk
 
 ## License
 
-This project is licensed under the MIT License. See the [license](LICENSE.txt) file for details
+This project is licensed under the MIT License. See the [license](LICENSE) file for details
 
 ## Project status
 
