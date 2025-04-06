@@ -1,0 +1,29 @@
+bluemath\_tk.teslakit.util package
+==================================
+
+Submodules
+----------
+
+bluemath\_tk.teslakit.util.operations module
+--------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.util.operations
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.util.time\_operations module
+--------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.util.time_operations
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.teslakit.util
+   :members:
+   :show-inheritance:
+   :undoc-members:

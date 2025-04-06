@@ -1,0 +1,18 @@
+bluemath\_tk.teslakit.numerical\_models package
+===============================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   bluemath_tk.teslakit.numerical_models.swan
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.teslakit.numerical_models
+   :members:
+   :show-inheritance:
+   :undoc-members:
