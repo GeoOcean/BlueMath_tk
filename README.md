@@ -18,15 +18,6 @@ The package also includes a set of utility functions for processing climate data
 pip install bluemath-tk
 ```
 
-## License
-
-This project is licensed under the BSD 3-Clause License.
-You are free to use, modify, and distribute this software for personal, academic, or commercial purposes, provided that:
-- The original copyright notice and license are retained.
-- The name of the authors and the GeoOcean group is not used to promote derived products without written permission.
-- The software is provided "as is", without warranty of any kind.
-See the [license](LICENSE) file for full details.
-
 ## Project status
 
 - UNDER DEVELOPMENT
