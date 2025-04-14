@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 from matplotlib import pyplot as plt
 
 from ..core.models import BlueMathModel
@@ -365,6 +366,81 @@ class BaseReduction(BlueMathModel):
     @abstractmethod
     def __init__(self) -> None:
         super().__init__()
+
+    @abstractmethod
+    def fit(self, *args, **kwargs) -> None:
+        """
+        Fits the model to the data.
+
+        Parameters
+        ----------
+        *args : list
+            Positional arguments.
+        **kwargs : dict
+            Keyword arguments.
+        """
+
+        pass
+
+    @abstractmethod
+    def transform(self, *args, **kwargs) -> xr.Dataset:
+        """
+        Transforms the data using the fitted model.
+
+        Parameters
+        ----------
+        *args : list
+            Positional arguments.
+        **kwargs : dict
+            Keyword arguments.
+
+        Returns
+        -------
+        xr.Dataset
+            The transformed data.
+        """
+
+        return xr.Dataset()
+
+    @abstractmethod
+    def fit_transform(self, *args, **kwargs) -> xr.Dataset:
+        """
+        Fits the model to the data and transforms it.
+
+        Parameters
+        ----------
+        *args : list
+            Positional arguments.
+        **kwargs : dict
+            Keyword arguments.
+
+        Returns
+        -------
+        xr.Dataset
+            The transformed data.
+        """
+
+        return xr.Dataset()
+
+    @abstractmethod
+    def inverse_transform(self, *args, **kwargs) -> xr.Dataset:
+        """
+        Inversely transforms the data using the fitted model.
+
+        Parameters
+        ----------
+        *args : list
+            Positional arguments.
+        **kwargs : dict
+            Keyword arguments.
+
+        Returns
+        -------
+        xr.Dataset
+            The inversely transformed data.
+        """
+
+        return xr.Dataset()
 
 
 class ClusteringComparator:

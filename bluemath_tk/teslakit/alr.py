@@ -823,7 +823,9 @@ class ALR_WRP(object):
         # calculate bmus persistences
         pers_hist = Persistences(bmus_values_hist.flatten())
         lsp = [Persistences(bs) for bs in bmus_values_sim.T.astype(int)]
-        pers_sim = {k: np.concatenate([x[k] for x in lsp]) for k in lsp[0].keys()}
+        pers_sim = {
+            k: np.concatenate([x.get(k, []) for x in lsp]) for k in lsp[0].keys()
+        }
 
         # fix datetime 64 dates
         if isinstance(bmus_dates_sim[0], np.datetime64):

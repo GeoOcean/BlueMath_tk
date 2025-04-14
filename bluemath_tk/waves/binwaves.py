@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import List, Tuple
 
@@ -110,12 +111,11 @@ def process_kp_coefficients(
             print(f"Error processing {input_spec_file} and {output_spec_file}")
             print(e)
 
-    return (
-        xr.concat(output_kp_list, dim="case_num")
-        .fillna(0.0)
-        .sortby("freq")
-        .sortby("dir")
-    )
+    # Concat files one by one
+    concatened_kp = output_kp_list[0]
+    for file in output_kp_list[1:]:
+        concatened_kp = xr.concat([concatened_kp, file], dim="case_num")
+    return concatened_kp.fillna(0.0).sortby("freq").sortby("dir")
 
 
 def reconstruc_spectra(
@@ -124,6 +124,7 @@ def reconstruc_spectra(
     num_workers: int = None,
     memory_limit: float = 0.5,
     chunk_sizes: dict = {"time": 24},
+    verbose: bool = False,
 ):
     """
     Reconstruct the onshore spectra using offshore spectra and kp coefficients.
@@ -140,6 +141,10 @@ def reconstruc_spectra(
         The memory limit to use. Default is 0.5.
     chunk_sizes : dict, optional
         The chunk sizes to use. Default is {"time": 24}.
+    verbose : bool, optional
+        Whether to print verbose output. Default is False.
+        If False, Dask logs are suppressed.
+        If True, Dask logs are shown.
 
     Returns
     -------
@@ -147,17 +152,28 @@ def reconstruc_spectra(
         The reconstructed onshore spectra dataset.
     """
 
+    if not verbose:
+        # Suppress Dask logs
+        logging.getLogger("distributed").setLevel(logging.ERROR)
+        logging.getLogger("distributed.client").setLevel(logging.ERROR)
+        logging.getLogger("distributed.scheduler").setLevel(logging.ERROR)
+        logging.getLogger("distributed.worker").setLevel(logging.ERROR)
+        logging.getLogger("distributed.nanny").setLevel(logging.ERROR)
+        # Also suppress bokeh and tornado logs that Dask uses
+        logging.getLogger("bokeh").setLevel(logging.ERROR)
+        logging.getLogger("tornado").setLevel(logging.ERROR)
+
     # Setup Dask client
     if num_workers is None:
-        num_workers = os.environ.get("BLUEMATH_NUM_WORKERS", 2)
+        num_workers = os.environ.get("BLUEMATH_NUM_WORKERS", 4)
     client = setup_dask_client(n_workers=num_workers, memory_limit=memory_limit)
 
     try:
         # Process with controlled chunks
         offshore_spectra_chunked = offshore_spectra.chunk(
-            {"time": chunk_sizes.get("time", 24)}
+            {"time": chunk_sizes.get("time", 24 * 7)}
         )
-        kp_coeffs_chunked = kp_coeffs.chunk({"site": 1})
+        kp_coeffs_chunked = kp_coeffs.chunk({"site": 10})
         with ProgressBar():
             onshore_spectra = (
                 (offshore_spectra_chunked * kp_coeffs_chunked).sum(dim="case_num")
@@ -250,7 +266,7 @@ def plot_selected_cases_grid(
     ax = fig.add_subplot(1, 1, 1, projection="polar")
 
     # prepare data
-    x = np.append(np.deg2rad(directions - 7.5), np.deg2rad(directions - 7.5)[0])
+    x = np.append(np.deg2rad(directions), np.deg2rad(directions)[0])
     y = np.append(0, frequencies)
     z = (
         np.array(range(len(frequencies) * len(directions)))

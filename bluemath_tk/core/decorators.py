@@ -1,5 +1,5 @@
 import functools
-from typing import List
+from typing import Any, Dict, List
 
 import pandas as pd
 import xarray as xr
@@ -120,6 +120,8 @@ def validate_data_kma(func):
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
         min_number_of_points: int = None,
+        max_number_of_iterations: int = 10,
+        normalize_data: bool = True,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -132,8 +134,21 @@ def validate_data_kma(func):
         if min_number_of_points is not None:
             if not isinstance(min_number_of_points, int) or min_number_of_points <= 0:
                 raise ValueError("Minimum number of points must be integer and > 0")
+        if (
+            not isinstance(max_number_of_iterations, int)
+            or max_number_of_iterations <= 0
+        ):
+            raise ValueError("Maximum number of iterations must be integer and > 0")
+        if not isinstance(normalize_data, bool):
+            raise TypeError("Normalize data must be a boolean")
         return func(
-            self, data, directional_variables, custom_scale_factor, min_number_of_points
+            self,
+            data,
+            directional_variables,
+            custom_scale_factor,
+            min_number_of_points,
+            max_number_of_iterations,
+            normalize_data,
         )
 
     return wrapper
@@ -241,6 +256,8 @@ def validate_data_pca(func):
         for variable, threshold in nan_threshold_to_drop.items():
             if not isinstance(threshold, float) or threshold < 0 or threshold > 1:
                 raise ValueError("Threshold must be a float between 0 and 1")
+        if not isinstance(scale_data, bool):
+            raise TypeError("Scale data must be a boolean, either True or False")
         return func(
             self,
             data,
@@ -328,6 +345,56 @@ def validate_data_rbf(func):
             target_custom_scale_factor,
             num_workers,
             iteratively_update_sigma,
+        )
+
+    return wrapper
+
+
+def validate_data_xwt(func):
+    """
+    Decorator to validate data in XWT class fit method.
+
+    Parameters
+    ----------
+    func : callable
+        The function to be decorated
+
+    Returns
+    -------
+    callable
+        The decorated function
+    """
+
+    @functools.wraps(func)
+    def wrapper(
+        self,
+        data: xr.Dataset,
+        fit_params: Dict[str, Dict[str, Any]] = {},
+        variable_to_sort_bmus: str = None,
+    ):
+        if not isinstance(data, xr.Dataset):
+            raise TypeError("Data must be an xarray Dataset")
+        if "time" not in data.dims:
+            raise ValueError(
+                'Time dimension with name "time" not found in data, rename and re-fit'
+            )  # TODO: check time is actually datetime
+        if not isinstance(fit_params, dict):
+            raise TypeError("Fit params must be a dict")
+        if "pca" not in fit_params:
+            raise ValueError("Fit params must contain PCA parameters")
+        if variable_to_sort_bmus is not None:
+            if (
+                not isinstance(variable_to_sort_bmus, str)
+                or variable_to_sort_bmus not in data.data_vars
+            ):
+                raise TypeError(
+                    "variable_to_sort_bmus must be a string and must exist in data variables"
+                )
+        return func(
+            self,
+            data,
+            fit_params,
+            variable_to_sort_bmus,
         )
 
     return wrapper

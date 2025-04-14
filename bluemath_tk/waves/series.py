@@ -101,7 +101,7 @@ def series_TMA(waves, depth):
               gamma   - Jonswap spectrum  peak parammeter
               warmup  - spin up time (s)
               deltat  - delta time (s)
-              tendc   - simulation period (s)
+              comptime   - simulation period (s)
 
     returns 2D numpy array with series time and elevation
     """
@@ -112,11 +112,11 @@ def series_TMA(waves, depth):
     gamma = waves["gamma"]
     warmup = waves["warmup"]
     deltat = waves["deltat"]
-    tendc = waves["tendc"]
+    comptime = waves["comptime"]
     g = 9.801
 
     # series duration
-    duration = int(tendc + warmup)
+    duration = int(comptime + warmup)
     time = np.arange(0, duration, deltat)
 
     # series frequency

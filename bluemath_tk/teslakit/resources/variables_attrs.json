@@ -1,0 +1,170 @@
+{
+    "longitude": 
+    {
+        "units": "degrees",
+        "short_name": "lon",
+        "long_name": "longitude"
+    },
+
+    "latitude": 
+    {
+        "units": "degrees",
+        "short_name": "lat",
+        "long_name": "latitude"
+    },
+
+    "hs": 
+    {
+        "units": "meters",
+        "short_name": "hs",
+        "long_name": "significant wave height"
+    },
+
+    "tp": 
+    {
+        "units": "s",
+        "short_name": "tp",
+        "long_name": "peak wave period"
+    },
+
+    "ss": 
+    {
+        "units": "meters",
+        "short_name": "ss",
+        "long_name": "storm surge"
+    },
+
+    "twl": 
+    {
+        "units": "meters",
+        "short_name": "twl",
+        "long_name": "total water level"
+    },
+
+    "dir": 
+    {
+        "units": "degrees",
+        "short_name": "dir",
+        "long_name": "waves swell direction"
+    },
+
+    "spr": 
+    {
+        "units": "degrees",
+        "short_name": "spr",
+        "long_name": "directional spread"
+    },
+
+    "mu": 
+    {
+        "units": "-",
+        "short_name": "mu",
+        "long_name": "-"
+    },
+
+    "tau": 
+    {
+        "units": "-",
+        "short_name": "tau",
+        "long_name": "-"
+    },
+
+    "waterlevel": 
+    {
+        "units": "meters",
+        "short_name": "wl",
+        "long_name": "water level"
+    },
+
+    "mmsl": 
+    {
+        "units": "meters",
+        "short_name": "mmsl",
+        "long_name": "monthly mean sea level"
+    },
+
+    "astro": 
+    {
+        "units": "meters",
+        "short_name": "astro",
+        "long_name": "astronomical tide"
+    },
+
+    "sst": 
+    {
+        "units": "celsius degrees",
+        "short_name": "sst",
+        "long_name": "sea surface temperature"
+    },
+
+    "mjo": 
+    {
+        "units": "",
+        "short_name": "mjo",
+        "long_name": "Madden-Julian Oscilation"
+    },
+
+    "rmm1": 
+    {
+        "units": "",
+        "short_name": "rmm1",
+        "long_name": "Madden-Julian Oscilation RMM1"
+    },
+
+    "rmm2": 
+    {
+        "units": "",
+        "short_name": "rmm2",
+        "long_name": "Madden-Julian Oscilation RMM2"
+    },
+
+    "phase": 
+    {
+        "units": "",
+        "short_name": "phase",
+        "long_name": "Madden-Julian Oscilation PHASE"
+    },
+
+    "pressure_min": 
+    {
+        "units": "mb",
+        "short_name": "prs_min",
+        "long_name": "storm track minimum central pressure"
+    },
+
+    "pressure_mean": 
+    {
+        "units": "mb",
+        "short_name": "prs_mean",
+        "long_name": "storm track mean central pressure"
+    },
+
+    "velocity_mean": 
+    {
+        "units": "km/h",
+        "short_name": "vmean",
+        "long_name": "storm track mean velocity"
+    },
+
+    "gamma": 
+    {
+        "units": "º",
+        "short_name": "gamma",
+        "long_name": "storm track parametrized: gamma"
+    },
+
+    "delta": 
+    {
+        "units": "º",
+        "short_name": "delta",
+        "long_name": "storm track parametrized: delta"
+    },
+
+    "category": 
+    {
+        "units": "",
+        "short_name": "cat",
+        "long_name": "storm category"
+    }
+}
+

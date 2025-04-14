@@ -18,10 +18,6 @@ The package also includes a set of utility functions for processing climate data
 pip install bluemath-tk
 ```
 
-## License
-
-This project is licensed under the MIT License. See the [license](LICENSE.txt) file for details
-
 ## Project status
 
 - UNDER DEVELOPMENT

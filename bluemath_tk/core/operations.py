@@ -95,7 +95,7 @@ def normalize(
         if custom_scale_factor.get(data_var):
             if custom_scale_factor.get(data_var)[0] > data_var_min:
                 if logger is not None:
-                    logger.warning(
+                    logger.info(
                         f"Proposed min custom scaler for {data_var} is bigger than datapoint"  # , using smallest datapoint
                     )
                 else:
@@ -107,7 +107,7 @@ def normalize(
             data_var_min = custom_scale_factor.get(data_var)[0]
             if custom_scale_factor.get(data_var)[1] < data_var_max:
                 if logger is not None:
-                    logger.warning(
+                    logger.info(
                         f"Proposed max custom scaler for {data_var} is lower than datapoint"  # , using biggest datapoint
                     )
                 else:
