@@ -265,6 +265,43 @@ class XWT(BlueMathModel, BlueMathPipeline):
 
         return natural_day_probs
 
+    @property
+    @check_model_is_fitted
+    def get_conditioned_probabilities(self) -> pd.DataFrame:
+        """
+        Calculate conditional probabilities P(X_t = j | X_{t-lag} = i)
+        """
+
+        # Convert to numpy array if not already
+        data = self.kma_bmus.values.flatten()
+
+        # Find unique values in the data
+        unique_values = np.unique(data)
+
+        # Create empty matrix for conditional probabilities
+        cond_probs = np.zeros((self.num_clusters, self.num_clusters))
+
+        # Count transitions
+        for i in range(len(data) - 1):
+            prev_idx = np.where(unique_values == data[i])[0][0]
+            next_idx = np.where(unique_values == data[i + 1])[0][0]
+            cond_probs[prev_idx, next_idx] += 1
+
+        # Normalize to get probabilities
+        row_sums = cond_probs.sum(axis=1, keepdims=True)
+        # Avoid division by zero
+        row_sums[row_sums == 0] = 1
+        cond_probs = cond_probs / row_sums
+
+        # Create DataFrame with labels
+        df_cond_probs = pd.DataFrame(
+            cond_probs,
+            index=[f"Cluster {v}" for v in unique_values],
+            columns=[f"Cluster {v}" for v in unique_values],
+        )
+
+        return df_cond_probs
+
     @validate_data_xwt
     def fit(
         self,
@@ -294,13 +331,16 @@ class XWT(BlueMathModel, BlueMathPipeline):
         self._data = data.copy()
 
         pca: PCA = self.steps.get("pca")
-        try:
-            _pcs_ds = pca.fit_transform(
-                data=data,
-                **fit_params.get("pca", {}),
-            )
-        except Exception as e:
-            raise XWTError(f"Error during PCA fitting: {e}")
+        if pca.pcs is None:
+            try:
+                _pcs_ds = pca.fit_transform(
+                    data=data,
+                    **fit_params.get("pca", {}),
+                )
+            except Exception as e:
+                raise XWTError(f"Error during PCA fitting: {e}")
+        else:
+            self.logger.info("PCA already fitted, skipping PCA fitting.")
 
         kma: KMA = self.steps.get("kma")
         self.num_clusters = kma.num_clusters

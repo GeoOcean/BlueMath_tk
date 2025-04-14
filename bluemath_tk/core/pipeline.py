@@ -17,8 +17,8 @@ class BlueMathPipeline:
         Parameters
         ----------
         steps : List[Tuple[str, Any]]
-            A list of tuples where each tuple contains the name of the step and
-            the model instance.
+            A list of tuples where each tuple contains the name of the step,
+            the model instance and the method to apply.
         """
 
         self.steps = steps
