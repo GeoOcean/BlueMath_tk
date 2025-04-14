@@ -52,6 +52,8 @@ class BaseModelWrapper(BlueMathModel):
         The thread for background execution.
     status_queue : Queue
         The queue to update the status.
+    sbatch_file_example : str
+        The example sbatch file.
 
     Methods
     -------
@@ -96,6 +98,8 @@ class BaseModelWrapper(BlueMathModel):
     postprocess_cases -> Union[xr.Dataset, List[xr.Dataset]]
         Postprocess the model output.
     """
+
+    sbatch_file_example = sbatch_file_example
 
     def __init__(
         self,
@@ -416,6 +420,11 @@ class BaseModelWrapper(BlueMathModel):
             Default is "one_by_one".
         cases_to_build : List[int], optional
             The list with the cases to build. Default is None.
+
+        Raises
+        ------
+        ValueError
+            If the mode is not valid.
         """
 
         if mode == "all_combinations":
@@ -452,7 +461,7 @@ class BaseModelWrapper(BlueMathModel):
 
         # Save an example sbatch file in the output directory
         with open(f"{self.output_dir}/sbatch_example.sh", "w") as file:
-            file.write(sbatch_file_example)
+            file.write(self.sbatch_file_example)
         self.logger.info(f"SBATCH example file generated in {self.output_dir}")
 
     def run_case(

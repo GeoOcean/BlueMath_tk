@@ -28,7 +28,8 @@ def write_array_in_file(array: np.ndarray, filename: str) -> None:
 
 def copy_files(src: str, dst: str) -> None:
     """
-    Copy file(s) from source to destination.
+    Copy binary file(s) from source to destination.
+    For non-binary files, use the file as a jinja template.
 
     Parameters
     ----------
@@ -41,9 +42,9 @@ def copy_files(src: str, dst: str) -> None:
     if os.path.isdir(src):
         os.makedirs(dst, exist_ok=True)
         for file in os.listdir(src):
-            with open(file, "r") as f:
+            with open(file, "rb") as f:
                 content = f.read()
-            with open(os.path.join(dst, file), "w") as f:
+            with open(os.path.join(dst, file), "wb") as f:
                 f.write(content)
     else:
         with open(src, "rb") as f:
