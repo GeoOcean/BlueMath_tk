@@ -549,6 +549,8 @@ class BlueMathModel(ABC):
 
         Warnings
         --------
+        - When using ThreadPoolExecutor, the function sometimes fails when reading / writing
+        to the same / different files. Might be the GIL (Global Interpreter Lock) in Python.
         - cpu_intensive = True does not work with non-pickable objects (Under development).
         """
 
