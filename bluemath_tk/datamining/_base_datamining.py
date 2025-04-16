@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 
 from ..core.models import BlueMathModel
 from ..core.plotting.base_plotting import DefaultStaticPlotting
@@ -328,6 +329,8 @@ class BaseClustering(BlueMathModel):
             sharex=False,
             sharey=False,
         )
+        if isinstance(axes, Axes):
+            axes = np.array([[axes]])
 
         # Gets colors for clusters and append to each nearest centroid
         colors_for_clusters = default_static_plot.get_list_of_colors_for_colormap(
