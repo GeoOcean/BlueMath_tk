@@ -22,6 +22,8 @@ class SwanModelWrapper(BaseModelWrapper):
         The default parameters type for the wrapper.
     available_launchers : dict
         The available launchers for the wrapper.
+    output_variables : dict
+        The output variables for the wrapper.
     """
 
     default_parameters = {

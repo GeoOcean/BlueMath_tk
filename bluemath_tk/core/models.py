@@ -5,7 +5,7 @@ import pickle
 import sys
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-from typing import Any, Callable, List, Tuple, TypeVar, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -28,8 +28,6 @@ from .operations import (
     normalize,
     standarize,
 )
-
-T = TypeVar("T")
 
 
 class BlueMathModel(ABC):
@@ -525,7 +523,7 @@ class BlueMathModel(ABC):
         num_workers: int,
         cpu_intensive: bool = False,
         **kwargs,
-    ) -> List[T]:
+    ) -> Dict[int, Any]:
         """
         Execute a function in parallel using concurrent.futures.
 
@@ -544,8 +542,10 @@ class BlueMathModel(ABC):
 
         Returns
         -------
-        List[T]
-            List of results from each function call
+        Dict[int, Any]
+            Dictionary with the results of the function execution.
+            The keys are the indices of the items in the original list.
+            The values are the results of the function execution.
 
         Warnings
         --------

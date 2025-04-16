@@ -81,5 +81,7 @@ if __name__ == "__main__":
     # Run the simulations
     swash_wrapper.run_cases(launcher="docker_serial", num_workers=5)
     # Post-process the results
-    swash_wrapper.postprocess_cases(output_vars=["Msetup", "Hrms", "Hfreqs"])
+    swash_wrapper.postprocess_cases(
+        output_vars=["Msetup", "Hrms", "Hfreqs"], force=True
+    )
     print("Done!")

@@ -528,3 +528,49 @@ def spatial_gradient(data: xr.DataArray) -> xr.DataArray:
     var_grad.attrs["name"] = "Gradient"
 
     return var_grad
+
+
+def nautical_to_mathematical(nautical_degrees: np.ndarray) -> np.ndarray:
+    """
+    Convert nautical degrees (0° at North, clockwise) to
+    mathematical degrees (0° at East, counterclockwise)
+
+    Parameters
+    ----------
+    nautical_degrees : np.ndarray
+        Directional angle in nautical convention
+
+    Returns
+    -------
+    np.ndarray
+        Directional angle in mathematical convention
+    """
+
+    # Convert nautical degrees to mathematical degrees
+    return (90 - nautical_degrees) % 360
+
+
+def mathematical_to_nautical(math_degrees: np.ndarray) -> np.ndarray:
+    """
+    Convert mathematical degrees (0° at East, counterclockwise) to
+    nautical degrees (0° at North, clockwise)
+
+    Parameters
+    ----------
+    math_degrees : float or array-like
+        Directional angle in mathematical convention
+
+    Returns
+    -------
+    np.ndarray
+        Directional angle in nautical convention
+    """
+
+    # Rotate the angle by 360 degrees
+    if math_degrees == 0:
+        reversed_angle = 0
+    else:
+        reversed_angle = 360 - math_degrees
+
+    # Convert mathematical degrees to nautical degrees
+    return (reversed_angle + 90) % 360

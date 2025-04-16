@@ -52,6 +52,8 @@ class BaseModelWrapper(BlueMathModel):
         The thread for background execution.
     status_queue : Queue
         The queue to update the status.
+    sbatch_file_example : str
+        The example sbatch file.
 
     Methods
     -------
@@ -79,6 +81,8 @@ class BaseModelWrapper(BlueMathModel):
         from the input dictionary.
     build_case -> None
         Build the input files for a case.
+    prebuild_case -> None
+        Build the input dir and context for a case.
     build_cases -> None
         Create the cases folders and render the input files.
     run_case -> None
@@ -96,6 +100,8 @@ class BaseModelWrapper(BlueMathModel):
     postprocess_cases -> Union[xr.Dataset, List[xr.Dataset]]
         Postprocess the model output.
     """
+
+    sbatch_file_example = sbatch_file_example
 
     def __init__(
         self,
@@ -403,8 +409,45 @@ class BaseModelWrapper(BlueMathModel):
 
         pass
 
+    def prebuild_case(
+        self,
+        case_num: dict,
+        case_context: str,
+        cases_name_format: callable,
+    ) -> None:
+        """
+        Build the input dir and context for a case.
+
+        Parameters
+        ----------
+        case_num : int
+            The case number.
+        case_context : dict
+            The case context.
+        """
+
+        case_context["case_num"] = case_num
+        case_dir = op.join(self.output_dir, cases_name_format(case_context))
+        self.cases_dirs.append(case_dir)
+        os.makedirs(case_dir, exist_ok=True)
+        case_context.update(self.fixed_parameters)
+        self.build_case(
+            case_context=case_context,
+            case_dir=case_dir,
+        )
+        for template_name in self.templates_name:
+            self.render_file_from_template(
+                template_name=template_name,
+                context=case_context,
+                output_filename=op.join(case_dir, template_name),
+            )
+
     def build_cases(
-        self, mode: str = "one_by_one", cases_to_build: List[int] = None
+        self,
+        mode: str = "one_by_one",
+        cases_to_build: List[int] = None,
+        cases_name_format: callable = lambda ctx: f"{ctx.get('case_num'):04}",
+        num_workers: int = None,
     ) -> None:
         """
         Create the cases folders and render the input files.
@@ -416,7 +459,20 @@ class BaseModelWrapper(BlueMathModel):
             Default is "one_by_one".
         cases_to_build : List[int], optional
             The list with the cases to build. Default is None.
+        cases_name_format : callable, optional
+            The function to format the case name. Default is a lambda function
+            that formats the case number with leading zeros.
+        num_workers : int, optional
+            The number of parallel workers. Default is None.
+
+        Raises
+        ------
+        ValueError
+            If the mode is not valid.
         """
+
+        if num_workers is None:
+            num_workers = self.num_workers
 
         if mode == "all_combinations":
             self.cases_context = self.create_cases_context_all_combinations()
@@ -430,29 +486,32 @@ class BaseModelWrapper(BlueMathModel):
         else:
             cases_to_build = list(range(len(self.cases_context)))
 
-        for case_num, case_context in zip(cases_to_build, self.cases_context):
-            case_context["case_num"] = case_num
-            case_dir = op.join(self.output_dir, f"{case_num:04}")
-            self.cases_dirs.append(case_dir)
-            os.makedirs(case_dir, exist_ok=True)
-            case_context.update(self.fixed_parameters)
-            self.build_case(
-                case_context=case_context,
-                case_dir=case_dir,
+        if num_workers > 1:
+            self.logger.debug(
+                f"Building cases in parallel. Number of workers: {num_workers}."
             )
-            for template_name in self.templates_name:
-                self.render_file_from_template(
-                    template_name=template_name,
-                    context=case_context,
-                    output_filename=op.join(case_dir, template_name),
+            _results = self.parallel_execute(
+                func=self.prebuild_case,
+                items=zip(cases_to_build, self.cases_context),
+                num_workers=num_workers,
+                cases_name_format=cases_name_format,
+            )
+        else:
+            self.logger.debug("Building cases sequentially.")
+            for case_num, case_context in zip(cases_to_build, self.cases_context):
+                self.prebuild_case(
+                    case_num=case_num,
+                    case_context=case_context,
+                    cases_name_format=cases_name_format,
                 )
+
         self.logger.info(
             f"{len(self.cases_dirs)} cases created in {mode} mode and saved in {self.output_dir}"
         )
 
         # Save an example sbatch file in the output directory
         with open(f"{self.output_dir}/sbatch_example.sh", "w") as file:
-            file.write(sbatch_file_example)
+            file.write(self.sbatch_file_example)
         self.logger.info(f"SBATCH example file generated in {self.output_dir}")
 
     def run_case(
@@ -537,7 +596,7 @@ class BaseModelWrapper(BlueMathModel):
                 launcher=launcher,
             )
         else:
-            self.logger.info(f"Running cases sequentially with launcher={launcher}.")
+            self.logger.debug(f"Running cases sequentially with launcher={launcher}.")
             for case_dir in cases_dir_to_run:
                 try:
                     self.run_case(
@@ -711,6 +770,9 @@ class BaseModelWrapper(BlueMathModel):
             The postprocessed file or the list with the postprocessed files.
         """
 
+        if force:
+            kwargs["force"] = force
+
         output_postprocessed_file_path = op.join(
             self.output_dir, "output_postprocessed.nc"
         )
@@ -768,6 +830,7 @@ class BaseModelWrapper(BlueMathModel):
                 # )
                 self.logger.info("Clean up completed.")
             return output_postprocessed
+
         except NotImplementedError as exc:
             self.logger.error(f"Error joining postprocessed files: {exc}")
             return postprocessed_files
