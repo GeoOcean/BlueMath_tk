@@ -1,0 +1,62 @@
+bluemath\_tk.teslakit.numerical\_models.swan package
+====================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   bluemath_tk.teslakit.numerical_models.swan.plots
+   bluemath_tk.teslakit.numerical_models.swan.test
+
+Submodules
+----------
+
+bluemath\_tk.teslakit.numerical\_models.swan.geo module
+-------------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.numerical_models.swan.geo
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.numerical\_models.swan.io module
+------------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.numerical_models.swan.io
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.numerical\_models.swan.storms module
+----------------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.numerical_models.swan.storms
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.numerical\_models.swan.temp\_plots module
+---------------------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.numerical_models.swan.temp_plots
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.numerical\_models.swan.wrap module
+--------------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.numerical_models.swan.wrap
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.teslakit.numerical_models.swan
+   :members:
+   :show-inheritance:
+   :undoc-members:

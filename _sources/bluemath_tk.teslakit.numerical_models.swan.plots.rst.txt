@@ -1,0 +1,37 @@
+bluemath\_tk.teslakit.numerical\_models.swan.plots package
+==========================================================
+
+Submodules
+----------
+
+bluemath\_tk.teslakit.numerical\_models.swan.plots.common module
+----------------------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.numerical_models.swan.plots.common
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.numerical\_models.swan.plots.config module
+----------------------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.numerical_models.swan.plots.config
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.numerical\_models.swan.plots.stat module
+--------------------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.numerical_models.swan.plots.stat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.teslakit.numerical_models.swan.plots
+   :members:
+   :show-inheritance:
+   :undoc-members:
