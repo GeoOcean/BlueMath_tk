@@ -1,109 +1,127 @@
+# TODO: Add OCSMESH to pyproject.toml
+
+
 import re
+from typing import Any, List, Tuple, Union
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
 import pyproj
 import rasterio
+import xarray as xr
+from jigsawpy.msh_t import jigsaw_msh_t
+from matplotlib.axes import Axes
 from matplotlib.tri import Triangulation
 from netCDF4 import Dataset
 from rasterio.mask import mask
-from shapely import Polygon
-from shapely.geometry import MultiPolygon, Point, mapping
+from shapely.geometry import MultiPolygon, Point, Polygon, mapping
 from shapely.ops import transform
 
 
-def plot_mesh_edge(msh_t, ax=None, **kwargs):
+def plot_mesh_edge(msh_t: jigsaw_msh_t, ax: Axes = None, **kwargs) -> Axes:
     """
     Plots the edges of a triangular mesh on a given set of axes.
 
     Parameters
     ----------
-    msh_t : object
+    msh_t : jigsaw_msh_t
         An object containing mesh data. It must have:
         - 'vert2['coord']' containing the coordinates of the mesh vertices
         - 'tria3['index']' containing the indices of the triangles
-    ax : matplotlib.axes.Axes, optional
-        The axes to plot on. If None, a new plot is created.
+    ax : Axes, optional
+        The axes to plot on. If None, a new plot is created. Default is None.
     **kwargs : keyword arguments, optional
-        Additional keyword arguments passed to the `triplot` function. These can be used to customize the plot (e.g., color, line style).
+        Additional keyword arguments passed to the `triplot` function.
+        These can be used to customize the plot (e.g., color, line style).
 
     Returns
     -------
-    ax : matplotlib.axes.Axes
+    ax : Axes
         The axes object with the plotted mesh edges.
     """
+
     crd = msh_t.vert2["coord"]
     cnn = msh_t.tria3["index"]
 
+    if ax is None:
+        _fig, ax = plt.subplots()
     ax.triplot(crd[:, 0], crd[:, 1], cnn, **kwargs)
-    plt.title("Mesh Design Criteria")
-    plt.xlabel("X UTM")
-    plt.ylabel("Y UTM")
+    ax.set_title("Mesh Design Criteria")
+    ax.set_xlabel("X UTM")
+    ax.set_ylabel("Y UTM")
+
     return ax
 
 
-def plot_mesh_vals(msh_t, ax=None, colorbar=True, clim=None, **kwargs):
+def plot_mesh_vals(
+    msh_t: jigsaw_msh_t,
+    ax: Axes = None,
+    colorbar: bool = True,
+    clim: tuple = None,
+    **kwargs,
+) -> Axes:
     """
     Plots the mesh values on a triangular mesh.
 
     Parameters
     ----------
-    msh_t : object
+    msh_t : jigsaw_msh_t
         An object containing the mesh data. It must have:
         - 'vert2['coord']' containing the coordinates of the mesh vertices.
         - 'tria3['index']' containing the indices of the triangles.
         - 'value' containing the mesh values to be plotted.
-
-    ax : matplotlib.axes.Axes, optional
+    ax : Axes, optional
         The axes to plot on. If None, a new plot is created. Default is None.
-
     colorbar : bool, optional
         Whether to display the colorbar. Default is True.
-
-    clim : tuple of float, optional
-        The limits for the color scale. If None, the limits are automatically determined from the data. Default is None.
-
+    clim : tuple, optional
+        The limits for the color scale. If None, the limits are automatically
+        determined from the data. Default is None.
     **kwargs : keyword arguments, optional
-        Additional keyword arguments passed to the `tricontourf` function. These can be used to customize the plot (e.g., color, line style).
+        Additional keyword arguments passed to the `tricontourf` function.
+        These can be used to customize the plot (e.g., color, line style).
 
     Returns
     -------
-    ax : matplotlib.axes.Axes
+    ax : Axes
         The axes object with the plotted mesh values.
     """
+
     crd = msh_t.vert2["coord"]
     cnn = msh_t.tria3["index"]
     val = msh_t.value.flatten()
 
-    if ax == None:
-        fig, ax = plt.subplots()
+    if ax is None:
+        _fig, ax = plt.subplots()
     mappable = ax.tricontourf(crd[:, 0], crd[:, 1], cnn, val, **kwargs)
     if colorbar:
         if clim is not None:
             mappable.set_clim(*clim)
-        cb = plt.colorbar(mappable)
+        _cb = plt.colorbar(mappable, ax=ax)
 
     return ax
 
 
-def plot_bati(rasters_path, polygon, ax):
+def plot_bati(rasters_path: List[str], polygon: Polygon, ax: Axes) -> Axes:
     """
     Plots bathymetric raster data and overlays a polygon on top of it.
 
     Parameters
     ----------
-    rasters_path : list of str
+    rasters_path : List[str]
         A list of file paths to the raster files.
-    polygon : shapely.geometry.Polygon
+    polygon : Polygon
         A polygon to overlay on the raster data.
-    ax : matplotlib.axes.Axes
+    ax : Axes
         The axes on which to plot the data.
 
     Returns
     -------
-    None
+    ax : Axes
+        The axes object with the plotted raster data and polygon.
     """
+
     data = []
     for path in rasters_path:
         with rasterio.open(path) as src:
@@ -130,32 +148,33 @@ def plot_bati(rasters_path, polygon, ax):
     ax.set_title("Raster")
 
     ax.plot(x_polygon, y_polygon, color="red", linewidth=1)
-
     ax.axis("equal")
 
+    return ax
 
-def clip_bati(rasters_path, output_path, domain, mas, UTM):
+
+def clip_bati(
+    rasters_path: List[str], output_path: str, domain: Polygon, mas: float, UTM: bool
+) -> None:
     """
-    Clips bathymetric raster data using a specified domain polygon and saves the clipped raster.
+    Clips bathymetric raster data using a specified domain polygon
+    and saves the clipped raster to the specified output path.
 
     Parameters
     ----------
-    rasters_path : list of str
+    rasters_path : List[str]
         A list of file paths to the raster files to be clipped.
     output_path : str
         The file path to save the clipped raster data.
-    domain : shapely.geometry.Polygon
+    domain : Polygon
         The domain polygon used to clip the rasters.
     mas : float
         A buffer factor applied to the domain polygon based on its area and length.
     UTM : bool
         If True, assumes the coordinate reference system is EPSG:4326;
         otherwise, assumes EPSG:32630 (UTM projection).
-
-    Returns
-    -------
-    None
     """
+
     original_polygon = domain.buffer(mas * domain.area / domain.length)
 
     if UTM:
@@ -187,22 +206,35 @@ def clip_bati(rasters_path, output_path, domain, mas, UTM):
         dest.write(out_image)
 
 
-def clip_bati_manning(rasters_path, output_path, domain, mas, UTM, manning):
+def clip_bati_manning(
+    rasters_path: List[str],
+    output_path: str,
+    domain: Polygon,
+    mas: float,
+    UTM: bool,
+    manning: float,
+) -> None:
     """
-    Clips bathymetric raster data using a specified domain polygon and applies Manning's coefficient.
+    Clips bathymetric raster data using a specified domain polygon and applies
+    Manning's coefficient.
 
-    Args:
-        rasters_path (list): A list of file paths to the raster files to be clipped.
-        output_path (str): The file path to save the clipped raster data.
-        domain (shapely.geometry.Polygon): The domain polygon used to clip the rasters.
-        mas (float): A buffer factor applied to the domain polygon based on its area and length.
-        UTM (bool): If True, assumes the coordinate reference system is EPSG:4326;
-                    otherwise, assumes EPSG:32630 (UTM projection).
-        manning (float): The Manning's coefficient to apply to the raster data.
-
-    Returns:
-        None
+    Parameters
+    ----------
+    rasters_path : List[str]
+        A list of file paths to the raster files to be clipped.
+    output_path : str
+        The file path to save the clipped raster data.
+    domain : Polygon
+        The domain polygon used to clip the rasters.
+    mas : float
+        A buffer factor applied to the domain polygon based on its area and length.
+    UTM : bool
+        If True, assumes the coordinate reference system is EPSG:4326;
+        otherwise, assumes EPSG:32630 (UTM projection).
+    manning : float
+        The Manning's coefficient to apply to the raster data.
     """
+
     original_polygon = domain.buffer(mas * domain.area / domain.length)
 
     if UTM:
@@ -235,22 +267,23 @@ def clip_bati_manning(rasters_path, output_path, domain, mas, UTM, manning):
         dest.write(out_image)
 
 
-def plot_poly(largest_polygon, final_polygon):
+def plot_poly(largest_polygon: Polygon, final_polygon: Polygon) -> Axes:
     """
     Plots two polygons on a map: the largest polygon and the final polygon.
 
     Parameters
     ----------
-    largest_polygon : shapely.geometry.Polygon
+    largest_polygon : Polygon
         The largest polygon to plot.
-    final_polygon : shapely.geometry.Polygon
+    final_polygon : Polygon
         The final polygon to plot.
 
     Returns
     -------
-    None
+    ax : Axes
+        The axes object with the plotted polygons.
     """
-    fig, ax = plt.subplots()
+
     exterior_points = list(largest_polygon.exterior.coords)
     interior_points = [list(interior.coords) for interior in largest_polygon.interiors]
     all_points = exterior_points + [
@@ -266,66 +299,78 @@ def plot_poly(largest_polygon, final_polygon):
     x1, y1 = zip(*all_points_1)
     x, y = zip(*all_points)
     xx, yy = largest_polygon.exterior.xy
-    plt.fill(xx, yy, alpha=0.5, fc="lightgrey", ec="black")
-    plt.scatter(x, y, color="red", s=1, label="Initial Polygon Points")
-    plt.scatter(x1, y1, color="black", s=1, label="Final Polygon Points")
-    plt.axis("equal")
-    plt.title("Polygon Domain")
-    plt.xlabel("Longitude")
-    plt.ylabel("Latitude")
-    plt.legend()
+
+    _fig, ax = plt.subplots()
+    ax.fill(xx, yy, alpha=0.5, fc="lightgrey", ec="black")
+    ax.scatter(x, y, color="red", s=1, label="Initial Polygon Points")
+    ax.scatter(x1, y1, color="black", s=1, label="Final Polygon Points")
+    ax.axis("equal")
+    ax.set_title("Polygon Domain")
+    ax.set_xlabel("Longitude")
+    ax.set_ylabel("Latitude")
+    ax.legend()
+
+    return ax
 
 
-def plot_boundaries(mesh, ax):
+def plot_boundaries(mesh: jigsaw_msh_t, ax: Axes) -> Axes:
     """
     Plots the boundaries of a mesh, including ocean, interior (islands), and land areas.
 
     Parameters
     ----------
-    mesh : object
+    mesh : jigsaw_msh_t
         The mesh object containing the mesh data and boundaries.
-    ax : matplotlib.axes.Axes
+    ax : Axes
         The axes on which to plot the boundaries.
 
     Returns
     -------
-    None
+    ax : Axes
+        The axes object with the plotted boundaries.
     """
+
     plot_mesh_edge(mesh.msh_t, ax=ax, lw=0.2, color="c")
+
     try:
         mesh.boundaries.ocean().plot(ax=ax, color="b", label="Ocean")
-    except:
-        print("No Ocean boundaries available")
+    except Exception as e:
+        print(f"No Ocean boundaries available. Error: {e}")
     try:
         mesh.boundaries.interior().plot(ax=ax, color="g", label="Islands")
-    except:
-        print("No Islands boundaries available")
+    except Exception as e:
+        print(f"No Islands boundaries available. Error: {e}")
     try:
         mesh.boundaries.land().plot(ax=ax, color="r", label="Land")
-    except:
-        print("No Land boundaries available")
+    except Exception as e:
+        print(f"No Land boundaries available. Error: {e}")
+
     ax.legend()
     ax.axis("equal")
     ax.set_title("Mesh Boundaries")
     ax.set_xlabel("X UTM")
     ax.set_ylabel("Y UTM")
 
+    return ax
 
-def plot_bati_interp(mesh, ax):
+
+def plot_bati_interp(mesh: jigsaw_msh_t, ax: Axes) -> Axes:
     """
     Plots the interpolated bathymetry data on a mesh.
 
     Parameters
     ----------
-    mesh : object
+    mesh : jigsaw_msh_t
         The mesh object containing the bathymetry values and mesh structure.
-    ax : matplotlib.axes.Axes
+    ax : Axes
         The axes on which to plot the interpolated bathymetry.
 
     Returns
     -------
-    None
+    ax : Axes
+        The axes object with the plotted interpolated bathymetry.
     """
+
     im = ax.tricontourf(
         Triangulation(
             mesh.msh_t.vert2["coord"][:, 0],
@@ -341,25 +386,29 @@ def plot_bati_interp(mesh, ax):
     cbar = plt.colorbar(im, ax=ax)
     cbar.set_label("Depth (m)")
 
+    return ax
 
-def simply_poly(base_shape, simpl_UTM, UTM_zone):
+
+def simply_poly(base_shape: Polygon, simpl_UTM: float, UTM_zone: Any) -> Polygon:
     """
     Simplifies the input polygon, optionally transforming it to UTM coordinates for simplification.
 
     Parameters
     ----------
-    base_shape : shapely.geometry.Polygon
+    base_shape : Polygon
         The polygon to be simplified.
     simpl_UTM : float
         The tolerance for simplification. A higher value results in greater simplification.
-    UTM_zone : int or None
-        The UTM zone for transformation. If None, no transformation is done, and the input shape is simplified in its current coordinate system.
+    UTM_zone : Any
+        The UTM zone for transformation. If None, no transformation is done, and the input shape
+        is simplified in its current coordinate system.
 
     Returns
     -------
-    shapely.geometry.Polygon
+    Polygon
         The simplified polygon.
     """
+
     if UTM_zone:
         transformer_to_utm = pyproj.Transformer.from_proj(
             pyproj.Proj(proj="latlong", datum="WGS84"),
@@ -380,27 +429,32 @@ def simply_poly(base_shape, simpl_UTM, UTM_zone):
         )
     else:
         simple_shape = base_shape.simplify(simpl_UTM)
+
     return simple_shape
 
 
-def remove_islands(main_polygon, threshold_area, UTM_zone):
+def remove_islands(
+    main_polygon: Union[Polygon, MultiPolygon], threshold_area: float, UTM_zone: Any
+) -> Union[Polygon, MultiPolygon]:
     """
     Removes small islands (interior polygons) from a given polygon based on a threshold area.
 
     Parameters
     ----------
-    main_polygon : shapely.geometry.Polygon or shapely.geometry.MultiPolygon
+    main_polygon : Union[Polygon, MultiPolygon]
         The main polygon which may contain smaller islands (interior polygons).
     threshold_area : float
-        The minimum area required for an interior polygon to be retained. Islands with smaller areas are removed.
+        The minimum area required for an interior polygon to be retained.
+        Islands with smaller areas are removed.
     UTM_zone : int
         The UTM zone to which the coordinates will be transformed for accurate area calculation.
 
     Returns
     -------
-    shapely.geometry.Polygon or shapely.geometry.MultiPolygon
+    Union[Polygon, MultiPolygon]
         The resulting polygon with small islands removed.
     """
+
     transformer_to_utm = pyproj.Transformer.from_proj(
         pyproj.Proj(proj="latlong", datum="WGS84"),
         pyproj.Proj(proj="utm", zone=UTM_zone, ellps="WGS84"),
@@ -437,15 +491,15 @@ def remove_islands(main_polygon, threshold_area, UTM_zone):
     return result_polygon_latlon
 
 
-def is_any_point_outside(triangle_coords, poly):
+def is_any_point_outside(triangle_coords: List[tuple], poly: Polygon) -> bool:
     """
     Checks if any of the points (vertices) of a triangle are outside a given polygon.
 
     Parameters
     ----------
-    triangle_coords : list of tuples
+    triangle_coords : List[tuple]
         Coordinates of the triangle vertices [(x1, y1), (x2, y2), (x3, y3)].
-    poly : shapely.geometry.Polygon
+    poly : Polygon
         The polygon within which the triangle points should be checked.
 
     Returns
@@ -453,25 +507,27 @@ def is_any_point_outside(triangle_coords, poly):
     bool
         True if any point is outside the polygon, False if all points are inside.
     """
-    return any(Point(coord).within(poly) == False for coord in triangle_coords)
+
+    return any(not Point(coord).within(poly) for coord in triangle_coords)
 
 
-def circumcenter(triangles_coords):
+def circumcenter(triangles_coords: np.ndarray) -> np.ndarray:
     """
     Calculates the circumcenter of a triangle given its vertex coordinates.
 
     Parameters
     ----------
-    triangles_coords : numpy.ndarray
+    triangles_coords : np.ndarray
         A 2D array of shape (n, 3, 2), where each row represents the coordinates
         of a triangle's three vertices.
 
     Returns
     -------
-    numpy.ndarray
-        A 2D array of shape (n, 2), where each row represents the (x, y) coordinates of the circumcenter
-        for each triangle.
+    np.ndarray
+        A 2D array of shape (n, 2), where each row represents the (x, y) c
+        oordinates of the circumcenter for each triangle.
     """
+
     triangles_coords = np.array(triangles_coords)
 
     x1, y1 = triangles_coords[:, 0, 0], triangles_coords[:, 0, 1]
@@ -497,10 +553,7 @@ def circumcenter(triangles_coords):
     return np.vstack((x_circumcenter, y_circumcenter)).T
 
 
-### Delft3DFM
-
-
-def read_adcirc_grd(grd_file):
+def read_adcirc_grd(grd_file: str) -> Tuple[np.ndarray, np.ndarray, List[str]]:
     """
     Reads the ADCIRC grid file and returns the node and element data.
 
@@ -511,14 +564,16 @@ def read_adcirc_grd(grd_file):
 
     Returns
     -------
-    tuple
+    Tuple[np.ndarray, np.ndarray, List[str]]
         A tuple containing:
-        - Nodes (numpy.ndarray): An array of shape (nnodes, 3) containing the coordinates of each node.
-        - Elmts (numpy.ndarray): An array of shape (nelmts, 3) containing the element connectivity,
+        - Nodes (np.ndarray): An array of shape (nnodes, 3) containing the coordinates of each node.
+        - Elmts (np.ndarray): An array of shape (nelmts, 3) containing the element connectivity,
             with node indices adjusted (decremented by 1).
+        - lines (List[str]): The remaining lines in the file after reading the nodes and elements.
     """
+
     with open(grd_file, "r") as f:
-        header0 = f.readline()
+        _header0 = f.readline()
         header1 = f.readline()
         header_nums = list(map(float, header1.split()))
         nelmts = int(header_nums[0])
@@ -531,20 +586,22 @@ def read_adcirc_grd(grd_file):
     return Nodes, Elmts, lines
 
 
-def calculate_edges(Elmts):
+def calculate_edges(Elmts: np.ndarray) -> np.ndarray:
     """
     Calculates the unique edges from the given triangle elements.
 
     Parameters
     ----------
-    Elmts : numpy.ndarray
+    Elmts : np.ndarray
         A 2D array of shape (nelmts, 3) containing the node indices for each triangle element.
 
     Returns
     -------
-    numpy.ndarray
-        A 2D array of shape (n_edges, 2) containing the unique edges, each represented by a pair of node indices.
+    np.ndarray
+        A 2D array of shape (n_edges, 2) containing the unique edges,
+        each represented by a pair of node indices.
     """
+
     perc = 0
     Links = np.zeros((len(Elmts) * 3, 2), dtype=int)
     tel = 0
@@ -564,7 +621,7 @@ def calculate_edges(Elmts):
     return Links_unique
 
 
-def adcirc2netcdf(Path_grd, netcdf_path):
+def adcirc2netcdf(Path_grd: str, netcdf_path: str) -> None:
     """
     Converts ADCIRC grid data to a NetCDF Delft3DFM format.
 
@@ -575,11 +632,9 @@ def adcirc2netcdf(Path_grd, netcdf_path):
     netcdf_path : str
         Path where the resulting NetCDF file will be saved.
 
-    Returns
-    -------
-    None
-        The function saves the converted data as a NetCDF file at the specified location.
+    TODO: Check the whole function for correctness and completeness.
     """
+
     Nodes_full, Elmts_full, lines = read_adcirc_grd(Path_grd)
     NODE = Nodes_full[:, [1, 2, 3]]
     EDGE = Elmts_full[:, [2, 3, 4]]
@@ -653,11 +708,11 @@ def adcirc2netcdf(Path_grd, netcdf_path):
     num_edges = edges.shape[0]
 
     with Dataset(netcdf_path, "w", format="NETCDF4") as dataset:
-        mesh2d_nNodes = dataset.createDimension("mesh2d_nNodes", num_nodes)
-        mesh2d_nEdges = dataset.createDimension("mesh2d_nEdges", num_edges)
-        mesh2d_nFaces = dataset.createDimension("mesh2d_nFaces", num_faces)
-        mesh2d_nMax_face_nodes = dataset.createDimension("mesh2d_nMax_face_nodes", 3)
-        two_dim = dataset.createDimension("Two", 2)
+        _mesh2d_nNodes = dataset.createDimension("mesh2d_nNodes", num_nodes)
+        _mesh2d_nEdges = dataset.createDimension("mesh2d_nEdges", num_edges)
+        _mesh2d_nFaces = dataset.createDimension("mesh2d_nFaces", num_faces)
+        _mesh2d_nMax_face_nodes = dataset.createDimension("mesh2d_nMax_face_nodes", 3)
+        _two_dim = dataset.createDimension("Two", 2)
 
         mesh2d_node_x = dataset.createVariable(
             "mesh2d_node_x", "f8", ("mesh2d_nNodes",)
@@ -810,13 +865,14 @@ def adcirc2netcdf(Path_grd, netcdf_path):
         mesh2d.edge_face_connectivity = "mesh2d_edge_faces"
 
 
-def decode_open_boundary_data(data):
+def decode_open_boundary_data(data: List[str]) -> dict:
     """
-    Decodes open boundary data from a given list of strings and returns a dictionary containing boundary information.
+    Decodes open boundary data from a given list of strings and
+    returns a dictionary containing boundary information.
 
     Parameters
     ----------
-    data : list of str
+    data : List[str]
         List of strings containing boundary data.
 
     Returns
@@ -824,12 +880,8 @@ def decode_open_boundary_data(data):
     dict
         A dictionary with keys corresponding to open boundary identifiers (e.g., 'open_boundary_1')
         and values as lists of integers representing boundary node indices.
-
-    Raises
-    ------
-    ValueError
-        If there is an error in reading or parsing the data.
     """
+
     N_obd = int(data[0].split("!")[0])
     boundary_info = {}
     key = data[2][-16:-1]
@@ -849,18 +901,22 @@ def decode_open_boundary_data(data):
             key = match.group(0)
             boundary_info[key] = []
 
+    return boundary_info
 
-def extract_pos_nearest_points_regular(xds_grid, lon_points, lat_points):
+
+def extract_pos_nearest_points_regular(
+    xds_grid: xr.Dataset, lon_points: np.ndarray, lat_points: np.ndarray
+) -> Tuple[int, int]:
     """
     Find the closest grid point indices for given longitude and latitude points.
 
     Parameters
     ----------
-    xds_grid : xarray.Dataset
+    xds_grid : xr.Dataset
         Dataset containing grid data (lon_z, lat_z, hz).
-    lon_points : list or numpy.ndarray
+    lon_points : np.ndarray
         Longitudes of interest.
-    lat_points : list or numpy.ndarray
+    lat_points : np.ndarray
         Latitudes of interest.
 
     Returns
@@ -872,9 +928,10 @@ def extract_pos_nearest_points_regular(xds_grid, lon_points, lat_points):
 
     Notes
     -----
-    Converts negative longitudes by adding 360 and uses squared differences to find the nearest grid point.
-    Assumes grid is regularly spaced.
+    Converts negative longitudes by adding 360 and uses squared differences to find
+    the nearest grid point. Assumes grid is regularly spaced.
     """
+
     if lon_points < 0:
         lon_points = lon_points + 360
 

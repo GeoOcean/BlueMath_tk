@@ -25,6 +25,8 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
+    "requests",
+    "xtarfile",
     "numpy",
     "pandas",
     "xarray",
@@ -52,9 +54,14 @@ dependencies = [
 [project.optional-dependencies]
 
 docs = ["sphinx", "sphinx-rtd-theme", "jupyter-sphinx", "myst-parser"]
-deep = ["tensorflow", "keras"]
-num-models = ["hydromt-sfincs"]
 waves = ["wavespectra", "olas"]
+num-models = ["hydromt-sfincs"]
+ocsmesh = ["bluemath-tk-ocsmesh-setup"]
+deep = ["tensorflow", "keras"]
+
+[project.scripts]
+
+bluemath-tk-ocsmesh-setup = "bluemath_tk.setup.ocsmesh:post_install"
 
 [project.urls]
 

@@ -19,9 +19,27 @@ def cleanup_skewed_el_M(
     up_bound_tri: float = 175.0,
     lw_bound_quad: float = 10.0,
     up_bound_quad: float = 179.0,
-) -> jigsaw_msh_t:
+) -> np.ndarray:
+    """
+    [MODIFIED]
+    Removes elements based on their internal angles
+
+    Parameters
+    ----------
+    msht : jigsawpy.msh_t.jigsaw_msh_t
+    lw_bound_tri : default=1
+    up_bound_tri : default=175
+    lw_bound_quad : default=10
+    up_bound_quad : default=179
+
+    Returns
+    -------
+    np.array
+        internal angles of each element
+    """
+
     tria = None
-    quad = None
+    _quad = None
     ang_tri, ang_quad = ocsmesh.utils.calc_el_angles(mesh)
     if len(ang_tri) > 0:
         ang_chk_tri = np.logical_or(
@@ -38,6 +56,24 @@ def cleanup_skewed_el_M(
 def clip_elements_by_index_M(
     msht: jigsaw_msh_t, tria=None, quad=None, inverse: bool = False
 ) -> jigsaw_msh_t:
+    """
+    [MODIFIED]
+    Adapted from: https://github.com/SorooshMani-NOAA/river-in-mesh/tree/main/river_in_mesh/utils
+
+    Parameters
+    ----------
+    msht : jigsawpy.msh_t.jigsaw_msh_t
+        mesh to beclipped
+
+    tria or quad: array with the element ids to be removed
+    inverse = default:False
+
+    Returns
+    -------
+    jigsaw_msh_t
+        mesh without skewed elements
+    """
+
     new_msht = deepcopy(msht)
 
     rm_dict = {"tria3": tria, "quad4": quad}
@@ -77,6 +113,10 @@ def clip_elements_by_index_M(
 
 
 def cleanup_isolates_M(mesh):
+    """
+    Modify cleanup_isolates in OCSMesh lib to make it work.
+    """
+
     used_old_idx = np.array([], dtype="int64")
     for etype in ELEM_2D_TYPES:
         elem_idx = getattr(mesh.msh_t, etype)["index"].flatten()
@@ -104,6 +144,12 @@ def cleanup_isolates_M(mesh):
 
 
 def cleanup_pinched_nodes_M(mesh):
+    """
+    Modify cleanup_pinched_nodes in OCSMesh lib to make it work.
+    """
+    # Older function: computationally more expensive and missing some
+    # nodes
+
     _inner_ring_collection = ocsmesh.utils.inner_ring_collection(mesh)
     all_nodes = []
     for inner_rings in _inner_ring_collection.values():
@@ -116,7 +162,11 @@ def cleanup_pinched_nodes_M(mesh):
 
 
 def put_id_tags_M(mesh):
+    """
+    Modify put_id_tags in OCSMesh lib to make it work.
+    """
     # start enumerating on 1 to avoid issues with indexing on fortran models
+
     mesh.msh_t.vert2 = np.array(
         [(coord, id + 1) for id, coord in enumerate(mesh.vert2["coord"])],
         dtype=jigsaw_msh_t.VERT2_t,
@@ -136,6 +186,10 @@ def put_id_tags_M(mesh):
 
 
 def finalize_mesh_M(mesh, sieve_area=None):
+    """
+    Modify finalize_mesh in OCSMesh lib to make it work.
+    """
+
     cleanup_isolates_M(mesh)
 
     while True:
@@ -168,6 +222,10 @@ def finalize_mesh_M(mesh, sieve_area=None):
 
 
 def get_mesh_polygons_M(mesh):
+    """
+    Modify get_mesh_polygons in OCSMesh lib to make it work.
+    """
+
     elm_polys = []
     for elm_type in ELEM_2D_TYPES:
         elems = getattr(mesh.msh_t, elm_type)["index"]
@@ -181,7 +239,9 @@ def get_mesh_polygons_M(mesh):
 
 
 def cleanup_duplicates_M(mesh):
-    """Cleanup duplicate nodes and elements
+    """
+    [MODIFIED]
+    Cleanup duplicate nodes and elements
 
     Notes
     -----
@@ -224,6 +284,10 @@ def clip_mesh_by_vertex_M(
     inverse: bool = False,
     in_place: bool = False,
 ) -> jigsaw_msh_t:
+    """
+    Modify clip_mesh_by_vertex in OCSMesh lib to make it work.
+    """
+
     if mesh.msh_t.mshID == "euclidean-mesh" and mesh.msh_t.ndims == 2:
         coord = mesh.vert2["coord"]
 
