@@ -2,8 +2,7 @@
 Project: BlueMath_tk
 Sub-Module: predictor
 Author: GeoOcean Research Group, Universidad de Cantabria
-Creation Date: 19 March 2024
-License: MIT
+Creation Date: 19 March 2025
 Repository: https://github.com/GeoOcean/BlueMath_tk.git
 Status: Under development (Working)
 """
