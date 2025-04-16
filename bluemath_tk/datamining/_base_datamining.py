@@ -243,6 +243,8 @@ class BaseClustering(BlueMathModel):
             sharex=False,
             sharey=False,
         )
+        if isinstance(axes, Axes):
+            axes = np.array([[axes]])
 
         for c1, v1 in enumerate(variables_names[1:]):
             for c2, v2 in enumerate(variables_names[:-1]):
