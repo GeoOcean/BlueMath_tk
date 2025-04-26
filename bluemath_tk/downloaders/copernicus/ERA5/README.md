@@ -29,25 +29,31 @@ The Reanalysis ERA5 single levels dataset has the following characteristics:
 
 These are the variables currently available for download. If a new variable is required, it MUST be added to the `ERA5_config.json` file, and then to the code or crontab downloading the files.
 
-| name    | long_name                                           | units   | type  |
-| ------- | --------------------------------------------------- | ------- | ----- |
-| swh     | Significant height of combined wind waves and swell | m       | ocean |
-| pp1d    | Peak wave period                                    | s       | ocean |
-| mwp     | Mean wave period                                    | s       | ocean |
-| mwd     | Mean wave direction                                 | degrees | ocean |
-| shww    | Significant height of wind waves                    | m       | ocean |
-| mpww    | Mean period of wind waves                           | s       | ocean |
-| mdww    | Mean direction of wind waves                        | degrees | ocean |
-| dwww    | Wave spectral directional width for wind waves      | degrees | ocean |
-| p140121 | Significant wave height of first swell partition    | m       | ocean |
-| p140124 | Significant wave height of second swell partition   | m       | ocean |
-| p140127 | Significant wave height of third swell partition    | m       | ocean |
-| p140123 | Mean wave period of first swell partition           | s       | ocean |
-| p140126 | Mean wave period of second swell partition          | s       | ocean |
-| p140129 | Mean wave period of third swell partition           | s       | ocean |
-| p140122 | Mean wave direction of first swell partition        | degrees | ocean |
-| p140125 | Mean wave direction of second swell partition       | degrees | ocean |
-| p140128 | Mean wave direction of third swell partition        | degrees | ocean |
+| name    | long_name                                           | units         | type  |
+| ------- | --------------------------------------------------- | ------------- | ----- |
+| swh     | Significant height of combined wind waves and swell | m             | ocean |
+| pp1d    | Peak wave period                                    | s             | ocean |
+| mwp     | Mean wave period                                    | s             | ocean |
+| mwd     | Mean wave direction                                 | degrees       | ocean |
+| shww    | Significant height of wind waves                    | m             | ocean |
+| mpww    | Mean period of wind waves                           | s             | ocean |
+| mdww    | Mean direction of wind waves                        | degrees       | ocean |
+| dwww    | Wave spectral directional width for wind waves      | degrees       | ocean |
+| p140121 | Significant wave height of first swell partition    | m             | ocean |
+| p140124 | Significant wave height of second swell partition   | m             | ocean |
+| p140127 | Significant wave height of third swell partition    | m             | ocean |
+| p140123 | Mean wave period of first swell partition           | s             | ocean |
+| p140126 | Mean wave period of second swell partition          | s             | ocean |
+| p140129 | Mean wave period of third swell partition           | s             | ocean |
+| p140122 | Mean wave direction of first swell partition        | degrees       | ocean |
+| p140125 | Mean wave direction of second swell partition       | degrees       | ocean |
+| p140128 | Mean wave direction of third swell partition        | degrees       | ocean |
+| mzl     | Mean zero-crossing wave period                      | s             | ocean |
+| mbathy  | Model bathymetry                                    | m             | ocean |
+| wsk     | Wave spectral kurtosis                              | dimensionless | ocean |
+| wsp     | Wave spectral peakedness                            | dimensionless | ocean |
+| wss     | Wave spectral skewness                              | dimensionless | ocean |
+| wsdw    | Wave spectral directional width                     | degrees       | ocean |
 
 These variables represent different atmospheric, ocean-wave, and land-surface quantities that are provided by the ERA5 dataset. Each variable has a corresponding path that specifies where the data is located within the dataset.
 
@@ -57,7 +63,26 @@ For more information and to access the dataset, click [here](https://cds.climate
 
 To download the Reanalysis ERA5 single levels dataset, you can use the following scripts:
 
-1. Python script: `ERA5_download.py`
+1. Main Python script: `copernicus_downloader.py`.
+
+```python
+from bluemath_tk.downloaders.copernicus.copernicus_downloader import CopernicusDownloader
+
+copernicus_downloader = CopernicusDownloader(
+    product="ERA5",
+    base_path_to_download="/path/to/Copernicus/",  # Will be created if not available
+    token=None,
+    check=True,
+)
+result = copernicus_downloader.download_data_era5(
+    variables=["swh"],
+    years=["2020"],
+    months=["01", "03"],
+)
+print(result)
+```
+
+2. Python script: `ERA5_download.py`.
 
 This script downloads ERA5 reanalysis data for multiple variables and saves them as NetCDF files.
 
@@ -97,7 +122,7 @@ Examples:
     era5_download.py --show-info
 ```
 
-2. Bash scripts: `bash_ERA5_download.sh and qsub_ERA5_download.sh` in [gitlab](https://gitlab.com/geoocean/datahub/datahub-scripts/-/tree/main/ERA5/launchers?ref_type=heads).
+3. Bash scripts: `bash_ERA5_download.sh and qsub_ERA5_download.sh` in [gitlab](https://gitlab.com/geoocean/datahub/datahub-scripts/-/tree/main/ERA5/launchers?ref_type=heads).
 
 This script creates and submits jobs to download several datasets simultaneously.
 

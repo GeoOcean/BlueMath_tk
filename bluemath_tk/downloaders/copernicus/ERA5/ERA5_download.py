@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# MIGHT NOT WORK perfectly due to changes in CopernicusDownloader!
+
 """
 Usage: era5_download.py YEARS MONTHS [--var=<var>] [--base-path=<base-path>] [--token=<token>] [--debug] [--check] [--force]
 era5_download.py (-h | --help | --version)

@@ -226,6 +226,54 @@
             "type": "ocean",
             "units": "degrees",
             "dataset": "reanalysis-era5-single-levels"
+        },
+        "mzl": {
+            "cds_name": "mean_zero_crossing_wave_period",
+            "long_name": "Mean zero-crossing wave period",
+            "nc_name": "mzl",
+            "type": "ocean",
+            "units": "s",
+            "dataset": "reanalysis-era5-single-levels"
+        },
+        "mbathy": {
+            "cds_name": "model_bathymetry",
+            "long_name": "Model bathymetry",
+            "nc_name": "mbathy",
+            "type": "ocean",
+            "units": "m",
+            "dataset": "reanalysis-era5-single-levels"
+        },
+        "wsk": {
+            "cds_name": "wave_spectral_kurtosis",
+            "long_name": "Wave spectral kurtosis",
+            "nc_name": "wsk",
+            "type": "ocean",
+            "units": "dimensionless",
+            "dataset": "reanalysis-era5-single-levels"
+        },
+        "wsp": {
+            "cds_name": "wave_spectral_peakedness",
+            "long_name": "Wave spectral peakedness",
+            "nc_name": "wsp",
+            "type": "ocean",
+            "units": "dimensionless",
+            "dataset": "reanalysis-era5-single-levels"
+        },
+        "wss": {
+            "cds_name": "wave_spectral_skewness",
+            "long_name": "Wave spectral skewness",
+            "nc_name": "wss",
+            "type": "ocean",
+            "units": "dimensionless",
+            "dataset": "reanalysis-era5-single-levels"
+        },
+        "wsdw": {
+            "cds_name": "wave_spectral_directional_width",
+            "long_name": "Wave spectral directional width",
+            "nc_name": "wsdw",
+            "type": "ocean",
+            "units": "degrees",
+            "dataset": "reanalysis-era5-single-levels"
         }
     }
 }
