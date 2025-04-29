@@ -355,11 +355,13 @@ class CopernicusDownloader(BaseDownloader):
                     variable_config["dataset"],
                     variable_config["type"],
                     product_type,
-                    variable_config["nc_name"],
-                    f"{variable_config['nc_name']}_{year}_{'_'.join(months)}.nc",
+                    variable_config["cds_name"],
+                    # f"{variable_config['nc_name']}_{year}_{'_'.join(months)}.nc",
+                    f"era5_{variable_config['cds_name']}_{year}.nc",
                 )
                 # Create the output directory if it does not exist
-                os.makedirs(os.path.dirname(output_nc_file), exist_ok=True)
+                if not self.check:
+                    os.makedirs(os.path.dirname(output_nc_file), exist_ok=True)
 
                 self.logger.info(f"""
                                  
