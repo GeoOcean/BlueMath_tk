@@ -274,18 +274,9 @@ class BaseModelWrapper(BlueMathModel):
         Set the cases directories from the output directory.
         """
 
-        if self.cases_dirs:
-            self.logger.warning("Cases directories already set... resetting.")
-
-        self.cases_dirs = sorted(
-            [
-                op.join(self.output_dir, case_dir)
-                for case_dir in os.listdir(self.output_dir)
-                if op.isdir(op.join(self.output_dir, case_dir))
-            ]
+        raise NotImplementedError(
+            "This method is deprecated, Use build_cases method with flag just_dir instead."
         )
-
-        self.logger.info(f"Cases directories set from {self.output_dir}.")
 
     def write_array_in_file(self, array: np.ndarray, filename: str) -> None:
         """
@@ -414,9 +405,10 @@ class BaseModelWrapper(BlueMathModel):
         case_num: dict,
         case_context: str,
         cases_name_format: callable,
+        just_dir: bool,
     ) -> None:
         """
-        Build the input dir and context for a case.
+        Build the input files and context for a case.
 
         Parameters
         ----------
@@ -424,6 +416,10 @@ class BaseModelWrapper(BlueMathModel):
             The case number.
         case_context : dict
             The case context.
+        cases_name_format : callable
+            The function to format the case name.
+        just_dir : bool
+            If True, just create the case directory.
         """
 
         case_context["case_num"] = case_num
@@ -431,22 +427,24 @@ class BaseModelWrapper(BlueMathModel):
         self.cases_dirs.append(case_dir)
         os.makedirs(case_dir, exist_ok=True)
         case_context.update(self.fixed_parameters)
-        self.build_case(
-            case_context=case_context,
-            case_dir=case_dir,
-        )
-        for template_name in self.templates_name:
-            self.render_file_from_template(
-                template_name=template_name,
-                context=case_context,
-                output_filename=op.join(case_dir, template_name),
+        if not just_dir:
+            self.build_case(
+                case_context=case_context,
+                case_dir=case_dir,
             )
+            for template_name in self.templates_name:
+                self.render_file_from_template(
+                    template_name=template_name,
+                    context=case_context,
+                    output_filename=op.join(case_dir, template_name),
+                )
 
     def build_cases(
         self,
         mode: str = "one_by_one",
         cases_to_build: List[int] = None,
         cases_name_format: callable = lambda ctx: f"{ctx.get('case_num'):04}",
+        just_dir: bool = False,
         num_workers: int = None,
     ) -> None:
         """
@@ -462,6 +460,8 @@ class BaseModelWrapper(BlueMathModel):
         cases_name_format : callable, optional
             The function to format the case name. Default is a lambda function
             that formats the case number with leading zeros.
+        just_dir : bool, optional
+            If True, just create the case directory. Default is False.
         num_workers : int, optional
             The number of parallel workers. Default is None.
 
@@ -495,6 +495,7 @@ class BaseModelWrapper(BlueMathModel):
                 items=zip(cases_to_build, self.cases_context),
                 num_workers=num_workers,
                 cases_name_format=cases_name_format,
+                just_dir=just_dir,
             )
         else:
             self.logger.debug("Building cases sequentially.")
@@ -503,6 +504,7 @@ class BaseModelWrapper(BlueMathModel):
                     case_num=case_num,
                     case_context=case_context,
                     cases_name_format=cases_name_format,
+                    just_dir=just_dir,
                 )
 
         self.logger.info(
@@ -702,37 +704,71 @@ class BaseModelWrapper(BlueMathModel):
         self.logger.info(f"Running cases with launcher={launcher}.")
         self._exec_bash_commands(str_cmd=launcher, cwd=self.output_dir)
 
-    def monitor_cases(self) -> None:
+    def monitor_cases(
+        self, cases_status: dict, value_counts: str
+    ) -> Union[pd.DataFrame, dict]:
         """
         Return the status of the cases.
-        """
-
-        raise NotImplementedError("The method monitor_cases must be implemented.")
-
-    def postprocess_case(self, case_num: int, case_dir: str) -> None:
-        """
-        Postprocess the model output.
+        This method is used to monitor the cases and log relevant information.
+        It is called in the child class to monitor the cases.
 
         Parameters
         ----------
-        case_num : int
-            The case number.
-        case_dir : str
-            The case directory.
+        cases_status : dict
+            The dictionary with the cases status.
+            Each key is the base case directory name and the value is the status of the case.
+            This status can be any string.
+        value_counts : str, optional
+            The value counts to be returned.
+            If "simple", it returns a dictionary with the number of cases in each status.
+            If "percentage", it returns a DataFrame with the percentage of cases in each status.
+            If "cases", it returns a dictionary with the cases in each status.
+            Default is None.
+
+        Returns
+        -------
+        Union[pd.DataFrame, dict]
+            The cases status as a pandas DataFrame or a dictionary with aggregated info.
+        """
+
+        # raise NotImplementedError("The method monitor_cases must be implemented.")
+
+        full_monitorization_df = pd.DataFrame(
+            cases_status.items(), columns=["Case", "Status"]
+        )
+        if value_counts:
+            value_counts_df = full_monitorization_df.set_index("Case").value_counts()
+            if value_counts == "simple":
+                return value_counts_df
+            elif value_counts == "percentage":
+                return value_counts_df / len(full_monitorization_df) * 100
+            value_counts_unique_values = [
+                run_type[0] for run_type in value_counts_df.index.values
+            ]
+            value_counts_dict = {
+                run_type: list(
+                    full_monitorization_df.where(
+                        full_monitorization_df["Status"] == run_type
+                    )
+                    .dropna()["Case"]
+                    .values
+                )
+                for run_type in value_counts_unique_values
+            }
+            return value_counts_dict
+        else:
+            return full_monitorization_df
+
+    def postprocess_case(self, **kwargs) -> None:
+        """
+        Postprocess the model output.
         """
 
         raise NotImplementedError("The method postprocess_case must be implemented.")
 
-    def join_postprocessed_files(
-        self, postprocessed_files: List[xr.Dataset]
-    ) -> xr.Dataset:
+    def join_postprocessed_files(self, **kwargs) -> None:
         """
         Join the postprocessed files.
-
-        Parameters
-        ----------
-        postprocessed_files : List[xr.Dataset]
-            The list with the postprocessed files.
         """
 
         raise NotImplementedError(

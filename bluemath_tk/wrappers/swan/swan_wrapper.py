@@ -1,6 +1,6 @@
 import os
 import re
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -227,26 +227,23 @@ class SwanModelWrapper(BaseModelWrapper):
 
         return "0 %"  # if no progress is found
 
-    def monitor_cases(self) -> pd.DataFrame:
+    def monitor_cases(self, value_counts: str = None) -> Union[pd.DataFrame, dict]:
         """
-        Monitor the cases and log relevant information.
-
-        Returns
-        -------
-        pd.DataFrame
-            The cases percentage.
+        Monitor the cases based on the wrapper_out.log file.
         """
 
-        cases_percentage = {}
+        cases_status = {}
 
         for case_dir in self.cases_dirs:
             output_log_file = os.path.join(case_dir, "wrapper_out.log")
             progress = self.get_case_percentage_from_file(
                 output_log_file=output_log_file
             )
-            cases_percentage[os.path.basename(case_dir)] = progress
+            cases_status[os.path.basename(case_dir)] = progress
 
-        return pd.DataFrame(cases_percentage.items(), columns=["Case", "Percentage"])
+        return super().monitor_cases(
+            cases_status=cases_status, value_counts=value_counts
+        )
 
     def postprocess_case(
         self,

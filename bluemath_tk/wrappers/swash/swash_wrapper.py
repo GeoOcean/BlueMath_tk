@@ -392,17 +392,16 @@ class SwashModelWrapper(BaseModelWrapper):
             The case number.
         case_dir : str
             The case directory.
-        force_output : bool, optional
-            Force the creation of the output.nc file. Default is False.
-        force_output_postprocessed : bool, optional
-            Force the postprocessing of the output.nc file into output_postprocessed. Default is False.
         output_vars : list, optional
             The output variables to postprocess. Default is None.
+        overwrite_output : bool, optional
+            Overwrite the output.nc file. Default is True.
+        overwrite_output_postprocessed : bool, optional
+            Overwrite the output_postprocessed.nc file. Default is True.
         remove_tab : bool, optional
             Remove the tab files. Default is False.
         remove_nc : bool, optional
             Remove the netCDF file. Default is False.
-        
 
         Returns
         -------
@@ -439,11 +438,11 @@ class SwashModelWrapper(BaseModelWrapper):
             var_ds_list = []
             for var in output_vars:
                 if var in self.postprocess_functions:
-                        self.logger.debug(f"[{case_num}]: Postprocessing variable {var}.")
-                        var_ds = getattr(self, self.postprocess_functions[var])(
-                            case_num=case_num, case_dir=case_dir, output_nc=output_nc
-                        )
-                        var_ds_list.append(var_ds)
+                    self.logger.debug(f"[{case_num}]: Postprocessing variable {var}.")
+                    var_ds = getattr(self, self.postprocess_functions[var])(
+                        case_num=case_num, case_dir=case_dir, output_nc=output_nc
+                    )
+                    var_ds_list.append(var_ds)
                 else:
                     # If the variable is present in output_nc, extract and squeeze it
                     if var in output_nc:
@@ -462,9 +461,10 @@ class SwashModelWrapper(BaseModelWrapper):
             )
             ds.to_netcdf(processed_nc_path)
         else:
-            self.logger.info(f"[{case_num}]: Reading existing output_postprocessed.nc file.")
+            self.logger.info(
+                f"[{case_num}]: Reading existing output_postprocessed.nc file."
+            )
             ds = xr.open_dataset(processed_nc_path)
-            
 
         # Remove raw files to save space
         if remove_tab:
@@ -512,7 +512,6 @@ class SwashModelWrapper(BaseModelWrapper):
         peaks, _ = find_peaks(x=x)
 
         return peaks, x[peaks]
-
 
     def calculate_runup2(
         self, case_num: int, case_dir: str, output_nc: xr.Dataset

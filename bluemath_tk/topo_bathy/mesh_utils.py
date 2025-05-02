@@ -1,6 +1,3 @@
-# TODO: Add OCSMESH to pyproject.toml
-
-
 import re
 from typing import Any, List, Tuple, Union
 
