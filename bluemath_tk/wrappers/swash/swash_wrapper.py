@@ -343,69 +343,36 @@ class SwashModelWrapper(BaseModelWrapper):
 
     def monitor_cases(self, value_counts: str = None) -> Union[pd.DataFrame, dict]:
         """
-        Monitor the cases and log relevant information.
-
-        Parameters
-        ----------
-        value_counts : str, optional
-            The value counts to be returned.
-            If "simple", it returns a dictionary with the number of cases in each status.
-            If "cases", it returns a dictionary with the cases in each status.
-            Default is None.
-
-        Returns
-        -------
-        Union[pd.DataFrame, dict]
-            The cases status as a pandas DataFrame or a dictionary with aggregated info.
+        Monitor the cases based on different model log files.
         """
 
-        cases_percentage = {}
+        cases_status = {}
 
         for case_dir in self.cases_dirs:
             case_dir_name = os.path.basename(case_dir)
             if os.path.exists(os.path.join(case_dir, "Errfile")):
-                cases_percentage[case_dir_name] = "Errfile"
+                cases_status[case_dir_name] = "Errfile"
             elif os.path.exists(os.path.join(case_dir, "norm_end")):
-                cases_percentage[case_dir_name] = "END"
+                cases_status[case_dir_name] = "END"
             else:
                 run_tab_file = os.path.join(case_dir, "run.tab")
                 if os.path.exists(run_tab_file):
                     run_tab = self._read_tabfile(file_path=run_tab_file)
                     if run_tab.isnull().values.any():
-                        cases_percentage[case_dir_name] = "NaN"
+                        cases_status[case_dir_name] = "NaN"
                         continue
                 else:
-                    cases_percentage[case_dir_name] = "No run.tab"
+                    cases_status[case_dir_name] = "No run.tab"
                     continue
                 output_log_file = os.path.join(case_dir, "wrapper_out.log")
                 progress = self.get_case_percentage_from_file(
                     output_log_file=output_log_file
                 )
-                cases_percentage[case_dir_name] = progress
+                cases_status[case_dir_name] = progress
 
-        full_monitorization_df = pd.DataFrame(
-            cases_percentage.items(), columns=["Case", "Percentage"]
+        return super().monitor_cases(
+            cases_status=cases_status, value_counts=value_counts
         )
-        if value_counts:
-            value_counts_df = full_monitorization_df.set_index("Case").value_counts()
-            if value_counts == "simple":
-                return value_counts_df
-            value_counts_unique_values = [
-                run_type[0] for run_type in value_counts_df.index.values
-            ]
-            value_counts_dict = {
-                run_type: list(
-                    full_monitorization_df.where(
-                        full_monitorization_df["Percentage"] == run_type
-                    )
-                    .dropna()["Case"]
-                    .values
-                )
-                for run_type in value_counts_unique_values
-            }
-            return value_counts_dict
-        else:
-            return full_monitorization_df
 
     def postprocess_case(
         self,
