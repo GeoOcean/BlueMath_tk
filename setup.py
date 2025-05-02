@@ -1,5 +1,5 @@
 # --------------------------- ONLY FOR DEVELOPMENT MODE ---------------------------
-# This setup.py file is used to configure the setup for the BlueMath project.
+# This setup.py file is used to configure the setup for the BlueMath_tk project.
 # It specifies metadata about the project and its dependencies.
 # This file is ONLY useful for development mode, where you can install
 # the project in an editable state using the command `pip install -e .`.
@@ -10,7 +10,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="BlueMath",
+    name="BlueMath_tk",
     author="GeoOcean Group",
     author_email="bluemath@unican.es",
     long_description=open("README.md").read(),
