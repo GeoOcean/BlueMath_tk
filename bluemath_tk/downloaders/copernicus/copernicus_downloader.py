@@ -316,16 +316,26 @@ class CopernicusDownloader(BaseDownloader):
                     continue
 
                 template_for_variable = variable_dataset["template"].copy()
-                template_for_variable["variable"] = variable_config["cds_name"]
-                template_for_variable["year"] = year
-                template_for_variable["month"] = months
-                template_for_variable["day"] = days
-                template_for_variable["time"] = times
-                template_for_variable["product_type"] = product_type
-                template_for_variable["data_format"] = data_format
-                template_for_variable["download_format"] = download_format
-                if area is not None:
-                    template_for_variable["area"] = area
+                if variable == "spectra":
+                    template_for_variable["date"] = (
+                        f"{year}-{months[0]}-01/to/{year}-{months[-1]}-31"
+                    )
+                    if area is not None:
+                        template_for_variable["area"] = "/".join(
+                            [str(coord) for coord in area]
+                        )
+                else:
+                    template_for_variable["variable"] = variable_config["cds_name"]
+                    template_for_variable["year"] = year
+                    template_for_variable["month"] = months
+                    template_for_variable["day"] = days
+                    template_for_variable["time"] = times
+                    template_for_variable["product_type"] = product_type
+                    template_for_variable["data_format"] = data_format
+                    template_for_variable["download_format"] = download_format
+                    if area is not None:
+                        template_for_variable["area"] = area
+
                 self.logger.info(
                     f"""
                     Template for variable {variable}:
@@ -356,8 +366,8 @@ class CopernicusDownloader(BaseDownloader):
                     variable_config["type"],
                     product_type,
                     variable_config["cds_name"],
-                    # f"{variable_config['nc_name']}_{year}_{'_'.join(months)}.nc",
-                    f"era5_{variable_config['cds_name']}_{year}.nc",
+                    f"{variable_config['nc_name']}_{year}_{'_'.join(months)}.nc",
+                    # f"era5_waves_{variable_config['cds_name']}_{year}.nc",
                 )
                 # Create the output directory if it does not exist
                 if not self.check:
@@ -381,7 +391,10 @@ class CopernicusDownloader(BaseDownloader):
                                     int(year), int(last_month)
                                 )
                                 last_hour = f"{year}-{last_month}-{last_day}T23"
-                                last_hour_nc = str(nc.valid_time[-1].values)
+                                try:
+                                    last_hour_nc = str(nc.time[-1].values)
+                                except Exception as _te:
+                                    last_hour_nc = str(nc.valid_time[-1].values)
                                 nc.close()
                                 if last_hour not in last_hour_nc:
                                     self.logger.debug(
