@@ -241,7 +241,7 @@ class BaseModelWrapper(BlueMathModel):
         """
 
         raise NotImplementedError(
-            "This method is deprecated, Use load_cases() method instead."
+            "This method is deprecated. Use load_cases() method instead."
         )
 
     def write_array_in_file(self, array: np.ndarray, filename: str) -> None:
