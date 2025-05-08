@@ -238,7 +238,9 @@ class SOM(BaseClustering):
             data[f"{directional_variable}_u"] = u_comp
             data[f"{directional_variable}_v"] = v_comp
             data.drop(columns=[directional_variable], inplace=True)
-        normalized_data, _ = self.normalize(data=data, scaler=self.scaler)
+        normalized_data, _ = self.normalize(
+            data=data, custom_scale_factor=self.scale_factor
+        )
         dict_with_probs = self.som.labels_map(normalized_data.values, labels)
 
         return pd.DataFrame(dict_with_probs).T.sort_index()

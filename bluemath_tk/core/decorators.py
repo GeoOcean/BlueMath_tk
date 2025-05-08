@@ -182,7 +182,9 @@ def validate_data_som(func):
         self,
         data: pd.DataFrame,
         directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
         num_iteration: int = 1000,
+        normalize_data: bool = False,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -190,8 +192,12 @@ def validate_data_som(func):
             raise TypeError("Data must be a pandas DataFrame")
         if not isinstance(directional_variables, list):
             raise TypeError("Directional variables must be a list")
+        if not isinstance(custom_scale_factor, dict):
+            raise TypeError("Custom scale factor must be a dict")
         if not isinstance(num_iteration, int) or num_iteration <= 0:
             raise ValueError("Number of iterations must be integer and > 0")
+        if not isinstance(normalize_data, bool):
+            raise TypeError("Normalize data must be a boolean")
         return func(self, data, directional_variables, num_iteration)
 
     return wrapper
