@@ -127,7 +127,8 @@ class SwanModelWrapper(BaseModelWrapper):
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
         )
 
-        self.depth_array = np.round(depth_array, 2)
+        if depth_array is not None:
+            self.depth_array = np.round(depth_array, 2)
 
     def build_case(
         self,

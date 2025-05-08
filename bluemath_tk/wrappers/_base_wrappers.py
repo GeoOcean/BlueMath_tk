@@ -33,72 +33,21 @@ class BaseModelWrapper(BlueMathModel):
     Attributes
     ----------
     templates_dir : str
-        The directory where the templates are stored.
+        The directory where the templates are searched.
     metamodel_parameters : dict
-        The parameters to be used in the templates.
+        The parameters to be used for all cases.
     fixed_parameters : dict
-        The fixed parameters for the model.
+        The fixed parameters for the cases.
     output_dir : str
-        The directory where the output files will be saved.
-    env : Environment
-        The Jinja2 environment.
+        The directory where the output cases are saved.
     templates_name : List[str]
-        The names of the templates.
-    cases_dirs : List[str]
-        The list with cases directories.
+        The names of the templates to use.
     cases_context : List[dict]
         The list with cases context.
-    thread : threading.Thread
-        The thread for background execution.
-    status_queue : Queue
-        The queue to update the status.
+    cases_dirs : List[str]
+        The list with cases directories.
     sbatch_file_example : str
         The example sbatch file.
-
-    Methods
-    -------
-    _check_parameters_type -> None
-        Check if the parameters have the correct type.
-    _exec_bash_commands -> None
-        Execute bash commands.
-    list_available_launchers -> dict
-        List the available launchers.
-    list_default_parameters -> pd.DataFrame
-        List the default parameters.
-    set_cases_dirs_from_output_dir -> None
-        Set the cases directories from the output directory.
-    write_array_in_file -> None
-        Write an array in a file.
-    copy_files -> None
-        Copy file(s) from source to destination.
-    render_file_from_template -> None
-        Render a file from a template.
-    create_cases_context_one_by_one -> List[dict]
-        Create an array of dictionaries with the combinations of values from the
-        input dictionary, one by one.
-    create_cases_context_all_combinations -> List[dict]
-        Create an array of dictionaries with each possible combination of values
-        from the input dictionary.
-    build_case -> None
-        Build the input files for a case.
-    prebuild_case -> None
-        Build the input dir and context for a case.
-    build_cases -> None
-        Create the cases folders and render the input files.
-    run_case -> None
-        Run the case based on the launcher specified.
-    run_cases -> None
-        Run the cases based on the launcher specified.
-        Parallel execution is optional.
-        Cases to run can be specified.
-    run_cases_bulk -> None
-        Run the cases based on the launcher specified.
-    postprocess_case -> None
-        Postprocess the model output for a specific case.
-    join_postprocessed_files -> xr.Dataset
-        Join the postprocessed files.
-    postprocess_cases -> Union[xr.Dataset, List[xr.Dataset]]
-        Postprocess the model output.
     """
 
     sbatch_file_example = sbatch_file_example
@@ -114,15 +63,32 @@ class BaseModelWrapper(BlueMathModel):
     ) -> None:
         """
         Initialize the BaseModelWrapper.
+
+        Parameters
+        ----------
+        templates_dir : str
+            The directory where the templates are searched.
+        metamodel_parameters : dict
+            The parameters to be used for all cases.
+        fixed_parameters : dict
+            The fixed parameters for the cases.
+        output_dir : str
+            The directory where the output cases are saved.
+        templates_name : List[str], optional
+            The names of the templates to use. Default is "all".
+        default_parameters : dict, optional
+            The default parameters for the cases. Default is None.
         """
 
         super().__init__()
+
         if default_parameters is not None:
             fixed_parameters = self._check_parameters_type(
                 default_parameters=default_parameters,
                 metamodel_parameters=metamodel_parameters,
                 fixed_parameters=fixed_parameters,
             )
+
         self.templates_dir = templates_dir
         self.metamodel_parameters = metamodel_parameters
         self.fixed_parameters = fixed_parameters
@@ -136,8 +102,8 @@ class BaseModelWrapper(BlueMathModel):
             self.logger.info(f"Templates names: {self.templates_name}")
         else:
             self.templates_name = templates_name
-        self.cases_dirs: List[str] = []
-        self.cases_context: List[dict] = []
+        self.cases_context: List[dict] = None
+        self.cases_dirs: List[str] = None
         self.thread: threading.Thread = None
         self.status_queue: Queue = None
 
@@ -275,7 +241,7 @@ class BaseModelWrapper(BlueMathModel):
         """
 
         raise NotImplementedError(
-            "This method is deprecated, Use build_cases method with flag just_dir instead."
+            "This method is deprecated, Use load_cases() method instead."
         )
 
     def write_array_in_file(self, array: np.ndarray, filename: str) -> None:
@@ -382,6 +348,41 @@ class BaseModelWrapper(BlueMathModel):
 
         return array_of_contexts
 
+    def load_cases(
+        self,
+        mode: str = "one_by_one",
+        cases_name_format: callable = lambda ctx: f"{ctx.get('case_num'):04}",
+    ) -> None:
+        """
+        Create the cases context and directories.
+
+        Parameters
+        ----------
+        mode : str, optional
+            The mode to create the cases. Can be "all_combinations" or "one_by_one".
+            Default is "one_by_one".
+        cases_name_format : callable, optional
+            The function to format the case name. Default is a lambda function
+            that formats the case number with leading zeros.
+        """
+
+        if mode == "all_combinations":
+            self.cases_context = self.create_cases_context_all_combinations()
+        elif mode == "one_by_one":
+            self.cases_context = self.create_cases_context_one_by_one()
+        else:
+            raise ValueError(f"Invalid mode to create cases: {mode}")
+
+        # Set cases_dirs to empty list
+        self.cases_dirs = []
+
+        for case_num, case_context in enumerate(self.cases_context):
+            case_context["case_num"] = case_num
+            case_dir = op.join(self.output_dir, cases_name_format(case_context))
+            self.cases_dirs.append(case_dir)
+            os.makedirs(case_dir, exist_ok=True)
+            case_context.update(self.fixed_parameters)
+
     def build_case(
         self,
         case_context: dict,
@@ -400,51 +401,38 @@ class BaseModelWrapper(BlueMathModel):
 
         pass
 
-    def prebuild_case(
+    def build_case_and_render_files(
         self,
-        case_num: dict,
         case_context: str,
-        cases_name_format: callable,
-        just_dir: bool,
+        case_dir: str,
     ) -> None:
         """
         Build the input files and context for a case.
 
         Parameters
         ----------
-        case_num : int
-            The case number.
         case_context : dict
             The case context.
-        cases_name_format : callable
-            The function to format the case name.
-        just_dir : bool
-            If True, just create the case directory.
+        case_dir : str
+            The case directory.
         """
 
-        case_context["case_num"] = case_num
-        case_dir = op.join(self.output_dir, cases_name_format(case_context))
-        self.cases_dirs.append(case_dir)
-        os.makedirs(case_dir, exist_ok=True)
-        case_context.update(self.fixed_parameters)
-        if not just_dir:
-            self.build_case(
-                case_context=case_context,
-                case_dir=case_dir,
+        self.build_case(
+            case_context=case_context,
+            case_dir=case_dir,
+        )
+        for template_name in self.templates_name:
+            self.render_file_from_template(
+                template_name=template_name,
+                context=case_context,
+                output_filename=op.join(case_dir, template_name),
             )
-            for template_name in self.templates_name:
-                self.render_file_from_template(
-                    template_name=template_name,
-                    context=case_context,
-                    output_filename=op.join(case_dir, template_name),
-                )
 
     def build_cases(
         self,
         mode: str = "one_by_one",
-        cases_to_build: List[int] = None,
         cases_name_format: callable = lambda ctx: f"{ctx.get('case_num'):04}",
-        just_dir: bool = False,
+        cases_to_build: List[int] = None,
         num_workers: int = None,
     ) -> None:
         """
@@ -454,14 +442,12 @@ class BaseModelWrapper(BlueMathModel):
         ----------
         mode : str, optional
             The mode to create the cases. Can be "all_combinations" or "one_by_one".
-            Default is "one_by_one".
-        cases_to_build : List[int], optional
-            The list with the cases to build. Default is None.
         cases_name_format : callable, optional
             The function to format the case name. Default is a lambda function
             that formats the case number with leading zeros.
-        just_dir : bool, optional
-            If True, just create the case directory. Default is False.
+            Default is "one_by_one".
+        cases_to_build : List[int], optional
+            The list with the cases to build. Default is None.
         num_workers : int, optional
             The number of parallel workers. Default is None.
 
@@ -471,40 +457,44 @@ class BaseModelWrapper(BlueMathModel):
             If the mode is not valid.
         """
 
+        self.load_cases(
+            mode=mode,
+            cases_name_format=cases_name_format,
+        )
+        self.logger.debug(
+            f"Cases context and directory created with {len(self.cases_context)} cases."
+        )
+
         if num_workers is None:
             num_workers = self.num_workers
 
-        if mode == "all_combinations":
-            self.cases_context = self.create_cases_context_all_combinations()
-        elif mode == "one_by_one":
-            self.cases_context = self.create_cases_context_one_by_one()
-        else:
-            raise ValueError(f"Invalid mode to create cases: {mode}")
-
-        if cases_to_build is not None:
-            self.cases_context = [self.cases_context[i] for i in cases_to_build]
-        else:
+        if cases_to_build is None:
             cases_to_build = list(range(len(self.cases_context)))
+        else:
+            self.logger.warning(
+                f"cases_to_build was specified, so just {cases_to_build} will be built."
+            )
+
+        cases_context_to_build = [self.cases_context[case] for case in cases_to_build]
+        cases_dir_to_build = [self.cases_dirs[case] for case in cases_to_build]
 
         if num_workers > 1:
             self.logger.debug(
                 f"Building cases in parallel. Number of workers: {num_workers}."
             )
             _results = self.parallel_execute(
-                func=self.prebuild_case,
-                items=zip(cases_to_build, self.cases_context),
+                func=self.build_case_and_render_files,
+                items=zip(cases_context_to_build, cases_dir_to_build),
                 num_workers=num_workers,
-                cases_name_format=cases_name_format,
-                just_dir=just_dir,
             )
         else:
             self.logger.debug("Building cases sequentially.")
-            for case_num, case_context in zip(cases_to_build, self.cases_context):
-                self.prebuild_case(
-                    case_num=case_num,
+            for case_context, case_dir in zip(
+                cases_context_to_build, cases_dir_to_build
+            ):
+                self.build_case_and_render_files(
                     case_context=case_context,
-                    cases_name_format=cases_name_format,
-                    just_dir=just_dir,
+                    case_dir=case_dir,
                 )
 
         self.logger.info(
@@ -572,6 +562,11 @@ class BaseModelWrapper(BlueMathModel):
         num_workers : int, optional
             The number of parallel workers. Default is None.
         """
+
+        if self.cases_context is None or self.cases_dirs is None:
+            raise ValueError(
+                "Cases context or cases directories are not set. Please run load_cases() first."
+            )
 
         if num_workers is None:
             num_workers = self.num_workers
@@ -731,8 +726,6 @@ class BaseModelWrapper(BlueMathModel):
             The cases status as a pandas DataFrame or a dictionary with aggregated info.
         """
 
-        # raise NotImplementedError("The method monitor_cases must be implemented.")
-
         full_monitorization_df = pd.DataFrame(
             cases_status.items(), columns=["Case", "Status"]
         )
@@ -766,7 +759,7 @@ class BaseModelWrapper(BlueMathModel):
 
         raise NotImplementedError("The method postprocess_case must be implemented.")
 
-    def join_postprocessed_files(self, **kwargs) -> None:
+    def join_postprocessed_files(self, **kwargs) -> xr.Dataset:
         """
         Join the postprocessed files.
         """
@@ -778,9 +771,8 @@ class BaseModelWrapper(BlueMathModel):
     def postprocess_cases(
         self,
         cases_to_postprocess: List[int] = None,
-        write_output_nc: bool = True,
+        write_output_nc: bool = False,
         clean_after: bool = False,
-        force: bool = False,
         **kwargs,
     ) -> Union[xr.Dataset, List[xr.Dataset]]:
         """
@@ -792,11 +784,9 @@ class BaseModelWrapper(BlueMathModel):
         cases_to_postprocess : List[int], optional
             The list with the cases to postprocess. Default is None.
         write_output_nc : bool, optional
-            Write the output postprocessed file. Default is True.
+            Write the output postprocessed file. Default is False.
         clean_after : bool, optional
             Clean the cases directories after postprocessing. Default is False.
-        force : bool, optional
-            Force the postprocessing. Default is False.
         **kwargs
             Additional keyword arguments to be passed to the postprocess_case method.
 
@@ -806,23 +796,19 @@ class BaseModelWrapper(BlueMathModel):
             The postprocessed file or the list with the postprocessed files.
         """
 
-        if force:
-            kwargs["force"] = force
+        if self.cases_context is None or self.cases_dirs is None:
+            raise ValueError(
+                "Cases context or cases directories are not set. Please run load_cases() first."
+            )
 
         output_postprocessed_file_path = op.join(
             self.output_dir, "output_postprocessed.nc"
         )
-        if op.exists(output_postprocessed_file_path) and not force:
+        if op.exists(output_postprocessed_file_path):
             self.logger.warning(
                 "Output postprocessed file already exists. Skipping postprocessing."
             )
             return xr.open_dataset(output_postprocessed_file_path)
-
-        if not self.cases_dirs:
-            self.logger.warning(
-                "Cases directories are not set and will be searched from the output directory."
-            )
-            self.set_cases_dirs_from_output_dir()
 
         if cases_to_postprocess is not None:
             self.logger.warning(
@@ -861,9 +847,8 @@ class BaseModelWrapper(BlueMathModel):
                 output_postprocessed.to_netcdf(output_postprocessed_file_path)
             if clean_after:
                 self.logger.warning("Cleaning up all cases dirs.")
-                # self._exec_bash_commands(
-                #     str_cmd=f"rm -rf {self.output_dir}/*/*", cwd=self.output_dir
-                # )
+                for case_dir in self.cases_dirs:
+                    os.rmdir(case_dir)
                 self.logger.info("Clean up completed.")
             return output_postprocessed
 
