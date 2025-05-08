@@ -118,79 +118,79 @@ class BaseClustering(BlueMathModel):
     """
     Base class for all clustering BlueMath models.
     This class provides the basic structure for all clustering models.
-
-    Methods
-    -------
-    fit : None
-        Fits the model to the data.
-    predict : pd.DataFrame
-        Predicts the clusters for the provided data.
-    fit_predict : pd.DataFrame
-        Fits the model to the data and predicts the clusters.
-    plot_selected_centroids : Tuple[plt.figure, plt.axes]
-        Plots data and selected centroids on a scatter plot matrix.
-    plot_data_as_clusters : Tuple[plt.figure, plt.axes]
-        Plots data as nearest clusters.
     """
 
     @abstractmethod
     def __init__(self) -> None:
         super().__init__()
 
-    @abstractmethod
-    def fit(self, *args, **kwargs) -> None:
-        """
-        Fits the model to the data.
-
-        Parameters
-        ----------
-        *args : list
-            Positional arguments.
-        **kwargs : dict
-            Keyword arguments.
-        """
-
-        pass
+        self._exclude_attributes = [
+            "_data",
+            "_normalized_data",
+            "_data_to_fit",
+        ]
 
     @abstractmethod
-    def predict(self, *args, **kwargs) -> pd.DataFrame:
+    def fit(
+        self,
+        data: pd.DataFrame,
+        directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
+        normalize_data: bool = False,
+    ) -> None:
         """
-        Predicts the clusters for the provided data.
-
-        Parameters
-        ----------
-        *args : list
-            Positional arguments.
-        **kwargs : dict
-            Keyword arguments.
-
-        Returns
-        -------
-        pd.DataFrame
-            The predicted clusters.
+        Preprocess some data to be used in the fit of children classes.
         """
 
-        return pd.DataFrame()
+        self._data = data.copy()
+        self.directional_variables = directional_variables.copy()
+        for directional_variable in self.directional_variables:
+            u_comp, v_comp = self.get_uv_components(
+                x_deg=self.data[directional_variable].values
+            )
+            self.data[f"{directional_variable}_u"] = u_comp
+            self.data[f"{directional_variable}_v"] = v_comp
+        self.data_variables = list(self.data.columns)
+
+        # Get just the data to be used in the training
+        self._data_to_fit = self.data.copy()
+        for directional_variable in self.directional_variables:
+            self.data_to_fit.drop(columns=[directional_variable], inplace=True)
+        self.fitting_variables = list(self.data_to_fit.columns)
+
+        if normalize_data:
+            self.custom_scale_factor = custom_scale_factor.copy()
+        else:
+            self.logger.info(
+                "Normalization is disabled. Using default scale factor (0, 1) for all fitting variables."
+            )
+            self.custom_scale_factor = {
+                fitting_variable: (0, 1) for fitting_variable in self.fitting_variables
+            }
+        # Normalize data using custom min max scaler
+        self._normalized_data, self.scale_factor = self.normalize(
+            data=self.data_to_fit, custom_scale_factor=self.custom_scale_factor
+        )
 
     @abstractmethod
-    def fit_predict(self, *args, **kwargs) -> pd.DataFrame:
+    def predict(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Fits the model to the data and predicts the clusters.
-
-        Parameters
-        ----------
-        *args : list
-            Positional arguments.
-        **kwargs : dict
-            Keyword arguments.
-
-        Returns
-        -------
-        pd.DataFrame
-            The predicted clusters.
+        Preprocess some data to be used in the predict of children classes.
         """
 
-        return pd.DataFrame()
+        data = data.copy()  # Avoid modifying the original data to predict
+        for directional_variable in self.directional_variables:
+            u_comp, v_comp = self.get_uv_components(
+                x_deg=data[directional_variable].values
+            )
+            data[f"{directional_variable}_u"] = u_comp
+            data[f"{directional_variable}_v"] = v_comp
+            data.drop(columns=[directional_variable], inplace=True)
+        normalized_data, _ = self.normalize(
+            data=data, custom_scale_factor=self.scale_factor
+        )
+
+        return normalized_data
 
     def plot_selected_centroids(
         self,

@@ -73,6 +73,7 @@ def validate_data_mda(func):
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
         first_centroid_seed: int = None,
+        normalize_data: bool = False,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -91,8 +92,15 @@ def validate_data_mda(func):
                 raise ValueError(
                     "First centroid seed must be an integer >= 0 and < num of data points"
                 )
+        if not isinstance(normalize_data, bool):
+            raise TypeError("Normalize data must be a boolean")
         return func(
-            self, data, directional_variables, custom_scale_factor, first_centroid_seed
+            self,
+            data,
+            directional_variables,
+            custom_scale_factor,
+            first_centroid_seed,
+            normalize_data,
         )
 
     return wrapper
@@ -121,7 +129,7 @@ def validate_data_kma(func):
         custom_scale_factor: dict = {},
         min_number_of_points: int = None,
         max_number_of_iterations: int = 10,
-        normalize_data: bool = True,
+        normalize_data: bool = False,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
