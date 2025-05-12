@@ -25,11 +25,8 @@ jobs:
         with:
           auto-update-conda: true
       
-      - name: Modify environment file with Python version
-        run: sed -i "s/python=[0-9.]\+/python=${{ matrix.python-version }}/" environment.yml        
-
       - name: Create conda environment
-        run: conda env create -f environment.yml
+        run: conda create -n bluemath-tk python=${{ matrix.python-version }}
 
       - name: Run tests
         run: |
