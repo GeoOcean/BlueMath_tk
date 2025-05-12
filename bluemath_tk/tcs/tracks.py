@@ -1,268 +1,25 @@
-import math
+import os
 import os.path as op
 from datetime import timedelta
 
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
 from numpy import polyfit
 
-from ..core.geo import geo_distance, shoot
+from .geo import GeoDistance, gc_distance, shoot
 
+# local paths
+# path_databases = op.join(os.getcwd(), 'databases')
+path_data_shytcwaves = (
+    "/home/grupos/geocean/tausiaj/BlueMath_tk/shytcAlba/data_shytcwaves"
+)
 
-def is_within_rectangle(lon, lat, min_lon, max_lon, min_lat, max_lat):
-    """
-    Check if a given (lon, lat) coordinate is inside a rectangular region.
+# path_databases = '/media/administrador/HD1/GBR-TCs/HyTCmodels/databases'
+# path_data_shytcwaves = '/media/administrador/HD1/GBR-TCs/HyTCmodels/data_shytcwaves'
 
-    Parameters:
-    lon (float): Longitude of the point to check.
-    lat (float): Latitude of the point to check.
-    min_lon (float): Minimum longitude of the rectangle.
-    max_lon (float): Maximum longitude of the rectangle.
-    min_lat (float): Minimum latitude of the rectangle.
-    max_lat (float): Maximum latitude of the rectangle.
-
-    Returns:
-    bool: True if the point is inside the rectangle, False otherwise.
-    """
-    return min_lon <= lon <= max_lon and min_lat <= lat <= max_lat
-
-
-def is_within_circle(lon_c, lat_c, radius, coords):
-    """
-    Check if any point in a given list of coordinates is within a circular region.
-
-    Parameters:
-    lon_c (float): Longitude of the circle center.
-    lat_c (float): Latitude of the circle center.
-    radius (float): Radius of the circle.
-    coords (list of tuples): List of (lon, lat) coordinates to check.
-
-    Returns:
-    bool: True if at least one coordinate is inside the circle, False otherwise.
-    """
-    for lon, lat in coords:
-        distancia = math.sqrt((lon - lon_c) ** 2 + (lat - lat_c) ** 2)
-        if distancia <= radius:
-            return True
-    return False
-
-
-def get_category_color(press, color):
-    """
-    Categorizes a pressure value into storm intensity levels and assigns a corresponding color.
-
-    Parameters:
-    press (float): Atmospheric pressure value.
-    color (list): List of colors corresponding to each category.
-
-    Returns:
-    tuple: (category, color) where:
-        - category (int): Storm intensity category (0 to 5).
-        - color (str): Assigned color based on the category.
-    """
-
-    # Determine storm category based on pressure
-    if press >= 1000:
-        cat = 0
-    elif press >= 979:
-        cat = 1
-    elif press >= 964:
-        cat = 2
-    elif press >= 949:
-        cat = 3
-    elif press >= 920:
-        cat = 4
-    else:  # press < 920
-        cat = 5
-
-    # Assign color based on pressure category
-    return (cat, color[cat] if press > 0 else "grey")
-
-
-def create_cartopy_map(ax=None, grid=True):
-    """
-    Create a Cartopy map with high-resolution coastlines and optional gridlines.
-
-    Parameters:
-    ax (matplotlib.axes._subplots.AxesSubplot, optional): Existing axis to plot on. Defaults to None.
-    grid (bool, optional): Whether to display latitude/longitude gridlines. Defaults to True.
-
-    Returns:
-    tuple: (fig, ax) where fig is the figure and ax is the axis object.
-    """
-
-    # Create figure and axis if none is provided
-    if ax is None:
-        fig = plt.figure(figsize=(10, 7))
-        ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
-    else:
-        fig = ax.figure  # Retrieve figure from provided axis
-
-    # Add high-resolution coastlines and map features
-    ax.add_feature(
-        cfeature.NaturalEarthFeature(
-            "physical", "coastline", "10m", edgecolor="grey", fc="none"
-        ),
-        linewidth=0.4,
-    )
-    ax.add_feature(cfeature.BORDERS, linestyle=":")
-    ax.add_feature(cfeature.LAND, fc="silver", alpha=0.3)
-    ax.add_feature(cfeature.OCEAN, fc="lightgrey", alpha=0.01)
-
-    ax.set_aspect("equal")
-
-    # Add gridlines if requested
-    if grid:
-        gl = ax.gridlines(
-            draw_labels=True,
-            dms=True,
-            x_inline=False,
-            y_inline=False,
-            color="gainsboro",
-        )
-        gl.top_labels = False
-        gl.right_labels = False
-
-    return fig, ax
-
-
-def get_category_color(cat):
-    colors = {1: "#2b44d6", 2: "#70a848", 3: "#e6a40c", 4: "#e14d0b", 5: "#9200d9"}
-    return colors.get(cat, "grey")
-
-
-def fix_extent(ax, extent):
-    """Fix the extent of the plot in latitude only."""
-    mlat = np.mean(extent[2:])
-    xtrm_data = np.array([[extent[0], mlat], [extent[1], mlat]])
-    proj_to_data = ccrs.PlateCarree()._as_mpl_transform(ax) - ax.transData
-    xtrm = proj_to_data.transform(xtrm_data)
-    ax.set_ylim(xtrm[:, 1].min(), xtrm[:, 1].max())
-
-
-def axplot_cartopy_robin(ax):
-    """Set up a Robinson projection map with Cartopy."""
-    ax.gridlines(
-        draw_labels=False,
-        dms=True,
-        x_inline=False,
-        y_inline=False,
-        color="gainsboro",
-        zorder=1,
-    )
-
-    ax.add_feature(
-        cfeature.NaturalEarthFeature(
-            "physical", "coastline", "10m", edgecolor="grey", fc="none"
-        ),
-        linewidth=0.4,
-    )
-    ax.add_feature(cfeature.BORDERS, linestyle=":")
-    ax.add_feature(cfeature.LAND, fc="silver", alpha=0.3)
-    ax.add_feature(cfeature.OCEAN, fc="lightgrey", alpha=0.01)
-
-    fix_extent(ax, (-180, 180, -60, 58))
-    return ax
-
-
-def axplot_shy_swath_cartopy(
-    fig,
-    ax,
-    xds_bulk,
-    storm,
-    path_data_shytcwaves,
-    path_databases,
-    vmin=0,
-    vmax=10,
-    cmap="hot",
-    label="Hs (m)",
-    colorbar=True,
-):
-    """Plot the storm swath on a Cartopy map."""
-    df_storm = historic_track_preprocessing(
-        storm, path_data_shytcwaves, path_databases, center="WMO"
-    )
-
-    xdlon, xdlat, xdmaxhs = (
-        xds_bulk.lon.values,
-        xds_bulk.lat.values,
-        xds_bulk.hswath.values,
-    )
-    lon_size, lat_size = np.unique(xdlon).size, np.unique(xdlat).size
-    XX, YY, ZZ = map(
-        lambda arr: np.reshape(arr, (lat_size, lon_size)), [xdlon, xdlat, xdmaxhs]
-    )
-
-    im = ax.pcolor(
-        XX,
-        YY,
-        ZZ,
-        cmap=cmap,
-        vmin=vmin,
-        vmax=vmax,
-        transform=ccrs.PlateCarree(),
-        zorder=3,
-    )
-    if colorbar:
-        fig.colorbar(im, ax=ax, label=label)
-
-    ax.plot(
-        storm.lon.values,
-        storm.lat.values,
-        "-",
-        color="k",
-        linewidth=1,
-        transform=ccrs.PlateCarree(),
-    )
-
-    for lo1, la1, lo2, la2, cat in zip(
-        df_storm.longitude[:-1],
-        df_storm.latitude[:-1],
-        df_storm.longitude[1:],
-        df_storm.latitude[1:],
-        df_storm.category[:-1],
-    ):
-        ax.plot(
-            [lo1, lo2],
-            [la1, la2],
-            "-",
-            color=get_category_color(cat),
-            linewidth=3,
-            transform=ccrs.PlateCarree(),
-            zorder=4,
-        )
-
-    return im
-
-
-def axplot_st_cartopy(ax, storm, path_data_shytcwaves, path_databases):
-    """Plot storm tracks on a Cartopy map."""
-    df_storm = historic_track_preprocessing(
-        storm, path_data_shytcwaves, path_databases, center="WMO"
-    )
-
-    for lo1, la1, lo2, la2, cat in zip(
-        df_storm.longitude[:-1],
-        df_storm.latitude[:-1],
-        df_storm.longitude[1:],
-        df_storm.latitude[1:],
-        df_storm.category[:-1],
-    ):
-        color = get_category_color(cat)
-        ax.plot(
-            [lo1, lo2],
-            [la1, la2],
-            "-",
-            color=color,
-            linewidth=3,
-            transform=ccrs.PlateCarree(),
-        )
-        ax.plot(lo2, la2, ".", color=color, linewidth=1, transform=ccrs.PlateCarree())
-
+###############################################################################
+# DICTIONARIES AND LOCAL FILENAMES
 
 # dictionary -- center names (IBTrACS)
 d_vns_idcenter = {
@@ -498,7 +255,7 @@ def Extract_basin_storms(xds, id_basin):
     return xds_basin
 
 
-def ibtracs_fit_pmin_wmax(path_databases):
+def ibtracs_fit_pmin_wmax():
     """
     Generate third order polynomial fitting coefficients for statistical
     relationship between minimum pressure (Pmin) and maximum wind speed (Wmax)
@@ -509,7 +266,7 @@ def ibtracs_fit_pmin_wmax(path_databases):
     """
 
     # get ibtracs data
-    path_ibtracs = op.join(path_databases, "ibtracs", file_ibtracs)
+    path_ibtracs = op.join(path_data_shytcwaves, file_ibtracs)
     xds_ibtracs = xr.open_dataset(path_ibtracs)
 
     # all basins, all centers
@@ -591,10 +348,14 @@ def ibtracs_fit_pmin_wmax(path_databases):
     xds.coef.attrs["name"] = "Fitting polynomial coefficients (Pmin, Wmax)"
     xds.coef.attrs["units"] = "Pressure (mbar), Wind speed (kt, 1-min avg)"
 
+    # store
+    path_out = op.join(path_data_shytcwaves, file_coeff_pmin_wmax)
+    xds.to_netcdf(path_out)
+
     return xds
 
 
-def check_ibtracs_coefs(path_data_shytcwaves, path_databases):
+def check_ibtracs_coefs():
     """
     Check if the coefficient file exists, otherwise the file is generated
 
@@ -608,7 +369,7 @@ def check_ibtracs_coefs(path_data_shytcwaves, path_databases):
         xds_coef = xr.open_dataset(path_coef)
     else:
         print("Calculating Pmin-Wmax fitting coefficients...")
-        xds_coef = ibtracs_fit_pmin_wmax(path_databases)
+        xds_coef = ibtracs_fit_pmin_wmax()
         print("Done \n")
 
     return xds_coef
@@ -743,13 +504,7 @@ def resample_storm_6h(storm):
 
 
 def historic_track_preprocessing(
-    xds,
-    path_data_shytcwaves,
-    path_databases,
-    center="WMO",
-    forecast_on=False,
-    database_on=False,
-    st_param=False,
+    xds, center="WMO", forecast_on=False, database_on=False, st_param=False
 ):
     """
     xds         - (xarray.Dataset) historic storm track dataset (storm dim)
@@ -829,7 +584,7 @@ def historic_track_preprocessing(
 
         if np.isnan(ycpres).any():
             # ibtracs fitting coefficients path
-            xds_coef = check_ibtracs_coefs(path_data_shytcwaves, path_databases)
+            xds_coef = check_ibtracs_coefs()
 
             # fill pressure gaps
             ycpres[np.isnan(ycpres)] = wind2pres(
@@ -1009,8 +764,6 @@ def historic_track_preprocessing(
 def historic_track_interpolation(
     df,
     dt_comp,
-    path_data_shytcwaves,
-    path_databases,
     y0=None,
     x0=None,
     great_circle=True,
@@ -1062,7 +815,7 @@ def historic_track_interpolation(
     rmw_fill = np.full(st_pres.size, False)
 
     # select Pmin-Wmax polynomial fitting coefficients (IBTrACS center,basin)
-    xds_coef = check_ibtracs_coefs(path_data_shytcwaves, path_databases)
+    xds_coef = check_ibtracs_coefs()
     coefs = xds_coef.sel(center=st_center, basin=st_basin).coef.values[:]
 
     p1, p2, p3, p4 = coefs[:, 0], coefs[:, 1], coefs[:, 2], coefs[:, 3]
@@ -1532,7 +1285,7 @@ def track_site_parameters(
     frec = len(lon)
 
     # select Pmin-Vmax polynomial fitting coefficients (IBTrACS center,basin)
-    xds_coef = check_ibtracs_coefs(path_data_shytcwaves, path_databases)
+    xds_coef = check_ibtracs_coefs()
     p1, p2, p3, p4 = xds_coef.sel(center=center, basin=basin).coef.values[:]
     wind_estimate = (
         p1 * np.power(pmin, 3) + p2 * np.power(pmin, 2) + p3 * np.power(pmin, 1) + p4
