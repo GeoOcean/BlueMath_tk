@@ -73,6 +73,7 @@ def validate_data_mda(func):
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
         first_centroid_seed: int = None,
+        normalize_data: bool = False,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -91,8 +92,15 @@ def validate_data_mda(func):
                 raise ValueError(
                     "First centroid seed must be an integer >= 0 and < num of data points"
                 )
+        if not isinstance(normalize_data, bool):
+            raise TypeError("Normalize data must be a boolean")
         return func(
-            self, data, directional_variables, custom_scale_factor, first_centroid_seed
+            self,
+            data,
+            directional_variables,
+            custom_scale_factor,
+            first_centroid_seed,
+            normalize_data,
         )
 
     return wrapper
@@ -121,7 +129,7 @@ def validate_data_kma(func):
         custom_scale_factor: dict = {},
         min_number_of_points: int = None,
         max_number_of_iterations: int = 10,
-        normalize_data: bool = True,
+        normalize_data: bool = False,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -174,7 +182,9 @@ def validate_data_som(func):
         self,
         data: pd.DataFrame,
         directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
         num_iteration: int = 1000,
+        normalize_data: bool = False,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -182,8 +192,12 @@ def validate_data_som(func):
             raise TypeError("Data must be a pandas DataFrame")
         if not isinstance(directional_variables, list):
             raise TypeError("Directional variables must be a list")
+        if not isinstance(custom_scale_factor, dict):
+            raise TypeError("Custom scale factor must be a dict")
         if not isinstance(num_iteration, int) or num_iteration <= 0:
             raise ValueError("Number of iterations must be integer and > 0")
+        if not isinstance(normalize_data, bool):
+            raise TypeError("Normalize data must be a boolean")
         return func(self, data, directional_variables, num_iteration)
 
     return wrapper

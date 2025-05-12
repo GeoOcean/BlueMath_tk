@@ -114,11 +114,9 @@ class BlueMathModel(ABC):
     def load_model(self, model_path: str) -> "BlueMathModel":
         """Loads the model from a file."""
 
-        self.logger.info(f"Loading model from {model_path}")
-        with open(model_path, "rb") as f:
-            model = pickle.load(f)
-
-        return model
+        raise NotImplementedError(
+            "This method is deprecated. Use load_model() from bluemath_tk.core.io instead."
+        )
 
     def list_class_attributes(self) -> list:
         """

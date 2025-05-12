@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from minisom import MiniSom
-from sklearn.preprocessing import StandardScaler
 
 from ..core.decorators import validate_data_som
 from ..core.plotting.base_plotting import DefaultStaticPlotting
@@ -23,7 +22,7 @@ class SOMError(Exception):
 
 class SOM(BaseClustering):
     """
-    Self-Organizing Map (SOM) class.
+    Self-Organizing Maps (SOM) class.
 
     This class performs the Self-Organizing Map algorithm on a given dataframe.
 
@@ -33,39 +32,22 @@ class SOM(BaseClustering):
         The shape of the SOM.
     num_dimensions : int
         The number of dimensions of the input data.
-    data : pd.DataFrame
-        The input data.
-    standarized_data : pd.DataFrame
-        The standarized input data.
-    data_to_fit : pd.DataFrame
-        The data to fit the SOM algorithm.
     data_variables : List[str]
         A list with all data variables.
     directional_variables : List[str]
         A list with directional variables.
     fitting_variables : List[str]
         A list with fitting variables.
-    scaler : StandardScaler
-        The StandardScaler object.
+    custom_scale_factor : dict
+        A dictionary of custom scale factors.
+    scale_factor : dict
+        A dictionary of scale factors (after normalizing the data).
     centroids : pd.DataFrame
         The selected centroids.
+    normalized_centroids : pd.DataFrame
+        The selected normalized centroids.
     is_fitted : bool
         A flag to check if the SOM model is fitted.
-
-    Methods
-    -------
-    activation_response(data)
-        Returns the activation response of the given data.
-    get_centroids_probs_for_labels(data, labels)
-        Returns the labels map of the given data.
-    plot_centroids_probs_for_labels(probs_data)
-        Plots the labels map of the given data.
-    fit(data, directional_variables, num_iteration)
-        Fits the SOM model to the provided data.
-    predict(data)
-        Predicts the nearest centroid for the provided data.
-    fit_predict(data, directional_variables, num_iteration)
-        Fit the SOM algorithm to the provided data and predict the nearest centroid for each data point.
 
     Notes
     -----
@@ -74,25 +56,26 @@ class SOM(BaseClustering):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> import pandas as pd
-    >>> from bluemath_tk.datamining.som import SOM
-    >>> data = pd.DataFrame(
-    ...     {
-    ...         'Hs': np.random.rand(1000) * 7,
-    ...         'Tp': np.random.rand(1000) * 20,
-    ...         'Dir': np.random.rand(1000) * 360
-    ...     }
-    ... )
-    >>> som = SOM(som_shape=(3, 3), num_dimensions=4)
-    >>> nearest_centroids_idxs, nearest_centroids_df = som.fit_predict(
-    ...     data=data,
-    ...     directional_variables=['Dir'],
-    ... )
+    :: jupyter-execute::
 
-    TODO
-    -----
-    - Add option to normalize data?
+        import numpy as np
+        import pandas as pd
+        from bluemath_tk.datamining.som import SOM
+
+        data = pd.DataFrame(
+            {
+                "Hs": np.random.rand(1000) * 7,
+                "Tp": np.random.rand(1000) * 20,
+                "Dir": np.random.rand(1000) * 360
+            }
+        )
+        som = SOM(som_shape=(3, 3), num_dimensions=4)
+        nearest_centroids_idxs, nearest_centroids_df = som.fit_predict(
+            data=data,
+            directional_variables=["Dir"],
+        )
+
+        som.plot_selected_centroids(plot_text=True)
     """
 
     def __init__(
@@ -137,12 +120,14 @@ class SOM(BaseClustering):
 
         super().__init__()
         self.set_logger_name(name=self.__class__.__name__)
+
         if not isinstance(som_shape, tuple):
             if len(som_shape) != 2:
                 raise ValueError("Invalid SOM shape.")
         self.som_shape = som_shape
         if not isinstance(num_dimensions, int):
             raise ValueError("Invalid number of dimensions.")
+
         self.num_dimensions = num_dimensions
         self.x = self.som_shape[0]
         self.y = self.som_shape[1]
@@ -167,30 +152,60 @@ class SOM(BaseClustering):
             random_seed=self.random_seed,
             sigma_decay_function=self.sigma_decay_function,
         )
+
         self._data: pd.DataFrame = pd.DataFrame()
-        self._standarized_data: pd.DataFrame = pd.DataFrame()
+        self._normalized_data: pd.DataFrame = pd.DataFrame()
         self._data_to_fit: pd.DataFrame = pd.DataFrame()
         self.data_variables: List[str] = []
         self.directional_variables: List[str] = []
         self.fitting_variables: List[str] = []
-        self.scaler: StandardScaler = StandardScaler()
+        self.custom_scale_factor: dict = {}
+        self.scale_factor: dict = {}
         self.centroids: pd.DataFrame = pd.DataFrame()
+        self.normalized_centroids: pd.DataFrame = pd.DataFrame()
         self.is_fitted: bool = False
 
     @property
     def som(self) -> MiniSom:
         return self._som
 
+    @som.setter
+    def som(self, som_params_dict: dict) -> None:
+        """
+        Setter for the SOM object.
+
+        Parameters
+        ----------
+        som_params_dict : dict
+            A dictionary with the parameters to set the SOM object.
+            The keys should be the same as the parameters of the MiniSom class.
+            Example: {"sigma": 1, "learning_rate": 0.5}
+        """
+
+        self._som = MiniSom(**som_params_dict)
+
     @property
     def data(self) -> pd.DataFrame:
+        """
+        Returns the original data used for clustering.
+        """
+
         return self._data
 
     @property
-    def standarized_data(self) -> pd.DataFrame:
-        return self._standarized_data
+    def normalized_data(self) -> pd.DataFrame:
+        """
+        Returns the normalized data used for clustering.
+        """
+
+        return self._normalized_data
 
     @property
     def data_to_fit(self) -> pd.DataFrame:
+        """
+        Returns the data used for fitting the K-Means algorithm.
+        """
+
         return self._data_to_fit
 
     @property
@@ -201,12 +216,12 @@ class SOM(BaseClustering):
 
         return self.som.distance_map().T
 
-    def _get_winner_neurons(self, standarized_data: np.ndarray) -> np.ndarray:
+    def _get_winner_neurons(self, normalized_data: np.ndarray) -> np.ndarray:
         """
-        Returns the winner neurons of the given standarized data.
+        Returns the winner neurons of the given normalized data.
         """
 
-        winner_neurons = np.array([self.som.winner(x) for x in standarized_data]).T
+        winner_neurons = np.array([self.som.winner(x) for x in normalized_data]).T
         return np.ravel_multi_index(winner_neurons, self.som_shape)
 
     def activation_response(self, data: pd.DataFrame = None) -> np.ndarray:
@@ -215,9 +230,9 @@ class SOM(BaseClustering):
         """
 
         if data is None:
-            data = self.standarized_data.copy()
+            data = self.normalized_data.copy()
         else:
-            data, _ = self.standarize(data=data, scaler=self.scaler)
+            data, _ = self.normalize(data=data, scaler=self.scaler)
 
         return self.som.activation_response(data=data.values)
 
@@ -229,6 +244,7 @@ class SOM(BaseClustering):
         """
 
         # TODO: JAVI: Could this method be implemented in more datamining classes?
+
         data = data.copy()  # Avoid modifying the original data to predict
         for directional_variable in self.directional_variables:
             u_comp, v_comp = self.get_uv_components(
@@ -237,8 +253,11 @@ class SOM(BaseClustering):
             data[f"{directional_variable}_u"] = u_comp
             data[f"{directional_variable}_v"] = v_comp
             data.drop(columns=[directional_variable], inplace=True)
-        standarized_data, _ = self.standarize(data=data, scaler=self.scaler)
-        dict_with_probs = self.som.labels_map(standarized_data.values, labels)
+        normalized_data, _ = self.normalize(
+            data=data, custom_scale_factor=self.scale_factor
+        )
+        dict_with_probs = self.som.labels_map(normalized_data.values, labels)
+
         return pd.DataFrame(dict_with_probs).T.sort_index()
 
     def plot_centroids_probs_for_labels(
@@ -265,7 +284,9 @@ class SOM(BaseClustering):
         self,
         data: pd.DataFrame,
         directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
         num_iteration: int = 1000,
+        normalize_data: bool = False,
     ) -> None:
         """
         Fits the SOM model to the provided data.
@@ -277,44 +298,39 @@ class SOM(BaseClustering):
         directional_variables : List[str], optional
             A list with the directional variables (will be transformed to u and v).
             Default is [].
+        custom_scale_factor : dict, optional
+            A dictionary specifying custom scale factors for normalization.
+            Default is {}.
         num_iteration : int, optional
             The number of iterations for the SOM fitting.
             Default is 1000.
-
-        Notes
-        -----
-        - The function assumes that the data is validated by the `validate_data_som`
-        decorator before execution.
+        normalize_data : bool, optional
+            A flag to normalize the data. Default is False.
         """
 
-        self._data = data.copy()
-        self.directional_variables = directional_variables.copy()
-        for directional_variable in self.directional_variables:
-            u_comp, v_comp = self.get_uv_components(
-                x_deg=self.data[directional_variable].values
-            )
-            self.data[f"{directional_variable}_u"] = u_comp
-            self.data[f"{directional_variable}_v"] = v_comp
-        self.data_variables = list(self.data.columns)
-
-        # Get just the data to be used in the training
-        self._data_to_fit = self.data.copy()
-        for directional_variable in self.directional_variables:
-            self.data_to_fit.drop(columns=[directional_variable], inplace=True)
-        self.fitting_variables = list(self.data_to_fit.columns)
-
-        # Standarize data using the StandardScaler custom method
-        self._standarized_data, self.scaler = self.standarize(data=self.data_to_fit)
+        super().fit(
+            data=data,
+            directional_variables=directional_variables,
+            custom_scale_factor=custom_scale_factor,
+            normalize_data=normalize_data,
+        )
 
         # Train the SOM model
-        self.som.train(data=self.standarized_data.values, num_iteration=num_iteration)
+        self.som.train(data=self.normalized_data.values, num_iteration=num_iteration)
 
         # Save winner neurons and calculate centroids values
         data_and_winners = self.data.copy()
         data_and_winners["winner_neurons"] = self._get_winner_neurons(
-            standarized_data=self.standarized_data.values
+            normalized_data=self.normalized_data.values
         )
-        self.centroids = data_and_winners.groupby("winner_neurons").mean()
+        self.normalized_centroids = (
+            data_and_winners.groupby("winner_neurons")
+            .mean()
+            .drop(columns=self.directional_variables)
+        )
+        self.centroids = self.denormalize(
+            normalized_data=self.normalized_centroids, scale_factor=self.scale_factor
+        )
         for directional_variable in self.directional_variables:
             self.centroids[directional_variable] = self.get_degrees_from_uv(
                 xu=self.centroids[f"{directional_variable}_u"].values,
@@ -341,17 +357,11 @@ class SOM(BaseClustering):
 
         if self.is_fitted is False:
             raise SOMError("SOM model is not fitted.")
-        data = data.copy()  # Avoid modifying the original data to predict
-        for directional_variable in self.directional_variables:
-            u_comp, v_comp = self.get_uv_components(
-                x_deg=data[directional_variable].values
-            )
-            data[f"{directional_variable}_u"] = u_comp
-            data[f"{directional_variable}_v"] = v_comp
-            data.drop(columns=[directional_variable], inplace=True)
-        standarized_data, _ = self.standarize(data=data, scaler=self.scaler)
+
+        normalized_data = super().predict(data=data)
+
         winner_neurons = self._get_winner_neurons(
-            standarized_data=standarized_data.values
+            normalized_data=normalized_data.values
         )
 
         return winner_neurons, self.centroids.iloc[winner_neurons]
@@ -360,7 +370,9 @@ class SOM(BaseClustering):
         self,
         data: pd.DataFrame,
         directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
         num_iteration: int = 1000,
+        normalize_data: bool = False,
     ) -> Tuple[np.ndarray, pd.DataFrame]:
         """
         Fit the SOM algorithm to the provided data and predict the nearest centroid for each data point.
@@ -372,9 +384,14 @@ class SOM(BaseClustering):
         directional_variables : List[str], optional
             A list of directional variables (will be transformed to u and v).
             Default is [].
+        custom_scale_factor : dict, optional
+            A dictionary specifying custom scale factors for normalization.
+            Default is {}.
         num_iteration : int, optional
             The number of iterations for the SOM fitting.
             Default is 1000.
+        normalize_data : bool, optional
+            A flag to normalize the data. Default is False.
 
         Returns
         -------
@@ -385,7 +402,9 @@ class SOM(BaseClustering):
         self.fit(
             data=data,
             directional_variables=directional_variables,
+            custom_scale_factor=custom_scale_factor,
             num_iteration=num_iteration,
+            normalize_data=normalize_data,
         )
 
         return self.predict(data=data)
