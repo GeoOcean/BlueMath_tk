@@ -20,7 +20,7 @@ class KMAError(Exception):
 
 class KMA(BaseClustering):
     """
-    K-Means (KMA) class.
+    K-Means Algorithm (KMA) class.
 
     This class performs the K-Means algorithm on a given dataframe.
 
@@ -138,8 +138,19 @@ class KMA(BaseClustering):
         return self._kma
 
     @kma.setter
-    def kma(self, kwargs) -> None:
-        self._kma = KMeans(**kwargs)
+    def kma(self, kma_params_dict) -> None:
+        """
+        Setter for the KMeans object.
+
+        Parameters
+        ----------
+        kma_params_dict : dict
+            A dictionary with KMeans parameters.
+            The keys should be the same as the KMeans parameters.
+            Example: {"n_clusters": 5, "random_state": 42}
+        """
+
+        self._kma = KMeans(**kma_params_dict)
 
     @property
     def data(self) -> pd.DataFrame:
@@ -183,6 +194,7 @@ class KMA(BaseClustering):
         It normalizes the data, and returns the calculated centroids.
 
         TODO: Implement KMA regression guided with variable.
+              Add option to force KMA initialization with MDA centroids.
 
         Parameters
         ----------

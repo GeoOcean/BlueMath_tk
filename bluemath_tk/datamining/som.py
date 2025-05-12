@@ -169,6 +169,21 @@ class SOM(BaseClustering):
     def som(self) -> MiniSom:
         return self._som
 
+    @som.setter
+    def som(self, som_params_dict: dict) -> None:
+        """
+        Setter for the SOM object.
+
+        Parameters
+        ----------
+        som_params_dict : dict
+            A dictionary with the parameters to set the SOM object.
+            The keys should be the same as the parameters of the MiniSom class.
+            Example: {"sigma": 1, "learning_rate": 0.5}
+        """
+
+        self._som = MiniSom(**som_params_dict)
+
     @property
     def data(self) -> pd.DataFrame:
         """
@@ -291,11 +306,6 @@ class SOM(BaseClustering):
             Default is 1000.
         normalize_data : bool, optional
             A flag to normalize the data. Default is False.
-
-        Notes
-        -----
-        - The function assumes that the data is validated by the `validate_data_som`
-        decorator before execution.
         """
 
         super().fit(
@@ -360,6 +370,7 @@ class SOM(BaseClustering):
         self,
         data: pd.DataFrame,
         directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
         num_iteration: int = 1000,
         normalize_data: bool = False,
     ) -> Tuple[np.ndarray, pd.DataFrame]:
@@ -373,6 +384,9 @@ class SOM(BaseClustering):
         directional_variables : List[str], optional
             A list of directional variables (will be transformed to u and v).
             Default is [].
+        custom_scale_factor : dict, optional
+            A dictionary specifying custom scale factors for normalization.
+            Default is {}.
         num_iteration : int, optional
             The number of iterations for the SOM fitting.
             Default is 1000.
@@ -388,6 +402,7 @@ class SOM(BaseClustering):
         self.fit(
             data=data,
             directional_variables=directional_variables,
+            custom_scale_factor=custom_scale_factor,
             num_iteration=num_iteration,
             normalize_data=normalize_data,
         )
