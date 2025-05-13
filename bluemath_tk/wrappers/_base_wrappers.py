@@ -4,7 +4,7 @@ import os
 import os.path as op
 import subprocess
 import threading
-from abc import ABC, abstractmethod
+from abc import ABC
 from queue import Queue
 from typing import List, Union
 
