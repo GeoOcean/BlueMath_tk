@@ -1,8 +1,9 @@
-from typing import List, Tuple
+from typing import List, Tuple, Any, Dict
 
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
+from sklearn.linear_model import LinearRegression
 
 from ..core.decorators import validate_data_kma
 from ._base_datamining import BaseClustering
@@ -132,6 +133,7 @@ class KMA(BaseClustering):
         self.normalized_centroids: pd.DataFrame = pd.DataFrame()
         self.centroid_real_indices: np.array = np.array([])
         self.is_fitted: bool = False
+        self.regression_guided: dict = {}
 
     @property
     def kma(self) -> KMeans:
@@ -176,6 +178,42 @@ class KMA(BaseClustering):
 
         return self._data_to_fit
 
+
+    def add_regression_guided(self, data: pd.DataFrame, vars: List[str], alpha: List[float]) -> pd.DataFrame:
+
+        """
+        Help KMA clustering features with regression-guided variables.
+        """
+
+        # Stack guiding variables into (time, n_vars) array
+        X = data.drop(columns=vars)
+        Y = np.stack([data[var].values for var in vars], axis=1)
+        
+        # Normalize input features
+        X_std = X.std().replace(0, 1)
+        X_norm = X / X_std
+
+        # Add intercept column to input
+        X_design = np.column_stack((np.ones(len(X)), X_norm.values))
+
+        # Normalize guiding targets
+        Y_std = np.nanstd(Y, axis=0)
+        Y_std[Y_std == 0] = 1.0
+
+        # Fit regression model to predict guiding vars from input
+        model = LinearRegression(fit_intercept=False).fit(X_design, Y / Y_std)
+        Y_pred = model.predict(X_design) * Y_std  # De-normalize predictions
+
+        # Weight columns by input alpha
+        X_weight = 1.0 - np.sum(alpha)
+        X_scaled = X_weight * X.values
+        Y_scaled = Y_pred * alpha
+
+        df = pd.DataFrame(np.hstack([X_scaled, Y_scaled]), index=data.index)
+        df.columns = list(X.columns) + vars
+
+        return df
+
     @validate_data_kma
     def fit(
         self,
@@ -185,6 +223,7 @@ class KMA(BaseClustering):
         min_number_of_points: int = None,
         max_number_of_iterations: int = 10,
         normalize_data: bool = False,
+        regression_guided: Dict[str, Dict[str, Any]] = {},
     ) -> None:
         """
         Fit the K-Means algorithm to the provided data.
@@ -215,15 +254,24 @@ class KMA(BaseClustering):
             Default is 10.
         normalize_data : bool, optional
             A flag to normalize the data. Default is False.
+        regression_guided: dict, optional
+            A dictionary specifying regression-guided clustering variables and relative weights.
         """
-
+        
+        if regression_guided:
+            data = self.add_regression_guided(
+                data=data, 
+                vars = regression_guided.get("vars", None),
+                alpha = regression_guided.get("alpha", None)
+            )
+        
         super().fit(
             data=data,
             directional_variables=directional_variables,
             custom_scale_factor=custom_scale_factor,
             normalize_data=normalize_data,
         )
-
+        
         # Fit K-Means algorithm
         if min_number_of_points is not None:
             stable_kma_child = False
@@ -255,6 +303,7 @@ class KMA(BaseClustering):
         self.centroids = self.denormalize(
             normalized_data=self.normalized_centroids, scale_factor=self.scale_factor
         )
+        
         for directional_variable in self.directional_variables:
             self.centroids[directional_variable] = self.get_degrees_from_uv(
                 xu=self.centroids[f"{directional_variable}_u"].values,
@@ -299,6 +348,7 @@ class KMA(BaseClustering):
         min_number_of_points: int = None,
         max_number_of_iterations: int = 10,
         normalize_data: bool = False,
+        regression_guided: Dict[str, Dict[str, Any]] = {},
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Fit the K-Means algorithm to the provided data and predict the nearest centroid
@@ -330,7 +380,7 @@ class KMA(BaseClustering):
             A tuple containing the nearest centroid index for each data point,
             and the nearest centroids.
         """
-
+        
         self.fit(
             data=data,
             directional_variables=directional_variables,
@@ -338,6 +388,7 @@ class KMA(BaseClustering):
             min_number_of_points=min_number_of_points,
             max_number_of_iterations=max_number_of_iterations,
             normalize_data=normalize_data,
+            regression_guided=regression_guided
         )
 
         return self.predict(data=data)

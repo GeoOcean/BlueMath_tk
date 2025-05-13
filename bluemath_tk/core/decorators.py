@@ -130,6 +130,7 @@ def validate_data_kma(func):
         min_number_of_points: int = None,
         max_number_of_iterations: int = 10,
         normalize_data: bool = False,
+        regression_guided: Dict[str, Dict[str, Any]] = {},
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -149,6 +150,8 @@ def validate_data_kma(func):
             raise ValueError("Maximum number of iterations must be integer and > 0")
         if not isinstance(normalize_data, bool):
             raise TypeError("Normalize data must be a boolean")
+        if not isinstance(regression_guided, dict):
+            raise TypeError("regression_guided must be a dictionary")
         return func(
             self,
             data,
@@ -157,6 +160,7 @@ def validate_data_kma(func):
             min_number_of_points,
             max_number_of_iterations,
             normalize_data,
+            regression_guided
         )
 
     return wrapper
@@ -384,6 +388,7 @@ def validate_data_xwt(func):
         self,
         data: xr.Dataset,
         fit_params: Dict[str, Dict[str, Any]] = {},
+        regression_guided: Dict[str, Dict[str, Any]] = {},
         variable_to_sort_bmus: str = None,
     ):
         if not isinstance(data, xr.Dataset):
