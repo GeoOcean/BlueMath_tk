@@ -723,3 +723,39 @@ class SwashModelWrapper(BaseModelWrapper):
         ds = ds.assign_coords({"case_num": [output_nc["case_num"].values]})
 
         return ds
+
+
+class HySwashVeggyModelWrapper(SwashModelWrapper):
+    """
+    Wrapper for the SWASH model with vegetation.
+    """
+
+    def build_case(self, case_context: dict, case_dir: str) -> None:
+        super().build_case(case_context=case_context, case_dir=case_dir)
+
+        # Build the input vegetation file
+        plants = np.zeros((len(self.depth_array)))
+        plants[
+            int(self.fixed_parameters["Plants_ini"]) : int(
+                self.fixed_parameters["Plants_fin"]
+            )
+        ] = case_context["plants_density"]
+        np.savetxt(os.path.join(case_dir, "plants.txt"), plants, fmt="%.6f")
+
+
+class ChySwashModelWrapper(SwashModelWrapper):
+    """
+    Wrapper for the SWASH model with friction.
+    """
+
+    default_Cf = 0.0002
+
+    def build_case(self, case_context: dict, case_dir: str) -> None:
+        super().build_case(case_context=case_context, case_dir=case_dir)
+
+        # Build the input friction file
+        friction = np.ones((len(self.depth_array))) * self.default_Cf
+        friction[
+            int(self.fixed_parameters["Cf_ini"]) : int(self.fixed_parameters["Cf_fin"])
+        ] = case_context["Cf"]
+        np.savetxt(os.path.join(case_dir, "friction.txt"), friction, fmt="%.6f")

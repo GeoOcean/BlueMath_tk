@@ -1,60 +1,44 @@
 import inspect
-import os
 import os.path as op
 
 import numpy as np
 
 from bluemath_tk.datamining.lhs import LHS
 from bluemath_tk.datamining.mda import MDA
-from bluemath_tk.wrappers.swash.swash_wrapper import SwashModelWrapper
+from bluemath_tk.wrappers.swash.swash_wrapper import HySwashVeggyModelWrapper
 
 
-class ChySwashModelWrapper(SwashModelWrapper):
-    """
-    Wrapper for the SWASH model with friction.
-    """
-
-    default_Cf = 0.0002
-
-    def build_case(
-        self,
-        case_context: dict,
-        case_dir: str,
-    ) -> None:
-        super().build_case(case_context=case_context, case_dir=case_dir)
-
-        # Build the input friction file
-        friction = np.ones((len(self.depth_array))) * self.default_Cf
-        friction[
-            int(self.fixed_parameters["Cf_ini"]) : int(self.fixed_parameters["Cf_fin"])
-        ] = case_context["Cf"]
-        np.savetxt(os.path.join(case_dir, "friction.txt"), friction, fmt="%.6f")
-
-
-# Usage example
 if __name__ == "__main__":
     # Define the output directory
-    output_dir = "/home/tausiaj/GitHub-GeoOcean/BlueMath_tk/test_cases/CHY"  # CHANGE THIS TO YOUR DESIRED OUTPUT DIRECTORY!
+    output_dir = (
+        "test_cases/HySwashVeggy/"  # CHANGE THIS TO YOUR DESIRED OUTPUT DIRECTORY!
+    )
     # Templates directory
-    swash_file_path = op.dirname(inspect.getfile(SwashModelWrapper))
+    swash_file_path = op.dirname(inspect.getfile(HySwashVeggyModelWrapper))
     templates_dir = op.join(swash_file_path, "templates")
     # Fixed parameters
     fixed_parameters = {
-        "dxinp": 1.5,  # bathymetry grid spacing
-        "default_Cf": 0.002,  # Friction manning coefficient (m^-1/3 s)
-        "Cf_ini": 700 / 1.5,  # Friction start cell
-        "Cf_fin": 1250 / 1.5,  # Friction end cell
+        "dxinp": 1,  # bathymetry grid spacing
+        "Plants_ini": 750,  # Vegetation start cell
+        "Plants_fin": 900,  # Vegetation end cell
         "comptime": 7200,  # Simulation duration (s)
         "warmup": 7200 * 0.15,  # Warmup duration (s)
-        "n_nodes_per_wavelength": 60,  # number of nodes per wavelength
+        "n_nodes_per_wavelength": 80,  # number of nodes per wavelength
     }
     # LHS
-    variables_to_analyse_in_metamodel = ["Hs", "Hs_L0", "WL", "Cf", "Cr"]
+    variables_to_analyse_in_metamodel = [
+        "Hs",
+        "Hs_L0",
+        "WL",
+        "vegetation_height",
+        "plants_density",
+    ]
     lhs_parameters = {
+        "num_dimensions": 5,
         "num_samples": 10000,
         "dimensions_names": variables_to_analyse_in_metamodel,
-        "lower_bounds": [0.15, 0.0005, -0.6, 0.025, 0.4],
-        "upper_bounds": [1.6, 0.009, 0.356, 0.2, 0.8],
+        "lower_bounds": [0.5, 0.005, 0, 0, 0],
+        "upper_bounds": [2, 0.05, 1, 1.5, 1000],
     }
     lhs = LHS(num_dimensions=len(variables_to_analyse_in_metamodel))
     df_dataset = lhs.generate(
@@ -68,8 +52,8 @@ if __name__ == "__main__":
     mda = MDA(num_centers=mda_parameters.get("num_centers"))
     mda.fit(data=df_dataset)
     metamodel_parameters = mda.centroids.to_dict(orient="list")
-    # ChySwashModelWrapper
-    swash_wrapper = ChySwashModelWrapper(
+    # HySwashVeggyModelWrapper
+    swash_wrapper = HySwashVeggyModelWrapper(
         templates_dir=templates_dir,
         metamodel_parameters=metamodel_parameters,
         fixed_parameters=fixed_parameters,
@@ -82,6 +66,6 @@ if __name__ == "__main__":
     swash_wrapper.run_cases(launcher="docker_serial", num_workers=5)
     # Post-process the results
     swash_wrapper.postprocess_cases(
-        output_vars=["Msetup", "Hrms", "Hfreqs"], force=True
+        output_vars=["Ru2", "Runlev", "Msetup", "Hrms", "Hfreqs"]
     )
     print("Done!")
