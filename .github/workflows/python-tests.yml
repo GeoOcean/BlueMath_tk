@@ -34,4 +34,7 @@ jobs:
           conda activate bluemath-tk
           python --version
           python -m unittest discover tests/datamining/
+          python -m unittest discover tests/downloaders/
           python -m unittest discover tests/interpolation/
+          python -m unittest discover tests/predictor/
+          python -m unittest discover tests/wrappers/
