@@ -8,9 +8,7 @@ from bluemath_tk.datamining.kma import KMA
 from bluemath_tk.datamining.pca import PCA
 from bluemath_tk.predictor.xwt import XWT
 
-era5 = xr.open_dataset(
-    "https://geoocean.sci.unican.es/thredds/dodsC/geoceanData/hidronas1/volume3/Laura/DATA/ERA5/global_msl_1day_1degree_32bits.nc"
-)
+era5 = xr.open_dataset("https://geoocean.sci.unican.es/thredds/dodsC/geoocean/era5-msl")
 era5["time"] = era5["time"].astype("timedelta64[D]") + np.datetime64("1940-01-01")
 era5 = era5.sel(time=slice("2015", None)).chunk({"time": 365}).load()
 era5["msl_gradient"] = spatial_gradient(era5["msl"])

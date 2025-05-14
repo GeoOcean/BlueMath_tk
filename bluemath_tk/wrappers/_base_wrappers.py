@@ -4,6 +4,7 @@ import os
 import os.path as op
 import subprocess
 import threading
+from abc import ABC
 from queue import Queue
 from typing import List, Union
 
@@ -26,9 +27,10 @@ yourLauncher.sh --case-dir $case_dir > $case_dir/wrapper_out.log 2> $case_dir/wr
 """
 
 
-class BaseModelWrapper(BlueMathModel):
+class BaseModelWrapper(BlueMathModel, ABC):
     """
     Base class for numerical models wrappers.
+    This is an abstract base class that cannot be instantiated directly.
 
     Attributes
     ----------
@@ -51,6 +53,14 @@ class BaseModelWrapper(BlueMathModel):
     """
 
     sbatch_file_example = sbatch_file_example
+
+    def __new__(cls, *args, **kwargs):
+        if cls is BaseModelWrapper:
+            raise TypeError(
+                "BaseModelWrapper is an abstract base class and cannot be instantiated directly. "
+                "For basic testing, you can use DummyModelWrapper from this same file."
+            )
+        return super().__new__(cls)
 
     def __init__(
         self,
@@ -383,11 +393,7 @@ class BaseModelWrapper(BlueMathModel):
             os.makedirs(case_dir, exist_ok=True)
             case_context.update(self.fixed_parameters)
 
-    def build_case(
-        self,
-        case_context: dict,
-        case_dir: str,
-    ) -> None:
+    def build_case(self, case_context: dict, case_dir: str) -> None:
         """
         Build the input files for a case.
 
@@ -855,3 +861,18 @@ class BaseModelWrapper(BlueMathModel):
         except NotImplementedError as exc:
             self.logger.error(f"Error joining postprocessed files: {exc}")
             return postprocessed_files
+
+
+class DummyModelWrapper(BaseModelWrapper):
+    """
+    Dummy model wrapper to test the BaseModelWrapper class.
+    """
+
+    def build_case(self, case_context: dict, case_dir: str) -> None:
+        pass
+
+    def postprocess_case(self, **kwargs) -> None:
+        pass
+
+    def join_postprocessed_files(self, **kwargs) -> xr.Dataset:
+        return xr.Dataset()
