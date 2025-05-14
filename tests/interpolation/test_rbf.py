@@ -10,9 +10,9 @@ class TestRBF(unittest.TestCase):
     def setUp(self):
         self.dataset = pd.DataFrame(
             {
-                "Hs": np.random.rand(100) * 7,
-                "Tp": np.random.rand(100) * 20,
-                "Dir": np.random.rand(100) * 360,
+                "Hs": np.random.rand(1000) * 7,
+                "Tp": np.random.rand(1000) * 20,
+                "Dir": np.random.rand(1000) * 360,
             }
         )
         self.subset = self.dataset.sample(frac=0.25)
