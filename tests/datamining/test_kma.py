@@ -1,6 +1,8 @@
 import unittest
+
 import numpy as np
 import pandas as pd
+
 from bluemath_tk.datamining.kma import KMA
 
 
@@ -41,6 +43,19 @@ class TestKMA(unittest.TestCase):
         )
         _unique_labels, counts = np.unique(predicted_labels, return_counts=True)
         self.assertTrue(np.all(counts >= 50))
+        self.assertIsInstance(predicted_labels, pd.DataFrame)
+        self.assertEqual(len(predicted_labels), 1000)
+        self.assertIsInstance(predicted_labels_df, pd.DataFrame)
+        self.assertEqual(predicted_labels_df.shape[0], 1000)
+
+    def test_add_regression_guided(self):
+        data = self.df.copy()
+        data["Fe"] = data["Hs"] ** 2 * data["Tp"]
+        predicted_labels, predicted_labels_df = self.kma.fit_predict(
+            data=data,
+            directional_variables=["Dir"],
+            regression_guided={"vars": ["Fe"], "alpha": [0.6]},
+        )
         self.assertIsInstance(predicted_labels, pd.DataFrame)
         self.assertEqual(len(predicted_labels), 1000)
         self.assertIsInstance(predicted_labels_df, pd.DataFrame)
