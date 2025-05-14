@@ -130,28 +130,42 @@ def validate_data_kma(func):
         min_number_of_points: int = None,
         max_number_of_iterations: int = 10,
         normalize_data: bool = False,
-        regression_guided: Dict[str, Dict[str, Any]] = {},
+        regression_guided: Dict[str, List] = {},
     ):
         if data is None:
-            raise ValueError("Data cannot be None")
+            raise ValueError("data cannot be None")
         elif not isinstance(data, pd.DataFrame):
-            raise TypeError("Data must be a pandas DataFrame")
+            raise TypeError("data must be a pandas DataFrame")
         if not isinstance(directional_variables, list):
-            raise TypeError("Directional variables must be a list")
+            raise TypeError("directional_variables must be a list")
         if not isinstance(custom_scale_factor, dict):
-            raise TypeError("Custom scale factor must be a dict")
+            raise TypeError("custom_scale_factor must be a dict")
         if min_number_of_points is not None:
             if not isinstance(min_number_of_points, int) or min_number_of_points <= 0:
-                raise ValueError("Minimum number of points must be integer and > 0")
+                raise ValueError("min_number_of_points must be integer and > 0")
         if (
             not isinstance(max_number_of_iterations, int)
             or max_number_of_iterations <= 0
         ):
-            raise ValueError("Maximum number of iterations must be integer and > 0")
+            raise ValueError("max_number_of_iterations must be integer and > 0")
         if not isinstance(normalize_data, bool):
-            raise TypeError("Normalize data must be a boolean")
+            raise TypeError("normalize_data must be a boolean")
         if not isinstance(regression_guided, dict):
             raise TypeError("regression_guided must be a dictionary")
+        if not all(
+            isinstance(var, str) and var in data.columns
+            for var in regression_guided.get("vars", [])
+        ):
+            raise TypeError(
+                "regression_guided vars must be a list of strings and must exist in data"
+            )
+        if not all(
+            isinstance(alpha, float) and alpha >= 0 and alpha <= 1
+            for alpha in regression_guided.get("alpha", [])
+        ):
+            raise TypeError(
+                "regression_guided alpha must be a list of floats between 0 and 1"
+            )
         return func(
             self,
             data,
@@ -160,7 +174,7 @@ def validate_data_kma(func):
             min_number_of_points,
             max_number_of_iterations,
             normalize_data,
-            regression_guided
+            regression_guided,
         )
 
     return wrapper
@@ -388,7 +402,6 @@ def validate_data_xwt(func):
         self,
         data: xr.Dataset,
         fit_params: Dict[str, Dict[str, Any]] = {},
-        regression_guided: Dict[str, Dict[str, Any]] = {},
         variable_to_sort_bmus: str = None,
     ):
         if not isinstance(data, xr.Dataset):

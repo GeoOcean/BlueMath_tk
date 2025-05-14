@@ -1,5 +1,3 @@
-from typing import List
-
 import logging
 import warnings
 from datetime import datetime, timedelta
@@ -303,7 +301,7 @@ class XWT(BlueMathModel, BlueMathPipeline):
         )
 
         return df_cond_probs
-    
+
     @validate_data_xwt
     def fit(
         self,
@@ -327,6 +325,9 @@ class XWT(BlueMathModel, BlueMathPipeline):
         ------
         XWTError
             If the data is not PCA formatted.
+
+        TODO: Standarize PCs by first PC variance.
+              pca.pcs_df / pca.pcs.stds.isel(n_component=0).values ??
         """
 
         # Make a copy of the data to avoid modifying the original dataset
@@ -346,17 +347,16 @@ class XWT(BlueMathModel, BlueMathPipeline):
 
         kma: KMA = self.steps.get("kma")
         self.num_clusters = kma.num_clusters
-        # TODO: standarize PCs by first PC variance
-        
-        data_to_kma = pca.pcs_df
-        
+
+        data_to_kma = pca.pcs_df.copy()
+
         if "regression_guided" in fit_params.get("kma", {}):
             guiding_vars = fit_params["kma"]["regression_guided"].get("vars", [])
-            
-            if guiding_vars:    
+
+            if guiding_vars:
                 guiding_data = pd.DataFrame(
                     {var: data[var].values for var in guiding_vars},
-                    index=data.time.values
+                    index=data.time.values,
                 )
                 data_to_kma = pd.concat([data_to_kma, guiding_data], axis=1)
 
