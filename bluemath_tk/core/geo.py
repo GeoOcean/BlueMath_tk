@@ -2,6 +2,10 @@ from math import pi
 from typing import Tuple, Union
 
 import numpy as np
+from numpy.typing import NDArray
+
+# from .constants import EARTH_RADIUS_NM
+EARTH_RADIUS_NM = 6378.135 / 1.852
 
 # Constants
 FLATTENING = 1 / 298.257223563
@@ -11,14 +15,28 @@ RAD2DEG = 180.0 / pi
 
 
 def convert_to_radians(*args: Union[float, NDArray]) -> tuple:
-    """Convert degree inputs to radians.
-
-    Args:
-        *args: Variable number of degree inputs
-
-    Returns:
-        tuple: Input values converted to radians
     """
+    Convert degree inputs to radians.
+
+    Parameters
+    ----------
+    *args : Union[float, NDArray]
+        Variable number of inputs in degrees to convert to radians.
+        Can be either scalar floats or numpy arrays.
+
+    Returns
+    -------
+    tuple
+        Tuple of input values converted to radians, preserving input types.
+
+    Examples
+    --------
+    >>> convert_to_radians(90.0)
+    (1.5707963267948966,)
+    >>> convert_to_radians(90.0, 180.0)
+    (1.5707963267948966, 3.141592653589793)
+    """
+
     return tuple(np.radians(arg) for arg in args)
 
 
@@ -28,15 +46,38 @@ def geodesic_distance(
     lat2: Union[float, NDArray],
     lon2: Union[float, NDArray],
 ) -> Union[float, NDArray]:
-    """Calculate great circle distance between two points on Earth.
-
-    Args:
-        lat1, lon1: Latitude and longitude of first point in degrees
-        lat2, lon2: Latitude and longitude of second point in degrees
-
-    Returns:
-        float: Great circle distance in degrees
     """
+    Calculate great circle distance between two points on Earth.
+
+    Parameters
+    ----------
+    lat1 : Union[float, NDArray]
+        Latitude of first point(s) in degrees
+    lon1 : Union[float, NDArray]
+        Longitude of first point(s) in degrees
+    lat2 : Union[float, NDArray]
+        Latitude of second point(s) in degrees
+    lon2 : Union[float, NDArray]
+        Longitude of second point(s) in degrees
+
+    Returns
+    -------
+    Union[float, NDArray]
+        Great circle distance(s) in degrees
+
+    Notes
+    -----
+    Uses the haversine formula to calculate great circle distance.
+    The result is in degrees of arc on a sphere.
+
+    Examples
+    --------
+    >>> geodesic_distance(0, 0, 0, 90)
+    90.0
+    >>> geodesic_distance([0, 45], [0, -90], [0, -45], [90, 90])
+    array([90., 90.])
+    """
+
     lon1, lat1, lon2, lat2 = convert_to_radians(lon1, lat1, lon2, lat2)
 
     a = (
@@ -46,6 +87,7 @@ def geodesic_distance(
     a = np.clip(a, 0, 1)
 
     rng = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+
     return np.degrees(rng)
 
 
@@ -55,15 +97,38 @@ def geodesic_azimuth(
     lat2: Union[float, NDArray],
     lon2: Union[float, NDArray],
 ) -> Union[float, NDArray]:
-    """Calculate azimuth between two points on Earth.
-
-    Args:
-        lat1, lon1: Latitude and longitude of first point in degrees
-        lat2, lon2: Latitude and longitude of second point in degrees
-
-    Returns:
-        float: Azimuth in degrees
     """
+    Calculate azimuth between two points on Earth.
+
+    Parameters
+    ----------
+    lat1 : Union[float, NDArray]
+        Latitude of first point(s) in degrees
+    lon1 : Union[float, NDArray]
+        Longitude of first point(s) in degrees
+    lat2 : Union[float, NDArray]
+        Latitude of second point(s) in degrees
+    lon2 : Union[float, NDArray]
+        Longitude of second point(s) in degrees
+
+    Returns
+    -------
+    Union[float, NDArray]
+        Azimuth(s) in degrees from North
+
+    Notes
+    -----
+    The azimuth is the angle between true north and the direction to the second point,
+    measured clockwise from north. Special cases are handled for points at the poles.
+
+    Examples
+    --------
+    >>> geodesic_azimuth(0, 0, 0, 90)
+    90.0
+    >>> geodesic_azimuth([0, 45], [0, -90], [0, -45], [90, 90])
+    array([90., 45.])
+    """
+
     lon1, lat1, lon2, lat2 = convert_to_radians(lon1, lat1, lon2, lat2)
 
     az = np.arctan2(
@@ -72,10 +137,10 @@ def geodesic_azimuth(
     )
 
     # Handle special cases at poles
-    az = np.where(lat1 <= -pi/2, 0, az)
-    az = np.where(lat2 >= pi/2, 0, az)
-    az = np.where(lat2 <= -pi/2, pi, az)
-    az = np.where(lat1 >= pi/2, pi, az)
+    az = np.where(lat1 <= -pi / 2, 0, az)
+    az = np.where(lat2 >= pi / 2, 0, az)
+    az = np.where(lat2 <= -pi / 2, pi, az)
+    az = np.where(lat1 >= pi / 2, pi, az)
 
     return np.degrees(az % (2 * pi))
 
@@ -86,52 +151,117 @@ def geodesic_distance_azimuth(
     lat2: Union[float, NDArray],
     lon2: Union[float, NDArray],
 ) -> Tuple[Union[float, NDArray], Union[float, NDArray]]:
-    """Calculate both great circle distance and azimuth between two points.
-
-    Args:
-        lat1, lon1: Latitude and longitude of first point in degrees
-        lat2, lon2: Latitude and longitude of second point in degrees
-
-    Returns:
-        tuple: (distance in degrees, azimuth in degrees)
     """
-    return geodesic_distance(lat1, lon1, lat2, lon2), geodesic_azimuth(lat1, lon1, lat2, lon2)
+    Calculate both great circle distance and azimuth between two points.
+
+    Parameters
+    ----------
+    lat1 : Union[float, NDArray]
+        Latitude of first point(s) in degrees
+    lon1 : Union[float, NDArray]
+        Longitude of first point(s) in degrees
+    lat2 : Union[float, NDArray]
+        Latitude of second point(s) in degrees
+    lon2 : Union[float, NDArray]
+        Longitude of second point(s) in degrees
+
+    Returns
+    -------
+    Tuple[Union[float, NDArray], Union[float, NDArray]]
+        Tuple containing:
+        - distance(s) : Great circle distance(s) in degrees
+        - azimuth(s) : Azimuth(s) in degrees from North
+
+    See Also
+    --------
+    geodesic_distance : Calculate only the great circle distance
+    geodesic_azimuth : Calculate only the azimuth
+
+    Examples
+    --------
+    >>> dist, az = geodesic_distance_azimuth(0, 0, 0, 90)
+    >>> dist
+    90.0
+    >>> az
+    90.0
+    """
+
+    return geodesic_distance(lat1, lon1, lat2, lon2), geodesic_azimuth(
+        lat1, lon1, lat2, lon2
+    )
 
 
 def shoot(
-    lon: float,
-    lat: float,
-    azimuth: float,
-    maxdist: float,
-) -> Tuple[float, float, float]:
-    """Calculate endpoint given starting point, azimuth and distance.
-
-    Args:
-        lon: Starting longitude in degrees
-        lat: Starting latitude in degrees
-        azimuth: Initial azimuth in degrees
-        maxdist: Distance to travel in kilometers
-
-    Returns:
-        tuple: (final longitude, final latitude, back azimuth) in degrees
+    lon: Union[float, NDArray],
+    lat: Union[float, NDArray],
+    azimuth: Union[float, NDArray],
+    maxdist: Union[float, NDArray],
+) -> Tuple[Union[float, NDArray], Union[float, NDArray], Union[float, NDArray]]:
     """
+    Calculate endpoint given starting point, azimuth and distance.
+
+    Parameters
+    ----------
+    lon : Union[float, NDArray]
+        Starting longitude(s) in degrees
+    lat : Union[float, NDArray]
+        Starting latitude(s) in degrees
+    azimuth : Union[float, NDArray]
+        Initial azimuth(s) in degrees
+    maxdist : Union[float, NDArray]
+        Distance(s) to travel in kilometers
+
+    Returns
+    -------
+    Tuple[Union[float, NDArray], Union[float, NDArray], Union[float, NDArray]]
+        Tuple containing:
+        - final_lon : Final longitude(s) in degrees
+        - final_lat : Final latitude(s) in degrees
+        - back_azimuth : Back azimuth(s) in degrees
+
+    Notes
+    -----
+    This function implements a geodesic shooting algorithm based on
+    T. Vincenty's method. It accounts for the Earth's ellipsoidal shape.
+
+    Raises
+    ------
+    ValueError
+        If attempting to shoot from a pole in a direction not along a meridian.
+
+    Examples
+    --------
+    >>> lon_f, lat_f, baz = shoot(0, 0, 90, 111.195)  # ~1 degree at equator
+    >>> round(lon_f, 6)
+    1.0
+    >>> round(lat_f, 6)
+    0.0
+    >>> round(baz, 6)
+    270.0
+    """
+
+    # Convert inputs to arrays
+    lon, lat, azimuth, maxdist = map(np.asarray, (lon, lat, azimuth, maxdist))
+
     glat1 = lat * DEG2RAD
     glon1 = lon * DEG2RAD
     s = maxdist / 1.852  # Convert km to nautical miles
     faz = azimuth * DEG2RAD
 
-    if (abs(np.cos(glat1)) < EPS) and not (abs(np.sin(faz)) < EPS):
+    # Check for pole condition
+    pole_condition = (np.abs(np.cos(glat1)) < EPS) & ~(np.abs(np.sin(faz)) < EPS)
+    if np.any(pole_condition):
         raise ValueError("Only N-S courses are meaningful, starting at a pole!")
 
     r = 1 - FLATTENING
     tu = r * np.tan(glat1)
     sf = np.sin(faz)
     cf = np.cos(faz)
-    
-    if cf == 0:
-        b = 0.0
-    else:
-        b = 2.0 * np.arctan2(tu, cf)
+
+    # Handle cf == 0 case
+    b = np.zeros_like(cf)
+    nonzero_cf = cf != 0
+    b[nonzero_cf] = 2.0 * np.arctan2(tu[nonzero_cf], cf[nonzero_cf])
 
     cu = 1.0 / np.sqrt(1 + tu * tu)
     su = tu * cu
@@ -143,7 +273,7 @@ def shoot(
     c = (x * x / 4.0 + 1.0) / c
     d = (0.375 * x * x - 1.0) * x
     tu = s / (r * EARTH_RADIUS_NM * c)
-    y = tu
+    y = tu.copy()
 
     # Iterative solution
     while True:
@@ -151,12 +281,14 @@ def shoot(
         cy = np.cos(y)
         cz = np.cos(b + y)
         e = 2.0 * cz * cz - 1.0
-        c = y
+        c = y.copy()
         x = e * cy
         y = e + e - 1.0
-        y = (((sy * sy * 4.0 - 3.0) * y * cz * d / 6.0 + x) * d / 4.0 - cz) * sy * d + tu
-        
-        if abs(y - c) <= EPS:
+        y = (
+            ((sy * sy * 4.0 - 3.0) * y * cz * d / 6.0 + x) * d / 4.0 - cz
+        ) * sy * d + tu
+
+        if np.all(np.abs(y - c) <= EPS):
             break
 
     b = cu * cy * cf - su * sy
@@ -170,8 +302,24 @@ def shoot(
     glon2 = ((glon1 + x - (1.0 - c) * d * FLATTENING + pi) % (2 * pi)) - pi
     baz = (np.arctan2(sa, b) + pi) % (2 * pi)
 
-    return (
-        glon2 * RAD2DEG,
-        glat2 * RAD2DEG,
-        baz * RAD2DEG
-    )
+    return (glon2 * RAD2DEG, glat2 * RAD2DEG, baz * RAD2DEG)
+
+
+if __name__ == "__main__":
+    # Examples with float inputs
+    print(geodesic_distance(0, 0, 0, 90))
+    print(geodesic_azimuth(0, 0, 0, 90))
+    print(geodesic_distance_azimuth(0, 0, 0, 90))
+    print(shoot(0, 0, 90, 111.195))
+
+    # Examples with numpy arrays
+    lat1 = np.array([0, 45])
+    lon1 = np.array([0, -90])
+    lat2 = np.array([0, -45])
+    lon2 = np.array([90, 90])
+    print(geodesic_distance(lat1, lon1, lat2, lon2))
+    print(geodesic_azimuth(lat1, lon1, lat2, lon2))
+    print(geodesic_distance_azimuth(lat1, lon1, lat2, lon2))
+    azimuth = np.array([90, 45])
+    maxdist = np.array([111.195, 111.195])
+    print(shoot(lon1, lat1, azimuth, maxdist))
