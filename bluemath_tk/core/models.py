@@ -47,6 +47,8 @@ class BlueMathModel(ABC):
     ----------
     gravity : float
         Gravitational constant from scipy.constants.
+    earth_radius : float
+        Earth radius in km.
     num_workers : int
         Number of parallel workers to use for processing.
     logger : logging.Logger
