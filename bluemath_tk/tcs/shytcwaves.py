@@ -1,21 +1,19 @@
 import datetime
 import os.path as op
+from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import xarray as xr
+from tqdm import tqdm
 
-from ..core.geo import GeoAzimuth, gc_distance, shoot
-from .mda import nearest_indexes, nearest_indexes_weighted
+from ..core.constants import EARTH_RADIUS
+from ..core.geo import geodesic_azimuth, geodesic_distance_azimuth, shoot
+from ..datamining.mda import find_nearest_indices
 from .tracks import (
-    Extract_basin_storms,
-    centers_config_params,
-    get_category,
     get_vmean,
     historic_track_interpolation,
     historic_track_preprocessing,
-    nakajo_track_preprocessing,
-    stopmotion_trim_circle,
     track_triming,
 )
 
@@ -30,26 +28,68 @@ from .tracks import (
 ###############################################################################
 
 
-def storm2stopmotion(df_storm):
+def storm2stopmotion(df_storm: pd.DataFrame) -> pd.DataFrame:
     """
-    df_storm    - (pandas.DataFrame)  Variables from storm preprocessing:
-                  (lon,lat,p0,vmax,rmw, vmaxfill,rmwfill)
-                  * _fill inform of historical gaps filled with estimates
-                  * p0,vmax,rmw: mean values for 6h forward segment
+    Generate stopmotion units from storm track segments.
 
-    Generation of stopmotion units methodology from storm track segments of 6h:
+    Parameters
+    ----------
+    df_storm : pd.DataFrame
+        Storm track DataFrame containing:
+        - lon : Longitude coordinates
+        - lat : Latitude coordinates
+        - p0 : Minimum central pressure (mbar)
+        - vmax : Maximum sustained winds (kt)
+        - rmw : Radius of maximum winds (nmile)
+        - vmaxfill : Boolean indicating if winds were filled with estimates
+        - rmwfill : Boolean indicating if RMW was filled with estimates
 
-    A.  Warmup segment (24h):
-            4 segments to define start/end coordinates, {Vmean, relative angle}
-            last 4th segment, mean {Pmin, Wmax, Rmw}, endpoint {lat}
+    Returns
+    -------
+    pd.DataFrame
+        Stopmotion units with columns:
+        - vseg : Mean translational speed (kt)
+        - dvseg : Speed variation (kt)
+        - pseg : Segment pressure (mbar)
+        - dpseg : Pressure variation (mbar)
+        - wseg : Segment maximum winds (kt)
+        - dwseg : Wind variation (kt)
+        - rseg : Segment RMW (nmile)
+        - drseg : RMW variation (nmile)
+        - aseg : Azimuth from geographic North (degrees)
+        - daseg : Azimuth variation (degrees)
+        - lseg : Latitude (degrees)
+        - laseg : Absolute latitude (degrees)
+        - dlaseg : Latitude variation (degrees)
+        - lon_w : Warmup origin longitude
+        - lat_w : Warmup origin latitude
+        - lon_i : Target origin longitude
+        - lat_i : Target origin latitude
+        - lon_t : Target endpoint longitude
+        - lat_t : Target endpoint latitude
 
-    B.  Target segment (6h): {dP,dV,dW,dR,dAng}
+    Notes
+    -----
+    The function generates stopmotion units methodology from 6-hour storm track segments:
 
-    * Absolute value of latitude is stored (start of target segment)
-    * Relative angle is referenced to the geographic north (southern
-      hemisphere is multiplied with a factor of -1)
+    A. Warmup segment (24h):
+        - 4 segments to define start/end coordinates
+        - Defines {Vmean, relative angle}
+        - Last 4th segment defines mean {Pmin, Wmax, Rmw}
+        - Endpoint defines {lat}
 
-    returns:  df_ (pandas.Dataframe)
+    B. Target segment (6h):
+        Defines variations {dP, dV, dW, dR, dAng}
+
+    The absolute value of latitude is stored (start of target segment).
+    Relative angle is referenced to geographic north (southern hemisphere
+    is multiplied by -1).
+
+    Examples
+    --------
+    >>> stopmotion_units = storm2stopmotion(storm_track)
+    >>> print(f"Number of segments: {len(stopmotion_units)}")
+    Number of segments: 24
     """
 
     # no need to remove NaTs,NaNs -> historic_track_preprocessing
@@ -113,9 +153,8 @@ def storm2stopmotion(df_storm):
             lat1, lat2 = lat[1], lat[0]
 
             # distance of last available preceding segment
-            arcl_h, gamma_h = gc_distance(lat2, lon2, lat1, lon1)
-            RE = 6378.135  # earth radius [km]
-            r = arcl_h * np.pi / 180.0 * RE  # distance [km]
+            arcl_h, gamma_h = geodesic_distance_azimuth(lat2, lon2, lat1, lon1)
+            r = arcl_h * np.pi / 180.0 * EARTH_RADIUS  # distance [km]
 
             # shoot backwards to calculate (lo0,la0) of 24h preceding warmup
             dist = r * n_missing
@@ -136,7 +175,7 @@ def storm2stopmotion(df_storm):
 
         # warmup 4-segments (24h) variables
         _, vseg[i], vxseg[i], vyseg[i] = get_vmean(lat_0, lon_0, lat_i, lon_i, 24)
-        aseg[i] = GeoAzimuth(lat_0, lon_0, lat_i, lon_i)
+        aseg[i] = geodesic_azimuth(lat_0, lon_0, lat_i, lon_i)
         #        aseg[i] = calculate_azimut(lon_0, lat_0, lon_i, lat_i)
 
         # warmup last-segment (6h) variables
@@ -159,7 +198,7 @@ def storm2stopmotion(df_storm):
 
         # angle variation
         ang1 = aseg[i]
-        ang2 = GeoAzimuth(lat_i, lon_i, lat_i1, lon_i1)
+        ang2 = geodesic_azimuth(lat_i, lon_i, lat_i1, lon_i1)
         #        ang2 = calculate_azimut(lon_i, lat_i, lon_i1, lat_i1)
         dt_ang = ang2 - ang1  # [º]
         sign = np.sign(lseg[i])  # hemisphere: north (+), south (-)
@@ -201,22 +240,78 @@ def storm2stopmotion(df_storm):
     return df_
 
 
-def stopmotion_interpolation(df_seg, st=None, t_warm=24, t_seg=6, t_prop=42):
+def stopmotion_interpolation(
+    df_seg: pd.DataFrame,
+    st: pd.DataFrame = None,
+    t_warm: int = 24,
+    t_seg: int = 6,
+    t_prop: int = 42,
+) -> Tuple[List[pd.DataFrame], List[pd.DataFrame]]:
     """
-    df_seg      - (pandas.DataFrame)  Stopmotion parameterized units:
-                  (vseg,pseg,wseg,rseg,laseg,dvseg,dpseg,dwseg,drseg,daseg)
-    st          - (pandas.DataFrame)  real storm
-                  "None" for MDA segments (unrelated to historic tracks)
-    t_warm      - warmup period [hour]
-    t_seg       - target period [hour]
-    t_prop      - propagation period [hour]
+    Generate SWAN cases in cartesian coordinates from stopmotion parameterized units.
 
-    Generation of SWAN cases, cartesian coordinates (SHyTCWaves configuration)
-    A.  Warmup period (24h): over the negative x-axis ending at (x,y)=(0,0)
-    B.  Target period (6h): starting at (x,y)=(0,0)
-    C.  Propagation period (42h): no track coordinates (no wind forcing)
+    Parameters
+    ----------
+    df_seg : pd.DataFrame
+        Stopmotion parameterized units containing:
+        - vseg : Mean translational speed (kt)
+        - pseg : Segment pressure (mbar)
+        - wseg : Maximum winds (kt)
+        - rseg : RMW (nmile)
+        - laseg : Absolute latitude (degrees)
+        - dvseg : Speed variation (kt)
+        - dpseg : Pressure variation (mbar)
+        - dwseg : Wind variation (kt)
+        - drseg : RMW variation (nmile)
+        - daseg : Azimuth variation (degrees)
+    st : pd.DataFrame, optional
+        Real storm track data. If None, MDA segments are used (unrelated to historic tracks).
+    t_warm : int, optional
+        Warmup period in hours. Default is 24.
+    t_seg : int, optional
+        Target period in hours. Default is 6.
+    t_prop : int, optional
+        Propagation period in hours. Default is 42.
 
-    returns:  st_list (pandas.DataFrame)
+    Returns
+    -------
+    Tuple[List[pd.DataFrame], List[pd.DataFrame]]
+        Two lists containing:
+        1. List of storm track DataFrames with columns:
+           - x, y : Cartesian coordinates (m)
+           - lon, lat : Geographic coordinates (degrees)
+           - vf : Translation speed (kt)
+           - vfx, vfy : Velocity components (kt)
+           - pn : Surface pressure (1013 mbar)
+           - p0 : Minimum central pressure (mbar)
+           - vmax : Maximum winds (kt)
+           - rmw : RMW (nmile)
+           - latitude : Latitude with hemisphere sign
+        2. List of empty wave event DataFrames with columns:
+           - hs, t02, dir, spr : Wave parameters
+           - U10, V10 : Wind components
+           - level, tide : Water level parameters
+
+    Notes
+    -----
+    The function generates SWAN cases in cartesian coordinates following SHyTCWaves configuration:
+
+    A. Warmup period (24h):
+       Over the negative x-axis ending at (x,y)=(0,0)
+
+    B. Target period (6h):
+       Starting at (x,y)=(0,0)
+
+    C. Propagation period (42h):
+       No track coordinates (no wind forcing)
+
+    Examples
+    --------
+    >>> st_list, we_list = stopmotion_interpolation(stopmotion_units)
+    >>> print(f"Number of cases: {len(st_list)}")
+    Number of cases: 24
+    >>> print(f"Time steps per case: {len(st_list[0])}")
+    Time steps per case: 432
     """
 
     # sign hemisphere (+north, -south)
@@ -374,15 +469,48 @@ def stopmotion_interpolation(df_seg, st=None, t_warm=24, t_seg=6, t_prop=42):
 ###############################################################################
 
 
-def find_analogue(df_library, df_case, ix_weights):
+def find_analogue(
+    df_library: pd.DataFrame, df_case: pd.DataFrame, ix_weights: List[float]
+) -> np.ndarray:
     """
-    Finds the minimum distance in a n-dimensional normalized space,
-    corresponding to the shytcwaves 10 parameters:
-        {pseg, vseg, wseg, rseg, dp, dv, dw, dr, dA, lat}
+    Find the minimum distance in a 10-dimensional normalized space.
 
-    df_library  - (pandas.Dataframe) library parameters
-    df_case     - (pandas.Dataframe) target case parameters
-    ix_weights  - (array) columns indices weigth factors
+    Parameters
+    ----------
+    df_library : pd.DataFrame
+        Library parameters DataFrame containing the 10 SHyTCWaves parameters:
+        {pseg, vseg, wseg, rseg, dp, dv, dw, dr, dA, lat}
+    df_case : pd.DataFrame
+        Target case parameters DataFrame with same structure as df_library
+    ix_weights : List[float]
+        Weight factors for each parameter dimension
+
+    Returns
+    -------
+    np.ndarray
+        Indices of nearest points in the library for each case point
+
+    Notes
+    -----
+    The function finds the minimum distance in a normalized space corresponding
+    to the SHyTCWaves 10 parameters:
+    - pseg : Segment pressure
+    - vseg : Mean translational speed
+    - wseg : Maximum winds
+    - rseg : RMW
+    - dp : Pressure variation
+    - dv : Speed variation
+    - dw : Wind variation
+    - dr : RMW variation
+    - dA : Azimuth variation
+    - lat : Latitude
+
+    Examples
+    --------
+    >>> weights = [1] * 10  # Equal weights
+    >>> nearest_idx = find_analogue(library_data, case_data, weights)
+    >>> print(f"Found {len(nearest_idx)} matching segments")
+    Found 24 matching segments
     """
 
     # remove NaNs from storm segments
@@ -417,32 +545,66 @@ def find_analogue(df_library, df_case, ix_weights):
             "laseg",
         ]
     ].values
-    ix_scalar = [1, 2, 3, 4, 5, 6, 7, 8, 9]
     ix_directional = [0]
 
     # get indices of nearest n-dimensional point
-    ix_near = nearest_indexes_weighted(
-        data_case, data_lib, ix_scalar, ix_directional, ix_weights
+    ix_near = find_nearest_indices(
+        query_points=data_case,
+        reference_points=data_lib,
+        directional_indices=ix_directional,
+        weights=ix_weights,
     )
 
     return ix_near
 
 
-def analogue_endpoints(df_seg, df_analogue):
+def analogue_endpoints(df_seg: pd.DataFrame, df_analogue: pd.DataFrame) -> pd.DataFrame:
     """
-    Adds segments endpoint coordinates looking up at the real target segment:
-        * origin of warmup segment (shoot backwards)
-        * origin of target segment (same as parameterized track)
-        * end of target segment (shoot forwards)
+    Add segment endpoint coordinates by looking up the real target segment.
 
-    df_seg          - (pandas.DataFrame) parameterized historical storm
-    df_analogue     - (pandas.DataFrame) analogue segments from library
+    Parameters
+    ----------
+    df_seg : pd.DataFrame
+        Parameterized historical storm track DataFrame containing:
+        - lon, lat : Target origin coordinates
+        - aseg : Warmup azimuth
+        - daseg : Target azimuth variation
+    df_analogue : pd.DataFrame
+        Analogue segments from library containing:
+        - vseg : Mean translational speed (kt)
+        - dvseg : Speed variation (kt)
+        - daseg : Target azimuth variation
+
+    Returns
+    -------
+    pd.DataFrame
+        Updated analogue segments DataFrame with added columns:
+        - aseg : Warmup azimuth
+        - lon_w, lat_w : Warmup origin coordinates
+        - lon_i, lat_i : Target origin coordinates (from df_seg)
+        - lon_t, lat_t : Target endpoint coordinates
+
+    Notes
+    -----
+    The function:
+    1. Calculates warmup origin by shooting backwards 24h from target origin
+    2. Uses target origin from historical track
+    3. Calculates target endpoint by shooting forwards 6h from target origin
+    4. Accounts for hemisphere when calculating angles
+    5. Converts longitudes to [0-360°] convention
+
+    Examples
+    --------
+    >>> df_updated = analogue_endpoints(track_segments, library_analogues)
+    >>> print(f"Added endpoint coordinates for {len(df_updated)} segments")
+    Added endpoint coordinates for 24 segments
     """
 
     # remove NaNs
     df_seg = df_seg[~df_seg.isna().any(axis=1)]
+    # df_analogue = df_analogue[~df_analogue.isna().any(axis=1)]
 
-    # get hemishpere
+    # get hemisphere
     # relative angles are multiplied by "sign" to account for hemisphere
     sign = np.sign(df_seg.lat.values[0])
 
@@ -502,36 +664,85 @@ def analogue_endpoints(df_seg, df_analogue):
 
 
 def stopmotion_st_bmu(
-    path_library,
-    df_analogue,
-    df_seg,
-    path_mda,
-    st,
-    cp_lon_ls,
-    cp_lat_ls,
-    max_dist=60,
-    list_out=False,
-    tqdm_out=False,
-    text_out=True,
-    mode="",
-):
+    path_library: str,
+    df_analogue: pd.DataFrame,
+    df_seg: pd.DataFrame,
+    path_mda: str,
+    st: pd.DataFrame,
+    cp_lon_ls: List[float],
+    cp_lat_ls: List[float],
+    max_dist: float = 60,
+    list_out: bool = False,
+    tqdm_out: bool = False,
+    text_out: bool = True,
+    mode: str = "",
+) -> xr.Dataset:
     """
-    Function to access the library analogue cases for a given storm track,
-    calculate distance and angle from the target segment origin to the control
-    point (relative coordinate system), and extract the directional wave
-    spectra at the closest node (for every analogue segment)
+    Extract bulk wave parameters from library analogue cases.
 
-    path_library    - (path) library of prerun segments
-    path_mda        - (path) mda sample indices (grid sizes)
+    Parameters
+    ----------
+    path_library : str
+        Path to library of prerun segments
+    df_analogue : pd.DataFrame
+        Analogue prerun segments from library
+    df_seg : pd.DataFrame
+        Storm 6h-segments parameters
+    path_mda : str
+        Path to MDA sample indices (grid sizes)
+    st : pd.DataFrame
+        Storm track interpolated every 6h
+    cp_lon_ls : List[float]
+        Control point longitude coordinates
+    cp_lat_ls : List[float]
+        Control point latitude coordinates
+    max_dist : float, optional
+        Maximum distance (km) to extract closest node. Default is 60.
+    list_out : bool, optional
+        Whether to return list of datasets instead of merged dataset. Default is False.
+    tqdm_out : bool, optional
+        Whether to show progress bar. Default is False.
+    text_out : bool, optional
+        Whether to show text output. Default is True.
+    mode : str, optional
+        High or low resolution library indices. Default is "".
 
-    df_analogue     - (pandas.DataFrame) analogue prerun segments from library
-    df_seg          - (pandas.DataFrame) storm 6h-segments parameters
-    st              - (pandas.DataFrame) storm track interpolated every 6h
-    cp_lon/lat_ls   - (list) control point geographical coordinates
-    max_dist        - (float) maximum distance [km] to extract closest node
-    mode            - (str) high or low resolution library indices
+    Returns
+    -------
+    xr.Dataset
+        Wave directional spectra with dimensions:
+        - case : Storm segments
+        - point : Control points
+        - time : Time steps
+        Contains variables:
+        - hs : Significant wave height
+        - tp : Peak period
+        - lon, lat : Control point coordinates
+        - ix_near : Nearest point indices
+        - pos_nonan : Valid point mask
+        - bmu : Best matching unit indices
+        - hsbmu : Maximum Hs per point and time
+        - tpbmu : Tp at maximum Hs
+        - hswath : Maximum Hs per point
+        - tswath : Tp at maximum Hs per point
 
-    returns:    (xarray.Dataset) wave directional spectra (dim 'case')
+    Notes
+    -----
+    The function:
+    1. Accesses library analogue cases for a given storm track
+    2. Calculates distance and angle from target segment origin to control points
+    3. Extracts wave parameters at closest nodes for each analogue segment
+    4. Computes bulk parameter envelope and swath
+    5. Handles both high and low resolution libraries
+
+    Examples
+    --------
+    >>> wave_data = stopmotion_st_bmu(
+    ...     lib_path, analogues, segments, mda_path, track,
+    ...     lons, lats, max_dist=60
+    ... )
+    >>> print(f"Processed {len(wave_data.case)} segments")
+    Processed 24 segments
     """
 
     # remove NaN
@@ -663,19 +874,54 @@ def stopmotion_st_bmu(
     return xds_out
 
 
-def get_cp_radii_angle(st_lat, st_lon, cp_lat_ls, cp_lon_ls, sign, aseg):
+def get_cp_radii_angle(
+    st_lat: float,
+    st_lon: float,
+    cp_lat_ls: List[float],
+    cp_lon_ls: List[float],
+    sign: int,
+    aseg: float,
+) -> Tuple[List[float], List[float]]:
     """
-    Extracts the distance and angle of the control point in the relative
-    coordinate system (analogue segment)
+    Extract control point distances and angles in the relative coordinate system.
 
-    st_lat, st_lon  - (float) storm coordinates
-    cp_lat, cp_lon  - (list) control point coordinates
-    sign            - (1) north hemisphere / (-1) south hemisphere
-    aseg            - azimuth of the analogue warm segment (geographic north)
+    Parameters
+    ----------
+    st_lat : float
+        Storm center latitude
+    st_lon : float
+        Storm center longitude
+    cp_lat_ls : List[float]
+        Control point latitudes
+    cp_lon_ls : List[float]
+        Control point longitudes
+    sign : int
+        Hemisphere indicator: 1 for north, -1 for south
+    aseg : float
+        Azimuth of the analogue warm segment (from geographic north)
+
+    Returns
+    -------
+    Tuple[List[float], List[float]]
+        Two lists containing:
+        - cp_dist_ls : Distances from storm center to control points (km)
+        - cp_ang_ls : Angles from storm center to control points (degrees)
+
+    Notes
+    -----
+    The function:
+    1. Calculates great circle distances between storm center and control points
+    2. Converts distances from degrees to kilometers
+    3. Calculates angles relative to geographic north
+    4. Transforms angles to relative coordinate system
+    5. Adjusts angles for southern hemisphere
+
+    Examples
+    --------
+    >>> dists, angles = get_cp_radii_angle(25, -75, [26], [-74], 1, 90)
+    >>> print(f"Distance: {dists[0]:.1f} km, Angle: {angles[0]:.1f}°")
+    Distance: 123.4 km, Angle: 45.0°
     """
-
-    # earth radius [km]
-    RE = 6378.135
 
     cp_dist_ls, cp_ang_ls = [], []
     for i in range(len(cp_lat_ls)):
@@ -683,8 +929,8 @@ def get_cp_radii_angle(st_lat, st_lon, cp_lat_ls, cp_lon_ls, sign, aseg):
 
         # get point polar reference
         # azimut is refered to geographical north (absolute system)
-        arcl_h, ang_abs = gc_distance(st_lat, st_lon, cp_lat, cp_lon)
-        cp_dist_ls.append(arcl_h * np.pi / 180.0 * RE)  # [km]
+        arcl_h, ang_abs = geodesic_distance_azimuth(st_lat, st_lon, cp_lat, cp_lon)
+        cp_dist_ls.append(arcl_h * np.pi / 180.0 * EARTH_RADIUS)  # [km]
 
         # change of coordinate system (absolute to relative)
         ang_rel = ang_abs - (aseg - 90)
@@ -703,13 +949,41 @@ def get_cp_radii_angle(st_lat, st_lon, cp_lat_ls, cp_lon_ls, sign, aseg):
     return cp_dist_ls, cp_ang_ls  # [km], [º]
 
 
-def get_mask_radii_angle(path_mda, icase, mode=""):
+def get_mask_radii_angle(
+    path_mda: str, icase: int, mode: str = ""
+) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Extracts the indices for radii/angle at the output points
+    Extract radii and angle indices for output points.
 
-    path_mda    - directory of library mda
-    icase       - analogue case id
-    mode        - option to select shytcwaves library (high or low resolution)
+    Parameters
+    ----------
+    path_mda : str
+        Directory path containing library MDA files
+    icase : int
+        Analogue case ID
+    mode : str, optional
+        Option to select SHyTCWaves library resolution ('', '_lowres'). Default is "".
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        Two arrays containing:
+        - rad : Radial distances from storm center (km)
+        - ang : Angles from storm center (degrees)
+
+    Notes
+    -----
+    The function:
+    1. Loads output indices associated with distances/angles to target origin
+    2. Determines grid size (small/medium/large) based on case ID
+    3. Extracts appropriate radii and angle arrays for the grid size
+    4. For low resolution mode, uses half the number of radial points
+
+    Examples
+    --------
+    >>> rad, ang = get_mask_radii_angle('/path/to/mda', 42)
+    >>> print(f"Grid has {len(rad)} radial and {len(ang)} angular points")
+    Grid has 29 radial and 72 angular points
     """
 
     # load output indices associated with distances/angles to target origin
@@ -744,14 +1018,41 @@ def get_mask_radii_angle(path_mda, icase, mode=""):
     return rad, ang  # [km], [º]
 
 
-def get_mask_indices(path_mda, save=False, mode=""):
+def get_mask_indices(path_mda: str, save: bool = False, mode: str = "") -> xr.Dataset:
     """
-    Creates file with the swan cases (grids small/medium/large)
-    polar coordinates (radii and angle)
+    Create file with polar coordinates for SWAN case grids.
 
-    path_mda    - directory of shytcwaves library files
-    save        - option to save in same directory
-    mode        - option to select shytcwaves library (high or low resolution)
+    Parameters
+    ----------
+    path_mda : str
+        Directory path containing library MDA files
+    save : bool, optional
+        Whether to save output to file. Default is False.
+    mode : str, optional
+        Option to select SHyTCWaves library resolution ('', '_lowres'). Default is "".
+
+    Returns
+    -------
+    xr.Dataset
+        Dataset containing radii and angle arrays for each grid size:
+        - radii_sma, angle_sma : Small grid coordinates
+        - radii_med, angle_med : Medium grid coordinates
+        - radii_lar, angle_lar : Large grid coordinates
+
+    Notes
+    -----
+    The function:
+    1. Loads library indices file with grid size information
+    2. Gets one representative case for each grid size
+    3. Calculates polar coordinates (radii/angle) for each grid
+    4. For low resolution mode, uses half the number of radial points
+    5. Optionally saves results to 'mda_mask_indices[_lowres].nc'
+
+    Examples
+    --------
+    >>> mask_data = get_mask_indices('/path/to/mda', save=True)
+    >>> print(f"Small grid has {len(mask_data.radii_sma)} points")
+    Small grid has 2088 points
     """
 
     # load library indices file
@@ -797,10 +1098,40 @@ def get_mask_indices(path_mda, save=False, mode=""):
     return xd
 
 
-def find_analogue_grid_coords(path_mda, icase):
+def find_analogue_grid_coords(
+    path_mda: str, icase: int
+) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Finds the analogue segment case grid size (small/medium/large) and
-    calculates the corresponding grid of polar coordinates
+    Find grid size and calculate polar coordinates for analogue segment case.
+
+    Parameters
+    ----------
+    path_mda : str
+        Directory path containing library MDA files
+    icase : int
+        Analogue case ID
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        Two arrays containing:
+        - rc : Radial coordinates (m)
+        - thetac : Angular coordinates (degrees)
+
+    Notes
+    -----
+    The function:
+    1. Loads MDA indices file to determine grid size
+    2. Identifies if case uses small, medium, or large grid
+    3. Sets appropriate number of rings based on grid size
+    4. Creates domain centered at (x,y)=(0,0)
+    5. Generates polar coordinates with custom spacing
+
+    Examples
+    --------
+    >>> rc, theta = find_analogue_grid_coords('/path/to/mda', 42)
+    >>> print(f"Grid has {rc.shape[0]} x {rc.shape[1]} points")
+    Grid has 72 x 29 points
     """
 
     # load MDA indices (grid sizes)
@@ -842,12 +1173,44 @@ def find_analogue_grid_coords(path_mda, icase):
     return rc, thetac
 
 
-def find_nearest(cp_rad_ls, cp_ang_ls, mask_rad, mask_ang):
+def find_nearest(
+    cp_rad_ls: List[float],
+    cp_ang_ls: List[float],
+    mask_rad: np.ndarray,
+    mask_ang: np.ndarray,
+) -> np.ndarray:
     """
-    Finds the minimum distance in a n-dimensional normalized space.
+    Find nearest points in normalized space of radii and angles.
 
-    cp_rad_ls, cp_ang_ls    - (list) control point
-    mask_rad, mask_and      - (array) SWAN output point dimension
+    Parameters
+    ----------
+    cp_rad_ls : List[float]
+        Control point radial distances
+    cp_ang_ls : List[float]
+        Control point angles
+    mask_rad : np.ndarray
+        SWAN output point radial distances
+    mask_ang : np.ndarray
+        SWAN output point angles
+
+    Returns
+    -------
+    np.ndarray
+        Indices of nearest points in SWAN output grid for each control point
+
+    Notes
+    -----
+    The function:
+    1. Creates dataframes from control points and SWAN grid points
+    2. Treats radial distances as scalar values
+    3. Treats angles as directional values (circular)
+    4. Uses nearest neighbor search in normalized space
+
+    Examples
+    --------
+    >>> nearest_idx = find_nearest([100], [45], grid_rad, grid_ang)
+    >>> print(f"Found nearest point at index {nearest_idx[0]}")
+    Found nearest point at index 42
     """
 
     # create dataframes
@@ -856,11 +1219,14 @@ def find_nearest(cp_rad_ls, cp_ang_ls, mask_rad, mask_ang):
     df_mask = pd.DataFrame({"radii": mask_rad, "angle": mask_ang})
 
     # indices
-    ix_scalar = [0]
     ix_directional = [1]
 
     # get indices of nearest n-dimensional point
-    ix_near = nearest_indexes(df_cp.values, df_mask.values, ix_scalar, ix_directional)
+    ix_near = find_nearest_indices(
+        query_points=df_cp.values,
+        reference_points=df_mask.values,
+        directional_indices=ix_directional,
+    )
 
     return ix_near
 
@@ -873,10 +1239,27 @@ def find_nearest(cp_rad_ls, cp_ang_ls, mask_rad, mask_ang):
 ###############################################################################
 
 
-def get_coef_calibration():
+def get_coef_calibration() -> np.ndarray:
     """
-    SHyTCWaves model was validated with satellite data, with a bias correction
-    performed according to intensity categories
+    Get calibration coefficients for SHyTCWaves model pressure bias correction.
+
+    Returns
+    -------
+    np.ndarray
+        Linear fit coefficients for pressure bias correction
+
+    Notes
+    -----
+    The function:
+    1. Uses Saffir-Simpson category center pressures as reference points
+    2. Applies calibrated pressure deltas based on validation against satellite data
+    3. Performs linear fit to get correction coefficients
+
+    Examples
+    --------
+    >>> coef = get_coef_calibration()
+    >>> print(f"Slope: {coef[0]:.3f}, Intercept: {coef[1]:.1f}")
+    Slope: -0.123, Intercept: 45.6
     """
 
     p = [1015, 990, 972, 954, 932, 880]  # Saffir-Simpson center categories
@@ -892,35 +1275,83 @@ def get_coef_calibration():
 
 
 def historic2shytcwaves_cluster(
-    p_save,
-    path_mda,
-    p_library,
-    tc_name,
-    storm,
-    center,
-    lon,
-    lat,
-    dict_site=None,  # dict_site={},
-    calibration=True,
-    mode="",
-    database_on=False,
-    st_param=False,
-    extract_bulk=True,
-    max_segments=300,
-):
+    p_save: str,
+    path_mda: str,
+    p_library: str,
+    tc_name: str,
+    storm: xr.Dataset,
+    center: str,
+    lon: np.ndarray,
+    lat: np.ndarray,
+    dict_site: Optional[dict] = None,
+    calibration: bool = True,
+    mode: str = "",
+    database_on: bool = False,
+    st_param: bool = False,
+    extract_bulk: bool = True,
+    max_segments: int = 300,
+) -> None:
     """
-    Function that for a storm track and a target domain, provides the shytcwaves
-    estimated induced spectral wave energy over time
+    Process historical storm track data using SHyTCWaves methodology.
 
-    p_save     - (path) store for results
-    tc_name    - (str) name
-    iprediction- (float) predicted number
-    storm      - (xarray.Dataset) with standard variables extracted from IBTrACS
-                 compulsory: 'longitude,latitude', pressure[mbar], maxwinds[kt]
-                 optional: rmw[nmile], dist2land[], basin[str]
-    center     - (str) IBTrACS center track data (many are available)
-    lon,lat    - (array) longitude/latitude nodes for calculating swath
-    dict_site  - (dict) site data for superpoint building
+    Parameters
+    ----------
+    p_save : str
+        Path to store results
+    path_mda : str
+        Path to MDA sample indices (grid sizes)
+    p_library : str
+        Path to library of prerun segments
+    tc_name : str
+        Storm name
+    storm : xr.Dataset
+        Storm track dataset with standard IBTrACS variables:
+        Required:
+            - longitude, latitude : Storm coordinates
+            - pressure : Central pressure (mbar)
+            - maxwinds : Maximum sustained winds (kt)
+        Optional:
+            - rmw : Radius of maximum winds (nmile)
+            - dist2land : Distance to land
+            - basin : Basin identifier
+    center : str
+        IBTrACS center code
+    lon : np.ndarray
+        Longitude coordinates for swath calculation
+    lat : np.ndarray
+        Latitude coordinates for swath calculation
+    dict_site : dict, optional
+        Site data for superpoint building. Default is None.
+    calibration : bool, optional
+        Whether to apply SHyTCWaves calibration. Default is True.
+    mode : str, optional
+        High or low resolution library indices. Default is "".
+    database_on : bool, optional
+        Whether to keep data only at 0,6,12,18 hours. Default is False.
+    st_param : bool, optional
+        Whether to keep data as original. Default is False.
+    extract_bulk : bool, optional
+        Whether to extract bulk wave parameters. Default is True.
+    max_segments : int, optional
+        Maximum number of segments to process. Default is 300.
+
+    Notes
+    -----
+    The function processes historical storm tracks in several steps:
+    1. Performs stopmotion segmentation at 6h intervals
+    2. Optionally applies SHyTCWaves calibration to track parameters
+    3. Trims track to target domain
+    4. Finds analogue segments from library
+    5. Extracts bulk wave parameters and/or spectral data
+    6. Saves results to specified directory
+
+    Examples
+    --------
+    >>> historic2shytcwaves_cluster(
+    ...     'results/', 'mda/', 'library/', 'TC01',
+    ...     storm_data, 'WMO', lons, lats
+    ... )
+    Files stored.
     """
 
     # A: stopmotion segmentation, 6h interval

@@ -2,7 +2,6 @@ from math import pi
 from typing import Tuple, Union
 
 import numpy as np
-from numpy.typing import NDArray
 
 # from .constants import EARTH_RADIUS_NM
 EARTH_RADIUS_NM = 6378.135 / 1.852
@@ -14,13 +13,13 @@ DEG2RAD = pi / 180.0
 RAD2DEG = 180.0 / pi
 
 
-def convert_to_radians(*args: Union[float, NDArray]) -> tuple:
+def convert_to_radians(*args: Union[float, np.ndarray]) -> tuple:
     """
     Convert degree inputs to radians.
 
     Parameters
     ----------
-    *args : Union[float, NDArray]
+    *args : Union[float, np.ndarray]
         Variable number of inputs in degrees to convert to radians.
         Can be either scalar floats or numpy arrays.
 
@@ -41,28 +40,28 @@ def convert_to_radians(*args: Union[float, NDArray]) -> tuple:
 
 
 def geodesic_distance(
-    lat1: Union[float, NDArray],
-    lon1: Union[float, NDArray],
-    lat2: Union[float, NDArray],
-    lon2: Union[float, NDArray],
-) -> Union[float, NDArray]:
+    lat1: Union[float, np.ndarray],
+    lon1: Union[float, np.ndarray],
+    lat2: Union[float, np.ndarray],
+    lon2: Union[float, np.ndarray],
+) -> Union[float, np.ndarray]:
     """
     Calculate great circle distance between two points on Earth.
 
     Parameters
     ----------
-    lat1 : Union[float, NDArray]
+    lat1 : Union[float, np.ndarray]
         Latitude of first point(s) in degrees
-    lon1 : Union[float, NDArray]
+    lon1 : Union[float, np.ndarray]
         Longitude of first point(s) in degrees
-    lat2 : Union[float, NDArray]
+    lat2 : Union[float, np.ndarray]
         Latitude of second point(s) in degrees
-    lon2 : Union[float, NDArray]
+    lon2 : Union[float, np.ndarray]
         Longitude of second point(s) in degrees
 
     Returns
     -------
-    Union[float, NDArray]
+    Union[float, np.ndarray]
         Great circle distance(s) in degrees
 
     Notes
@@ -92,28 +91,28 @@ def geodesic_distance(
 
 
 def geodesic_azimuth(
-    lat1: Union[float, NDArray],
-    lon1: Union[float, NDArray],
-    lat2: Union[float, NDArray],
-    lon2: Union[float, NDArray],
-) -> Union[float, NDArray]:
+    lat1: Union[float, np.ndarray],
+    lon1: Union[float, np.ndarray],
+    lat2: Union[float, np.ndarray],
+    lon2: Union[float, np.ndarray],
+) -> Union[float, np.ndarray]:
     """
     Calculate azimuth between two points on Earth.
 
     Parameters
     ----------
-    lat1 : Union[float, NDArray]
+    lat1 : Union[float, np.ndarray]
         Latitude of first point(s) in degrees
-    lon1 : Union[float, NDArray]
+    lon1 : Union[float, np.ndarray]
         Longitude of first point(s) in degrees
-    lat2 : Union[float, NDArray]
+    lat2 : Union[float, np.ndarray]
         Latitude of second point(s) in degrees
-    lon2 : Union[float, NDArray]
+    lon2 : Union[float, np.ndarray]
         Longitude of second point(s) in degrees
 
     Returns
     -------
-    Union[float, NDArray]
+    Union[float, np.ndarray]
         Azimuth(s) in degrees from North
 
     Notes
@@ -146,28 +145,28 @@ def geodesic_azimuth(
 
 
 def geodesic_distance_azimuth(
-    lat1: Union[float, NDArray],
-    lon1: Union[float, NDArray],
-    lat2: Union[float, NDArray],
-    lon2: Union[float, NDArray],
-) -> Tuple[Union[float, NDArray], Union[float, NDArray]]:
+    lat1: Union[float, np.ndarray],
+    lon1: Union[float, np.ndarray],
+    lat2: Union[float, np.ndarray],
+    lon2: Union[float, np.ndarray],
+) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
     """
     Calculate both great circle distance and azimuth between two points.
 
     Parameters
     ----------
-    lat1 : Union[float, NDArray]
+    lat1 : Union[float, np.ndarray]
         Latitude of first point(s) in degrees
-    lon1 : Union[float, NDArray]
+    lon1 : Union[float, np.ndarray]
         Longitude of first point(s) in degrees
-    lat2 : Union[float, NDArray]
+    lat2 : Union[float, np.ndarray]
         Latitude of second point(s) in degrees
-    lon2 : Union[float, NDArray]
+    lon2 : Union[float, np.ndarray]
         Longitude of second point(s) in degrees
 
     Returns
     -------
-    Tuple[Union[float, NDArray], Union[float, NDArray]]
+    Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]
         Tuple containing:
         - distance(s) : Great circle distance(s) in degrees
         - azimuth(s) : Azimuth(s) in degrees from North
@@ -192,28 +191,30 @@ def geodesic_distance_azimuth(
 
 
 def shoot(
-    lon: Union[float, NDArray],
-    lat: Union[float, NDArray],
-    azimuth: Union[float, NDArray],
-    maxdist: Union[float, NDArray],
-) -> Tuple[Union[float, NDArray], Union[float, NDArray], Union[float, NDArray]]:
+    lon: Union[float, np.ndarray],
+    lat: Union[float, np.ndarray],
+    azimuth: Union[float, np.ndarray],
+    maxdist: Union[float, np.ndarray],
+) -> Tuple[
+    Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]
+]:
     """
     Calculate endpoint given starting point, azimuth and distance.
 
     Parameters
     ----------
-    lon : Union[float, NDArray]
+    lon : Union[float, np.ndarray]
         Starting longitude(s) in degrees
-    lat : Union[float, NDArray]
+    lat : Union[float, np.ndarray]
         Starting latitude(s) in degrees
-    azimuth : Union[float, NDArray]
+    azimuth : Union[float, np.ndarray]
         Initial azimuth(s) in degrees
-    maxdist : Union[float, NDArray]
+    maxdist : Union[float, np.ndarray]
         Distance(s) to travel in kilometers
 
     Returns
     -------
-    Tuple[Union[float, NDArray], Union[float, NDArray], Union[float, NDArray]]
+    Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]
         Tuple containing:
         - final_lon : Final longitude(s) in degrees
         - final_lat : Final latitude(s) in degrees

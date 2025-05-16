@@ -1,5 +1,6 @@
+import os
 from datetime import timedelta
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,7 +9,7 @@ import xarray as xr
 from numpy import polyfit
 
 from ..core.constants import EARTH_RADIUS
-from ..core.geo import geodesic_distance, shoot
+from ..core.geo import geodesic_distance, geodesic_distance_azimuth, shoot
 
 # Configuration dictionaries and constants
 centers_config_params: Dict[str, Dict[str, Union[str, List[str], float]]] = {
@@ -191,7 +192,7 @@ def check_and_plot_track_data(track_data: xr.Dataset) -> plt.Figure:
 
     fig, axes = plt.subplots(1, 4, figsize=(20, 4))
 
-    for center in centers_config_params:
+    for center in all_centers:
         # dictionary for IBTrACS center
         center_info = get_center_information(center=center)
         # get var time
@@ -228,7 +229,6 @@ def check_and_plot_track_data(track_data: xr.Dataset) -> plt.Figure:
 
     # plot attributes
     for ax in axes:
-        ax.axis.set_xticks(rotation=45)
         ax.legend(loc="upper left")
 
     return fig
@@ -262,7 +262,7 @@ def filter_track_by_basin(tracks_data: xr.Dataset, id_basin: str) -> xr.Dataset:
     )
 
 
-def ibtracs_fit_pmin_wmax(ibtracs_data: xr.Dataset, N: int = 3) -> xr.Dataset:
+def ibtracs_fit_pmin_wmax(ibtracs_data: xr.Dataset = None, N: int = 3) -> xr.Dataset:
     """
     Generate polynomial fit coefficients for pressure-wind relationship.
 
@@ -293,6 +293,14 @@ def ibtracs_fit_pmin_wmax(ibtracs_data: xr.Dataset, N: int = 3) -> xr.Dataset:
     >>> fit_data = ibtracs_fit_pmin_wmax(ibtracs_data, N=3)
     >>> print(fit_data.coef_fit.shape)  # (n_centers, n_basins, N+1)
     """
+
+    if os.path.exists(
+        "/home/grupos/geocean/tausiaj/BlueMath_tk/shytcAlba/data_shytcwaves/ibtracs_coef_pmin_wmax.nc"
+    ):
+        xds = xr.open_dataset(
+            "/home/grupos/geocean/tausiaj/BlueMath_tk/shytcAlba/data_shytcwaves/ibtracs_coef_pmin_wmax.nc"
+        )
+        return xds
 
     coef_fit = np.nan * np.zeros((len(all_centers), len(all_basins), N + 1))
     pres_data = np.nan * np.zeros((len(all_centers), len(all_basins), 200000))
@@ -501,7 +509,7 @@ def get_vmean(
     18.5
     """
 
-    arcl_h, gamma_h = geodesic_distance(lat2, lon2, lat1, lon1)  # great circle
+    arcl_h, gamma_h = geodesic_distance_azimuth(lat2, lon2, lat1, lon1)  # great circle
 
     r = arcl_h * np.pi / 180.0 * EARTH_RADIUS  # distance between coordinates [km]
     vmean = r / deltat  # translation speed [km/h]
@@ -619,15 +627,15 @@ def historic_track_preprocessing(
     Parameters
     ----------
     xds : xr.Dataset
-        Historical storm track dataset with storm dimension
+        Historical storm track dataset with storm dimension.
     center : str, optional
-        IBTrACS center code (e.g., 'WMO', 'TOKYO'), by default "WMO"
+        IBTrACS center code (e.g., 'WMO', 'TOKYO'). Default is "WMO".
     forecast_on : bool, optional
-        Whether track is forecasted (not IBTrACS), by default False
+        Whether track is forecasted (not IBTrACS). Default is False.
     database_on : bool, optional
-        Whether to keep data only at 0,6,12,18 hours, by default False
+        Whether to keep data only at 0,6,12,18 hours. Default is False.
     st_param : bool, optional
-        Whether to keep data as original, by default False
+        Whether to keep data as original. Default is False.
 
     Returns
     -------
@@ -673,8 +681,6 @@ def historic_track_preprocessing(
 
     # dictionary for IBTrACS center
     d_vns = get_center_information(center=center)
-
-    print(center)
 
     # get names of variables
     nm_tim = d_vns["time"]
@@ -913,8 +919,8 @@ def historic_track_preprocessing(
 def historic_track_interpolation(
     df: pd.DataFrame,
     dt_comp: float,
-    y0: Optional[float] = None,
-    x0: Optional[float] = None,
+    y0: float = None,
+    x0: float = None,
     great_circle: bool = True,
     wind_estimate_on: bool = False,
     fit: bool = False,
@@ -928,31 +934,31 @@ def historic_track_interpolation(
     Parameters
     ----------
     df : pd.DataFrame
-        Storm track DataFrame with historical data
+        Storm track DataFrame with historical data.
     dt_comp : float
-        Computation time step in minutes
+        Computation time step in minutes.
     y0 : float, optional
-        Target latitude coordinate, by default None
+        Target latitude coordinate. Default is None.
     x0 : float, optional
-        Target longitude coordinate, by default None
+        Target longitude coordinate. Default is None.
     great_circle : bool, optional
-        Whether to use great circle distances, by default True
+        Whether to use great circle distances. Default is True.
     wind_estimate_on : bool, optional
-        Whether to use empirical estimates instead of historical winds, by default False
+        Whether to use empirical estimates instead of historical winds. Default is False.
     fit : bool, optional
-        Whether to estimate winds when wind=0, by default False
+        Whether to estimate winds when wind=0. Default is False.
     interpolation : bool, optional
-        Whether to interpolate storm variables, by default True
+        Whether to interpolate storm variables. Default is True.
     mode : str, optional
-        Value selection for constant segments ('first' or 'mean'), by default "first"
+        Value selection for constant segments ('first' or 'mean'). Default is "first".
     radi_estimate_on : bool, optional
-        Whether to estimate missing RMW values, by default True
+        Whether to estimate missing RMW values. Default is True.
 
     Returns
     -------
     Tuple[pd.DataFrame, np.ndarray]
-        - DataFrame with interpolated storm track variables
-        - Array of interpolated time coordinates
+        - DataFrame with interpolated storm track variables.
+        - Array of interpolated time coordinates.
 
     Notes
     -----
@@ -970,8 +976,6 @@ def historic_track_interpolation(
     >>> print(f"Interpolated points: {len(st)}")
     Interpolated points: 144
     """
-
-    RE = 6378.135  # earth radius [km]
 
     # historic storm variables
     st_time = df.index.values[:]  # datetime format
@@ -1015,7 +1019,6 @@ def historic_track_interpolation(
         wind_fill[poszero] = True
         st_wind[poszero] = wind_estimate[poszero]
     ###########################################################################
-
     #    else:                                             # wind provided
     #        pos = np.where(st_wind==0)[0]
     #        if fit and pos.size>0:    # data filled (for wind=0)
@@ -1064,8 +1067,8 @@ def historic_track_interpolation(
         lat1, lat2 = st_lat[i], st_lat[i + 1]
 
         # translation speed
-        arcl_h, gamma_h = geodesic_distance(lat2, lon2, lat1, lon1)
-        r = arcl_h * np.pi / 180.0 * RE  # distance between coordinates [km]
+        arcl_h, gamma_h = geodesic_distance_azimuth(lat2, lon2, lat1, lon1)
+        r = arcl_h * np.pi / 180.0 * EARTH_RADIUS  # distance between coordinates [km]
         dx = r / nts[i]  # distance during time step [km]
         tx = ts_h[i] / nts[i]  # time period during time step [h]
         vx = float(dx) / tx / 3.6  # translation speed [km/h to m/s]
@@ -1079,10 +1082,16 @@ def historic_track_interpolation(
             # append interpolated lon, lat
             if not great_circle:
                 glon = (
-                    lon1 - (dx * 180 / (RE * np.pi)) * np.sin(gamma_h * np.pi / 180) * j
+                    lon1
+                    - (dx * 180 / (EARTH_RADIUS * np.pi))
+                    * np.sin(gamma_h * np.pi / 180)
+                    * j
                 )
                 glat = (
-                    lat1 - (dx * 180 / (RE * np.pi)) * np.cos(gamma_h * np.pi / 180) * j
+                    lat1
+                    - (dx * 180 / (EARTH_RADIUS * np.pi))
+                    * np.cos(gamma_h * np.pi / 180)
+                    * j
                 )
             else:
                 glon, glat, baz = shoot(lon1, lat1, gamma_h + 180, float(dx) * j)
@@ -1188,21 +1197,21 @@ def track_triming(
     Parameters
     ----------
     st : pd.DataFrame
-        Storm track DataFrame containing time series data
+        Storm track DataFrame containing time series data.
     lat00 : float
-        Southern latitude bound in degrees
+        Southern latitude bound in degrees.
     lon00 : float
-        Western longitude bound in degrees
+        Western longitude bound in degrees.
     lat01 : float
-        Northern latitude bound in degrees
+        Northern latitude bound in degrees.
     lon01 : float
-        Eastern longitude bound in degrees
+        Eastern longitude bound in degrees.
 
     Returns
     -------
     pd.DataFrame
         Trimmed storm track containing only points within the specified bounds
-        and preserving continuous time segments
+        and preserving continuous time segments.
 
     Notes
     -----
@@ -1240,24 +1249,25 @@ def track_triming(
 def track_triming_circle(
     st: pd.DataFrame, plon: float, plat: float, radii: float
 ) -> pd.DataFrame:
-    """Trim storm track to points within a circular domain.
+    """
+    Trim storm track to points within a circular domain.
 
     Parameters
     ----------
     st : pd.DataFrame
-        Storm track DataFrame containing time series data
+        Storm track DataFrame containing time series data.
     plon : float
-        Longitude of circle center in degrees
+        Longitude of circle center in degrees.
     plat : float
-        Latitude of circle center in degrees
+        Latitude of circle center in degrees.
     radii : float
-        Radius of circular domain in degrees
+        Radius of circular domain in degrees.
 
     Returns
     -------
     pd.DataFrame
         Trimmed storm track containing only points within the circular domain
-        and preserving continuous time segments
+        and preserving continuous time segments.
 
     Notes
     -----
@@ -1311,23 +1321,24 @@ def track_triming_circle(
 def stopmotion_trim_circle(
     df_seg: pd.DataFrame, plon: float, plat: float, radii: float
 ) -> pd.DataFrame:
-    """Trim storm track segments to those intersecting a circular domain.
+    """
+    Trim storm track segments to those intersecting a circular domain.
 
     Parameters
     ----------
     df_seg : pd.DataFrame
-        DataFrame containing storm track segments with start/end coordinates
+        DataFrame containing storm track segments with start/end coordinates.
     plon : float
-        Longitude of circle center in degrees
+        Longitude of circle center in degrees.
     plat : float
-        Latitude of circle center in degrees
+        Latitude of circle center in degrees.
     radii : float
-        Radius of circular domain in degrees
+        Radius of circular domain in degrees.
 
     Returns
     -------
     pd.DataFrame
-        Trimmed DataFrame containing only segments that intersect the circular domain
+        Trimmed DataFrame containing only segments that intersect the circular domain.
 
     Notes
     -----
@@ -1387,7 +1398,7 @@ def stopmotion_trim_circle(
 
 
 def track_extent(
-    st: pd.DataFrame, time_input: np.ndarray, dt_comp: float, time_extent: float = 48
+    st: pd.DataFrame, time_input: np.ndarray, dt_comp: float, time_extent: float = 48.0
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Extend storm track data for wave propagation analysis.
@@ -1395,20 +1406,20 @@ def track_extent(
     Parameters
     ----------
     st : pd.DataFrame
-        Storm track DataFrame containing time series data
+        Storm track DataFrame containing time series data.
     time_input : np.ndarray
-        Array of time coordinates
+        Array of time coordinates.
     dt_comp : float
-        Computational time step in minutes
+        Computational time step in minutes.
     time_extent : float, optional
-        Additional time to extend simulation in hours, by default 48
+        Additional time to extend simulation in hours. Default is 48.
 
     Returns
     -------
     Tuple[pd.DataFrame, pd.DataFrame]
         Tuple containing:
-        - st_new : Extended storm track DataFrame
-        - we : Wave event DataFrame with empty fields for wave parameters
+        - st_new : Extended storm track DataFrame.
+        - we : Wave event DataFrame with empty fields for wave parameters.
 
     Notes
     -----
@@ -1482,35 +1493,36 @@ def entrance_coords(
     lat0: float,
     lat1: float,
 ) -> Tuple[float, float]:
-    """Calculate storm entrance coordinates at computational domain boundary.
+    """
+    Calculate storm entrance coordinates at computational domain boundary.
 
     Parameters
     ----------
     delta : float
-        Storm track angle parameter in degrees
+        Storm track angle parameter in degrees.
     gamma : float
-        Storm forward direction in degrees
+        Storm forward direction in degrees.
     x0 : float
-        Site longitude coordinate in degrees
+        Site longitude coordinate in degrees.
     y0 : float
-        Site latitude coordinate in degrees
+        Site latitude coordinate in degrees.
     R : float
-        Radius of influence in degrees
+        Radius of influence in degrees.
     lon0 : float
-        Western longitude bound of computational domain
+        Western longitude bound of computational domain.
     lon1 : float
-        Eastern longitude bound of computational domain
+        Eastern longitude bound of computational domain.
     lat0 : float
-        Southern latitude bound of computational domain
+        Southern latitude bound of computational domain.
     lat1 : float
-        Northern latitude bound of computational domain
+        Northern latitude bound of computational domain.
 
     Returns
     -------
     Tuple[float, float]
         Tuple containing:
-        - x1 : Entrance longitude coordinate in degrees
-        - y1 : Entrance latitude coordinate in degrees
+        - x1 : Entrance longitude coordinate in degrees.
+        - y1 : Entrance latitude coordinate in degrees.
 
     Notes
     -----
@@ -1577,40 +1589,41 @@ def track_site_parameters(
     center: str = "WMO",
     basin: str = "SP",
 ) -> pd.DataFrame:
-    """Generate parameterized storm track within study area.
+    """
+    Generate parameterized storm track within study area.
 
     Parameters
     ----------
     step : float
-        Computational time step in minutes
+        Computational time step in minutes.
     pmin : float
-        Minimum central pressure in millibars
+        Minimum central pressure in millibars.
     vmean : float
-        Mean translation speed in knots
+        Mean translation speed in knots.
     delta : float
-        Storm track angle parameter in degrees
+        Storm track angle parameter in degrees.
     gamma : float
-        Storm forward direction in degrees
+        Storm forward direction in degrees.
     x0 : float
-        Site longitude coordinate in degrees
+        Site longitude coordinate in degrees.
     y0 : float
-        Site latitude coordinate in degrees
+        Site latitude coordinate in degrees.
     lon0 : float
-        Western longitude bound of computational domain
+        Western longitude bound of computational domain.
     lon1 : float
-        Eastern longitude bound of computational domain
+        Eastern longitude bound of computational domain.
     lat0 : float
-        Southern latitude bound of computational domain
+        Southern latitude bound of computational domain.
     lat1 : float
-        Northern latitude bound of computational domain
+        Northern latitude bound of computational domain.
     R : float
-        Radius of influence in degrees
+        Radius of influence in degrees.
     date_ini : str
-        Initial date in format 'YYYY-MM-DD HH:MM'
+        Initial date in format 'YYYY-MM-DD HH:MM'.
     center : str, optional
-        IBTrACS center code, by default "WMO"
+        IBTrACS center code. Default is "WMO".
     basin : str, optional
-        Storm basin identifier, by default "SP"
+        Storm basin identifier. Default is "SP".
 
     Returns
     -------
@@ -1718,17 +1731,58 @@ def track_site_parameters(
 
 ###############################################################################
 # synthetic tracks
+###############################################################################
 
 
-def nakajo_track_preprocessing(xds, center="WMO"):
+def nakajo_track_preprocessing(xds: xr.Dataset, center: str = "WMO") -> pd.DataFrame:
     """
-    xds         - (xarray.Dataset) historic storm track dataset (storm dim)
+    Preprocess synthetic storm track data from Nakajo format.
 
-    Synthetic track is preprocessed: remove NaT data, remove NaN data,
-    longitude convention [0º-360º], time format, calculate vmean,
-    get storm category (winds, rmw are not provided)
+    Parameters
+    ----------
+    xds : xr.Dataset
+        Synthetic storm track dataset with storm dimension in Nakajo format.
+        Must contain variables for time, longitude (ylon_TC), latitude (ylat_TC),
+        and pressure (yCPRES).
+    center : str, optional
+        IBTrACS center code. Default is "WMO".
 
-    returns:  df (pandas.Dataframe)
+    Returns
+    -------
+    pd.DataFrame
+        Preprocessed storm track data with columns:
+        - center : Storm center identifier
+        - basin : Storm basin identifier (determined from coordinates)
+        - dist2land : Distance to nearest land (fixed at 100 km)
+        - longitude : Storm longitude (0-360°)
+        - latitude : Storm latitude
+        - move : Forward direction (degrees)
+        - mean_velocity : Translation speed (kt)
+        - pressure : Central pressure (mbar)
+        - maxwinds : Maximum winds (kt, not provided)
+        - rmw : Radius of maximum winds (not provided)
+        - category : Storm category (0-6)
+        - timestep : Time step (hours)
+        - storm_vmean : Mean translation speed (kt)
+
+    Notes
+    -----
+    The function:
+    1. Removes NaT (Not a Time) values from time coordinate
+    2. Removes NaN values from pressure data
+    3. Converts longitudes to [0°-360°] convention
+    4. Determines basin based on storm coordinates
+    5. Rounds dates to nearest hour
+    6. Calculates translation speed and direction
+    7. Determines storm category based on pressure
+
+    Examples
+    --------
+    >>> processed = nakajo_track_preprocessing(nakajo_data, center='WMO')
+    >>> print(f"Track duration: {len(processed)} time steps")
+    Track duration: 48
+    >>> print(f"Storm category: {processed['category'].iloc[0]}")
+    Storm category: 3
     """
 
     # get names of variables
