@@ -1,10 +1,190 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
 from ..core.decorators import validate_data_mda
 from ._base_datamining import BaseClustering
+
+
+def calculate_normalized_squared_distance(
+    data_array: Union[np.ndarray, pd.DataFrame],
+    array_to_compare: Union[np.ndarray, pd.DataFrame],
+    directional_indices: List[int] = None,
+    weights: List[float] = None,
+) -> np.ndarray:
+    """
+    Calculate the normalized squared distance between the data_array and the array_to_compare.
+    ALERT: directional_indices will be deprecated in the future.
+
+    Parameters
+    ----------
+    data_array : Union[np.ndarray, pd.DataFrame]
+        The data array to compare.
+    array_to_compare : Union[np.ndarray, pd.DataFrame]
+        The array to compare against.
+    directional_indices : List[int], optional
+        List of column indices that contain directional data.
+        For these columns, the minimum circular distance will be used.
+        Default is None.
+    weights : List[float], optional
+        List of weights to apply to each column's distance.
+        Must have the same length as the number of columns.
+        Default is None (equal weights).
+
+    Returns
+    -------
+    np.ndarray
+        An array of normalized squared distances between the two arrays for each row.
+
+    Raises
+    ------
+    ValueError
+        If the arrays have different numbers of columns.
+        If weights are provided but length doesn't match number of columns.
+
+    Examples
+    --------
+    >>> # Regular Euclidean distance
+    >>> calculate_normalized_squared_distance(
+        data_array=np.array([[1, 2, 3]]),
+        array_to_compare=np.array([[1, 2, 3], [4, 5, 6]]),
+    )
+    >>>
+    >>> # With directional data (angles in radians) in second column
+    >>> calculate_normalized_squared_distance(
+        data_array=np.array([[1, np.pi, 3]]),
+        array_to_compare=np.array([[1, 0, 3], [4, np.pi/2, 6]]),
+        directional_indices=[1]
+    )
+    >>>
+    >>> # With weights
+    >>> calculate_normalized_squared_distance(
+        data_array=np.array([[1, 2, 3]]),
+        array_to_compare=np.array([[1, 2, 3], [4, 5, 6]]),
+        weights=[1.0, 0.5, 2.0]
+    )
+
+    Notes
+    -----
+    - IMPORTANT: Data is assumed to be normalized before calling this function.
+    - For directional variables, the function calculates the minimum circular distance.
+    - The function calculates weighted squared differences for each row.
+    - If DataFrames are provided, they will be converted to numpy arrays.
+    """
+
+    if isinstance(data_array, pd.DataFrame):
+        data_array = data_array.values
+    if isinstance(array_to_compare, pd.DataFrame):
+        array_to_compare = array_to_compare.values
+
+    if data_array.shape[1] != array_to_compare.shape[1]:
+        raise ValueError("Arrays must have the same number of columns")
+
+    if weights is not None and len(weights) != data_array.shape[1]:
+        raise ValueError("Length of weights must match number of columns")
+
+    # Calculate initial differences
+    diff = data_array - array_to_compare
+
+    # Handle directional variables if specified
+    if directional_indices is not None:
+        for idx in directional_indices:
+            # Calculate absolute angular difference
+            abs_diff = np.absolute(diff[:, idx])
+            # Use minimum circular distance
+            diff[:, idx] = np.minimum(abs_diff, 1 - abs_diff)
+
+    # Apply weights if specified
+    if weights is not None:
+        for i, weight in enumerate(weights):
+            diff[:, i] *= weight
+
+    # Compute the squared sum of differences for each row
+    dist = np.sum(diff**2, axis=1)
+
+    return dist
+
+
+def find_nearest_indices(
+    query_points: Union[np.ndarray, pd.DataFrame],
+    reference_points: Union[np.ndarray, pd.DataFrame],
+    directional_indices: List[int] = None,
+    weights: List[float] = None,
+) -> np.ndarray:
+    """
+    Find the indices of nearest points in reference_points for each point in query_points.
+
+    Parameters
+    ----------
+    query_points : Union[np.ndarray, pd.DataFrame]
+        The points to find nearest neighbors for.
+    reference_points : Union[np.ndarray, pd.DataFrame]
+        The set of points to search in.
+    directional_indices : List[int], optional
+        List of column indices that contain directional data.
+        For these columns, the minimum circular distance will be used.
+        Default is None.
+    weights : List[float], optional
+        List of weights to apply to each column's distance.
+        Must have the same length as the number of columns.
+        Default is None (equal weights).
+
+    Returns
+    -------
+    np.ndarray
+        An array containing the index of the nearest reference point for each query point.
+
+    Notes
+    -----
+    - Data is assumed to be normalized before calling this function.
+    - This function can be used in two ways:
+        1. Finding nearest centroids for data points (query=data, reference=centroids)
+        2. Finding nearest data points for centroids (query=centroids, reference=data)
+
+    Examples
+    --------
+    >>> # Finding nearest centroids for data points
+    >>> data = np.random.rand(100, 3)  # 100 points with 3 features
+    >>> centroids = np.random.rand(5, 3)  # 5 centroids
+    >>> nearest_centroid_indices = find_nearest_indices(data, centroids)
+    >>>
+    >>> # Finding nearest data points for centroids
+    >>> nearest_data_indices = find_nearest_indices(centroids, data)
+    >>>
+    >>> # With directional data in second column
+    >>> nearest_indices = find_nearest_indices(
+    ...     data, centroids, directional_indices=[1]
+    ... )
+    >>>
+    >>> # With weighted columns
+    >>> nearest_indices = find_nearest_indices(
+    ...     data, centroids, weights=[1.0, 0.5, 2.0]
+    ... )
+    """
+
+    if isinstance(query_points, pd.DataFrame):
+        query_points = query_points.values
+    if isinstance(reference_points, pd.DataFrame):
+        reference_points = reference_points.values
+
+    nearest_indices = np.zeros(query_points.shape[0], dtype=int)
+
+    for i in range(query_points.shape[0]):
+        rep = np.repeat(
+            np.expand_dims(query_points[i, :], axis=0),
+            reference_points.shape[0],
+            axis=0,
+        )
+        ndist = calculate_normalized_squared_distance(
+            data_array=rep,
+            array_to_compare=reference_points,
+            directional_indices=directional_indices,
+            weights=weights,
+        )
+        nearest_indices[i] = np.nanargmin(ndist)
+
+    return nearest_indices
 
 
 class MDAError(Exception):
@@ -134,103 +314,6 @@ class MDA(BaseClustering):
 
         return self._data_to_fit
 
-    def _normalized_distance(
-        self, array_to_compare: np.ndarray, all_rest_data: np.ndarray
-    ) -> np.ndarray:
-        """
-        Calculate the normalized distance between the array_to_compare and all_rest_data.
-
-        Parameters
-        ----------
-        array_to_compare : np.ndarray
-            The array to compare against.
-        all_rest_data : np.ndarray)
-            The rest of the data.
-
-        Returns
-        -------
-        np.ndarray
-            An array of squared Euclidean distances between the two arrays for each row.
-
-        Raises
-        ------
-        MDAError
-            If the function is NOT called before or during fitting.
-
-        Notes
-        -----
-        - IMPORTANT: Data is assumed to be normalized before calling this function.
-        - The function assumes that the data_variables, directional_variables, and scale_factor
-            attributes have been set.
-        - The function calculates the squared sum of differences for each row.
-        - DEPRECATED: directional_distance calculation.
-            distance = np.absolute(array_to_compare[:, ix] - all_rest_data[:, ix])
-            diff[:, ix] = np.minimum(
-                distance, 1 - distance
-            )
-        """
-
-        if not self.fitting_variables:
-            raise MDAError(
-                "_normalized_distance must be called after or during fitting, not before."
-            )
-
-        diff = np.zeros(all_rest_data.shape)
-
-        # Calculate differences for columns
-        for ix in range(len(self.fitting_variables)):
-            diff[:, ix] = array_to_compare[:, ix] - all_rest_data[:, ix]
-            ix = ix + 1
-
-        # Compute the squared sum of differences for each row
-        dist = np.sum(diff**2, axis=1)
-
-        return dist
-
-    def _nearest_indices_to_centroids(
-        self, normalized_data: pd.DataFrame
-    ) -> Tuple[np.ndarray, pd.DataFrame]:
-        """
-        Compute nearest data points to calculated centroids.
-
-        Parameters
-        ----------
-        normalized_data : pd.DataFrame
-            The input data to be used to compute nearest data point to centroids.
-
-        Returns
-        -------
-        np.ndarray
-            An array containing the index of the nearest data point to centroids.
-        pd.DataFrame
-            A DataFrame containing the nearest data points to centroids.
-
-        Raises
-        ------
-        MDAError
-            If the fit method has not been called before this method.
-            Or if the data is empty.
-        """
-
-        if normalized_data.empty:
-            raise MDAError("Data cannot be empty.")
-
-        # Compute distances and store nearest distance index
-        nearest_indices_array = np.zeros(self.normalized_centroids.shape[0], dtype=int)
-
-        for i in range(self.normalized_centroids.shape[0]):
-            rep = np.repeat(
-                np.expand_dims(self.normalized_centroids.values[i, :], axis=0),
-                normalized_data.values.shape[0],
-                axis=0,
-            )
-            ndist = self._normalized_distance(
-                array_to_compare=rep, all_rest_data=normalized_data.values
-            )
-            nearest_indices_array[i] = np.nanargmin(ndist)
-
-        return nearest_indices_array, normalized_data.iloc[nearest_indices_array]
-
     def _nearest_indices(
         self, normalized_data: pd.DataFrame
     ) -> Tuple[np.ndarray, pd.DataFrame]:
@@ -244,34 +327,23 @@ class MDA(BaseClustering):
 
         Returns
         -------
-        np.ndarray
-            An array containing the index of the nearest centroid to the data.
-        pd.DataFrame
-            A DataFrame containing the nearest centroids to the data.
+        Tuple[np.ndarray, pd.DataFrame]
+            An array containing the index of the nearest centroid to the data,
+            and a DataFrame containing the nearest centroids.
 
         Raises
         ------
         MDAError
-            If the fit method has not been called before this method.
-            Or if the data is empty.
+            If the data is empty.
         """
 
         if normalized_data.empty:
             raise MDAError("Data cannot be empty.")
 
-        # Compute distances and store nearest distance index
-        nearest_indices_array = np.zeros(normalized_data.shape[0], dtype=int)
-
-        for i in range(normalized_data.shape[0]):
-            rep = np.repeat(
-                np.expand_dims(normalized_data.values[i, :], axis=0),
-                self.normalized_centroids.values.shape[0],
-                axis=0,
-            )
-            ndist = self._normalized_distance(
-                array_to_compare=rep, all_rest_data=self.normalized_centroids.values
-            )
-            nearest_indices_array[i] = np.nanargmin(ndist)
+        nearest_indices_array = find_nearest_indices(
+            query_points=normalized_data,
+            reference_points=self.normalized_centroids,
+        )
 
         return nearest_indices_array, self.centroids.iloc[nearest_indices_array]
 
@@ -322,9 +394,7 @@ class MDA(BaseClustering):
             normalize_data=normalize_data,
         )
 
-        # [DEPRECATED] Select the point with the maximum value in the first column of pandas dataframe
-        # seed = self.normalized_data[self.normalized_data.columns[0]].idxmax()
-        # Select the point with the maximum summed value
+        # Select seed point
         if first_centroid_seed is not None:
             seed = first_centroid_seed
             self.logger.info(f"Using specified seed={seed} as first centroid.")
@@ -346,14 +416,16 @@ class MDA(BaseClustering):
             m2 = subset.shape[0]
             if m2 == 1:
                 xx2 = np.repeat(subset, train.shape[0], axis=0)
-                d_last = self._normalized_distance(
-                    array_to_compare=xx2, all_rest_data=train
+                d_last = calculate_normalized_squared_distance(
+                    data_array=xx2,
+                    array_to_compare=train,
                 )
             else:
                 xx = np.array([subset[-1, :]])
                 xx2 = np.repeat(xx, train.shape[0], axis=0)
-                d_prev = self._normalized_distance(
-                    array_to_compare=xx2, all_rest_data=train
+                d_prev = calculate_normalized_squared_distance(
+                    data_array=xx2,
+                    array_to_compare=train,
                 )
                 d_last = np.minimum(d_prev, d_last)
 
@@ -387,8 +459,9 @@ class MDA(BaseClustering):
             )
 
         # Calculate the real indices of the centroids
-        self.centroid_real_indices, _ = self._nearest_indices_to_centroids(
-            normalized_data=self.normalized_data
+        self.centroid_real_indices = find_nearest_indices(
+            query_points=self.normalized_centroids,
+            reference_points=self.normalized_data,
         )
 
         # Set the fitted flag to True
