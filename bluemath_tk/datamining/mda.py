@@ -20,9 +20,9 @@ def calculate_normalized_squared_distance(
     Parameters
     ----------
     data_array : Union[np.ndarray, pd.DataFrame]
-        The data array to compare.
+        The data array to compare. Dimensions: (1, n_features).
     array_to_compare : Union[np.ndarray, pd.DataFrame]
-        The array to compare against.
+        The array to compare against. Dimensions: (n_samples, n_features).
     directional_indices : List[int], optional
         List of column indices that contain directional data.
         For these columns, the minimum circular distance will be used.
@@ -35,7 +35,8 @@ def calculate_normalized_squared_distance(
     Returns
     -------
     np.ndarray
-        An array of normalized squared distances between the two arrays for each row.
+        An array of normalized squared distance between the two arrays.
+        Dimensions: (n_samples, 1).
 
     Raises
     ------
@@ -45,30 +46,17 @@ def calculate_normalized_squared_distance(
 
     Examples
     --------
-    >>> # Regular Euclidean distance
     >>> calculate_normalized_squared_distance(
-        data_array=np.array([[1, 2, 3]]),
-        array_to_compare=np.array([[1, 2, 3], [4, 5, 6]]),
-    )
-    >>>
-    >>> # With directional data (angles in radians) in second column
-    >>> calculate_normalized_squared_distance(
-        data_array=np.array([[1, np.pi, 3]]),
-        array_to_compare=np.array([[1, 0, 3], [4, np.pi/2, 6]]),
-        directional_indices=[1]
-    )
-    >>>
-    >>> # With weights
-    >>> calculate_normalized_squared_distance(
-        data_array=np.array([[1, 2, 3]]),
-        array_to_compare=np.array([[1, 2, 3], [4, 5, 6]]),
-        weights=[1.0, 0.5, 2.0]
-    )
+    ...     data_array=np.array([[1, 2, 3]]),
+    ...     array_to_compare=np.array([[1, 2, 3], [4, 5, 6]]),
+    ... )
+    [0.0, 27.0]
 
     Notes
     -----
     - IMPORTANT: Data is assumed to be normalized before calling this function.
     - For directional variables, the function calculates the minimum circular distance.
+      Assuming data is between 0 and 1 (normalized).
     - The function calculates weighted squared differences for each row.
     - If DataFrames are provided, they will be converted to numpy arrays.
     """
@@ -135,32 +123,12 @@ def find_nearest_indices(
     np.ndarray
         An array containing the index of the nearest reference point for each query point.
 
-    Notes
-    -----
-    - Data is assumed to be normalized before calling this function.
-    - This function can be used in two ways:
-        1. Finding nearest centroids for data points (query=data, reference=centroids)
-        2. Finding nearest data points for centroids (query=centroids, reference=data)
-
     Examples
     --------
     >>> # Finding nearest centroids for data points
     >>> data = np.random.rand(100, 3)  # 100 points with 3 features
     >>> centroids = np.random.rand(5, 3)  # 5 centroids
     >>> nearest_centroid_indices = find_nearest_indices(data, centroids)
-    >>>
-    >>> # Finding nearest data points for centroids
-    >>> nearest_data_indices = find_nearest_indices(centroids, data)
-    >>>
-    >>> # With directional data in second column
-    >>> nearest_indices = find_nearest_indices(
-    ...     data, centroids, directional_indices=[1]
-    ... )
-    >>>
-    >>> # With weighted columns
-    >>> nearest_indices = find_nearest_indices(
-    ...     data, centroids, weights=[1.0, 0.5, 2.0]
-    ... )
     """
 
     if isinstance(query_points, pd.DataFrame):
@@ -382,8 +350,6 @@ class MDA(BaseClustering):
 
         Notes
         -----
-        - The function assumes that the data is validated by the `validate_data_mda`
-            decorator before execution.
         - When first_centroid_seed is not provided, max value centroid is used.
         """
 
