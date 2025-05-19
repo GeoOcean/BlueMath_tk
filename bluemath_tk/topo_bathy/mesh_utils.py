@@ -1,19 +1,23 @@
 import re
-from typing import Any, List, Tuple, Union
+from collections import defaultdict
+from copy import deepcopy
+from datetime import datetime
+from typing import Dict, List, Tuple
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
-import pyproj
+import ocsmesh
 import rasterio
-import xarray as xr
 from jigsawpy.msh_t import jigsaw_msh_t
 from matplotlib.axes import Axes
 from matplotlib.tri import Triangulation
 from netCDF4 import Dataset
+from pyproj.enums import TransformDirection
 from rasterio.mask import mask
-from shapely.geometry import MultiPolygon, Point, Polygon, mapping
+from shapely.geometry import Polygon, mapping
 from shapely.ops import transform
+from shapely.vectorized import contains
 
 
 def plot_mesh_edge(msh_t: jigsaw_msh_t, ax: Axes = None, **kwargs) -> Axes:
@@ -100,7 +104,7 @@ def plot_mesh_vals(
     return ax
 
 
-def plot_bati(rasters_path: List[str], polygon: Polygon, ax: Axes) -> Axes:
+def plot_bathymetry(rasters_path: List[str], polygon: Polygon, ax: Axes) -> Axes:
     """
     Plots bathymetric raster data and overlays a polygon on top of it.
 
@@ -150,43 +154,42 @@ def plot_bati(rasters_path: List[str], polygon: Polygon, ax: Axes) -> Axes:
     return ax
 
 
-def clip_bati(
-    rasters_path: List[str], output_path: str, domain: Polygon, mas: float, UTM: bool
-) -> None:
+def clip_bathymetry(
+    input_raster_paths: List[str],
+    output_path: str,
+    domain: Polygon,
+    margin: float,
+) -> float:
     """
-    Clips bathymetric raster data using a specified domain polygon
-    and saves the clipped raster to the specified output path.
+    Clips bathymetric raster data using a specified domain polygon,
+    applies a margin buffer, and saves the clipped raster.
 
     Parameters
     ----------
-    rasters_path : List[str]
-        A list of file paths to the raster files to be clipped.
+    input_raster_paths : List[str]
+        List of file paths to the input raster files.
     output_path : str
-        The file path to save the clipped raster data.
+        Destination file path to save the clipped raster.
     domain : Polygon
-        The domain polygon used to clip the rasters.
-    mas : float
-        A buffer factor applied to the domain polygon based on its area and length.
-    UTM : bool
-        If True, assumes the coordinate reference system is EPSG:4326;
-        otherwise, assumes EPSG:32630 (UTM projection).
+        Polygon geometry used to clip the raster.
+    margin : float
+        Buffer factor applied to the domain before clipping.
+    Returns
+    -------
+    float
+        The mean resolution of the raster.
     """
 
-    original_polygon = domain.buffer(mas * domain.area / domain.length)
+    buffered_polygon = buffer_aera(domain, margin)
 
-    if UTM:
-        crrs = "EPSG:4326"
-    else:
-        crrs = "EPSG:32630"
-    for path in rasters_path:
+    for path in input_raster_paths:
         with rasterio.open(path) as src:
-            gdf_polygon = gpd.GeoDataFrame(
-                index=[0], geometry=[original_polygon], crs=crrs
-            )
-            gdf_polygon = gdf_polygon.to_crs(src.crs)
+            domain_gdf = gpd.GeoDataFrame(
+                index=[0], geometry=[buffered_polygon], crs="EPSG:4326"
+            ).to_crs(src.crs)
 
             out_image, out_transform = mask(
-                src, [mapping(gdf_polygon.geometry[0])], crop=True
+                src, [mapping(domain_gdf.geometry[0])], crop=True
             )
 
             out_meta = src.meta.copy()
@@ -198,9 +201,12 @@ def clip_bati(
                     "transform": out_transform,
                 }
             )
+        res_x, res_y = src.res
+        mean_resolution = (abs(res_x) + abs(res_y)) / 2
 
     with rasterio.open(output_path, "w", **out_meta) as dest:
         dest.write(out_image)
+    return mean_resolution
 
 
 def clip_bati_manning(
@@ -231,8 +237,7 @@ def clip_bati_manning(
     manning : float
         The Manning's coefficient to apply to the raster data.
     """
-
-    original_polygon = domain.buffer(mas * domain.area / domain.length)
+    original_polygon = buffer_aera(domain, mas)
 
     if UTM:
         crrs = "EPSG:4326"
@@ -351,7 +356,7 @@ def plot_boundaries(mesh: jigsaw_msh_t, ax: Axes) -> Axes:
     return ax
 
 
-def plot_bati_interp(mesh: jigsaw_msh_t, ax: Axes) -> Axes:
+def plot_bathymetry_interp(mesh: jigsaw_msh_t, ax: Axes) -> Axes:
     """
     Plots the interpolated bathymetry data on a mesh.
 
@@ -386,168 +391,72 @@ def plot_bati_interp(mesh: jigsaw_msh_t, ax: Axes) -> Axes:
     return ax
 
 
-def simply_poly(base_shape: Polygon, simpl_UTM: float, UTM_zone: Any) -> Polygon:
+def simply_polygon(base_shape: Polygon, simpl_UTM: float, project) -> Polygon:
     """
-    Simplifies the input polygon, optionally transforming it to UTM coordinates for simplification.
+    Simplifies a polygon by transforming it to a projected coordinate system (e.g., UTM),
+    applying geometric simplification, and transforming it back to geographic coordinates.
 
     Parameters
     ----------
     base_shape : Polygon
-        The polygon to be simplified.
+        The input polygon in geographic coordinates (e.g., WGS84).
     simpl_UTM : float
-        The tolerance for simplification. A higher value results in greater simplification.
-    UTM_zone : Any
-        The UTM zone for transformation. If None, no transformation is done, and the input shape
-        is simplified in its current coordinate system.
+        Tolerance for simplification (in projected units, typically meters). Higher values result in simpler shapes.
+    project : pyproj.Transformer.transform
+        A projection function that converts coordinates from geographic to projected (e.g., WGS84 → UTM).
 
     Returns
     -------
     Polygon
-        The simplified polygon.
+        The simplified polygon in geographic coordinates.
     """
 
-    if UTM_zone:
-        transformer_to_utm = pyproj.Transformer.from_proj(
-            pyproj.Proj(proj="latlong", datum="WGS84"),
-            pyproj.Proj(proj="utm", zone=UTM_zone, ellps="WGS84"),
-        )
-        base_shape_utm = transform(
-            lambda x, y: transformer_to_utm.transform(x, y), base_shape
-        )
-        simple_shape_UTM = base_shape_utm.simplify(simpl_UTM)
+    base_shape_utm = transform(project, base_shape)
 
-        transformer_to_latlon = pyproj.Transformer.from_proj(
-            pyproj.Proj(proj="utm", zone=UTM_zone, ellps="WGS84"),
-            pyproj.Proj(proj="latlong", datum="WGS84"),
-        )
+    simple_shape_utm = base_shape_utm.simplify(simpl_UTM)
 
-        simple_shape = transform(
-            lambda x, y: transformer_to_latlon.transform(x, y), simple_shape_UTM
-        )
-    else:
-        simple_shape = base_shape.simplify(simpl_UTM)
+    simple_shape = transform(
+        lambda x, y: project(x, y, direction=TransformDirection.INVERSE),
+        simple_shape_utm,
+    )
 
     return simple_shape
 
 
-def remove_islands(
-    main_polygon: Union[Polygon, MultiPolygon], threshold_area: float, UTM_zone: Any
-) -> Union[Polygon, MultiPolygon]:
+def remove_islands(base_shape: Polygon, threshold_area: float, project) -> Polygon:
     """
-    Removes small islands (interior polygons) from a given polygon based on a threshold area.
+    Transforms a polygon to a projected coordinate system (e.g., UTM), filters out small interior rings
+    (holes) based on a minimum area threshold, and transforms the simplified polygon back to geographic coordinates.
 
     Parameters
     ----------
-    main_polygon : Union[Polygon, MultiPolygon]
-        The main polygon which may contain smaller islands (interior polygons).
+    base_shape : Polygon
+        The input polygon in geographic coordinates (e.g., WGS84).
     threshold_area : float
-        The minimum area required for an interior polygon to be retained.
-        Islands with smaller areas are removed.
-    UTM_zone : int
-        The UTM zone to which the coordinates will be transformed for accurate area calculation.
+        Minimum area (in projected units, e.g., square meters) for interior rings (holes) to be preserved.
+        Interior rings smaller than this threshold will be removed.
+    project : callable
+        A projection function, typically `pyproj.Transformer.transform`, that converts coordinates
+        from geographic to projected CRS.
 
     Returns
     -------
-    Union[Polygon, MultiPolygon]
-        The resulting polygon with small islands removed.
+    Polygon
+        The polygon with small interior rings removed, transformed back to geographic coordinates.
     """
-
-    transformer_to_utm = pyproj.Transformer.from_proj(
-        pyproj.Proj(proj="latlong", datum="WGS84"),
-        pyproj.Proj(proj="utm", zone=UTM_zone, ellps="WGS84"),
+    base_shape_utm = transform(project, base_shape)
+    interior_shape_utm = [
+        interior
+        for interior in base_shape_utm.interiors
+        if Polygon(interior).area >= threshold_area
+    ]
+    simple_shape_utm = Polygon(base_shape_utm.exterior, interior_shape_utm)
+    simple_shape = transform(
+        lambda x, y: project(x, y, direction=TransformDirection.INVERSE),
+        simple_shape_utm,
     )
 
-    main_polygon_utm = transform(
-        lambda x, y: transformer_to_utm.transform(x, y), main_polygon
-    )
-
-    if isinstance(main_polygon_utm, MultiPolygon):
-        new_polygons = []
-        for poly in main_polygon_utm.geoms:
-            new_poly = remove_islands(poly, threshold_area, UTM_zone)
-            new_polygons.append(new_poly)
-        result_polygon = MultiPolygon(new_polygons)
-
-    elif isinstance(main_polygon_utm, Polygon):
-        new_interior = [
-            interior
-            for interior in main_polygon_utm.interiors
-            if Polygon(interior).area >= threshold_area
-        ]
-        result_polygon = Polygon(main_polygon_utm.exterior, new_interior)
-
-    transformer_to_latlon = pyproj.Transformer.from_proj(
-        pyproj.Proj(proj="utm", zone=UTM_zone, ellps="WGS84"),
-        pyproj.Proj(proj="latlong", datum="WGS84"),
-    )
-
-    result_polygon_latlon = transform(
-        lambda x, y: transformer_to_latlon.transform(x, y), result_polygon
-    )
-
-    return result_polygon_latlon
-
-
-def is_any_point_outside(triangle_coords: List[tuple], poly: Polygon) -> bool:
-    """
-    Checks if any of the points (vertices) of a triangle are outside a given polygon.
-
-    Parameters
-    ----------
-    triangle_coords : List[tuple]
-        Coordinates of the triangle vertices [(x1, y1), (x2, y2), (x3, y3)].
-    poly : Polygon
-        The polygon within which the triangle points should be checked.
-
-    Returns
-    -------
-    bool
-        True if any point is outside the polygon, False if all points are inside.
-    """
-
-    return any(not Point(coord).within(poly) for coord in triangle_coords)
-
-
-def circumcenter(triangles_coords: np.ndarray) -> np.ndarray:
-    """
-    Calculates the circumcenter of a triangle given its vertex coordinates.
-
-    Parameters
-    ----------
-    triangles_coords : np.ndarray
-        A 2D array of shape (n, 3, 2), where each row represents the coordinates
-        of a triangle's three vertices.
-
-    Returns
-    -------
-    np.ndarray
-        A 2D array of shape (n, 2), where each row represents the (x, y) c
-        oordinates of the circumcenter for each triangle.
-    """
-
-    triangles_coords = np.array(triangles_coords)
-
-    x1, y1 = triangles_coords[:, 0, 0], triangles_coords[:, 0, 1]
-    x2, y2 = triangles_coords[:, 1, 0], triangles_coords[:, 1, 1]
-    x3, y3 = triangles_coords[:, 2, 0], triangles_coords[:, 2, 1]
-
-    A = 0.5 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2))
-
-    D_x = (
-        (x1**2 + y1**2) * (y2 - y3)
-        + (x2**2 + y2**2) * (y3 - y1)
-        + (x3**2 + y3**2) * (y1 - y2)
-    )
-    D_y = (
-        (x1**2 + y1**2) * (x3 - x2)
-        + (x2**2 + y2**2) * (x1 - x3)
-        + (x3**2 + y3**2) * (x2 - x1)
-    )
-
-    x_circumcenter = D_x / (2 * A)
-    y_circumcenter = D_y / (2 * A)
-
-    return np.vstack((x_circumcenter, y_circumcenter)).T
+    return simple_shape
 
 
 def read_adcirc_grd(grd_file: str) -> Tuple[np.ndarray, np.ndarray, List[str]]:
@@ -839,9 +748,9 @@ def adcirc2netcdf(Path_grd: str, netcdf_path: str) -> None:
         mesh2d_face_x_bnd[:] = face_x_bnd
         mesh2d_face_y_bnd[:] = face_y_bnd
 
-        dataset.institution = "Deltares"
-        dataset.references = "http://www.deltares.nl"
-        dataset.source = "RGFGRID 7.03.00.77422. Model: ---"
+        dataset.institution = "GeoOcean"
+        dataset.references = "https://github.com/GeoOcean/BlueMath_tk"
+        dataset.source = f"BlueMath tk {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         dataset.history = "Created with OCSmesh"
         dataset.Conventions = "CF-1.8 UGRID-1.0 Deltares-0.10"
 
@@ -901,48 +810,223 @@ def decode_open_boundary_data(data: List[str]) -> dict:
     return boundary_info
 
 
-def extract_pos_nearest_points_regular(
-    xds_grid: xr.Dataset, lon_points: np.ndarray, lat_points: np.ndarray
-) -> Tuple[int, int]:
+def buffer_aera(polygon: Polygon, mas: float) -> Polygon:
     """
-    Find the closest grid point indices for given longitude and latitude points.
+    Buffer the polygon by a factor of its area divided by its length.
+    This is a heuristic to ensure that the buffer is proportional to the size of the polygon.
+    Parameters
+    ----------
+    polygon : Polygon
+        The polygon to be buffered.
+    mas : float
+        The buffer factor.
+    Returns
+    -------
+    Polygon
+        The buffered polygon.
+    """
+    return polygon.buffer(mas * polygon.area / polygon.length)
+
+
+def compute_circumcenter(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray) -> np.ndarray:
+    """
+    Technical Reference Manual D-Flow Flexible Mesh 13 May 2025 Revision: 80268
+    Compute the circumcenter of a triangle from its 3 vertices.
+    Ref: Figure 3.12, Equation (3.6), D-Flow Flexible Mesh Technical Reference Manual.
+    -------
+    Parameters
+    p0, p1, p2 : np.ndarray
+        2D coordinates of the triangle vertices.
+    -------
+    Returns
+    center : np.ndarray
+        2D coordinates of the circumcenter.
+    """
+    A = p1 - p0
+    B = p2 - p0
+    AB_perp = np.array([A[1], -A[0]])
+    AC_perp = np.array([B[1], -B[0]])
+    mid_AB = (p0 + p1) / 2
+    mid_AC = (p0 + p2) / 2
+    M = np.array([AB_perp, -AC_perp]).T
+    b = mid_AC - mid_AB
+    try:
+        t = np.linalg.solve(M, b)
+        center = mid_AB + t[0] * AB_perp
+    except np.linalg.LinAlgError:
+        center = (p0 + p1 + p2) / 3
+    return center
+
+
+def build_edge_to_cells(elements: np.ndarray) -> Dict[Tuple[int, int], List[int]]:
+    """
+    Technical Reference Manual D-Flow Flexible Mesh 13 May 2025 Revision: 80268
+    Build edge -> list of adjacent element indices (max 2).
+    Ref: Connectivity structure implied in Section 3.5.1 and Fig 3.2a.
+    -------
+    Parameters
+    elements : np.ndarray
+        Array of triangle elements (indices of vertices).
+    -------
+    Returns
+    edge_to_cells : Dict[Tuple[int, int], List[int]]
+        Dictionary mapping edges to the list of adjacent element indices.
+    -------
+    """
+    edge_to_cells = defaultdict(list)
+    for idx, elem in enumerate(elements):
+        for i in range(3):
+            a = elem[i]
+            b = elem[(i + 1) % 3]
+            edge = tuple(sorted((a, b)))
+            edge_to_cells[edge].append(idx)
+    return edge_to_cells
+
+
+def detect_circumcenter_too_close(
+    X: np.ndarray, Y: np.ndarray, elements: np.ndarray, aj_threshold: float = 0.1
+) -> np.ndarray:
+    """
+    Technical Reference Manual D-Flow Flexible Mesh 13 May 2025 Revision: 80268
+    Detect elements where the distance between adjacent circumcenters is small compared
+    to the shared edge length: aj = ||xRj - xLj|| / ||x1j - x0||
+    Ref: Equation (3.6) in Section 3.5.1 (Grid Orthogonalization), D-Flow Flexible Mesh Manual.
+    -------
+    Parameters
+    X, Y : np.ndarray
+        1D arrays of x and y coordinates of the nodes.
+    elements : np.ndarray
+        2D array of shape (nelmts, 3) containing the node indices for each triangle element.
+    aj_threshold : float
+        Threshold for the ratio of circumcenter distance to edge length.
+    -------
+    Returns
+    bad_elements_mask : np.ndarray
+        Boolean mask indicating which elements are problematic (True if bad).
+    -------
+    """
+    nodes = np.column_stack((X, Y))
+    centers = np.array(
+        [
+            compute_circumcenter(nodes[i0], nodes[i1], nodes[i2])
+            for i0, i1, i2 in elements
+        ]
+    )  # Ref: Fig 3.12
+
+    edge_to_cells = build_edge_to_cells(elements)
+    bad_elements_mask = np.zeros(len(elements), dtype=bool)
+
+    for edge, cells in edge_to_cells.items():
+        if len(cells) != 2:
+            continue  # Internal edges only (Ref: Ji in Eq. 3.7)
+
+        idx0, idx1 = cells
+        c0 = centers[idx0]  # x_Lj
+        c1 = centers[idx1]  # x_Rj
+        node0 = nodes[edge[0]]  # x0
+        node1 = nodes[edge[1]]  # x1j
+
+        edge_length = np.linalg.norm(node1 - node0)  # Denominator of aj (||x1j - x0||)
+        center_dist = np.linalg.norm(c1 - c0)  # Numerator of aj (||xRj - xLj||)
+
+        aj = center_dist / edge_length if edge_length > 0 else 0  # Equation (3.6)
+
+        if aj < aj_threshold:
+            # If the ratio is too low, mark both elements as problematic
+            bad_elements_mask[idx0] = True
+            bad_elements_mask[idx1] = True
+
+    return bad_elements_mask
+
+
+def mask_points_outside_polygon(
+    elements: np.ndarray, node_coords: np.ndarray, poly
+) -> np.ndarray:
+    """
+    Returns a boolean mask indicating which triangle elements have at least two vertices outside the polygon.
+
+    This version uses matplotlib.path.Path for high-performance point-in-polygon testing.
 
     Parameters
     ----------
-    xds_grid : xr.Dataset
-        Dataset containing grid data (lon_z, lat_z, hz).
-    lon_points : np.ndarray
-        Longitudes of interest.
-    lat_points : np.ndarray
-        Latitudes of interest.
+    elements : (n_elements, 3) np.ndarray
+        Array containing indices of triangle vertices.
+    node_coords : (n_nodes, 2) np.ndarray
+        Array of node coordinates as (x, y) pairs.
+    poly : shapely.geometry.Polygon
+        Polygon used for containment checks.
 
     Returns
     -------
-    pos_lon_points_mesh : int
-        Index of closest longitude grid point.
-    pos_lat_points_mesh : int
-        Index of closest latitude grid point.
-
-    Notes
-    -----
-    Converts negative longitudes by adding 360 and uses squared differences to find
-    the nearest grid point. Assumes grid is regularly spaced.
+    mask : (n_elements,) np.ndarray
+        Boolean array where True means at least two vertices of the triangle lie outside the polygon.
     """
 
-    if lon_points < 0:
-        lon_points = lon_points + 360
+    tri_coords = node_coords[elements]
 
-    z = xds_grid.hz.values
-    Lon_grid = xds_grid.lon_z.values
-    Lat_grid = xds_grid.lat_z.values
-    LLat, LLon = np.meshgrid(Lat_grid, Lon_grid)
+    x = tri_coords[..., 0]
+    y = tri_coords[..., 1]
 
-    Lon_val = LLon[z != 0]
-    Lat_val = LLat[z != 0]
+    inside = contains(poly, x, y)
 
-    index = np.nanargmin((lat_points - Lat_val) ** 2 + (lon_points - Lon_val) ** 2)
+    num_inside = np.sum(inside, axis=1)
 
-    pos_lon_points_mesh = Lon_val[index]
-    pos_lat_points_mesh = Lat_val[index]
+    return num_inside < 3
 
-    return pos_lon_points_mesh, pos_lat_points_mesh
+
+def define_mesh_target_size(
+    rasters, raster_resolution_meters, nprocs=None, depth_ranges=None
+):
+    """
+    Define the mesh target size based on depth ranges and their corresponding values.
+
+    Parameters
+    ----------
+    rasters : list
+        List of raster objects.
+    depth_ranges : dict, optional
+        Dictionary containing depth ranges and their corresponding mesh sizes and rates.
+        Format: {(lower_bound, upper_bound): {'value': mesh_size, 'rate': expansion_rate}}
+
+    Returns
+    -------
+    mesh_spacing : ocsmesh.Hfun
+        Hfun object with the defined mesh target size.
+    """
+    if depth_ranges is None:
+        # Default depth-to-mesh size mapping
+        depth_ranges = {
+            (-200_000, -250): {"value": 26_000, "rate": 0.0001},  # Very deep ocean
+            (-250, -100): {"value": 13_000, "rate": 0.0001},  # Continental slope
+            (-100, -75): {"value": 6_500, "rate": 0.0001},  # Outer shelf
+            (-75, -25): {"value": 3_250, "rate": 0.0001},  # Mid shelf
+            (-25, 2.5): {"value": 1_700, "rate": 0.0001},  # Coastal zone
+        }
+
+    all_values = [zone["value"] for zone in depth_ranges.values()]
+
+    points_by_cell = 1  # Number of depth points per minimum size cell for the final cell size definition
+
+    rasters_copy = deepcopy(rasters)
+    for raster in rasters_copy:
+        raster.resample(
+            scaling_factor=raster_resolution_meters * points_by_cell / min(all_values)
+        )
+
+    mesh_spacing = ocsmesh.Hfun(
+        rasters_copy,
+        hmin=min(all_values),
+        hmax=max(all_values),
+        nprocs=nprocs,
+    )
+
+    for (lower, upper), params in depth_ranges.items():
+        mesh_spacing.add_topo_bound_constraint(
+            value=params["value"],
+            lower_bound=lower,
+            upper_bound=upper,
+            value_type="max",
+            rate=params["rate"],
+        )
+
+    return mesh_spacing

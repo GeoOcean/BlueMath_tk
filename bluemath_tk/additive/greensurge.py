@@ -1,10 +1,9 @@
-from pathlib import Path
-
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
+from matplotlib.path import Path
 
 from ..core.operations import get_degrees_from_uv
 
@@ -38,6 +37,32 @@ def create_triangle_mask(
     inside_mask = triangle_path.contains_points(points)
     mask = inside_mask.reshape(lon_grid.shape)
 
+    return mask
+
+
+def create_triangle_mask_from_points(
+    lon: np.ndarray, lat: np.ndarray, triangle: np.ndarray
+) -> np.ndarray:
+    """
+    Create a mask indicating which scattered points are inside a triangle.
+
+    Parameters
+    ----------
+    lon : np.ndarray
+        1D array of longitudes of the points.
+    lat : np.ndarray
+        1D array of latitudes of the points.
+    triangle : np.ndarray
+        (3, 2) array containing the triangle vertices as (lon, lat) pairs.
+
+    Returns
+    -------
+    np.ndarray
+        1D boolean array of same length as lon/lat indicating points inside the triangle.
+    """
+    points = np.column_stack((lon, lat))  # Shape (N, 2)
+    triangle_path = Path(triangle)
+    mask = triangle_path.contains_points(points)
     return mask
 
 
