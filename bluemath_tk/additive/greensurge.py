@@ -1,9 +1,9 @@
-from matplotlib.path import Path
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
+from matplotlib.path import Path
 
 from ..core.operations import get_degrees_from_uv
 
@@ -38,6 +38,7 @@ def create_triangle_mask(
     mask = inside_mask.reshape(lon_grid.shape)
 
     return mask
+
 
 def create_triangle_mask_from_points(
     lon: np.ndarray, lat: np.ndarray, triangle: np.ndarray

@@ -177,8 +177,12 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
         wind_speed = case_context.get("wind_magnitude")
 
         connectivity = ds_GFD_info.triangle_forcing_connectivity
-        triangle_longitude = ds_GFD_info.node_forcing_longitude.isel(node_forcing_index=connectivity).values
-        triangle_latitude = ds_GFD_info.node_forcing_latitude.isel(node_forcing_index=connectivity).values
+        triangle_longitude = ds_GFD_info.node_forcing_longitude.isel(
+            node_forcing_index=connectivity
+        ).values
+        triangle_latitude = ds_GFD_info.node_forcing_latitude.isel(
+            node_forcing_index=connectivity
+        ).values
 
         longitude_points_computation = ds_GFD_info.node_computation_longitude.values
         latitude_points_computation = ds_GFD_info.node_computation_latitude.values
@@ -187,7 +191,9 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
         y0, y1, y2 = triangle_latitude[triangle_index, :]
 
         triangle_vertices = [(x0, y0), (x1, y1), (x2, y2)]
-        triangle_mask = create_triangle_mask_from_points(longitude_points_computation, latitude_points_computation, triangle_vertices)
+        triangle_mask = create_triangle_mask_from_points(
+            longitude_points_computation, latitude_points_computation, triangle_vertices
+        )
 
         angle_rad = nautical_to_mathematical(wind_direction) * np.pi / 180
         wind_u = -np.cos(angle_rad) * wind_speed
@@ -199,34 +205,42 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
         windx[0:2, triangle_mask] = wind_u
         windy[0:2, triangle_mask] = wind_v
 
-        ds_forcing = ds_GFD_info[["time_forcing_index", "node_cumputation_index", "node_computation_longitude","node_computation_latitude"]]
-        ds_forcing = ds_forcing.rename({
-            "time_forcing_index": "time",
-            "node_cumputation_index": "node",
-            "node_computation_longitude": "longitude",
-            "node_computation_latitude": "latitude",
-        })
+        ds_forcing = ds_GFD_info[
+            [
+                "time_forcing_index",
+                "node_cumputation_index",
+                "node_computation_longitude",
+                "node_computation_latitude",
+            ]
+        ]
+        ds_forcing = ds_forcing.rename(
+            {
+                "time_forcing_index": "time",
+                "node_cumputation_index": "node",
+                "node_computation_longitude": "longitude",
+                "node_computation_latitude": "latitude",
+            }
+        )
         ds_forcing.attrs = {}
-        ds_forcing["windx"] = (("time","node"), windx)
-        ds_forcing["windy"] = (("time","node"), windy)
+        ds_forcing["windx"] = (("time", "node"), windx)
+        ds_forcing["windy"] = (("time", "node"), windy)
         ds_forcing["windx"].attrs = {
             "coordinates": "time node",
             "long_name": "Wind speed in x direction",
             "standard_name": "windx",
-            "units": "m s-1"
+            "units": "m s-1",
         }
         ds_forcing["windy"].attrs = {
             "coordinates": "time node",
             "long_name": "Wind speed in y direction",
             "standard_name": "windy",
-            "units": "m s-1"
+            "units": "m s-1",
         }
         ds_forcing.to_netcdf(op.join(case_dir, "forcing.nc"))
 
         self.logger.info(
             f"Creating triangle {triangle_index} direction {int(wind_direction)} with u = {wind_u} and v = {wind_v}"
         )
-
 
     def build_case(
         self,

@@ -750,7 +750,7 @@ def adcirc2netcdf(Path_grd: str, netcdf_path: str) -> None:
 
         dataset.institution = "GeoOcean"
         dataset.references = "https://github.com/GeoOcean/BlueMath_tk"
-        dataset.source = f"BlueMath tk {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"
+        dataset.source = f"BlueMath tk {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         dataset.history = "Created with OCSmesh"
         dataset.Conventions = "CF-1.8 UGRID-1.0 Deltares-0.10"
 
@@ -808,6 +808,7 @@ def decode_open_boundary_data(data: List[str]) -> dict:
             boundary_info[key] = []
 
     return boundary_info
+
 
 def buffer_aera(polygon: Polygon, mas: float) -> Polygon:
     """
