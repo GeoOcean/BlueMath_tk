@@ -4,6 +4,7 @@ from copy import deepcopy
 from datetime import datetime
 from typing import Dict, List, Tuple
 
+import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,15 +19,9 @@ from rasterio.mask import mask
 from shapely.geometry import Polygon, mapping
 from shapely.ops import transform
 from shapely.vectorized import contains
-import cartopy.crs as ccrs
 
 
-def plot_mesh_edge(
-        msh_t: jigsaw_msh_t, 
-        ax = None ,
-        to_geo=None, 
-        **kwargs
-) -> None:
+def plot_mesh_edge(msh_t: jigsaw_msh_t, ax=None, to_geo=None, **kwargs) -> None:
     """
     Plots the edges of a triangular mesh on a given set of axes.
 
@@ -43,8 +38,6 @@ def plot_mesh_edge(
     **kwargs : keyword arguments, optional
         Additional keyword arguments passed to the `triplot` function.
         These can be used to customize the plot (e.g., color, line style).
-
-
     """
 
     crd = np.array(msh_t.vert2["coord"], copy=True)
@@ -156,9 +149,11 @@ def plot_bathymetry(rasters_path: List[str], polygon: Polygon, ax: Axes) -> Axes
     height, width = data[0].shape
     cols, rows = np.meshgrid(np.arange(width), np.arange(height))
     xs, ys = rasterio.transform.xy(transform, rows, cols)
-    
+
     im = ax.imshow(
-        data[0], cmap="gist_earth", extent=(np.min(xs), np.max(xs), np.min(ys), np.max(ys))
+        data[0],
+        cmap="gist_earth",
+        extent=(np.min(xs), np.max(xs), np.min(ys), np.max(ys)),
     )
     cbar = plt.colorbar(im, ax=ax)
     cbar.set_label("Depth (m)")
@@ -168,6 +163,7 @@ def plot_bathymetry(rasters_path: List[str], polygon: Polygon, ax: Axes) -> Axes
     gl = ax.gridlines(draw_labels=True)
     gl.top_labels = False
     gl.right_labels = False
+
     return ax
 
 
@@ -302,13 +298,15 @@ def plot_boundaries(mesh: jigsaw_msh_t, ax: Axes, to_geo=None) -> Axes:
         A function to transform coordinates from projected to geographic CRS.
     """
 
-    plot_mesh_edge(mesh.msh_t,to_geo=to_geo, ax=ax, color="gray", lw=0.5)
+    plot_mesh_edge(mesh.msh_t, to_geo=to_geo, ax=ax, color="gray", lw=0.5)
 
     def plot_boundary(gdf, color, label):
         try:
             if to_geo:
                 gdf = gdf.copy()
-                gdf["geometry"] = gdf["geometry"].apply(lambda geom: transform(to_geo, geom))
+                gdf["geometry"] = gdf["geometry"].apply(
+                    lambda geom: transform(to_geo, geom)
+                )
             gdf.plot(ax=ax, color=color, label=label)
         except Exception as e:
             print(f"No {label} boundaries available. Error: {e}")
@@ -321,7 +319,7 @@ def plot_boundaries(mesh: jigsaw_msh_t, ax: Axes, to_geo=None) -> Axes:
     ax.legend()
 
 
-def plot_bathymetry_interp(mesh: jigsaw_msh_t,to_geo, ax: Axes) -> Axes:
+def plot_bathymetry_interp(mesh: jigsaw_msh_t, to_geo, ax: Axes) -> Axes:
     """
     Plots the interpolated bathymetry data on a mesh.
 
@@ -342,7 +340,7 @@ def plot_bathymetry_interp(mesh: jigsaw_msh_t,to_geo, ax: Axes) -> Axes:
 
     im = ax.tricontourf(
         Triangulation(
-            crd[:, 0], 
+            crd[:, 0],
             crd[:, 1],
             triangles=mesh.msh_t.tria3["index"],
         ),
@@ -355,6 +353,7 @@ def plot_bathymetry_interp(mesh: jigsaw_msh_t,to_geo, ax: Axes) -> Axes:
     cbar = plt.colorbar(im, ax=ax)
     cbar.set_label("Depth (m)")
     ax.set_extent([*bnd], crs=ccrs.PlateCarree())
+
 
 def simply_polygon(base_shape: Polygon, simpl_UTM: float, project) -> Polygon:
     """
