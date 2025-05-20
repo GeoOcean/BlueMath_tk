@@ -4,6 +4,7 @@ from copy import deepcopy
 from datetime import datetime
 from typing import Dict, List, Tuple
 
+import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,7 +21,7 @@ from shapely.ops import transform
 from shapely.vectorized import contains
 
 
-def plot_mesh_edge(msh_t: jigsaw_msh_t, ax: Axes = None, **kwargs) -> Axes:
+def plot_mesh_edge(msh_t: jigsaw_msh_t, ax=None, to_geo=None, **kwargs) -> None:
     """
     Plots the edges of a triangular mesh on a given set of axes.
 
@@ -32,75 +33,85 @@ def plot_mesh_edge(msh_t: jigsaw_msh_t, ax: Axes = None, **kwargs) -> Axes:
         - 'tria3['index']' containing the indices of the triangles
     ax : Axes, optional
         The axes to plot on. If None, a new plot is created. Default is None.
+    to_geo : callable, optional
+        A function to transform (x, y) coordinates from projected to geographic CRS.
     **kwargs : keyword arguments, optional
         Additional keyword arguments passed to the `triplot` function.
         These can be used to customize the plot (e.g., color, line style).
-
-    Returns
-    -------
-    ax : Axes
-        The axes object with the plotted mesh edges.
     """
 
-    crd = msh_t.vert2["coord"]
+    crd = np.array(msh_t.vert2["coord"], copy=True)
     cnn = msh_t.tria3["index"]
 
-    if ax is None:
-        _fig, ax = plt.subplots()
-    ax.triplot(crd[:, 0], crd[:, 1], cnn, **kwargs)
-    ax.set_title("Mesh Design Criteria")
-    ax.set_xlabel("X UTM")
-    ax.set_ylabel("Y UTM")
+    if to_geo is not None:
+        crd[:, 0], crd[:, 1] = to_geo(crd[:, 0], crd[:, 1])
+        bnd = [crd[:, 0].min(), crd[:, 0].max(), crd[:, 1].min(), crd[:, 1].max()]
 
-    return ax
+    ax.triplot(crd[:, 0], crd[:, 1], cnn, **kwargs)
+    ax.set_extent([*bnd], crs=ccrs.PlateCarree())
+    gl = ax.gridlines(draw_labels=True)
+    gl.top_labels = False
+    gl.right_labels = False
 
 
 def plot_mesh_vals(
     msh_t: jigsaw_msh_t,
     ax: Axes = None,
     colorbar: bool = True,
-    clim: tuple = None,
+    clim: Tuple[float, float] = None,
+    to_geo: callable = None,
     **kwargs,
 ) -> Axes:
     """
-    Plots the mesh values on a triangular mesh.
+    Plots the mesh values on a triangular mesh, with optional transformation
+    from UTM to geographic coordinates.
 
     Parameters
     ----------
     msh_t : jigsaw_msh_t
-        An object containing the mesh data. It must have:
-        - 'vert2['coord']' containing the coordinates of the mesh vertices.
-        - 'tria3['index']' containing the indices of the triangles.
-        - 'value' containing the mesh values to be plotted.
-    ax : Axes, optional
-        The axes to plot on. If None, a new plot is created. Default is None.
+        An object containing the mesh data. Must include:
+        - vert2['coord']: coordinates of mesh vertices (N, 2)
+        - tria3['index']: triangle connectivity (M, 3)
+        - value: values to plot (length M or Mx1)
+    ax : matplotlib Axes, optional
+        Axes to draw on. If None, a new one is created.
     colorbar : bool, optional
-        Whether to display the colorbar. Default is True.
+        If True, show colorbar. Default is True.
     clim : tuple, optional
-        The limits for the color scale. If None, the limits are automatically
-        determined from the data. Default is None.
-    **kwargs : keyword arguments, optional
-        Additional keyword arguments passed to the `tricontourf` function.
-        These can be used to customize the plot (e.g., color, line style).
+        Color limits (vmin, vmax). If None, autoscale.
+    to_geo : callable, optional
+        Function to transform (x, y) in projected coordinates to (lon, lat),
+    **kwargs : additional keyword args for tricontourf
 
     Returns
     -------
-    ax : Axes
-        The axes object with the plotted mesh values.
+    ax : matplotlib Axes
+        The axes with the plot.
     """
 
-    crd = msh_t.vert2["coord"]
+    # Copy coordinates to avoid modifying original mesh
+    crd = np.array(msh_t.vert2["coord"], copy=True)
     cnn = msh_t.tria3["index"]
     val = msh_t.value.flatten()
 
+    # Transform to geographic coordinates if needed
+    if to_geo is not None:
+        crd[:, 0], crd[:, 1] = to_geo(crd[:, 0], crd[:, 1])
+
     if ax is None:
-        _fig, ax = plt.subplots()
+        _, ax = plt.subplots()
+
     mappable = ax.tricontourf(crd[:, 0], crd[:, 1], cnn, val, **kwargs)
+
     if colorbar:
         if clim is not None:
             mappable.set_clim(*clim)
-        _cb = plt.colorbar(mappable, ax=ax)
+        cbar = plt.colorbar(mappable, ax=ax)
+        cbar.set_label("Mesh spacing conditioning (m)")
 
+    gl = ax.gridlines(draw_labels=True)
+    gl.top_labels = False
+    gl.right_labels = False
     return ax
 
 
@@ -140,16 +151,18 @@ def plot_bathymetry(rasters_path: List[str], polygon: Polygon, ax: Axes) -> Axes
     xs, ys = rasterio.transform.xy(transform, rows, cols)
 
     im = ax.imshow(
-        data[0], cmap="terrain", extent=(np.min(xs), np.max(xs), np.min(ys), np.max(ys))
+        data[0],
+        cmap="gist_earth",
+        extent=(np.min(xs), np.max(xs), np.min(ys), np.max(ys)),
     )
     cbar = plt.colorbar(im, ax=ax)
     cbar.set_label("Depth (m)")
-    ax.set_xlabel("Longitude")
-    ax.set_ylabel("Latitude")
     ax.set_title("Raster")
 
     ax.plot(x_polygon, y_polygon, color="red", linewidth=1)
-    ax.axis("equal")
+    gl = ax.gridlines(draw_labels=True)
+    gl.top_labels = False
+    gl.right_labels = False
 
     return ax
 
@@ -174,6 +187,7 @@ def clip_bathymetry(
         Polygon geometry used to clip the raster.
     margin : float
         Buffer factor applied to the domain before clipping.
+
     Returns
     -------
     float
@@ -237,6 +251,7 @@ def clip_bati_manning(
     manning : float
         The Manning's coefficient to apply to the raster data.
     """
+
     original_polygon = buffer_aera(domain, mas)
 
     if UTM:
@@ -269,53 +284,7 @@ def clip_bati_manning(
         dest.write(out_image)
 
 
-def plot_poly(largest_polygon: Polygon, final_polygon: Polygon) -> Axes:
-    """
-    Plots two polygons on a map: the largest polygon and the final polygon.
-
-    Parameters
-    ----------
-    largest_polygon : Polygon
-        The largest polygon to plot.
-    final_polygon : Polygon
-        The final polygon to plot.
-
-    Returns
-    -------
-    ax : Axes
-        The axes object with the plotted polygons.
-    """
-
-    exterior_points = list(largest_polygon.exterior.coords)
-    interior_points = [list(interior.coords) for interior in largest_polygon.interiors]
-    all_points = exterior_points + [
-        point for island in interior_points for point in island
-    ]
-
-    exterior_points_1 = list(final_polygon.exterior.coords)
-    interior_points_1 = [list(interior.coords) for interior in final_polygon.interiors]
-    all_points_1 = exterior_points_1 + [
-        point for island in interior_points_1 for point in island
-    ]
-
-    x1, y1 = zip(*all_points_1)
-    x, y = zip(*all_points)
-    xx, yy = largest_polygon.exterior.xy
-
-    _fig, ax = plt.subplots()
-    ax.fill(xx, yy, alpha=0.5, fc="lightgrey", ec="black")
-    ax.scatter(x, y, color="red", s=1, label="Initial Polygon Points")
-    ax.scatter(x1, y1, color="black", s=1, label="Final Polygon Points")
-    ax.axis("equal")
-    ax.set_title("Polygon Domain")
-    ax.set_xlabel("Longitude")
-    ax.set_ylabel("Latitude")
-    ax.legend()
-
-    return ax
-
-
-def plot_boundaries(mesh: jigsaw_msh_t, ax: Axes) -> Axes:
+def plot_boundaries(mesh: jigsaw_msh_t, ax: Axes, to_geo=None) -> Axes:
     """
     Plots the boundaries of a mesh, including ocean, interior (islands), and land areas.
 
@@ -325,38 +294,32 @@ def plot_boundaries(mesh: jigsaw_msh_t, ax: Axes) -> Axes:
         The mesh object containing the mesh data and boundaries.
     ax : Axes
         The axes on which to plot the boundaries.
-
-    Returns
-    -------
-    ax : Axes
-        The axes object with the plotted boundaries.
+    to_geo : callable, optional
+        A function to transform coordinates from projected to geographic CRS.
     """
 
-    plot_mesh_edge(mesh.msh_t, ax=ax, lw=0.2, color="c")
+    plot_mesh_edge(mesh.msh_t, to_geo=to_geo, ax=ax, color="gray", lw=0.5)
 
-    try:
-        mesh.boundaries.ocean().plot(ax=ax, color="b", label="Ocean")
-    except Exception as e:
-        print(f"No Ocean boundaries available. Error: {e}")
-    try:
-        mesh.boundaries.interior().plot(ax=ax, color="g", label="Islands")
-    except Exception as e:
-        print(f"No Islands boundaries available. Error: {e}")
-    try:
-        mesh.boundaries.land().plot(ax=ax, color="r", label="Land")
-    except Exception as e:
-        print(f"No Land boundaries available. Error: {e}")
+    def plot_boundary(gdf, color, label):
+        try:
+            if to_geo:
+                gdf = gdf.copy()
+                gdf["geometry"] = gdf["geometry"].apply(
+                    lambda geom: transform(to_geo, geom)
+                )
+            gdf.plot(ax=ax, color=color, label=label)
+        except Exception as e:
+            print(f"No {label} boundaries available. Error: {e}")
 
-    ax.legend()
-    ax.axis("equal")
+    plot_boundary(mesh.boundaries.ocean(), color="b", label="Ocean")
+    plot_boundary(mesh.boundaries.interior(), color="g", label="Islands")
+    plot_boundary(mesh.boundaries.land(), color="r", label="Land")
+
     ax.set_title("Mesh Boundaries")
-    ax.set_xlabel("X UTM")
-    ax.set_ylabel("Y UTM")
-
-    return ax
+    ax.legend()
 
 
-def plot_bathymetry_interp(mesh: jigsaw_msh_t, ax: Axes) -> Axes:
+def plot_bathymetry_interp(mesh: jigsaw_msh_t, to_geo, ax: Axes) -> Axes:
     """
     Plots the interpolated bathymetry data on a mesh.
 
@@ -366,29 +329,30 @@ def plot_bathymetry_interp(mesh: jigsaw_msh_t, ax: Axes) -> Axes:
         The mesh object containing the bathymetry values and mesh structure.
     ax : Axes
         The axes on which to plot the interpolated bathymetry.
-
-    Returns
-    -------
-    ax : Axes
-        The axes object with the plotted interpolated bathymetry.
+    to_geo : callable
+        A function to transform coordinates from projected to geographic CRS.
     """
+    crd = np.array(mesh.msh_t.vert2["coord"], copy=True)
+
+    if to_geo is not None:
+        crd[:, 0], crd[:, 1] = to_geo(crd[:, 0], crd[:, 1])
+        bnd = [crd[:, 0].min(), crd[:, 0].max(), crd[:, 1].min(), crd[:, 1].max()]
 
     im = ax.tricontourf(
         Triangulation(
-            mesh.msh_t.vert2["coord"][:, 0],
-            mesh.msh_t.vert2["coord"][:, 1],
+            crd[:, 0],
+            crd[:, 1],
             triangles=mesh.msh_t.tria3["index"],
         ),
         mesh.msh_t.value.flatten(),
     )
     ax.set_title("Interpolated Bathymetry")
-    ax.axis("equal")
-    ax.set_xlabel("X UTM")
-    ax.set_ylabel("Y UTM")
+    gl = ax.gridlines(draw_labels=True)
+    gl.top_labels = False
+    gl.right_labels = False
     cbar = plt.colorbar(im, ax=ax)
     cbar.set_label("Depth (m)")
-
-    return ax
+    ax.set_extent([*bnd], crs=ccrs.PlateCarree())
 
 
 def simply_polygon(base_shape: Polygon, simpl_UTM: float, project) -> Polygon:
@@ -444,6 +408,7 @@ def remove_islands(base_shape: Polygon, threshold_area: float, project) -> Polyg
     Polygon
         The polygon with small interior rings removed, transformed back to geographic coordinates.
     """
+
     base_shape_utm = transform(project, base_shape)
     interior_shape_utm = [
         interior
@@ -814,17 +779,20 @@ def buffer_aera(polygon: Polygon, mas: float) -> Polygon:
     """
     Buffer the polygon by a factor of its area divided by its length.
     This is a heuristic to ensure that the buffer is proportional to the size of the polygon.
+
     Parameters
     ----------
     polygon : Polygon
         The polygon to be buffered.
     mas : float
         The buffer factor.
+
     Returns
     -------
     Polygon
         The buffered polygon.
     """
+
     return polygon.buffer(mas * polygon.area / polygon.length)
 
 
@@ -833,15 +801,18 @@ def compute_circumcenter(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray) -> np.n
     Technical Reference Manual D-Flow Flexible Mesh 13 May 2025 Revision: 80268
     Compute the circumcenter of a triangle from its 3 vertices.
     Ref: Figure 3.12, Equation (3.6), D-Flow Flexible Mesh Technical Reference Manual.
-    -------
+
     Parameters
+    ----------
     p0, p1, p2 : np.ndarray
         2D coordinates of the triangle vertices.
-    -------
+
     Returns
+    -------
     center : np.ndarray
         2D coordinates of the circumcenter.
     """
+
     A = p1 - p0
     B = p2 - p0
     AB_perp = np.array([A[1], -A[0]])
@@ -863,16 +834,18 @@ def build_edge_to_cells(elements: np.ndarray) -> Dict[Tuple[int, int], List[int]
     Technical Reference Manual D-Flow Flexible Mesh 13 May 2025 Revision: 80268
     Build edge -> list of adjacent element indices (max 2).
     Ref: Connectivity structure implied in Section 3.5.1 and Fig 3.2a.
-    -------
+
     Parameters
+    ----------
     elements : np.ndarray
         Array of triangle elements (indices of vertices).
-    -------
+
     Returns
+    -------
     edge_to_cells : Dict[Tuple[int, int], List[int]]
         Dictionary mapping edges to the list of adjacent element indices.
-    -------
     """
+
     edge_to_cells = defaultdict(list)
     for idx, elem in enumerate(elements):
         for i in range(3):
@@ -880,6 +853,7 @@ def build_edge_to_cells(elements: np.ndarray) -> Dict[Tuple[int, int], List[int]
             b = elem[(i + 1) % 3]
             edge = tuple(sorted((a, b)))
             edge_to_cells[edge].append(idx)
+
     return edge_to_cells
 
 
@@ -891,20 +865,22 @@ def detect_circumcenter_too_close(
     Detect elements where the distance between adjacent circumcenters is small compared
     to the shared edge length: aj = ||xRj - xLj|| / ||x1j - x0||
     Ref: Equation (3.6) in Section 3.5.1 (Grid Orthogonalization), D-Flow Flexible Mesh Manual.
-    -------
+
     Parameters
+    ----------
     X, Y : np.ndarray
         1D arrays of x and y coordinates of the nodes.
     elements : np.ndarray
         2D array of shape (nelmts, 3) containing the node indices for each triangle element.
     aj_threshold : float
         Threshold for the ratio of circumcenter distance to edge length.
-    -------
+
     Returns
+    -------
     bad_elements_mask : np.ndarray
         Boolean mask indicating which elements are problematic (True if bad).
-    -------
     """
+
     nodes = np.column_stack((X, Y))
     centers = np.array(
         [
@@ -993,6 +969,7 @@ def define_mesh_target_size(
     mesh_spacing : ocsmesh.Hfun
         Hfun object with the defined mesh target size.
     """
+
     if depth_ranges is None:
         # Default depth-to-mesh size mapping
         depth_ranges = {

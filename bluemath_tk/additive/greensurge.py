@@ -60,9 +60,11 @@ def create_triangle_mask_from_points(
     np.ndarray
         1D boolean array of same length as lon/lat indicating points inside the triangle.
     """
+
     points = np.column_stack((lon, lat))  # Shape (N, 2)
     triangle_path = Path(triangle)
     mask = triangle_path.contains_points(points)
+
     return mask
 
 
