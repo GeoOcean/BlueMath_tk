@@ -174,6 +174,7 @@ def clip_bathymetry(
         Polygon geometry used to clip the raster.
     margin : float
         Buffer factor applied to the domain before clipping.
+
     Returns
     -------
     float
@@ -237,6 +238,7 @@ def clip_bati_manning(
     manning : float
         The Manning's coefficient to apply to the raster data.
     """
+
     original_polygon = buffer_aera(domain, mas)
 
     if UTM:
@@ -444,6 +446,7 @@ def remove_islands(base_shape: Polygon, threshold_area: float, project) -> Polyg
     Polygon
         The polygon with small interior rings removed, transformed back to geographic coordinates.
     """
+
     base_shape_utm = transform(project, base_shape)
     interior_shape_utm = [
         interior
@@ -814,17 +817,20 @@ def buffer_aera(polygon: Polygon, mas: float) -> Polygon:
     """
     Buffer the polygon by a factor of its area divided by its length.
     This is a heuristic to ensure that the buffer is proportional to the size of the polygon.
+
     Parameters
     ----------
     polygon : Polygon
         The polygon to be buffered.
     mas : float
         The buffer factor.
+
     Returns
     -------
     Polygon
         The buffered polygon.
     """
+
     return polygon.buffer(mas * polygon.area / polygon.length)
 
 
@@ -833,15 +839,18 @@ def compute_circumcenter(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray) -> np.n
     Technical Reference Manual D-Flow Flexible Mesh 13 May 2025 Revision: 80268
     Compute the circumcenter of a triangle from its 3 vertices.
     Ref: Figure 3.12, Equation (3.6), D-Flow Flexible Mesh Technical Reference Manual.
-    -------
+
     Parameters
+    ----------
     p0, p1, p2 : np.ndarray
         2D coordinates of the triangle vertices.
-    -------
+
     Returns
+    -------
     center : np.ndarray
         2D coordinates of the circumcenter.
     """
+
     A = p1 - p0
     B = p2 - p0
     AB_perp = np.array([A[1], -A[0]])
@@ -863,16 +872,18 @@ def build_edge_to_cells(elements: np.ndarray) -> Dict[Tuple[int, int], List[int]
     Technical Reference Manual D-Flow Flexible Mesh 13 May 2025 Revision: 80268
     Build edge -> list of adjacent element indices (max 2).
     Ref: Connectivity structure implied in Section 3.5.1 and Fig 3.2a.
-    -------
+
     Parameters
+    ----------
     elements : np.ndarray
         Array of triangle elements (indices of vertices).
-    -------
+
     Returns
+    -------
     edge_to_cells : Dict[Tuple[int, int], List[int]]
         Dictionary mapping edges to the list of adjacent element indices.
-    -------
     """
+
     edge_to_cells = defaultdict(list)
     for idx, elem in enumerate(elements):
         for i in range(3):
@@ -880,6 +891,7 @@ def build_edge_to_cells(elements: np.ndarray) -> Dict[Tuple[int, int], List[int]
             b = elem[(i + 1) % 3]
             edge = tuple(sorted((a, b)))
             edge_to_cells[edge].append(idx)
+
     return edge_to_cells
 
 
@@ -891,20 +903,22 @@ def detect_circumcenter_too_close(
     Detect elements where the distance between adjacent circumcenters is small compared
     to the shared edge length: aj = ||xRj - xLj|| / ||x1j - x0||
     Ref: Equation (3.6) in Section 3.5.1 (Grid Orthogonalization), D-Flow Flexible Mesh Manual.
-    -------
+
     Parameters
+    ----------
     X, Y : np.ndarray
         1D arrays of x and y coordinates of the nodes.
     elements : np.ndarray
         2D array of shape (nelmts, 3) containing the node indices for each triangle element.
     aj_threshold : float
         Threshold for the ratio of circumcenter distance to edge length.
-    -------
+
     Returns
+    -------
     bad_elements_mask : np.ndarray
         Boolean mask indicating which elements are problematic (True if bad).
-    -------
     """
+
     nodes = np.column_stack((X, Y))
     centers = np.array(
         [
@@ -993,6 +1007,7 @@ def define_mesh_target_size(
     mesh_spacing : ocsmesh.Hfun
         Hfun object with the defined mesh target size.
     """
+
     if depth_ranges is None:
         # Default depth-to-mesh size mapping
         depth_ranges = {
