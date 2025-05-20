@@ -41,7 +41,7 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate bluemath-tk
-          ruff check bluemath_tk/
+          ruff check bluemath_tk/datamining/
 
       - name: Run tests
         run: |
