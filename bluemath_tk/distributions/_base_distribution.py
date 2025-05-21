@@ -3,7 +3,9 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
-class BaseDistribution(ABC):
+from ..core.models import BlueMathModel
+
+class BaseDistribution(BlueMathModel):
     """
     Base class for all extreme distributions.
     """
@@ -11,7 +13,7 @@ class BaseDistribution(ABC):
     @property
     @abstractmethod
     def name() -> str:
-        pass
+        return str
 
     @staticmethod
     @abstractmethod
@@ -21,7 +23,7 @@ class BaseDistribution(ABC):
         """
         Probability density function
         """
-        pass
+        return np.ndarray()
 
     @staticmethod
     @abstractmethod
@@ -31,7 +33,7 @@ class BaseDistribution(ABC):
         """
         Cumulative distribution function
         """
-        pass
+        return np.ndarray()
 
     @staticmethod
     @abstractmethod
@@ -41,7 +43,7 @@ class BaseDistribution(ABC):
         """
         Survival function (1 - cdf)
         """
-        pass
+        return np.ndarray()
 
     @staticmethod
     @abstractmethod
@@ -51,7 +53,7 @@ class BaseDistribution(ABC):
         """
         Quantile function
         """
-        pass
+        return np.ndarray()
 
     @staticmethod
     @abstractmethod
@@ -61,7 +63,7 @@ class BaseDistribution(ABC):
         """
         Loglikelihood function
         """
-        pass
+        return np.ndarray()
 
     @staticmethod
     @abstractmethod
@@ -71,7 +73,7 @@ class BaseDistribution(ABC):
         """
         Fit distribution
         """
-        pass
+        return np.ndarray()
     
     @staticmethod
     @abstractmethod
@@ -82,7 +84,7 @@ class BaseDistribution(ABC):
         """
         Generate random values
         """
-        pass
+        return np.ndarray()
 
     @staticmethod
     @abstractmethod
@@ -91,7 +93,7 @@ class BaseDistribution(ABC):
         """
         Mean
         """
-        pass
+        return float
     
     @staticmethod
     @abstractmethod
@@ -100,7 +102,7 @@ class BaseDistribution(ABC):
         """
         Median
         """
-        pass
+        return float
     
     @staticmethod
     @abstractmethod
@@ -109,7 +111,7 @@ class BaseDistribution(ABC):
         """
         Variance 
         """
-        pass
+        return float
     
     @staticmethod
     @abstractmethod
@@ -118,7 +120,7 @@ class BaseDistribution(ABC):
         """
         Standard deviation
         """
-        pass
+        return float
     
     @staticmethod
     @abstractmethod
@@ -127,7 +129,7 @@ class BaseDistribution(ABC):
         """
         Stats
         """
-        pass
+        return float
 
 
     
