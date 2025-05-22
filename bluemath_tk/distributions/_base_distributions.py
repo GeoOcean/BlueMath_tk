@@ -7,6 +7,7 @@ from scipy.optimize import minimize
 
 from ..core.models import BlueMathModel
 
+
 class BaseDistribution(BlueMathModel):
     """
     Base class for all extreme distributions.
@@ -65,27 +66,17 @@ class BaseDistribution(BlueMathModel):
         Quantile function
         """
         pass
-
+        
     @staticmethod
     @abstractmethod
-    def loglike(
+    def nll(
         x: np.ndarray
     ) -> float:
         """
-        Loglikelihood function
+        Negative Log-Likelihood function
         """
         pass
 
-    @staticmethod
-    @abstractmethod
-    def fit(
-        data: np.ndarray
-    ) -> Tuple[float, float, float]:
-        """
-        Fit distribution
-        """
-        pass
-    
     @staticmethod
     @abstractmethod
     def random(
@@ -142,5 +133,53 @@ class BaseDistribution(BlueMathModel):
         """
         pass
 
+    def fit(
+        self,
+        data: np.ndarray,
+        *args,
+        **kwargs
+    ) -> Tuple[float, float, float]:
+        """
+        Fit distribution
+        """
+        fitter = FitClass(self, data, *args, **kwargs)
+        return fitter.run()
 
-    
+
+
+
+class FitResult(BlueMathModel):
+    """
+    Class used for the results of fitting a distribution
+    """
+    def __init__(self, params, success, message):
+        self.params = params
+        self.success = success
+        self.message = message
+
+    def summary(self):
+        return {
+            'parameters': self.params,
+            'success': self.success,
+            'message': self.message
+        }
+
+
+class FitClass(BlueMathModel):
+    """
+    Class used to fit the distributions
+    """
+    def __init__(self, dist, data, *args, **kwargs):
+        super().__init__()
+
+        self.dist = dist
+        self.data = data
+        self.args = args
+        self.kwargs = kwargs
+
+    def run(self):
+        
+        initial_guess = self.kwargs.get('initial_guess', [np.mean(self.data), np.std(self.data), 0.0])
+
+        result = minimize(self.dist.nll, initial_guess)
+        return FitResult(params=result.x, success=result.success, message=result.message)

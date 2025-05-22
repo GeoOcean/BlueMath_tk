@@ -1,9 +1,10 @@
 from typing import Tuple
 
-from ._base_distributions import BaseDistribution
-
 import numpy as np
 import pandas as pd
+
+from ._base_distributions import BaseDistribution
+
 
 class gev(BaseDistribution):
     """
@@ -82,11 +83,11 @@ class gev(BaseDistribution):
         pass
 
     @staticmethod
-    def loglike(
+    def nll(
         x: np.ndarray
     ) -> float:
         """
-        Loglikelihood function
+        Negative Log-Likelihood function
         """
         pass
 
