@@ -1,7 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
+from scipy.optimize import minimize
 
 from ..core.models import BlueMathModel
 
@@ -9,11 +11,20 @@ class BaseDistribution(BlueMathModel):
     """
     Base class for all extreme distributions.
     """
+
+    @abstractmethod
+    def __init__(
+        self
+    ) -> None:
+        """
+        Initialize the base distribution class
+        """
+        super().__init__()
     
     @property
     @abstractmethod
-    def name() -> str:
-        return str
+    def name(self) -> str:
+        pass
 
     @staticmethod
     @abstractmethod
@@ -23,7 +34,7 @@ class BaseDistribution(BlueMathModel):
         """
         Probability density function
         """
-        return np.ndarray()
+        pass
 
     @staticmethod
     @abstractmethod
@@ -33,7 +44,7 @@ class BaseDistribution(BlueMathModel):
         """
         Cumulative distribution function
         """
-        return np.ndarray()
+        pass
 
     @staticmethod
     @abstractmethod
@@ -43,7 +54,7 @@ class BaseDistribution(BlueMathModel):
         """
         Survival function (1 - cdf)
         """
-        return np.ndarray()
+        pass
 
     @staticmethod
     @abstractmethod
@@ -53,7 +64,7 @@ class BaseDistribution(BlueMathModel):
         """
         Quantile function
         """
-        return np.ndarray()
+        pass
 
     @staticmethod
     @abstractmethod
@@ -63,17 +74,17 @@ class BaseDistribution(BlueMathModel):
         """
         Loglikelihood function
         """
-        return np.ndarray()
+        pass
 
     @staticmethod
     @abstractmethod
     def fit(
         data: np.ndarray
-    ):
+    ) -> Tuple[float, float, float]:
         """
         Fit distribution
         """
-        return np.ndarray()
+        pass
     
     @staticmethod
     @abstractmethod
@@ -84,7 +95,7 @@ class BaseDistribution(BlueMathModel):
         """
         Generate random values
         """
-        return np.ndarray()
+        pass
 
     @staticmethod
     @abstractmethod
@@ -93,7 +104,7 @@ class BaseDistribution(BlueMathModel):
         """
         Mean
         """
-        return float
+        pass
     
     @staticmethod
     @abstractmethod
@@ -102,7 +113,7 @@ class BaseDistribution(BlueMathModel):
         """
         Median
         """
-        return float
+        pass
     
     @staticmethod
     @abstractmethod
@@ -111,7 +122,7 @@ class BaseDistribution(BlueMathModel):
         """
         Variance 
         """
-        return float
+        pass
     
     @staticmethod
     @abstractmethod
@@ -120,16 +131,16 @@ class BaseDistribution(BlueMathModel):
         """
         Standard deviation
         """
-        return float
+        pass
     
     @staticmethod
     @abstractmethod
     def stats(
-    ) -> float:
+    ) -> dict:
         """
-        Stats
+        Return summary statistics including mean, std, variance, etc.
         """
-        return float
+        pass
 
 
     
