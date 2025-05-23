@@ -2,7 +2,6 @@ from abc import abstractmethod
 from typing import Tuple
 
 import numpy as np
-import pandas as pd
 from scipy.optimize import minimize
 
 from ..core.models import BlueMathModel
@@ -25,6 +24,11 @@ class BaseDistribution(BlueMathModel):
     @property
     @abstractmethod
     def name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def nparams(self) -> int:
         pass
 
     @staticmethod
@@ -142,8 +146,8 @@ class BaseDistribution(BlueMathModel):
         """
         Fit distribution
         """
-        fitter = FitClass(self, data, *args, **kwargs)
-        return fitter.run()
+        fit_result = fit_dist(self, data, *args, **kwargs)
+        return fit_result
 
 
 
@@ -152,34 +156,91 @@ class FitResult(BlueMathModel):
     """
     Class used for the results of fitting a distribution
     """
-    def __init__(self, params, success, message):
-        self.params = params
-        self.success = success
-        self.message = message
+    def __init__(self, dist, data, res):
+        self.dist = dist
+        self.data = data
+
+        self.params = res.x
+        self.success = res.success
+        self.message = res.message
+        self.nll = res.obj
 
     def summary(self):
         return {
             'parameters': self.params,
+            'nll': self.nll,
             'success': self.success,
             'message': self.message
         }
+    
+    def plot(self, ax=None, plot_type="hist"):
+        """
+        Plots of fitting results
+        """
+        pass
 
 
-class FitClass(BlueMathModel):
+
+
+def fit_dist(dist, data, *args, **kwargs) -> FitResult:
     """
-    Class used to fit the distributions
-    """
-    def __init__(self, dist, data, *args, **kwargs):
-        super().__init__()
+    Function used to fit a distributions
 
-        self.dist = dist
-        self.data = data
-        self.args = args
-        self.kwargs = kwargs
 
-    def run(self):
+    Parameters
+    ----------
+    dist : BaseDistribution
+        Distribution used to fit
+    data : array_like 
+        Data to use in estimating the distribution parameters.
         
-        initial_guess = self.kwargs.get('initial_guess', [np.mean(self.data), np.std(self.data), 0.0])
+    **kwds : floats, optional
+        - 'x0': initial guess of distribution parameters
 
-        result = minimize(self.dist.nll, initial_guess)
-        return FitResult(params=result.x, success=result.success, message=result.message)
+        - method : The method to use. The default is "MLE" (Maximum
+            Likelihood Estimate)
+            AT THE MOMENT ONLY MLE IS AVAILABLE            
+            "MM" (Method of Moments) is also available.
+        
+        - method : Method used in optimization step.
+            Default 'Nelder-Mead'
+
+        - bounds : Tuple
+            Optimization parameter bounds.
+        
+        - options : dict
+            Optimization options
+
+    Returns
+    -------
+    result: FitResult
+        The fitting results, see FitResult class.
+    """
+
+    nparams = dist.nparams
+
+    method = kwargs.get('method', 'Nelder-Mead').lower()
+    bounds = kwargs.get('bounds', ((None, None),(0,None)) + ((None,None),)*(nparams - 2))
+    options = kwargs.get('opt_options', {'disp': False})
+    
+    
+
+
+    # Default initial guess
+    x0 = kwargs.get("x0", np.asarray([np.mean(data), np.std(data)] + [0.0]*(nparams - 2)))
+
+    def obj(param):
+        return dist.nll(data, *param)                          # Negative Log-likelihood (function to minimize)
+    
+    result = minimize(
+        fun=obj,
+        x0=x0,
+        method=method,
+        bounds=bounds,
+        options=options
+    )
+
+    return FitResult(dist, data, result)
+
+
+

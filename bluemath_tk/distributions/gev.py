@@ -14,12 +14,23 @@ class gev(BaseDistribution):
 
     Attributes
     ----------
+    name : str
+        The complete name of the distribution (GEV).
+    nparams : int
+        Number of GEV parameters.
     
-
     Methods
     -------
-    generate(dimensions_names, lower_bounds, upper_bounds, num_samples)
-        Generate LHS samples.
+    pdf(x, loc, scale, shape)
+        Probability density function.
+    cdf(x, loc, scale, shape)
+        Cumulative distribution function
+    qf(p, loc, scale, shape)
+        Quantile function
+    sf(x, loc, scale, shape)
+        Survival function
+
+        AÑADIR MAS METODOS
 
     Notes
     -----
@@ -41,19 +52,73 @@ class gev(BaseDistribution):
         """
         super().__init__()
 
+    @property
     def name(
             self
     ) -> str:
         return "Generalized Extreme Value"
     
+    @property
+    def nparams(self) -> int:
+        """
+        Number of parameters of GEV
+        """
+        return int(3)
+    
     @staticmethod
     def pdf(
-        x: np.ndarray
+        x: np.ndarray,
+        loc: float,
+        scale: float,
+        shape: float
     ) -> np.ndarray:
         """
         Probability density function
+        
+        Parameters
+        ----------
+        x : np.ndarray
+            Values to compute the probability density
+        loc : float, default=0.0
+            Location parameter
+        scale : float, default = 1.0
+            Scale parameter. 
+            Must be greater than 0.
+        shape : float
+            Shape parameter.
+            
+        Returns
+        ----------
+        pdf : np.ndarray
+            Probability density function values
+
+        Raises
+        ------
+        ValueError
+            If scale is not greater than 0.
         """
-        pass
+
+        if scale <= 0:
+            raise ValueError("Scale parameter must be > 0")
+        
+        y = (x - loc)/scale
+
+        # Gumbel case (shape = 0)
+        if shape == 0.0:
+            pdf = (1/scale) * (np.exp(-y) * np.exp(-np.exp(-y)))
+
+        # General case (Weibull and Frechet, shape != 0)
+        else: 
+            pdf = np.full_like(x, 0, dtype=float)   # 0 
+            yy = 1 + shape * y
+            yymask = yy > 0
+            pdf[yymask] = (1/scale) * (yy[yymask] ** (-1 - (1/shape)) * np.exp(-yy[yymask] ** (-1/shape)))
+
+        return pdf
+
+        
+
+        
 
     @staticmethod
     def cdf(
@@ -84,7 +149,8 @@ class gev(BaseDistribution):
 
     @staticmethod
     def nll(
-        x: np.ndarray
+        data: np.ndarray,
+        *args
     ) -> float:
         """
         Negative Log-Likelihood function
