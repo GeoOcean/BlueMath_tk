@@ -1,4 +1,3 @@
-import os
 from datetime import timedelta
 from typing import Dict, List, Tuple, Union
 
@@ -8,6 +7,7 @@ import pandas as pd
 import xarray as xr
 from numpy import polyfit
 
+from ..config.paths import PATHS
 from ..core.constants import EARTH_RADIUS
 from ..core.geo import geodesic_distance, geodesic_distance_azimuth, shoot
 
@@ -294,13 +294,8 @@ def ibtracs_fit_pmin_wmax(ibtracs_data: xr.Dataset = None, N: int = 3) -> xr.Dat
     >>> print(fit_data.coef_fit.shape)  # (n_centers, n_basins, N+1)
     """
 
-    if os.path.exists(
-        "/home/grupos/geocean/tausiaj/BlueMath_tk/shytcAlba/data_shytcwaves/ibtracs_coef_pmin_wmax.nc"
-    ):
-        xds = xr.open_dataset(
-            "/home/grupos/geocean/tausiaj/BlueMath_tk/shytcAlba/data_shytcwaves/ibtracs_coef_pmin_wmax.nc"
-        )
-        return xds
+    if True:
+        return xr.open_dataset(PATHS["SHYTCWAVES_COEFS"])
 
     coef_fit = np.nan * np.zeros((len(all_centers), len(all_basins), N + 1))
     pres_data = np.nan * np.zeros((len(all_centers), len(all_basins), 200000))
@@ -309,7 +304,7 @@ def ibtracs_fit_pmin_wmax(ibtracs_data: xr.Dataset = None, N: int = 3) -> xr.Dat
     for ic, center in enumerate(all_centers):
         center_info = get_center_information(center=center)
 
-        for basin in center_info["basins"]:
+        for basin in center_info["basin"]:
             # filter tracks data by basin
             filtered_tracks = filter_track_by_basin(
                 tracks_data=ibtracs_data, id_basin=basin
@@ -994,7 +989,10 @@ def historic_track_interpolation(
 
     # select Pmin-Wmax polynomial fitting coefficients (IBTrACS center,basin)
     xds_coef = ibtracs_fit_pmin_wmax()
-    coefs = xds_coef.sel(center=st_center, basin=st_basin).coef.values[:]
+    coefs = xds_coef.sel(
+        center=st_center.encode("utf-8"),
+        basin=st_basin.astype("bytes"),
+    ).coef.values[:]
 
     p1, p2, p3, p4 = coefs[:, 0], coefs[:, 1], coefs[:, 2], coefs[:, 3]
     wind_estimate = (

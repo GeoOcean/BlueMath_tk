@@ -7,6 +7,7 @@ import pandas as pd
 import xarray as xr
 from tqdm import tqdm
 
+from ..config.paths import PATHS
 from ..core.constants import EARTH_RADIUS
 from ..core.geo import geodesic_azimuth, geodesic_distance_azimuth, shoot
 from ..datamining.mda import find_nearest_indices
@@ -794,16 +795,19 @@ def stopmotion_st_bmu(
 
         # ---------------------------------------------------------------------
         # load library Hs reconstructed
-        xds_rec = xr.open_dataset(
-            op.join(path_library, "library_shytcwaves_bulk_params.nc")
-        )
+        xds_rec = xr.open_dataset(PATHS["SHYTCWAVES_BULK"])
+        xds_rec["time"] = pd.date_range("2000-01-01", periods=48, freq="1H")
 
         # extract HS,TP at closest points (case,point,time)
         hs_arr = np.full((ix_near.size, xds_rec.time.values.size), np.nan)
-        hs_arr[pos_nonan, :] = xds_rec.hs.values[iseg_analogue, ix_near[pos_nonan], :]
+        hs_arr[pos_nonan, :] = (
+            xds_rec.hs.isel(case=iseg_analogue, point=ix_near[pos_nonan]).load().values
+        )
 
         tp_arr = np.full((ix_near.size, xds_rec.time.values.size), np.nan)
-        tp_arr[pos_nonan, :] = xds_rec.tp.values[iseg_analogue, ix_near[pos_nonan], :]
+        tp_arr[pos_nonan, :] = (
+            xds_rec.tp.isel(case=iseg_analogue, point=ix_near[pos_nonan]).load().values
+        )
 
         # time array
         hour_intervals = xds_rec.time.size
@@ -996,7 +1000,7 @@ def get_mask_radii_angle(
 
     # load MDA indices (grid sizes)
     #    xds_ind_mda = xr.open_dataset(op.join(path_mda, 'shytcwaves_mda_indices.nc'))
-    xds_ind_mda = xr.open_dataset(op.join(path_mda, "shytcwaves_mda_indices_clean.nc"))
+    xds_ind_mda = xr.open_dataset(PATHS["SHYTCWAVES_MDA"])
 
     # get grid code
     pos_small = np.where(icase == xds_ind_mda.indices_small)[0]
@@ -1058,7 +1062,7 @@ def get_mask_indices(path_mda: str, save: bool = False, mode: str = "") -> xr.Da
     # load library indices file
     #    xds_mda = xr.open_dataset(op.join(path_mda, 'shytcwaves_mda_indices.nc'))  # before cleaning wrong cases
     # some MDA cases were removed afterwards (wrong swan simulations)
-    xds_mda = xr.open_dataset(op.join(path_mda, "shytcwaves_mda_indices_clean.nc"))
+    xds_mda = xr.open_dataset(PATHS["SHYTCWAVES_MDA"])
 
     # get one case for each grid size
     case_sma = xds_mda.indices_small.values[0]
@@ -1136,7 +1140,7 @@ def find_analogue_grid_coords(
 
     # load MDA indices (grid sizes)
     #    xds_ind_mda = xr.open_dataset(op.join(p_mda, 'shytcwaves_mda_indices.nc'))  # before cleaning wrong cases
-    xds_ind_mda = xr.open_dataset(op.join(path_mda, "shytcwaves_mda_indices_clean.nc"))
+    xds_ind_mda = xr.open_dataset(PATHS["SHYTCWAVES_MDA"])
 
     # get grid code
     pos_small = np.where(icase == xds_ind_mda.indices_small)[0]
