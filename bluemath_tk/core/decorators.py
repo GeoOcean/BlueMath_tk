@@ -1,5 +1,5 @@
 import functools
-from typing import List
+from typing import Any, Dict, List
 
 import pandas as pd
 import xarray as xr
@@ -73,6 +73,7 @@ def validate_data_mda(func):
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
         first_centroid_seed: int = None,
+        normalize_data: bool = False,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -91,8 +92,15 @@ def validate_data_mda(func):
                 raise ValueError(
                     "First centroid seed must be an integer >= 0 and < num of data points"
                 )
+        if not isinstance(normalize_data, bool):
+            raise TypeError("Normalize data must be a boolean")
         return func(
-            self, data, directional_variables, custom_scale_factor, first_centroid_seed
+            self,
+            data,
+            directional_variables,
+            custom_scale_factor,
+            first_centroid_seed,
+            normalize_data,
         )
 
     return wrapper
@@ -119,16 +127,55 @@ def validate_data_kma(func):
         data: pd.DataFrame,
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
+        min_number_of_points: int = None,
+        max_number_of_iterations: int = 10,
+        normalize_data: bool = False,
+        regression_guided: Dict[str, List] = {},
     ):
         if data is None:
-            raise ValueError("Data cannot be None")
+            raise ValueError("data cannot be None")
         elif not isinstance(data, pd.DataFrame):
-            raise TypeError("Data must be a pandas DataFrame")
+            raise TypeError("data must be a pandas DataFrame")
         if not isinstance(directional_variables, list):
-            raise TypeError("Directional variables must be a list")
+            raise TypeError("directional_variables must be a list")
         if not isinstance(custom_scale_factor, dict):
-            raise TypeError("Custom scale factor must be a dict")
-        return func(self, data, directional_variables, custom_scale_factor)
+            raise TypeError("custom_scale_factor must be a dict")
+        if min_number_of_points is not None:
+            if not isinstance(min_number_of_points, int) or min_number_of_points <= 0:
+                raise ValueError("min_number_of_points must be integer and > 0")
+        if (
+            not isinstance(max_number_of_iterations, int)
+            or max_number_of_iterations <= 0
+        ):
+            raise ValueError("max_number_of_iterations must be integer and > 0")
+        if not isinstance(normalize_data, bool):
+            raise TypeError("normalize_data must be a boolean")
+        if not isinstance(regression_guided, dict):
+            raise TypeError("regression_guided must be a dictionary")
+        if not all(
+            isinstance(var, str) and var in data.columns
+            for var in regression_guided.get("vars", [])
+        ):
+            raise TypeError(
+                "regression_guided vars must be a list of strings and must exist in data"
+            )
+        if not all(
+            isinstance(alpha, float) and alpha >= 0 and alpha <= 1
+            for alpha in regression_guided.get("alpha", [])
+        ):
+            raise TypeError(
+                "regression_guided alpha must be a list of floats between 0 and 1"
+            )
+        return func(
+            self,
+            data,
+            directional_variables,
+            custom_scale_factor,
+            min_number_of_points,
+            max_number_of_iterations,
+            normalize_data,
+            regression_guided,
+        )
 
     return wrapper
 
@@ -153,7 +200,9 @@ def validate_data_som(func):
         self,
         data: pd.DataFrame,
         directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
         num_iteration: int = 1000,
+        normalize_data: bool = False,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -161,8 +210,12 @@ def validate_data_som(func):
             raise TypeError("Data must be a pandas DataFrame")
         if not isinstance(directional_variables, list):
             raise TypeError("Directional variables must be a list")
+        if not isinstance(custom_scale_factor, dict):
+            raise TypeError("Custom scale factor must be a dict")
         if not isinstance(num_iteration, int) or num_iteration <= 0:
             raise ValueError("Number of iterations must be integer and > 0")
+        if not isinstance(normalize_data, bool):
+            raise TypeError("Normalize data must be a boolean")
         return func(self, data, directional_variables, num_iteration)
 
     return wrapper
@@ -235,6 +288,8 @@ def validate_data_pca(func):
         for variable, threshold in nan_threshold_to_drop.items():
             if not isinstance(threshold, float) or threshold < 0 or threshold > 1:
                 raise ValueError("Threshold must be a float between 0 and 1")
+        if not isinstance(scale_data, bool):
+            raise TypeError("Scale data must be a boolean, either True or False")
         return func(
             self,
             data,
@@ -275,7 +330,7 @@ def validate_data_rbf(func):
         subset_custom_scale_factor: dict = {},
         normalize_target_data: bool = True,
         target_custom_scale_factor: dict = {},
-        num_threads: int = None,
+        num_workers: int = None,
         iteratively_update_sigma: bool = False,
     ):
         if subset_data is None:
@@ -306,9 +361,9 @@ def validate_data_rbf(func):
             raise TypeError("Normalize target data must be a bool")
         if not isinstance(target_custom_scale_factor, dict):
             raise TypeError("Target custom scale factor must be a dict")
-        if num_threads is not None:
-            if not isinstance(num_threads, int) or num_threads <= 0:
-                raise ValueError("Number of threads must be integer and > 0")
+        if num_workers is not None:
+            if not isinstance(num_workers, int) or num_workers <= 0:
+                raise ValueError("Number of workers must be integer and > 0")
         if not isinstance(iteratively_update_sigma, bool):
             raise TypeError("Iteratively update sigma must be a boolean")
         return func(
@@ -320,8 +375,58 @@ def validate_data_rbf(func):
             subset_custom_scale_factor,
             normalize_target_data,
             target_custom_scale_factor,
-            num_threads,
+            num_workers,
             iteratively_update_sigma,
+        )
+
+    return wrapper
+
+
+def validate_data_xwt(func):
+    """
+    Decorator to validate data in XWT class fit method.
+
+    Parameters
+    ----------
+    func : callable
+        The function to be decorated
+
+    Returns
+    -------
+    callable
+        The decorated function
+    """
+
+    @functools.wraps(func)
+    def wrapper(
+        self,
+        data: xr.Dataset,
+        fit_params: Dict[str, Dict[str, Any]] = {},
+        variable_to_sort_bmus: str = None,
+    ):
+        if not isinstance(data, xr.Dataset):
+            raise TypeError("Data must be an xarray Dataset")
+        if "time" not in data.dims:
+            raise ValueError(
+                'Time dimension with name "time" not found in data, rename and re-fit'
+            )  # TODO: check time is actually datetime
+        if not isinstance(fit_params, dict):
+            raise TypeError("Fit params must be a dict")
+        if "pca" not in fit_params:
+            raise ValueError("Fit params must contain PCA parameters")
+        if variable_to_sort_bmus is not None:
+            if (
+                not isinstance(variable_to_sort_bmus, str)
+                or variable_to_sort_bmus not in data.data_vars
+            ):
+                raise TypeError(
+                    "variable_to_sort_bmus must be a string and must exist in data variables"
+                )
+        return func(
+            self,
+            data,
+            fit_params,
+            variable_to_sort_bmus,
         )
 
     return wrapper

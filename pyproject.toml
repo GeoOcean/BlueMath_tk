@@ -23,34 +23,45 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
+    "requests",
     "numpy",
     "pandas",
     "xarray",
     "netcdf4",
     "dask",
+    "distributed",
     "zarr",
     "scipy",
     "scikit-learn",
     "matplotlib",
     "plotly",
     "cartopy",
-    "cdsapi",
     "jinja2",
     "requests",
     "aiohttp",
     "minisom",
     "statsmodels",
     "regionmask",
-    "wavespectra",
+    "cdsapi",
+    "ipykernel",
+    "ipywidgets",
+    "cmocean",
 ]
 
 [project.optional-dependencies]
 
-docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocstrings[python]"]
-tests = ["pytest", "pytest-mock"]
+docs = ["sphinx", "sphinx-rtd-theme", "jupyter-sphinx", "myst-parser"]
+waves = ["wavespectra", "olas"]
+num-models = ["hydromt-sfincs"]
+ocsmesh = ["bluemath-tk-ocsmesh-setup"]
 deep = ["tensorflow", "keras"]
+
+[project.scripts]
+
+bluemath-tk-ocsmesh-setup = "bluemath_tk.setup.ocsmesh:post_install"
 
 [project.urls]
 

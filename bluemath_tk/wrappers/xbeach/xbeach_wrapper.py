@@ -14,9 +14,7 @@ class XBeachModelWrapper(BaseModelWrapper):
         The available launchers for the wrapper.
     """
 
-    default_parameters = {
-        "spectra": str,
-    }
+    default_parameters = {}
 
     available_launchers = {
         "geoocean-cluster": "launchXbeach.sh",
@@ -25,18 +23,20 @@ class XBeachModelWrapper(BaseModelWrapper):
     def __init__(
         self,
         templates_dir: str,
-        model_parameters: dict,
+        metamodel_parameters: dict,
+        fixed_parameters: dict,
         output_dir: str,
         templates_name: dict = "all",
         debug: bool = True,
     ) -> None:
         """
-        Initialize the SWASH model wrapper.
+        Initialize the XBeach model wrapper.
         """
 
         super().__init__(
             templates_dir=templates_dir,
-            model_parameters=model_parameters,
+            metamodel_parameters=metamodel_parameters,
+            fixed_parameters=fixed_parameters,
             output_dir=output_dir,
             templates_name=templates_name,
             default_parameters=self.default_parameters,

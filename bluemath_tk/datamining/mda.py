@@ -27,12 +27,6 @@ class MDA(BaseClustering):
     ----------
     num_centers : int
         The number of centers to use in the MDA algorithm.
-    data : pd.DataFrame
-        The input data.
-    normalized_data : pd.DataFrame
-        The normalized input data.
-    data_to_fit : pd.DataFrame
-        The data to fit the MDA algorithm.
     data_variables : List[str]
         A list with all data variables.
     directional_variables : List[str]
@@ -51,33 +45,31 @@ class MDA(BaseClustering):
         A list of iterative indices of the centroids.
     centroid_real_indices : List[int]
         The real indices of the selected centroids.
-
-    Methods
-    -------
-    fit(data, directional_variables, custom_scale_factor, first_centroid_seed)
-        Fit the MDA algorithm to the provided data.
-    predict(data)
-        Predict the nearest centroid for the provided data.
-    fit_predict(data, directional_variables, custom_scale_factor, first_centroid_seed)
-        Fits the MDA model to the data and predicts the nearest centroids.
+    is_fitted : bool
+        A flag indicating whether the model is fitted or not.
 
     Examples
     --------
-    >>> import numpy as np
-    >>> import pandas as pd
-    >>> from bluemath_tk.datamining.mda import MDA
-    >>> data = pd.DataFrame(
-    ...     {
-    ...         'Hs': np.random.rand(1000) * 7,
-    ...         'Tp': np.random.rand(1000) * 20,
-    ...         'Dir': np.random.rand(1000) * 360
-    ...     }
-    ... )
-    >>> mda = MDA(num_centers=10)
-    >>> nearest_centroids_idxs, nearest_centroids_df = mda.fit_predict(
-    ...     data=data,
-    ...     directional_variables=['Dir'],
-    ... )
+    .. jupyter-execute::
+
+        import numpy as np
+        import pandas as pd
+        from bluemath_tk.datamining.mda import MDA
+
+        data = pd.DataFrame(
+            {
+                "Hs": np.random.rand(1000) * 7,
+                "Tp": np.random.rand(1000) * 20,
+                "Dir": np.random.rand(1000) * 360
+            }
+        )
+        mda = MDA(num_centers=5)
+        nearest_centroids_idxs, nearest_centroids_df = mda.fit_predict(
+            data=data,
+            directional_variables=["Dir"],
+        )
+
+        mda.plot_selected_centroids(plot_text=True)
     """
 
     def __init__(self, num_centers: int) -> None:
@@ -98,10 +90,12 @@ class MDA(BaseClustering):
 
         super().__init__()
         self.set_logger_name(name=self.__class__.__name__)
+
         if num_centers > 0:
             self.num_centers = int(num_centers)
         else:
             raise ValueError("Variable num_centers must be > 0")
+
         self._data: pd.DataFrame = pd.DataFrame()
         self._normalized_data: pd.DataFrame = pd.DataFrame()
         self._data_to_fit: pd.DataFrame = pd.DataFrame()
@@ -118,14 +112,26 @@ class MDA(BaseClustering):
 
     @property
     def data(self) -> pd.DataFrame:
+        """
+        Returns the original data used for clustering.
+        """
+
         return self._data
 
     @property
     def normalized_data(self) -> pd.DataFrame:
+        """
+        Returns the normalized data used for clustering.
+        """
+
         return self._normalized_data
 
     @property
     def data_to_fit(self) -> pd.DataFrame:
+        """
+        Returns the data used for fitting the K-Means algorithm.
+        """
+
         return self._data_to_fit
 
     def _normalized_distance(
@@ -276,6 +282,7 @@ class MDA(BaseClustering):
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
         first_centroid_seed: int = None,
+        normalize_data: bool = False,
     ) -> None:
         """
         Fit the Maximum Dissimilarity Algorithm (MDA) to the provided data.
@@ -298,6 +305,8 @@ class MDA(BaseClustering):
         first_centroid_seed : int, optional
             The index of the first centroid to use in the MDA algorithm.
             Default is None.
+        normalize_data : bool, optional
+            A flag to normalize the data. Default is False.
 
         Notes
         -----
@@ -306,26 +315,11 @@ class MDA(BaseClustering):
         - When first_centroid_seed is not provided, max value centroid is used.
         """
 
-        self._data = data.copy()
-        self.directional_variables = directional_variables.copy()
-        for directional_variable in self.directional_variables:
-            u_comp, v_comp = self.get_uv_components(
-                x_deg=self.data[directional_variable].values
-            )
-            self.data[f"{directional_variable}_u"] = u_comp
-            self.data[f"{directional_variable}_v"] = v_comp
-        self.data_variables = list(self.data.columns)
-        self.custom_scale_factor = custom_scale_factor.copy()
-
-        # Get just the data to be used in the fitting
-        self._data_to_fit = self.data.copy()
-        for directional_variable in self.directional_variables:
-            self.data_to_fit.drop(columns=[directional_variable], inplace=True)
-        self.fitting_variables = list(self.data_to_fit.columns)
-
-        # Normalize provided data with instantiated custom_scale_factor
-        self._normalized_data, self.scale_factor = self.normalize(
-            data=self.data_to_fit, custom_scale_factor=self.custom_scale_factor
+        super().fit(
+            data=data,
+            directional_variables=directional_variables,
+            custom_scale_factor=custom_scale_factor,
+            normalize_data=normalize_data,
         )
 
         # [DEPRECATED] Select the point with the maximum value in the first column of pandas dataframe
@@ -417,17 +411,8 @@ class MDA(BaseClustering):
 
         if self.is_fitted is False:
             raise MDAError("MDA model is not fitted.")
-        data = data.copy()  # Avoid modifying the original data to predict
-        for directional_variable in self.directional_variables:
-            u_comp, v_comp = self.get_uv_components(
-                x_deg=data[directional_variable].values
-            )
-            data[f"{directional_variable}_u"] = u_comp
-            data[f"{directional_variable}_v"] = v_comp
-            data.drop(columns=[directional_variable], inplace=True)
-        normalized_data, _ = self.normalize(
-            data=data, custom_scale_factor=self.scale_factor
-        )
+
+        normalized_data = super().predict(data=data)
 
         return self._nearest_indices(normalized_data=normalized_data)
 
@@ -437,6 +422,7 @@ class MDA(BaseClustering):
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
         first_centroid_seed: int = None,
+        normalize_data: bool = False,
     ) -> Tuple[np.ndarray, pd.DataFrame]:
         """
         Fits the MDA model to the data and predicts the nearest centroids.
@@ -454,6 +440,8 @@ class MDA(BaseClustering):
         first_centroid_seed : int, optional
             The index of the first centroid to use in the MDA algorithm.
             Default is None.
+        normalize_data : bool, optional
+            A flag to normalize the data. Default is False.
 
         Returns
         -------
@@ -466,6 +454,7 @@ class MDA(BaseClustering):
             directional_variables=directional_variables,
             custom_scale_factor=custom_scale_factor,
             first_centroid_seed=first_centroid_seed,
+            normalize_data=normalize_data,
         )
 
         return self.predict(data=data)

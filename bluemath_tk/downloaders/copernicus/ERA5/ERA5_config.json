@@ -88,6 +88,42 @@
                 "data_format": "netcdf",
                 "download_format": "unarchived"
             }
+        },
+        "reanalysis-era5-complete": {
+            "description": "ERA5 Complete Dataset",
+            "url": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-complete?tab=overview",
+            "types": [
+                "ocean"
+            ],
+            "mandatory_fields": [
+                "class",
+                "date",
+                "direction",
+                "domain",
+                "expver",
+                "frequency",
+                "param",
+                "stream",
+                "time",
+                "type",
+                "area",
+                "format",
+                "grid"
+            ],
+            "optional_fields": [],
+            "template": {
+                "class": "ea",
+                "direction": "1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24",
+                "domain": "g",
+                "expver": "1",
+                "frequency": "1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28/29/30",
+                "param": "251.140",
+                "stream": "wave",
+                "time": "00:00:00/01:00:00/02:00:00/03:00:00/04:00:00/05:00:00/06:00:00/07:00:00/08:00:00/09:00:00/10:00:00/11:00:00/12:00:00/13:00:00/14:00:00/15:00:00/16:00:00/17:00:00/18:00:00/19:00:00/20:00:00/21:00:00/22:00:00/23:00:00",
+                "type": "an",
+                "format": "netcdf",
+                "grid": "0.5/0.5"
+            }
         }
     },
     "variables": {
@@ -226,6 +262,14 @@
             "type": "ocean",
             "units": "degrees",
             "dataset": "reanalysis-era5-single-levels"
+        },
+        "spectra": {
+            "cds_name": "full_wave_spectra",
+            "long_name": "Full wave spectra",
+            "nc_name": "spectra",
+            "type": "ocean",
+            "units": "m^2/Hz·radian",
+            "dataset": "reanalysis-era5-complete"
         }
     }
 }

@@ -111,6 +111,11 @@ class DefaultStaticPlotting(BasePlotting):
         fig, ax = plt.subplots(**kwargs)
         return fig, ax
 
+    def get_subplot(self, figsize, **kwargs):
+        fig = plt.figure(figsize=figsize)
+        ax = fig.add_subplot(**kwargs)
+        return fig, ax
+
     def plot_line(self, ax, **kwargs):
         c = kwargs.get("c", self.line_defaults.get("color"))
         kwargs.pop("c", None)

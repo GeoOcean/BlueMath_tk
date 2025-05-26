@@ -1,11 +1,12 @@
 from typing import List, Union
 
+import cartopy.crs as ccrs
 import numpy as np
+import pandas as pd
 import xarray as xr
 from sklearn.decomposition import PCA as PCA_
 from sklearn.decomposition import IncrementalPCA as IncrementalPCA_
 from sklearn.preprocessing import StandardScaler
-import cartopy.crs as ccrs
 
 from ..core.decorators import validate_data_pca
 from ._base_datamining import BaseReduction
@@ -31,21 +32,10 @@ class PCA(BaseReduction):
         The number of components or the explained variance ratio.
     is_incremental : bool
         Indicates whether Incremental PCA is used.
-    pca : Union[PCA_, IncrementalPCA_]
-        The PCA or Incremental PCA model.
     is_fitted : bool
         Indicates whether the PCA model has been fitted.
-    data : xr.Dataset
-        The original dataset used in fitting.
-    window_processed_data : xr.Dataset
-        The windows processed dataset used in fitting. Windows refer to the rolling
-        windows in the PCA row dimension.
-    stacked_data_matrix : np.ndarray
-        The stacked data matrix.
-    standarized_stacked_data_matrix : np.ndarray
-        The standardized stacked data matrix, in case the data is standardized.
     scaler : StandardScaler
-        The scaler used for standardizing the data, in case the data is standardized.
+        The scaler used for standardizing the data, in case the data is standarized.
     vars_to_stack : List[str]
         The list of variables to stack.
     window_stacked_vars : List[str]
@@ -66,64 +56,44 @@ class PCA(BaseReduction):
         The number of columns for variables.
     pcs : xr.Dataset
         The Principal Components (PCs).
-    eofs : xr.Dataset
-        The Empirical Orthogonal Functions (EOFs).
-        If destandarized EOFs are needed, call self._reshape_EOFs(destandarize=True).
-    explained_variance : np.ndarray
-        The explained variance.
-    explained_variance_ratio : np.ndarray
-        The explained variance ratio.
-    cumulative_explained_variance_ratio : np.ndarray
-        The cumulative explained variance ratio.
-
-    Methods
-    -------
-    _generate_stacked_data -> np.ndarray
-        Generate stacked data matrix.
-    _preprocess_data -> np.ndarray
-        Preprocess data for PCA.
-    _reshape_EOFs -> xr.Dataset
-        Reshape EOFs to the original data shape.
-    _reshape_data -> xr.Dataset
-        Reshape data to the original data shape.
-    fit -> None
-        Fit PCA model to data.
-    transform -> xr.Dataset
-        Transform data using the fitted PCA model.
-    fit_transform -> xr.Dataset
-        Fit and transform data using PCA model.
-    inverse_transform -> xr.Dataset
-        Inverse transform data using the fitted PCA model.
 
     Examples
     --------
-    >>> from bluemath_tk.core.data.sample_data import get_2d_dataset
-    >>> from bluemath_tk.datamining.pca import PCA
-    >>> ds = get_2d_dataset()
-    >>> pca = PCA(
-    ...     n_components=5,
-    ...     is_incremental=False,
-    ...     debug=True,
-    ... )
-    >>> pca.fit(
-    ...     data=ds,
-    ...     vars_to_stack=["X", "Y"],
-    ...     coords_to_stack=["coord1", "coord2"],
-    ...     pca_dim_for_rows="coord3",
-    ...     windows_in_pca_dim_for_rows={"X": [1, 2, 3]},
-    ...     value_to_replace_nans={"X": 0.0},
-    ...     nan_threshold_to_drop={"X": 0.95},
-    ... )
-    >>> pcs = pca.transform(
-    ...     data=ds,
-    ... )
-    >>> reconstructed_ds = pca.inverse_transform(PCs=pcs)
-    >>> eofs = pca.eofs
-    >>> explained_variance = pca.explained_variance
-    >>> explained_variance_ratio = pca.explained_variance_ratio
-    >>> cumulative_explained_variance_ratio = pca.cumulative_explained_variance_ratio
-    >>> # Save the full class in a pickle file
-    >>> pca.save_model("pca_model.pkl")
+    .. jupyter-execute::
+
+        from bluemath_tk.core.data.sample_data import get_2d_dataset
+        from bluemath_tk.datamining.pca import PCA
+
+        ds = get_2d_dataset()
+
+        pca = PCA(
+            n_components=5,
+            is_incremental=False,
+            debug=True,
+        )
+        pca.fit(
+            data=ds,
+            vars_to_stack=["X", "Y"],
+            coords_to_stack=["coord1", "coord2"],
+            pca_dim_for_rows="coord3",
+            windows_in_pca_dim_for_rows={"X": [1, 2, 3]},
+            value_to_replace_nans={"X": 0.0},
+            nan_threshold_to_drop={"X": 0.95},
+        )
+        pcs = pca.transform(
+            data=ds,
+        )
+        reconstructed_ds = pca.inverse_transform(PCs=pcs)
+        eofs = pca.eofs
+        explained_variance = pca.explained_variance
+        explained_variance_ratio = pca.explained_variance_ratio
+        cumulative_explained_variance_ratio = pca.cumulative_explained_variance_ratio
+
+        # Save the full class in a pickle file
+        pca.save_model("pca_model.pkl")
+
+        # Plot the calculated EOFs
+        pca.plot_eofs(vars_to_plot=["X", "Y"], num_eofs=3)
 
     References
     ----------
@@ -176,6 +146,7 @@ class PCA(BaseReduction):
         self.set_logger_name(
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
         )
+
         if n_components <= 0:
             raise ValueError("Number of components must be greater than 0.")
         elif n_components >= 1:
@@ -191,6 +162,7 @@ class PCA(BaseReduction):
         else:
             self.logger.info("Using PCA")
             self._pca = PCA_(n_components=self.n_components)
+
         self.is_fitted: bool = False
         self.is_incremental = is_incremental
         self._data: xr.Dataset = xr.Dataset()
@@ -212,51 +184,100 @@ class PCA(BaseReduction):
 
         # Exclude attributes from beign saved with pca.save_model()
         self._exclude_attributes = [
-            # "_data",
+            "_data",
             "_window_processed_data",
-            # "_stacked_data_matrix",
-            # "_standarized_stacked_data_matrix",
+            "_stacked_data_matrix",
+            "_standarized_stacked_data_matrix",
         ]
 
     @property
     def pca(self) -> Union[PCA_, IncrementalPCA_]:
+        """
+        Returns the PCA or IncrementalPCA instance used for dimensionality reduction.
+        """
+
         return self._pca
 
     @property
     def data(self) -> xr.Dataset:
+        """
+        Returns the raw data used for PCA.
+        """
+
         return self._data
 
     @property
     def window_processed_data(self) -> xr.Dataset:
+        """
+        Return the window processed data used for PCA.
+        """
+
         return self._window_processed_data
 
     @property
     def stacked_data_matrix(self) -> np.ndarray:
+        """
+        Return the stacked data matrix.
+        """
+
         return self._stacked_data_matrix
 
     @property
     def standarized_stacked_data_matrix(self) -> np.ndarray:
+        """
+        Return the standarized stacked data matrix.
+        """
+
         return self._standarized_stacked_data_matrix
 
     @property
     def eofs(self) -> xr.Dataset:
+        """
+        Return the Empirical Orthogonal Functions (EOFs).
+        """
+
         return self._reshape_EOFs(destandarize=False)
 
     @property
     def explained_variance(self) -> np.ndarray:
+        """
+        Return the explained variance of the PCA model.
+        """
+
         return self.pca.explained_variance_
 
     @property
     def explained_variance_ratio(self) -> np.ndarray:
+        """
+        Return the explained variance ratio of the PCA model.
+        """
+
         return self.pca.explained_variance_ratio_
 
     @property
     def cumulative_explained_variance_ratio(self) -> np.ndarray:
-        return (
-            np.cumsum(self.explained_variance_ratio)
-            / np.sum(self.explained_variance_ratio)
-            * 100.0
-        )
+        """
+        Return the cumulative explained variance ratio of the PCA model.
+        """
+
+        return np.cumsum(self.explained_variance_ratio)
+
+    @property
+    def pcs_df(self) -> pd.DataFrame:
+        """
+        Returns the principal components as a DataFrame.
+        """
+
+        if self.pcs is not None:
+            return pd.DataFrame(
+                data=self.pcs["PCs"].values,
+                columns=[f"PC{i + 1}" for i in range(self.pca.n_components_)],
+                index=self.pcs[self.pca_dim_for_rows].values,
+            )
+        else:
+            raise PCAError(
+                "PCA model must be fitted and transformed before calling pcs_df"
+            )
 
     def _generate_stacked_data(self, data: xr.Dataset) -> np.ndarray:
         """
@@ -285,7 +306,8 @@ class PCA(BaseReduction):
         cleaned_vars_to_stack = []
         for var_to_clean in self.window_stacked_vars:
             var_to_clean_values = tmp_stacked_data[var_to_clean].values
-            # Drop variables with more than 90% of NaNs if not specified
+            if var_to_clean_values.ndim == 1:
+                var_to_clean_values = var_to_clean_values.reshape(-1, 1)
             var_to_clean_threshold = self.nan_threshold_to_drop.get(
                 var_to_clean,
                 self.nan_threshold_to_drop.get(
@@ -296,8 +318,6 @@ class PCA(BaseReduction):
             not_nan_positions = np.where(
                 np.mean(~np.isnan(var_to_clean_values), axis=0) > var_to_clean_threshold
             )[0]
-            # Replace NaNs with the value specified in value_to_replace_nans
-            # If not specified, try to get the value from the variable name, deleting window suffixes
             var_value_to_replace_nans = self.value_to_replace_nans.get(
                 var_to_clean,
                 self.value_to_replace_nans.get(
@@ -370,6 +390,7 @@ class PCA(BaseReduction):
             standarized_stacked_data_matrix, scaler = self.standarize(
                 data=stacked_data_matrix,
                 scaler=self.scaler if not is_fit else None,
+                transform=not is_fit,
             )
         else:
             self.logger.warning("Data is not standarized")
@@ -547,7 +568,7 @@ class PCA(BaseReduction):
             The value to replace NaNs for each variable. Default is {}.
         nan_threshold_to_drop : dict, optional
             The threshold percentage to drop NaNs for each variable.
-            By default, variables with more than 90% of NaNs are dropped.
+            By default, variables with less than 90% of valid values are dropped.
             Default is {}.
         scale_data : bool, optional
             If True, scale the data. Default is True.
@@ -609,7 +630,7 @@ class PCA(BaseReduction):
         transformed_data = self.pca.transform(X=processed_data)
 
         # Save the Principal Components (PCs) in an xr.Dataset
-        self.pcs = xr.Dataset(
+        pcs = xr.Dataset(
             {
                 "PCs": ((self.pca_dim_for_rows, "n_component"), transformed_data),
                 "stds": (("n_component",), np.std(transformed_data, axis=0)),
@@ -619,8 +640,10 @@ class PCA(BaseReduction):
                 "n_component": np.arange(self.pca.n_components_),
             },
         )
+        if after_fitting:
+            self.pcs = pcs.copy()
 
-        return self.pcs.copy()
+        return pcs
 
     def fit_transform(
         self,
@@ -652,7 +675,7 @@ class PCA(BaseReduction):
             The value to replace NaNs for each variable. Default is {}.
         nan_threshold_to_drop : dict, optional
             The threshold percentage to drop NaNs for each variable.
-            By default, variables with more than 90% of NaNs are dropped.
+            By default, variables with more than 10% of NaNs are dropped.
             Default is {}.
         scale_data : bool, optional
             If True, scale the data. Default is True.
@@ -739,7 +762,7 @@ class PCA(BaseReduction):
                     "No Principal Components (PCs) found. Please transform some data first."
                 )
             self.logger.info("Using the Principal Components (PCs) from the class")
-            pcs = self.pcs
+            pcs = self.pcs.copy()
 
         _ = (
             pcs["PCs"]

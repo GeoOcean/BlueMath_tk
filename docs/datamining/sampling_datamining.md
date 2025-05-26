@@ -1,1 +1,0 @@
-::: bluemath_tk.datamining.lhs

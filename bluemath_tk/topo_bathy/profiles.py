@@ -128,7 +128,7 @@ def biparabolic(h0, hsig, omega_surf_list, TR):
     hr = 1.1 * hsig + TR
 
     # Legal point
-    ha = 3 * hsig + TR
+    _ha = 3 * hsig + TR
 
     # Empirical adjusted parameters
     A = 0.21 - 0.02 * omega_surf_list
@@ -141,7 +141,7 @@ def biparabolic(h0, hsig, omega_surf_list, TR):
     h_cont = []
 
     # Important points for the profile
-    xr = (hr / A) ** (3 / 2) + (B / (A ** (3 / 2))) * hr**3
+    _xr = (hr / A) ** (3 / 2) + (B / (A ** (3 / 2))) * hr**3
 
     # Lines for the profile
     x, Xx, X, xX = [], [], [], []

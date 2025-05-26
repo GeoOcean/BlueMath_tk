@@ -3,8 +3,13 @@ from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
+import pyproj
 import xarray as xr
 from sklearn.preprocessing import StandardScaler
+
+available_projections = {
+    "SPAIN": pyproj.Proj(proj="utm", zone=30, ellps="WGS84"),
+}
 
 
 def normalize(
@@ -90,7 +95,7 @@ def normalize(
         if custom_scale_factor.get(data_var):
             if custom_scale_factor.get(data_var)[0] > data_var_min:
                 if logger is not None:
-                    logger.warning(
+                    logger.info(
                         f"Proposed min custom scaler for {data_var} is bigger than datapoint"  # , using smallest datapoint
                     )
                 else:
@@ -102,7 +107,7 @@ def normalize(
             data_var_min = custom_scale_factor.get(data_var)[0]
             if custom_scale_factor.get(data_var)[1] < data_var_max:
                 if logger is not None:
-                    logger.warning(
+                    logger.info(
                         f"Proposed max custom scaler for {data_var} is lower than datapoint"  # , using biggest datapoint
                     )
                 else:
@@ -205,6 +210,7 @@ def denormalize(
 def standarize(
     data: Union[np.ndarray, pd.DataFrame, xr.Dataset],
     scaler: StandardScaler = None,
+    transform: bool = False,
 ) -> Tuple[Union[np.ndarray, pd.DataFrame, xr.Dataset], StandardScaler]:
     """
     Standarize data to have mean 0 and std 1.
@@ -215,6 +221,8 @@ def standarize(
         Input data to be standarized.
     scaler : StandardScaler, optional
         Scaler object to use for standarization. Default is None.
+    transform : bool
+        Whether to just transform the data. Default to False.
 
     Returns
     -------
@@ -233,13 +241,21 @@ def standarize(
 
     scaler = scaler or StandardScaler()
     if isinstance(data, np.ndarray):
-        standarized_data = scaler.fit_transform(X=data)
-        return standarized_data, scaler
+        if transform:
+            standarized_data = scaler.transform(X=data)
+        else:
+            standarized_data = scaler.fit_transform(X=data)
     elif isinstance(data, pd.DataFrame):
-        standarized_data = scaler.fit_transform(X=data.values)
+        if transform:
+            standarized_data = scaler.transform(X=data.values)
+        else:
+            standarized_data = scaler.fit_transform(X=data.values)
         standarized_data = pd.DataFrame(standarized_data, columns=data.columns)
     elif isinstance(data, xr.Dataset):
-        standarized_data = scaler.fit_transform(X=data.to_array().values)
+        if transform:
+            standarized_data = scaler.transform(X=data.to_array().values)
+        else:
+            standarized_data = scaler.fit_transform(X=data.to_array().values)
         standarized_data = xr.Dataset(
             {
                 var_name: (tuple(data.coords), standarized_data[i_var])
@@ -367,3 +383,194 @@ def get_degrees_from_uv(xu: np.ndarray, xv: np.ndarray) -> np.ndarray:
 
     # Return the degrees
     return x_deg
+
+
+def convert_utm_to_lonlat(
+    utm_x: np.ndarray,
+    utm_y: np.ndarray,
+    projection: Union[int, str, dict, pyproj.CRS],
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    This method converts UTM coordinates to Longitude and Latitude.
+
+    Parameters
+    ----------
+    utm_x : np.ndarray
+        The x values in UTM.
+    utm_y : np.ndarray
+        The y values in UTM.
+    projection : int, str, dict, pyproj.CRS
+        The projection to use for the transformation.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        The longitude and latitude values.
+    """
+
+    if isinstance(projection, str):
+        projection = available_projections.get(projection, projection)
+
+    # Transform the UTM to LonLat coordinates
+    reshape = False
+    if utm_x.size != utm_y.size:
+        reshape_size = (utm_y.size, utm_x.size)
+        utm_x, utm_y = (
+            np.meshgrid(utm_x, utm_y)[0].reshape(-1),
+            np.meshgrid(utm_x, utm_y)[1].reshape(-1),
+        )
+        reshape = True
+    lon, lat = projection(utm_x, utm_y, inverse=True)
+    if reshape:
+        lon, lat = (
+            lon.reshape(*reshape_size)[0, :],
+            lat.reshape(*reshape_size)[:, 0],
+        )
+
+    # Return the LonLat coordinates
+    return lon, lat
+
+
+def convert_lonlat_to_utm(
+    lon: np.ndarray,
+    lat: np.ndarray,
+    projection: Union[int, str, dict, pyproj.CRS],
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    This method converts Longitude and Latitude to UTM coordinates.
+
+    Parameters
+    ----------
+    lon : np.ndarray
+        The longitude values.
+    lat : np.ndarray
+        The latitude values.
+    projection : int, str, dict, pyproj.CRS
+        The projection to use for the transformation.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        The x and y coordinates in UTM.
+    """
+
+    if isinstance(projection, str):
+        projection = available_projections.get(projection, projection)
+
+    # Transform the LonLat to UTM coordinates
+    reshape = False
+    if lon.size != lat.size:
+        reshape_size = (lat.size, lon.size)
+        lon, lat = (
+            np.meshgrid(lon, lat)[0].reshape(-1),
+            np.meshgrid(lon, lat)[1].reshape(-1),
+        )
+        reshape = True
+    utm_x, utm_y = projection(lon, lat)
+    if reshape:
+        utm_x, utm_y = (
+            utm_x.reshape(*reshape_size)[0, :],
+            utm_y.reshape(*reshape_size)[:, 0],
+        )
+
+    # Return the UTM coordinates
+    return utm_x, utm_y
+
+
+def spatial_gradient(data: xr.DataArray) -> xr.DataArray:
+    """
+    Calculate spatial gradient of a DataArray with dimensions (time, latitude, longitude).
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Input data with dimensions (time, latitude, longitude).
+
+    Returns
+    -------
+    xr.DataArray
+        Gradient magnitude with same dimensions as input.
+
+    Notes
+    -----
+    The gradient is calculated using central differences, accounting for
+    latitude-dependent grid spacing in spherical coordinates.
+    """
+
+    # Initialize gradient array
+    var_grad = xr.zeros_like(data)
+
+    # Get latitude values in radians for spherical coordinate correction
+    lat_rad = np.pi * np.abs(data.latitude.values) / 180.0
+
+    # Calculate gradients using vectorized operations
+    for t in range(len(data.time)):
+        var_val = data.isel(time=t).values
+
+        # calculate gradient (matrix)
+        m_c = var_val[1:-1, 1:-1]
+        m_l = np.roll(var_val, -1, axis=1)[1:-1, 1:-1]
+        m_r = np.roll(var_val, +1, axis=1)[1:-1, 1:-1]
+        m_u = np.roll(var_val, -1, axis=0)[1:-1, 1:-1]
+        m_d = np.roll(var_val, +1, axis=0)[1:-1, 1:-1]
+        m_phi = lat_rad[1:-1]
+
+        dpx1 = (m_c - m_l) / np.cos(m_phi[:, None])
+        dpx2 = (m_r - m_c) / np.cos(m_phi[:, None])
+        dpy1 = m_c - m_d
+        dpy2 = m_u - m_c
+
+        vg = (dpx1**2 + dpx2**2) / 2 + (dpy1**2 + dpy2**2) / 2
+        var_grad[t, 1:-1, 1:-1] = vg
+
+    # Set attributes
+    var_grad.attrs["units"] = "m^2/s^2"
+    var_grad.attrs["name"] = "Gradient"
+
+    return var_grad
+
+
+def nautical_to_mathematical(nautical_degrees: np.ndarray) -> np.ndarray:
+    """
+    Convert nautical degrees (0° at North, clockwise) to
+    mathematical degrees (0° at East, counterclockwise)
+
+    Parameters
+    ----------
+    nautical_degrees : np.ndarray
+        Directional angle in nautical convention
+
+    Returns
+    -------
+    np.ndarray
+        Directional angle in mathematical convention
+    """
+
+    # Convert nautical degrees to mathematical degrees
+    return (90 - nautical_degrees) % 360
+
+
+def mathematical_to_nautical(math_degrees: np.ndarray) -> np.ndarray:
+    """
+    Convert mathematical degrees (0° at East, counterclockwise) to
+    nautical degrees (0° at North, clockwise)
+
+    Parameters
+    ----------
+    math_degrees : float or array-like
+        Directional angle in mathematical convention
+
+    Returns
+    -------
+    np.ndarray
+        Directional angle in nautical convention
+    """
+
+    # Rotate the angle by 360 degrees
+    if math_degrees == 0:
+        reversed_angle = 0
+    else:
+        reversed_angle = 360 - math_degrees
+
+    # Convert mathematical degrees to nautical degrees
+    return (reversed_angle + 90) % 360

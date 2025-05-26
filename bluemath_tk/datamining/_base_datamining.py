@@ -3,7 +3,9 @@ from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 
 from ..core.models import BlueMathModel
 from ..core.plotting.base_plotting import DefaultStaticPlotting
@@ -88,6 +90,8 @@ class BaseSampling(BlueMathModel):
             sharex=False,
             sharey=False,
         )
+        if isinstance(axes, Axes):
+            axes = np.array([[axes]])
 
         for c1, v1 in enumerate(variables_names[1:]):
             for c2, v2 in enumerate(variables_names[:-1]):
@@ -114,84 +118,85 @@ class BaseClustering(BlueMathModel):
     """
     Base class for all clustering BlueMath models.
     This class provides the basic structure for all clustering models.
-
-    Methods
-    -------
-    fit : None
-        Fits the model to the data.
-    predict : pd.DataFrame
-        Predicts the clusters for the provided data.
-    fit_predict : pd.DataFrame
-        Fits the model to the data and predicts the clusters.
-    plot_selected_centroids : Tuple[plt.figure, plt.axes]
-        Plots data and selected centroids on a scatter plot matrix.
-    plot_data_as_clusters : Tuple[plt.figure, plt.axes]
-        Plots data as nearest clusters.
     """
 
     @abstractmethod
     def __init__(self) -> None:
         super().__init__()
 
-    @abstractmethod
-    def fit(self, *args, **kwargs) -> None:
-        """
-        Fits the model to the data.
-
-        Parameters
-        ----------
-        *args : list
-            Positional arguments.
-        **kwargs : dict
-            Keyword arguments.
-        """
-
-        pass
+        self._exclude_attributes = [
+            "_data",
+            "_normalized_data",
+            "_data_to_fit",
+        ]
 
     @abstractmethod
-    def predict(self, *args, **kwargs) -> pd.DataFrame:
+    def fit(
+        self,
+        data: pd.DataFrame,
+        directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
+        normalize_data: bool = False,
+    ) -> None:
         """
-        Predicts the clusters for the provided data.
-
-        Parameters
-        ----------
-        *args : list
-            Positional arguments.
-        **kwargs : dict
-            Keyword arguments.
-
-        Returns
-        -------
-        pd.DataFrame
-            The predicted clusters.
+        Preprocess some data to be used in the fit of children classes.
         """
 
-        return pd.DataFrame()
+        self._data = data.copy()
+        self.directional_variables = directional_variables.copy()
+        for directional_variable in self.directional_variables:
+            u_comp, v_comp = self.get_uv_components(
+                x_deg=self.data[directional_variable].values
+            )
+            self.data[f"{directional_variable}_u"] = u_comp
+            self.data[f"{directional_variable}_v"] = v_comp
+        self.data_variables = list(self.data.columns)
+
+        # Get just the data to be used in the training
+        self._data_to_fit = self.data.copy()
+        for directional_variable in self.directional_variables:
+            self.data_to_fit.drop(columns=[directional_variable], inplace=True)
+        self.fitting_variables = list(self.data_to_fit.columns)
+
+        if normalize_data:
+            self.custom_scale_factor = custom_scale_factor.copy()
+        else:
+            self.logger.info(
+                "Normalization is disabled. Using default scale factor (0, 1) for all fitting variables."
+            )
+            self.custom_scale_factor = {
+                fitting_variable: (0, 1) for fitting_variable in self.fitting_variables
+            }
+        # Normalize data using custom min max scaler
+        self._normalized_data, self.scale_factor = self.normalize(
+            data=self.data_to_fit, custom_scale_factor=self.custom_scale_factor
+        )
 
     @abstractmethod
-    def fit_predict(self, *args, **kwargs) -> pd.DataFrame:
+    def predict(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Fits the model to the data and predicts the clusters.
-
-        Parameters
-        ----------
-        *args : list
-            Positional arguments.
-        **kwargs : dict
-            Keyword arguments.
-
-        Returns
-        -------
-        pd.DataFrame
-            The predicted clusters.
+        Preprocess some data to be used in the predict of children classes.
         """
 
-        return pd.DataFrame()
+        data = data.copy()  # Avoid modifying the original data to predict
+        for directional_variable in self.directional_variables:
+            u_comp, v_comp = self.get_uv_components(
+                x_deg=data[directional_variable].values
+            )
+            data[f"{directional_variable}_u"] = u_comp
+            data[f"{directional_variable}_v"] = v_comp
+            data.drop(columns=[directional_variable], inplace=True)
+        normalized_data, _ = self.normalize(
+            data=data, custom_scale_factor=self.scale_factor
+        )
+
+        return normalized_data
 
     def plot_selected_centroids(
         self,
         data_color: str = "blue",
         centroids_color: str = "red",
+        plot_text: bool = False,
         **kwargs,
     ) -> Tuple[plt.figure, plt.axes]:
         """
@@ -203,6 +208,8 @@ class BaseClustering(BlueMathModel):
             Color for the data points. Default is "blue".
         centroids_color : str, optional
             Color for the centroid points. Default is "red".
+        plot_text : bool, optional
+            Whether to display text labels for centroids. Default is False.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the scatter plot function.
 
@@ -238,6 +245,8 @@ class BaseClustering(BlueMathModel):
             sharex=False,
             sharey=False,
         )
+        if isinstance(axes, Axes):
+            axes = np.array([[axes]])
 
         for c1, v1 in enumerate(variables_names[1:]):
             for c2, v2 in enumerate(variables_names[:-1]):
@@ -258,14 +267,15 @@ class BaseClustering(BlueMathModel):
                         alpha=0.9,
                         **kwargs,
                     )
-                    for i in range(self.centroids.shape[0]):
-                        axes[c2, c1].text(
-                            self.centroids[v1][i],
-                            self.centroids[v2][i],
-                            str(i + 1),
-                            fontsize=12,
-                            fontweight="bold",
-                        )
+                    if plot_text:
+                        for i in range(self.centroids.shape[0]):
+                            axes[c2, c1].text(
+                                self.centroids[v1][i],
+                                self.centroids[v2][i],
+                                str(i + 1),
+                                fontsize=12,
+                                fontweight="bold",
+                            )
                 if c1 == c2:
                     axes[c2, c1].set_xlabel(variables_names[c1 + 1])
                     axes[c2, c1].set_ylabel(variables_names[c2])
@@ -323,6 +333,8 @@ class BaseClustering(BlueMathModel):
             sharex=False,
             sharey=False,
         )
+        if isinstance(axes, Axes):
+            axes = np.array([[axes]])
 
         # Gets colors for clusters and append to each nearest centroid
         colors_for_clusters = default_static_plot.get_list_of_colors_for_colormap(
@@ -361,6 +373,81 @@ class BaseReduction(BlueMathModel):
     @abstractmethod
     def __init__(self) -> None:
         super().__init__()
+
+    @abstractmethod
+    def fit(self, *args, **kwargs) -> None:
+        """
+        Fits the model to the data.
+
+        Parameters
+        ----------
+        *args : list
+            Positional arguments.
+        **kwargs : dict
+            Keyword arguments.
+        """
+
+        pass
+
+    @abstractmethod
+    def transform(self, *args, **kwargs) -> xr.Dataset:
+        """
+        Transforms the data using the fitted model.
+
+        Parameters
+        ----------
+        *args : list
+            Positional arguments.
+        **kwargs : dict
+            Keyword arguments.
+
+        Returns
+        -------
+        xr.Dataset
+            The transformed data.
+        """
+
+        return xr.Dataset()
+
+    @abstractmethod
+    def fit_transform(self, *args, **kwargs) -> xr.Dataset:
+        """
+        Fits the model to the data and transforms it.
+
+        Parameters
+        ----------
+        *args : list
+            Positional arguments.
+        **kwargs : dict
+            Keyword arguments.
+
+        Returns
+        -------
+        xr.Dataset
+            The transformed data.
+        """
+
+        return xr.Dataset()
+
+    @abstractmethod
+    def inverse_transform(self, *args, **kwargs) -> xr.Dataset:
+        """
+        Inversely transforms the data using the fitted model.
+
+        Parameters
+        ----------
+        *args : list
+            Positional arguments.
+        **kwargs : dict
+            Keyword arguments.
+
+        Returns
+        -------
+        xr.Dataset
+            The inversely transformed data.
+        """
+
+        return xr.Dataset()
 
 
 class ClusteringComparator:

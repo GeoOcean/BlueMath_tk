@@ -4,11 +4,13 @@ import os
 import pickle
 import sys
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Union
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import xarray as xr
+from scipy import constants
 from sklearn.metrics import (
     explained_variance_score,
     mean_absolute_error,
@@ -31,15 +33,86 @@ from .operations import (
 class BlueMathModel(ABC):
     """
     Abstract base class for handling default functionalities across the project.
+
+    This class provides core functionality used by all BlueMath models including:
+    - Model saving and loading
+    - Data normalization and denormalization
+    - Parallel processing capabilities
+    - Logging functionality
+    - NaN handling
+    - Directional data processing
+
+    Attributes
+    ----------
+    gravity : float
+        Gravitational constant from scipy.constants.
+    num_workers : int
+        Number of parallel workers to use for processing.
+    logger : logging.Logger
+        Logger instance for the model.
+
+    Notes
+    -----
+    All BlueMath models should inherit from this class to ensure consistent
+    behavior and functionality across the project.
     """
+
+    gravity = constants.g
 
     @abstractmethod
     def __init__(self) -> None:
         self._logger: logging.Logger = None
         self._exclude_attributes: List[str] = []
+        self.num_workers: int = 1
+
+        # [UNDER DEVELOPMENT] Below, we try to generalise parallel processing
+        bluemath_num_workers = os.environ.get("BLUEMATH_NUM_WORKERS", None)
+        omp_num_threads = os.environ.get("OMP_NUM_THREADS", None)
+        if bluemath_num_workers is not None:
+            self.logger.info(
+                f"Setting self.num_workers to {bluemath_num_workers} due to BLUEMATH_NUM_WORKERS. \n"
+                "Change it using self.set_num_processors_to_use method. \n"
+                "Also setting OMP_NUM_THREADS to 1, to avoid conflicts with BlueMath parallel processing."
+            )
+            self.set_num_processors_to_use(num_processors=int(bluemath_num_workers))
+            self.set_omp_num_threads(num_threads=1)
+        elif omp_num_threads is not None:
+            self.logger.info(
+                f"Changing variable OMP_NUM_THREADS from {omp_num_threads} to 1. \n"
+                f"And setting self.num_workers to {omp_num_threads}. \n"
+                "To avoid conflicts with BlueMath parallel processing."
+            )
+            self.set_omp_num_threads(num_threads=1)
+            self.set_num_processors_to_use(num_processors=int(omp_num_threads))
+        else:
+            self.num_workers = 1  # self.get_num_processors_available()
+            self.logger.info(
+                f"Setting self.num_workers to {self.num_workers}. "
+                "Change it using self.set_num_processors_to_use method."
+            )
 
     def __getstate__(self):
-        """Exclude certain attributes from being pickled."""
+        """
+        Control which attributes are pickled when saving the model.
+
+        This method is automatically called by pickle.dump() to determine what
+        to serialize. It excludes specified attributes and warns about xarray objects.
+
+        Returns
+        -------
+        dict
+            A copy of the instance's __dict__ with excluded attributes removed.
+
+        Notes
+        -----
+        - Controlled by self._exclude_attributes list
+        - Warns when encountering xarray objects (Dataset/DataArray)
+        - Creates a deep copy of state to avoid modifying original
+
+        See Also
+        --------
+        save_model : High-level method for saving model to file
+        """
 
         state = self.__dict__.copy()
         for attr in self._exclude_attributes:
@@ -56,46 +129,139 @@ class BlueMathModel(ABC):
 
     @property
     def logger(self) -> logging.Logger:
+        """
+        Get the logger instance for this model.
+
+        Returns
+        -------
+        logging.Logger
+            The logger instance. Creates a new file logger if none exists.
+
+        Notes
+        -----
+        - Lazily instantiates logger on first access
+        - Uses class name as default logger name
+        - Thread-safe logger creation
+        """
+
         if self._logger is None:
             self._logger = get_file_logger(name=self.__class__.__name__)
         return self._logger
 
     @logger.setter
     def logger(self, value: logging.Logger) -> None:
+        """
+        Set the logger instance for this model.
+
+        Parameters
+        ----------
+        value : logging.Logger
+            The logger instance to use.
+
+        Raises
+        ------
+        ValueError
+            If the logger is not an instance of logging.Logger.
+        """
+
+        if not isinstance(value, logging.Logger):
+            raise ValueError("Logger must be an instance of logging.Logger")
         self._logger = value
 
-    def set_logger_name(self, name: str, level: str = "INFO") -> None:
-        """Sets the name of the logger."""
+    def set_logger_name(
+        self, name: str, level: str = "INFO", console: bool = True
+    ) -> None:
+        """
+        Configure the model's logger with a new name and settings.
 
-        self.logger = get_file_logger(name=name)
-        self.logger.setLevel(level)
+        Parameters
+        ----------
+        name : str
+            The name to give to the logger.
+        level : str, optional
+            The logging level to use. Default is "INFO".
+            Valid values are: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+        console : bool, optional
+            Whether to output logs to console. Default is True.
+
+        Notes
+        -----
+        - Creates a new file logger with specified settings
+        - Previous logger settings are overwritten
+        - Log files are created in the default logging directory
+
+        Examples
+        --------
+        >>> model = BlueMathModel()
+        >>> model.set_logger_name("my_model", level="DEBUG", console=False)
+        """
+
+        self.logger = get_file_logger(name=name, level=level, console=console)
 
     def save_model(self, model_path: str, exclude_attributes: List[str] = None) -> None:
-        """Saves the model to a file."""
+        """
+        Save the model to a file using pickle.
+
+        Parameters
+        ----------
+        model_path : str
+            Path where the model will be saved.
+        exclude_attributes : List[str], optional
+            List of attribute names to exclude from saving. Default is None.
+            If provided, it will override the default _exclude_attributes.
+
+        Notes
+        -----
+        - Uses pickle for serialization
+        - Warns if any xarray Datasets/DataArrays are being pickled
+        - Creates parent directories if they don't exist
+        - Excludes specified attributes from serialization
+
+        Warnings
+        --------
+        - Pickle files can be security risks if loaded from untrusted sources
+        - xarray objects in the model will be pickled and may be large
+
+        Examples
+        --------
+        >>> model = MyBlueMathModel()
+        >>> model.save_model('model.pkl', exclude_attributes=['_logger'])
+        """
 
         self.logger.info(f"Saving model to {model_path}")
         if exclude_attributes is not None:
-            self._exclude_attributes += exclude_attributes
+            self._exclude_attributes = exclude_attributes
         with open(model_path, "wb") as f:
             pickle.dump(self, f)
 
     def load_model(self, model_path: str) -> "BlueMathModel":
         """Loads the model from a file."""
 
-        self.logger.info(f"Loading model from {model_path}")
-        with open(model_path, "rb") as f:
-            model = pickle.load(f)
-
-        return model
+        raise NotImplementedError(
+            "This method is deprecated. Use load_model() from bluemath_tk.core.io instead."
+        )
 
     def list_class_attributes(self) -> list:
         """
-        Lists the attributes of the class.
+        List all non-callable attributes of the class.
 
         Returns
         -------
         list
-            The attributes of the class.
+            Names of all non-callable, non-private attributes.
+
+        Notes
+        -----
+        - Excludes methods and private attributes (starting with __)
+        - Includes properties and class variables
+        - Useful for introspection and debugging
+
+        Examples
+        --------
+        >>> model = BlueMathModel()
+        >>> attrs = model.list_class_attributes()
+        >>> print(attrs)
+        ['gravity', 'num_workers', '_logger']
         """
 
         return [
@@ -106,12 +272,25 @@ class BlueMathModel(ABC):
 
     def list_class_methods(self) -> list:
         """
-        Lists the methods of the class.
+        List all callable methods of the class.
 
         Returns
         -------
         list
-            The methods of the class.
+            Names of all callable, non-private methods.
+
+        Notes
+        -----
+        - Excludes attributes and private methods (starting with __)
+        - Includes instance methods and properties
+        - Useful for introspection and debugging
+
+        Examples
+        --------
+        >>> model = BlueMathModel()
+        >>> methods = model.list_class_methods()
+        >>> print(methods)
+        ['normalize', 'denormalize', 'check_nans']
         """
 
         return [
@@ -127,22 +306,21 @@ class BlueMathModel(ABC):
         raise_error: bool = False,
     ) -> Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset]:
         """
-        Checks for NaNs in the data and optionally replaces them.
+        Check for NaNs in the data and optionally replace them.
 
         Parameters
         ----------
-        data : np.ndarray, pd.Series, pd.DataFrame, xr.DataArray or xr.Dataset
+        data : Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset]
             The data to check for NaNs.
-        replace_value : float or callable, optional
-            The value to replace NaNs with. If None, NaNs will not be replaced.
-            If a callable is provided, it will be called and the result will be returned.
-            Default is None.
+        replace_value : Union[float, callable], optional
+            Value to replace NaNs with. If callable, the function will be called
+            on the data. Default is None (no replacement).
         raise_error : bool, optional
             Whether to raise an error if NaNs are found. Default is False.
 
         Returns
         -------
-        data : np.ndarray, pd.Series, pd.DataFrame, xr.DataArray or xr.Dataset
+        data : Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset]
             The data with NaNs optionally replaced.
 
         Raises
@@ -152,8 +330,23 @@ class BlueMathModel(ABC):
 
         Notes
         -----
-        - This method is intended to be used in classes that inherit from the BlueMathModel class.
-        - The method checks for NaNs in the data and optionally replaces them with the specified value.
+        - For numpy arrays, uses np.isnan() to check for NaNs
+        - For pandas objects, uses isnull() to check for NaNs
+        - For xarray objects, uses isnull() to check for NaNs
+        - If replace_value is callable, it takes precedence over other options
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> model = BlueMathModel()
+        >>> df = pd.DataFrame({'a': [1, np.nan, 3]})
+        >>> cleaned_df = model.check_nans(df, replace_value=0)
+        >>> print(cleaned_df)
+           a
+        0  1
+        1  0
+        2  3
         """
 
         # If replace_value is a callable, just call and return it
@@ -243,6 +436,7 @@ class BlueMathModel(ABC):
         self,
         data: Union[np.ndarray, pd.DataFrame, xr.Dataset],
         scaler: StandardScaler = None,
+        transform: bool = False,
     ) -> Tuple[Union[np.ndarray, pd.DataFrame, xr.Dataset], StandardScaler]:
         """
         Standarize data using StandardScaler.
@@ -254,6 +448,8 @@ class BlueMathModel(ABC):
             Input data to be standarized.
         scaler : StandardScaler, optional
             Scaler object to use for standarization. Default is None.
+        transform : bool
+            Whether to just transform the data. Default to False.
 
         Returns
         -------
@@ -263,7 +459,9 @@ class BlueMathModel(ABC):
             Scaler object used for standarization.
         """
 
-        standarized_data, scaler = standarize(data=data, scaler=scaler)
+        standarized_data, scaler = standarize(
+            data=data, scaler=scaler, transform=transform
+        )
         return standarized_data, scaler
 
     def destandarize(
@@ -416,6 +614,37 @@ class BlueMathModel(ABC):
 
         return get_degrees_from_uv(xu, xv)
 
+    def set_omp_num_threads(self, num_threads: int) -> None:
+        """
+        Set the number of OpenMP threads for parallel operations.
+
+        Parameters
+        ----------
+        num_threads : int
+            Number of OpenMP threads to use.
+
+        Notes
+        -----
+        - Sets the OMP_NUM_THREADS environment variable
+        - Reloads numpy to ensure new thread settings take effect
+        - May affect other libraries using OpenMP
+
+        Warnings
+        --------
+        - This method is under development and behavior may change
+        - Reloading numpy may have side effects in running calculations
+
+        See Also
+        --------
+        set_num_processors_to_use : Set number of processors for BlueMath parallel processing
+        """
+
+        os.environ["OMP_NUM_THREADS"] = str(num_threads)
+
+        # Re-import numpy if it is already imported
+        if "numpy" in sys.modules:
+            importlib.reload(np)
+
     def get_num_processors_available(self) -> int:
         """
         Gets the number of processors available.
@@ -425,26 +654,38 @@ class BlueMathModel(ABC):
         int
             The number of processors available.
 
-        TODO:
+        TODO
+        ----
         - Check whether available processors are used or not.
         """
 
-        return os.cpu_count()
+        return int(os.cpu_count() * 0.9)
 
     def set_num_processors_to_use(self, num_processors: int) -> None:
         """
-        Sets the number of processors to use for parallel processing.
+        Set the number of processors to use for parallel processing.
 
         Parameters
         ----------
         num_processors : int
-            The number of processors to use.
-            If -1, all available processors will be used.
+            Number of processors to use. If -1, uses all available processors
+            minus one for system processes.
 
         Raises
         ------
         ValueError
-            If the number of processors requested exceeds the number of processors available
+            If num_processors is <= 0 (except -1).
+
+        Notes
+        -----
+        - Automatically adjusts if requesting too many processors
+        - Sets the num_workers attribute used by parallel processing methods
+        - Takes into account system resources to avoid overload
+
+        See Also
+        --------
+        get_num_processors_available : Get number of available processors
+        parallel_execute : Execute functions in parallel
         """
 
         # Retrieve the number of processors available
@@ -455,48 +696,90 @@ class BlueMathModel(ABC):
             num_processors = num_processors_available
         elif num_processors <= 0:
             raise ValueError("Number of processors must be greater than 0")
-        elif num_processors > num_processors_available:
-            raise ValueError(
-                f"Number of processors requested ({num_processors}) "
-                f"exceeds the number of processors available ({num_processors_available})"
-            )
-
-        # Calculate the percentage of processors to use
-        percentage = round(num_processors / num_processors_available, 2)
-        if percentage < 0.5:
+        elif (num_processors_available - num_processors) < 2:
             self.logger.info(
-                f"Number of processors requested ({num_processors}) "
-                f"is less than 50% of the available processors ({num_processors_available})"
+                "Number of processors requested leaves less than 2 processors available"
             )
-        else:
-            self.logger.warning(
-                f"Number of processors requested ({num_processors}) "
-                f"is more than 50% of the available processors ({num_processors_available})"
-            )
-        self.logger.info(f"Using {percentage * 100}% of the available processors")
-        os.environ["OMP_NUM_THREADS"] = str(num_processors)
 
-        # Re-import numpy if it is already imported
-        if "numpy" in sys.modules:
-            importlib.reload(np)
+        # Set the number of processors to use
+        self.num_workers = num_processors
 
-    def get_num_processors_used(self) -> int:
+    def parallel_execute(
+        self,
+        func: Callable,
+        items: List[Any],
+        num_workers: int,
+        cpu_intensive: bool = False,
+        **kwargs,
+    ) -> Dict[int, Any]:
         """
-        Gets the number of processors used.
+        Execute a function in parallel across multiple items.
+
+        Parameters
+        ----------
+        func : Callable
+            The function to execute. Should accept single item and **kwargs.
+        items : List[Any]
+            List of items to process in parallel.
+        num_workers : int
+            Number of parallel workers to use.
+        cpu_intensive : bool, optional
+            If True, uses ProcessPoolExecutor, otherwise ThreadPoolExecutor.
+            Default is False.
+        **kwargs : dict
+            Additional keyword arguments passed to func.
 
         Returns
         -------
-        int
-            The number of processors used.
+        Dict[int, Any]
+            Dictionary mapping item indices to function results.
+
+        Raises
+        ------
+        Exception
+            Any exception raised by func is logged and the job continues.
 
         Notes
         -----
-        - This method returns the number of processors used by the application.
-        - 1 is returned if the number of processors used is not set, as is the case of
-          serial processing like Python's built-in functions.
-        - Remember that if we run a parallel processing task, the number of processors used
-          will be the number of processors set by the task, ehich can be > 1.
-          Examples: np.linalg. or numerical models compiled with OpenMP or MPI.
+        - Uses ThreadPoolExecutor for I/O-bound tasks
+        - Uses ProcessPoolExecutor for CPU-bound tasks
+        - Results maintain original item order via index mapping
+        - Failed jobs are logged but don't stop execution
+
+        Warnings
+        --------
+        - ThreadPoolExecutor may have GIL limitations
+        - ProcessPoolExecutor doesn't work with non-picklable objects
+        - File operations may fail with ThreadPoolExecutor
+
+        Examples
+        --------
+        >>> def square(x):
+        ...     return x * x
+        >>> model = BlueMathModel()
+        >>> results = model.parallel_execute(square, [1, 2, 3], num_workers=2)
+        >>> print(results)
+        {0: 1, 1: 4, 2: 9}
         """
 
-        return int(os.environ.get("OMP_NUM_THREADS", 1))
+        results = {}
+
+        executor_class = ProcessPoolExecutor if cpu_intensive else ThreadPoolExecutor
+        self.logger.info(f"Using {executor_class.__name__} for parallel execution")
+
+        with executor_class(max_workers=num_workers) as executor:
+            future_to_item = {
+                executor.submit(func, *item, **kwargs)
+                if isinstance(item, tuple)
+                else executor.submit(func, item, **kwargs): i
+                for i, item in enumerate(items)
+            }
+            for future in as_completed(future_to_item):
+                i = future_to_item[future]
+                try:
+                    result = future.result()
+                    results[i] = result
+                except Exception as exc:
+                    self.logger.error(f"Job for {i} generated an exception: {exc}")
+
+        return results

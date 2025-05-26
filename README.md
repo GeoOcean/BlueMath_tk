@@ -6,6 +6,7 @@
   <img alt="PyPI" src="https://img.shields.io/pypi/v/BlueMath_tk">
   <img alt="Conda (channel only)" src="https://img.shields.io/conda/vn/conda-forge/BlueMath_tk">
   <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/BlueMath_tk">
+  <a href="https://deepwiki.com/GeoOcean/BlueMath_tk"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 Module collection for custom climate data analysis. The main objective of this Python package is to provide a set of statistical tools tailored for climate data analysis, with a focus on statistical classification and prediction.
@@ -17,10 +18,6 @@ The package also includes a set of utility functions for processing climate data
 ```sh
 pip install bluemath-tk
 ```
-
-## License
-
-This project is licensed under the MIT License. See the [license](LICENSE.txt) file for details
 
 ## Project status
 
