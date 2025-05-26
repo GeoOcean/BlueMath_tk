@@ -68,9 +68,9 @@ class gev(BaseDistribution):
     @staticmethod
     def pdf(
         x: np.ndarray,
-        loc: float,
-        scale: float,
-        shape: float
+        loc: float = 0.0,
+        scale: float = 1.0,
+        shape: float = 0.0
     ) -> np.ndarray:
         """
         Probability density function
@@ -78,13 +78,13 @@ class gev(BaseDistribution):
         Parameters
         ----------
         x : np.ndarray
-            Values to compute the probability density
+            Values to compute the probability density value
         loc : float, default=0.0
             Location parameter
         scale : float, default = 1.0
             Scale parameter. 
             Must be greater than 0.
-        shape : float
+        shape : float, default = 0.0
             Shape parameter.
             
         Returns
@@ -116,36 +116,152 @@ class gev(BaseDistribution):
 
         return pdf
 
-        
-
-        
 
     @staticmethod
     def cdf(
-        x: np.ndarray
+        x: np.ndarray,
+        loc: float = 0.0,
+        scale: float = 1.0,
+        shape: float = 0.0
     ) -> np.ndarray:
         """
         Cumulative distribution function
+        
+        Parameters
+        ----------
+        x : np.ndarray
+            Values to compute their probability
+        loc : float, default=0.0
+            Location parameter
+        scale : float, default = 1.0
+            Scale parameter. 
+            Must be greater than 0.
+        shape : float, default = 0.0
+            Shape parameter.
+            
+        Returns
+        ----------
+        p : np.ndarray
+            Probability
+
+        Raises
+        ------
+        ValueError
+            If scale is not greater than 0.
         """
-        pass
+        
+        if scale <= 0:
+            raise ValueError("Scale parameter must be > 0")
+        
+        y = (x - loc) / scale
+
+        # Gumbel case (shape = 0)
+        if shape == 0.0:
+            p = np.exp(-np.exp(-y))
+        
+        # General case (Weibull and Frechet, shape != 0)
+        else:
+            p = np.exp(- np.maximum(1 + shape * y, 0) ** (-1/shape))
+        
+        return p
 
     @staticmethod
     def sf(
-        x: np.ndarray
+        x: np.ndarray,
+        loc: float = 0.0,
+        scale: float = 1.0,
+        shape: float = 0.0
     ) -> np.ndarray:
         """
-        Survival function (1 - cdf)
+        Survival function (1-Cumulative Distribution Function)
+        
+        Parameters
+        ----------
+        x : np.ndarray
+            Values to compute their survival function value
+        loc : float, default=0.0
+            Location parameter
+        scale : float, default = 1.0
+            Scale parameter. 
+            Must be greater than 0.
+        shape : float, default = 0.0
+            Shape parameter.
+            
+        Returns
+        ----------
+        sp : np.ndarray
+            Survival function value 
+
+        Raises
+        ------
+        ValueError
+            If scale is not greater than 0.
         """
-        pass
+        
+        if scale <= 0:
+            raise ValueError("Scale parameter must be > 0")
+
+        sp = gev.cdf(
+            x,
+            loc = loc,
+            scale = scale,
+            shape = shape
+        )
+
+        return sp
+
 
     @staticmethod
     def qf(
-        p: np.ndarray
+        p: np.ndarray,
+        loc: float = 0.0,
+        scale: float = 1.0,
+        shape: float = 0.0
     ) -> np.ndarray:
         """
-        Quantile function
+        Quantile function (Inverse of Cumulative Distribution Function)
+        
+        Parameters
+        ----------
+        p : np.ndarray
+            Probabilities to compute their quantile
+        loc : float, default=0.0
+            Location parameter
+        scale : float, default = 1.0
+            Scale parameter. 
+            Must be greater than 0.
+        shape : float, default = 0.0
+            Shape parameter.
+            
+        Returns
+        ----------
+        q : np.ndarray
+            Quantile value
+
+        Raises
+        ------
+        ValueError
+            If probabilities are not in the range (0, 1).
+
+        ValueError
+            If scale is not greater than 0.
         """
-        pass
+        
+        if np.min(p) <= 0 or np.max(p) >= 1:
+            raise ValueError("Probabilities must be in the range (0, 1)")
+
+        if scale <= 0:
+            raise ValueError("Scale parameter must be > 0")
+        
+        #Gumbel case (shape = 0)
+        if shape == 0.0:
+            q = loc - scale * np.log(-np.log(p))
+
+        # General case (Weibull and Frechet, shape != 0)
+        else:
+            q = loc + scale * (1 + shape * np.log(p)) ** (-1/shape)
+
+        return q
 
     @staticmethod
     def nll(
