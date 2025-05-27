@@ -4,40 +4,103 @@ import numpy as np
 
 from bluemath_tk.distributions.gev import gev
 
+
 class TestGEV(unittest.TestCase):
     def setUp(self):
-
         self.x = np.random.rand(1000) * 2
-
+        self.p = np.random.rand(1000)
         self.loc = 0.0
         self.scale = 1.0
-        self.shape_frechet = 0.1    # GEV (Frechet)
-        self.shape_weibull = -0.1    # GEV (Weibull)
-        self.shape_gumbel = 0.0     # Gumbel case
+        self.shape_frechet = 0.1  # GEV (Frechet)
+        self.shape_weibull = -0.1  # GEV (Weibull)
+        self.shape_gumbel = 0.0  # Gumbel case
 
-    def test_pdf_frechet(self):
-        custom_pdf = gev.pdf(self.x, self.loc, self.scale, self.shape_frechet)
+    def test_pdf(self):
+        for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
+            custom_pdf = gev.pdf(self.x, self.loc, self.scale, shape)
+            self.assertIsInstance(custom_pdf, np.ndarray)
+            self.assertEqual(custom_pdf.shape[0], 1000)
 
-        self.assertIsInstance(custom_pdf, np.ndarray)
-        self.assertEqual(custom_pdf.shape[0], 1000)
+    def test_cdf(self):
+        for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
+            custom_cdf = gev.cdf(self.x, self.loc, self.scale, shape)
+            self.assertIsInstance(custom_cdf, np.ndarray)
+            self.assertEqual(custom_cdf.shape[0], 1000)
 
-    def test_pdf_weibull(self):
-        custom_pdf = gev.pdf(self.x, self.loc, self.scale, self.shape_weibull)
+    def test_sf(self):
+        for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
+            custom_sf = gev.sf(self.x, self.loc, self.scale, shape)
+            self.assertIsInstance(custom_sf, np.ndarray)
+            self.assertEqual(custom_sf.shape[0], 1000)
 
-        self.assertIsInstance(custom_pdf, np.ndarray)
-        self.assertEqual(custom_pdf.shape[0], 1000)
+    def test_qf(self):
+        for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
+            custom_qf = gev.qf(self.p, self.loc, self.scale, shape)
+            self.assertIsInstance(custom_qf, np.ndarray)
+            self.assertEqual(custom_qf.shape[0], 1000)
 
-    def test_pdf_gumbel(self):
-        custom_pdf = gev.pdf(self.x, self.loc, self.scale, self.shape_gumbel)
+    def test_nll(self):
+        for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
+            nll = gev.nll(self.x, self.loc, self.scale, shape)
+            self.assertIsInstance(nll, float)
 
-        self.assertIsInstance(custom_pdf, np.ndarray)
-        self.assertEqual(custom_pdf.shape[0], 1000)
+    def test_random(self):
+        for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
+            random_values = gev.random(1000, self.loc, self.scale, shape)
+            self.assertIsInstance(random_values, np.ndarray)
+            self.assertEqual(random_values.shape[0], 1000)
 
-    def test_pdf_invalid_scale(self):
-        # Scale must be > 0
+    def test_mean(self):
+        for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
+            mean = gev.mean(self.loc, self.scale, shape)
+            self.assertIsInstance(mean, float)
+
+    def test_median(self):
+        for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
+            median = gev.median(self.loc, self.scale, shape)
+            self.assertIsInstance(median, float)
+
+    def test_variance(self):
+        for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
+            variance = gev.variance(self.loc, self.scale, shape)
+            self.assertIsInstance(variance, float)
+
+    def test_std(self):
+        for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
+            std = gev.std(self.loc, self.scale, shape)
+            self.assertIsInstance(std, float)
+
+    def test_stats(self):
+        for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
+            stats = gev.stats(self.loc, self.scale, shape)
+            self.assertIsInstance(stats, dict)
+            self.assertIn("mean", stats)
+            self.assertIn("median", stats)
+            self.assertIn("variance", stats)
+            self.assertIn("std", stats)
+
+    def test_invalid_scale(self):
         with self.assertRaises(ValueError):
             gev.pdf(self.x, self.loc, 0.0, self.shape_frechet)
+        with self.assertRaises(ValueError):
+            gev.cdf(self.x, self.loc, 0.0, self.shape_frechet)
+        with self.assertRaises(ValueError):
+            gev.sf(self.x, self.loc, 0.0, self.shape_frechet)
+        with self.assertRaises(ValueError):
+            gev.qf(self.p, self.loc, 0.0, self.shape_frechet)
+        with self.assertRaises(ValueError):
+            gev.random(1000, self.loc, 0.0, self.shape_frechet)
+        with self.assertRaises(ValueError):
+            gev.mean(self.loc, 0.0, self.shape_frechet)
+        with self.assertRaises(ValueError):
+            gev.median(self.loc, 0.0, self.shape_frechet)
+        with self.assertRaises(ValueError):
+            gev.variance(self.loc, 0.0, self.shape_frechet)
+        with self.assertRaises(ValueError):
+            gev.std(self.loc, 0.0, self.shape_frechet)
+        with self.assertRaises(ValueError):
+            gev.stats(self.loc, 0.0, self.shape_frechet)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

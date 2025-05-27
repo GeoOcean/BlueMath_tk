@@ -1,7 +1,7 @@
 from typing import Tuple
 
 import numpy as np
-import pandas as pd
+from scipy.special import gamma
 
 from ._base_distributions import BaseDistribution
 
@@ -18,7 +18,7 @@ class gev(BaseDistribution):
         The complete name of the distribution (GEV).
     nparams : int
         Number of GEV parameters.
-    
+
     Methods
     -------
     pdf(x, loc, scale, shape)
@@ -29,8 +29,22 @@ class gev(BaseDistribution):
         Quantile function
     sf(x, loc, scale, shape)
         Survival function
-
-        AÑADIR MAS METODOS
+    nll(data, loc, scale, shape)
+        Negative Log-Likelihood function
+    fit(data)
+        Fit distribution to data (NOT IMPLEMENTED).
+    random(size, loc, scale, shape)
+        Generates random values from GEV distribution.
+    mean(loc, scale, shape)
+        Mean of GEV distribution.
+    median(loc, scale, shape)
+        Median of GEV distribution.
+    variance(loc, scale, shape)
+        Variance of GEV distribution.
+    std(loc, scale, shape)
+        Standard deviation of GEV distribution.
+    stats(loc, scale, shape)
+        Summary statistics of GEV distribution.
 
     Notes
     -----
@@ -44,37 +58,30 @@ class gev(BaseDistribution):
     >>> gev_qf = gev.qf(p, loc=0, scale=1, shape=0.1)
     """
 
-    def __init__(
-            self
-    ) -> None:
+    def __init__(self) -> None:
         """
         Initialize the GEV distribution class
         """
         super().__init__()
 
     @property
-    def name(
-            self
-    ) -> str:
+    def name(self) -> str:
         return "Generalized Extreme Value"
-    
+
     @property
     def nparams(self) -> int:
         """
         Number of parameters of GEV
         """
         return int(3)
-    
+
     @staticmethod
     def pdf(
-        x: np.ndarray,
-        loc: float = 0.0,
-        scale: float = 1.0,
-        shape: float = 0.0
+        x: np.ndarray, loc: float = 0.0, scale: float = 1.0, shape: float = 0.0
     ) -> np.ndarray:
         """
         Probability density function
-        
+
         Parameters
         ----------
         x : np.ndarray
@@ -82,11 +89,11 @@ class gev(BaseDistribution):
         loc : float, default=0.0
             Location parameter
         scale : float, default = 1.0
-            Scale parameter. 
+            Scale parameter.
             Must be greater than 0.
         shape : float, default = 0.0
             Shape parameter.
-            
+
         Returns
         ----------
         pdf : np.ndarray
@@ -100,33 +107,31 @@ class gev(BaseDistribution):
 
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
-        
-        y = (x - loc)/scale
+
+        y = (x - loc) / scale
 
         # Gumbel case (shape = 0)
         if shape == 0.0:
-            pdf = (1/scale) * (np.exp(-y) * np.exp(-np.exp(-y)))
+            pdf = (1 / scale) * (np.exp(-y) * np.exp(-np.exp(-y)))
 
         # General case (Weibull and Frechet, shape != 0)
-        else: 
-            pdf = np.full_like(x, 0, dtype=float)   # 0 
+        else:
+            pdf = np.full_like(x, 0, dtype=float)  # 0
             yy = 1 + shape * y
             yymask = yy > 0
-            pdf[yymask] = (1/scale) * (yy[yymask] ** (-1 - (1/shape)) * np.exp(-yy[yymask] ** (-1/shape)))
+            pdf[yymask] = (1 / scale) * (
+                yy[yymask] ** (-1 - (1 / shape)) * np.exp(-(yy[yymask] ** (-1 / shape)))
+            )
 
         return pdf
 
-
     @staticmethod
     def cdf(
-        x: np.ndarray,
-        loc: float = 0.0,
-        scale: float = 1.0,
-        shape: float = 0.0
+        x: np.ndarray, loc: float = 0.0, scale: float = 1.0, shape: float = 0.0
     ) -> np.ndarray:
         """
         Cumulative distribution function
-        
+
         Parameters
         ----------
         x : np.ndarray
@@ -134,11 +139,11 @@ class gev(BaseDistribution):
         loc : float, default=0.0
             Location parameter
         scale : float, default = 1.0
-            Scale parameter. 
+            Scale parameter.
             Must be greater than 0.
         shape : float, default = 0.0
             Shape parameter.
-            
+
         Returns
         ----------
         p : np.ndarray
@@ -149,32 +154,29 @@ class gev(BaseDistribution):
         ValueError
             If scale is not greater than 0.
         """
-        
+
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
-        
+
         y = (x - loc) / scale
 
         # Gumbel case (shape = 0)
         if shape == 0.0:
             p = np.exp(-np.exp(-y))
-        
+
         # General case (Weibull and Frechet, shape != 0)
         else:
-            p = np.exp(- np.maximum(1 + shape * y, 0) ** (-1/shape))
-        
+            p = np.exp(-(np.maximum(1 + shape * y, 0) ** (-1 / shape)))
+
         return p
 
     @staticmethod
     def sf(
-        x: np.ndarray,
-        loc: float = 0.0,
-        scale: float = 1.0,
-        shape: float = 0.0
+        x: np.ndarray, loc: float = 0.0, scale: float = 1.0, shape: float = 0.0
     ) -> np.ndarray:
         """
         Survival function (1-Cumulative Distribution Function)
-        
+
         Parameters
         ----------
         x : np.ndarray
@@ -182,45 +184,36 @@ class gev(BaseDistribution):
         loc : float, default=0.0
             Location parameter
         scale : float, default = 1.0
-            Scale parameter. 
+            Scale parameter.
             Must be greater than 0.
         shape : float, default = 0.0
             Shape parameter.
-            
+
         Returns
         ----------
         sp : np.ndarray
-            Survival function value 
+            Survival function value
 
         Raises
         ------
         ValueError
             If scale is not greater than 0.
         """
-        
+
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        sp = gev.cdf(
-            x,
-            loc = loc,
-            scale = scale,
-            shape = shape
-        )
+        sp = 1 - gev.cdf(x, loc=loc, scale=scale, shape=shape)
 
         return sp
 
-
     @staticmethod
     def qf(
-        p: np.ndarray,
-        loc: float = 0.0,
-        scale: float = 1.0,
-        shape: float = 0.0
+        p: np.ndarray, loc: float = 0.0, scale: float = 1.0, shape: float = 0.0
     ) -> np.ndarray:
         """
         Quantile function (Inverse of Cumulative Distribution Function)
-        
+
         Parameters
         ----------
         p : np.ndarray
@@ -228,11 +221,11 @@ class gev(BaseDistribution):
         loc : float, default=0.0
             Location parameter
         scale : float, default = 1.0
-            Scale parameter. 
+            Scale parameter.
             Must be greater than 0.
         shape : float, default = 0.0
             Shape parameter.
-            
+
         Returns
         ----------
         q : np.ndarray
@@ -246,88 +239,327 @@ class gev(BaseDistribution):
         ValueError
             If scale is not greater than 0.
         """
-        
+
         if np.min(p) <= 0 or np.max(p) >= 1:
             raise ValueError("Probabilities must be in the range (0, 1)")
 
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
-        
-        #Gumbel case (shape = 0)
+
+        # Gumbel case (shape = 0)
         if shape == 0.0:
             q = loc - scale * np.log(-np.log(p))
 
         # General case (Weibull and Frechet, shape != 0)
         else:
-            q = loc + scale * (1 + shape * np.log(p)) ** (-1/shape)
+            q = loc + scale * ((-np.log(p)) ** (-shape) - 1) / shape
 
         return q
 
     @staticmethod
     def nll(
-        data: np.ndarray,
-        *args
+        data: np.ndarray, loc: float = 0.0, scale: float = 1.0, shape: float = 0.0
     ) -> float:
         """
         Negative Log-Likelihood function
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Data to compute the Negative Log-Likelihood value
+        loc : float, default=0.0
+            Location parameter
+        scale : float, default = 1.0
+            Scale parameter.
+            Must be greater than 0.
+        shape : float, default = 0.0
+            Shape parameter.
+
+        Returns
+        ----------
+        nll : float
+            Negative Log-Likelihood value
+
+        Raises
+        ------
+        ValueError
+            If scale is not greater than 0.
         """
-        pass
+
+        if scale <= 0:
+            nll = np.inf  # Return a large value for invalid scale
+
+        y = (data - loc) / scale
+
+        # Gumbel case (shape = 0)
+        if shape == 0.0:
+            nll = data.shape[0] * np.log(scale) + np.sum(
+                np.exp(-y) + np.sum(-y)
+            )  # Gumbel case
+
+        # General case (Weibull and Frechet, shape != 0)
+        else:
+            y = 1 + shape * y
+            if any(y <= 0):
+                nll = np.inf  # Return a large value for invalid y
+            else:
+                nll = (
+                    data.shape[0] * np.log(scale)
+                    + np.sum(y ** (-1 / shape))
+                    + (1 / shape + 1) * np.sum(np.log(y))
+                )
+
+        return nll
 
     @staticmethod
-    def fit(
-        data: np.ndarray
-    ) -> Tuple[float, float, float]:
+    def fit(data: np.ndarray) -> Tuple[float, float, float]:
         """
         Fit distribution
         """
         pass
-    
-    @staticmethod
-    def random(
-        data: np.ndarray,
-        size: int
-    ) -> np.ndarray:
-        """
-        Generate random values
-        """
-        pass
 
     @staticmethod
-    def mean(
-    ) -> float:
+    def random(
+        size: int, loc: float = 0.0, scale: float = 1.0, shape: float = 0.0
+    ) -> np.ndarray:
+        """
+        Generates random values from GEV distribution
+
+        Parameters
+        ----------
+        size : int
+            Number of random values to generate
+        loc : float, default=0.0
+            Location parameter
+        scale : float, default = 1.0
+            Scale parameter.
+            Must be greater than 0.
+        shape : float, default = 0.0
+            Shape parameter.
+
+        Returns
+        ----------
+        x : np.ndarray
+            Random values from GEV distribution
+
+        Raises
+        ------
+        ValueError
+            If scale is not greater than 0.
+        """
+
+        if scale <= 0:
+            raise ValueError("Scale parameter must be > 0")
+
+        # Generate uniform random numbers
+        u = np.random.uniform(0, 1, size)
+
+        # Gumbel case (shape = 0)
+        if shape == 0.0:
+            x = loc - scale * np.log(-np.log(u))
+
+        # General case (Weibull and Frechet, shape != 0)
+        else:
+            x = loc + scale * ((-np.log(u)) ** (-shape) - 1) / shape
+
+        return x
+
+    @staticmethod
+    def mean(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
         """
         Mean
+
+        Parameters
+        ----------
+        loc : float, default=0.0
+            Location parameter
+        scale : float, default = 1.0
+            Scale parameter.
+            Must be greater than 0.
+        shape : float, default = 0.0
+            Shape parameter.
+
+        Returns
+        ----------
+        mean : np.ndarray
+            Mean value of GEV with the given parameters
+
+        Raises
+        ------
+        ValueError
+            If scale is not greater than 0.
         """
-        pass
-    
+
+        if scale <= 0:
+            raise ValueError("Scale parameter must be > 0")
+
+        eu_cons = np.euler_gamma  # Euler-Mascheroni constant
+
+        # Gumbel case (shape = 0)
+        if shape == 0.0:
+            mean = loc + scale * eu_cons
+
+        # General case (Weibull and Frechet, shape != 0 and shape < 1)
+        elif shape != 0.0 and shape < 1:
+            mean = loc + scale * (gamma(1 - shape) - 1) / shape
+
+        # Shape >= 1 case
+        else:
+            mean = np.inf
+
+        return mean
+
     @staticmethod
-    def median(
-    ) -> float:
+    def median(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
         """
         Median
+
+        Parameters
+        ----------
+        loc : float, default=0.0
+            Location parameter
+        scale : float, default = 1.0
+            Scale parameter.
+            Must be greater than 0.
+        shape : float, default = 0.0
+            Shape parameter.
+
+        Returns
+        ----------
+        median : np.ndarray
+            Median value of GEV with the given parameters
+
+        Raises
+        ------
+        ValueError
+            If scale is not greater than 0.
         """
-        pass
-    
+
+        if scale <= 0:
+            raise ValueError("Scale parameter must be > 0")
+
+        if shape == 0.0:
+            median = loc - scale * np.log(np.log(2))
+
+        else:
+            median = loc + scale * ((np.log(2)) ** (-shape) - 1) / shape
+
+        return median
+
     @staticmethod
-    def variance(
-    ) -> float:
+    def variance(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
         """
-        Variance 
+        Variance
+
+        Parameters
+        ----------
+        loc : float, default=0.0
+            Location parameter
+        scale : float, default = 1.0
+            Scale parameter.
+            Must be greater than 0.
+        shape : float, default = 0.0
+            Shape parameter.
+
+        Returns
+        ----------
+        var : np.ndarray
+            Variance of GEV with the given parameters
+
+        Raises
+        ------
+        ValueError
+            If scale is not greater than 0.
         """
-        pass
-    
+
+        if scale <= 0:
+            raise ValueError("Scale parameter must be > 0")
+
+        # Gumbel case (shape = 0)
+        if shape == 0.0:
+            var = (np.pi**2 / 6) * scale**2
+
+        elif shape != 0.0 and shape < 0.5:
+            var = (
+                (scale**2)
+                * (gamma(1 - 2 * shape) - (gamma(1 - shape) ** 2))
+                / (shape**2)
+            )
+
+        else:
+            var = np.inf
+
+        return var
+
     @staticmethod
-    def std(
-    ) -> float:
+    def std(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
         """
         Standard deviation
+
+        Parameters
+        ----------
+        loc : float, default=0.0
+            Location parameter
+        scale : float, default = 1.0
+            Scale parameter.
+            Must be greater than 0.
+        shape : float, default = 0.0
+            Shape parameter.
+
+        Returns
+        ----------
+        std : np.ndarray
+            Standard Deviation of GEV with the given
+            parameters
+
+        Raises
+        ------
+        ValueError
+            If scale is not greater than 0.
         """
-        pass
-    
+
+        if scale <= 0:
+            raise ValueError("Scale parameter must be > 0")
+
+        std = np.sqrt(gev.variance(loc, scale, shape))
+
+        return std
+
     @staticmethod
-    def stats(
-    ) -> dict:
+    def stats(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> dict:
         """
+        Summary statistics
+
         Return summary statistics including mean, std, variance, etc.
+
+        Parameters
+        ----------
+        loc : float, default=0.0
+            Location parameter
+        scale : float, default = 1.0
+            Scale parameter.
+            Must be greater than 0.
+        shape : float, default = 0.0
+            Shape parameter.
+
+        Returns
+        ----------
+        stats : dict
+            Summary statistics of GEV distribution with the given
+            parameters
+
+        Raises
+        ------
+        ValueError
+            If scale is not greater than 0.
         """
-        pass
+
+        if scale <= 0:
+            raise ValueError("Scale parameter must be > 0")
+
+        return {
+            "mean": gev.mean(loc, scale, shape),
+            "median": gev.median(loc, scale, shape),
+            "variance": gev.variance(loc, scale, shape),
+            "std": gev.std(loc, scale, shape),
+        }
