@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 
 from bluemath_tk.distributions.gev import gev
+from bluemath_tk.distributions._base_distributions import FitResult
 
 
 class TestGEV(unittest.TestCase):
@@ -100,6 +101,24 @@ class TestGEV(unittest.TestCase):
             gev.std(self.loc, 0.0, self.shape_frechet)
         with self.assertRaises(ValueError):
             gev.stats(self.loc, 0.0, self.shape_frechet)
+
+    def test_fit(self):
+        # Generate data using specific parameters
+        loc, scale, shape = 0.5, 1.5, 0.2
+        data = gev.random(1000, loc, scale, shape)
+
+        # Fit the GEV distribution to the data
+        fit_result = gev.fit(data)
+
+        # Check the fit result
+        self.assertIsInstance(fit_result, FitResult)
+        self.assertTrue(fit_result.success)
+        self.assertEqual(len(fit_result.params), 3)  # loc, scale, shape
+        self.assertGreater(fit_result.params[1], 0)  # Scale must be > 0
+        self.assertIsInstance(fit_result.nll, float)
+
+        # Verify that the fitted parameters are close to the original ones
+        np.testing.assert_allclose(fit_result.params, [loc, scale, shape], rtol=0.25)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 from scipy.special import gamma
 
-from ._base_distributions import BaseDistribution
+from ._base_distributions import BaseDistribution, FitResult, fit_dist
 
 
 class gev(BaseDistribution):
@@ -311,12 +311,24 @@ class gev(BaseDistribution):
 
         return nll
 
-    @staticmethod
-    def fit(data: np.ndarray) -> Tuple[float, float, float]:
+    
+    def fit(data: np.ndarray, **kwargs) -> FitResult:
         """
-        Fit distribution
+        Fit GEV distribution
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Data to fit the GEV distribution
+
+        Returns
+        ----------
+        FitResult
+            Result of the fit containing the parameters loc, scale, shape, 
+            success status, and negative log-likelihood value.
         """
-        pass
+        # Fit the GEV distribution to the data using the fit_dist function
+        return fit_dist(gev, data, **kwargs)
 
     @staticmethod
     def random(
