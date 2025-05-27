@@ -145,7 +145,7 @@ class NOAADownloader(BaseDownloader):
         ----------
         data_type : str
             The data type to download ('bulk_parameters', 'wave_spectra',
-            'directional_spectra', 'waves_forecast')
+            'directional_spectra', 'wind_forecast')
         **kwargs
             Additional keyword arguments specific to each data type
 

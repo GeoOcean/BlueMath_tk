@@ -15,7 +15,7 @@ LEGEND_SIZE = 12
 TEXT_SIZE = 14
 
 
-class NOAADataReader:
+class NOAAReader:
     """
     Class for reading and processing NOAA buoy data.
 
@@ -24,29 +24,27 @@ class NOAADataReader:
 
     Attributes
     ----------
-    base_path : Path
+    base_path_to_read : Path
         Base path where the data is stored
     debug : bool
         Whether to run in debug mode
     """
 
-    def __init__(self, base_path: Union[str, Path], debug: bool = True):
+    def __init__(self, base_path_to_read: Union[str, Path], debug: bool = True):
         """
         Initialize the NOAA data reader.
 
         Parameters
         ----------
-        base_path : Union[str, Path]
+        base_path_to_read : Union[str, Path]
             Base path where the data is stored
         debug : bool, optional
             Whether to run in debug mode, by default True
         """
 
-        self.base_path = Path(base_path)
+        self.base_path_to_read = Path(base_path_to_read)
         self.debug = debug
-        self.logger = get_file_logger(
-            "NOAADataReader", level="DEBUG" if debug else "INFO"
-        )
+        self.logger = get_file_logger("NOAAReader", level="DEBUG" if debug else "INFO")
 
     def read_bulk_parameters(self, buoy_id: str, year: int) -> Optional[pd.DataFrame]:
         """
@@ -65,7 +63,9 @@ class NOAADataReader:
             DataFrame containing the bulk parameters, or None if data not found
         """
 
-        file_path = self.base_path / buoy_id / f"buoy_{buoy_id}_bulk_parameters.csv"
+        file_path = (
+            self.base_path_to_read / buoy_id / f"buoy_{buoy_id}_bulk_parameters.csv"
+        )
         try:
             df = pd.read_csv(file_path)
             df["datetime"] = pd.to_datetime(
@@ -104,13 +104,21 @@ class NOAADataReader:
         """
 
         file_path = (
-            self.base_path
+            self.base_path_to_read
+            / "buoy_data"
             / buoy_id
             / "wave_spectra"
             / f"buoy_{buoy_id}_spectra_{year}.csv"
         )
         try:
-            df = pd.read_csv(file_path, index_col=0, parse_dates=True)
+            df = pd.read_csv(file_path)
+            df["date"] = pd.to_datetime(
+                df[["YYYY", "MM", "DD", "hh"]].rename(
+                    columns={"YYYY": "year", "MM": "month", "DD": "day", "hh": "hour"}
+                )
+            )
+            df.set_index("date", inplace=True)
+            df.drop(columns=["YYYY", "MM", "DD", "hh"], inplace=True)
             return df
         except FileNotFoundError:
             self.logger.error(
@@ -138,7 +146,9 @@ class NOAADataReader:
             or None for each if data not found
         """
 
-        dir_path = self.base_path / buoy_id / "directional_spectra"
+        dir_path = (
+            self.base_path_to_read / "buoy_data" / buoy_id / "directional_spectra"
+        )
         files = {
             "alpha1": f"{buoy_id}d{year}.txt.gz",
             "alpha2": f"{buoy_id}i{year}.txt.gz",
