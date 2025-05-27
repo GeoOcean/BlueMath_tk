@@ -105,7 +105,7 @@ class TestGEV(unittest.TestCase):
     def test_fit(self):
         # Generate data using specific parameters
         loc, scale, shape = 0.5, 1.5, 0.2
-        data = gev.random(1000, loc, scale, shape)
+        data = gev.random(1000, loc, scale, shape, random_state=42)
 
         # Fit the GEV distribution to the data
         fit_result = gev.fit(data)
@@ -118,7 +118,9 @@ class TestGEV(unittest.TestCase):
         self.assertIsInstance(fit_result.nll, float)
 
         # Verify that the fitted parameters are close to the original ones
-        np.testing.assert_allclose(fit_result.params, [loc, scale, shape], rtol=0.25)
+        self.assertAlmostEqual(fit_result.params[0], loc, delta=0.1)
+        self.assertAlmostEqual(fit_result.params[1], scale, delta=0.1)
+        self.assertAlmostEqual(fit_result.params[2], shape, delta=0.1)
 
 
 if __name__ == "__main__":
