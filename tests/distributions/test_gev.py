@@ -2,8 +2,8 @@ import unittest
 
 import numpy as np
 
-from bluemath_tk.distributions.gev import gev
 from bluemath_tk.distributions._base_distributions import FitResult
+from bluemath_tk.distributions.gev import gev
 
 
 class TestGEV(unittest.TestCase):

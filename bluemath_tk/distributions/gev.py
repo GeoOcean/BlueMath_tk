@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import numpy as np
 from scipy.special import gamma
 
@@ -311,7 +309,6 @@ class gev(BaseDistribution):
 
         return nll
 
-    
     def fit(data: np.ndarray, **kwargs) -> FitResult:
         """
         Fit GEV distribution
@@ -324,7 +321,7 @@ class gev(BaseDistribution):
         Returns
         ----------
         FitResult
-            Result of the fit containing the parameters loc, scale, shape, 
+            Result of the fit containing the parameters loc, scale, shape,
             success status, and negative log-likelihood value.
         """
         # Fit the GEV distribution to the data using the fit_dist function
