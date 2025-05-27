@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import Dict, List
 
 import numpy as np
 from scipy.optimize import minimize
@@ -10,7 +11,7 @@ class FitResult(BlueMathModel):
     """
     Class used for the results of fitting a distribution
 
-    Attributes  
+    Attributes
     ----------
     dist : BaseDistribution
         The distribution that was fitted.
@@ -22,20 +23,20 @@ class FitResult(BlueMathModel):
         Indicates whether the fitting was successful.
     message : str
         Message from the optimization result.
-    nll : float     
+    nll : float
         Negative log-likelihood of the fitted distribution.
-    res : OptimizeResult    
+    res : OptimizeResult
         The result of the optimization process, containing additional information.
- 
+
     Methods
-    ------- 
+    -------
     summary() -> dict
         Returns a summary of the fitting results, including parameters, negative log-likelihood,
         success status, message, and the optimization result.
     plot(ax=None, plot_type="hist")
-        Plots of fitting results (NOT IMPLEMENTED).     
-    
-    Notes   
+        Plots of fitting results (NOT IMPLEMENTED).
+
+    Notes
     -------
     - This class is used to encapsulate the results of fitting a distribution to data.
     - It provides a method to summarize the fitting results and a placeholder for plotting the results.
@@ -54,21 +55,16 @@ class FitResult(BlueMathModel):
 
     def summary(self):
         """
-        Returns a summary of the fitting resultsº
-
-        Returns
-        ------- 
-        dict
-            A dictionary containing the fitting results, including parameters,
-            negative log-likelihood, success status, message, and the optimization result.
+        Print a summary of the fitting results
         """
-        return {
-            "parameters": self.params,
-            "nll": self.nll,
-            "success": self.success,
-            "message": self.message,
-            "result": self.res
-        }
+        print(f"Fitting results for {self.dist().name}:")
+        print("--------------------------------------")
+        print("Parameters:")
+        for i, param in enumerate(self.params):
+            print(f"   - {self.dist().param_names[i]}: {param:.4f}")
+        # print("\n")
+        print(f"Negative Log-Likelihood value: {self.nll:.4f}")
+        print(f"{self.message}")
 
     def plot(self, ax=None, plot_type="hist"):
         """
@@ -142,6 +138,11 @@ class BaseDistribution(BlueMathModel):
     @property
     @abstractmethod
     def nparams(self) -> int:
+        pass
+
+    @property
+    @abstractmethod
+    def param_names(self) -> List[str]:
         pass
 
     @staticmethod
@@ -226,7 +227,7 @@ class BaseDistribution(BlueMathModel):
 
     @staticmethod
     @abstractmethod
-    def stats() -> dict:
+    def stats() -> Dict[str, float]:
         """
         Return summary statistics including mean, std, variance, etc.
         """

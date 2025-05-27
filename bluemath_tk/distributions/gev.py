@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 import numpy as np
 from scipy.special import gamma
 
@@ -64,7 +66,7 @@ class gev(BaseDistribution):
 
     @property
     def name(self) -> str:
-        return "Generalized Extreme Value"
+        return "Generalized Extreme Value (GEV)"
 
     @property
     def nparams(self) -> int:
@@ -72,6 +74,13 @@ class gev(BaseDistribution):
         Number of parameters of GEV
         """
         return int(3)
+
+    @property
+    def param_names(self) -> List[str]:
+        """
+        Name of parameters of GEV
+        """
+        return ["location", "scale", "shape"]
 
     @staticmethod
     def pdf(
@@ -329,7 +338,11 @@ class gev(BaseDistribution):
 
     @staticmethod
     def random(
-        size: int, loc: float = 0.0, scale: float = 1.0, shape: float = 0.0
+        size: int,
+        loc: float = 0.0,
+        scale: float = 1.0,
+        shape: float = 0.0,
+        random_state: int = None,
     ) -> np.ndarray:
         """
         Generates random values from GEV distribution
@@ -345,6 +358,9 @@ class gev(BaseDistribution):
             Must be greater than 0.
         shape : float, default = 0.0
             Shape parameter.
+        random_state : np.random.RandomState, optional
+            Random state for reproducibility.
+            If None, do not use random stat.
 
         Returns
         ----------
@@ -359,6 +375,10 @@ class gev(BaseDistribution):
 
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
+
+        # Set random state if provided
+        if random_state is not None:
+            np.random.seed(random_state)
 
         # Generate uniform random numbers
         u = np.random.uniform(0, 1, size)
@@ -535,7 +555,9 @@ class gev(BaseDistribution):
         return std
 
     @staticmethod
-    def stats(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> dict:
+    def stats(
+        loc: float = 0.0, scale: float = 1.0, shape: float = 0.0
+    ) -> Dict[str, float]:
         """
         Summary statistics
 
@@ -567,8 +589,8 @@ class gev(BaseDistribution):
             raise ValueError("Scale parameter must be > 0")
 
         return {
-            "mean": gev.mean(loc, scale, shape),
-            "median": gev.median(loc, scale, shape),
-            "variance": gev.variance(loc, scale, shape),
-            "std": gev.std(loc, scale, shape),
+            "mean": float(gev.mean(loc, scale, shape)),
+            "median": float(gev.median(loc, scale, shape)),
+            "variance": float(gev.variance(loc, scale, shape)),
+            "std": float(gev.std(loc, scale, shape)),
         }
