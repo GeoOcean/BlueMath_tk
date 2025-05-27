@@ -9,9 +9,40 @@ from ..core.models import BlueMathModel
 class FitResult(BlueMathModel):
     """
     Class used for the results of fitting a distribution
+
+    Attributes  
+    ----------
+    dist : BaseDistribution
+        The distribution that was fitted.
+    data : np.ndarray
+        The data used for fitting the distribution.
+    params : np.ndarray
+        Fitted parameters of the distribution.
+    success : bool
+        Indicates whether the fitting was successful.
+    message : str
+        Message from the optimization result.
+    nll : float     
+        Negative log-likelihood of the fitted distribution.
+    res : OptimizeResult    
+        The result of the optimization process, containing additional information.
+ 
+    Methods
+    ------- 
+    summary() -> dict
+        Returns a summary of the fitting results, including parameters, negative log-likelihood,
+        success status, message, and the optimization result.
+    plot(ax=None, plot_type="hist")
+        Plots of fitting results (NOT IMPLEMENTED).     
+    
+    Notes   
+    -------
+    - This class is used to encapsulate the results of fitting a distribution to data.
+    - It provides a method to summarize the fitting results and a placeholder for plotting the results.
     """
 
     def __init__(self, dist, data, res):
+        super().__init__()
         self.dist = dist
         self.data = data
 
@@ -19,13 +50,24 @@ class FitResult(BlueMathModel):
         self.success = res.success
         self.message = res.message
         self.nll = res.fun
+        self.res = res
 
     def summary(self):
+        """
+        Returns a summary of the fitting resultsº
+
+        Returns
+        ------- 
+        dict
+            A dictionary containing the fitting results, including parameters,
+            negative log-likelihood, success status, message, and the optimization result.
+        """
         return {
             "parameters": self.params,
             "nll": self.nll,
             "success": self.success,
             "message": self.message,
+            "result": self.res
         }
 
     def plot(self, ax=None, plot_type="hist"):
