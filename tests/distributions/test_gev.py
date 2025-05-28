@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from bluemath_tk.distributions._base_distributions import FitResult
-from bluemath_tk.distributions.gev import gev
+from bluemath_tk.distributions.gev import GEV
 
 
 class TestGEV(unittest.TestCase):
@@ -18,62 +18,62 @@ class TestGEV(unittest.TestCase):
 
     def test_pdf(self):
         for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
-            custom_pdf = gev.pdf(self.x, self.loc, self.scale, shape)
+            custom_pdf = GEV.pdf(self.x, self.loc, self.scale, shape)
             self.assertIsInstance(custom_pdf, np.ndarray)
             self.assertEqual(custom_pdf.shape[0], 1000)
 
     def test_cdf(self):
         for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
-            custom_cdf = gev.cdf(self.x, self.loc, self.scale, shape)
+            custom_cdf = GEV.cdf(self.x, self.loc, self.scale, shape)
             self.assertIsInstance(custom_cdf, np.ndarray)
             self.assertEqual(custom_cdf.shape[0], 1000)
 
     def test_sf(self):
         for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
-            custom_sf = gev.sf(self.x, self.loc, self.scale, shape)
+            custom_sf = GEV.sf(self.x, self.loc, self.scale, shape)
             self.assertIsInstance(custom_sf, np.ndarray)
             self.assertEqual(custom_sf.shape[0], 1000)
 
     def test_qf(self):
         for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
-            custom_qf = gev.qf(self.p, self.loc, self.scale, shape)
+            custom_qf = GEV.qf(self.p, self.loc, self.scale, shape)
             self.assertIsInstance(custom_qf, np.ndarray)
             self.assertEqual(custom_qf.shape[0], 1000)
 
     def test_nll(self):
         for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
-            nll = gev.nll(self.x, self.loc, self.scale, shape)
+            nll = GEV.nll(self.x, self.loc, self.scale, shape)
             self.assertIsInstance(nll, float)
 
     def test_random(self):
         for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
-            random_values = gev.random(1000, self.loc, self.scale, shape)
+            random_values = GEV.random(1000, self.loc, self.scale, shape)
             self.assertIsInstance(random_values, np.ndarray)
             self.assertEqual(random_values.shape[0], 1000)
 
     def test_mean(self):
         for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
-            mean = gev.mean(self.loc, self.scale, shape)
+            mean = GEV.mean(self.loc, self.scale, shape)
             self.assertIsInstance(mean, float)
 
     def test_median(self):
         for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
-            median = gev.median(self.loc, self.scale, shape)
+            median = GEV.median(self.loc, self.scale, shape)
             self.assertIsInstance(median, float)
 
     def test_variance(self):
         for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
-            variance = gev.variance(self.loc, self.scale, shape)
+            variance = GEV.variance(self.loc, self.scale, shape)
             self.assertIsInstance(variance, float)
 
     def test_std(self):
         for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
-            std = gev.std(self.loc, self.scale, shape)
+            std = GEV.std(self.loc, self.scale, shape)
             self.assertIsInstance(std, float)
 
     def test_stats(self):
         for shape in [self.shape_frechet, self.shape_weibull, self.shape_gumbel]:
-            stats = gev.stats(self.loc, self.scale, shape)
+            stats = GEV.stats(self.loc, self.scale, shape)
             self.assertIsInstance(stats, dict)
             self.assertIn("mean", stats)
             self.assertIn("median", stats)
@@ -82,33 +82,33 @@ class TestGEV(unittest.TestCase):
 
     def test_invalid_scale(self):
         with self.assertRaises(ValueError):
-            gev.pdf(self.x, self.loc, 0.0, self.shape_frechet)
+            GEV.pdf(self.x, self.loc, 0.0, self.shape_frechet)
         with self.assertRaises(ValueError):
-            gev.cdf(self.x, self.loc, 0.0, self.shape_frechet)
+            GEV.cdf(self.x, self.loc, 0.0, self.shape_frechet)
         with self.assertRaises(ValueError):
-            gev.sf(self.x, self.loc, 0.0, self.shape_frechet)
+            GEV.sf(self.x, self.loc, 0.0, self.shape_frechet)
         with self.assertRaises(ValueError):
-            gev.qf(self.p, self.loc, 0.0, self.shape_frechet)
+            GEV.qf(self.p, self.loc, 0.0, self.shape_frechet)
         with self.assertRaises(ValueError):
-            gev.random(1000, self.loc, 0.0, self.shape_frechet)
+            GEV.random(1000, self.loc, 0.0, self.shape_frechet)
         with self.assertRaises(ValueError):
-            gev.mean(self.loc, 0.0, self.shape_frechet)
+            GEV.mean(self.loc, 0.0, self.shape_frechet)
         with self.assertRaises(ValueError):
-            gev.median(self.loc, 0.0, self.shape_frechet)
+            GEV.median(self.loc, 0.0, self.shape_frechet)
         with self.assertRaises(ValueError):
-            gev.variance(self.loc, 0.0, self.shape_frechet)
+            GEV.variance(self.loc, 0.0, self.shape_frechet)
         with self.assertRaises(ValueError):
-            gev.std(self.loc, 0.0, self.shape_frechet)
+            GEV.std(self.loc, 0.0, self.shape_frechet)
         with self.assertRaises(ValueError):
-            gev.stats(self.loc, 0.0, self.shape_frechet)
+            GEV.stats(self.loc, 0.0, self.shape_frechet)
 
     def test_fit(self):
         # Generate data using specific parameters
         loc, scale, shape = 0.5, 1.5, 0.2
-        data = gev.random(1000, loc, scale, shape, random_state=42)
+        data = GEV.random(1000, loc, scale, shape, random_state=42)
 
         # Fit the GEV distribution to the data
-        fit_result = gev.fit(data)
+        fit_result = GEV.fit(data)
 
         # Check the fit result
         self.assertIsInstance(fit_result, FitResult)
