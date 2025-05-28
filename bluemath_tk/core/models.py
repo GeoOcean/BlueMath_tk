@@ -19,6 +19,7 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import StandardScaler
 
+from .constants import EARTH_RADIUS
 from .logging import get_file_logger
 from .operations import (
     denormalize,
@@ -46,6 +47,8 @@ class BlueMathModel(ABC):
     ----------
     gravity : float
         Gravitational constant from scipy.constants.
+    earth_radius : float
+        Earth radius in km.
     num_workers : int
         Number of parallel workers to use for processing.
     logger : logging.Logger
@@ -58,6 +61,7 @@ class BlueMathModel(ABC):
     """
 
     gravity = constants.g
+    earth_radius = EARTH_RADIUS
 
     @abstractmethod
     def __init__(self) -> None:
