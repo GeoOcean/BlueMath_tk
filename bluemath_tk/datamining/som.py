@@ -294,18 +294,24 @@ class SOM(BaseClustering):
         Parameters
         ----------
         data : pd.DataFrame
-            The input data to be used for the fitting.
+            The input data to be used for the SOM algorithm.
         directional_variables : List[str], optional
-            A list with the directional variables (will be transformed to u and v).
+            A list of directional variables that will be transformed to u and v components.
+            Then, to use custom_scale_factor, you must specify the variables names with the u and v suffixes.
+            Example: directional_variables=["Dir"], custom_scale_factor={"Dir_u": [0, 1], "Dir_v": [0, 1]}.
             Default is [].
         custom_scale_factor : dict, optional
             A dictionary specifying custom scale factors for normalization.
+            If normalize_data is True, this will be used to normalize the data.
+            Example: {"Hs": [0, 10], "Tp": [0, 10]}.
             Default is {}.
         num_iteration : int, optional
             The number of iterations for the SOM fitting.
             Default is 1000.
         normalize_data : bool, optional
-            A flag to normalize the data. Default is False.
+            A flag to normalize the data.
+            If True, the data will be normalized using the custom_scale_factor.
+            Default is False.
         """
 
         super().fit(
@@ -382,16 +388,22 @@ class SOM(BaseClustering):
         data : pd.DataFrame
             The input data to be used for the SOM algorithm.
         directional_variables : List[str], optional
-            A list of directional variables (will be transformed to u and v).
+            A list of directional variables that will be transformed to u and v components.
+            Then, to use custom_scale_factor, you must specify the variables names with the u and v suffixes.
+            Example: directional_variables=["Dir"], custom_scale_factor={"Dir_u": [0, 1], "Dir_v": [0, 1]}.
             Default is [].
         custom_scale_factor : dict, optional
             A dictionary specifying custom scale factors for normalization.
+            If normalize_data is True, this will be used to normalize the data.
+            Example: {"Hs": [0, 10], "Tp": [0, 10]}.
             Default is {}.
         num_iteration : int, optional
             The number of iterations for the SOM fitting.
             Default is 1000.
         normalize_data : bool, optional
-            A flag to normalize the data. Default is False.
+            A flag to normalize the data.
+            If True, the data will be normalized using the custom_scale_factor.
+            Default is False.
 
         Returns
         -------
