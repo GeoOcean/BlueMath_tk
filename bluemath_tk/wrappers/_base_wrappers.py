@@ -78,8 +78,10 @@ class BaseModelWrapper(BlueMathModel, ABC):
         ----------
         templates_dir : str
             The directory where the templates are searched.
+            Both binary and text files are supported, for the case where the user
+            needs to have a fixed binary file in all cases directories.
         metamodel_parameters : dict
-            The parameters to be used for all cases.
+            The parameters to be used for the different cases.
         fixed_parameters : dict
             The fixed parameters for the cases.
         output_dir : str
@@ -428,11 +430,17 @@ class BaseModelWrapper(BlueMathModel, ABC):
             case_dir=case_dir,
         )
         for template_name in self.templates_name:
-            self.render_file_from_template(
-                template_name=template_name,
-                context=case_context,
-                output_filename=op.join(case_dir, template_name),
-            )
+            try:
+                self.render_file_from_template(
+                    template_name=template_name,
+                    context=case_context,
+                    output_filename=op.join(case_dir, template_name),
+                )
+            except UnicodeDecodeError as _ude:
+                self.copy_files(
+                    src=op.join(self.templates_dir, template_name),
+                    dst=op.join(case_dir, template_name),
+                )
 
     def build_cases(
         self,
