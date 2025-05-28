@@ -216,7 +216,14 @@ def validate_data_som(func):
             raise ValueError("Number of iterations must be integer and > 0")
         if not isinstance(normalize_data, bool):
             raise TypeError("Normalize data must be a boolean")
-        return func(self, data, directional_variables, num_iteration)
+        return func(
+            self,
+            data,
+            directional_variables,
+            custom_scale_factor,
+            num_iteration,
+            normalize_data,
+        )
 
     return wrapper
 

@@ -377,10 +377,14 @@ class KMA(BaseClustering):
         data : pd.DataFrame
             The input data to be used for the KMA algorithm.
         directional_variables : List[str], optional
-            A list of directional variables (will be transformed to u and v).
+            A list of directional variables that will be transformed to u and v components.
+            Then, to use custom_scale_factor, you must specify the variables names with the u and v suffixes.
+            Example: directional_variables=["Dir"], custom_scale_factor={"Dir_u": [0, 1], "Dir_v": [0, 1]}.
             Default is [].
-        custom_scale_factor : dict
+        custom_scale_factor : dict, optional
             A dictionary specifying custom scale factors for normalization.
+            If normalize_data is True, this will be used to normalize the data.
+            Example: {"Hs": [0, 10], "Tp": [0, 10]}.
             Default is {}.
         min_number_of_points : int, optional
             The minimum number of points to consider a cluster.
@@ -390,10 +394,13 @@ class KMA(BaseClustering):
             This is used when min_number_of_points is not None.
             Default is 10.
         normalize_data : bool, optional
-            A flag to normalize the data. Default is False.
+            A flag to normalize the data.
+            If True, the data will be normalized using the custom_scale_factor.
+            Default is False.
         regression_guided: dict, optional
             A dictionary specifying regression-guided clustering variables and relative weights.
-            Example: {"vars":["Fe"],"alpha":[0.6]}. Default is {}.
+            Example: {"vars": ["Fe"], "alpha": [0.6]}.
+            Default is {}.
 
         Returns
         -------
