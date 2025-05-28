@@ -64,19 +64,19 @@ class gev(BaseDistribution):
         """
         super().__init__()
 
-    @property
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return "Generalized Extreme Value (GEV)"
 
-    @property
-    def nparams(self) -> int:
+    @staticmethod
+    def nparams() -> int:
         """
         Number of parameters of GEV
         """
         return int(3)
 
-    @property
-    def param_names(self) -> List[str]:
+    @staticmethod
+    def param_names() -> List[str]:
         """
         Name of parameters of GEV
         """
@@ -318,6 +318,7 @@ class gev(BaseDistribution):
 
         return nll
 
+    @staticmethod
     def fit(data: np.ndarray, **kwargs) -> FitResult:
         """
         Fit GEV distribution
@@ -326,6 +327,11 @@ class gev(BaseDistribution):
         ----------
         data : np.ndarray
             Data to fit the GEV distribution
+        **kwargs : dict, optional
+            Additional keyword arguments for the fitting function.
+            These can include options like method, bounds, etc.
+            See fit_dist for more details.
+            If not provided, default fitting options will be used.
 
         Returns
         ----------
@@ -588,9 +594,11 @@ class gev(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        return {
+        stats = {
             "mean": float(gev.mean(loc, scale, shape)),
             "median": float(gev.median(loc, scale, shape)),
             "variance": float(gev.variance(loc, scale, shape)),
             "std": float(gev.std(loc, scale, shape)),
         }
+
+        return stats

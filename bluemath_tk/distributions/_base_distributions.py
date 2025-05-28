@@ -1,9 +1,9 @@
 from abc import abstractmethod
 from typing import Dict, List
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize
-import matplotlib.pyplot as plt
 
 from ..core.models import BlueMathModel
 
@@ -62,11 +62,11 @@ class FitResult(BlueMathModel):
         """
         Print a summary of the fitting results
         """
-        print(f"Fitting results for {self.dist().name}:")
+        print(f"Fitting results for {self.dist.name()}:")
         print("--------------------------------------")
         print("Parameters:")
         for i, param in enumerate(self.params):
-            print(f"   - {self.dist().param_names[i]}: {param:.4f}")
+            print(f"   - {self.dist.param_names()[i]}: {param:.4f}")
         # print("\n")
         print(f"Negative Log-Likelihood value: {self.nll:.4f}")
         print(f"{self.message}")
@@ -87,7 +87,7 @@ class FitResult(BlueMathModel):
         -------
         fig : matplotlib.figure.Figure
             Figure object containing the plots. If `ax` is provided, returns None.
-        
+
         Raises
         -------
         ValueError
@@ -95,9 +95,9 @@ class FitResult(BlueMathModel):
         """
         if plot_type == "all":
             fig, axs = plt.subplots(2, 2, figsize=(12, 10))
-            self.hist(ax=axs[0, 0])
-            self.pp(ax=axs[0, 1])
-            self.qq(ax=axs[1, 0])
+            self.pp(ax=axs[0, 0])
+            self.qq(ax=axs[0, 1])
+            self.hist(ax=axs[1, 0])
             self.return_period(ax=axs[1, 1])
             plt.tight_layout()
             return fig
@@ -110,11 +110,14 @@ class FitResult(BlueMathModel):
         elif plot_type == "return_period":
             return self.return_period()
         else:
-            raise ValueError("Invalid plot type. Use 'hist', 'pp', 'qq', 'return_period', or 'all'.")
+            raise ValueError(
+                "Invalid plot type. Use 'hist', 'pp', 'qq', 'return_period', or 'all'."
+            )
 
     def pp(self, ax=None):
         """
         Probability plot of the fitted distribution.
+
         Parameters
         ----------
         ax : matplotlib.axes.Axes, optional
@@ -127,10 +130,17 @@ class FitResult(BlueMathModel):
 
         probabilities = self.dist.cdf(np.sort(self.data), *self.params)
         ax.plot([0, 1], [0, 1], color="tab:red", linestyle="--")
-        ax.plot(probabilities, self.ecdf, color="tab:blue", marker="o", linestyle="", alpha=0.7)
+        ax.plot(
+            probabilities,
+            self.ecdf,
+            color="tab:blue",
+            marker="o",
+            linestyle="",
+            alpha=0.7,
+        )
         ax.set_xlabel("Fitted Probability")
         ax.set_ylabel("Empirical Probability")
-        ax.set_title(f"PP Plot of {self.dist().name}")
+        ax.set_title("PP Plot")
         ax.grid()
 
         return fig
@@ -138,6 +148,7 @@ class FitResult(BlueMathModel):
     def qq(self, ax=None):
         """
         Quantile-Quantile plot of the fitted distribution.
+
         Parameters
         ----------
         ax : matplotlib.axes.Axes, optional
@@ -149,11 +160,23 @@ class FitResult(BlueMathModel):
             fig = None
 
         quantiles = self.dist.qf(self.ecdf, *self.params)
-        ax.plot([np.min(self.data), np.max(self.data)], [np.min(self.data), np.max(self.data)], color="tab:red", linestyle="--")
-        ax.plot(quantiles, np.sort(self.data), color="tab:blue", marker="o", linestyle="", alpha=0.7)
+        ax.plot(
+            [np.min(self.data), np.max(self.data)],
+            [np.min(self.data), np.max(self.data)],
+            color="tab:red",
+            linestyle="--",
+        )
+        ax.plot(
+            quantiles,
+            np.sort(self.data),
+            color="tab:blue",
+            marker="o",
+            linestyle="",
+            alpha=0.7,
+        )
         ax.set_xlabel("Theoretical Quantiles")
         ax.set_ylabel("Sample Quantiles")
-        ax.set_title(f"QQ Plot of {self.dist().name}")
+        ax.set_title("QQ Plot")
         ax.grid()
 
         return fig
@@ -161,6 +184,7 @@ class FitResult(BlueMathModel):
     def hist(self, ax=None):
         """
         Histogram of the data with the fitted distribution overlayed.
+
         Parameters
         ----------
         ax : matplotlib.axes.Axes, optional
@@ -171,12 +195,19 @@ class FitResult(BlueMathModel):
         else:
             fig = None
 
-        ax.hist(self.data, bins=30, density=True, alpha=0.7, color='tab:blue', label='Data Histogram')
+        ax.hist(
+            self.data,
+            bins=30,
+            density=True,
+            alpha=0.7,
+            color="tab:blue",
+            label="Data Histogram",
+        )
         x = np.linspace(np.min(self.data), np.max(self.data), 1000)
-        ax.plot(x, self.dist.pdf(x, *self.params), color='tab:red', label='Fitted PDF')
+        ax.plot(x, self.dist.pdf(x, *self.params), color="tab:red", label="Fitted PDF")
         ax.set_xlabel("Data Values")
         ax.set_ylabel("Density")
-        ax.set_title(f"Histogram and Fitted PDF of {self.dist().name}")
+        ax.set_title("Histogram and Fitted PDF")
         ax.legend()
         ax.grid()
 
@@ -185,6 +216,7 @@ class FitResult(BlueMathModel):
     def return_period(self, ax=None):
         """
         Return period plot of the fitted distribution.
+
         Parameters
         ----------
         ax : matplotlib.axes.Axes, optional
@@ -195,17 +227,32 @@ class FitResult(BlueMathModel):
         else:
             fig = None
 
-
         sorted_data = np.sort(self.data)
         exceedance_prob = 1 - self.ecdf
         return_period = 1 / exceedance_prob
 
-        ax.plot(return_period, self.dist.qf(self.ecdf, *self.params), color='tab:red', label='Fitted Distribution')
-        ax.plot(return_period, sorted_data, marker="o", linestyle="", color="tab:blue", alpha=0.7, label='Empirical Data')
+        ax.plot(
+            return_period,
+            self.dist.qf(self.ecdf, *self.params),
+            color="tab:red",
+            label="Fitted Distribution",
+        )
+        ax.plot(
+            return_period,
+            sorted_data,
+            marker="o",
+            linestyle="",
+            color="tab:blue",
+            alpha=0.7,
+            label="Empirical Data",
+        )
         ax.set_xscale("log")
+        ax.set_xticks([1, 2, 5, 10, 25, 50, 100, 250, 1000, 10000])
+        ax.set_xticklabels([1, 2, 5, 10, 25, 50, 100, 500, 1000, 10000])
+        ax.set_xlim(right=np.max(return_period) * 1.2)
         ax.set_xlabel("Return Period")
         ax.set_ylabel("Data Values")
-        ax.set_title(f"Return Period Plot of {self.dist().name}")
+        ax.set_title("Return Period Plot")
         ax.legend()
         ax.grid()
 
@@ -234,7 +281,7 @@ def fit_dist(dist, data: np.ndarray, **kwargs) -> FitResult:
     FitResult
         The fitting results, including parameters, success status, and negative log-likelihood.
     """
-    nparams = dist().nparams
+    nparams = dist.nparams()
 
     # Default optimization settings
     x0 = kwargs.get(
@@ -269,112 +316,303 @@ class BaseDistribution(BlueMathModel):
         """
         super().__init__()
 
-    @property
+    @staticmethod
     @abstractmethod
-    def name(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def nparams(self) -> int:
-        pass
-
-    @property
-    @abstractmethod
-    def param_names(self) -> List[str]:
+    def name() -> str:
         pass
 
     @staticmethod
     @abstractmethod
-    def pdf(x: np.ndarray) -> np.ndarray:
+    def nparams() -> int:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def param_names() -> List[str]:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def pdf(x: np.ndarray, **kwargs) -> np.ndarray:
         """
         Probability density function
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Values to compute the probability density value
+        **kwargs :
+            Distribution specific parameters as keyword arguments.
+            Common parameters include:
+            - loc: Location parameter
+            - scale: Scale parameter
+            - shape: Shape parameter (for some distributions)
+
+        Returns
+        ----------
+        pdf : np.ndarray
+            Probability density function values
         """
         pass
 
     @staticmethod
     @abstractmethod
-    def cdf(x: np.ndarray) -> np.ndarray:
+    def cdf(x: np.ndarray, **kwargs) -> np.ndarray:
         """
         Cumulative distribution function
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Values to compute their probability
+        **kwargs :
+            Distribution specific parameters as keyword arguments.
+            Common parameters include:
+            - loc: Location parameter
+            - scale: Scale parameter
+            - shape: Shape parameter (for some distributions)
+
+        Returns
+        ----------
+        p : np.ndarray
+            Probability
         """
         pass
 
     @staticmethod
     @abstractmethod
-    def sf(x: np.ndarray) -> np.ndarray:
+    def sf(x: np.ndarray, **kwargs) -> np.ndarray:
         """
-        Survival function (1 - cdf)
+        Survival function (1-Cumulative Distribution Function)
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Values to compute their survival function value
+        **kwargs :
+            Distribution specific parameters as keyword arguments.
+            Common parameters include:
+            - loc: Location parameter
+            - scale: Scale parameter
+            - shape: Shape parameter (for some distributions)
+
+        Returns
+        ----------
+        sp : np.ndarray
+            Survival function value
         """
         pass
 
     @staticmethod
     @abstractmethod
-    def qf(p: np.ndarray) -> np.ndarray:
+    def qf(p: np.ndarray, **kwargs) -> np.ndarray:
         """
         Quantile function
+
+        Parameters
+        ----------
+        p : np.ndarray
+            Probabilities to compute their quantile
+        **kwargs :
+            Distribution specific parameters as keyword arguments.
+            Common parameters include:
+            - loc: Location parameter
+            - scale: Scale parameter
+            - shape: Shape parameter (for some distributions)
+
+        Returns
+        ----------
+        q : np.ndarray
+            Quantile value
         """
         pass
 
     @staticmethod
     @abstractmethod
-    def nll(x: np.ndarray) -> float:
+    def nll(data: np.ndarray, **kwargs) -> float:
         """
         Negative Log-Likelihood function
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Data to compute the Negative Log-Likelihood value
+        **kwargs :
+            Distribution specific parameters as keyword arguments.
+            Common parameters include:
+            - loc: Location parameter
+            - scale: Scale parameter
+            - shape: Shape parameter (for some distributions)
+
+        Returns
+        ----------
+        nll : float
+            Negative Log-Likelihood value
         """
         pass
 
     @staticmethod
     @abstractmethod
-    def random(data: np.ndarray, size: int) -> np.ndarray:
+    def random(size: int, random_state: int, **kwargs) -> np.ndarray:
         """
         Generate random values
+
+        Parameters
+        ----------
+        size : int
+            Number of random values to generate
+        random_state : int
+            Seed for the random number generator
+        **kwargs :
+            Distribution specific parameters as keyword arguments.
+            Common parameters include:
+            - loc: Location parameter
+            - scale: Scale parameter
+            - shape: Shape parameter (for some distributions)
+
+        Returns
+        ----------
+        x : np.ndarray
+            Random values from GEV distribution
         """
         pass
 
     @staticmethod
     @abstractmethod
-    def mean() -> float:
+    def mean(**kwargs) -> float:
         """
         Mean
+
+        Parameters
+        ----------
+        **kwargs :
+            Distribution specific parameters as keyword arguments.
+            Common parameters include:
+            - loc: Location parameter
+            - scale: Scale parameter
+            - shape: Shape parameter (for some distributions)
+
+        Returns
+        ----------
+        mean : np.ndarray
+            Mean value of GEV with the given parameters
         """
         pass
 
     @staticmethod
     @abstractmethod
-    def median() -> float:
+    def median(**kwargs) -> float:
         """
         Median
+
+        Parameters
+        ----------
+        **kwargs :
+            Distribution specific parameters as keyword arguments.
+            Common parameters include:
+            - loc: Location parameter
+            - scale: Scale parameter
+            - shape: Shape parameter (for some distributions)
+
+        Returns
+        ----------
+        median : np.ndarray
+            Median value of GEV with the given parameters
         """
         pass
 
     @staticmethod
     @abstractmethod
-    def variance() -> float:
+    def variance(**kwargs) -> float:
         """
         Variance
+
+        Parameters
+        ----------
+        **kwargs :
+            Distribution specific parameters as keyword arguments.
+            Common parameters include:
+            - loc: Location parameter
+            - scale: Scale parameter
+            - shape: Shape parameter (for some distributions)
+
+        Returns
+        ----------
+        var : np.ndarray
+            Variance of GEV with the given parameters
         """
         pass
 
     @staticmethod
     @abstractmethod
-    def std() -> float:
+    def std(**kwargs) -> float:
         """
         Standard deviation
+
+        Parameters
+        ----------
+        **kwargs :
+            Distribution specific parameters as keyword arguments.
+            Common parameters include:
+            - loc: Location parameter
+            - scale: Scale parameter
+            - shape: Shape parameter (for some distributions)
+
+        Returns
+        ----------
+        std : np.ndarray
+            Standard Deviation of GEV with the given
+            parameters
         """
         pass
 
     @staticmethod
     @abstractmethod
-    def stats() -> Dict[str, float]:
+    def stats(**kwargs) -> Dict[str, float]:
         """
+        Summary statistics
+
         Return summary statistics including mean, std, variance, etc.
+
+        Parameters
+        ----------
+        **kwargs :
+            Distribution specific parameters as keyword arguments.
+            Common parameters include:
+            - loc: Location parameter
+            - scale: Scale parameter
+            - shape: Shape parameter (for some distributions)
+
+        Returns
+        ----------
+        stats : dict
+            Summary statistics of BaseDistribution with the given
+            parameters
         """
         pass
 
+    @staticmethod
     @abstractmethod
     def fit(dist, data: np.ndarray, **kwargs) -> FitResult:
         """
-        Fit distribution
+        Fit any distribution
+
+        Parameters
+        ----------
+        dist : BaseDistribution
+            Distribution to fit.
+        data : np.ndarray
+            Data to fit the GEV distribution
+        **kwargs : dict, optional
+            Additional keyword arguments for the fitting function.
+            These can include options like method, bounds, etc.
+            See fit_dist for more details.
+            If not provided, default fitting options will be used.
+
+        Returns
+        ----------
+        FitResult
+            Result of the fit containing the parameters loc, scale, shape,
+            success status, and negative log-likelihood value.
         """
         pass
