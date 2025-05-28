@@ -1,0 +1,115 @@
+{
+    "datasets": {
+        "buoy_data": {
+            "name": "NOAA Buoy Data",
+            "description": "Historical buoy measurements from NDBC",
+            "base_url": "https://www.ndbc.noaa.gov/data",
+            "template": {
+                "buoy_id": null,
+                "year": null,
+                "data_type": "bulk_parameters"
+            },
+            "mandatory_fields": [
+                "buoy_id",
+                "year"
+            ]
+        },
+        "forecast_data": {
+            "name": "NOAA GFS Forecast Data",
+            "description": "GFS 0.25 degree forecast data",
+            "base_url": "https://nomads.ncep.noaa.gov/dods/gfs_0p25_1hr",
+            "template": {
+                "date": null
+            },
+            "mandatory_fields": [
+                "date"
+            ]
+        }
+    },
+    "data_types": {
+        "bulk_parameters": {
+            "name": "bulk_parameters",
+            "long_name": "Standard Meteorological Data",
+            "description": "Wind, wave, temperature, and pressure measurements",
+            "url_pattern": "historical/stdmet/{buoy_id}h{year}.txt.gz",
+            "fallback_urls": [
+                "view_text_file.php?filename={buoy_id}h{year}.txt.gz&dir=data/historical/stdmet/",
+                "stdmet/{year}/{buoy_id}h{year}.txt.gz"
+            ],
+            "dataset": "buoy_data",
+            "file_format": "txt.gz",
+            "columns": [
+                "YYYY",
+                "MM",
+                "DD",
+                "hh",
+                "mm",
+                "WD",
+                "WSPD",
+                "GST",
+                "WVHT",
+                "DPD",
+                "APD",
+                "MWD",
+                "BAR",
+                "ATMP",
+                "WTMP",
+                "DEWP",
+                "VIS",
+                "TIDE"
+            ]
+        },
+        "wave_spectra": {
+            "name": "wave_spectra",
+            "long_name": "Wave Spectral Density",
+            "description": "Wave energy density spectra",
+            "url_pattern": "historical/swden/{buoy_id}w{year}.txt.gz",
+            "dataset": "buoy_data",
+            "file_format": "txt.gz"
+        },
+        "directional_spectra": {
+            "name": "directional_spectra",
+            "long_name": "Directional Wave Spectra Coefficients",
+            "description": "Fourier coefficients for directional wave spectra",
+            "dataset": "buoy_data",
+            "file_format": "txt.gz",
+            "coefficients": {
+                "d": {
+                    "name": "alpha1",
+                    "url_pattern": "historical/swdir/{buoy_id}d{year}.txt.gz"
+                },
+                "i": {
+                    "name": "alpha2",
+                    "url_pattern": "historical/swdir2/{buoy_id}i{year}.txt.gz"
+                },
+                "j": {
+                    "name": "r1",
+                    "url_pattern": "historical/swr1/{buoy_id}j{year}.txt.gz"
+                },
+                "k": {
+                    "name": "r2",
+                    "url_pattern": "historical/swr2/{buoy_id}k{year}.txt.gz"
+                },
+                "w": {
+                    "name": "c11",
+                    "url_pattern": "historical/swden/{buoy_id}w{year}.txt.gz"
+                }
+            }
+        },
+        "wind_forecast": {
+            "name": "wind_forecast",
+            "long_name": "GFS Wind Forecast",
+            "description": "Wind speed and direction forecast from GFS model",
+            "dataset": "forecast_data",
+            "file_format": "netcdf",
+            "variables": [
+                "ugrd10m",
+                "vgrd10m"
+            ],
+            "output_variables": {
+                "u10": "ugrd10m",
+                "v10": "vgrd10m"
+            }
+        }
+    }
+}
