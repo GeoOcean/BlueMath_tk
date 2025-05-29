@@ -18,6 +18,8 @@ class GEV(BaseDistribution):
         The complete name of the distribution (GEV).
     nparams : int
         Number of GEV parameters.
+    param_names : List[str]
+        Names of GEV parameters (location, scale, shape).
 
     Methods
     -------
@@ -286,35 +288,31 @@ class GEV(BaseDistribution):
         ----------
         nll : float
             Negative Log-Likelihood value
-
-        Raises
-        ------
-        ValueError
-            If scale is not greater than 0.
         """
 
         if scale <= 0:
             nll = np.inf  # Return a large value for invalid scale
-
-        y = (data - loc) / scale
-
-        # Gumbel case (shape = 0)
-        if shape == 0.0:
-            nll = data.shape[0] * np.log(scale) + np.sum(
-                np.exp(-y) + np.sum(-y)
-            )  # Gumbel case
-
-        # General case (Weibull and Frechet, shape != 0)
+        
         else:
-            y = 1 + shape * y
-            if any(y <= 0):
-                nll = np.inf  # Return a large value for invalid y
+            y = (data - loc) / scale
+
+            # Gumbel case (shape = 0)
+            if shape == 0.0:
+                nll = data.shape[0] * np.log(scale) + np.sum(
+                    np.exp(-y) + np.sum(-y)
+                )  # Gumbel case
+
+            # General case (Weibull and Frechet, shape != 0)
             else:
-                nll = (
-                    data.shape[0] * np.log(scale)
-                    + np.sum(y ** (-1 / shape))
-                    + (1 / shape + 1) * np.sum(np.log(y))
-                )
+                y = 1 + shape * y
+                if any(y <= 0):
+                    nll = np.inf  # Return a large value for invalid y
+                else:
+                    nll = (
+                        data.shape[0] * np.log(scale)
+                        + np.sum(y ** (-1 / shape))
+                        + (1 / shape + 1) * np.sum(np.log(y))
+                    )
 
         return nll
 
