@@ -7,7 +7,7 @@
 # without needing to reinstall the package.
 # To install the package, change name of pyproject.toml to pyproject.toml.bak
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name="BlueMath_tk",
@@ -41,6 +41,7 @@ setup(
         "wavespectra",
         "cmocean",
         "hydromt-sfincs",
+        "siphon",
     ],
     classifiers=["Programming Language :: Python :: 3.11"],
     python_requires=">=3.11",  # Specify the Python version required

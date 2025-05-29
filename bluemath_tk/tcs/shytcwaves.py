@@ -85,12 +85,6 @@ def storm2stopmotion(df_storm: pd.DataFrame) -> pd.DataFrame:
     The absolute value of latitude is stored (start of target segment).
     Relative angle is referenced to geographic north (southern hemisphere
     is multiplied by -1).
-
-    Examples
-    --------
-    >>> stopmotion_units = storm2stopmotion(storm_track)
-    >>> print(f"Number of segments: {len(stopmotion_units)}")
-    Number of segments: 24
     """
 
     # no need to remove NaTs,NaNs -> historic_track_preprocessing
@@ -305,14 +299,6 @@ def stopmotion_interpolation(
 
     C. Propagation period (42h):
        No track coordinates (no wind forcing)
-
-    Examples
-    --------
-    >>> st_list, we_list = stopmotion_interpolation(stopmotion_units)
-    >>> print(f"Number of cases: {len(st_list)}")
-    Number of cases: 24
-    >>> print(f"Time steps per case: {len(st_list[0])}")
-    Time steps per case: 432
     """
 
     # sign hemisphere (+north, -south)
@@ -482,14 +468,14 @@ def find_analogue(
         Library parameters DataFrame containing the 10 SHyTCWaves parameters:
         {pseg, vseg, wseg, rseg, dp, dv, dw, dr, dA, lat}
     df_case : pd.DataFrame
-        Target case parameters DataFrame with same structure as df_library
+        Target case parameters DataFrame with same structure as df_library.
     ix_weights : List[float]
-        Weight factors for each parameter dimension
+        Weight factors for each parameter dimension.
 
     Returns
     -------
     np.ndarray
-        Indices of nearest points in the library for each case point
+        Indices of nearest points in the library for each case point.
 
     Notes
     -----
@@ -505,13 +491,6 @@ def find_analogue(
     - dr : RMW variation
     - dA : Azimuth variation
     - lat : Latitude
-
-    Examples
-    --------
-    >>> weights = [1] * 10  # Equal weights
-    >>> nearest_idx = find_analogue(library_data, case_data, weights)
-    >>> print(f"Found {len(nearest_idx)} matching segments")
-    Found 24 matching segments
     """
 
     # remove NaNs from storm segments
@@ -593,12 +572,6 @@ def analogue_endpoints(df_seg: pd.DataFrame, df_analogue: pd.DataFrame) -> pd.Da
     3. Calculates target endpoint by shooting forwards 6h from target origin
     4. Accounts for hemisphere when calculating angles
     5. Converts longitudes to [0-360°] convention
-
-    Examples
-    --------
-    >>> df_updated = analogue_endpoints(track_segments, library_analogues)
-    >>> print(f"Added endpoint coordinates for {len(df_updated)} segments")
-    Added endpoint coordinates for 24 segments
     """
 
     # remove NaNs
@@ -665,10 +638,8 @@ def analogue_endpoints(df_seg: pd.DataFrame, df_analogue: pd.DataFrame) -> pd.Da
 
 
 def stopmotion_st_bmu(
-    path_library: str,
     df_analogue: pd.DataFrame,
     df_seg: pd.DataFrame,
-    path_mda: str,
     st: pd.DataFrame,
     cp_lon_ls: List[float],
     cp_lat_ls: List[float],
@@ -683,20 +654,16 @@ def stopmotion_st_bmu(
 
     Parameters
     ----------
-    path_library : str
-        Path to library of prerun segments
     df_analogue : pd.DataFrame
-        Analogue prerun segments from library
+        Analogue prerun segments from library.
     df_seg : pd.DataFrame
-        Storm 6h-segments parameters
-    path_mda : str
-        Path to MDA sample indices (grid sizes)
+        Storm 6h-segments parameters.
     st : pd.DataFrame
-        Storm track interpolated every 6h
+        Storm track interpolated every 6h.
     cp_lon_ls : List[float]
-        Control point longitude coordinates
+        Control point longitude coordinates.
     cp_lat_ls : List[float]
-        Control point latitude coordinates
+        Control point latitude coordinates.
     max_dist : float, optional
         Maximum distance (km) to extract closest node. Default is 60.
     list_out : bool, optional
@@ -735,15 +702,6 @@ def stopmotion_st_bmu(
     3. Extracts wave parameters at closest nodes for each analogue segment
     4. Computes bulk parameter envelope and swath
     5. Handles both high and low resolution libraries
-
-    Examples
-    --------
-    >>> wave_data = stopmotion_st_bmu(
-    ...     lib_path, analogues, segments, mda_path, track,
-    ...     lons, lats, max_dist=60
-    ... )
-    >>> print(f"Processed {len(wave_data.case)} segments")
-    Processed 24 segments
     """
 
     # remove NaN
@@ -787,7 +745,7 @@ def stopmotion_st_bmu(
         )
 
         # get SWAN output mask indices (rad, ang)
-        mask_rad, mask_ang = get_mask_radii_angle(path_mda, iseg_analogue, mode=mode)
+        mask_rad, mask_ang = get_mask_radii_angle(iseg_analogue, mode=mode)
 
         # find closest index
         ix_near = find_nearest(cp_dist_ls, cp_ang_ls, mask_rad, mask_ang)
@@ -892,17 +850,17 @@ def get_cp_radii_angle(
     Parameters
     ----------
     st_lat : float
-        Storm center latitude
+        Storm center latitude.
     st_lon : float
-        Storm center longitude
+        Storm center longitude.
     cp_lat_ls : List[float]
-        Control point latitudes
+        Control point latitudes.
     cp_lon_ls : List[float]
-        Control point longitudes
+        Control point longitudes.
     sign : int
-        Hemisphere indicator: 1 for north, -1 for south
+        Hemisphere indicator: 1 for north, -1 for south.
     aseg : float
-        Azimuth of the analogue warm segment (from geographic north)
+        Azimuth of the analogue warm segment (from geographic north).
 
     Returns
     -------
@@ -919,12 +877,6 @@ def get_cp_radii_angle(
     3. Calculates angles relative to geographic north
     4. Transforms angles to relative coordinate system
     5. Adjusts angles for southern hemisphere
-
-    Examples
-    --------
-    >>> dists, angles = get_cp_radii_angle(25, -75, [26], [-74], 1, 90)
-    >>> print(f"Distance: {dists[0]:.1f} km, Angle: {angles[0]:.1f}°")
-    Distance: 123.4 km, Angle: 45.0°
     """
 
     cp_dist_ls, cp_ang_ls = [], []
@@ -953,18 +905,14 @@ def get_cp_radii_angle(
     return cp_dist_ls, cp_ang_ls  # [km], [º]
 
 
-def get_mask_radii_angle(
-    path_mda: str, icase: int, mode: str = ""
-) -> Tuple[np.ndarray, np.ndarray]:
+def get_mask_radii_angle(icase: int, mode: str = "") -> Tuple[np.ndarray, np.ndarray]:
     """
     Extract radii and angle indices for output points.
 
     Parameters
     ----------
-    path_mda : str
-        Directory path containing library MDA files
     icase : int
-        Analogue case ID
+        Analogue case ID.
     mode : str, optional
         Option to select SHyTCWaves library resolution ('', '_lowres'). Default is "".
 
@@ -982,25 +930,16 @@ def get_mask_radii_angle(
     2. Determines grid size (small/medium/large) based on case ID
     3. Extracts appropriate radii and angle arrays for the grid size
     4. For low resolution mode, uses half the number of radial points
-
-    Examples
-    --------
-    >>> rad, ang = get_mask_radii_angle('/path/to/mda', 42)
-    >>> print(f"Grid has {len(rad)} radial and {len(ang)} angular points")
-    Grid has 29 radial and 72 angular points
     """
 
     # load output indices associated with distances/angles to target origin
-    name = "mda_mask_indices" + mode + ".nc"
-    p_mask = op.join(path_mda, name)
-    if not op.isfile(p_mask):
-        xds_mask_ind = get_mask_indices(path_mda, mode=mode)
+    if mode == "_lowres":
+        xds_mask_ind = xr.open_dataset(PATHS["SHYTCWAVES_MDA_MASK_INDICES_LOWRES"])
     else:
-        xds_mask_ind = xr.open_dataset(p_mask)
+        xds_mask_ind = xr.open_dataset(PATHS["SHYTCWAVES_MDA_MASK_INDICES"])
 
     # load MDA indices (grid sizes)
-    #    xds_ind_mda = xr.open_dataset(op.join(path_mda, 'shytcwaves_mda_indices.nc'))
-    xds_ind_mda = xr.open_dataset(PATHS["SHYTCWAVES_MDA"])
+    xds_ind_mda = xr.open_dataset(PATHS["SHYTCWAVES_MDA_INDICES"])
 
     # get grid code
     pos_small = np.where(icase == xds_ind_mda.indices_small)[0]
@@ -1022,16 +961,12 @@ def get_mask_radii_angle(
     return rad, ang  # [km], [º]
 
 
-def get_mask_indices(path_mda: str, save: bool = False, mode: str = "") -> xr.Dataset:
+def get_mask_indices(mode: str = "") -> xr.Dataset:
     """
     Create file with polar coordinates for SWAN case grids.
 
     Parameters
     ----------
-    path_mda : str
-        Directory path containing library MDA files
-    save : bool, optional
-        Whether to save output to file. Default is False.
     mode : str, optional
         Option to select SHyTCWaves library resolution ('', '_lowres'). Default is "".
 
@@ -1050,19 +985,10 @@ def get_mask_indices(path_mda: str, save: bool = False, mode: str = "") -> xr.Da
     2. Gets one representative case for each grid size
     3. Calculates polar coordinates (radii/angle) for each grid
     4. For low resolution mode, uses half the number of radial points
-    5. Optionally saves results to 'mda_mask_indices[_lowres].nc'
-
-    Examples
-    --------
-    >>> mask_data = get_mask_indices('/path/to/mda', save=True)
-    >>> print(f"Small grid has {len(mask_data.radii_sma)} points")
-    Small grid has 2088 points
     """
 
     # load library indices file
-    #    xds_mda = xr.open_dataset(op.join(path_mda, 'shytcwaves_mda_indices.nc'))  # before cleaning wrong cases
-    # some MDA cases were removed afterwards (wrong swan simulations)
-    xds_mda = xr.open_dataset(PATHS["SHYTCWAVES_MDA"])
+    xds_mda = xr.open_dataset(PATHS["SHYTCWAVES_MDA_INDICES"])
 
     # get one case for each grid size
     case_sma = xds_mda.indices_small.values[0]
@@ -1073,7 +999,7 @@ def get_mask_indices(path_mda: str, save: bool = False, mode: str = "") -> xr.Da
     # get analogue case
     for ic, case_id in enumerate([case_sma, case_med, case_lar]):
         # get polar coords (radii/distance, angle)
-        rc, thetac = find_analogue_grid_coords(path_mda, case_id)
+        rc, thetac = find_analogue_grid_coords(case_id)
 
         if mode == "_lowres":  # new library of cases with half rings
             rc = rc[:, ::2]
@@ -1095,25 +1021,17 @@ def get_mask_indices(path_mda: str, save: bool = False, mode: str = "") -> xr.Da
         }
     )
 
-    # store dataset
-    if save:
-        xd.to_netcdf(op.join(path_mda, "mda_mask_indices" + mode + ".nc"))
-
     return xd
 
 
-def find_analogue_grid_coords(
-    path_mda: str, icase: int
-) -> Tuple[np.ndarray, np.ndarray]:
+def find_analogue_grid_coords(icase: int) -> Tuple[np.ndarray, np.ndarray]:
     """
     Find grid size and calculate polar coordinates for analogue segment case.
 
     Parameters
     ----------
-    path_mda : str
-        Directory path containing library MDA files
     icase : int
-        Analogue case ID
+        Analogue case ID.
 
     Returns
     -------
@@ -1130,17 +1048,10 @@ def find_analogue_grid_coords(
     3. Sets appropriate number of rings based on grid size
     4. Creates domain centered at (x,y)=(0,0)
     5. Generates polar coordinates with custom spacing
-
-    Examples
-    --------
-    >>> rc, theta = find_analogue_grid_coords('/path/to/mda', 42)
-    >>> print(f"Grid has {rc.shape[0]} x {rc.shape[1]} points")
-    Grid has 72 x 29 points
     """
 
     # load MDA indices (grid sizes)
-    #    xds_ind_mda = xr.open_dataset(op.join(p_mda, 'shytcwaves_mda_indices.nc'))  # before cleaning wrong cases
-    xds_ind_mda = xr.open_dataset(PATHS["SHYTCWAVES_MDA"])
+    xds_ind_mda = xr.open_dataset(PATHS["SHYTCWAVES_MDA_INDICES"])
 
     # get grid code
     pos_small = np.where(icase == xds_ind_mda.indices_small)[0]
@@ -1189,18 +1100,18 @@ def find_nearest(
     Parameters
     ----------
     cp_rad_ls : List[float]
-        Control point radial distances
+        Control point radial distances.
     cp_ang_ls : List[float]
-        Control point angles
+        Control point angles.
     mask_rad : np.ndarray
-        SWAN output point radial distances
+        SWAN output point radial distances.
     mask_ang : np.ndarray
-        SWAN output point angles
+        SWAN output point angles.
 
     Returns
     -------
     np.ndarray
-        Indices of nearest points in SWAN output grid for each control point
+        Indices of nearest points in SWAN output grid for each control point.
 
     Notes
     -----
@@ -1209,12 +1120,6 @@ def find_nearest(
     2. Treats radial distances as scalar values
     3. Treats angles as directional values (circular)
     4. Uses nearest neighbor search in normalized space
-
-    Examples
-    --------
-    >>> nearest_idx = find_nearest([100], [45], grid_rad, grid_ang)
-    >>> print(f"Found nearest point at index {nearest_idx[0]}")
-    Found nearest point at index 42
     """
 
     # create dataframes
@@ -1250,7 +1155,7 @@ def get_coef_calibration() -> np.ndarray:
     Returns
     -------
     np.ndarray
-        Linear fit coefficients for pressure bias correction
+        Linear fit coefficients for pressure bias correction.
 
     Notes
     -----
@@ -1258,12 +1163,6 @@ def get_coef_calibration() -> np.ndarray:
     1. Uses Saffir-Simpson category center pressures as reference points
     2. Applies calibrated pressure deltas based on validation against satellite data
     3. Performs linear fit to get correction coefficients
-
-    Examples
-    --------
-    >>> coef = get_coef_calibration()
-    >>> print(f"Slope: {coef[0]:.3f}, Intercept: {coef[1]:.1f}")
-    Slope: -0.123, Intercept: 45.6
     """
 
     p = [1015, 990, 972, 954, 932, 880]  # Saffir-Simpson center categories
@@ -1279,9 +1178,7 @@ def get_coef_calibration() -> np.ndarray:
 
 
 def historic2shytcwaves_cluster(
-    p_save: str,
-    path_mda: str,
-    p_library: str,
+    path_save: str,
     tc_name: str,
     storm: xr.Dataset,
     center: str,
@@ -1300,14 +1197,10 @@ def historic2shytcwaves_cluster(
 
     Parameters
     ----------
-    p_save : str
-        Path to store results
-    path_mda : str
-        Path to MDA sample indices (grid sizes)
-    p_library : str
-        Path to library of prerun segments
+    path_save : str
+        Path to store results.
     tc_name : str
-        Storm name
+        Storm name.
     storm : xr.Dataset
         Storm track dataset with standard IBTrACS variables:
         Required:
@@ -1319,11 +1212,11 @@ def historic2shytcwaves_cluster(
             - dist2land : Distance to land
             - basin : Basin identifier
     center : str
-        IBTrACS center code
+        IBTrACS center code.
     lon : np.ndarray
-        Longitude coordinates for swath calculation
+        Longitude coordinates for swath calculation.
     lat : np.ndarray
-        Latitude coordinates for swath calculation
+        Latitude coordinates for swath calculation.
     dict_site : dict, optional
         Site data for superpoint building. Default is None.
     calibration : bool, optional
@@ -1348,14 +1241,6 @@ def historic2shytcwaves_cluster(
     4. Finds analogue segments from library
     5. Extracts bulk wave parameters and/or spectral data
     6. Saves results to specified directory
-
-    Examples
-    --------
-    >>> historic2shytcwaves_cluster(
-    ...     'results/', 'mda/', 'library/', 'TC01',
-    ...     storm_data, 'WMO', lons, lats
-    ... )
-    Files stored.
     """
 
     # A: stopmotion segmentation, 6h interval
@@ -1398,8 +1283,8 @@ def historic2shytcwaves_cluster(
         st_trim = track_triming(st, lat[0], lon[0], lat[-1], lon[-1])
 
         # store tracks for shytcwaves
-        st.to_pickle(op.join(p_save, "{0}_track.pkl".format(tc_name)))
-        st_trim.to_pickle(op.join(p_save, "{0}_track_trim.pkl".format(tc_name)))
+        st.to_pickle(op.join(path_save, "{0}_track.pkl".format(tc_name)))
+        st_trim.to_pickle(op.join(path_save, "{0}_track_trim.pkl".format(tc_name)))
 
         # parameterized segts (24h warmup + 6htarget)
         df_seg = storm2stopmotion(st_trim)
@@ -1410,7 +1295,7 @@ def historic2shytcwaves_cluster(
 
             #######################################################################
             # B: analogue segments from library
-            df_mda = pd.read_pickle(op.join(path_mda, "shytcwaves_mda_clean.pkl"))
+            df_mda = xr.open_dataset(PATHS["SHYTCWAVES_MDA"]).to_dataframe()
             ix_weights = [1] * 10  # equal weights
             ix = find_analogue(df_mda, df_seg, ix_weights)
 
@@ -1434,10 +1319,8 @@ def historic2shytcwaves_cluster(
 
                 if len(st_list) < max_segments:
                     xds_shy_bulk = stopmotion_st_bmu(
-                        p_library,
                         df_analogue,
                         df_seg,
-                        path_mda,
                         st_trim,
                         list(np.ravel(mesh_lo)),
                         list(np.ravel(mesh_la)),
@@ -1446,17 +1329,15 @@ def historic2shytcwaves_cluster(
                     )
                     # store
                     xds_shy_bulk.to_netcdf(
-                        op.join(p_save, "{0}_xds_shy_bulk.nc".format(tc_name))
+                        op.join(path_save, "{0}_xds_shy_bulk.nc".format(tc_name))
                     )
 
             #######################################################################
             # D: extract spectra envelope
             if type(dict_site) == dict:
                 xds_shy_spec, _ = stopmotion_st_spectra(
-                    p_library,
                     df_analogue,
                     df_seg,
-                    path_mda,
                     st_trim,
                     dict_site["lonpts"],
                     dict_site["latpts"],
@@ -1468,7 +1349,7 @@ def historic2shytcwaves_cluster(
                 # store
                 xds_shy_spec.to_netcdf(
                     op.join(
-                        p_save,
+                        path_save,
                         "{0}_xds_shy_spec_{1}.nc".format(tc_name, dict_site["site"]),
                     )
                 )
