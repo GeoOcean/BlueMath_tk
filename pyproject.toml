@@ -49,6 +49,7 @@ dependencies = [
     "ipykernel",
     "ipywidgets",
     "cmocean",
+    "siphon",
 ]
 
 [project.optional-dependencies]
