@@ -82,7 +82,7 @@ class GEV(BaseDistribution):
         """
         Name of parameters of GEV
         """
-        return ["location", "scale", "shape"]
+        return ["loc", "scale", "shape"]
 
     @staticmethod
     def pdf(
@@ -296,23 +296,26 @@ class GEV(BaseDistribution):
         else:
             y = (data - loc) / scale
 
-            # Gumbel case (shape = 0)
-            if shape == 0.0:
-                nll = data.shape[0] * np.log(scale) + np.sum(
-                    np.exp(-y) + np.sum(-y)
-                )  # Gumbel case
+            # # Gumbel case (shape = 0)
+            # if shape == 0.0:
+            #     pass
+            #     nll = data.shape[0] * np.log(scale) + np.sum(
+            #         np.exp(-y) + np.sum(-y)
+            #     )  # Gumbel case
 
-            # General case (Weibull and Frechet, shape != 0)
+            # # General case (Weibull and Frechet, shape != 0)
+            # else:
+
+            shape = np.maximum(shape, 1e-8) if shape > 0 else np.minimum(shape, -1e-8)  # Avoid division by zero
+            y = 1 + shape * y
+            if any(y <= 0):
+                nll = np.inf  # Return a large value for invalid y
             else:
-                y = 1 + shape * y
-                if any(y <= 0):
-                    nll = np.inf  # Return a large value for invalid y
-                else:
-                    nll = (
-                        data.shape[0] * np.log(scale)
-                        + np.sum(y ** (-1 / shape))
-                        + (1 / shape + 1) * np.sum(np.log(y))
-                    )
+                nll = (
+                    data.shape[0] * np.log(scale)
+                    + np.sum(y ** (-1 / shape))
+                    + (1 / shape + 1) * np.sum(np.log(y))
+                )
 
         return nll
 
