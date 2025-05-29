@@ -294,59 +294,66 @@ def ibtracs_fit_pmin_wmax(ibtracs_data: xr.Dataset = None, N: int = 3) -> xr.Dat
     >>> print(fit_data.coef_fit.shape)  # (n_centers, n_basins, N+1)
     """
 
-    if True:
+    try:
         return xr.open_dataset(PATHS["SHYTCWAVES_COEFS"])
 
-    coef_fit = np.nan * np.zeros((len(all_centers), len(all_basins), N + 1))
-    pres_data = np.nan * np.zeros((len(all_centers), len(all_basins), 200000))
-    wind_data = np.nan * np.zeros((len(all_centers), len(all_basins), 200000))
+    except Exception as e:
+        print(f"File could not be found: {PATHS['SHYTCWAVES_COEFS']}. Error: {e}")
 
-    for ic, center in enumerate(all_centers):
-        center_info = get_center_information(center=center)
+        coef_fit = np.nan * np.zeros((len(all_centers), len(all_basins), N + 1))
+        pres_data = np.nan * np.zeros((len(all_centers), len(all_basins), 200000))
+        wind_data = np.nan * np.zeros((len(all_centers), len(all_basins), 200000))
 
-        for basin in center_info["basin"]:
-            # filter tracks data by basin
-            filtered_tracks = filter_track_by_basin(
-                tracks_data=ibtracs_data, id_basin=basin
-            )
-            # extract and reshape basin data: pressure, wind, landbasin
-            newshape = filtered_tracks.storm.size * filtered_tracks.date_time.size
-            landbasin = filtered_tracks[center_info["dist2land"]].values.reshape(
-                newshape
-            )
-            Pbasin = filtered_tracks[center_info["pressure"]].values.reshape(newshape)
-            Wbasin = filtered_tracks[center_info["maxwinds"]].values.reshape(newshape)
-            # winds are converted to 1-min avg [kt]
-            Wbasin /= center_info["windfac"]
-            PWbasin_s = np.column_stack((Pbasin, Wbasin, landbasin))
-            # index for removing NaNs (including landmask)
-            ix_nonan = ~np.isnan(PWbasin_s).any(axis=1)
-            PWbasin_s = PWbasin_s[ix_nonan]
-            # Fitting Polynomial Regression to the dataset
-            X, y = PWbasin_s[:, 0], PWbasin_s[:, 1]
-            u = polyfit(X, y, deg=N)
-            # store coefficients
-            ibasin = np.where(basin == np.array(all_basins))[0][0]
-            coef_fit[ic, ibasin, :] = u
-            pres_data[ic, ibasin, : PWbasin_s.shape[0]] = PWbasin_s[:, 0].T
-            wind_data[ic, ibasin, : PWbasin_s.shape[0]] = PWbasin_s[:, 1].T
+        for ic, center in enumerate(all_centers):
+            center_info = get_center_information(center=center)
 
-    # dataset
-    xds = xr.Dataset(
-        {
-            "coef": (("center", "basin", "polynomial"), coef_fit),
-            "pres": (("center", "basin", "data"), pres_data),
-            "wind": (("center", "basin", "data"), wind_data),
-        },
-        {
-            "center": np.asarray(all_centers),
-            "basin": np.asarray(all_basins),
-        },
-    )
-    xds.coef.attrs["name"] = "Fitting polynomial coefficients (Pmin, Wmax)"
-    xds.coef.attrs["units"] = "Pressure (mbar), Wind speed (kt, 1-min avg)"
+            for basin in center_info["basin"]:
+                # filter tracks data by basin
+                filtered_tracks = filter_track_by_basin(
+                    tracks_data=ibtracs_data, id_basin=basin
+                )
+                # extract and reshape basin data: pressure, wind, landbasin
+                newshape = filtered_tracks.storm.size * filtered_tracks.date_time.size
+                landbasin = filtered_tracks[center_info["dist2land"]].values.reshape(
+                    newshape
+                )
+                Pbasin = filtered_tracks[center_info["pressure"]].values.reshape(
+                    newshape
+                )
+                Wbasin = filtered_tracks[center_info["maxwinds"]].values.reshape(
+                    newshape
+                )
+                # winds are converted to 1-min avg [kt]
+                Wbasin /= center_info["windfac"]
+                PWbasin_s = np.column_stack((Pbasin, Wbasin, landbasin))
+                # index for removing NaNs (including landmask)
+                ix_nonan = ~np.isnan(PWbasin_s).any(axis=1)
+                PWbasin_s = PWbasin_s[ix_nonan]
+                # Fitting Polynomial Regression to the dataset
+                X, y = PWbasin_s[:, 0], PWbasin_s[:, 1]
+                u = polyfit(X, y, deg=N)
+                # store coefficients
+                ibasin = np.where(basin == np.array(all_basins))[0][0]
+                coef_fit[ic, ibasin, :] = u
+                pres_data[ic, ibasin, : PWbasin_s.shape[0]] = PWbasin_s[:, 0].T
+                wind_data[ic, ibasin, : PWbasin_s.shape[0]] = PWbasin_s[:, 1].T
 
-    return xds
+        # dataset
+        xds = xr.Dataset(
+            {
+                "coef": (("center", "basin", "polynomial"), coef_fit),
+                "pres": (("center", "basin", "data"), pres_data),
+                "wind": (("center", "basin", "data"), wind_data),
+            },
+            {
+                "center": np.asarray(all_centers),
+                "basin": np.asarray(all_basins),
+            },
+        )
+        xds.coef.attrs["name"] = "Fitting polynomial coefficients (Pmin, Wmax)"
+        xds.coef.attrs["units"] = "Pressure (mbar), Wind speed (kt, 1-min avg)"
+
+        return xds
 
 
 def get_category(ycpres: np.ndarray) -> np.ndarray:
@@ -990,8 +997,8 @@ def historic_track_interpolation(
     # select Pmin-Wmax polynomial fitting coefficients (IBTrACS center,basin)
     xds_coef = ibtracs_fit_pmin_wmax()
     coefs = xds_coef.sel(
-        center=st_center.encode("utf-8"),
-        basin=st_basin.astype("bytes"),
+        center=st_center,  # .encode("utf-8")
+        basin=st_basin,  # .astype("bytes")
     ).coef.values[:]
 
     p1, p2, p3, p4 = coefs[:, 0], coefs[:, 1], coefs[:, 2], coefs[:, 3]
