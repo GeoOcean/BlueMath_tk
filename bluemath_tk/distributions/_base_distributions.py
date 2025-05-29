@@ -603,6 +603,9 @@ def fit_dist(dist: BaseDistribution, data: np.ndarray, **kwargs) -> FitResult:
         - 'method': Optimization method (default: 'Nelder-Mead').
         - 'bounds': Bounds for optimization parameters (default: [(None, None), (0, None), ...]).
         - 'options': Options for the optimizer (default: {'disp': False}).
+        - 'f0', 'floc': Fix location parameter (first parameter).
+        - 'f1', 'fscale': Fix scale parameter (second parameter).
+        - 'f2', 'fshape': Fix shape parameter (third parameter).
 
     Returns
     -------
@@ -610,23 +613,66 @@ def fit_dist(dist: BaseDistribution, data: np.ndarray, **kwargs) -> FitResult:
         The fitting results, including parameters, success status, and negative log-likelihood.
     """
     nparams = dist.nparams()
+    param_names = dist.param_names()
 
-    # Default optimization settings
-    x0 = kwargs.get(
-        "x0", np.asarray([np.mean(data), np.std(data)] + [0.0] * (nparams - 2))
-    )
+    # Handle fixed parameters
+    fixed_params = {}
+    for i, name in enumerate(param_names):
+        # Check both numerical (f0, f1, f2) and named (floc, fscale, fshape) fixed parameters
+        num_key = f'f{i}'
+        if num_key in kwargs:
+            fixed_params[i] = kwargs[num_key]
+
+
+    # Create list of free parameters (those not fixed)
+    free_params = [i for i in range(nparams) if i not in fixed_params]
+    # n_free = len(free_params)
+
+   # Default optimization settings for free parameters only
+    default_x0 = np.asarray([np.mean(data), np.std(data)] + [0.1] * (nparams - 2))
+    x0 = kwargs.get("x0", default_x0)
+    x0_free = np.array([x0[i] for i in free_params])
+
     method = kwargs.get("method", "Nelder-Mead").lower()
-    bounds = kwargs.get(
-        "bounds", [(None, None), (0, None)] + [(None, None)] * (nparams - 2)
-    )
+    default_bounds = [(None, None), (1e-6, None)] + [(None, None)] * (nparams - 2)
+    bounds = kwargs.get("bounds", default_bounds)
+    bounds_free = [bounds[i] for i in free_params]
     options = kwargs.get("options", {"disp": False})
 
-    # Objective function: Negative Log-Likelihood
-    def obj(params):
-        return dist.nll(data, *params)
+    # Objective function that handles fixed parameters
+    def obj(free_values):
+        # Reconstruct full parameter vector with fixed values
+        full_params = np.zeros(nparams)
+        free_idx = 0
+        for i in range(nparams):
+            if i in fixed_params:
+                full_params[i] = fixed_params[i]
+            else:
+                full_params[i] = free_values[free_idx]
+                free_idx += 1
+        return dist.nll(data, *full_params)
 
-    # Perform optimization
-    result = minimize(fun=obj, x0=x0, method=method, bounds=bounds, options=options)
+    # Perform optimization only on free parameters
+    result = minimize(fun=obj, x0=x0_free, method=method, 
+                     bounds=bounds_free, options=options)
+
+    # Reconstruct full parameter vector for final result
+    full_params = np.zeros(nparams)
+    free_idx = 0
+    for i in range(nparams):
+        if i in fixed_params:
+            full_params[i] = fixed_params[i]
+        else:
+            full_params[i] = result.x[free_idx]
+            free_idx += 1
+
+    # Create modified result with full parameters
+    modified_result = OptimizeResult(
+        x=full_params,
+        success=result.success,
+        fun=result.fun,
+        message=result.message
+    )
 
     # Return the fitting result as a FitResult object
-    return FitResult(dist, data, result)
+    return FitResult(dist, data, modified_result)
