@@ -81,7 +81,7 @@ class GPD(BaseDistribution):
         """
         Name of parameters of GPD
         """
-        return ["location", "scale", "shape"]
+        return ["loc", "scale", "shape"]
 
     @staticmethod
     def pdf(
@@ -256,11 +256,11 @@ class GPD(BaseDistribution):
 
         # Gumbel case (shape = 0)
         if shape == 0.0:
-            q = loc - scale * np.log(p)
+            q = loc - scale * np.log(1 - p)
 
         # General case (Weibull and Frechet, shape != 0)
         else:
-            q = loc + scale * (p ** (-shape) - 1) / shape
+            q = loc + scale * ((1 - p) ** (-shape) - 1) / shape
 
         return q
 
@@ -294,22 +294,23 @@ class GPD(BaseDistribution):
             nll = np.inf  # Return a large value for invalid scale
         
         else:
-            y = data - loc / scale
+            y = (data - loc) / scale
 
-            # Gumbel case (shape = 0)
-            if shape == 0.0:
-                nll = data.shape[0] * np.log(scale) + np.sum(y)
+            # # Gumbel case (shape = 0)
+            # if shape == 0.0:
+            #     nll = data.shape[0] * np.log(scale) + np.sum(y)
 
             # General case (Weibull and Frechet, shape != 0)
+            # else:
+            shape = np.maximum(shape, 1e-8) if shape > 0 else np.minimum(shape, -1e-8)  # Avoid division by zero
+            y = 1 + shape * y
+            if np.min(y <= 0):
+                nll = np.inf  # Return a large value for invalid y
             else:
-                y = 1 + shape * y
-                if any(y <= 0):
-                    nll = np.inf  # Return a large value for invalid y
-                else:
-                    nll = (
-                        data.shape[0] * np.log(scale)
-                        + (1 / shape + 1) * np.sum(np.log(y))
-                    )
+                nll = (
+                    data.shape[0] * np.log(scale)
+                    + (1 / shape + 1) * np.sum(np.log(y))
+                )
 
         return nll
 
@@ -468,8 +469,11 @@ class GPD(BaseDistribution):
 
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
-
-        median = loc + scale * (2 ** shape - 1) / shape
+        
+        if shape == 0:
+            median = np.inf
+        else:
+            median = loc + scale * (2 ** shape - 1) / shape
 
         return median
 
