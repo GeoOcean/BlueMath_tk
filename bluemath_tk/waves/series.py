@@ -335,10 +335,10 @@ def series_regular_monochromatic(waves):
     # waves properties
     T = waves["T"]
     H = waves["H"]
-    WL = waves["WL"]
+    #WL = waves["WL"]
     warmup = waves["warmup"]
     deltat = waves["deltat"]
-    tendc = waves["tendc"]
+    tendc = waves["comptime"]
 
     # series duration
     duration = tendc + int(warmup)
