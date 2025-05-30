@@ -1,0 +1,326 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.waves package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.wrappers package" href="bluemath_tk.wrappers.html" />
+    <link rel="prev" title="bluemath_tk.topo_bathy package" href="bluemath_tk.topo_bathy.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tc.html">bluemath_tk.tc package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">bluemath_tk.waves package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.waves package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.waves.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-waves-package">
+<h1>bluemath_tk.waves package<a class="headerlink" href="#bluemath-tk-waves-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-waves-binwaves-module">
+<h2>bluemath_tk.waves.binwaves module<a class="headerlink" href="#bluemath-tk-waves-binwaves-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.waves.climate">
+<span id="bluemath-tk-waves-climate-module"></span><h2>bluemath_tk.waves.climate module<a class="headerlink" href="#module-bluemath_tk.waves.climate" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-waves-estela-module">
+<h2>bluemath_tk.waves.estela module<a class="headerlink" href="#bluemath-tk-waves-estela-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.waves.greenswell">
+<span id="bluemath-tk-waves-greenswell-module"></span><h2>bluemath_tk.waves.greenswell module<a class="headerlink" href="#module-bluemath_tk.waves.greenswell" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.waves.partitioning">
+<span id="bluemath-tk-waves-partitioning-module"></span><h2>bluemath_tk.waves.partitioning module<a class="headerlink" href="#module-bluemath_tk.waves.partitioning" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.waves.series">
+<span id="bluemath-tk-waves-series-module"></span><h2>bluemath_tk.waves.series module<a class="headerlink" href="#module-bluemath_tk.waves.series" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.energy_spectrum">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">energy_spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#energy_spectrum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.energy_spectrum" title="Link to this definition"></a></dt>
+<dd><p>spec: Dataset with vars for the whole partitions
+S(f,dir) = S(f) * D(dir)
+S(f) —– D(dir)
+Meshgrid de x freqs - dir - z energy</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.series_Jonswap">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">series_Jonswap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waves</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#series_Jonswap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.series_Jonswap" title="Link to this definition"></a></dt>
+<dd><p>Generate surface elevation from PSD df = 1/tendc</p>
+<dl class="simple">
+<dt>waves - dictionary</dt><dd><p>T       - Period (s)
+H       - Height (m)
+gamma   - Jonswap spectrum  peak parammeter
+warmup  - spin up time (s)
+deltat  - delta time (s)
+tendc   - simulation period (s)</p>
+</dd>
+</dl>
+<p>returns 2D numpy array with series time and elevation</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.series_Jonswap_bimodal">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">series_Jonswap_bimodal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waves</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#series_Jonswap_bimodal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.series_Jonswap_bimodal" title="Link to this definition"></a></dt>
+<dd><p>Generate surface elevation from PSD df = 1/tendc</p>
+<dl class="simple">
+<dt>waves - dictionary</dt><dd><p>T       - Period (s)
+H       - Height (m)
+gamma   - Jonswap spectrum  peak parammeter
+warmup  - spin up time (s)
+deltat  - delta time (s)
+tendc   - simulation period (s)</p>
+</dd>
+</dl>
+<p>returns 2D numpy array with series time and elevation</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.series_TMA">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">series_TMA</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waves</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#series_TMA"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.series_TMA" title="Link to this definition"></a></dt>
+<dd><p>Generate surface elevation from PSD df = 1/tendc</p>
+<dl class="simple">
+<dt>waves - dictionary</dt><dd><p>T       - Period (s)
+H       - Height (m)
+gamma   - Jonswap spectrum  peak parammeter
+warmup  - spin up time (s)
+deltat  - delta time (s)
+comptime   - simulation period (s)</p>
+</dd>
+</dl>
+<p>returns 2D numpy array with series time and elevation</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.series_TMA_bimodal">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">series_TMA_bimodal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waves</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#series_TMA_bimodal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.series_TMA_bimodal" title="Link to this definition"></a></dt>
+<dd><p>Generate surface elevation from PSD df = 1/tendc</p>
+<dl class="simple">
+<dt>waves - dictionary</dt><dd><p>T       - Period (s)
+H       - Height (m)
+gamma   - Jonswap spectrum  peak parammeter
+warmup  - spin up time (s)
+deltat  - delta time (s)
+tendc   - simulation period (s)</p>
+</dd>
+</dl>
+<p>returns 2D numpy array with series time and elevation</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.series_regular_bichromatic">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">series_regular_bichromatic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waves</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#series_regular_bichromatic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.series_regular_bichromatic" title="Link to this definition"></a></dt>
+<dd><p>Generates bichromatic regular waves series</p>
+<dl class="simple">
+<dt>waves - dictionary</dt><dd><p>T1     - Period component 1 (s)
+T2     - Period component 2 (s)
+H      - Height (m)
+WL     - Water level (m)
+warmup - spin up time (s)
+deltat - delta time (s)
+tendc  - simulation period (s)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.series_regular_monochromatic">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">series_regular_monochromatic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waves</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#series_regular_monochromatic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.series_regular_monochromatic" title="Link to this definition"></a></dt>
+<dd><p>Generates monochromatic regular waves series</p>
+<dl class="simple">
+<dt>waves - dictionary</dt><dd><p>T      - Period (s)
+H      - Height (m)
+WL     - Water level (m)
+warmup - spin up time (s)
+deltat - delta time (s)
+tendc  - simulation period (s)</p>
+</dd>
+</dl>
+<p>returns 2D numpy array with series time and elevation</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.waves_dispersion">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">waves_dispersion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#waves_dispersion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.waves_dispersion" title="Link to this definition"></a></dt>
+<dd><p>Solve the wave dispersion relation to calculate the wavelength (L), wave number (k), and phase speed (c).
+:param T: Wave period in seconds.
+:type T: float
+:param h: Water depth in meters.
+:type h: float</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>L</strong> (<em>float</em>) – Wavelength in meters.</p></li>
+<li><p><strong>k</strong> (<em>float</em>) – Wave number in radians per meter.</p></li>
+<li><p><strong>c</strong> (<em>float</em>) – Phase speed in meters per second.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.waves.snakes">
+<span id="bluemath-tk-waves-snakes-module"></span><h2>bluemath_tk.waves.snakes module<a class="headerlink" href="#module-bluemath_tk.waves.snakes" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.waves.spectra">
+<span id="bluemath-tk-waves-spectra-module"></span><h2>bluemath_tk.waves.spectra module<a class="headerlink" href="#module-bluemath_tk.waves.spectra" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.spectra.spectral_analysis">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.spectra.</span></span><span class="sig-name descname"><span class="pre">spectral_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">water_level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/waves/spectra.html#spectral_analysis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.spectra.spectral_analysis" title="Link to this definition"></a></dt>
+<dd><p>Performs spectral analisys of water level variable</p>
+<p>water_level - water level series (m)
+delta_time - time delta for sample (s)</p>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.waves.statistics">
+<span id="bluemath-tk-waves-statistics-module"></span><h2>bluemath_tk.waves.statistics module<a class="headerlink" href="#module-bluemath_tk.waves.statistics" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.statistics.upcrossing">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.statistics.</span></span><span class="sig-name descname"><span class="pre">upcrossing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">series</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/waves/statistics.html#upcrossing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.statistics.upcrossing" title="Link to this definition"></a></dt>
+<dd><p>Performs fast fourier transformation FFt by extracting
+the wave series mean and interpolating to find the cross-zero</p>
+<p>time   - time series
+watlev - surface elevation series</p>
+<p>return - Wave heigths and periods</p>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.waves.superpoint">
+<span id="bluemath-tk-waves-superpoint-module"></span><h2>bluemath_tk.waves.superpoint module<a class="headerlink" href="#module-bluemath_tk.waves.superpoint" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.waves">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bluemath_tk.waves" title="Link to this heading"></a></h2>
+<p>Project: BlueMath_tk
+Sub-Module: waves
+Author: GeoOcean Research Group, Universidad de Cantabria
+Creation Date: 19 February 2025
+Repository: <a class="reference external" href="https://github.com/GeoOcean/BlueMath_tk.git">https://github.com/GeoOcean/BlueMath_tk.git</a>
+Status: Under development (Working)</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.topo_bathy.html" class="btn btn-neutral float-left" title="bluemath_tk.topo_bathy package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.wrappers.html" class="btn btn-neutral float-right" title="bluemath_tk.wrappers package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

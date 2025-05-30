@@ -1,0 +1,611 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.additive.greensurge &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.additive.greensurge</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.additive.greensurge</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cartopy.crs</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ccrs</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.path</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_degrees_from_uv</span>
+
+
+<div class="viewcode-block" id="create_triangle_mask">
+<a class="viewcode-back" href="../../../bluemath_tk.additive.html#bluemath_tk.additive.greensurge.create_triangle_mask">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_triangle_mask</span><span class="p">(</span>
+    <span class="n">lon_grid</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">lat_grid</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">triangle</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a mask for a triangle defined by its vertices.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lon_grid : np.ndarray</span>
+<span class="sd">        The longitude grid.</span>
+<span class="sd">    lat_grid : np.ndarray</span>
+<span class="sd">        The latitude grid.</span>
+<span class="sd">    triangle : np.ndarray</span>
+<span class="sd">        The triangle vertices.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        The mask for the triangle.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">triangle_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">triangle</span><span class="p">)</span>
+    <span class="c1"># if lon_grid.ndim == 1:</span>
+    <span class="c1">#     lon_grid, lat_grid = np.meshgrid(lon_grid, lat_grid)</span>
+    <span class="n">lon_grid</span><span class="p">,</span> <span class="n">lat_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">lon_grid</span><span class="p">,</span> <span class="n">lat_grid</span><span class="p">)</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">lon_grid</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">lat_grid</span><span class="o">.</span><span class="n">ravel</span><span class="p">()])</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">inside_mask</span> <span class="o">=</span> <span class="n">triangle_path</span><span class="o">.</span><span class="n">contains_points</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">inside_mask</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">lon_grid</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">mask</span></div>
+
+
+
+<div class="viewcode-block" id="create_triangle_mask_from_points">
+<a class="viewcode-back" href="../../../bluemath_tk.additive.html#bluemath_tk.additive.greensurge.create_triangle_mask_from_points">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_triangle_mask_from_points</span><span class="p">(</span>
+    <span class="n">lon</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">lat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">triangle</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a mask indicating which scattered points are inside a triangle.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lon : np.ndarray</span>
+<span class="sd">        1D array of longitudes of the points.</span>
+<span class="sd">    lat : np.ndarray</span>
+<span class="sd">        1D array of latitudes of the points.</span>
+<span class="sd">    triangle : np.ndarray</span>
+<span class="sd">        (3, 2) array containing the triangle vertices as (lon, lat) pairs.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        1D boolean array of same length as lon/lat indicating points inside the triangle.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">))</span>  <span class="c1"># Shape (N, 2)</span>
+    <span class="n">triangle_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">triangle</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">triangle_path</span><span class="o">.</span><span class="n">contains_points</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">mask</span></div>
+
+
+
+<div class="viewcode-block" id="GS_LinearWindDragCoef">
+<a class="viewcode-back" href="../../../bluemath_tk.additive.html#bluemath_tk.additive.greensurge.GS_LinearWindDragCoef">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">GS_LinearWindDragCoef</span><span class="p">(</span><span class="n">Wspeed</span><span class="p">,</span> <span class="n">CD_Wl_abc</span><span class="p">,</span> <span class="n">Wl_abc</span><span class="p">):</span>
+    <span class="n">Wla</span> <span class="o">=</span> <span class="n">Wl_abc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">Wlb</span> <span class="o">=</span> <span class="n">Wl_abc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">Wlc</span> <span class="o">=</span> <span class="n">Wl_abc</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">CDa</span> <span class="o">=</span> <span class="n">CD_Wl_abc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">CDb</span> <span class="o">=</span> <span class="n">CD_Wl_abc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">CDc</span> <span class="o">=</span> <span class="n">CD_Wl_abc</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="c1"># coefs lines y=ax+b</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">Wla</span> <span class="o">==</span> <span class="n">Wlb</span><span class="p">:</span>
+        <span class="n">a_CDline_ab</span> <span class="o">=</span> <span class="p">(</span><span class="n">CDa</span> <span class="o">-</span> <span class="n">CDb</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">Wla</span> <span class="o">-</span> <span class="n">Wlb</span><span class="p">)</span>
+        <span class="n">b_CDline_ab</span> <span class="o">=</span> <span class="n">CDb</span> <span class="o">-</span> <span class="n">a_CDline_ab</span> <span class="o">*</span> <span class="n">Wlb</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">a_CDline_ab</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">b_CDline_ab</span> <span class="o">=</span> <span class="n">CDa</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">Wlb</span> <span class="o">==</span> <span class="n">Wlc</span><span class="p">:</span>
+        <span class="n">a_CDline_bc</span> <span class="o">=</span> <span class="p">(</span><span class="n">CDb</span> <span class="o">-</span> <span class="n">CDc</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">Wlb</span> <span class="o">-</span> <span class="n">Wlc</span><span class="p">)</span>
+        <span class="n">b_CDline_bc</span> <span class="o">=</span> <span class="n">CDc</span> <span class="o">-</span> <span class="n">a_CDline_bc</span> <span class="o">*</span> <span class="n">Wlc</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">a_CDline_bc</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">b_CDline_bc</span> <span class="o">=</span> <span class="n">CDb</span>
+    <span class="n">a_CDline_cinf</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">b_CDline_cinf</span> <span class="o">=</span> <span class="n">CDc</span>
+
+    <span class="k">if</span> <span class="n">Wspeed</span> <span class="o">&lt;=</span> <span class="n">Wlb</span><span class="p">:</span>
+        <span class="n">CD</span> <span class="o">=</span> <span class="n">a_CDline_ab</span> <span class="o">*</span> <span class="n">Wspeed</span> <span class="o">+</span> <span class="n">b_CDline_ab</span>
+    <span class="k">elif</span> <span class="n">Wspeed</span> <span class="o">&gt;</span> <span class="n">Wlb</span> <span class="ow">and</span> <span class="n">Wspeed</span> <span class="o">&lt;=</span> <span class="n">Wlc</span><span class="p">:</span>
+        <span class="n">CD</span> <span class="o">=</span> <span class="n">a_CDline_bc</span> <span class="o">*</span> <span class="n">Wspeed</span> <span class="o">+</span> <span class="n">b_CDline_bc</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">CD</span> <span class="o">=</span> <span class="n">a_CDline_cinf</span> <span class="o">*</span> <span class="n">Wspeed</span> <span class="o">+</span> <span class="n">b_CDline_cinf</span>
+
+    <span class="k">return</span> <span class="n">CD</span><span class="o">.</span><span class="n">values</span></div>
+
+
+
+<div class="viewcode-block" id="GS_windsetup_reconstruction_tri">
+<a class="viewcode-back" href="../../../bluemath_tk.additive.html#bluemath_tk.additive.greensurge.GS_windsetup_reconstruction_tri">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">GS_windsetup_reconstruction_tri</span><span class="p">(</span>
+    <span class="n">p_GFD_libdir</span><span class="p">,</span> <span class="n">ds_GFD_info</span><span class="p">,</span> <span class="n">ds_wind_partition</span><span class="p">,</span> <span class="n">d_guarda</span><span class="p">,</span> <span class="n">tini</span><span class="p">,</span> <span class="n">tend</span>
+<span class="p">):</span>
+    <span class="n">Wdir</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">Wdir</span>
+    <span class="n">AWdir</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">Wdir</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">Wdir</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">NTT</span> <span class="o">=</span> <span class="n">p_GFD_libdir</span><span class="o">.</span><span class="n">tes</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">ND</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">Wdir</span><span class="p">)</span>
+    <span class="n">Wspeed</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">Wspeed</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">DT_GS</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">simul_hours</span>
+    <span class="n">CD_Wl_abc</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">CD_Wl_abc</span>
+    <span class="n">Wl_abc</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">Wl_abc</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">simul_dt_hours</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">time_hours</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">tini</span><span class="p">,</span> <span class="n">tend</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="mi">60</span> <span class="o">*</span> <span class="n">dt</span><span class="o">.</span><span class="n">item</span><span class="p">()),</span> <span class="s2">&quot;m&quot;</span><span class="p">))</span>
+    <span class="n">Dir_tes</span> <span class="o">=</span> <span class="n">ds_wind_partition</span><span class="o">.</span><span class="n">Dir_tes</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">time_hours</span><span class="p">)</span>
+    <span class="n">Wspeed_tes</span> <span class="o">=</span> <span class="n">ds_wind_partition</span><span class="o">.</span><span class="n">Wspeed_tes</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">time_hours</span><span class="p">)</span>
+    <span class="n">CD_base</span> <span class="o">=</span> <span class="n">GS_LinearWindDragCoef</span><span class="p">(</span><span class="n">Wspeed</span><span class="p">,</span> <span class="n">CD_Wl_abc</span><span class="p">,</span> <span class="n">Wl_abc</span><span class="p">)</span>
+    <span class="n">Ntime</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">time_hours</span><span class="p">)</span>
+    <span class="n">cont</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">discret_dir</span> <span class="o">=</span> <span class="n">Wdir</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Ntime</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">NT</span> <span class="ow">in</span> <span class="n">NTT</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">Dir_tes</span><span class="p">[</span><span class="n">NT</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">((</span><span class="n">ND</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">AWdir</span><span class="p">):</span>
+                <span class="n">discret_dir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">discret_dir</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">360</span><span class="p">,</span> <span class="n">discret_dir</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">discret_dir</span> <span class="o">=</span> <span class="n">Wdir</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">dif_dir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">discret_dir</span> <span class="o">-</span> <span class="n">Dir_tes</span><span class="p">[</span><span class="n">NT</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">pos_Dir</span> <span class="o">=</span> <span class="n">dif_dir</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># from 0 to 23</span>
+            <span class="c1"># maps</span>
+            <span class="n">WL_case</span> <span class="o">=</span> <span class="n">p_GFD_libdir</span><span class="p">[</span><span class="s2">&quot;mesh2d_s1&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">tes</span><span class="o">=</span><span class="n">NT</span><span class="p">)</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="n">pos_Dir</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">WL_case</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">WL_case</span><span class="p">,</span> <span class="n">nan</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">A</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">WL_GS_WindSetUp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">Ntime</span><span class="p">,</span> <span class="n">WL_case</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="n">WL_case_scale_inter</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">WL_case</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+                <span class="n">A</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="c1"># re-scale and drag coefficient</span>
+            <span class="n">Wspeed_tes_case</span> <span class="o">=</span> <span class="n">Wspeed_tes</span><span class="p">[</span><span class="n">NT</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">CD_tes_case</span> <span class="o">=</span> <span class="n">GS_LinearWindDragCoef</span><span class="p">(</span><span class="n">Wspeed_tes_case</span><span class="p">,</span> <span class="n">CD_Wl_abc</span><span class="p">,</span> <span class="n">Wl_abc</span><span class="p">)</span>
+            <span class="n">WL_case_scale_inter</span> <span class="o">+=</span> <span class="p">(</span>
+                <span class="n">WL_case</span> <span class="o">*</span> <span class="p">(</span><span class="n">Wspeed_tes_case</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="n">Wspeed</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">CD_tes_case</span> <span class="o">/</span> <span class="n">CD_base</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">DT_GS_aux</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">((</span><span class="n">DT_GS</span><span class="p">,</span> <span class="n">Ntime</span><span class="p">))</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">Ntime</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">DT_GS_aux</span><span class="p">):</span>
+            <span class="n">WL_GS_WindSetUp</span><span class="p">[</span><span class="n">t</span> <span class="p">:</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="n">DT_GS_aux</span> <span class="o">-</span> <span class="n">d_guarda</span><span class="p">),</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">WL_GS_WindSetUp</span><span class="p">[</span><span class="n">t</span> <span class="p">:</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="n">DT_GS_aux</span> <span class="o">-</span> <span class="n">d_guarda</span><span class="p">),</span> <span class="p">:]</span>
+                <span class="o">+</span> <span class="n">WL_case_scale_inter</span><span class="p">[</span><span class="n">d_guarda</span><span class="p">:</span><span class="n">DT_GS_aux</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="p">)</span>
+            <span class="n">WL_case_scale_inter</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">WL_case</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cont</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">WL_GS_WindSetUp</span><span class="p">[</span><span class="n">t</span> <span class="p">:</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="n">DT_GS_aux</span> <span class="o">-</span> <span class="n">cont</span> <span class="o">-</span> <span class="n">d_guarda</span><span class="p">),</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">WL_GS_WindSetUp</span><span class="p">[</span><span class="n">t</span> <span class="p">:</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="n">DT_GS_aux</span> <span class="o">-</span> <span class="n">cont</span> <span class="o">-</span> <span class="n">d_guarda</span><span class="p">),</span> <span class="p">:]</span>
+                <span class="o">+</span> <span class="n">WL_case_scale_inter</span><span class="p">[</span><span class="n">d_guarda</span> <span class="p">:</span> <span class="n">DT_GS_aux</span> <span class="o">-</span> <span class="n">cont</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="p">)</span>
+            <span class="n">WL_case_scale_inter</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">WL_case</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+    <span class="n">ds_WL_GS_WindSetUp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;WL&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;nface&quot;</span><span class="p">],</span> <span class="n">WL_GS_WindSetUp</span><span class="p">),</span>
+            <span class="s2">&quot;lon&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;nface&quot;</span><span class="p">],</span> <span class="n">p_GFD_libdir</span><span class="o">.</span><span class="n">mesh2d_face_x</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+            <span class="s2">&quot;lat&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;nface&quot;</span><span class="p">],</span> <span class="n">p_GFD_libdir</span><span class="o">.</span><span class="n">mesh2d_face_y</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">time_hours</span><span class="p">,</span> <span class="s2">&quot;nface&quot;</span><span class="p">:</span> <span class="n">p_GFD_libdir</span><span class="o">.</span><span class="n">mesh2d_nFaces</span><span class="o">.</span><span class="n">values</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ds_WL_GS_WindSetUp</span></div>
+
+
+
+<div class="viewcode-block" id="axplot_var_map_tri">
+<a class="viewcode-back" href="../../../bluemath_tk.additive.html#bluemath_tk.additive.greensurge.axplot_var_map_tri">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">axplot_var_map_tri</span><span class="p">(</span>
+    <span class="n">ax</span><span class="p">,</span>
+    <span class="n">XX</span><span class="p">,</span>
+    <span class="n">YY</span><span class="p">,</span>
+    <span class="n">TT</span><span class="p">,</span>
+    <span class="n">vv</span><span class="p">,</span>
+    <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s2">&quot;seismic&quot;</span><span class="p">),</span>
+<span class="p">):</span>
+    <span class="s2">&quot;plot 2D map with variable data&quot;</span>
+
+    <span class="c1"># cplot v lims</span>
+    <span class="k">if</span> <span class="n">vmin</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">vmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">vv</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">vmax</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">vv</span><span class="p">)</span>
+
+    <span class="c1"># plot variable 2D map</span>
+    <span class="n">pm</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">tripcolor</span><span class="p">(</span>
+        <span class="n">XX</span><span class="p">,</span>
+        <span class="n">YY</span><span class="p">,</span>
+        <span class="n">TT</span><span class="p">,</span>
+        <span class="n">facecolors</span><span class="o">=</span><span class="n">vv</span><span class="p">,</span>
+        <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span>
+        <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span>
+        <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span>
+        <span class="n">shading</span><span class="o">=</span><span class="s2">&quot;flat&quot;</span><span class="p">,</span>
+        <span class="n">transform</span><span class="o">=</span><span class="n">ccrs</span><span class="o">.</span><span class="n">PlateCarree</span><span class="p">(),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># return pcolormesh</span>
+    <span class="k">return</span> <span class="n">pm</span></div>
+
+
+
+<div class="viewcode-block" id="plot_GS_vs_dynamic_windsetup_tri">
+<a class="viewcode-back" href="../../../bluemath_tk.additive.html#bluemath_tk.additive.greensurge.plot_GS_vs_dynamic_windsetup_tri">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_GS_vs_dynamic_windsetup_tri</span><span class="p">(</span>
+    <span class="n">ds_WL_GS_WindSetUp</span><span class="p">,</span>
+    <span class="n">ds_WL_dynamic_WindSetUp</span><span class="p">,</span>
+    <span class="n">ds_GFD_calc_info</span><span class="p">,</span>
+    <span class="n">t</span><span class="p">,</span>
+    <span class="n">vmin</span><span class="p">,</span>
+    <span class="n">vmax</span><span class="p">,</span>
+    <span class="n">swath</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">figsize</span><span class="o">=</span><span class="p">[</span><span class="mi">15</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span>
+    <span class="n">loadcost</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">ds_GFD_calc_info</span><span class="o">.</span><span class="n">mesh2d_node_x</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">Y</span> <span class="o">=</span> <span class="n">ds_GFD_calc_info</span><span class="o">.</span><span class="n">mesh2d_node_y</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">triangles</span> <span class="o">=</span> <span class="n">ds_GFD_calc_info</span><span class="o">.</span><span class="n">node_triangle</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">XD</span> <span class="o">=</span> <span class="n">ds_WL_dynamic_WindSetUp</span><span class="o">.</span><span class="n">mesh2d_node_x</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">YD</span> <span class="o">=</span> <span class="n">ds_WL_dynamic_WindSetUp</span><span class="o">.</span><span class="n">mesh2d_node_y</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">TriangleD</span> <span class="o">=</span> <span class="n">ds_WL_dynamic_WindSetUp</span><span class="o">.</span><span class="n">mesh2d_face_nodes</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">swath</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">vmin</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vmin</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">xds_GS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">((</span><span class="n">ds_WL_GS_WindSetUp</span><span class="p">[</span><span class="s2">&quot;WL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">xds_DY</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">((</span><span class="n">ds_WL_dynamic_WindSetUp</span><span class="p">[</span><span class="s2">&quot;mesh2d_s1&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">vmax</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">vmax</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">xds_GS</span><span class="p">))</span>
+            <span class="n">ccmap1</span> <span class="o">=</span> <span class="s2">&quot;CMRmap_r&quot;</span>
+            <span class="n">ccmap2</span> <span class="o">=</span> <span class="s2">&quot;CMRmap_r&quot;</span>
+        <span class="k">if</span> <span class="n">vmax</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vmax</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">xds_GS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">((</span><span class="n">ds_WL_GS_WindSetUp</span><span class="p">[</span><span class="s2">&quot;WL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">xds_DY</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">((</span><span class="n">ds_WL_dynamic_WindSetUp</span><span class="p">[</span><span class="s2">&quot;mesh2d_s1&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">vmin</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">vmin</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">xds_GS</span><span class="p">))</span>
+            <span class="n">ccmap1</span> <span class="o">=</span> <span class="s2">&quot;CMRmap&quot;</span>
+            <span class="n">ccmap2</span> <span class="o">=</span> <span class="s2">&quot;CMRmap&quot;</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">xds_GS</span> <span class="o">=</span> <span class="n">ds_WL_GS_WindSetUp</span><span class="p">[</span><span class="s2">&quot;WL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+        <span class="n">xds_DY</span> <span class="o">=</span> <span class="n">ds_WL_dynamic_WindSetUp</span><span class="p">[</span><span class="s2">&quot;mesh2d_s1&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+        <span class="n">ccmap1</span> <span class="o">=</span> <span class="s2">&quot;bwr&quot;</span>
+        <span class="n">ccmap2</span> <span class="o">=</span> <span class="s2">&quot;bwr&quot;</span>
+        <span class="c1"># maximum and minimum wind values</span>
+        <span class="k">if</span> <span class="n">vmax</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vmax</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">xds_GS</span><span class="p">))),</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">xds_DY</span><span class="p">)))</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">vmin</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vmin</span> <span class="o">=</span> <span class="n">vmax</span> <span class="o">*</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">axs</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span>
+        <span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span>
+        <span class="n">subplot_kw</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;projection&quot;</span><span class="p">:</span> <span class="n">ccrs</span><span class="o">.</span><span class="n">PlateCarree</span><span class="p">()},</span>
+    <span class="p">)</span>
+
+    <span class="n">WL_units</span> <span class="o">=</span> <span class="s2">&quot;m&quot;</span>
+
+    <span class="n">pm</span> <span class="o">=</span> <span class="n">axplot_var_map_tri</span><span class="p">(</span>
+        <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">XD</span><span class="p">,</span> <span class="n">YD</span><span class="p">,</span> <span class="n">TriangleD</span><span class="p">,</span> <span class="n">xds_DY</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">ccmap1</span>
+    <span class="p">)</span>
+    <span class="n">cbar1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">pm</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+    <span class="n">cbar1</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span>
+        <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> (</span><span class="si">{1}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;WL&quot;</span><span class="p">,</span> <span class="n">WL_units</span><span class="p">),</span>
+        <span class="n">rotation</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">va</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span>
+        <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span>
+        <span class="n">labelpad</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">pm</span> <span class="o">=</span> <span class="n">axplot_var_map_tri</span><span class="p">(</span>
+        <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">triangles</span><span class="p">,</span> <span class="n">xds_GS</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">ccmap2</span>
+    <span class="p">)</span>
+    <span class="n">cbar2</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">pm</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+    <span class="n">cbar2</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span>
+        <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> (</span><span class="si">{1}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;WL&quot;</span><span class="p">,</span> <span class="n">WL_units</span><span class="p">),</span>
+        <span class="n">rotation</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">va</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span>
+        <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span>
+        <span class="n">labelpad</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">loadcost</span><span class="p">:</span>
+        <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">coastlines</span><span class="p">()</span>
+        <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coastlines</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">swath</span><span class="p">:</span>
+        <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;SWATH Dynamic Wind SetUp&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">)</span>
+        <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;SWATH GreenSurge Wind SetUp&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">date_0</span> <span class="o">=</span> <span class="n">ds_WL_GS_WindSetUp</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">t</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%d</span><span class="s2">-%b-%Y %H:%M%p&quot;</span>
+        <span class="n">t_str</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">date_0</span><span class="p">))</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
+        <span class="n">ttl_t</span> <span class="o">=</span> <span class="s2">&quot;Time: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t_str</span><span class="p">)</span>
+
+        <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+            <span class="s2">&quot;Dynamic Wind SetUp, </span><span class="se">\n</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ttl_t</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span>
+        <span class="p">)</span>
+        <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+            <span class="s2">&quot;GreenSurge Wind SetUp, </span><span class="se">\n</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ttl_t</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_extent</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">ds_WL_GS_WindSetUp</span><span class="o">.</span><span class="n">lon</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">ds_WL_GS_WindSetUp</span><span class="o">.</span><span class="n">lon</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">ds_WL_GS_WindSetUp</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">ds_WL_GS_WindSetUp</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_extent</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">ds_WL_GS_WindSetUp</span><span class="o">.</span><span class="n">lon</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">ds_WL_GS_WindSetUp</span><span class="o">.</span><span class="n">lon</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">ds_WL_GS_WindSetUp</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">ds_WL_GS_WindSetUp</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="wind_layer_from_era5">
+<a class="viewcode-back" href="../../../bluemath_tk.additive.html#bluemath_tk.additive.greensurge.wind_layer_from_era5">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">wind_layer_from_era5</span><span class="p">(</span><span class="n">ds_Wind</span><span class="p">,</span> <span class="n">ds_GFD_info</span><span class="p">):</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="n">ds_Wind</span><span class="o">.</span><span class="n">valid_time</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">era_lon</span> <span class="o">=</span> <span class="n">ds_Wind</span><span class="o">.</span><span class="n">longitude</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">era_lat</span> <span class="o">=</span> <span class="n">ds_Wind</span><span class="o">.</span><span class="n">latitude</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">in_lon</span><span class="p">,</span> <span class="n">in_lat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">era_lon</span><span class="p">,</span> <span class="n">era_lat</span><span class="p">)</span>
+    <span class="n">in_u</span> <span class="o">=</span> <span class="n">ds_Wind</span><span class="o">.</span><span class="n">u10</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">in_v</span> <span class="o">=</span> <span class="n">ds_Wind</span><span class="o">.</span><span class="n">v10</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">in_P</span> <span class="o">=</span> <span class="n">ds_Wind</span><span class="o">.</span><span class="n">msl</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="n">c_lon</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">lon_grid</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">c_lat</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">lat_grid</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">cg_lon</span><span class="p">,</span> <span class="n">cg_lat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">c_lon</span><span class="p">,</span> <span class="n">c_lat</span><span class="p">)</span>
+
+    <span class="n">hld_u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="o">*</span><span class="n">cg_lon</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">)))</span>
+    <span class="n">hld_v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="o">*</span><span class="n">cg_lon</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">)))</span>
+    <span class="n">hld_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="o">*</span><span class="n">cg_lon</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">)))</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">)):</span>
+        <span class="n">hld_u</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">in_lon</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">in_lat</span><span class="o">.</span><span class="n">flatten</span><span class="p">()),</span>
+            <span class="n">in_u</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span>
+            <span class="p">(</span><span class="n">cg_lon</span><span class="p">,</span> <span class="n">cg_lat</span><span class="p">),</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">hld_v</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">in_lat</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">in_lon</span><span class="o">.</span><span class="n">flatten</span><span class="p">()),</span>
+            <span class="n">in_v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span>
+            <span class="p">(</span><span class="n">cg_lat</span><span class="p">,</span> <span class="n">cg_lon</span><span class="p">),</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">hld_p</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">in_lat</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">in_lon</span><span class="o">.</span><span class="n">flatten</span><span class="p">()),</span>
+            <span class="n">in_P</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span>
+            <span class="p">(</span><span class="n">cg_lat</span><span class="p">,</span> <span class="n">cg_lon</span><span class="p">),</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">hld_W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">hld_u</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">hld_v</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">hld_D</span> <span class="o">=</span> <span class="n">get_degrees_from_uv</span><span class="p">(</span><span class="o">-</span><span class="n">hld_u</span><span class="p">,</span> <span class="o">-</span><span class="n">hld_v</span><span class="p">)</span>
+
+    <span class="c1"># generate vortex dataset</span>
+    <span class="n">xds_vortex</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;W&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;lat&quot;</span><span class="p">,</span> <span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">hld_W</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;m/s&quot;</span><span class="p">}),</span>
+            <span class="s2">&quot;u&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;lat&quot;</span><span class="p">,</span> <span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">hld_u</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;m/s&quot;</span><span class="p">}),</span>
+            <span class="s2">&quot;v&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;lat&quot;</span><span class="p">,</span> <span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">hld_v</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;m/s&quot;</span><span class="p">}),</span>
+            <span class="s2">&quot;p&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;lat&quot;</span><span class="p">,</span> <span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">hld_p</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;mbar&quot;</span><span class="p">}),</span>
+            <span class="s2">&quot;Dir&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;lat&quot;</span><span class="p">,</span> <span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">hld_D</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;º&quot;</span><span class="p">}),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;lat&quot;</span><span class="p">:</span> <span class="n">c_lat</span><span class="p">,</span>
+            <span class="s2">&quot;lon&quot;</span><span class="p">:</span> <span class="n">c_lon</span><span class="p">,</span>
+            <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">times</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">xds_vortex</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;xlabel&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;lat&quot;</span>
+    <span class="n">xds_vortex</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;ylabel&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;lon&quot;</span>
+    <span class="k">return</span> <span class="n">xds_vortex</span></div>
+
+
+
+<div class="viewcode-block" id="GS_wind_partition_tri">
+<a class="viewcode-back" href="../../../bluemath_tk.additive.html#bluemath_tk.additive.greensurge.GS_wind_partition_tri">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">GS_wind_partition_tri</span><span class="p">(</span><span class="n">ds_GFD_info</span><span class="p">,</span> <span class="n">xds_vortex</span><span class="p">):</span>
+    <span class="c1"># Code to split (partition) original TC-induced wind fields (regardless of their origin: from Holland vortex model or from forecasting systems)</span>
+    <span class="c1"># taking into account spatial (i.e. cells) and temporal (i.e. length of sustained winds) resolutions defined in GFD</span>
+
+    <span class="c1"># WARNING: only valid for discretization based on correlative square bings --&gt;</span>
+    <span class="c1"># TO DO: generalize (any kind of discretization)</span>
+
+    <span class="n">NTT</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">teselas</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">NumT</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">NT</span><span class="p">)</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">M</span><span class="p">)</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">N</span><span class="p">)</span>
+    <span class="n">lon_grid</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">lon_grid</span>
+    <span class="n">lat_grid</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">lat_grid</span>
+
+    <span class="n">node_triangle</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">node_triangle</span>
+
+    <span class="n">lon_teselas</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">lon_node</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">Node</span><span class="o">=</span><span class="n">node_triangle</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">lat_teselas</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">lat_node</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">Node</span><span class="o">=</span><span class="n">node_triangle</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">lon_grid</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">lon_teselas</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">180</span><span class="p">:</span>
+        <span class="n">lon_teselas</span> <span class="o">=</span> <span class="n">lon_teselas</span> <span class="o">+</span> <span class="mi">360</span>
+
+    <span class="c1"># TC_info</span>
+    <span class="n">Ntime</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xds_vortex</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">xds_vortex</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="c1"># storage</span>
+    <span class="n">U_tes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">NumT</span><span class="p">,</span> <span class="n">Ntime</span><span class="p">))</span>
+    <span class="n">V_tes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">NumT</span><span class="p">,</span> <span class="n">Ntime</span><span class="p">))</span>
+    <span class="n">Dir_tes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">NumT</span><span class="p">,</span> <span class="n">Ntime</span><span class="p">))</span>
+    <span class="n">Wspeed_tes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">NumT</span><span class="p">,</span> <span class="n">Ntime</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Ntime</span><span class="p">):</span>
+        <span class="n">W_grid</span> <span class="o">=</span> <span class="n">xds_vortex</span><span class="o">.</span><span class="n">W</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span>
+        <span class="n">Dir_grid</span> <span class="o">=</span> <span class="p">(</span><span class="mi">270</span> <span class="o">-</span> <span class="n">xds_vortex</span><span class="o">.</span><span class="n">Dir</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
+
+        <span class="n">u_sel_t</span> <span class="o">=</span> <span class="n">W_grid</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">Dir_grid</span><span class="p">)</span>
+        <span class="n">v_sel_t</span> <span class="o">=</span> <span class="n">W_grid</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">Dir_grid</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">NT</span> <span class="ow">in</span> <span class="p">(</span><span class="n">NTT</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">):</span>
+            <span class="n">X0</span><span class="p">,</span> <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">lon_teselas</span><span class="p">[</span><span class="n">NT</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="n">Y0</span><span class="p">,</span> <span class="n">Y1</span><span class="p">,</span> <span class="n">Y2</span> <span class="o">=</span> <span class="n">lat_teselas</span><span class="p">[</span><span class="n">NT</span><span class="p">,</span> <span class="p">:]</span>
+
+            <span class="n">triangle</span> <span class="o">=</span> <span class="p">[(</span><span class="n">X0</span><span class="p">,</span> <span class="n">Y0</span><span class="p">),</span> <span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">Y1</span><span class="p">),</span> <span class="p">(</span><span class="n">X2</span><span class="p">,</span> <span class="n">Y2</span><span class="p">)]</span>
+
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">create_triangle_mask</span><span class="p">(</span><span class="n">lon_grid</span><span class="p">,</span> <span class="n">lat_grid</span><span class="p">,</span> <span class="n">triangle</span><span class="p">)</span>
+
+            <span class="n">u_sel</span> <span class="o">=</span> <span class="n">u_sel_t</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+            <span class="n">v_sel</span> <span class="o">=</span> <span class="n">v_sel_t</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+            <span class="n">Dir</span> <span class="o">=</span> <span class="n">Dir_grid</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+            <span class="n">u_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">u_sel</span><span class="p">)</span>
+            <span class="n">v_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">v_sel</span><span class="p">)</span>
+
+            <span class="n">U_tes</span><span class="p">[</span><span class="n">NT</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">u_mean</span>
+            <span class="n">V_tes</span><span class="p">[</span><span class="n">NT</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">v_mean</span>
+
+            <span class="n">Dir_aux_2</span> <span class="o">=</span> <span class="p">(</span><span class="n">circmean</span><span class="p">(</span><span class="n">Dir</span><span class="p">))</span> <span class="o">*</span> <span class="mi">180</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+            <span class="n">Dir_aux</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">v_mean</span><span class="p">,</span> <span class="n">u_mean</span><span class="p">)</span> <span class="o">*</span> <span class="mi">180</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Dir_aux_2</span> <span class="o">%</span> <span class="mi">360</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Dir_aux</span> <span class="o">%</span> <span class="mi">360</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Issue arg(|W|) ¡= teta, diff </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Dir_aux_2</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">360</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Dir_aux</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">360</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+            <span class="n">Dir_tes</span><span class="p">[</span><span class="n">NT</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_degrees_from_uv</span><span class="p">(</span><span class="o">-</span><span class="n">u_mean</span><span class="p">,</span> <span class="o">-</span><span class="n">v_mean</span><span class="p">)</span>
+
+            <span class="n">Wspeed_tes</span><span class="p">[</span><span class="n">NT</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">u_mean</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">v_mean</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">ds_wind_partition</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;U_tes&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;Ntes&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="n">U_tes</span><span class="p">),</span>
+            <span class="s2">&quot;V_tes&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;Ntes&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="n">V_tes</span><span class="p">),</span>
+            <span class="s2">&quot;Dir_tes&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;Ntes&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="n">Dir_tes</span><span class="p">),</span>
+            <span class="s2">&quot;Wspeed_tes&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;Ntes&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="n">Wspeed_tes</span><span class="p">),</span>
+            <span class="s2">&quot;lon_teselas&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;Ntes&quot;</span><span class="p">,</span> <span class="s2">&quot;NN&quot;</span><span class="p">),</span> <span class="n">lon_teselas</span><span class="p">),</span>
+            <span class="s2">&quot;lat_teselas&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;Ntes&quot;</span><span class="p">,</span> <span class="s2">&quot;NN&quot;</span><span class="p">),</span> <span class="n">lat_teselas</span><span class="p">),</span>
+            <span class="s2">&quot;lon_node&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;Node&quot;</span><span class="p">),</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">lon_node</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+            <span class="s2">&quot;lat_node&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;Node&quot;</span><span class="p">),</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">lat_node</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+            <span class="s2">&quot;node_triangle&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;Ntes&quot;</span><span class="p">,</span> <span class="s2">&quot;NN&quot;</span><span class="p">),</span> <span class="n">node_triangle</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;Ntes&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;Ntes&quot;</span><span class="p">),</span> <span class="n">NTT</span><span class="p">),</span>
+            <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">time</span><span class="p">),</span>
+            <span class="s2">&quot;NN&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;NN&quot;</span><span class="p">),</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span>
+            <span class="s2">&quot;Node&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;Node&quot;</span><span class="p">),</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">Node</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ds_wind_partition</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
