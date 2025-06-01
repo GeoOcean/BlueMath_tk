@@ -951,8 +951,11 @@ def mask_points_outside_polygon(
 
 
 def define_mesh_target_size(
-    rasters, raster_resolution_meters, nprocs=None, depth_ranges=None
-):
+    rasters: List[rasterio.io.DatasetReader],
+    raster_resolution_meters: float,
+    nprocs: int,
+    depth_ranges: float,
+) -> ocsmesh.Hfun:
     """
     Define the mesh target size based on depth ranges and their corresponding values.
 

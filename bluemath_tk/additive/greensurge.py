@@ -1,43 +1,351 @@
+import datetime as datetime
+
 import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import xarray as xr
+from matplotlib import cm
 from matplotlib.path import Path
+from tqdm import tqdm
 
-from ..core.operations import get_degrees_from_uv
 
-
-def create_triangle_mask(
-    lon_grid: np.ndarray, lat_grid: np.ndarray, triangle: np.ndarray
-) -> np.ndarray:
+def get_regular_grid(
+    node_computation_longitude: np.ndarray,
+    node_computation_latitude: np.ndarray,
+    node_computation_elements: np.ndarray,
+    factor: float = 10,
+) -> tuple:
     """
-    Create a mask for a triangle defined by its vertices.
+    Generate a regular grid based on the node computation longitude and latitude.
+    The grid is defined by the minimum and maximum longitude and latitude values,
+    and the minimum distance between nodes in both dimensions.
+    The grid is generated with a specified factor to adjust the resolution.
+    Parameters:
+    - node_computation_longitude: 1D array of longitudes for the nodes.
+    - node_computation_latitude: 1D array of latitudes for the nodes.
+    - node_computation_elements: 2D array of indices defining the elements (triangles).
+    - factor: A scaling factor to adjust the resolution of the grid.
+    Returns:
+    - lon_grid: 1D array of longitudes defining the grid.
+    - lat_grid: 1D array of latitudes defining the grid.
+    """
 
+    lon_min, lon_max = (
+        node_computation_longitude.min(),
+        node_computation_longitude.max(),
+    )
+    lat_min, lat_max = node_computation_latitude.min(), node_computation_latitude.max()
+
+    lon_tri = node_computation_longitude[node_computation_elements]
+    lat_tri = node_computation_latitude[node_computation_elements]
+
+    dlon01 = np.abs(lon_tri[:, 0] - lon_tri[:, 1])
+    dlon12 = np.abs(lon_tri[:, 1] - lon_tri[:, 2])
+    dlon20 = np.abs(lon_tri[:, 2] - lon_tri[:, 0])
+    min_dx = np.min(np.stack([dlon01, dlon12, dlon20], axis=1).max(axis=1)) * factor
+
+    dlat01 = np.abs(lat_tri[:, 0] - lat_tri[:, 1])
+    dlat12 = np.abs(lat_tri[:, 1] - lat_tri[:, 2])
+    dlat20 = np.abs(lat_tri[:, 2] - lat_tri[:, 0])
+    min_dy = np.min(np.stack([dlat01, dlat12, dlat20], axis=1).max(axis=1)) * factor
+
+    lon_grid = np.arange(lon_min, lon_max + min_dx, min_dx)
+    lat_grid = np.arange(lat_min, lat_max + min_dy, min_dy)
+    return lon_grid, lat_grid
+
+
+def generate_structured_points(triangle_connectivity, node_lon, node_lat):
+    """Generate structured points for each triangle in the mesh.
+    Each triangle will have 10 points: vertices, centroid, midpoints of edges, and midpoints of vertex-centroid
+    segments.
     Parameters
     ----------
-    lon_grid : np.ndarray
-        The longitude grid.
-    lat_grid : np.ndarray
-        The latitude grid.
-    triangle : np.ndarray
-        The triangle vertices.
-
+    triangle_connectivity : np.ndarray
+        Array of shape (n_triangles, 3) containing indices of the vertices for each triangle.
+    node_lon : np.ndarray
+        Array of shape (n_nodes,) containing the longitudes of the nodes.
+    node_lat : np.ndarray
+        Array of shape (n_nodes,) containing the latitudes of the nodes.
     Returns
     -------
-    np.ndarray
-        The mask for the triangle.
+    lon_all : np.ndarray
+        Array of shape (n_triangles, 10) containing the longitudes of the structured points for each triangle.
+    lat_all : np.ndarray
+        Array of shape (n_triangles, 10) containing the latitudes of the structured points for each triangle.
+    """
+    n_tri = triangle_connectivity.shape[0]
+    lon_all = np.empty((n_tri, 10))
+    lat_all = np.empty((n_tri, 10))
+
+    for i, tri in enumerate(triangle_connectivity):
+        A = np.array([node_lon[tri[0]], node_lat[tri[0]]])
+        B = np.array([node_lon[tri[1]], node_lat[tri[1]]])
+        C = np.array([node_lon[tri[2]], node_lat[tri[2]]])
+
+        G = (A + B + C) / 3
+        M_AB = (A + B) / 2
+        M_BC = (B + C) / 2
+        M_CA = (C + A) / 2
+        M_AG = (A + G) / 2
+        M_BG = (B + G) / 2
+        M_CG = (C + G) / 2
+
+        points = [A, B, C, G, M_AB, M_BC, M_CA, M_AG, M_BG, M_CG]
+        lon_all[i, :] = [pt[0] for pt in points]
+        lat_all[i, :] = [pt[1] for pt in points]
+
+    return lon_all, lat_all
+
+
+def custom_cmap(
+    numcolors: int,
+    map1: str,
+    m1ini: float,
+    m1end: float,
+    map2: str,
+    m2ini: float,
+    m2end: float,
+) -> colors.ListedColormap:
+    """
+    Create a custom colormap by blending two existing colormaps.
+    Parameters
+    ----------
+    numcolors : int
+        Number of colors in the final colormap.
+    map1 : str
+        Name of the first colormap to blend.
+    m1ini : float
+        Initial value for the first colormap (between 0 and 1).
+    m1end : float
+        Final value for the first colormap (between 0 and 1).
+    map2 : str
+        Name of the second colormap to blend.
+    m2ini : float
+        Initial value for the second colormap (between 0 and 1).
+    m2end : float
+        Final value for the second colormap (between 0 and 1).
+    Returns
+    -------
+    colors.ListedColormap
+        A new colormap that blends the two specified colormaps.
     """
 
-    triangle_path = Path(triangle)
-    # if lon_grid.ndim == 1:
-    #     lon_grid, lat_grid = np.meshgrid(lon_grid, lat_grid)
-    lon_grid, lat_grid = np.meshgrid(lon_grid, lat_grid)
-    points = np.vstack([lon_grid.ravel(), lat_grid.ravel()]).T
-    inside_mask = triangle_path.contains_points(points)
-    mask = inside_mask.reshape(lon_grid.shape)
+    cmap1 = plt.get_cmap(map1, numcolors)
+    cmap2 = plt.get_cmap(map2, numcolors)
 
-    return mask
+    cmap1v = colors.LinearSegmentedColormap.from_list(
+        f"trunc({cmap1.name},{m1ini:.2f},{m1end:.2f})",
+        cmap1(np.linspace(m1ini, m1end, 100)),
+    )
+
+    cmap2v = colors.LinearSegmentedColormap.from_list(
+        f"trunc({cmap2.name},{m2ini:.2f},{m2end:.2f})",
+        cmap2(np.linspace(m2ini, m2end, 100)),
+    )
+
+    top = cm.get_cmap(cmap1v, 128)
+    bottom = plt.get_cmap(cmap2v, 128)
+
+    newcolors = np.vstack((bottom(np.linspace(0, 1, 128)), top(np.linspace(0, 1, 128))))
+
+    newcmp = colors.ListedColormap(newcolors, name="CustomBlend")
+    return newcmp
+
+
+def plot_GS_input_wind_partition(
+    xds_vortex_GS: xr.Dataset,
+    xds_vortex_interp: xr.Dataset,
+    ds_GFD_info: xr.Dataset,
+    i_time: int = 0,
+    figsize=(10, 8),
+) -> None:
+    """
+    Plot the wind partition for GreenSurge input data.
+    Parameters
+    ----------
+    xds_vortex_GS : xr.Dataset
+        Dataset containing the vortex model data for GreenSurge.
+    ds_GFD_info : xr.Dataset
+        Dataset containing the GreenSurge forcing information.
+    i_time : int, optional
+        Index of the time step to plot, by default 0.
+    """
+
+    simple_quiver = 20
+    scale = 30
+    width = 0.003
+
+    fig, (ax1, ax2) = plt.subplots(
+        1,
+        2,
+        figsize=figsize,
+        subplot_kw={"projection": ccrs.PlateCarree()},
+        constrained_layout=True,
+    )
+    time = xds_vortex_GS.time.isel(time=i_time)
+    fig.suptitle(
+        f"Wind partition for {time.values.astype('datetime64[s]').astype(str)}",
+        fontsize=16,
+    )
+    ax1.set_title("Vortex wind")
+    ax2.set_title("Wind partition (GreenSurge)")
+
+    # Plotting the wind speed
+    W = xds_vortex_interp.W.isel(time=i_time)
+    Dir = (270 - xds_vortex_interp.Dir.isel(time=i_time)) % 360
+
+    triangle_forcing_connectivity = ds_GFD_info.triangle_forcing_connectivity.values
+    node_forcing_longitude = ds_GFD_info.node_forcing_longitude.values
+    node_forcing_latitude = ds_GFD_info.node_forcing_latitude.values
+
+    Lon = xds_vortex_GS.lon
+    Lat = xds_vortex_GS.lat
+
+    W_reg = xds_vortex_GS.W.isel(time=i_time)
+    Dir_reg = (270 - xds_vortex_GS.Dir.isel(time=i_time)) % 360
+
+    vmin = np.min((W.min(), W_reg.min()))
+    vmax = np.max((W.max(), W_reg.max()))
+
+    cmap = custom_cmap(100, "plasma_r", 0.05, 0.9, "viridis", 0.2, 1)
+
+    ax2.tripcolor(
+        node_forcing_longitude,
+        node_forcing_latitude,
+        triangle_forcing_connectivity,
+        facecolors=W,
+        cmap=cmap,
+        vmin=vmin,
+        vmax=vmax,
+        edgecolor="white",
+        shading="flat",
+        transform=ccrs.PlateCarree(),
+    )
+
+    pm1 = ax1.pcolormesh(
+        Lon,
+        Lat,
+        W_reg,
+        cmap=cmap,
+        vmin=vmin,
+        vmax=vmax,
+        shading="auto",
+        transform=ccrs.PlateCarree(),
+    )
+    cbar = fig.colorbar(
+        pm1, ax=(ax1, ax2), orientation="horizontal", pad=0.03, aspect=50
+    )
+    cbar.set_label(
+        "{0} ({1})".format("Wind", "m.s⁻¹"),
+        rotation=0,
+        va="bottom",
+        fontweight="bold",
+        labelpad=15,
+    )
+
+    ax2.quiver(
+        np.mean(node_forcing_longitude[triangle_forcing_connectivity], axis=1),
+        np.mean(node_forcing_latitude[triangle_forcing_connectivity], axis=1),
+        np.cos(np.deg2rad(Dir)),
+        np.sin(np.deg2rad(Dir)),
+        color="black",
+        scale=scale,
+        width=width,
+        transform=ccrs.PlateCarree(),
+    )
+
+    ax1.quiver(
+        Lon[::simple_quiver],
+        Lat[::simple_quiver],
+        (np.cos(np.deg2rad(Dir_reg)))[::simple_quiver, ::simple_quiver],
+        (np.sin(np.deg2rad(Dir_reg)))[::simple_quiver, ::simple_quiver],
+        color="black",
+        scale=scale,
+        width=width,
+        transform=ccrs.PlateCarree(),
+    )
+
+    ax1.set_extent([Lon.min(), Lon.max(), Lat.min(), Lat.max()], crs=ccrs.PlateCarree())
+    ax2.set_extent([Lon.min(), Lon.max(), Lat.min(), Lat.max()], crs=ccrs.PlateCarree())
+
+    ax1.coastlines()
+    ax2.coastlines()
+
+
+def plot_greensurge_setup(info_ds: xr.Dataset, figsize=(10, 10)) -> tuple:
+    """
+    Plot the GreenSurge mesh setup from the provided dataset.
+
+    Parameters:
+    - info_ds: xarray Dataset containing the mesh information.
+    - figsize: Tuple specifying the figure size.
+    """
+    # Extracting data from the dataset
+    Conectivity = info_ds.triangle_forcing_connectivity.values
+    node_forcing_longitude = info_ds.node_forcing_longitude.values
+    node_forcing_latitude = info_ds.node_forcing_latitude.values
+    node_computation_longitude = info_ds.node_computation_longitude.values
+    node_computation_latitude = info_ds.node_computation_latitude.values
+
+    num_elements = len(Conectivity)
+
+    fig, ax = plt.subplots(
+        subplot_kw={"projection": ccrs.PlateCarree()}, figsize=figsize
+    )
+
+    ax.triplot(
+        node_computation_longitude,
+        node_computation_latitude,
+        info_ds.triangle_computation_connectivity.values,
+        color="grey",
+        linestyle="-",
+        marker="",
+        linewidth=1 / 2,
+        label="Computational mesh",
+    )
+    ax.triplot(
+        node_forcing_longitude,
+        node_forcing_latitude,
+        Conectivity,
+        color="green",
+        linestyle="-",
+        marker="",
+        linewidth=1,
+        label=f"Forcing mesh ({num_elements} elements)",
+    )
+
+    for t in range(num_elements):
+        node0, node1, node2 = Conectivity[t]
+        x = (
+            node_forcing_longitude[int(node0)]
+            + node_forcing_longitude[int(node1)]
+            + node_forcing_longitude[int(node2)]
+        ) / 3
+        y = (
+            node_forcing_latitude[int(node0)]
+            + node_forcing_latitude[int(node1)]
+            + node_forcing_latitude[int(node2)]
+        ) / 3
+        plt.text(
+            x, y, f"T{t}", fontsize=10, ha="center", va="center", fontweight="bold"
+        )
+
+    bnd = [
+        min(node_computation_longitude.min(), node_forcing_longitude.min()),
+        max(node_computation_longitude.max(), node_forcing_longitude.max()),
+        min(node_computation_latitude.min(), node_forcing_latitude.min()),
+        max(node_computation_latitude.max(), node_forcing_latitude.max()),
+    ]
+    ax.set_extent([*bnd], crs=ccrs.PlateCarree())
+    plt.legend()
+    ax.set_title("GreenSurge Mesh Setup")
+    gl = ax.gridlines(draw_labels=True)
+    gl.top_labels = False
+    gl.right_labels = False
+
+    return fig, ax
 
 
 def create_triangle_mask_from_points(
@@ -68,411 +376,527 @@ def create_triangle_mask_from_points(
     return mask
 
 
-def GS_LinearWindDragCoef(Wspeed, CD_Wl_abc, Wl_abc):
-    Wla = Wl_abc[0]
-    Wlb = Wl_abc[1]
-    Wlc = Wl_abc[2]
-    CDa = CD_Wl_abc[0]
-    CDb = CD_Wl_abc[1]
-    CDc = CD_Wl_abc[2]
-
-    # coefs lines y=ax+b
-    if not Wla == Wlb:
-        a_CDline_ab = (CDa - CDb) / (Wla - Wlb)
-        b_CDline_ab = CDb - a_CDline_ab * Wlb
-    else:
-        a_CDline_ab = 0
-        b_CDline_ab = CDa
-    if not Wlb == Wlc:
-        a_CDline_bc = (CDb - CDc) / (Wlb - Wlc)
-        b_CDline_bc = CDc - a_CDline_bc * Wlc
-    else:
-        a_CDline_bc = 0
-        b_CDline_bc = CDb
-    a_CDline_cinf = 0
-    b_CDline_cinf = CDc
-
-    if Wspeed <= Wlb:
-        CD = a_CDline_ab * Wspeed + b_CDline_ab
-    elif Wspeed > Wlb and Wspeed <= Wlc:
-        CD = a_CDline_bc * Wspeed + b_CDline_bc
-    else:
-        CD = a_CDline_cinf * Wspeed + b_CDline_cinf
-
-    return CD.values
-
-
-def GS_windsetup_reconstruction_tri(
-    p_GFD_libdir, ds_GFD_info, ds_wind_partition, d_guarda, tini, tend
-):
-    Wdir = ds_GFD_info.Wdir
-    AWdir = ds_GFD_info.Wdir[1] - ds_GFD_info.Wdir[0]
-    NTT = p_GFD_libdir.tes.values
-    ND = len(ds_GFD_info.Wdir)
-    Wspeed = ds_GFD_info.Wspeed.values
-    DT_GS = ds_GFD_info.simul_hours
-    CD_Wl_abc = ds_GFD_info.CD_Wl_abc
-    Wl_abc = ds_GFD_info.Wl_abc
-    dt = ds_GFD_info.simul_dt_hours.values
-    time_hours = np.arange(tini, tend, np.timedelta64(int(60 * dt.item()), "m"))
-    Dir_tes = ds_wind_partition.Dir_tes.sel(time=time_hours)
-    Wspeed_tes = ds_wind_partition.Wspeed_tes.sel(time=time_hours)
-    CD_base = GS_LinearWindDragCoef(Wspeed, CD_Wl_abc, Wl_abc)
-    Ntime = len(time_hours)
-    cont = 0
-    discret_dir = Wdir.values
-    A = 0
-
-    for t in range(Ntime):
-        for NT in NTT.astype(int):
-            if Dir_tes[NT, t] > ((ND - 1) * AWdir):
-                discret_dir = np.where(discret_dir == 0, 360, discret_dir)
-            else:
-                discret_dir = Wdir.values
-            dif_dir = np.abs(discret_dir - Dir_tes[NT, t].values)
-            pos_Dir = dif_dir.argmin(axis=0)  # from 0 to 23
-            # maps
-            WL_case = p_GFD_libdir["mesh2d_s1"].sel(tes=NT).sel(dir=pos_Dir).values
-            WL_case = np.nan_to_num(WL_case, nan=0)
-            if A == 0:
-                WL_GS_WindSetUp = np.zeros((Ntime, WL_case.shape[1]))
-                WL_case_scale_inter = np.zeros((WL_case.shape))
-                A = 1
-            # re-scale and drag coefficient
-            Wspeed_tes_case = Wspeed_tes[NT, t].values
-            CD_tes_case = GS_LinearWindDragCoef(Wspeed_tes_case, CD_Wl_abc, Wl_abc)
-            WL_case_scale_inter += (
-                WL_case * (Wspeed_tes_case**2 / Wspeed**2) * (CD_tes_case / CD_base)
-            )
-
-        DT_GS_aux = np.min((DT_GS, Ntime))
-        if (Ntime - t) >= (DT_GS_aux):
-            WL_GS_WindSetUp[t : (t + DT_GS_aux - d_guarda), :] = (
-                WL_GS_WindSetUp[t : (t + DT_GS_aux - d_guarda), :]
-                + WL_case_scale_inter[d_guarda:DT_GS_aux, :]
-            )
-            WL_case_scale_inter = np.zeros((WL_case.shape))
-        else:
-            cont += 1
-            WL_GS_WindSetUp[t : (t + DT_GS_aux - cont - d_guarda), :] = (
-                WL_GS_WindSetUp[t : (t + DT_GS_aux - cont - d_guarda), :]
-                + WL_case_scale_inter[d_guarda : DT_GS_aux - cont, :]
-            )
-            WL_case_scale_inter = np.zeros((WL_case.shape))
-
-    ds_WL_GS_WindSetUp = xr.Dataset(
-        {
-            "WL": (["time", "nface"], WL_GS_WindSetUp),
-            "lon": (["nface"], p_GFD_libdir.mesh2d_face_x.values),
-            "lat": (["nface"], p_GFD_libdir.mesh2d_face_y.values),
-        },
-        coords={"time": time_hours, "nface": p_GFD_libdir.mesh2d_nFaces.values},
-    )
-    return ds_WL_GS_WindSetUp
-
-
-def axplot_var_map_tri(
-    ax,
-    XX,
-    YY,
-    TT,
-    vv,
+def plot_GS_vs_dynamic_windsetup_swath(
+    ds_WL_GS_WindSetUp: xr.Dataset,
+    ds_WL_dynamic_WindSetUp: xr.Dataset,
+    ds_gfd_metadata: xr.Dataset,
     vmin=None,
     vmax=None,
-    cmap=plt.get_cmap("seismic"),
-):
-    "plot 2D map with variable data"
+    figsize=(10, 8),
+) -> None:
+    """
+    Plot the GreenSurge and dynamic wind setup from the provided datasets.
+    Parameters:
+    - ds_WL_GS_WindSetUp: xarray Dataset containing the GreenSurge wind setup data.
+    - ds_WL_dynamic_WindSetUp: xarray Dataset containing the dynamic wind setup data.
+    - ds_gfd_metadata: xarray Dataset containing the metadata for the GFD mesh.
+    - vmin: Minimum value for the color scale (optional).
+    - vmax: Maximum value for the color scale (optional).
+    - figsize: Tuple specifying the figure size.
+    """
 
-    # cplot v lims
-    if vmin == None:
-        vmin = np.nanmin(vv)
-    if vmax == None:
-        vmax = np.nanmax(vv)
+    X = ds_gfd_metadata.node_computation_longitude.values
+    Y = ds_gfd_metadata.node_computation_latitude.values
+    triangles = ds_gfd_metadata.triangle_computation_connectivity.values
 
-    # plot variable 2D map
-    pm = ax.tripcolor(
-        XX,
-        YY,
-        TT,
-        facecolors=vv,
-        cmap=cmap,
-        vmin=vmin,
-        vmax=vmax,
-        shading="flat",
-        transform=ccrs.PlateCarree(),
-    )
+    Longitude_dynamic = ds_WL_dynamic_WindSetUp.mesh2d_node_x.values
+    Latitude_dynamic = ds_WL_dynamic_WindSetUp.mesh2d_node_y.values
 
-    # return pcolormesh
-    return pm
+    xds_GS = np.nanmax(ds_WL_GS_WindSetUp["WL"].values, axis=0)
+    xds_DY = np.nanmax(ds_WL_dynamic_WindSetUp["mesh2d_s1"].values, axis=0)
 
+    if vmin is None:
+        vmin = 0
+    if vmax is None:
+        vmax = float(np.nanmax(xds_GS))
 
-def plot_GS_vs_dynamic_windsetup_tri(
-    ds_WL_GS_WindSetUp,
-    ds_WL_dynamic_WindSetUp,
-    ds_GFD_calc_info,
-    t,
-    vmin,
-    vmax,
-    swath=False,
-    figsize=[15, 12],
-    loadcost=None,
-):
-    X = ds_GFD_calc_info.mesh2d_node_x.values
-    Y = ds_GFD_calc_info.mesh2d_node_y.values
-    triangles = ds_GFD_calc_info.node_triangle[:, 0:3].values
-    XD = ds_WL_dynamic_WindSetUp.mesh2d_node_x.values
-    YD = ds_WL_dynamic_WindSetUp.mesh2d_node_y.values
-    TriangleD = ds_WL_dynamic_WindSetUp.mesh2d_face_nodes.values[:, 0:3] - 1
-
-    if swath:
-        if vmin == None:
-            vmin = 0
-            xds_GS = np.nanmax((ds_WL_GS_WindSetUp["WL"].values), axis=0)
-            xds_DY = np.nanmax((ds_WL_dynamic_WindSetUp["mesh2d_s1"].values), axis=0)
-            if vmax == None:
-                vmax = float(np.nanmax(xds_GS))
-            ccmap1 = "CMRmap_r"
-            ccmap2 = "CMRmap_r"
-        if vmax == None:
-            vmax = 0
-            xds_GS = np.nanmin((ds_WL_GS_WindSetUp["WL"].values), axis=0)
-            xds_DY = np.nanmin((ds_WL_dynamic_WindSetUp["mesh2d_s1"].values), axis=0)
-            if vmin == None:
-                vmin = float(np.nanmin(xds_GS))
-            ccmap1 = "CMRmap"
-            ccmap2 = "CMRmap"
-
-    else:
-        xds_GS = ds_WL_GS_WindSetUp["WL"].sel(time=t)
-        xds_DY = ds_WL_dynamic_WindSetUp["mesh2d_s1"].sel(time=t)
-        ccmap1 = "bwr"
-        ccmap2 = "bwr"
-        # maximum and minimum wind values
-        if vmax == None:
-            vmax = max(
-                np.abs(float(np.nanmax(xds_GS))), np.abs(float(np.nanmin(xds_DY)))
-            )
-        if vmin == None:
-            vmin = vmax * -1
-
-    fig, (axs) = plt.subplots(
+    fig, axs = plt.subplots(
         nrows=1,
         ncols=2,
         figsize=figsize,
         subplot_kw={"projection": ccrs.PlateCarree()},
     )
 
-    WL_units = "m"
-
-    pm = axplot_var_map_tri(
-        axs[0], XD, YD, TriangleD, xds_DY, vmin=vmin, vmax=vmax, cmap=ccmap1
-    )
-    cbar1 = fig.colorbar(pm, ax=axs[0], orientation="horizontal", pad=0.1)
-    cbar1.ax.set_xlabel(
-        "{0} ({1})".format("WL", WL_units),
-        rotation=0,
-        va="bottom",
-        fontweight="bold",
-        labelpad=15,
+    axs[0].tripcolor(
+        Longitude_dynamic,
+        Latitude_dynamic,
+        ds_WL_dynamic_WindSetUp.mesh2d_face_nodes.values - 1,
+        facecolors=xds_DY,
+        cmap="CMRmap_r",
+        vmin=vmin,
+        vmax=vmax,
+        transform=ccrs.PlateCarree(),
     )
 
-    pm = axplot_var_map_tri(
-        axs[1], X, Y, triangles, xds_GS, vmin=vmin, vmax=vmax, cmap=ccmap2
+    pm = axs[1].tripcolor(
+        X,
+        Y,
+        triangles,
+        facecolors=xds_GS,
+        cmap="CMRmap_r",
+        vmin=vmin,
+        vmax=vmax,
+        transform=ccrs.PlateCarree(),
     )
-    cbar2 = fig.colorbar(pm, ax=axs[1], orientation="horizontal", pad=0.1)
-    cbar2.ax.set_xlabel(
-        "{0} ({1})".format("WL", WL_units),
-        rotation=0,
-        va="bottom",
-        fontweight="bold",
-        labelpad=15,
+    cbar = fig.colorbar(pm, ax=axs, orientation="horizontal", pad=0.03, aspect=50)
+    cbar.set_label(
+        "WL ({})".format("m"), rotation=0, va="bottom", fontweight="bold", labelpad=15
     )
+    fig.suptitle("SWATH", fontsize=18, fontweight="bold")
 
-    if loadcost:
-        axs[0].coastlines()
-        axs[1].coastlines()
+    axs[0].set_title("Dynamic Wind SetUp", fontsize=14)
+    axs[1].set_title("GreenSurge Wind SetUp", fontsize=14)
 
-    if swath:
-        axs[0].set_title("SWATH Dynamic Wind SetUp", fontsize=16, fontweight="bold")
-        axs[1].set_title("SWATH GreenSurge Wind SetUp", fontsize=16, fontweight="bold")
+    lon_min = np.nanmin(Longitude_dynamic)
+    lon_max = np.nanmax(Longitude_dynamic)
+    lat_min = np.nanmin(Latitude_dynamic)
+    lat_max = np.nanmax(Latitude_dynamic)
+    for ax in axs:
+        ax.set_extent([lon_min, lon_max, lat_min, lat_max])
+
+
+def GS_windsetup_reconstruction_with_postprocess(
+    greensurge_dataset: xr.Dataset,
+    ds_gfd_metadata: xr.Dataset,
+    wind_direction_input: xr.Dataset,
+    velocity_thresholds: np.ndarray = [0, 100, 100],
+    drag_coefficients: np.ndarray = [0.00063, 0.00723, 0.00723],
+) -> xr.Dataset:
+    """
+    Reconstructs the GreenSurge wind setup using the provided wind direction input and metadata.
+    Parameters:
+    - greensurge_dataset: xarray Dataset containing the GreenSurge mesh and forcing data.
+    - ds_gfd_metadata: xarray Dataset containing metadata for the GFD mesh.
+    - wind_direction_input: xarray Dataset containing wind direction and speed data.
+    - velocity_thresholds: List of velocity thresholds for drag coefficient calculation.
+    - drag_coefficients: List of drag coefficients corresponding to the velocity thresholds.
+    Returns:
+    - ds_wind_setup: xarray Dataset containing the reconstructed wind setup.
+    """
+
+    velocity_thresholds = np.asarray(velocity_thresholds)
+    drag_coefficients = np.asarray(drag_coefficients)
+
+    direction_bins = ds_gfd_metadata.wind_directions.values
+    forcing_cell_indices = greensurge_dataset.forcing_cell.values
+    wind_speed_reference = ds_gfd_metadata.wind_speed.values.item()
+    base_drag_coeff = GS_LinearWindDragCoef_mat(
+        wind_speed_reference, drag_coefficients, velocity_thresholds
+    )
+    time_step_hours = ds_gfd_metadata.time_step_hours.values / np.timedelta64(1, "h")
+
+    time_start = wind_direction_input.time.values.min()
+    time_end = wind_direction_input.time.values.max()
+    duration_in_steps = (
+        int(
+            (ds_gfd_metadata.simulation_duration_hours.values / np.timedelta64(1, "h"))
+            / time_step_hours
+        )
+        + 1
+    )
+    output_time_vector = np.arange(
+        time_start, time_end, np.timedelta64(int(60 * time_step_hours.item()), "m")
+    )
+    num_output_times = len(output_time_vector)
+
+    direction_data = wind_direction_input.Dir.values
+    wind_speed_data = wind_direction_input.W.values
+
+    n_faces = greensurge_dataset["mesh2d_s1"].isel(forcing_cell=0, direction=0).shape
+    wind_setup_output = np.zeros((num_output_times, n_faces[1]))
+    water_level_accumulator = np.zeros(n_faces)
+
+    for time_index in tqdm(range(num_output_times), desc="Processing time steps"):
+        water_level_accumulator[:] = 0
+        for cell_index in forcing_cell_indices.astype(int):
+            current_dir = direction_data[cell_index, time_index] % 360
+            adjusted_bins = np.where(direction_bins == 0, 360, direction_bins)
+            closest_direction_index = np.abs(adjusted_bins - current_dir).argmin()
+
+            water_level_case = (
+                greensurge_dataset["mesh2d_s1"]
+                .sel(forcing_cell=cell_index, direction=closest_direction_index)
+                .values
+            )
+            water_level_case = np.nan_to_num(water_level_case, nan=0)
+
+            wind_speed_value = wind_speed_data[cell_index, time_index]
+            drag_coeff_value = GS_LinearWindDragCoef_mat(
+                wind_speed_value, drag_coefficients, velocity_thresholds
+            )
+
+            scaling_factor = (wind_speed_value**2 / wind_speed_reference**2) * (
+                drag_coeff_value / base_drag_coeff
+            )
+            water_level_accumulator += water_level_case * scaling_factor
+
+        step_window = min(duration_in_steps, num_output_times - time_index)
+        if (num_output_times - time_index) > step_window:
+            wind_setup_output[time_index : time_index + step_window] += (
+                water_level_accumulator
+            )
+        else:
+            shift_counter = step_window - (num_output_times - time_index)
+            wind_setup_output[
+                time_index : time_index + step_window - shift_counter
+            ] += water_level_accumulator[: step_window - shift_counter]
+
+    ds_wind_setup = xr.Dataset(
+        {"WL": (["time", "nface"], wind_setup_output)},
+        coords={
+            "time": output_time_vector,
+            "nface": np.arange(wind_setup_output.shape[1]),
+        },
+    )
+    ds_wind_setup.attrs["description"] = "Wind setup from GreenSurge methodology"
+    return ds_wind_setup
+
+
+def GS_LinearWindDragCoef_mat(
+    Wspeed: np.ndarray, CD_Wl_abc: np.ndarray, Wl_abc: np.ndarray
+) -> np.ndarray:
+    """
+    Calculate the linear drag coefficient based on wind speed and specified thresholds.
+    Parameters
+    ----------
+    Wspeed : np.ndarray
+        Wind speed values (1D array).
+    CD_Wl_abc : np.ndarray
+        Coefficients for the drag coefficient calculation, should be a 1D array of length 3.
+    Wl_abc : np.ndarray
+        Wind speed thresholds for the drag coefficient calculation, should be a 1D array of length 3.
+    Returns
+    -------
+    np.ndarray
+        Calculated drag coefficient values based on the input wind speed.
+    """
+    Wspeed = np.atleast_1d(Wspeed).astype(np.float64)
+    was_scalar = Wspeed.ndim == 1 and Wspeed.size == 1
+
+    Wla, Wlb, Wlc = Wl_abc
+    CDa, CDb, CDc = CD_Wl_abc
+
+    if Wla != Wlb:
+        a_ab = (CDa - CDb) / (Wla - Wlb)
+        b_ab = CDb - a_ab * Wlb
     else:
-        date_0 = ds_WL_GS_WindSetUp["time"].sel(time=t).values
-        fmt = "%d-%b-%Y %H:%M%p"
-        t_str = pd.to_datetime(str(date_0)).strftime(fmt)
-        ttl_t = "Time: {0}".format(t_str)
+        a_ab = 0
+        b_ab = CDa
 
-        axs[0].set_title(
-            "Dynamic Wind SetUp, \n{0}".format(ttl_t), fontsize=16, fontweight="bold"
-        )
-        axs[1].set_title(
-            "GreenSurge Wind SetUp, \n{0}".format(ttl_t), fontsize=16, fontweight="bold"
-        )
+    if Wlb != Wlc:
+        a_bc = (CDb - CDc) / (Wlb - Wlc)
+        b_bc = CDc - a_bc * Wlc
+    else:
+        a_bc = 0
+        b_bc = CDb
 
-    axs[0].set_extent(
-        [
-            np.nanmin(ds_WL_GS_WindSetUp.lon.values),
-            np.nanmax(ds_WL_GS_WindSetUp.lon.values),
-            np.nanmin(ds_WL_GS_WindSetUp.lat.values),
-            np.nanmax(ds_WL_GS_WindSetUp.lat.values),
-        ]
-    )
-    axs[1].set_extent(
-        [
-            np.nanmin(ds_WL_GS_WindSetUp.lon.values),
-            np.nanmax(ds_WL_GS_WindSetUp.lon.values),
-            np.nanmin(ds_WL_GS_WindSetUp.lat.values),
-            np.nanmax(ds_WL_GS_WindSetUp.lat.values),
-        ]
-    )
+    a_cinf = 0
+    b_cinf = CDc
+
+    CD = a_cinf * Wspeed + b_cinf
+    CD[Wspeed <= Wlb] = a_ab * Wspeed[Wspeed <= Wlb] + b_ab
+    mask_bc = (Wspeed > Wlb) & (Wspeed <= Wlc)
+    CD[mask_bc] = a_bc * Wspeed[mask_bc] + b_bc
+
+    return CD.item() if was_scalar else CD
 
 
-def wind_layer_from_era5(ds_Wind, ds_GFD_info):
-    times = ds_Wind.valid_time.values
-    era_lon = ds_Wind.longitude.values
-    era_lat = ds_Wind.latitude.values
-    in_lon, in_lat = np.meshgrid(era_lon, era_lat)
-    in_u = ds_Wind.u10.values
-    in_v = ds_Wind.v10.values
-    in_P = ds_Wind.msl.values
+def plot_GS_vs_dynamic_windsetup(
+    ds_WL_GS_WindSetUp: xr.Dataset,
+    ds_WL_dynamic_WindSetUp: xr.Dataset,
+    ds_gfd_metadata: xr.Dataset,
+    time: datetime.datetime,
+    vmin=None,
+    vmax=None,
+    figsize=(10, 8),
+) -> None:
+    """
+    Plot the GreenSurge and dynamic wind setup from the provided datasets.
+    Parameters:
+    - ds_WL_GS_WindSetUp: xarray Dataset containing the GreenSurge wind setup data.
+    - ds_WL_dynamic_WindSetUp: xarray Dataset containing the dynamic wind setup data.
+    - ds_gfd_metadata: xarray Dataset containing the metadata for the GFD mesh.
+    - time: The time point at which to plot the data.
+    - vmin: Minimum value for the color scale (optional).
+    - vmax: Maximum value for the color scale (optional).
+    - figsize: Tuple specifying the figure size.
+    """
 
-    c_lon = ds_GFD_info.lon_grid.values
-    c_lat = ds_GFD_info.lat_grid.values
-    cg_lon, cg_lat = np.meshgrid(c_lon, c_lat)
+    X = ds_gfd_metadata.node_computation_longitude.values
+    Y = ds_gfd_metadata.node_computation_latitude.values
+    triangles = ds_gfd_metadata.triangle_computation_connectivity.values
 
-    hld_u = np.zeros((*cg_lon.shape, len(times)))
-    hld_v = np.zeros((*cg_lon.shape, len(times)))
-    hld_p = np.zeros((*cg_lon.shape, len(times)))
+    Longitude_dynamic = ds_WL_dynamic_WindSetUp.mesh2d_node_x.values
+    Latitude_dynamic = ds_WL_dynamic_WindSetUp.mesh2d_node_y.values
 
-    for i in range(len(times)):
-        hld_u[:, :, i] = griddata(
-            (in_lon.flatten(), in_lat.flatten()),
-            in_u[i].flatten(),
-            (cg_lon, cg_lat),
-            method="linear",
-        )
-        hld_v[:, :, i] = griddata(
-            (in_lat.flatten(), in_lon.flatten()),
-            in_v[i].flatten(),
-            (cg_lat, cg_lon),
-            method="linear",
-        )
-        hld_p[:, :, i] = griddata(
-            (in_lat.flatten(), in_lon.flatten()),
-            in_P[i].flatten(),
-            (cg_lat, cg_lon),
-            method="linear",
-        )
+    xds_GS = ds_WL_GS_WindSetUp["WL"].sel(time=time).values
+    xds_DY = ds_WL_dynamic_WindSetUp["mesh2d_s1"].sel(time=time).values
+    if vmin is None or vmax is None:
+        vmax = float(np.nanmax(xds_GS)) * 0.5
+        vmin = -vmax
 
-    hld_W = np.sqrt(hld_u**2 + hld_v**2)
-    hld_D = get_degrees_from_uv(-hld_u, -hld_v)
-
-    # generate vortex dataset
-    xds_vortex = xr.Dataset(
-        {
-            "W": (("lat", "lon", "time"), hld_W, {"units": "m/s"}),
-            "u": (("lat", "lon", "time"), hld_u, {"units": "m/s"}),
-            "v": (("lat", "lon", "time"), hld_v, {"units": "m/s"}),
-            "p": (("lat", "lon", "time"), hld_p, {"units": "mbar"}),
-            "Dir": (("lat", "lon", "time"), hld_D, {"units": "º"}),
-        },
-        coords={
-            "lat": c_lat,
-            "lon": c_lon,
-            "time": times,
-        },
-    )
-    xds_vortex.attrs["xlabel"] = "lat"
-    xds_vortex.attrs["ylabel"] = "lon"
-    return xds_vortex
-
-
-def GS_wind_partition_tri(ds_GFD_info, xds_vortex):
-    # Code to split (partition) original TC-induced wind fields (regardless of their origin: from Holland vortex model or from forecasting systems)
-    # taking into account spatial (i.e. cells) and temporal (i.e. length of sustained winds) resolutions defined in GFD
-
-    # WARNING: only valid for discretization based on correlative square bings -->
-    # TO DO: generalize (any kind of discretization)
-
-    NTT = ds_GFD_info.teselas.values
-    NumT = int(ds_GFD_info.NT)
-    M = len(ds_GFD_info.M)
-    N = len(ds_GFD_info.N)
-    lon_grid = ds_GFD_info.lon_grid
-    lat_grid = ds_GFD_info.lat_grid
-
-    node_triangle = ds_GFD_info.node_triangle
-
-    lon_teselas = ds_GFD_info.lon_node.isel(Node=node_triangle).values
-    lat_teselas = ds_GFD_info.lat_node.isel(Node=node_triangle).values
-
-    if np.abs(np.mean(lon_grid) - np.mean(lon_teselas)) > 180:
-        lon_teselas = lon_teselas + 360
-
-    # TC_info
-    Ntime = len(xds_vortex.time)
-    time = xds_vortex.time.values
-
-    # storage
-    U_tes = np.zeros((NumT, Ntime))
-    V_tes = np.zeros((NumT, Ntime))
-    Dir_tes = np.zeros((NumT, Ntime))
-    Wspeed_tes = np.zeros((NumT, Ntime))
-
-    for i in range(Ntime):
-        W_grid = xds_vortex.W.values[:, :, i]
-        Dir_grid = (270 - xds_vortex.Dir.values[:, :, i]) * np.pi / 180
-
-        u_sel_t = W_grid * np.cos(Dir_grid)
-        v_sel_t = W_grid * np.sin(Dir_grid)
-
-        for NT in (NTT - 1).astype(int):
-            X0, X1, X2 = lon_teselas[NT, :]
-            Y0, Y1, Y2 = lat_teselas[NT, :]
-
-            triangle = [(X0, Y0), (X1, Y1), (X2, Y2)]
-
-            mask = create_triangle_mask(lon_grid, lat_grid, triangle)
-
-            u_sel = u_sel_t[mask]
-            v_sel = v_sel_t[mask]
-            Dir = Dir_grid[mask]
-
-            u_mean = np.nanmean(u_sel)
-            v_mean = np.nanmean(v_sel)
-
-            U_tes[NT, i] = u_mean
-            V_tes[NT, i] = v_mean
-
-            Dir_aux_2 = (circmean(Dir)) * 180 / (np.pi)
-            Dir_aux = np.arctan2(v_mean, u_mean) * 180 / (np.pi)
-
-            if np.abs(np.mean(Dir_aux_2 % 360) - np.mean(Dir_aux % 360)) > 5:
-                print(
-                    f"Issue arg(|W|) ¡= teta, diff {np.mean(Dir_aux_2 % 360) - np.mean(Dir_aux % 360)}"
-                )
-
-            Dir_tes[NT, i] = get_degrees_from_uv(-u_mean, -v_mean)
-
-            Wspeed_tes[NT, i] = np.sqrt(u_mean**2 + v_mean**2)
-
-    ds_wind_partition = xr.Dataset(
-        {
-            "U_tes": (["Ntes", "time"], U_tes),
-            "V_tes": (["Ntes", "time"], V_tes),
-            "Dir_tes": (["Ntes", "time"], Dir_tes),
-            "Wspeed_tes": (["Ntes", "time"], Wspeed_tes),
-            "lon_teselas": (("Ntes", "NN"), lon_teselas),
-            "lat_teselas": (("Ntes", "NN"), lat_teselas),
-            "lon_node": (("Node"), ds_GFD_info.lon_node.values),
-            "lat_node": (("Node"), ds_GFD_info.lat_node.values),
-            "node_triangle": (("Ntes", "NN"), node_triangle.values),
-        },
-        coords={
-            "Ntes": (("Ntes"), NTT),
-            "time": (("time"), time),
-            "NN": (("NN"), [1, 2, 3]),
-            "Node": (("Node"), ds_GFD_info.Node.values),
-        },
+    fig, axs = plt.subplots(
+        nrows=1,
+        ncols=2,
+        figsize=figsize,
+        subplot_kw={"projection": ccrs.PlateCarree()},
+        constrained_layout=True,
     )
 
-    return ds_wind_partition
+    axs[0].tripcolor(
+        Longitude_dynamic,
+        Latitude_dynamic,
+        ds_WL_dynamic_WindSetUp.mesh2d_face_nodes.values - 1,
+        facecolors=xds_DY,
+        cmap="bwr",
+        vmin=vmin,
+        vmax=vmax,
+        transform=ccrs.PlateCarree(),
+    )
+
+    pm = axs[1].tripcolor(
+        X,
+        Y,
+        triangles,
+        facecolors=xds_GS,
+        cmap="bwr",
+        vmin=vmin,
+        vmax=vmax,
+        transform=ccrs.PlateCarree(),
+    )
+    cbar = fig.colorbar(pm, ax=axs, orientation="horizontal", pad=0.03, aspect=50)
+    cbar.set_label(
+        "WL ({})".format("m"), rotation=0, va="bottom", fontweight="bold", labelpad=15
+    )
+    fig.suptitle(
+        f"Wind SetUp for {time.astype('datetime64[s]').astype(str)}",
+        fontsize=16,
+        fontweight="bold",
+    )
+
+    axs[0].set_title("Dynamic Wind SetUp")
+    axs[1].set_title("GreenSurge Wind SetUp")
+
+    lon_min = np.nanmin(Longitude_dynamic)
+    lon_max = np.nanmax(Longitude_dynamic)
+    lat_min = np.nanmin(Latitude_dynamic)
+    lat_max = np.nanmax(Latitude_dynamic)
+    for ax in axs:
+        ax.set_extent([lon_min, lon_max, lat_min, lat_max])
+
+
+# Revisar
+
+
+def plot_GS_TG_validation_timeseries_tri(
+    ds_WL_GS_WindSetUp: xr.Dataset,
+    ds_WL_GS_IB: xr.Dataset,
+    ds_WL_dynamic_WindSetUp: xr.Dataset,
+    TG: xr.Dataset,
+    ds_GFD_info: xr.Dataset,
+    figsize=[15, 7],
+    WLmin: float = None,
+    WLmax: float = None,
+) -> None:
+    """
+    Plot a time series comparison of GreenSurge, dynamic wind setup, and tide gauge data.
+    Parameters
+    ----------
+    ds_WL_GS_WindSetUp : xr.Dataset
+        Dataset containing GreenSurge wind setup data with dimensions (nface, time).
+    ds_WL_GS_IB : xr.Dataset
+        Dataset containing inverse barometer data with dimensions (lat, lon, time).
+    ds_WL_dynamic_WindSetUp : xr.Dataset
+        Dataset containing dynamic wind setup data with dimensions (mesh2d_nFaces, time).
+    TG : xr.Dataset
+        Dataset containing tide gauge data with dimensions (time).
+    ds_GFD_info : xr.Dataset
+        Dataset containing grid information with longitude and latitude coordinates.
+    figsize : list, optional
+        Size of the figure for the plot, by default [15, 7].
+    WLmin : float, optional
+        Minimum water level for the plot, by default None (will be calculated).
+    WLmax : float, optional
+        Maximum water level for the plot, by default None (will be calculated).
+    Returns
+    -------
+    None
+        Displays the plot of the time series comparison.
+    """
+
+    lon_obs_points = TG.lon.values
+    lat_obs_points = TG.lat.values
+
+    # Extract Windsetup
+    # Nearest point in grid
+    lon_obs_points = np.where(
+        lon_obs_points > 180, lon_obs_points - 360, lon_obs_points
+    )
+    nface_index = int(
+        extract_pos_nearest_points_tri(ds_GFD_info, lon_obs_points, lat_obs_points)
+    )
+    mesh2d_nFaces = extract_pos_nearest_points_tri(
+        ds_WL_dynamic_WindSetUp, lon_obs_points, lat_obs_points
+    )
+
+    # GS
+    time_GS = ds_WL_GS_WindSetUp.WL.time
+    # dynamic
+    ds_WL_dynamic_WindSetUp = ds_WL_dynamic_WindSetUp.sel(
+        time=ds_WL_GS_WindSetUp.WL.time
+    )
+    time_dy = ds_WL_dynamic_WindSetUp["mesh2d_s1"].time
+    # Extract time series IB
+    # Nearest point in grid
+    pos_lon_IB, pos_lat_IB = extract_pos_nearest_points(
+        ds_WL_GS_IB, lon_obs_points, lat_obs_points
+    )
+
+    ds_WL_GS_IB = ds_WL_GS_IB.interp(time=ds_WL_GS_WindSetUp.WL.time)
+
+    WL_GS_windsetup_points = ds_WL_GS_WindSetUp["WL"].sel(nface=int(nface_index)).values
+    WL_dynamic_windsetup_points = (
+        ds_WL_dynamic_WindSetUp["mesh2d_s1"]
+        .sel(mesh2d_nFaces=int(mesh2d_nFaces))
+        .values
+    )
+    WL_GS_IB_points = ds_WL_GS_IB.IB.values[int(pos_lat_IB), int(pos_lon_IB), :]
+
+    WL_SS_dynamic_points = WL_dynamic_windsetup_points + WL_GS_IB_points
+    WL_SS_GS_points = WL_GS_windsetup_points + WL_GS_IB_points
+
+    WL_SS_TG = TG.SS.values
+    time_TG = TG.time
+
+    # Plot comparison
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    (line1,) = ax.plot(time_dy, WL_SS_dynamic_points, c="blue")
+    (line2,) = ax.plot(time_GS, WL_SS_GS_points, c="tomato")
+    (line3,) = ax.plot(time_TG, WL_SS_TG, c="green")
+    (line4,) = ax.plot(time_dy, WL_GS_windsetup_points, c="grey")
+    (line5,) = ax.plot(time_dy, WL_GS_IB_points, c="black")
+
+    if WLmin is None or WLmax is None:
+        WLmax = np.max(
+            [np.max(WL_SS_dynamic_points), np.max(WL_SS_GS_points), np.max(WL_SS_TG)]
+        )
+        WLmin = np.min(
+            [np.min(WL_SS_dynamic_points), np.min(WL_SS_GS_points), np.min(WL_SS_TG)]
+        )
+    ax.set_xlim(time_GS[0], time_GS[-1])
+    ax.set_ylim(WLmin, WLmax)
+    ax.set_ylabel("m")
+
+    ax.legend(
+        (line1, line2, line3, line4, line5),
+        ("Dynamic simulation", "GreenSurge", "TG", "GS_WindSetup", "IB"),
+    )
+
+    # gs1.tight_layout(fig, rect=[0.3, 0, 1, 0.75])
+
+
+def extract_pos_nearest_points_tri(
+    ds_mesh_info: xr.Dataset, lon_points: np.ndarray, lat_points: np.ndarray
+) -> np.ndarray:
+    """
+    Extract the nearest triangle index for given longitude and latitude points.
+    Parameters
+    ----------
+    ds_mesh_info : xr.Dataset
+        Dataset containing mesh information with longitude and latitude coordinates.
+    lon_points : np.ndarray
+        Array of longitudes for which to find the nearest triangle index.
+    lat_points : np.ndarray
+        Array of latitudes for which to find the nearest triangle index.
+    Returns
+    -------
+    np.ndarray
+        Array of nearest triangle indices corresponding to the input longitude and latitude points.
+    """
+
+    if "node_forcing_latitude" in ds_mesh_info.variables:
+        lon_mesh = ds_mesh_info.node_forcing_longitude.values
+        lat_mesh = ds_mesh_info.node_forcing_latitude.values
+        type_ds = 0
+    else:
+        lon_mesh = ds_mesh_info.mesh2d_face_x.values
+        lat_mesh = ds_mesh_info.mesh2d_face_y.values
+        type_ds = 1
+
+    nface_index = np.zeros(len(lon_points))
+
+    for i in range(len(lon_points)):
+        lon = lon_points[i]
+        lat = lat_points[i]
+
+        distances = np.sqrt((lon_mesh - lon) ** 2 + (lat_mesh - lat) ** 2)
+        min_idx = np.argmin(distances)
+
+        if type_ds == 0:
+            nface_index[i] = ds_mesh_info.element_forcing_index.values[min_idx]
+        elif type_ds == 1:
+            nface_index[i] = ds_mesh_info.mesh2d_nFaces.values[min_idx]
+
+    return nface_index
+
+
+def extract_pos_nearest_points(
+    ds_mesh_info: xr.Dataset, lon_points: np.ndarray, lat_points: np.ndarray
+) -> (np.ndarray, np.ndarray):
+    """
+    Extract the nearest point indices for given longitude and latitude points in a mesh dataset.
+    Parameters
+    ----------
+    ds_mesh_info : xr.Dataset
+        Dataset containing mesh information with longitude and latitude coordinates.
+    lon_points : np.ndarray
+        Array of longitudes for which to find the nearest point indices.
+    lat_points : np.ndarray
+        Array of latitudes for which to find the nearest point indices.
+    Returns
+    -------
+    pos_lon_points_mesh : np.ndarray
+        Array of longitude indices corresponding to the input longitude points in the mesh.
+    pos_lat_points_mesh : np.ndarray
+        Array of latitude indices corresponding to the input latitude points in the mesh.
+    """
+
+    lon_mesh = ds_mesh_info.lon.values
+    lat_mesh = ds_mesh_info.lat.values
+
+    pos_lon_points_mesh = np.zeros(len(lon_points))
+    pos_lat_points_mesh = np.zeros(len(lat_points))
+
+    for i in range(len(lon_points)):
+        lon = lon_points[i]
+        lat = lat_points[i]
+
+        lat_index = np.nanargmin((lat - lat_mesh) ** 2)
+        lon_index = np.nanargmin((lon - lon_mesh) ** 2)
+
+        pos_lon_points_mesh[i] = lon_index
+        pos_lat_points_mesh[i] = lat_index
+
+    return pos_lon_points_mesh, pos_lat_points_mesh
+
+
+def pressure_to_IB(xds_presure: xr.Dataset) -> xr.Dataset:
+    """Convert pressure data in a dataset to inverse barometer (IB) values.
+    Parameters
+    ----------
+    xds_presure : xr.Dataset
+        Dataset containing pressure data with dimensions (lat, lon, time).
+    Returns
+    -------
+    xr.Dataset
+        Dataset with an additional variable 'IB' representing the inverse barometer values.
+    """
+    p = xds_presure.p.values
+    IB = (p - 1013.25) * -1 / 100  # Convert pressure (hPa) to inverse barometer (m)
+
+    xds_presure_modified = xds_presure.copy()
+    xds_presure_modified["IB"] = (("lat", "lon", "time"), IB)
+
+    return xds_presure_modified
