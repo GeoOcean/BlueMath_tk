@@ -1,38 +1,50 @@
 import datetime as datetime
 import warnings
+from typing import Tuple
 
 import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-import matplotlib.colors as colors
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
-from cartopy import crs as ccrs
-from matplotlib import cm
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from matplotlib.path import Path
 from tqdm import tqdm
+
+from ..core.plotting.colors import hex_colors_land, hex_colors_water
+from ..core.plotting.utils import join_colormaps
 
 
 def get_regular_grid(
     node_computation_longitude: np.ndarray,
     node_computation_latitude: np.ndarray,
     node_computation_elements: np.ndarray,
-    factor: float = 10,
-) -> tuple:
+    factor: float = 10.0,
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate a regular grid based on the node computation longitude and latitude.
     The grid is defined by the minimum and maximum longitude and latitude values,
     and the minimum distance between nodes in both dimensions.
     The grid is generated with a specified factor to adjust the resolution.
-    Parameters:
-    - node_computation_longitude: 1D array of longitudes for the nodes.
-    - node_computation_latitude: 1D array of latitudes for the nodes.
-    - node_computation_elements: 2D array of indices defining the elements (triangles).
-    - factor: A scaling factor to adjust the resolution of the grid.
-    Returns:
-    - lon_grid: 1D array of longitudes defining the grid.
-    - lat_grid: 1D array of latitudes defining the grid.
+
+    Parameters
+    ----------
+    node_computation_longitude : np.ndarray
+        1D array of longitudes for the nodes.
+    node_computation_latitude : np.ndarray
+        1D array of latitudes for the nodes.
+    node_computation_elements : np.ndarray
+        2D array of indices defining the elements (triangles).
+    factor : float, optional
+        A scaling factor to adjust the resolution of the grid.
+
+    Returns
+    -------
+    lon_grid : np.ndarray
+        1D array of longitudes defining the grid.
+    lat_grid : np.ndarray
+        1D array of latitudes defining the grid.
     """
 
     lon_min, lon_max = (
@@ -56,13 +68,20 @@ def get_regular_grid(
 
     lon_grid = np.arange(lon_min, lon_max + min_dx, min_dx)
     lat_grid = np.arange(lat_min, lat_max + min_dy, min_dy)
+
     return lon_grid, lat_grid
 
 
-def generate_structured_points(triangle_connectivity, node_lon, node_lat):
-    """Generate structured points for each triangle in the mesh.
-    Each triangle will have 10 points: vertices, centroid, midpoints of edges, and midpoints of vertex-centroid
-    segments.
+def generate_structured_points(
+    triangle_connectivity: np.ndarray,
+    node_lon: np.ndarray,
+    node_lat: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Generate structured points for each triangle in the mesh.
+    Each triangle will have 10 points: vertices, centroid, midpoints of edges,
+    and midpoints of vertex-centroid segments.
+
     Parameters
     ----------
     triangle_connectivity : np.ndarray
@@ -71,6 +90,7 @@ def generate_structured_points(triangle_connectivity, node_lon, node_lat):
         Array of shape (n_nodes,) containing the longitudes of the nodes.
     node_lat : np.ndarray
         Array of shape (n_nodes,) containing the latitudes of the nodes.
+
     Returns
     -------
     lon_all : np.ndarray
@@ -78,6 +98,7 @@ def generate_structured_points(triangle_connectivity, node_lon, node_lat):
     lat_all : np.ndarray
         Array of shape (n_triangles, 10) containing the latitudes of the structured points for each triangle.
     """
+
     n_tri = triangle_connectivity.shape[0]
     lon_all = np.empty((n_tri, 10))
     lat_all = np.empty((n_tri, 10))
@@ -102,61 +123,6 @@ def generate_structured_points(triangle_connectivity, node_lon, node_lat):
     return lon_all, lat_all
 
 
-def custom_cmap(
-    numcolors: int,
-    map1: str,
-    m1ini: float,
-    m1end: float,
-    map2: str,
-    m2ini: float,
-    m2end: float,
-) -> colors.ListedColormap:
-    """
-    Create a custom colormap by blending two existing colormaps.
-    Parameters
-    ----------
-    numcolors : int
-        Number of colors in the final colormap.
-    map1 : str
-        Name of the first colormap to blend.
-    m1ini : float
-        Initial value for the first colormap (between 0 and 1).
-    m1end : float
-        Final value for the first colormap (between 0 and 1).
-    map2 : str
-        Name of the second colormap to blend.
-    m2ini : float
-        Initial value for the second colormap (between 0 and 1).
-    m2end : float
-        Final value for the second colormap (between 0 and 1).
-    Returns
-    -------
-    colors.ListedColormap
-        A new colormap that blends the two specified colormaps.
-    """
-
-    cmap1 = plt.get_cmap(map1, numcolors)
-    cmap2 = plt.get_cmap(map2, numcolors)
-
-    cmap1v = colors.LinearSegmentedColormap.from_list(
-        f"trunc({cmap1.name},{m1ini:.2f},{m1end:.2f})",
-        cmap1(np.linspace(m1ini, m1end, 100)),
-    )
-
-    cmap2v = colors.LinearSegmentedColormap.from_list(
-        f"trunc({cmap2.name},{m2ini:.2f},{m2end:.2f})",
-        cmap2(np.linspace(m2ini, m2end, 100)),
-    )
-
-    top = cm.get_cmap(cmap1v, 128)
-    bottom = plt.get_cmap(cmap2v, 128)
-
-    newcolors = np.vstack((bottom(np.linspace(0, 1, 128)), top(np.linspace(0, 1, 128))))
-
-    newcmp = colors.ListedColormap(newcolors, name="CustomBlend")
-    return newcmp
-
-
 def plot_GS_input_wind_partition(
     xds_vortex_GS: xr.Dataset,
     xds_vortex_interp: xr.Dataset,
@@ -166,14 +132,19 @@ def plot_GS_input_wind_partition(
 ) -> None:
     """
     Plot the wind partition for GreenSurge input data.
+
     Parameters
     ----------
     xds_vortex_GS : xr.Dataset
         Dataset containing the vortex model data for GreenSurge.
+    xds_vortex_interp : xr.Dataset
+        Dataset containing the interpolated vortex model data.
     ds_GFD_info : xr.Dataset
         Dataset containing the GreenSurge forcing information.
     i_time : int, optional
-        Index of the time step to plot, by default 0.
+        Index of the time step to plot. Default is 0.
+    figsize : tuple, optional
+        Figure size. Default is (10, 8).
     """
 
     simple_quiver = 20
@@ -212,7 +183,8 @@ def plot_GS_input_wind_partition(
     vmin = np.min((W.min(), W_reg.min()))
     vmax = np.max((W.max(), W_reg.max()))
 
-    cmap = custom_cmap(100, "plasma_r", 0.05, 0.9, "viridis", 0.2, 1)
+    cmap = join_colormaps("plasma_r", "viridis", name="wind_partition_cmap")
+    # 100, "plasma_r", 0.05, 0.9, "viridis", 0.2, 1
 
     ax2.tripcolor(
         node_forcing_longitude,
@@ -277,14 +249,27 @@ def plot_GS_input_wind_partition(
     ax2.coastlines()
 
 
-def plot_greensurge_setup(info_ds: xr.Dataset, figsize=(10, 10)) -> tuple:
+def plot_greensurge_setup(
+    info_ds: xr.Dataset, figsize: tuple = (10, 10)
+) -> Tuple[Figure, Axes]:
     """
     Plot the GreenSurge mesh setup from the provided dataset.
 
-    Parameters:
-    - info_ds: xarray Dataset containing the mesh information.
-    - figsize: Tuple specifying the figure size.
+    Parameters
+    ----------
+    info_ds : xr.Dataset
+        Dataset containing the mesh information.
+    figsize : tuple, optional
+        Figure size. Default is (10, 10).
+
+    Returns
+    -------
+    fig : Figure
+        Figure object.
+    ax : Axes
+        Axes object.
     """
+
     # Extracting data from the dataset
     Conectivity = info_ds.triangle_forcing_connectivity.values
     node_forcing_longitude = info_ds.node_forcing_longitude.values
@@ -370,7 +355,7 @@ def create_triangle_mask_from_points(
 
     Returns
     -------
-    np.ndarray
+    mask : np.ndarray
         1D boolean array of same length as lon/lat indicating points inside the triangle.
     """
 
@@ -385,19 +370,27 @@ def plot_GS_vs_dynamic_windsetup_swath(
     ds_WL_GS_WindSetUp: xr.Dataset,
     ds_WL_dynamic_WindSetUp: xr.Dataset,
     ds_gfd_metadata: xr.Dataset,
-    vmin=None,
-    vmax=None,
-    figsize=(10, 8),
+    vmin: float = None,
+    vmax: float = None,
+    figsize: tuple = (10, 8),
 ) -> None:
     """
     Plot the GreenSurge and dynamic wind setup from the provided datasets.
-    Parameters:
-    - ds_WL_GS_WindSetUp: xarray Dataset containing the GreenSurge wind setup data.
-    - ds_WL_dynamic_WindSetUp: xarray Dataset containing the dynamic wind setup data.
-    - ds_gfd_metadata: xarray Dataset containing the metadata for the GFD mesh.
-    - vmin: Minimum value for the color scale (optional).
-    - vmax: Maximum value for the color scale (optional).
-    - figsize: Tuple specifying the figure size.
+
+    Parameters
+    ----------
+    ds_WL_GS_WindSetUp : xr.Dataset
+        Dataset containing the GreenSurge wind setup data.
+    ds_WL_dynamic_WindSetUp : xr.Dataset
+        Dataset containing the dynamic wind setup data.
+    ds_gfd_metadata : xr.Dataset
+        Dataset containing the metadata for the GFD mesh.
+    vmin : float, optional
+        Minimum value for the color scale. Default is None.
+    vmax : float, optional
+        Maximum value for the color scale. Default is None.
+    figsize : tuple, optional
+        Figure size. Default is (10, 8).
     """
 
     warnings.filterwarnings("ignore", message="All-NaN slice encountered")
@@ -467,19 +460,29 @@ def GS_windsetup_reconstruction_with_postprocess(
     greensurge_dataset: xr.Dataset,
     ds_gfd_metadata: xr.Dataset,
     wind_direction_input: xr.Dataset,
-    velocity_thresholds: np.ndarray = [0, 100, 100],
-    drag_coefficients: np.ndarray = [0.00063, 0.00723, 0.00723],
+    velocity_thresholds: np.ndarray = np.array([0, 100, 100]),
+    drag_coefficients: np.ndarray = np.array([0.00063, 0.00723, 0.00723]),
 ) -> xr.Dataset:
     """
     Reconstructs the GreenSurge wind setup using the provided wind direction input and metadata.
-    Parameters:
-    - greensurge_dataset: xarray Dataset containing the GreenSurge mesh and forcing data.
-    - ds_gfd_metadata: xarray Dataset containing metadata for the GFD mesh.
-    - wind_direction_input: xarray Dataset containing wind direction and speed data.
-    - velocity_thresholds: List of velocity thresholds for drag coefficient calculation.
-    - drag_coefficients: List of drag coefficients corresponding to the velocity thresholds.
-    Returns:
-    - ds_wind_setup: xarray Dataset containing the reconstructed wind setup.
+
+    Parameters
+    ----------
+    greensurge_dataset : xr.Dataset
+        xarray Dataset containing the GreenSurge mesh and forcing data.
+    ds_gfd_metadata: xr.Dataset
+        xarray Dataset containing metadata for the GFD mesh.
+    wind_direction_input: xr.Dataset
+        xarray Dataset containing wind direction and speed data.
+    velocity_thresholds : np.ndarray
+        Array of velocity thresholds for drag coefficient calculation.
+    drag_coefficients : np.ndarray
+        Array of drag coefficients corresponding to the velocity thresholds.
+
+    Returns
+    -------
+    xr.Dataset
+        xarray Dataset containing the reconstructed wind setup.
     """
 
     velocity_thresholds = np.asarray(velocity_thresholds)
@@ -496,11 +499,7 @@ def GS_windsetup_reconstruction_with_postprocess(
     time_start = wind_direction_input.time.values.min()
     time_end = wind_direction_input.time.values.max()
     duration_in_steps = (
-        int(
-            (ds_gfd_metadata.simulation_duration_hours.values)
-            / time_step_hours
-        )
-        + 1
+        int((ds_gfd_metadata.simulation_duration_hours.values) / time_step_hours) + 1
     )
     output_time_vector = np.arange(
         time_start, time_end, np.timedelta64(int(60 * time_step_hours.item()), "m")
@@ -557,6 +556,7 @@ def GS_windsetup_reconstruction_with_postprocess(
         },
     )
     ds_wind_setup.attrs["description"] = "Wind setup from GreenSurge methodology"
+
     return ds_wind_setup
 
 
@@ -565,6 +565,7 @@ def GS_LinearWindDragCoef_mat(
 ) -> np.ndarray:
     """
     Calculate the linear drag coefficient based on wind speed and specified thresholds.
+
     Parameters
     ----------
     Wspeed : np.ndarray
@@ -573,11 +574,13 @@ def GS_LinearWindDragCoef_mat(
         Coefficients for the drag coefficient calculation, should be a 1D array of length 3.
     Wl_abc : np.ndarray
         Wind speed thresholds for the drag coefficient calculation, should be a 1D array of length 3.
+
     Returns
     -------
     np.ndarray
         Calculated drag coefficient values based on the input wind speed.
     """
+
     Wspeed = np.atleast_1d(Wspeed).astype(np.float64)
     was_scalar = Wspeed.ndim == 1 and Wspeed.size == 1
 
@@ -614,20 +617,29 @@ def plot_GS_vs_dynamic_windsetup(
     ds_WL_dynamic_WindSetUp: xr.Dataset,
     ds_gfd_metadata: xr.Dataset,
     time: datetime.datetime,
-    vmin=None,
-    vmax=None,
-    figsize=(10, 8),
+    vmin: float = None,
+    vmax: float = None,
+    figsize: tuple = (10, 8),
 ) -> None:
     """
     Plot the GreenSurge and dynamic wind setup from the provided datasets.
-    Parameters:
-    - ds_WL_GS_WindSetUp: xarray Dataset containing the GreenSurge wind setup data.
-    - ds_WL_dynamic_WindSetUp: xarray Dataset containing the dynamic wind setup data.
-    - ds_gfd_metadata: xarray Dataset containing the metadata for the GFD mesh.
-    - time: The time point at which to plot the data.
-    - vmin: Minimum value for the color scale (optional).
-    - vmax: Maximum value for the color scale (optional).
-    - figsize: Tuple specifying the figure size.
+
+    Parameters
+    ----------
+    ds_WL_GS_WindSetUp: xr.Dataset
+        xarray Dataset containing the GreenSurge wind setup data.
+    ds_WL_dynamic_WindSetUp: xr.Dataset
+        xarray Dataset containing the dynamic wind setup data.
+    ds_gfd_metadata: xr.Dataset
+        xarray Dataset containing the metadata for the GFD mesh.
+    time: datetime.datetime
+        The time point at which to plot the data.
+    vmin: float, optional
+        Minimum value for the color scale. Default is None.
+    vmax: float, optional
+        Maximum value for the color scale. Default is None.
+    figsize: tuple, optional
+        Tuple specifying the figure size. Default is (10, 8).
     """
 
     warnings.filterwarnings("ignore", message="All-NaN slice encountered")
@@ -695,21 +707,19 @@ def plot_GS_vs_dynamic_windsetup(
         ax.set_extent([lon_min, lon_max, lat_min, lat_max])
 
 
-# Revisar
-
-
 def plot_GS_TG_validation_timeseries(
     ds_WL_GS_WindSetUp: xr.Dataset,
     ds_WL_GS_IB: xr.Dataset,
     ds_WL_dynamic_WindSetUp: xr.Dataset,
     tide_gauge: xr.Dataset,
     ds_GFD_info: xr.Dataset,
-    figsize: list = [20,7],
+    figsize: tuple = (15, 7),
     WLmin: float = None,
     WLmax: float = None,
-)-> None:
+) -> None:
     """
     Plot a time series comparison of GreenSurge, dynamic wind setup, and tide gauge data with a bathymetry map.
+
     Parameters
     ----------
     ds_WL_GS_WindSetUp : xr.Dataset
@@ -722,23 +732,24 @@ def plot_GS_TG_validation_timeseries(
         Dataset containing tide gauge data with dimensions (time).
     ds_GFD_info : xr.Dataset
         Dataset containing grid information with longitude and latitude coordinates.
-    figsize : list, optional
-        Size of the figure for the plot, by default [15, 7].
+    figsize : tuple, optional
+        Size of the figure for the plot. Default is (15, 7).
     WLmin : float, optional
-        Minimum water level for the plot, by default None (will be calculated).
+        Minimum water level for the plot. Default is None.
     WLmax : float, optional
-        Maximum water level for the plot, by default None (will be calculated).
-    Returns
-    -------
-    None
-        Displays the plot of the time series comparison with a bathymetry map.
+        Maximum water level for the plot. Default is None.
     """
+
     lon_obs = tide_gauge.lon.values
     lat_obs = tide_gauge.lat.values
     lon_obs = np.where(lon_obs > 180, lon_obs - 360, lon_obs)
 
-    nface_index = int(extract_pos_nearest_points_tri(ds_GFD_info, lon_obs, lat_obs).item())
-    mesh2d_nFaces = int(extract_pos_nearest_points_tri(ds_WL_dynamic_WindSetUp, lon_obs, lat_obs).item())
+    nface_index = int(
+        extract_pos_nearest_points_tri(ds_GFD_info, lon_obs, lat_obs).item()
+    )
+    mesh2d_nFaces = int(
+        extract_pos_nearest_points_tri(ds_WL_dynamic_WindSetUp, lon_obs, lat_obs).item()
+    )
     pos_lon_IB, pos_lat_IB = extract_pos_nearest_points(ds_WL_GS_IB, lon_obs, lat_obs)
 
     time = ds_WL_GS_WindSetUp.WL.time
@@ -762,11 +773,26 @@ def plot_GS_TG_validation_timeseries(
     triangles = ds_WL_dynamic_WindSetUp.mesh2d_face_nodes.values.astype(int) - 1
     Z = np.mean(ds_WL_dynamic_WindSetUp.mesh2d_node_z.values[triangles], axis=1)
 
-    ax_map.tripcolor(X, Y, triangles, facecolors=Z, cmap="RdYlBu_r", shading="flat", transform=ccrs.PlateCarree())
-    ax_map.scatter(lon_obs, lat_obs, color='red', marker='x', transform=ccrs.PlateCarree(), label='Tide Gauge')
+    ax_map.tripcolor(
+        X,
+        Y,
+        triangles,
+        facecolors=Z,
+        cmap="RdYlBu_r",
+        shading="flat",
+        transform=ccrs.PlateCarree(),
+    )
+    ax_map.scatter(
+        lon_obs,
+        lat_obs,
+        color="red",
+        marker="x",
+        transform=ccrs.PlateCarree(),
+        label="Tide Gauge",
+    )
     ax_map.set_extent([X.min(), X.max(), Y.min(), Y.max()], crs=ccrs.PlateCarree())
     ax_map.set_title("Bathymetry Map")
-    ax_map.legend(loc='upper right', fontsize='small')
+    ax_map.legend(loc="upper right", fontsize="small")
 
     ax_ts = fig.add_subplot(gs[1])
     time_vals = time.values
@@ -790,12 +816,12 @@ def plot_GS_TG_validation_timeseries(
     plt.show()
 
 
-
 def extract_pos_nearest_points_tri(
     ds_mesh_info: xr.Dataset, lon_points: np.ndarray, lat_points: np.ndarray
 ) -> np.ndarray:
     """
     Extract the nearest triangle index for given longitude and latitude points.
+
     Parameters
     ----------
     ds_mesh_info : xr.Dataset
@@ -838,9 +864,10 @@ def extract_pos_nearest_points_tri(
 
 def extract_pos_nearest_points(
     ds_mesh_info: xr.Dataset, lon_points: np.ndarray, lat_points: np.ndarray
-) -> (np.ndarray, np.ndarray):
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Extract the nearest point indices for given longitude and latitude points in a mesh dataset.
+
     Parameters
     ----------
     ds_mesh_info : xr.Dataset
@@ -849,6 +876,7 @@ def extract_pos_nearest_points(
         Array of longitudes for which to find the nearest point indices.
     lat_points : np.ndarray
         Array of latitudes for which to find the nearest point indices.
+
     Returns
     -------
     pos_lon_points_mesh : np.ndarray
@@ -875,17 +903,22 @@ def extract_pos_nearest_points(
 
     return pos_lon_points_mesh, pos_lat_points_mesh
 
+
 def pressure_to_IB(xds_presure: xr.Dataset) -> xr.Dataset:
-    """Convert pressure data in a dataset to inverse barometer (IB) values.
+    """
+    Convert pressure data in a dataset to inverse barometer (IB) values.
+
     Parameters
     ----------
     xds_presure : xr.Dataset
         Dataset containing pressure data with dimensions (lat, lon, time).
+
     Returns
     -------
     xr.Dataset
         Dataset with an additional variable 'IB' representing the inverse barometer values.
     """
+
     p = xds_presure.p.values
     IB = (p - 1013.25) * -1 / 100  # Convert pressure (hPa) to inverse barometer (m)
 

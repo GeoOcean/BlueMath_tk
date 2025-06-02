@@ -10,6 +10,7 @@ from matplotlib.figure import Figure
 from ..core.models import BlueMathModel
 from ..core.plotting.base_plotting import DefaultStaticPlotting
 from ..core.plotting.scatter import plot_scatters_in_triangle
+from ..core.plotting.utils import get_list_of_colors_for_colormap
 
 
 class BaseSampling(BlueMathModel):
@@ -273,7 +274,7 @@ class BaseClustering(BlueMathModel):
             axes = np.array([[axes]])
 
         # Gets colors for clusters and append to each nearest centroid
-        colors_for_clusters = default_static_plot.get_list_of_colors_for_colormap(
+        colors_for_clusters = get_list_of_colors_for_colormap(
             cmap="jet", num_colors=self.centroids.shape[0]
         )
         nearest_centroids_colors = [colors_for_clusters[i] for i in nearest_centroids]
