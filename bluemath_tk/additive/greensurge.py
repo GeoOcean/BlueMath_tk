@@ -1,11 +1,14 @@
 import datetime as datetime
+import warnings
 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import matplotlib.colors as colors
+import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
+from cartopy import crs as ccrs
 from matplotlib import cm
 from matplotlib.path import Path
 from tqdm import tqdm
@@ -292,7 +295,9 @@ def plot_greensurge_setup(info_ds: xr.Dataset, figsize=(10, 10)) -> tuple:
     num_elements = len(Conectivity)
 
     fig, ax = plt.subplots(
-        subplot_kw={"projection": ccrs.PlateCarree()}, figsize=figsize
+        subplot_kw={"projection": ccrs.PlateCarree()},
+        figsize=figsize,
+        constrained_layout=True,
     )
 
     ax.triplot(
@@ -395,6 +400,8 @@ def plot_GS_vs_dynamic_windsetup_swath(
     - figsize: Tuple specifying the figure size.
     """
 
+    warnings.filterwarnings("ignore", message="All-NaN slice encountered")
+
     X = ds_gfd_metadata.node_computation_longitude.values
     Y = ds_gfd_metadata.node_computation_latitude.values
     triangles = ds_gfd_metadata.triangle_computation_connectivity.values
@@ -415,6 +422,7 @@ def plot_GS_vs_dynamic_windsetup_swath(
         ncols=2,
         figsize=figsize,
         subplot_kw={"projection": ccrs.PlateCarree()},
+        constrained_layout=True,
     )
 
     axs[0].tripcolor(
@@ -483,13 +491,13 @@ def GS_windsetup_reconstruction_with_postprocess(
     base_drag_coeff = GS_LinearWindDragCoef_mat(
         wind_speed_reference, drag_coefficients, velocity_thresholds
     )
-    time_step_hours = ds_gfd_metadata.time_step_hours.values / np.timedelta64(1, "h")
+    time_step_hours = ds_gfd_metadata.time_step_hours.values
 
     time_start = wind_direction_input.time.values.min()
     time_end = wind_direction_input.time.values.max()
     duration_in_steps = (
         int(
-            (ds_gfd_metadata.simulation_duration_hours.values / np.timedelta64(1, "h"))
+            (ds_gfd_metadata.simulation_duration_hours.values)
             / time_step_hours
         )
         + 1
@@ -622,6 +630,8 @@ def plot_GS_vs_dynamic_windsetup(
     - figsize: Tuple specifying the figure size.
     """
 
+    warnings.filterwarnings("ignore", message="All-NaN slice encountered")
+
     X = ds_gfd_metadata.node_computation_longitude.values
     Y = ds_gfd_metadata.node_computation_latitude.values
     triangles = ds_gfd_metadata.triangle_computation_connectivity.values
@@ -688,18 +698,18 @@ def plot_GS_vs_dynamic_windsetup(
 # Revisar
 
 
-def plot_GS_TG_validation_timeseries_tri(
+def plot_GS_TG_validation_timeseries(
     ds_WL_GS_WindSetUp: xr.Dataset,
     ds_WL_GS_IB: xr.Dataset,
     ds_WL_dynamic_WindSetUp: xr.Dataset,
-    TG: xr.Dataset,
+    tide_gauge: xr.Dataset,
     ds_GFD_info: xr.Dataset,
-    figsize=[15, 7],
+    figsize: list = [20,7],
     WLmin: float = None,
     WLmax: float = None,
-) -> None:
+)-> None:
     """
-    Plot a time series comparison of GreenSurge, dynamic wind setup, and tide gauge data.
+    Plot a time series comparison of GreenSurge, dynamic wind setup, and tide gauge data with a bathymetry map.
     Parameters
     ----------
     ds_WL_GS_WindSetUp : xr.Dataset
@@ -708,7 +718,7 @@ def plot_GS_TG_validation_timeseries_tri(
         Dataset containing inverse barometer data with dimensions (lat, lon, time).
     ds_WL_dynamic_WindSetUp : xr.Dataset
         Dataset containing dynamic wind setup data with dimensions (mesh2d_nFaces, time).
-    TG : xr.Dataset
+    tide_gauge : xr.Dataset
         Dataset containing tide gauge data with dimensions (time).
     ds_GFD_info : xr.Dataset
         Dataset containing grid information with longitude and latitude coordinates.
@@ -721,80 +731,64 @@ def plot_GS_TG_validation_timeseries_tri(
     Returns
     -------
     None
-        Displays the plot of the time series comparison.
+        Displays the plot of the time series comparison with a bathymetry map.
     """
+    lon_obs = tide_gauge.lon.values
+    lat_obs = tide_gauge.lat.values
+    lon_obs = np.where(lon_obs > 180, lon_obs - 360, lon_obs)
 
-    lon_obs_points = TG.lon.values
-    lat_obs_points = TG.lat.values
+    nface_index = int(extract_pos_nearest_points_tri(ds_GFD_info, lon_obs, lat_obs).item())
+    mesh2d_nFaces = int(extract_pos_nearest_points_tri(ds_WL_dynamic_WindSetUp, lon_obs, lat_obs).item())
+    pos_lon_IB, pos_lat_IB = extract_pos_nearest_points(ds_WL_GS_IB, lon_obs, lat_obs)
 
-    # Extract Windsetup
-    # Nearest point in grid
-    lon_obs_points = np.where(
-        lon_obs_points > 180, lon_obs_points - 360, lon_obs_points
-    )
-    nface_index = int(
-        extract_pos_nearest_points_tri(ds_GFD_info, lon_obs_points, lat_obs_points)
-    )
-    mesh2d_nFaces = extract_pos_nearest_points_tri(
-        ds_WL_dynamic_WindSetUp, lon_obs_points, lat_obs_points
-    )
+    time = ds_WL_GS_WindSetUp.WL.time
+    ds_WL_dynamic_WindSetUp = ds_WL_dynamic_WindSetUp.sel(time=time)
+    ds_WL_GS_IB = ds_WL_GS_IB.interp(time=time)
 
-    # GS
-    time_GS = ds_WL_GS_WindSetUp.WL.time
-    # dynamic
-    ds_WL_dynamic_WindSetUp = ds_WL_dynamic_WindSetUp.sel(
-        time=ds_WL_GS_WindSetUp.WL.time
-    )
-    time_dy = ds_WL_dynamic_WindSetUp["mesh2d_s1"].time
-    # Extract time series IB
-    # Nearest point in grid
-    pos_lon_IB, pos_lat_IB = extract_pos_nearest_points(
-        ds_WL_GS_IB, lon_obs_points, lat_obs_points
-    )
+    WL_GS = ds_WL_GS_WindSetUp.WL.sel(nface=nface_index).values
+    WL_dyn = ds_WL_dynamic_WindSetUp.mesh2d_s1.sel(mesh2d_nFaces=mesh2d_nFaces).values
+    WL_IB = ds_WL_GS_IB.IB.values[int(pos_lat_IB.item()), int(pos_lon_IB.item()), :]
+    WL_TG = tide_gauge.SS.values
 
-    ds_WL_GS_IB = ds_WL_GS_IB.interp(time=ds_WL_GS_WindSetUp.WL.time)
+    WL_SS_dyn = WL_dyn + WL_IB
+    WL_SS_GS = WL_GS + WL_IB
 
-    WL_GS_windsetup_points = ds_WL_GS_WindSetUp["WL"].sel(nface=int(nface_index)).values
-    WL_dynamic_windsetup_points = (
-        ds_WL_dynamic_WindSetUp["mesh2d_s1"]
-        .sel(mesh2d_nFaces=int(mesh2d_nFaces))
-        .values
-    )
-    WL_GS_IB_points = ds_WL_GS_IB.IB.values[int(pos_lat_IB), int(pos_lon_IB), :]
+    fig = plt.figure(figsize=figsize)
+    gs = gridspec.GridSpec(1, 2, width_ratios=[1, 3], figure=fig)
 
-    WL_SS_dynamic_points = WL_dynamic_windsetup_points + WL_GS_IB_points
-    WL_SS_GS_points = WL_GS_windsetup_points + WL_GS_IB_points
+    ax_map = fig.add_subplot(gs[0], projection=ccrs.PlateCarree())
+    X = ds_WL_dynamic_WindSetUp.mesh2d_node_x.values
+    Y = ds_WL_dynamic_WindSetUp.mesh2d_node_y.values
+    triangles = ds_WL_dynamic_WindSetUp.mesh2d_face_nodes.values.astype(int) - 1
+    Z = np.mean(ds_WL_dynamic_WindSetUp.mesh2d_node_z.values[triangles], axis=1)
 
-    WL_SS_TG = TG.SS.values
-    time_TG = TG.time
+    ax_map.tripcolor(X, Y, triangles, facecolors=Z, cmap="RdYlBu_r", shading="flat", transform=ccrs.PlateCarree())
+    ax_map.scatter(lon_obs, lat_obs, color='red', marker='x', transform=ccrs.PlateCarree(), label='Tide Gauge')
+    ax_map.set_extent([X.min(), X.max(), Y.min(), Y.max()], crs=ccrs.PlateCarree())
+    ax_map.set_title("Bathymetry Map")
+    ax_map.legend(loc='upper right', fontsize='small')
 
-    # Plot comparison
-
-    fig, ax = plt.subplots(figsize=figsize)
-
-    (line1,) = ax.plot(time_dy, WL_SS_dynamic_points, c="blue")
-    (line2,) = ax.plot(time_GS, WL_SS_GS_points, c="tomato")
-    (line3,) = ax.plot(time_TG, WL_SS_TG, c="green")
-    (line4,) = ax.plot(time_dy, WL_GS_windsetup_points, c="grey")
-    (line5,) = ax.plot(time_dy, WL_GS_IB_points, c="black")
+    ax_ts = fig.add_subplot(gs[1])
+    time_vals = time.values
+    ax_ts.plot(time_vals, WL_SS_dyn, c="blue", label="Dynamic simulation")
+    ax_ts.plot(time_vals, WL_SS_GS, c="tomato", label="GreenSurge")
+    ax_ts.plot(tide_gauge.time.values, WL_TG, c="green", label="Tide Gauge")
+    ax_ts.plot(time_vals, WL_GS, c="grey", label="GS WindSetup")
+    ax_ts.plot(time_vals, WL_IB, c="black", label="Inverse Barometer")
 
     if WLmin is None or WLmax is None:
-        WLmax = np.max(
-            [np.max(WL_SS_dynamic_points), np.max(WL_SS_GS_points), np.max(WL_SS_TG)]
-        )
-        WLmin = np.min(
-            [np.min(WL_SS_dynamic_points), np.min(WL_SS_GS_points), np.min(WL_SS_TG)]
-        )
-    ax.set_xlim(time_GS[0], time_GS[-1])
-    ax.set_ylim(WLmin, WLmax)
-    ax.set_ylabel("m")
+        WLmax = max(np.nanmax(WL_SS_dyn), np.nanmax(WL_SS_GS), np.nanmax(WL_TG))
+        WLmin = min(np.nanmin(WL_SS_dyn), np.nanmin(WL_SS_GS), np.nanmin(WL_TG))
 
-    ax.legend(
-        (line1, line2, line3, line4, line5),
-        ("Dynamic simulation", "GreenSurge", "TG", "GS_WindSetup", "IB"),
-    )
+    ax_ts.set_xlim(time_vals[0], time_vals[-1])
+    ax_ts.set_ylim(WLmin, WLmax)
+    ax_ts.set_ylabel("Water Level (m)")
+    ax_ts.set_title("Tide Gauge Validation")
+    ax_ts.legend()
 
-    # gs1.tight_layout(fig, rect=[0.3, 0, 1, 0.75])
+    plt.tight_layout()
+    plt.show()
+
 
 
 def extract_pos_nearest_points_tri(
@@ -817,8 +811,8 @@ def extract_pos_nearest_points_tri(
     """
 
     if "node_forcing_latitude" in ds_mesh_info.variables:
-        lon_mesh = ds_mesh_info.node_forcing_longitude.values
-        lat_mesh = ds_mesh_info.node_forcing_latitude.values
+        lon_mesh = ds_mesh_info.node_computation_longitude.values
+        lat_mesh = ds_mesh_info.node_computation_latitude.values
         type_ds = 0
     else:
         lon_mesh = ds_mesh_info.mesh2d_face_x.values
@@ -835,7 +829,7 @@ def extract_pos_nearest_points_tri(
         min_idx = np.argmin(distances)
 
         if type_ds == 0:
-            nface_index[i] = ds_mesh_info.element_forcing_index.values[min_idx]
+            nface_index[i] = ds_mesh_info.node_cumputation_index.values[min_idx]
         elif type_ds == 1:
             nface_index[i] = ds_mesh_info.mesh2d_nFaces.values[min_idx]
 
@@ -880,7 +874,6 @@ def extract_pos_nearest_points(
         pos_lat_points_mesh[i] = lat_index
 
     return pos_lon_points_mesh, pos_lat_points_mesh
-
 
 def pressure_to_IB(xds_presure: xr.Dataset) -> xr.Dataset:
     """Convert pressure data in a dataset to inverse barometer (IB) values.

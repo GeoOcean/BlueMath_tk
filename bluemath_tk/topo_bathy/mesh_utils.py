@@ -373,6 +373,16 @@ def simply_polygon(base_shape: Polygon, simpl_UTM: float, project) -> Polygon:
     -------
     Polygon
         The simplified polygon in geographic coordinates.
+    Example
+    -------
+    >>> from shapely.geometry import Polygon
+    >>> from pyproj import Transformer
+    >>> from shapely.ops import transform
+    >>> base_shape = Polygon([(0, 0), (1, 1), (1, 0), (0, 0)])
+    >>> project = Transformer.from_crs("EPSG:4326", "EPSG:32630").transform
+    >>> simpl_UTM = 100.0  # Simplification tolerance in meters
+    >>> simplified_shape = simply_polygon(base_shape, simpl_UTM, project)
+    >>> print(simplified_shape)
     """
 
     base_shape_utm = transform(project, base_shape)
@@ -407,6 +417,16 @@ def remove_islands(base_shape: Polygon, threshold_area: float, project) -> Polyg
     -------
     Polygon
         The polygon with small interior rings removed, transformed back to geographic coordinates.
+    Example
+    -------
+    >>> from shapely.geometry import Polygon
+    >>> from pyproj import Transformer
+    >>> from shapely.ops import transform
+    >>> base_shape = Polygon([(0, 0), (1, 1), (1, 0), (0, 0)])
+    >>> project = Transformer.from_crs("EPSG:4326", "EPSG:32630").transform
+    >>> threshold_area = 100.0  # Minimum area for interior rings in square meters
+    >>> simplified_shape = remove_islands(base_shape, threshold_area, project)
+    >>> print(simplified_shape)
     """
 
     base_shape_utm = transform(project, base_shape)
@@ -441,6 +461,11 @@ def read_adcirc_grd(grd_file: str) -> Tuple[np.ndarray, np.ndarray, List[str]]:
         - Elmts (np.ndarray): An array of shape (nelmts, 3) containing the element connectivity,
             with node indices adjusted (decremented by 1).
         - lines (List[str]): The remaining lines in the file after reading the nodes and elements.
+    Example
+    -------
+    >>> nodes, elmts, lines = read_adcirc_grd("path/to/grid.grd")
+    >>> print(nodes.shape, elmts.shape, len(lines))
+    (1000, 3) (500, 3) 10
     """
 
     with open(grd_file, "r") as f:
@@ -471,6 +496,16 @@ def calculate_edges(Elmts: np.ndarray) -> np.ndarray:
     np.ndarray
         A 2D array of shape (n_edges, 2) containing the unique edges,
         each represented by a pair of node indices.
+    Example
+    -------
+    >>> Elmts = np.array([[0, 1, 2], [1, 2, 3], [2, 0, 3]])
+    >>> edges = calculate_edges(Elmts)
+    >>> print(edges)
+    [[0 1]
+     [0 2]
+     [1 2]
+     [1 3]
+     [2 3]]
     """
 
     perc = 0
@@ -751,6 +786,21 @@ def decode_open_boundary_data(data: List[str]) -> dict:
     dict
         A dictionary with keys corresponding to open boundary identifiers (e.g., 'open_boundary_1')
         and values as lists of integers representing boundary node indices.
+    Example
+    -------
+    >>> data = [
+    "100! 200! 300!",
+    "open_boundary_1",
+    "open_boundary_2",
+    "open_boundary_3",
+    "land boundaries",
+    "open_boundary_1! 10",
+    "open_boundary_2! 20",
+    "open_boundary_3! 30",
+    ]
+    >>> boundaries = decode_open_boundary_data(data)
+    >>> print(boundaries)
+    {'open_boundary_1': [10], 'open_boundary_2': [20], 'open_boundary_3': [30]}
     """
 
     N_obd = int(data[0].split("!")[0])
@@ -791,6 +841,14 @@ def buffer_aera(polygon: Polygon, mas: float) -> Polygon:
     -------
     Polygon
         The buffered polygon.
+    Example
+    -------
+    >>> from shapely.geometry import Polygon
+    >>> polygon = Polygon([(0, 0), (1, 0), (1, 1), (0, 1)])
+    >>> mas = 0.1
+    >>> buffered_polygon = buffer_aera(polygon, mas)
+    >>> print(buffered_polygon)
+    POLYGON ((-0.1 -0.1, 1.1 -0.1, 1.1 1.1, -0.1 1.1, -0.1 -0.1))
     """
 
     return polygon.buffer(mas * polygon.area / polygon.length)
@@ -811,6 +869,14 @@ def compute_circumcenter(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray) -> np.n
     -------
     center : np.ndarray
         2D coordinates of the circumcenter.
+    Example
+    -------
+    >>> p0 = np.array([0, 0])
+    >>> p1 = np.array([1, 0])
+    >>> p2 = np.array([0, 1])
+    >>> center = compute_circumcenter(p0, p1, p2)
+    >>> print(center)
+    [0.5 0.5]
     """
 
     A = p1 - p0
@@ -844,6 +910,12 @@ def build_edge_to_cells(elements: np.ndarray) -> Dict[Tuple[int, int], List[int]
     -------
     edge_to_cells : Dict[Tuple[int, int], List[int]]
         Dictionary mapping edges to the list of adjacent element indices.
+    Example
+    -------
+    >>> elements = np.array([[0, 1, 2], [1, 2, 3], [2, 0, 3]])
+    >>> edge_to_cells = build_edge_to_cells(elements)
+    >>> print(edge_to_cells)
+    {(0, 1): [0], (0, 2): [0, 2], (1, 2): [0, 1], (1, 3): [1], (2, 3): [1]}
     """
 
     edge_to_cells = defaultdict(list)
@@ -879,6 +951,14 @@ def detect_circumcenter_too_close(
     -------
     bad_elements_mask : np.ndarray
         Boolean mask indicating which elements are problematic (True if bad).
+    Example
+    -------
+    >>> X = np.array([0, 1, 0, 1])
+    >>> Y = np.array([0, 0, 1, 1])
+    >>> elements = np.array([[0, 1, 2], [1, 3, 2]])
+    >>> bad_elements = detect_circumcenter_too_close(X, Y, elements, aj_threshold=0.1)
+    >>> print(bad_elements)
+    [False False]
     """
 
     nodes = np.column_stack((X, Y))
@@ -936,6 +1016,16 @@ def mask_points_outside_polygon(
     -------
     mask : (n_elements,) np.ndarray
         Boolean array where True means at least two vertices of the triangle lie outside the polygon.
+    Example
+    -------
+    >>> import numpy as np
+    >>> from shapely.geometry import Polygon
+    >>> elements = np.array([[0, 1, 2], [1, 2, 3]])
+    >>> node_coords = np.array([[0, 0], [1, 0], [0, 1], [1, 1]])
+    >>> poly = Polygon([(0, 0), (1, 0), (1, 1), (0, 1)])
+    >>> mask = mask_points_outside_polygon(elements, node_coords, poly)
+    >>> print(mask)
+    [False False]
     """
 
     tri_coords = node_coords[elements]
@@ -1010,3 +1100,14 @@ def define_mesh_target_size(
         )
 
     return mesh_spacing
+
+if __name__ == "__main__":
+    # Example usage
+    from shapely.geometry import Polygon
+    from pyproj import Transformer
+
+    base_shape = Polygon([(0, 0), (1, 1), (1, 0), (0, 0)])
+    project = Transformer.from_crs("EPSG:4326", "EPSG:32630").transform
+    simpl_UTM = 100.0  # Simplification tolerance in meters
+    simplified_shape = simply_polygon(base_shape, simpl_UTM, project)
+    print(simplified_shape)

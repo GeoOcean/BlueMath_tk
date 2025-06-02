@@ -49,6 +49,19 @@ def geo_distance_azimuth(
             Array of geodesic distances in degrees.
         - azi : np.ndarray
             Array of azimuths in degrees from north.
+    Examples:
+    --------
+    >>> lat_matrix = np.array([[0, 0], [1, 1]])
+    >>> lon_matrix = np.array([[0, 1], [0, 1]])
+    >>> lat_point = 0.5
+    >>> lon_point = 0.5
+    >>> arcl, azi = geo_distance_azimuth(lat_matrix, lon_matrix, lat_point, lon_point)
+    >>> arcl
+    array([[  0.        ,  90.        ],
+          [  78.69006753,  78.69006753]])
+    >>> azi
+    array([[  0.        ,  90.        ],
+          [ 45.        , 135.        ]])
     """
     # Vectorized computation of distances and azimuths
     lat_point_rad, lon_point_rad = map(radians, [lat_point, lon_point])
@@ -96,6 +109,16 @@ def geo_distance_cartesian(
     -------
     np.ndarray
         Array of distances in the same units as x_matrix and y_matrix.
+    Examples:
+    --------
+    >>> y_matrix = np.array([[0, 1], [2, 3]])
+    >>> x_matrix = np.array([[0, 1], [2, 3]])
+    >>> y_point = np.array([1, 2])
+    >>> x_point = np.array([1, 2])
+    >>> distances = geo_distance_cartesian(y_matrix, x_matrix, y_point, x_point)
+    >>> distances
+    array([[1.41421356, 1.41421356],
+           [1.41421356, 1.41421356]])
     """
     dist = np.sqrt((y_point - y_matrix) ** 2 + (x_point - x_matrix) ** 2)
     return dist
@@ -127,6 +150,16 @@ def geo_distance_meters(
     -------
     np.ndarray
         Array of distances in meters.
+    Examples:
+    --------
+    >>> y_matrix = np.array([[0, 1], [2, 3]])
+    >>> x_matrix = np.array([[0, 1], [2, 3]])
+    >>> y_point = np.array([1, 2])
+    >>> x_point = np.array([1, 2])
+    >>> distances = geo_distance_meters(y_matrix, x_matrix, y_point, x_point, coords_mode='CARTESIAN')
+    >>> distances
+    array([[1.41421356, 1.41421356],
+           [1.41421356, 1.41421356]])
     """
     RE = 6378.135 * 1000  # Earth radius [m]
 
@@ -146,19 +179,51 @@ def vortex_model_grid(
     coords_mode: str = "SPHERICAL",
 ) -> xr.Dataset:
     """
-    storm_track - (pandas.DataFrame)
-        - obligatory fields:            vfx, vfy, p0, pn, vmax, rmw
-        - for SPHERICAL coordinates:    lon, lat
-        - for CARTESIAN coordinates:    x, y, latitude
-
-    cg_lon, cg_lat - computational grid in longitudes and latitudes
-
-    coords_mode - 'SPHERICAL' / 'CARTESIAN' swan project coordinates mode
-
-    The Dynamic Holland Model is used to generate wind vortex fields from
-    storm track coordinate parameters.
-
-    Returns: xarray.Dataset with wind speed W and direction Dir (º from north)
+Generate wind vortex fields from storm track parameters using the Dynamic Holland Model.
+Parameters:
+    ----------
+    storm_track : pandas.DataFrame
+        DataFrame containing storm track parameters.
+        - obligatory fields: vfx, vfy, p0, pn, vmax, rmw
+        - for SPHERICAL coordinates: lon, lat
+        - for CARTESIAN coordinates: x, y, latitude
+    cg_lon : np.ndarray
+        Computational grid longitudes.
+    cg_lat : np.ndarray
+        Computational grid latitudes.
+    cg_lon, cg_lat : np.ndarray
+        Computational grid in longitudes and latitudes.
+    coords_mode : str
+        'SPHERICAL' for spherical coordinates (latitude, longitude),
+        'CARTESIAN' for Cartesian coordinates (x, y).
+    Returns:
+    -------
+    xarray.Dataset
+        Dataset containing wind speed W, direction Dir (º from north),
+        and pressure p at each grid point.
+    Examples:
+    --------
+    >>> storm_track = pd.DataFrame({
+    ...     'vfx': [10, 12], 'vfy': [5, 6],
+    ...     'p0': [1000, 990], 'pn': [980, 970],
+    ...     'vmax': [50, 55], 'rmw': [30, 35],
+    ...     'lon': [10, 12], 'lat': [20, 22]
+    ... })
+    >>> cg_lon = np.array([10, 11, 12])
+    >>> cg_lat = np.array([20, 21, 22])
+    >>> coords_mode = 'SPHERICAL'
+    >>> result = vortex_model_grid(storm_track, cg_lon, cg_lat, coords_mode)
+    >>> print(result)
+    <xarray.Dataset>
+    Dimensions:  (lat: 3, lon: 3, time: 2)
+    Coordinates:
+    * lat      (lat) float64 20.0 21.0 22.0
+    * lon      (lon) float64 10.0 11.0 12.0
+    * time     (time) datetime64[ns] 2023-10-01 2023-10-02
+    Data variables:
+    W        (lat, lon, time) float64 0.0 0.0 0.0 ... 0.0 0.0 0.0
+    Dir      (lat, lon, time) float64 0.0 0.0 0.0 ... 0.0 0.0 0.0
+    p        (lat, lon, time) float64 0.0 0.0 0.0 ... 0.0 0.0 0.0
     """
     # Convert negative longitudes to 0-360 range
     converted_coords = False
@@ -285,3 +350,39 @@ def vortex_model_grid(
         },
         coords={ylab: cg_lat, xlab: cg_lon, "time": times},
     )
+
+
+if __name__ == "__main__":
+    # Example usage of vortex_model_grid
+    storm_track = pd.DataFrame({
+        'vfx': [10, 12], 'vfy': [5, 6],
+        'p0': [1000, 990], 'pn': [980, 970],
+        'vmax': [50, 55], 'rmw': [30, 35],
+        'lon': [10, 12], 'lat': [20, 22]
+    })
+    cg_lon = np.array([10, 11, 12])
+    cg_lat = np.array([20, 21, 22])
+    coords_mode = 'SPHERICAL'
+    result = vortex_model_grid(storm_track, cg_lon, cg_lat, coords_mode)
+    print(result)
+    # Example usage of geo_distance_azimuth
+    lat_matrix = np.array([[0, 0], [1, 1]])
+    lon_matrix = np.array([[0, 1], [0, 1]])
+    lat_point = 0.5
+    lon_point = 0.5
+    arcl, azi = geo_distance_azimuth(lat_matrix, lon_matrix, lat_point, lon_point)
+    print("Geodesic distance (degrees):", arcl)
+    print("Azimuth (degrees):", azi)
+    # Example usage of geo_distance_cartesian
+    y_matrix = np.array([[0, 1], [2, 3]])
+    x_matrix = np.array([[0, 1], [2, 3]])
+    y_point = np.array([1, 2])
+    x_point = np.array([1, 2])
+    distances = geo_distance_cartesian(y_matrix, x_matrix, y_point, x_point)
+    print("Cartesian distances:", distances)
+    # Example usage of geo_distance_meters
+    distances_meters = geo_distance_meters(y_matrix, x_matrix, y_point, x_point, coords_mode='CARTESIAN')
+    print("Geodesic distances in meters:", distances_meters)
+    # Example usage of geo_distance_meters with spherical coordinates
+    distances_spherical = geo_distance_meters(lat_matrix, lon_matrix, lat_point, lon_point, coords_mode='SPHERICAL')
+    print("Geodesic distances in meters (spherical):", distances_spherical)

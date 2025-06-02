@@ -1063,7 +1063,7 @@ def historic_track_interpolation(
         # time array for SWAN input
         date_ini = st_time[i]
         time_input0 = pd.date_range(
-            date_ini, periods=int(nts[i]), freq="{0}MIN".format(dt_comp)
+            date_ini, periods=int(nts[i]), freq="{0}min".format(dt_comp)
         )
         time_input = np.append(np.array(time_input), np.array(time_input0))
 
@@ -1162,7 +1162,6 @@ def historic_track_interpolation(
     st["center"] = st_center
     st["basin"] = bas
     st["dist2land"] = dist  # distance to nearest land [km]
-    print(len(lon))
     st["lon"] = lon  # longitude coordinate
     st["lat"] = lat  # latitude coordinate
     st["move"] = move  # gamma, forward direction
@@ -1455,7 +1454,7 @@ def track_extent(
     # total simulation period
     size_new = int(T * 60 / dt_comp)
     time_input_new = pd.date_range(
-        date_ini, periods=size_new, freq="{0}MIN".format(dt_comp)
+        date_ini, periods=size_new, freq="{0}min".format(dt_comp)
     )
     st_new = pd.DataFrame(index=time_input_new, columns=list(st.keys()))
 
@@ -1467,7 +1466,7 @@ def track_extent(
         st_new.y0 = st.attrs["y0"]
 
     # [OPTIONAL] override SWAN storm case computational delta time
-    st_new.attrs["override_dtcomp"] = "{0} MIN".format(dt_comp)
+    st_new.attrs["override_dtcomp"] = "{0} min".format(dt_comp)
 
     # generate wave event (empty)
     we = pd.DataFrame(
