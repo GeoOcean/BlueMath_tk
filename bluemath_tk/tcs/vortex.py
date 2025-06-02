@@ -1,8 +1,8 @@
-from math import radians
-
 import numpy as np
 import pandas as pd
 import xarray as xr
+
+from ..core.geo import geodesic_distance, geo_distance_cartesian
 
 """
 Dynamic Holland Model for Wind Vortex Fields
@@ -22,123 +22,6 @@ large datasets and real-time applications.
 """
 
 
-def geo_distance_azimuth(
-    lat_matrix: np.ndarray,
-    lon_matrix: np.ndarray,
-    lat_point: np.ndarray,
-    lon_point: np.ndarray,
-) -> tuple:
-    """
-    Returns geodesic distance and azimuth between lat,lon matrix and lat,lon
-    point in degrees.
-    Parameters:
-    ----------
-    lat_matrix : np.ndarray
-        2D array of latitudes.
-    lon_matrix : np.ndarray
-        2D array of longitudes.
-    lat_point : float
-        Latitude of the point.
-    lon_point : float
-        Longitude of the point.
-    Returns:
-    -------
-    tuple
-        Tuple containing:
-        - arcl : np.ndarray
-            Array of geodesic distances in degrees.
-        - azi : np.ndarray
-            Array of azimuths in degrees from north.
-    """
-    # Vectorized computation of distances and azimuths
-    lat_point_rad, lon_point_rad = map(radians, [lat_point, lon_point])
-    lat_matrix_rad, lon_matrix_rad = np.radians(lat_matrix), np.radians(lon_matrix)
-
-    dlat = lat_matrix_rad - lat_point_rad
-    dlon = lon_matrix_rad - lon_point_rad
-
-    a = (
-        np.sin(dlat / 2) ** 2
-        + np.cos(lat_point_rad) * np.cos(lat_matrix_rad) * np.sin(dlon / 2) ** 2
-    )
-    a = np.clip(a, 0, 1)  # Clamp values to avoid numerical errors
-
-    arcl = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
-    arcl = np.degrees(arcl)
-
-    azi = np.arctan2(
-        np.cos(lat_matrix_rad) * np.sin(dlon),
-        np.cos(lat_point_rad) * np.sin(lat_matrix_rad)
-        - np.sin(lat_point_rad) * np.cos(lat_matrix_rad) * np.cos(dlon),
-    )
-    azi = np.degrees(azi % (2 * np.pi))
-
-    return arcl, azi
-
-
-def geo_distance_cartesian(
-    y_matrix: np.ndarray, x_matrix, y_point: np.ndarray, x_point: np.ndarray
-) -> np.ndarray:
-    """
-    Returns cartesian distance between y,x matrix and y,x point.
-    Optimized using vectorized operations.
-    Parameters:
-    ----------
-    y_matrix : np.ndarray
-        2D array of y-coordinates (latitude or y in Cartesian).
-    x_matrix : np.ndarray
-        2D array of x-coordinates (longitude or x in Cartesian).
-    y_point : np.ndarray
-        y-coordinate of the point (latitude or y in Cartesian).
-    x_point : np.ndarray
-        x-coordinate of the point (longitude or x in Cartesian).
-    Returns:
-    -------
-    np.ndarray
-        Array of distances in the same units as x_matrix and y_matrix.
-    """
-    dist = np.sqrt((y_point - y_matrix) ** 2 + (x_point - x_matrix) ** 2)
-    return dist
-
-
-def geo_distance_meters(
-    y_matrix: np.ndarray,
-    x_matrix: np.ndarray,
-    y_point: np.ndarray,
-    x_point: np.ndarray,
-    coords_mode: str = "SPHERICAL",
-) -> np.ndarray:
-    """
-    Returns geodesic distance in meters between y,x matrix and y,x point.
-    Parameters:
-    ----------
-    y_matrix : np.ndarray
-        2D array of y-coordinates (latitude or y in Cartesian).
-    x_matrix : np.ndarray
-        2D array of x-coordinates (longitude or x in Cartesian).
-    y_point : np.ndarray
-        y-coordinate of the point (latitude or y in Cartesian).
-    x_point : np.ndarray
-        x-coordinate of the point (longitude or x in Cartesian).
-    coords_mode : str
-        'SPHERICAL' for spherical coordinates (latitude, longitude),
-        'CARTESIAN' for Cartesian coordinates (x, y).
-    Returns:
-    -------
-    np.ndarray
-        Array of distances in meters.
-    """
-    RE = 6378.135 * 1000  # Earth radius [m]
-
-    if coords_mode == "SPHERICAL":
-        arcl, _ = geo_distance_azimuth(y_matrix, x_matrix, y_point, x_point)
-        r = arcl * np.pi / 180.0 * RE
-    elif coords_mode == "CARTESIAN":
-        r = geo_distance_cartesian(y_matrix, x_matrix, y_point, x_point)
-
-    return r
-
-
 def vortex_model_grid(
     storm_track: pd.DataFrame,
     cg_lon: np.ndarray,
@@ -146,20 +29,29 @@ def vortex_model_grid(
     coords_mode: str = "SPHERICAL",
 ) -> xr.Dataset:
     """
-    storm_track - (pandas.DataFrame)
-        - obligatory fields:            vfx, vfy, p0, pn, vmax, rmw
-        - for SPHERICAL coordinates:    lon, lat
-        - for CARTESIAN coordinates:    x, y, latitude
-
-    cg_lon, cg_lat - computational grid in longitudes and latitudes
-
-    coords_mode - 'SPHERICAL' / 'CARTESIAN' swan project coordinates mode
 
     The Dynamic Holland Model is used to generate wind vortex fields from
     storm track coordinate parameters.
 
-    Returns: xarray.Dataset with wind speed W and direction Dir (º from north)
+    Parameters
+    ----------
+    storm_track : pd.DataFrame
+        Obligatory fields: vfx, vfy, p0, pn, vmax, rmw.
+        For SPHERICAL coordinates: lon, lat.
+        For CARTESIAN coordinates: x, y, latitude.
+    cg_lon : np.ndarray
+        Computational grid in longitudes.
+    cg_lat : np.ndarray
+        Computational grid in latitudes.
+    coords_mode : str
+        'SPHERICAL' / 'CARTESIAN' swan project coordinates mode. Default is "SPHERICAL".
+
+    Returns
+    -------
+    xr.Dataset
+        xarray.Dataset with wind speed W and direction Dir (º from north).
     """
+
     # Convert negative longitudes to 0-360 range
     converted_coords = False
     if coords_mode == "SPHERICAL":
@@ -214,7 +106,10 @@ def vortex_model_grid(
             continue
 
         # Compute distance between grid points and storm center
-        r = geo_distance_meters(lat2d, lon2d, la, lo, coords_mode)
+        if coords_mode == "SPHERICAL":
+            r = geodesic_distance(lat2d, lon2d, la, lo)
+        else:
+            r = geo_distance_cartesian(lat2d, lon2d, la, lo)
 
         # Compute direction from storm center to each grid point
         dlat = (lat2d - la) * deg2rad

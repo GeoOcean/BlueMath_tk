@@ -1,10 +1,12 @@
 from math import pi
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 import numpy as np
+from shapely.geometry import Point, Polygon
+from shapely.vectorized import contains
 
 # from .constants import EARTH_RADIUS_NM
-EARTH_RADIUS_NM = 6378.135 / 1.852
+EARTH_RADIUS_NM = 6378.135 / 1.852  # DELETE: This is to test __name__ == "__main__"
 
 # Constants
 FLATTENING = 1 / 298.257223563
@@ -88,6 +90,38 @@ def geodesic_distance(
     rng = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
     return np.degrees(rng)
+
+
+def geo_distance_cartesian(
+    y_matrix: Union[float, np.ndarray],
+    x_matrix: Union[float, np.ndarray],
+    y_point: Union[float, np.ndarray],
+    x_point: Union[float, np.ndarray],
+) -> np.ndarray:
+    """
+    Returns cartesian distance between y,x matrix and y,x point.
+    Optimized using vectorized operations.
+
+    Parameters
+    ----------
+    y_matrix : Union[float, np.ndarray]
+        2D array of y-coordinates (latitude or y in Cartesian).
+    x_matrix : Union[float, np.ndarray]
+        2D array of x-coordinates (longitude or x in Cartesian).
+    y_point : Union[float, np.ndarray]
+        y-coordinate of the point (latitude or y in Cartesian).
+    x_point : Union[float, np.ndarray]
+        x-coordinate of the point (longitude or x in Cartesian).
+
+    Returns
+    -------
+    np.ndarray
+        Array of distances in the same units as x_matrix and y_matrix.
+    """
+
+    dist = np.sqrt((y_point - y_matrix) ** 2 + (x_point - x_matrix) ** 2)
+
+    return dist
 
 
 def geodesic_azimuth(
@@ -304,6 +338,192 @@ def shoot(
     baz = (np.arctan2(sa, b) + pi) % (2 * pi)
 
     return (glon2 * RAD2DEG, glat2 * RAD2DEG, baz * RAD2DEG)
+
+
+def create_polygon(coordinates: List[Tuple[float, float]]) -> Polygon:
+    """
+    Create a polygon from a list of (longitude, latitude) coordinates.
+
+    Parameters
+    ----------
+    coordinates : List[Tuple[float, float]]
+        List of (longitude, latitude) coordinate pairs that define the polygon vertices.
+        The first and last points should be the same to close the polygon.
+
+    Returns
+    -------
+    Polygon
+        A shapely Polygon object.
+
+    Examples
+    --------
+    >>> coords = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]  # Square
+    >>> poly = create_polygon(coords)
+    """
+
+    return Polygon(coordinates)
+
+
+def points_in_polygon(
+    lon: Union[List[float], np.ndarray],
+    lat: Union[List[float], np.ndarray],
+    polygon: Polygon,
+) -> np.ndarray:
+    """
+    Check which points are inside a polygon.
+
+    Parameters
+    ----------
+    lon : Union[List[float], np.ndarray]
+        Array or list of longitude values.
+    lat : Union[List[float], np.ndarray]
+        Array or list of latitude values.
+        Must have the same shape as lon.
+    polygon : Polygon
+        A shapely Polygon object.
+
+    Returns
+    -------
+    np.ndarray
+        Boolean array indicating which points are inside the polygon.
+
+    Raises
+    ------
+    ValueError
+        If lon and lat arrays have different shapes.
+
+    Examples
+    --------
+    >>> coords = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]  # Square
+    >>> poly = create_polygon(coords)
+    >>> lon = [0.5, 2.0]
+    >>> lat = [0.5, 2.0]
+    >>> mask = points_in_polygon(lon, lat, poly)
+    >>> print(mask)  # [True, False]
+    """
+
+    if isinstance(lon, list):
+        lon = np.array(lon)
+    if isinstance(lat, list):
+        lat = np.array(lat)
+
+    if lon.shape != lat.shape:
+        raise ValueError("lon and lat arrays must have the same shape")
+
+    # Create Point objects for each coordinate pair
+    points_geom = [Point(x, y) for x, y in zip(lon, lat)]
+
+    # Check which points are inside the polygon
+    return np.array([polygon.contains(p) for p in points_geom])
+
+
+def filter_points_in_polygon(
+    lon: Union[List[float], np.ndarray],
+    lat: Union[List[float], np.ndarray],
+    polygon: Polygon,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Filter points to keep only those inside a polygon.
+
+    Parameters
+    ----------
+    lon : Union[List[float], np.ndarray]
+        Array or list of longitude values.
+    lat : Union[List[float], np.ndarray]
+        Array or list of latitude values.
+        Must have the same shape as lon.
+    polygon : Polygon
+        A shapely Polygon object.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        Tuple containing:
+        - filtered_lon : Array of longitudes inside the polygon
+        - filtered_lat : Array of latitudes inside the polygon
+
+    Raises
+    ------
+    ValueError
+        If lon and lat arrays have different shapes.
+
+    Examples
+    --------
+    >>> coords = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]  # Square
+    >>> poly = create_polygon(coords)
+    >>> lon = [0.5, 2.0]
+    >>> lat = [0.5, 2.0]
+    >>> filtered_lon, filtered_lat = filter_points_in_polygon(lon, lat, poly)
+    >>> print(filtered_lon)  # [0.5]
+    >>> print(filtered_lat)  # [0.5]
+    """
+
+    if isinstance(lon, list):
+        lon = np.array(lon)
+    if isinstance(lat, list):
+        lat = np.array(lat)
+
+    if lon.shape != lat.shape:
+        raise ValueError("lon and lat arrays must have the same shape")
+
+    mask = points_in_polygon(lon, lat, polygon)
+    return lon[mask], lat[mask]
+
+
+def buffer_area_for_polygon(polygon: Polygon, area_factor: float) -> Polygon:
+    """
+    Buffer the polygon by a factor of its area divided by its length.
+    This is a heuristic to ensure that the buffer is proportional to the size of the polygon.
+
+    Parameters
+    ----------
+    polygon : Polygon
+        The polygon to be buffered.
+    area_factor : float
+        The area buffer factor.
+
+    Returns
+    -------
+    Polygon
+        The buffered polygon.
+    """
+
+    return polygon.buffer(area_factor * polygon.area / polygon.length)
+
+
+def mask_points_outside_polygon(
+    elements: np.ndarray, node_coords: np.ndarray, poly: Polygon
+) -> np.ndarray:
+    """
+    Returns a boolean mask indicating which triangle elements have at least two
+    vertices outside the polygon.
+    This version uses shapely.vectorized.contains for high-performance point-in-polygon testing.
+
+    Parameters
+    ----------
+    elements : np.ndarray
+        Array of shape (n_elements, 3) containing indices of triangle vertices.
+    node_coords : np.ndarray
+        Array of shape (n_nodes, 2) containing node coordinates as (x, y) pairs.
+    poly : Polygon
+        Polygon used for containment checks.
+
+    Returns
+    -------
+    np.ndarray
+        Boolean array where True means at least two vertices of the triangle lie outside the polygon.
+    """
+
+    tri_coords = node_coords[elements]
+
+    x = tri_coords[..., 0]
+    y = tri_coords[..., 1]
+
+    inside = contains(poly, x, y)
+
+    num_inside = np.sum(inside, axis=1)
+
+    return num_inside < 3
 
 
 if __name__ == "__main__":

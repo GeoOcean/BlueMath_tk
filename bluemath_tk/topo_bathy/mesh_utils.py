@@ -18,10 +18,13 @@ from pyproj.enums import TransformDirection
 from rasterio.mask import mask
 from shapely.geometry import Polygon, mapping
 from shapely.ops import transform
-from shapely.vectorized import contains
+
+from ..core.geo import buffer_area_for_polygon
 
 
-def plot_mesh_edge(msh_t: jigsaw_msh_t, ax=None, to_geo=None, **kwargs) -> None:
+def plot_mesh_edge(
+    msh_t: jigsaw_msh_t, ax: Axes = None, to_geo: callable = None, **kwargs
+) -> None:
     """
     Plots the edges of a triangular mesh on a given set of axes.
 
@@ -194,7 +197,7 @@ def clip_bathymetry(
         The mean resolution of the raster.
     """
 
-    buffered_polygon = buffer_aera(domain, margin)
+    buffered_polygon = buffer_area_for_polygon(domain, margin)
 
     for path in input_raster_paths:
         with rasterio.open(path) as src:
@@ -220,6 +223,7 @@ def clip_bathymetry(
 
     with rasterio.open(output_path, "w", **out_meta) as dest:
         dest.write(out_image)
+
     return mean_resolution
 
 
@@ -252,7 +256,7 @@ def clip_bati_manning(
         The Manning's coefficient to apply to the raster data.
     """
 
-    original_polygon = buffer_aera(domain, mas)
+    original_polygon = buffer_area_for_polygon(domain, mas)
 
     if UTM:
         crrs = "EPSG:4326"
@@ -284,7 +288,7 @@ def clip_bati_manning(
         dest.write(out_image)
 
 
-def plot_boundaries(mesh: jigsaw_msh_t, ax: Axes, to_geo=None) -> Axes:
+def plot_boundaries(mesh: jigsaw_msh_t, ax: Axes, to_geo: callable = None) -> None:
     """
     Plots the boundaries of a mesh, including ocean, interior (islands), and land areas.
 
@@ -319,7 +323,7 @@ def plot_boundaries(mesh: jigsaw_msh_t, ax: Axes, to_geo=None) -> Axes:
     ax.legend()
 
 
-def plot_bathymetry_interp(mesh: jigsaw_msh_t, to_geo, ax: Axes) -> Axes:
+def plot_bathymetry_interp(mesh: jigsaw_msh_t, to_geo, ax: Axes) -> None:
     """
     Plots the interpolated bathymetry data on a mesh.
 
@@ -332,6 +336,7 @@ def plot_bathymetry_interp(mesh: jigsaw_msh_t, to_geo, ax: Axes) -> Axes:
     to_geo : callable
         A function to transform coordinates from projected to geographic CRS.
     """
+
     crd = np.array(mesh.msh_t.vert2["coord"], copy=True)
 
     if to_geo is not None:
@@ -775,27 +780,6 @@ def decode_open_boundary_data(data: List[str]) -> dict:
     return boundary_info
 
 
-def buffer_aera(polygon: Polygon, mas: float) -> Polygon:
-    """
-    Buffer the polygon by a factor of its area divided by its length.
-    This is a heuristic to ensure that the buffer is proportional to the size of the polygon.
-
-    Parameters
-    ----------
-    polygon : Polygon
-        The polygon to be buffered.
-    mas : float
-        The buffer factor.
-
-    Returns
-    -------
-    Polygon
-        The buffered polygon.
-    """
-
-    return polygon.buffer(mas * polygon.area / polygon.length)
-
-
 def compute_circumcenter(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray) -> np.ndarray:
     """
     Technical Reference Manual D-Flow Flexible Mesh 13 May 2025 Revision: 80268
@@ -913,41 +897,6 @@ def detect_circumcenter_too_close(
             bad_elements_mask[idx1] = True
 
     return bad_elements_mask
-
-
-def mask_points_outside_polygon(
-    elements: np.ndarray, node_coords: np.ndarray, poly
-) -> np.ndarray:
-    """
-    Returns a boolean mask indicating which triangle elements have at least two vertices outside the polygon.
-
-    This version uses matplotlib.path.Path for high-performance point-in-polygon testing.
-
-    Parameters
-    ----------
-    elements : (n_elements, 3) np.ndarray
-        Array containing indices of triangle vertices.
-    node_coords : (n_nodes, 2) np.ndarray
-        Array of node coordinates as (x, y) pairs.
-    poly : shapely.geometry.Polygon
-        Polygon used for containment checks.
-
-    Returns
-    -------
-    mask : (n_elements,) np.ndarray
-        Boolean array where True means at least two vertices of the triangle lie outside the polygon.
-    """
-
-    tri_coords = node_coords[elements]
-
-    x = tri_coords[..., 0]
-    y = tri_coords[..., 1]
-
-    inside = contains(poly, x, y)
-
-    num_inside = np.sum(inside, axis=1)
-
-    return num_inside < 3
 
 
 def define_mesh_target_size(

@@ -158,8 +158,11 @@ def format_matrix(mat):
 def format_zeros(mat_shape):
     return "\n".join("0 " * mat_shape[1] for _ in range(mat_shape[0]))
 
-def actualize_grid_info(path_ds_origin: str, ds_GFD_calc_info: xr.Dataset,) -> None:
 
+def actualize_grid_info(
+    path_ds_origin: str,
+    ds_GFD_calc_info: xr.Dataset,
+) -> None:
     """
     Actualizes the grid information in the GFD calculation info dataset
     by adding the node coordinates and triangle connectivity from the original dataset.
@@ -178,14 +181,18 @@ def actualize_grid_info(path_ds_origin: str, ds_GFD_calc_info: xr.Dataset,) -> N
     ds_ori = xr.open_dataset(path_ds_origin)
 
     ds_GFD_calc_info["node_computation_longitude"] = (
-        ("node_cumputation_index",), ds_ori.mesh2d_node_x.values
+        ("node_cumputation_index",),
+        ds_ori.mesh2d_node_x.values,
     )
     ds_GFD_calc_info["node_computation_latitude"] = (
-        ("node_cumputation_index",), ds_ori.mesh2d_node_y.values
+        ("node_cumputation_index",),
+        ds_ori.mesh2d_node_y.values,
     )
     ds_GFD_calc_info["triangle_computation_connectivity"] = (
-        ("element_computation_index", "triangle_forcing_nodes"), (ds_ori.mesh2d_face_nodes.values - 1).astype("int32")
+        ("element_computation_index", "triangle_forcing_nodes"),
+        (ds_ori.mesh2d_face_nodes.values - 1).astype("int32"),
     )
+
     return ds_GFD_calc_info
 
 
@@ -344,7 +351,6 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
             cwd=case_dir,
         )
 
-
     def postprocess_cases(self, ds_GFD_info: xr.Dataset, parallel: bool = False):
         """
         Postprocess the cases output files.
@@ -369,10 +375,12 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
             raise ValueError(
                 "Not all cases are finished. Please check the status of the cases."
             )
-        
-        path_computation = op.join(self.cases_dirs[0], "dflowfmoutput/GreenSurge_GFDcase_map.nc")
+
+        path_computation = op.join(
+            self.cases_dirs[0], "dflowfmoutput/GreenSurge_GFDcase_map.nc"
+        )
         ds_GFD_info = actualize_grid_info(path_computation, ds_GFD_info)
-        dirname, basename = os.path.split(ds_GFD_info.encoding['source'])
+        dirname, basename = os.path.split(ds_GFD_info.encoding["source"])
         name, ext = os.path.splitext(basename)
         new_filepath = os.path.join(dirname, f"{name}_updated{ext}")
         ds_GFD_info.to_netcdf(new_filepath)
@@ -388,9 +396,11 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
                 .expand_dims(["forcing_cell"])
                 .assign_coords(forcing_cell=[tes_i])
             )
-            self.logger.info(f"Loaded {file_name} with forcing_cell={tes_i} and dir={dir_i}")
+            self.logger.info(
+                f"Loaded {file_name} with forcing_cell={tes_i} and dir={dir_i}"
+            )
             return dataset
-        
+
         folder_postprocess = op.join(self.output_dir, "GreenSurge_Postprocess")
         os.makedirs(folder_postprocess, exist_ok=True)
 
@@ -404,8 +414,4 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
                 combine="by_coords",
                 preprocess=preprocess,
             )
-            DS.load().to_netcdf(
-                op.join(folder_postprocess, f"GreenSurge_DB_{idx}.nc")
-            )
-
-
+            DS.load().to_netcdf(op.join(folder_postprocess, f"GreenSurge_DB_{idx}.nc"))
