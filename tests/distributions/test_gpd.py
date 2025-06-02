@@ -109,7 +109,7 @@ class TestGPD(unittest.TestCase):
 
         # Fit the GPD distribution to the data
         # loc is fixed at 0.0
-        fit_result = GPD.fit(data - loc, f0 = 0.0)
+        fit_result = GPD.fit(data - loc, f0=0.0)
 
         # Check the fit result
         self.assertIsInstance(fit_result, FitResult)
