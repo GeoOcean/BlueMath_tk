@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Tuple, Union
 
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
@@ -59,10 +59,12 @@ def join_colormaps(
     cmap1: Union[str, List[str], Colormap],
     cmap2: Union[str, List[str], Colormap],
     name: str = "joined_cmap",
+    range1: Tuple[float, float] = (0.0, 1.0),
+    range2: Tuple[float, float] = (0.0, 1.0),
 ) -> colors.ListedColormap:
     """
     Join two colormaps into one. Each input can be either a colormap name, a list of colors,
-    or an existing colormap.
+    or an existing colormap. Optionally crop each colormap to a specific range.
 
     Parameters
     ----------
@@ -72,11 +74,24 @@ def join_colormaps(
         Second colormap (name, color list, or colormap object).
     name : str, optional
         Name for the resulting colormap. Default is "joined_cmap".
+    range1 : Tuple[float, float], optional
+        Range of colors to use from first colormap (start, end) between 0 and 1.
+        Default is (0.0, 1.0) using the full range.
+    range2 : Tuple[float, float], optional
+        Range of colors to use from second colormap (start, end) between 0 and 1.
+        Default is (0.0, 1.0) using the full range.
 
     Returns
     -------
     colors.ListedColormap
         A new colormap that combines both input colormaps.
+
+    Examples
+    --------
+    >>> # Join two colormaps using only middle 80% of each
+    >>> cmap = join_colormaps("viridis", "plasma", range1=(0.1, 0.9), range2=(0.1, 0.9))
+    >>> # Join colormaps with different ranges
+    >>> cmap = join_colormaps("viridis", "plasma", range1=(0.0, 0.5), range2=(0.5, 1.0))
     """
 
     # Convert inputs to colormaps if they aren't already
@@ -96,20 +111,25 @@ def join_colormaps(
     elif isinstance(cmap2, list):
         cmap2 = create_cmap_from_colors(cmap2)
 
-    # Create the joined colormap
-    colors1 = cmap1(np.linspace(0, 1, 128))
-    colors2 = cmap2(np.linspace(0, 1, 128))
+    # Create the joined colormap with specified ranges
+    colors1 = cmap1(np.linspace(range1[0], range1[1], 128))
+    colors2 = cmap2(np.linspace(range2[0], range2[1], 128))
     newcolors = np.vstack((colors1, colors2))
 
     return colors.ListedColormap(newcolors, name=name)
 
 
 if __name__ == "__main__":
-    # Join two named colormaps
-    cmap = join_colormaps("viridis", "plasma")
+    # Join two named colormaps using only middle 80% of each
+    cmap = join_colormaps("viridis", "plasma", range1=(0.1, 0.9), range2=(0.1, 0.9))
+
     # Join a named colormap with a list of colors
     cmap = join_colormaps("viridis", ["#ff0000", "#00ff00", "#0000ff"])
+
     # Join two lists of colors
     cmap = join_colormaps(["#ff0000", "#00ff00"], ["#0000ff", "#ffff00"])
-    # Join with custom name
-    cmap = join_colormaps("viridis", "plasma", name="my_custom_cmap")
+
+    # Join with custom name and ranges
+    cmap = join_colormaps(
+        "viridis", "plasma", name="my_custom_cmap", range1=(0.0, 0.5), range2=(0.5, 1.0)
+    )
