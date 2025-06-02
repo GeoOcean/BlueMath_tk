@@ -183,8 +183,13 @@ def plot_GS_input_wind_partition(
     vmin = np.min((W.min(), W_reg.min()))
     vmax = np.max((W.max(), W_reg.max()))
 
-    cmap = join_colormaps("plasma_r", "viridis", name="wind_partition_cmap")
-    # 100, "plasma_r", 0.05, 0.9, "viridis", 0.2, 1
+    cmap = join_colormaps(
+        cmap1="viridis",
+        cmap2="plasma_r",
+        name="wind_partition_cmap",
+        range1=(0.2, 1.0),
+        range2=(0.05, 0.8),
+    )
 
     ax2.tripcolor(
         node_forcing_longitude,

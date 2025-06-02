@@ -1454,7 +1454,7 @@ def track_extent(
     # total simulation period
     size_new = int(T * 60 / dt_comp)
     time_input_new = pd.date_range(
-        date_ini, periods=size_new, freq="{0}min".format(dt_comp)
+        date_ini, periods=size_new, freq="{0}MIN".format(dt_comp)
     )
     st_new = pd.DataFrame(index=time_input_new, columns=list(st.keys()))
 
@@ -1466,7 +1466,7 @@ def track_extent(
         st_new.y0 = st.attrs["y0"]
 
     # [OPTIONAL] override SWAN storm case computational delta time
-    st_new.attrs["override_dtcomp"] = "{0} min".format(dt_comp)
+    st_new.attrs["override_dtcomp"] = "{0}MIN".format(dt_comp)
 
     # generate wave event (empty)
     we = pd.DataFrame(
@@ -1700,7 +1700,7 @@ def track_site_parameters(
     vfy = vmean * np.cos((gamma + 180) * np.pi / 180)  # [kt]
 
     # time array for SWAN input
-    time_input = pd.date_range(date_ini, periods=frec, freq="{0}min".format(step))
+    time_input = pd.date_range(date_ini, periods=frec, freq="{0}MIN".format(step))
 
     # storm track (pd.DataFrame)
     st = pd.DataFrame(

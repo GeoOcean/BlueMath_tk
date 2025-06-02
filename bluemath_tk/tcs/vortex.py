@@ -134,8 +134,10 @@ def vortex_model_grid(
 
         # Compute distance between grid points and storm center
         if coords_mode == "SPHERICAL":
-            r = geodesic_distance(lat2d, lon2d, la, lo)
-        else:
+            geo_dis = geodesic_distance(lat2d, lon2d, la, lo)
+            RE = 6378.135 * 1000  # Earth radius [m]
+            r = geo_dis * np.pi / 180.0 * RE
+        elif coords_mode == "CARTESIAN":
             r = geo_distance_cartesian(lat2d, lon2d, la, lo)
 
         # Compute direction from storm center to each grid point
@@ -207,24 +209,3 @@ def vortex_model_grid(
         },
         coords={ylab: cg_lat, xlab: cg_lon, "time": times},
     )
-
-
-if __name__ == "__main__":
-    # Example usage of vortex_model_grid
-    storm_track = pd.DataFrame(
-        {
-            "vfx": [10, 12],
-            "vfy": [5, 6],
-            "p0": [1000, 990],
-            "pn": [980, 970],
-            "vmax": [50, 55],
-            "rmw": [30, 35],
-            "lon": [10, 12],
-            "lat": [20, 22],
-        }
-    )
-    cg_lon = np.array([10, 11, 12])
-    cg_lat = np.array([20, 21, 22])
-    coords_mode = "SPHERICAL"
-    result = vortex_model_grid(storm_track, cg_lon, cg_lat, coords_mode)
-    print(result)
