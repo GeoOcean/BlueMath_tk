@@ -624,6 +624,7 @@ def GS_LinearWindDragCoef(
 ) -> np.ndarray:
     """
     Calculate the linear drag coefficient based on wind speed and specified thresholds.
+
     Parameters
     ----------
     Wspeed : np.ndarray
@@ -632,6 +633,7 @@ def GS_LinearWindDragCoef(
         Coefficients for the drag coefficient calculation, should be a 1D array of length 3.
     Wl_abc : np.ndarray
         Wind speed thresholds for the drag coefficient calculation, should be a 1D array of length 3.
+
     Returns
     -------
     np.ndarray
@@ -918,6 +920,7 @@ def extract_pos_nearest_points_tri(
         Array of longitudes for which to find the nearest triangle index.
     lat_points : np.ndarray
         Array of latitudes for which to find the nearest triangle index.
+
     Returns
     -------
     np.ndarray
@@ -1037,6 +1040,7 @@ def compute_water_level_for_time(
 ) -> np.ndarray:
     """
     Compute the water level for a specific time index based on wind direction and speed.
+
     Parameters
     ----------
     time_index : int
@@ -1063,12 +1067,12 @@ def compute_water_level_for_time(
         Total duration of the simulation in steps.
     num_output_times : int
         Total number of output time steps.
+
     Returns
     -------
     np.ndarray
         2D array of computed water levels for the specified time index.
     """
-    from bluemath_tk.additive.greensurge import GS_LinearWindDragCoef
 
     adjusted_bins = np.where(direction_bins == 0, 360, direction_bins)
     n_faces = greensurge_dataset["mesh2d_s1"].isel(forcing_cell=0, direction=0).shape
@@ -1117,6 +1121,7 @@ def GS_windsetup_reconstruction_with_postprocess_parallel(
 ) -> xr.Dataset:
     """
     Reconstructs the GreenSurge wind setup using the provided wind direction input and metadata in parallel.
+
     Parameters
     ----------
     greensurge_dataset : xr.Dataset
@@ -1129,17 +1134,15 @@ def GS_windsetup_reconstruction_with_postprocess_parallel(
         Array of velocity thresholds for drag coefficient calculation.
     drag_coefficients : np.ndarray
         Array of drag coefficients corresponding to the velocity thresholds.
-    cpu_count : int, optional
-        Number of CPU cores to use for parallel processing. If None, uses all available cores.
+
     Returns
     -------
     xr.Dataset
         xarray Dataset containing the reconstructed wind setup.
     """
+
     if num_workers is None:
         num_workers = cpu_count()
-
-    from bluemath_tk.additive.greensurge import GS_LinearWindDragCoef
 
     direction_bins = ds_gfd_metadata.wind_directions.values
     forcing_cell_indices = greensurge_dataset.forcing_cell.values
@@ -1194,4 +1197,5 @@ def GS_windsetup_reconstruction_with_postprocess_parallel(
         },
     )
     ds_wind_setup.attrs["description"] = "Wind setup from GreenSurge methodology"
+
     return ds_wind_setup
