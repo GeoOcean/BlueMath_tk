@@ -3,8 +3,7 @@ from typing import List, Tuple, Union
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.colors import Colormap
-
+from matplotlib.colors import Colormap, ListedColormap, BoundaryNorm
 
 def get_list_of_colors_for_colormap(
     cmap: Union[str, Colormap], num_colors: int
@@ -54,69 +53,65 @@ def create_cmap_from_colors(
 
     return colors.LinearSegmentedColormap.from_list(name, rgb_colors, N=256)
 
-
 def join_colormaps(
     cmap1: Union[str, List[str], Colormap],
     cmap2: Union[str, List[str], Colormap],
     name: str = "joined_cmap",
     range1: Tuple[float, float] = (0.0, 1.0),
     range2: Tuple[float, float] = (0.0, 1.0),
-) -> colors.ListedColormap:
+    value_range1: Tuple[float, float] = None,
+    value_range2: Tuple[float, float] = None,
+) -> Tuple[ListedColormap, BoundaryNorm]:
     """
-    Join two colormaps into one. Each input can be either a colormap name, a list of colors,
-    or an existing colormap. Optionally crop each colormap to a specific range.
+    Join two colormaps into one, with value ranges specified for each. 
 
     Parameters
     ----------
-    cmap1 : Union[str, List[str], Colormap]
-        First colormap (name, color list, or colormap object).
-    cmap2 : Union[str, List[str], Colormap]
-        Second colormap (name, color list, or colormap object).
-    name : str, optional
-        Name for the resulting colormap. Default is "joined_cmap".
-    range1 : Tuple[float, float], optional
-        Range of colors to use from first colormap (start, end) between 0 and 1.
-        Default is (0.0, 1.0) using the full range.
-    range2 : Tuple[float, float], optional
-        Range of colors to use from second colormap (start, end) between 0 and 1.
-        Default is (0.0, 1.0) using the full range.
+    cmap1, cmap2 : Union[str, List[str], Colormap]
+        Input colormaps (name, list of hex codes, or Colormap object).
+    name : str
+        Name of the output colormap.
+    range1, range2 : Tuple[float, float]
+        Portion of each colormap to use (from 0 to 1).
+    value_range1, value_range2 : Tuple[float, float]
+        Value ranges in the data domain corresponding to each colormap.
 
     Returns
     -------
-    colors.ListedColormap
-        A new colormap that combines both input colormaps.
-
-    Examples
-    --------
-    >>> # Join two colormaps using only middle 80% of each
-    >>> cmap = join_colormaps("viridis", "plasma", range1=(0.1, 0.9), range2=(0.1, 0.9))
-    >>> # Join colormaps with different ranges
-    >>> cmap = join_colormaps("viridis", "plasma", range1=(0.0, 0.5), range2=(0.5, 1.0))
+    ListedColormap
+        Merged colormap object.
+    BoundaryNorm
+        Normalization for mapping data to colors.
     """
 
-    # Convert inputs to colormaps if they aren't already
+    # Convert cmap1 to a Colormap if needed
     if isinstance(cmap1, str):
-        if cmap1.startswith("#"):
-            cmap1 = create_cmap_from_colors([cmap1])
-        else:
-            cmap1 = plt.get_cmap(cmap1)
+        cmap1 = plt.get_cmap(cmap1)
     elif isinstance(cmap1, list):
-        cmap1 = create_cmap_from_colors(cmap1)
+        cmap1 = colors.LinearSegmentedColormap.from_list("cmap1", cmap1)
 
     if isinstance(cmap2, str):
-        if cmap2.startswith("#"):
-            cmap2 = create_cmap_from_colors([cmap2])
-        else:
-            cmap2 = plt.get_cmap(cmap2)
+        cmap2 = plt.get_cmap(cmap2)
     elif isinstance(cmap2, list):
-        cmap2 = create_cmap_from_colors(cmap2)
+        cmap2 = colors.LinearSegmentedColormap.from_list("cmap2", cmap2)
 
-    # Create the joined colormap with specified ranges
+    # Get colors from each colormap
     colors1 = cmap1(np.linspace(range1[0], range1[1], 128))
     colors2 = cmap2(np.linspace(range2[0], range2[1], 128))
     newcolors = np.vstack((colors1, colors2))
 
-    return colors.ListedColormap(newcolors, name=name)
+    # Create corresponding boundaries in data space
+    if value_range1 is not None and value_range2 is not None:
+
+        bounds1 = np.linspace(value_range1[0], value_range1[1], 129)
+        bounds2 = np.linspace(value_range2[0], value_range2[1], 129)
+        all_bounds = np.concatenate([bounds1[:-1], bounds2])
+
+        norm = BoundaryNorm(boundaries=all_bounds, ncolors=len(newcolors))
+
+        return colors.ListedColormap(newcolors, name=name), norm
+    else:
+        return colors.ListedColormap(newcolors, name=name)
 
 
 if __name__ == "__main__":

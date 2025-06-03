@@ -21,6 +21,9 @@ from shapely.ops import transform
 
 from ..core.geo import buffer_area_for_polygon
 
+from ..core.plotting.colors import hex_colors_land, hex_colors_water
+from ..core.plotting.utils import join_colormaps
+
 
 def plot_mesh_edge(
     msh_t: jigsaw_msh_t, ax: Axes = None, to_geo: callable = None, **kwargs
@@ -153,9 +156,19 @@ def plot_bathymetry(rasters_path: List[str], polygon: Polygon, ax: Axes) -> Axes
     cols, rows = np.meshgrid(np.arange(width), np.arange(height))
     xs, ys = rasterio.transform.xy(transform, rows, cols)
 
+    vmin = np.nanmin(data[0])
+    vmax = np.nanmax(data[0])
+
+    cmap, norm = join_colormaps(
+        cmap1= hex_colors_water,
+        cmap2= hex_colors_land,
+        value_range1=(vmin, 0.0), value_range2=(0.0, vmax),
+        name="raster_cmap")
+
     im = ax.imshow(
         data[0],
-        cmap="gist_earth",
+        cmap=cmap,
+        norm=norm,
         extent=(np.min(xs), np.max(xs), np.min(ys), np.max(ys)),
     )
     cbar = plt.colorbar(im, ax=ax)
@@ -343,13 +356,26 @@ def plot_bathymetry_interp(mesh: jigsaw_msh_t, to_geo, ax: Axes) -> None:
         crd[:, 0], crd[:, 1] = to_geo(crd[:, 0], crd[:, 1])
         bnd = [crd[:, 0].min(), crd[:, 0].max(), crd[:, 1].min(), crd[:, 1].max()]
 
-    im = ax.tricontourf(
-        Triangulation(
-            crd[:, 0],
-            crd[:, 1],
-            triangles=mesh.msh_t.tria3["index"],
-        ),
-        mesh.msh_t.value.flatten(),
+    triangle = mesh.msh_t.tria3["index"]
+    Z = np.mean(mesh.msh_t.value.flatten()[triangle],axis = 1)
+    vmin = np.nanmin(Z)
+    vmax = np.nanmax(Z)
+
+    cmap, norm = join_colormaps(
+        cmap1=hex_colors_water,
+        cmap2=hex_colors_land,
+        value_range1=(vmin, 0.0),
+        value_range2=(0.0, vmax),
+        name="raster_cmap"
+)
+
+    im = ax.tripcolor(
+        crd[:, 0],
+        crd[:, 1],
+        triangle,
+        facecolors=Z,
+        cmap=cmap,
+        norm=norm,
     )
     ax.set_title("Interpolated Bathymetry")
     gl = ax.gridlines(draw_labels=True)
@@ -974,8 +1000,8 @@ def detect_circumcenter_too_close(
 def define_mesh_target_size(
     rasters: List[rasterio.io.DatasetReader],
     raster_resolution_meters: float,
-    nprocs: int,
     depth_ranges: float,
+    nprocs: int = 1,
 ) -> ocsmesh.Hfun:
     """
     Define the mesh target size based on depth ranges and their corresponding values.

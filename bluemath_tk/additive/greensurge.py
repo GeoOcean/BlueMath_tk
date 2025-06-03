@@ -496,7 +496,7 @@ def GS_windsetup_reconstruction_with_postprocess(
     direction_bins = ds_gfd_metadata.wind_directions.values
     forcing_cell_indices = greensurge_dataset.forcing_cell.values
     wind_speed_reference = ds_gfd_metadata.wind_speed.values.item()
-    base_drag_coeff = GS_LinearWindDragCoef_mat(
+    base_drag_coeff = GS_LinearWindDragCoef(
         wind_speed_reference, drag_coefficients, velocity_thresholds
     )
     time_step_hours = ds_gfd_metadata.time_step_hours.values
@@ -533,7 +533,7 @@ def GS_windsetup_reconstruction_with_postprocess(
             water_level_case = np.nan_to_num(water_level_case, nan=0)
 
             wind_speed_value = wind_speed_data[cell_index, time_index]
-            drag_coeff_value = GS_LinearWindDragCoef_mat(
+            drag_coeff_value = GS_LinearWindDragCoef(
                 wind_speed_value, drag_coefficients, velocity_thresholds
             )
 
@@ -615,6 +615,59 @@ def GS_LinearWindDragCoef_mat(
     CD[mask_bc] = a_bc * Wspeed[mask_bc] + b_bc
 
     return CD.item() if was_scalar else CD
+
+def GS_LinearWindDragCoef(Wspeed: np.ndarray,CD_Wl_abc: np.ndarray,Wl_abc: np.ndarray)-> np.ndarray:
+    """
+    Calculate the linear drag coefficient based on wind speed and specified thresholds.
+    Parameters
+    ----------
+    Wspeed : np.ndarray
+        Wind speed values (1D array).
+    CD_Wl_abc : np.ndarray
+        Coefficients for the drag coefficient calculation, should be a 1D array of length 3.
+    Wl_abc : np.ndarray
+        Wind speed thresholds for the drag coefficient calculation, should be a 1D array of length 3.
+    Returns
+    -------
+    np.ndarray
+        Calculated drag coefficient values based on the input wind speed.
+    """
+    
+    Wla=Wl_abc[0]
+    Wlb=Wl_abc[1]
+    Wlc=Wl_abc[2]
+    CDa=CD_Wl_abc[0]
+    CDb=CD_Wl_abc[1]
+    CDc=CD_Wl_abc[2]
+    
+    
+    #coefs lines y=ax+b
+    if not Wla==Wlb:
+        a_CDline_ab=(CDa-CDb)/(Wla-Wlb)
+        b_CDline_ab=CDb-a_CDline_ab*Wlb
+    else:
+        a_CDline_ab=0
+        b_CDline_ab=CDa
+    if not Wlb==Wlc:
+        a_CDline_bc=(CDb-CDc)/(Wlb-Wlc)
+        b_CDline_bc=CDc-a_CDline_bc*Wlc
+    else:
+        a_CDline_bc=0
+        b_CDline_bc=CDb
+    a_CDline_cinf=0
+    b_CDline_cinf=CDc
+
+
+    
+    if Wspeed<=Wlb:
+        CD=a_CDline_ab*Wspeed+b_CDline_ab
+    elif (Wspeed>Wlb and Wspeed<=Wlc):
+        CD=a_CDline_bc*Wspeed+b_CDline_bc
+    else:
+        CD=a_CDline_cinf*Wspeed+b_CDline_cinf
+    
+    
+    return CD
 
 
 def plot_GS_vs_dynamic_windsetup(
@@ -718,7 +771,7 @@ def plot_GS_TG_validation_timeseries(
     ds_WL_dynamic_WindSetUp: xr.Dataset,
     tide_gauge: xr.Dataset,
     ds_GFD_info: xr.Dataset,
-    figsize: tuple = (15, 7),
+    figsize: tuple = (20, 7),
     WLmin: float = None,
     WLmax: float = None,
 ) -> None:
@@ -777,16 +830,27 @@ def plot_GS_TG_validation_timeseries(
     Y = ds_WL_dynamic_WindSetUp.mesh2d_node_y.values
     triangles = ds_WL_dynamic_WindSetUp.mesh2d_face_nodes.values.astype(int) - 1
     Z = np.mean(ds_WL_dynamic_WindSetUp.mesh2d_node_z.values[triangles], axis=1)
+    vmin = np.nanmin(Z)
+    vmax = np.nanmax(Z)
 
-    ax_map.tripcolor(
+    cmap, norm = join_colormaps(
+        cmap1= hex_colors_water,
+        cmap2= hex_colors_land,
+        value_range1=(vmin, 0.0), value_range2=(0.0, vmax),
+        name="raster_cmap")
+    ax_map.set_facecolor("#518134")       
+
+    pm = ax_map.tripcolor(
         X,
         Y,
         triangles,
         facecolors=Z,
-        cmap="RdYlBu_r",
+        cmap=cmap,
+        norm=norm,
         shading="flat",
         transform=ccrs.PlateCarree(),
     )
+
     ax_map.scatter(
         lon_obs,
         lat_obs,
