@@ -148,22 +148,25 @@ class XBeachModelWrapper(BaseModelWrapper):
 
             globalx = output_raw.globalx.values
             globaly = output_raw.globaly.values
-
+            zb = output_raw.zb.values[0]
             y = np.arange(globalx.shape[0])
             x = np.arange(globalx.shape[1])
 
             ds = xr.Dataset({
                 "globalx": (("y", "x"), globalx),
-                "globaly": (("y", "x"), globaly)
-
+                "globaly": (("y", "x"), globaly),
+                "zb": (("y", "x"), zb),
             },
             coords={"y": y,
                 "x": x
             })
 
             for var in output_vars:
-                ds[var] = (("y", "x"),self._get_average_var(case_nc = output_raw ,var = var))
+                averaged = self._get_average_var(case_nc=output_raw, var=var)
+                masked = xr.where(ds["zb"] > 0, np.nan, averaged)
+                ds[var] = (("y", "x"), masked.data)
 
+            ds = ds.drop_vars("zb")
             ds.to_netcdf(output_nc_path)
 
             return ds
