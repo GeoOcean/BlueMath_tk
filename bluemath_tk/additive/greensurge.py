@@ -1111,7 +1111,7 @@ def GS_windsetup_reconstruction_with_postprocess_parallel(
     greensurge_dataset: xr.Dataset,
     ds_gfd_metadata: xr.Dataset,
     wind_direction_input: xr.Dataset,
-    cpu_count: int = None,
+    num_workers: int = None,
     velocity_thresholds: np.ndarray = np.array([0, 100, 100]),
     drag_coefficients: np.ndarray = np.array([0.00063, 0.00723, 0.00723]),
 ) -> xr.Dataset:
@@ -1136,8 +1136,8 @@ def GS_windsetup_reconstruction_with_postprocess_parallel(
     xr.Dataset
         xarray Dataset containing the reconstructed wind setup.
     """
-    if cpu_count is None:
-        cpu_count = cpu_count()
+    if num_workers is None:
+        num_workers = cpu_count()
 
     from bluemath_tk.additive.greensurge import GS_LinearWindDragCoef
 
@@ -1179,7 +1179,7 @@ def GS_windsetup_reconstruction_with_postprocess_parallel(
         num_output_times=num_output_times,
     )
 
-    with Pool(processes=cpu_count) as pool:
+    with Pool(processes=num_workers) as pool:
         results = list(
             tqdm(pool.imap(args, range(num_output_times)), total=num_output_times)
         )
