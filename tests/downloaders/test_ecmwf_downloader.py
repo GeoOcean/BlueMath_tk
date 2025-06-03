@@ -23,7 +23,7 @@ class TestECMWFDownloader(unittest.TestCase):
 
     def test_download_data(self):
         dataset = self.downloader.download_data(
-            load_data=True,
+            load_data=False,
             param=["msl"],
             step=[0, 240],
             type="fc",
