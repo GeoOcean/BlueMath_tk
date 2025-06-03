@@ -1,0 +1,15 @@
+{
+    "datasets": {
+        "forecast_data": {
+            "description": "ECMWF OpenData Forecast Data",
+            "url": "https://confluence.ecmwf.int/display/DAC/ECMWF+open+data%3A+real-time+forecasts+from+IFS+and+AIFS",
+            "models": [
+                "ifs",
+                "aifs"
+            ],
+            "resolutions": [
+                "0p25"
+            ]
+        }
+    }
+}
