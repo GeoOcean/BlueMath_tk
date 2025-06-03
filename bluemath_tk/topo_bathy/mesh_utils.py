@@ -12,7 +12,6 @@ import ocsmesh
 import rasterio
 from jigsawpy.msh_t import jigsaw_msh_t
 from matplotlib.axes import Axes
-from matplotlib.tri import Triangulation
 from netCDF4 import Dataset
 from pyproj.enums import TransformDirection
 from rasterio.mask import mask
@@ -20,7 +19,6 @@ from shapely.geometry import Polygon, mapping
 from shapely.ops import transform
 
 from ..core.geo import buffer_area_for_polygon
-
 from ..core.plotting.colors import hex_colors_land, hex_colors_water
 from ..core.plotting.utils import join_colormaps
 
@@ -160,10 +158,12 @@ def plot_bathymetry(rasters_path: List[str], polygon: Polygon, ax: Axes) -> Axes
     vmax = np.nanmax(data[0])
 
     cmap, norm = join_colormaps(
-        cmap1= hex_colors_water,
-        cmap2= hex_colors_land,
-        value_range1=(vmin, 0.0), value_range2=(0.0, vmax),
-        name="raster_cmap")
+        cmap1=hex_colors_water,
+        cmap2=hex_colors_land,
+        value_range1=(vmin, 0.0),
+        value_range2=(0.0, vmax),
+        name="raster_cmap",
+    )
 
     im = ax.imshow(
         data[0],
@@ -357,7 +357,7 @@ def plot_bathymetry_interp(mesh: jigsaw_msh_t, to_geo, ax: Axes) -> None:
         bnd = [crd[:, 0].min(), crd[:, 0].max(), crd[:, 1].min(), crd[:, 1].max()]
 
     triangle = mesh.msh_t.tria3["index"]
-    Z = np.mean(mesh.msh_t.value.flatten()[triangle],axis = 1)
+    Z = np.mean(mesh.msh_t.value.flatten()[triangle], axis=1)
     vmin = np.nanmin(Z)
     vmax = np.nanmax(Z)
 
@@ -366,8 +366,8 @@ def plot_bathymetry_interp(mesh: jigsaw_msh_t, to_geo, ax: Axes) -> None:
         cmap2=hex_colors_land,
         value_range1=(vmin, 0.0),
         value_range2=(0.0, vmax),
-        name="raster_cmap"
-)
+        name="raster_cmap",
+    )
 
     im = ax.tripcolor(
         crd[:, 0],

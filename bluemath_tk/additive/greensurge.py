@@ -1,5 +1,7 @@
 import datetime as datetime
 import warnings
+from functools import partial
+from multiprocessing import Pool, cpu_count
 from typing import Tuple
 
 import cartopy.crs as ccrs
@@ -616,7 +618,10 @@ def GS_LinearWindDragCoef_mat(
 
     return CD.item() if was_scalar else CD
 
-def GS_LinearWindDragCoef(Wspeed: np.ndarray,CD_Wl_abc: np.ndarray,Wl_abc: np.ndarray)-> np.ndarray:
+
+def GS_LinearWindDragCoef(
+    Wspeed: np.ndarray, CD_Wl_abc: np.ndarray, Wl_abc: np.ndarray
+) -> np.ndarray:
     """
     Calculate the linear drag coefficient based on wind speed and specified thresholds.
     Parameters
@@ -632,41 +637,37 @@ def GS_LinearWindDragCoef(Wspeed: np.ndarray,CD_Wl_abc: np.ndarray,Wl_abc: np.nd
     np.ndarray
         Calculated drag coefficient values based on the input wind speed.
     """
-    
-    Wla=Wl_abc[0]
-    Wlb=Wl_abc[1]
-    Wlc=Wl_abc[2]
-    CDa=CD_Wl_abc[0]
-    CDb=CD_Wl_abc[1]
-    CDc=CD_Wl_abc[2]
-    
-    
-    #coefs lines y=ax+b
-    if not Wla==Wlb:
-        a_CDline_ab=(CDa-CDb)/(Wla-Wlb)
-        b_CDline_ab=CDb-a_CDline_ab*Wlb
-    else:
-        a_CDline_ab=0
-        b_CDline_ab=CDa
-    if not Wlb==Wlc:
-        a_CDline_bc=(CDb-CDc)/(Wlb-Wlc)
-        b_CDline_bc=CDc-a_CDline_bc*Wlc
-    else:
-        a_CDline_bc=0
-        b_CDline_bc=CDb
-    a_CDline_cinf=0
-    b_CDline_cinf=CDc
 
+    Wla = Wl_abc[0]
+    Wlb = Wl_abc[1]
+    Wlc = Wl_abc[2]
+    CDa = CD_Wl_abc[0]
+    CDb = CD_Wl_abc[1]
+    CDc = CD_Wl_abc[2]
 
-    
-    if Wspeed<=Wlb:
-        CD=a_CDline_ab*Wspeed+b_CDline_ab
-    elif (Wspeed>Wlb and Wspeed<=Wlc):
-        CD=a_CDline_bc*Wspeed+b_CDline_bc
+    # coefs lines y=ax+b
+    if not Wla == Wlb:
+        a_CDline_ab = (CDa - CDb) / (Wla - Wlb)
+        b_CDline_ab = CDb - a_CDline_ab * Wlb
     else:
-        CD=a_CDline_cinf*Wspeed+b_CDline_cinf
-    
-    
+        a_CDline_ab = 0
+        b_CDline_ab = CDa
+    if not Wlb == Wlc:
+        a_CDline_bc = (CDb - CDc) / (Wlb - Wlc)
+        b_CDline_bc = CDc - a_CDline_bc * Wlc
+    else:
+        a_CDline_bc = 0
+        b_CDline_bc = CDb
+    a_CDline_cinf = 0
+    b_CDline_cinf = CDc
+
+    if Wspeed <= Wlb:
+        CD = a_CDline_ab * Wspeed + b_CDline_ab
+    elif Wspeed > Wlb and Wspeed <= Wlc:
+        CD = a_CDline_bc * Wspeed + b_CDline_bc
+    else:
+        CD = a_CDline_cinf * Wspeed + b_CDline_cinf
+
     return CD
 
 
@@ -834,13 +835,15 @@ def plot_GS_TG_validation_timeseries(
     vmax = np.nanmax(Z)
 
     cmap, norm = join_colormaps(
-        cmap1= hex_colors_water,
-        cmap2= hex_colors_land,
-        value_range1=(vmin, 0.0), value_range2=(0.0, vmax),
-        name="raster_cmap")
-    ax_map.set_facecolor("#518134")       
+        cmap1=hex_colors_water,
+        cmap2=hex_colors_land,
+        value_range1=(vmin, 0.0),
+        value_range2=(0.0, vmax),
+        name="raster_cmap",
+    )
+    ax_map.set_facecolor("#518134")
 
-    pm = ax_map.tripcolor(
+    ax_map.tripcolor(
         X,
         Y,
         triangles,
@@ -872,8 +875,24 @@ def plot_GS_TG_validation_timeseries(
     ax_ts.plot(time_vals, WL_IB, c="black", label="Inverse Barometer")
 
     if WLmin is None or WLmax is None:
-        WLmax = max(np.nanmax(WL_SS_dyn), np.nanmax(WL_SS_GS), np.nanmax(WL_TG))
-        WLmin = min(np.nanmin(WL_SS_dyn), np.nanmin(WL_SS_GS), np.nanmin(WL_TG))
+        WLmax = (
+            max(
+                np.nanmax(WL_SS_dyn),
+                np.nanmax(WL_SS_GS),
+                np.nanmax(WL_TG),
+                np.nanmax(WL_GS),
+            )
+            * 1.05
+        )
+        WLmin = (
+            min(
+                np.nanmin(WL_SS_dyn),
+                np.nanmin(WL_SS_GS),
+                np.nanmin(WL_TG),
+                np.nanmin(WL_GS),
+            )
+            * 1.05
+        )
 
     ax_ts.set_xlim(time_vals[0], time_vals[-1])
     ax_ts.set_ylim(WLmin, WLmax)
@@ -906,8 +925,13 @@ def extract_pos_nearest_points_tri(
     """
 
     if "node_forcing_latitude" in ds_mesh_info.variables:
-        lon_mesh = ds_mesh_info.node_computation_longitude.values
-        lat_mesh = ds_mesh_info.node_computation_latitude.values
+        elements = ds_mesh_info.triangle_computation_connectivity.values
+        lon_mesh = np.mean(
+            ds_mesh_info.node_computation_longitude.values[elements], axis=1
+        )
+        lat_mesh = np.mean(
+            ds_mesh_info.node_computation_latitude.values[elements], axis=1
+        )
         type_ds = 0
     else:
         lon_mesh = ds_mesh_info.mesh2d_face_x.values
@@ -995,3 +1019,179 @@ def pressure_to_IB(xds_presure: xr.Dataset) -> xr.Dataset:
     xds_presure_modified["IB"] = (("lat", "lon", "time"), IB)
 
     return xds_presure_modified
+
+
+def compute_water_level_for_time(
+    time_index: int,
+    direction_data: np.ndarray,
+    wind_speed_data: np.ndarray,
+    direction_bins: np.ndarray,
+    forcing_cell_indices: np.ndarray,
+    greensurge_dataset: xr.Dataset,
+    wind_speed_reference: float,
+    base_drag_coeff: float,
+    drag_coefficients: np.ndarray,
+    velocity_thresholds: np.ndarray,
+    duration_in_steps: int,
+    num_output_times: int,
+) -> np.ndarray:
+    """
+    Compute the water level for a specific time index based on wind direction and speed.
+    Parameters
+    ----------
+    time_index : int
+        The index of the time step to compute the water level for.
+    direction_data : np.ndarray
+        2D array of wind direction data with shape (n_cells, n_times).
+    wind_speed_data : np.ndarray
+        2D array of wind speed data with shape (n_cells, n_times).
+    direction_bins : np.ndarray
+        1D array of wind direction bins.
+    forcing_cell_indices : np.ndarray
+        1D array of indices for the forcing cells.
+    greensurge_dataset : xr.Dataset
+        xarray Dataset containing the GreenSurge mesh and forcing data.
+    wind_speed_reference : float
+        Reference wind speed value for scaling.
+    base_drag_coeff : float
+        Base drag coefficient value for scaling.
+    drag_coefficients : np.ndarray
+        1D array of drag coefficients corresponding to the velocity thresholds.
+    velocity_thresholds : np.ndarray
+        1D array of velocity thresholds for drag coefficient calculation.
+    duration_in_steps : int
+        Total duration of the simulation in steps.
+    num_output_times : int
+        Total number of output time steps.
+    Returns
+    -------
+    np.ndarray
+        2D array of computed water levels for the specified time index.
+    """
+    from bluemath_tk.additive.greensurge import GS_LinearWindDragCoef
+
+    adjusted_bins = np.where(direction_bins == 0, 360, direction_bins)
+    n_faces = greensurge_dataset["mesh2d_s1"].isel(forcing_cell=0, direction=0).shape
+    water_level_accumulator = np.zeros(n_faces)
+
+    for cell_index in forcing_cell_indices.astype(int):
+        current_dir = direction_data[cell_index, time_index] % 360
+        closest_direction_index = np.abs(adjusted_bins - current_dir).argmin()
+
+        water_level_case = (
+            greensurge_dataset["mesh2d_s1"]
+            .sel(forcing_cell=cell_index, direction=closest_direction_index)
+            .values
+        )
+        water_level_case = np.nan_to_num(water_level_case, nan=0)
+
+        wind_speed_value = wind_speed_data[cell_index, time_index]
+        drag_coeff_value = GS_LinearWindDragCoef(
+            wind_speed_value, drag_coefficients, velocity_thresholds
+        )
+
+        scaling_factor = (wind_speed_value**2 / wind_speed_reference**2) * (
+            drag_coeff_value / base_drag_coeff
+        )
+        water_level_accumulator += water_level_case * scaling_factor
+
+    step_window = min(duration_in_steps, num_output_times - time_index)
+    result = np.zeros((num_output_times, n_faces[1]))
+    if (num_output_times - time_index) > step_window:
+        result[time_index : time_index + step_window] += water_level_accumulator
+    else:
+        shift_counter = step_window - (num_output_times - time_index)
+        result[time_index : time_index + step_window - shift_counter] += (
+            water_level_accumulator[: step_window - shift_counter]
+        )
+    return result
+
+
+def GS_windsetup_reconstruction_with_postprocess_parallel(
+    greensurge_dataset: xr.Dataset,
+    ds_gfd_metadata: xr.Dataset,
+    wind_direction_input: xr.Dataset,
+    cpu_count: int = None,
+    velocity_thresholds: np.ndarray = np.array([0, 100, 100]),
+    drag_coefficients: np.ndarray = np.array([0.00063, 0.00723, 0.00723]),
+) -> xr.Dataset:
+    """
+    Reconstructs the GreenSurge wind setup using the provided wind direction input and metadata in parallel.
+    Parameters
+    ----------
+    greensurge_dataset : xr.Dataset
+        xarray Dataset containing the GreenSurge mesh and forcing data.
+    ds_gfd_metadata: xr.Dataset
+        xarray Dataset containing metadata for the GFD mesh.
+    wind_direction_input: xr.Dataset
+        xarray Dataset containing wind direction and speed data.
+    velocity_thresholds : np.ndarray
+        Array of velocity thresholds for drag coefficient calculation.
+    drag_coefficients : np.ndarray
+        Array of drag coefficients corresponding to the velocity thresholds.
+    cpu_count : int, optional
+        Number of CPU cores to use for parallel processing. If None, uses all available cores.
+    Returns
+    -------
+    xr.Dataset
+        xarray Dataset containing the reconstructed wind setup.
+    """
+    if cpu_count is None:
+        cpu_count = cpu_count()
+
+    from bluemath_tk.additive.greensurge import GS_LinearWindDragCoef
+
+    direction_bins = ds_gfd_metadata.wind_directions.values
+    forcing_cell_indices = greensurge_dataset.forcing_cell.values
+    wind_speed_reference = ds_gfd_metadata.wind_speed.values.item()
+    base_drag_coeff = GS_LinearWindDragCoef(
+        wind_speed_reference, drag_coefficients, velocity_thresholds
+    )
+    time_step_hours = ds_gfd_metadata.time_step_hours.values
+
+    time_start = wind_direction_input.time.values.min()
+    time_end = wind_direction_input.time.values.max()
+    duration_in_steps = (
+        int((ds_gfd_metadata.simulation_duration_hours.values) / time_step_hours) + 1
+    )
+    output_time_vector = np.arange(
+        time_start, time_end, np.timedelta64(int(60 * time_step_hours.item()), "m")
+    )
+    num_output_times = len(output_time_vector)
+
+    direction_data = wind_direction_input.Dir.values
+    wind_speed_data = wind_direction_input.W.values
+
+    n_faces = greensurge_dataset["mesh2d_s1"].isel(forcing_cell=0, direction=0).shape[1]
+
+    args = partial(
+        compute_water_level_for_time,
+        direction_data=direction_data,
+        wind_speed_data=wind_speed_data,
+        direction_bins=direction_bins,
+        forcing_cell_indices=forcing_cell_indices,
+        greensurge_dataset=greensurge_dataset,
+        wind_speed_reference=wind_speed_reference,
+        base_drag_coeff=base_drag_coeff,
+        drag_coefficients=drag_coefficients,
+        velocity_thresholds=velocity_thresholds,
+        duration_in_steps=duration_in_steps,
+        num_output_times=num_output_times,
+    )
+
+    with Pool(processes=cpu_count) as pool:
+        results = list(
+            tqdm(pool.imap(args, range(num_output_times)), total=num_output_times)
+        )
+
+    wind_setup_output = np.sum(results, axis=0)
+
+    ds_wind_setup = xr.Dataset(
+        {"WL": (["time", "nface"], wind_setup_output)},
+        coords={
+            "time": output_time_vector,
+            "nface": np.arange(n_faces),
+        },
+    )
+    ds_wind_setup.attrs["description"] = "Wind setup from GreenSurge methodology"
+    return ds_wind_setup
