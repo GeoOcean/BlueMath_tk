@@ -38,6 +38,8 @@ class XBeachModelWrapper(BaseModelWrapper):
         "geoocean-cluster": "launchXbeach.sh",
     }
 
+
+
     def __init__(
         self,
         templates_dir: str,
@@ -79,9 +81,9 @@ class XBeachModelWrapper(BaseModelWrapper):
             The case directory.
         """
 
-        if self.fixed_parameters['wbctype'] == 'jonstable':
+        if case_context['wbctype'] == 'jonstable':
             with open(f"{case_dir}/jonswap.txt", "w") as f:
-                for i in range(math.ceil(self.fixed_parameters['comptime'] / 3600)):
+                for i in range(math.ceil(case_context['comptime'] / 3600)):
                     f.write(f"{case_context['Hs']} {case_context['Tp']} {case_context['Dir']} 3.300000 30.000000 3600.000000 1.000000 \n")
    
     def _get_average_var(self, case_nc, var):
