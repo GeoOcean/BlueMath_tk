@@ -98,7 +98,22 @@ class XBeachModelWrapper(BaseModelWrapper):
 
         if var in case_nc:
             return np.mean(case_nc[var].isel(meantime=slice(1,int(case_nc.meantime.values[-1]))).values, axis=0)
-        
+
+    def _get_max_var(self, case_nc, var):
+        """
+        Get the Max value of a variable except for the first hour of the simulation 
+
+        Parameters
+        ----------
+        case_nc : str
+            Simulation .nc file.
+        var : str
+            Variable of interest.
+        """
+
+        if var in case_nc:
+            return np.max(case_nc[var].isel(meantime=slice(1,int(case_nc.meantime.values[-1]))).values, axis=0)
+
     def postprocess_case(
         self,
         case_num: int,
@@ -162,9 +177,14 @@ class XBeachModelWrapper(BaseModelWrapper):
             })
 
             for var in output_vars:
-                averaged = self._get_average_var(case_nc=output_raw, var=var)
-                masked = xr.where(ds["zb"] > 0, np.nan, averaged)
-                ds[var] = (("y", "x"), masked.data)
+                if var == 'zs_max':
+                    maxed = self._get_max_var(case_nc=output_raw, var=var)
+                    masked = xr.where(ds["zb"] > 0, np.nan, maxed)
+                    ds[var] = (("y", "x"), masked.data)
+                else:
+                    averaged = self._get_average_var(case_nc=output_raw, var=var)
+                    masked = xr.where(ds["zb"] > 0, np.nan, averaged)
+                    ds[var] = (("y", "x"), masked.data)
 
             ds = ds.drop_vars("zb")
             ds.to_netcdf(output_nc_path)
