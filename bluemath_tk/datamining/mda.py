@@ -509,3 +509,47 @@ class MDA(BaseClustering):
         )
 
         return self.predict(data=data)
+
+    def to_swash(
+        self,
+        data: pd.DataFrame,
+        directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
+        first_centroid_seed: int = None,
+        normalize_data: bool = False,
+    ) -> Tuple[np.ndarray, pd.DataFrame]:
+        """
+        Return data from MDA to input in SWASH format.
+        """
+
+        self.fit(
+            data=data,
+            directional_variables=directional_variables,
+            custom_scale_factor=custom_scale_factor,
+            first_centroid_seed=first_centroid_seed,
+            normalize_data=normalize_data,
+        )
+
+        return self.centroids.to_dict(orient="list")
+
+    def to_rbf(
+        self,
+        data: pd.DataFrame,
+        directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
+        first_centroid_seed: int = None,
+        normalize_data: bool = False,
+    ) -> Tuple[np.ndarray, pd.DataFrame]:
+        """
+        Return data from MDA to input in SWASH format.
+        """
+
+        self.fit(
+            data=data,
+            directional_variables=directional_variables,
+            custom_scale_factor=custom_scale_factor,
+            first_centroid_seed=first_centroid_seed,
+            normalize_data=normalize_data,
+        )
+
+        return self.centroids
