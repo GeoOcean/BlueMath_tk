@@ -9,13 +9,14 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
 import ocsmesh
+import pandas as pd
 import rasterio
 from jigsawpy.msh_t import jigsaw_msh_t
 from matplotlib.axes import Axes
 from netCDF4 import Dataset
 from pyproj.enums import TransformDirection
 from rasterio.mask import mask
-from shapely.geometry import Polygon, mapping
+from shapely.geometry import LineString, MultiLineString, Polygon, mapping
 from shapely.ops import transform
 
 from ..core.geo import buffer_area_for_polygon
@@ -1084,3 +1085,33 @@ if __name__ == "__main__":
     simpl_UTM = 100.0  # Simplification tolerance in meters
     simplified_shape = simply_polygon(base_shape, simpl_UTM, project)
     print(simplified_shape)
+
+
+def read_lines(poly_line: str) -> MultiLineString:
+    """
+    Reads a CSV file containing coordinates of a polyline and returns a MultiLineString.
+    The CSV file should have two columns for x and y coordinates, with NaN values indicating breaks in the line.
+    Parameters
+    ----------
+    poly_line : str
+        Path to the CSV file containing the polyline coordinates
+    Returns
+    -------
+    MultiLineString
+        A MultiLineString object representing the polyline segments
+    """
+
+    coords_line = pd.read_csv(poly_line, sep=",", header=None)
+    segments = []
+    current_segment = []
+    for index, row in coords_line.iterrows():
+        if row.isna().any():
+            if current_segment:
+                segments.append(LineString(current_segment))
+                current_segment = []
+        else:
+            current_segment.append(tuple(row))
+
+    if current_segment:
+        segments.append(LineString(current_segment))
+    return MultiLineString(segments)
