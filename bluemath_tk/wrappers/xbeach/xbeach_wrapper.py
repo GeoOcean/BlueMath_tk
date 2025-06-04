@@ -1,8 +1,10 @@
 import math
 import os
-from typing import List
+import re
+from typing import List, Tuple, Union
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 
 from .._base_wrappers import BaseModelWrapper
@@ -135,6 +137,37 @@ class XBeachModelWrapper(BaseModelWrapper):
                 .values,
                 axis=0,
             )
+
+    def monitor_cases(self, value_counts: str = None) -> Union[pd.DataFrame, dict]:
+        """
+        Monitor the cases based on different model log files.
+        """
+
+        cases_status = {}
+
+        for case_dir in self.cases_dirs:
+            case_dir_name = os.path.basename(case_dir)
+            if os.path.exists(os.path.join(case_dir, "XBlog.txt")):
+                if os.path.exists(os.path.join(case_dir, "XBerror.txt")) & os.path.getsize(os.path.join(case_dir, "XBerror.txt")) != 0:
+                    cases_status[case_dir_name] = "XBerror.txt"
+                    continue
+                else:
+                    with open(os.path.join(case_dir, "XBlog.txt"), 'r') as f:
+                        lines = f.readlines()[-2:] 
+
+                    if any('End of program xbeach' in line.lower() for line in lines):
+                        cases_status[case_dir_name] = "End of run"
+                        continue
+                    else:
+                        cases_status[case_dir_name] = "Running"
+                        continue
+            else:
+                cases_status[case_dir_name] = "No run"
+                continue
+
+        return super().monitor_cases(
+            cases_status=cases_status, value_counts=value_counts
+        )
 
     def postprocess_case(
         self,
