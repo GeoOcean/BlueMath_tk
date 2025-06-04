@@ -1,12 +1,12 @@
-import os
-import re
-from typing import List, Tuple, Union
-
 import math
-import xarray as xr
+import os
+from typing import List
+
 import numpy as np
+import xarray as xr
 
 from .._base_wrappers import BaseModelWrapper
+
 
 class XBeachModelWrapper(BaseModelWrapper):
     """
@@ -37,8 +37,6 @@ class XBeachModelWrapper(BaseModelWrapper):
     available_launchers = {
         "geoocean-cluster": "launchXbeach.sh",
     }
-
-
 
     def __init__(
         self,
@@ -81,40 +79,62 @@ class XBeachModelWrapper(BaseModelWrapper):
             The case directory.
         """
 
-        if case_context['wbctype'] == 'jonstable':
+        if case_context["wbctype"] == "jonstable":
             with open(f"{case_dir}/jonswap.txt", "w") as f:
-                for i in range(math.ceil(case_context['comptime'] / 3600)):
-                    f.write(f"{case_context['Hs']} {case_context['Tp']} {case_context['Dir']} 3.300000 30.000000 3600.000000 1.000000 \n")
-   
-    def _get_average_var(self, case_nc, var):
+                for _i in range(math.ceil(case_context["comptime"] / 3600)):
+                    f.write(
+                        f"{case_context['Hs']} {case_context['Tp']} {case_context['Dir']} 3.300000 30.000000 3600.000000 1.000000 \n"
+                    )
+
+    def _get_average_var(self, case_nc: xr.Dataset, var: str) -> np.ndarray:
         """
-        Get the average value of a variable except for the first hour of the simulation 
+        Get the average value of a variable except for the first hour of the simulation
 
         Parameters
         ----------
-        case_nc : str
+        case_nc : xr.Dataset
             Simulation .nc file.
         var : str
             Variable of interest.
+
+        Returns
+        -------
+        np.ndarray
+            The average value of the variable.
         """
 
         if var in case_nc:
-            return np.mean(case_nc[var].isel(meantime=slice(1,int(case_nc.meantime.values[-1]))).values, axis=0)
+            return np.mean(
+                case_nc[var]
+                .isel(meantime=slice(1, int(case_nc.meantime.values[-1])))
+                .values,
+                axis=0,
+            )
 
-    def _get_max_var(self, case_nc, var):
+    def _get_max_var(self, case_nc: xr.Dataset, var: str) -> np.ndarray:
         """
-        Get the Max value of a variable except for the first hour of the simulation 
+        Get the Max value of a variable except for the first hour of the simulation
 
         Parameters
         ----------
-        case_nc : str
+        case_nc : xr.Dataset
             Simulation .nc file.
         var : str
             Variable of interest.
+
+        Returns
+        -------
+        np.ndarray
+            The max value of the variable.
         """
 
         if var in case_nc:
-            return np.max(case_nc[var].isel(meantime=slice(1,int(case_nc.meantime.values[-1]))).values, axis=0)
+            return np.max(
+                case_nc[var]
+                .isel(meantime=slice(1, int(case_nc.meantime.values[-1])))
+                .values,
+                axis=0,
+            )
 
     def postprocess_case(
         self,
@@ -122,9 +142,6 @@ class XBeachModelWrapper(BaseModelWrapper):
         case_dir: str,
         output_vars: List[str] = None,
         overwrite_output: bool = True,
-        overwrite_output_postprocessed: bool = True,
-        remove_tab: bool = False,
-        remove_nc: bool = False,
     ) -> xr.Dataset:
         """
         Convert tab output files to netCDF file.
@@ -139,12 +156,6 @@ class XBeachModelWrapper(BaseModelWrapper):
             The output variables to postprocess. Default is None.
         overwrite_output : bool, optional
             Overwrite the output.nc file. Default is True.
-        overwrite_output_postprocessed : bool, optional
-            Overwrite the output_postprocessed.nc file. Default is True.
-        remove_tab : bool, optional
-            Remove the tab files. Default is False.
-        remove_nc : bool, optional
-            Remove the netCDF file. Default is False.
 
         Returns
         -------
@@ -156,11 +167,10 @@ class XBeachModelWrapper(BaseModelWrapper):
 
         warnings.filterwarnings("ignore")
 
-        self.logger.info(f"[{case_num}]: Postprocessing case {case_num} in {case_dir}.")  
+        self.logger.info(f"[{case_num}]: Postprocessing case {case_num} in {case_dir}.")
 
         output_nc_path = os.path.join(case_dir, "xboutput_postprocessed.nc")
         if not os.path.exists(output_nc_path) or overwrite_output:
-        
             output_raw = xr.open_dataset(os.path.join(case_dir, "xboutput.nc"))
 
             globalx = output_raw.globalx.values
@@ -169,17 +179,17 @@ class XBeachModelWrapper(BaseModelWrapper):
             y = np.arange(globalx.shape[0])
             x = np.arange(globalx.shape[1])
 
-            ds = xr.Dataset({
-                "globalx": (("y", "x"), globalx),
-                "globaly": (("y", "x"), globaly),
-                "zb": (("y", "x"), zb),
-            },
-            coords={"y": y,
-                "x": x
-            })
+            ds = xr.Dataset(
+                {
+                    "globalx": (("y", "x"), globalx),
+                    "globaly": (("y", "x"), globaly),
+                    "zb": (("y", "x"), zb),
+                },
+                coords={"y": y, "x": x},
+            )
 
             for var in output_vars:
-                if var == 'zs_max':
+                if var == "zs_max":
                     maxed = self._get_max_var(case_nc=output_raw, var=var)
                     masked = xr.where(ds["zb"] > 0, np.nan, maxed)
                     ds[var] = (("y", "x"), masked.data)
@@ -193,26 +203,28 @@ class XBeachModelWrapper(BaseModelWrapper):
 
             return ds
         else:
-            self.logger.info(f"[{case_num}]: Reading existing xboutput_postprocessed.nc file.")
+            self.logger.info(
+                f"[{case_num}]: Reading existing xboutput_postprocessed.nc file."
+            )
             output_nc = xr.open_dataset(output_nc_path)
 
             return output_nc
-        
+
     def join_postprocessed_files(
-            self, postprocessed_files: List[xr.Dataset]
-        ) -> xr.Dataset:
-            """
-            Join postprocessed files in a single Dataset.
+        self, postprocessed_files: List[xr.Dataset]
+    ) -> xr.Dataset:
+        """
+        Join postprocessed files in a single Dataset.
 
-            Parameters
-            ----------
-            postprocessed_files : list
-                The postprocessed files.
+        Parameters
+        ----------
+        postprocessed_files : list
+            The postprocessed files.
 
-            Returns
-            -------
-            xr.Dataset
-                The joined Dataset.
-            """
+        Returns
+        -------
+        xr.Dataset
+            The joined xarray.Dataset.
+        """
 
-            return xr.concat(postprocessed_files, dim="case_num")
+        return xr.concat(postprocessed_files, dim="case_num")
