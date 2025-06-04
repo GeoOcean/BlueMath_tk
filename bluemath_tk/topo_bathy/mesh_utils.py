@@ -12,7 +12,6 @@ import ocsmesh
 import rasterio
 from jigsawpy.msh_t import jigsaw_msh_t
 from matplotlib.axes import Axes
-from matplotlib.tri import Triangulation
 from netCDF4 import Dataset
 from pyproj.enums import TransformDirection
 from rasterio.mask import mask
@@ -20,6 +19,8 @@ from shapely.geometry import Polygon, mapping
 from shapely.ops import transform
 
 from ..core.geo import buffer_area_for_polygon
+from ..core.plotting.colors import hex_colors_land, hex_colors_water
+from ..core.plotting.utils import join_colormaps
 
 
 def plot_mesh_edge(
@@ -153,9 +154,21 @@ def plot_bathymetry(rasters_path: List[str], polygon: Polygon, ax: Axes) -> Axes
     cols, rows = np.meshgrid(np.arange(width), np.arange(height))
     xs, ys = rasterio.transform.xy(transform, rows, cols)
 
+    vmin = np.nanmin(data[0])
+    vmax = np.nanmax(data[0])
+
+    cmap, norm = join_colormaps(
+        cmap1=hex_colors_water,
+        cmap2=hex_colors_land,
+        value_range1=(vmin, 0.0),
+        value_range2=(0.0, vmax),
+        name="raster_cmap",
+    )
+
     im = ax.imshow(
         data[0],
-        cmap="gist_earth",
+        cmap=cmap,
+        norm=norm,
         extent=(np.min(xs), np.max(xs), np.min(ys), np.max(ys)),
     )
     cbar = plt.colorbar(im, ax=ax)
@@ -343,13 +356,26 @@ def plot_bathymetry_interp(mesh: jigsaw_msh_t, to_geo, ax: Axes) -> None:
         crd[:, 0], crd[:, 1] = to_geo(crd[:, 0], crd[:, 1])
         bnd = [crd[:, 0].min(), crd[:, 0].max(), crd[:, 1].min(), crd[:, 1].max()]
 
-    im = ax.tricontourf(
-        Triangulation(
-            crd[:, 0],
-            crd[:, 1],
-            triangles=mesh.msh_t.tria3["index"],
-        ),
-        mesh.msh_t.value.flatten(),
+    triangle = mesh.msh_t.tria3["index"]
+    Z = np.mean(mesh.msh_t.value.flatten()[triangle], axis=1)
+    vmin = np.nanmin(Z)
+    vmax = np.nanmax(Z)
+
+    cmap, norm = join_colormaps(
+        cmap1=hex_colors_water,
+        cmap2=hex_colors_land,
+        value_range1=(vmin, 0.0),
+        value_range2=(0.0, vmax),
+        name="raster_cmap",
+    )
+
+    im = ax.tripcolor(
+        crd[:, 0],
+        crd[:, 1],
+        triangle,
+        facecolors=Z,
+        cmap=cmap,
+        norm=norm,
     )
     ax.set_title("Interpolated Bathymetry")
     gl = ax.gridlines(draw_labels=True)
@@ -378,8 +404,9 @@ def simply_polygon(base_shape: Polygon, simpl_UTM: float, project) -> Polygon:
     -------
     Polygon
         The simplified polygon in geographic coordinates.
-    Example
-    -------
+
+    Examples
+    --------
     >>> from shapely.geometry import Polygon
     >>> from pyproj import Transformer
     >>> from shapely.ops import transform
@@ -422,8 +449,9 @@ def remove_islands(base_shape: Polygon, threshold_area: float, project) -> Polyg
     -------
     Polygon
         The polygon with small interior rings removed, transformed back to geographic coordinates.
-    Example
-    -------
+
+    Examples
+    --------
     >>> from shapely.geometry import Polygon
     >>> from pyproj import Transformer
     >>> from shapely.ops import transform
@@ -466,8 +494,9 @@ def read_adcirc_grd(grd_file: str) -> Tuple[np.ndarray, np.ndarray, List[str]]:
         - Elmts (np.ndarray): An array of shape (nelmts, 3) containing the element connectivity,
             with node indices adjusted (decremented by 1).
         - lines (List[str]): The remaining lines in the file after reading the nodes and elements.
-    Example
-    -------
+
+    Examples
+    --------
     >>> nodes, elmts, lines = read_adcirc_grd("path/to/grid.grd")
     >>> print(nodes.shape, elmts.shape, len(lines))
     (1000, 3) (500, 3) 10
@@ -501,8 +530,9 @@ def calculate_edges(Elmts: np.ndarray) -> np.ndarray:
     np.ndarray
         A 2D array of shape (n_edges, 2) containing the unique edges,
         each represented by a pair of node indices.
-    Example
-    -------
+
+    Examples
+    --------
     >>> Elmts = np.array([[0, 1, 2], [1, 2, 3], [2, 0, 3]])
     >>> edges = calculate_edges(Elmts)
     >>> print(edges)
@@ -543,7 +573,10 @@ def adcirc2netcdf(Path_grd: str, netcdf_path: str) -> None:
     netcdf_path : str
         Path where the resulting NetCDF file will be saved.
 
-    TODO: Check the whole function for correctness and completeness.
+    Examples
+    --------
+    >>> adcirc2netcdf("path/to/grid.grd", "path/to/output.nc")
+    >>> print("NetCDF file created successfully.")
     """
 
     Nodes_full, Elmts_full, lines = read_adcirc_grd(Path_grd)
@@ -791,18 +824,19 @@ def decode_open_boundary_data(data: List[str]) -> dict:
     dict
         A dictionary with keys corresponding to open boundary identifiers (e.g., 'open_boundary_1')
         and values as lists of integers representing boundary node indices.
-    Example
-    -------
+
+    Examples
+    --------
     >>> data = [
-    "100! 200! 300!",
-    "open_boundary_1",
-    "open_boundary_2",
-    "open_boundary_3",
-    "land boundaries",
-    "open_boundary_1! 10",
-    "open_boundary_2! 20",
-    "open_boundary_3! 30",
-    ]
+    ...     "100! 200! 300!",
+    ...     "open_boundary_1",
+    ...     "open_boundary_2",
+    ...     "open_boundary_3",
+    ...     "land boundaries",
+    ...     "open_boundary_1! 10",
+    ...     "open_boundary_2! 20",
+    ...     "open_boundary_3! 30",
+    ... ]
     >>> boundaries = decode_open_boundary_data(data)
     >>> print(boundaries)
     {'open_boundary_1': [10], 'open_boundary_2': [20], 'open_boundary_3': [30]}
@@ -843,10 +877,11 @@ def compute_circumcenter(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray) -> np.n
 
     Returns
     -------
-    center : np.ndarray
+    np.ndarray
         2D coordinates of the circumcenter.
-    Example
-    -------
+
+    Examples
+    --------
     >>> p0 = np.array([0, 0])
     >>> p1 = np.array([1, 0])
     >>> p2 = np.array([0, 1])
@@ -886,8 +921,9 @@ def build_edge_to_cells(elements: np.ndarray) -> Dict[Tuple[int, int], List[int]
     -------
     edge_to_cells : Dict[Tuple[int, int], List[int]]
         Dictionary mapping edges to the list of adjacent element indices.
-    Example
-    -------
+
+    Examples
+    --------
     >>> elements = np.array([[0, 1, 2], [1, 2, 3], [2, 0, 3]])
     >>> edge_to_cells = build_edge_to_cells(elements)
     >>> print(edge_to_cells)
@@ -920,15 +956,16 @@ def detect_circumcenter_too_close(
         1D arrays of x and y coordinates of the nodes.
     elements : np.ndarray
         2D array of shape (nelmts, 3) containing the node indices for each triangle element.
-    aj_threshold : float
-        Threshold for the ratio of circumcenter distance to edge length.
+    aj_threshold : float, optional
+        Threshold for the ratio of circumcenter distance to edge length. Default is 0.1.
 
     Returns
     -------
     bad_elements_mask : np.ndarray
         Boolean mask indicating which elements are problematic (True if bad).
-    Example
-    -------
+
+    Examples
+    --------
     >>> X = np.array([0, 1, 0, 1])
     >>> Y = np.array([0, 0, 1, 1])
     >>> elements = np.array([[0, 1, 2], [1, 3, 2]])
@@ -974,19 +1011,23 @@ def detect_circumcenter_too_close(
 def define_mesh_target_size(
     rasters: List[rasterio.io.DatasetReader],
     raster_resolution_meters: float,
-    nprocs: int,
-    depth_ranges: float,
+    depth_ranges: dict,
+    nprocs: int = 1,
 ) -> ocsmesh.Hfun:
     """
     Define the mesh target size based on depth ranges and their corresponding values.
 
     Parameters
     ----------
-    rasters : list
+    rasters : List[rasterio.io.DatasetReader]
         List of raster objects.
+    raster_resolution_meters : float
+        Resolution of the raster in meters.
     depth_ranges : dict, optional
         Dictionary containing depth ranges and their corresponding mesh sizes and rates.
         Format: {(lower_bound, upper_bound): {'value': mesh_size, 'rate': expansion_rate}}
+    nprocs : int, optional
+        Number of processors to use for the mesh generation. Default is 1.
 
     Returns
     -------
