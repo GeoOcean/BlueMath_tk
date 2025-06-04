@@ -1,7 +1,6 @@
 import math
 import os
-import re
-from typing import List, Tuple, Union
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -148,14 +147,18 @@ class XBeachModelWrapper(BaseModelWrapper):
         for case_dir in self.cases_dirs:
             case_dir_name = os.path.basename(case_dir)
             if os.path.exists(os.path.join(case_dir, "XBlog.txt")):
-                if os.path.exists(os.path.join(case_dir, "XBerror.txt")) & os.path.getsize(os.path.join(case_dir, "XBerror.txt")) != 0:
+                if (
+                    os.path.exists(os.path.join(case_dir, "XBerror.txt"))
+                    & os.path.getsize(os.path.join(case_dir, "XBerror.txt"))
+                    != 0
+                ):
                     cases_status[case_dir_name] = "XBerror.txt"
                     continue
                 else:
-                    with open(os.path.join(case_dir, "XBlog.txt"), 'r') as f:
-                        lines = f.readlines()[-2:] 
+                    with open(os.path.join(case_dir, "XBlog.txt"), "r") as f:
+                        lines = f.readlines()[-2:]
 
-                    if any('End of program xbeach' in line.lower() for line in lines):
+                    if any("End of program xbeach" in line.lower() for line in lines):
                         cases_status[case_dir_name] = "End of run"
                         continue
                     else:
