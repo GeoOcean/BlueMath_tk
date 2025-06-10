@@ -14,6 +14,8 @@ from scipy.stats import gaussian_kde
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error
 
+from ..core.models import BlueMathModel
+
 
 # -----------------------------------------------------------------------------#
 # Metric and accuracy functions
@@ -102,47 +104,69 @@ def calibration_time(sat, hind, sh=True, min_time=2):
 
 
 # Calibration-Validation class
-class CalVal(object):
+class CalVal(BlueMathModel):
     """
-    This class CalVal calibrates the wave reanalysis information with
-    buoy and satellite data, although we prefer to calibrate it first
-    with satellites, so then the data can be compared and validated
-    with the buoys. Following this procedure, the calibration is always
-    performed and after this, if buoy data is available, then this new
-    wave reanalysis calibrated hindcast can be validated
+    Calibrates wave reanalysis information with buoy and satellite data.
+    Preferably calibrates first with satellites, then validates with buoys if available.
+    Inherits from BlueMathModel for consistent project behavior.
+
+    Attributes
+    ----------
+    hindcast : pd.DataFrame
+        Original hindcast data.
+    n_parts : int
+        Number of partitions in the wave hindcast.
+    satellite : Any
+        Satellite data.
+    hindcast_sat_corr : pd.DataFrame
+        Hindcast data after satellite calibration.
+    params_sat_corr : np.ndarray
+        Calibration parameters from satellite calibration.
+    hindcast_buoy_corr : pd.DataFrame
+        Hindcast data after buoy calibration (if performed).
+    params_buoy_corr : np.ndarray
+        Calibration parameters from buoy calibration (if performed).
     """
 
     def __init__(
         self,
-        hindcast,
-        n_parts,
-        satellite,
-        buoy=(False, None),
-        buoy_corrections=False,
-        hindcast_longitude=-4.5,
-        hindcast_latitude=44.0,
-        buoy_longitude=None,
-        buoy_latitude=None,
-    ):
-        """Initializes the class with all the necessary attributes that
-        will be used in the different methods
-        ------------
+        hindcast: pd.DataFrame,
+        n_parts: int,
+        satellite: any,
+        buoy: tuple[bool, pd.DataFrame | None] = (False, None),
+        buoy_corrections: bool = False,
+        hindcast_longitude: float = -4.5,
+        hindcast_latitude: float = 44.0,
+        buoy_longitude: float | None = None,
+        buoy_latitude: float | None = None,
+    ) -> None:
+        """
+        Initialize the CalVal class.
+
         Parameters
-        hindcast: Hindcast data as a dataframe
-        n_parts: Number of partitions in the wave hindcast
-        satellite: Satellite data as a netCDF (see extract_satellite.py)
-        buoy: Buoy data as a dataframe, and boolean to indicate if it
-            is available or not
-        buoy_corrections: Boolean to indicate if the buoy corrections
-            will be applied or not
-        ------------
-        Returns
-        Attributes initialized and plots for both calibrations, the one
-        done with the satellite and the other one performed with buoy
-        data, if done. The parameters for the calibrations are also stored
+        ----------
+        hindcast : pd.DataFrame
+            Hindcast data as a DataFrame.
+        n_parts : int
+            Number of partitions in the wave hindcast.
+        satellite : Any
+            Satellite data as a netCDF (see extract_satellite.py).
+        buoy : tuple[bool, pd.DataFrame | None], optional
+            Tuple (is_available, DataFrame) for buoy data.
+        buoy_corrections : bool, optional
+            Whether to apply buoy corrections.
+        hindcast_longitude : float, optional
+            Longitude of the hindcast point.
+        hindcast_latitude : float, optional
+            Latitude of the hindcast point.
+        buoy_longitude : float | None, optional
+            Longitude of the buoy (if available).
+        buoy_latitude : float | None, optional
+            Latitude of the buoy (if available).
         """
 
-        print("\n Plotting region to be working with!! \n")
+        super().__init__()
+        self.logger.info("Plotting region to be working with!!")
 
         # plot data domains for hindcast, satellite and buoy
         fig, ax = plt.subplots(
@@ -173,14 +197,15 @@ class CalVal(object):
             zorder=10,
             transform=ccrs.PlateCarree(),
         )
-        ax.scatter(
-            buoy_longitude,
-            buoy_latitude,
-            s=50,
-            c="orange",
-            zorder=10,
-            transform=ccrs.PlateCarree(),
-        ) if buoy[0] else None
+        if buoy[0]:
+            ax.scatter(
+                buoy_longitude,
+                buoy_latitude,
+                s=50,
+                c="orange",
+                zorder=10,
+                transform=ccrs.PlateCarree(),
+            )
         ax.set_extent(
             [
                 hindcast_longitude - 4,
@@ -192,53 +217,57 @@ class CalVal(object):
         ax.stock_img()
         ax.add_feature(land_10m)
         plt.show()  # TODO: add better plotting!!
-        # TODO: add labels
-        # gl = ax.gridlines(crs=ccrs.PlateCarree(),draw_labels=True,
-        #                   linewidth=2,color='gray',linestyle='--')
-        # xlabels = np.arange(plot_region[1][0],plot_region[1][1],plot_labels[1])
-        # xlabels = np.where(xlabels<180,xlabels,xlabels-360)
-        # ylabels = np.arange(plot_region[1][3],plot_region[1][2],plot_labels[2])
-        # gl.xlocator = mticker.FixedLocator(list(xlabels))
-        # gl.ylocator = mticker.FixedLocator(list(ylabels))
-        # gl.xlabels_top = False
-        # gl.ylabels_right = False
 
-        # save all datasets and variables in class
-        self.hindcast = hindcast.copy()
-        self.n_parts = n_parts
-        self.hindcast_longitude = hindcast_longitude
-        self.hindcast_latitude = hindcast_latitude
-        self.possible_to_correct = np.where(hindcast["Hs_cal"] > 0.01)[0]
-        self.hind_to_corr = hindcast.iloc[self.possible_to_correct].copy()
+        # Save all datasets and variables in class
+        self.hindcast: pd.DataFrame = hindcast.copy()
+        self.n_parts: int = n_parts
+        self.hindcast_longitude: float = hindcast_longitude
+        self.hindcast_latitude: float = hindcast_latitude
+        self.possible_to_correct: np.ndarray = np.where(hindcast["Hs_cal"] > 0.01)[0]
+        self.hind_to_corr: pd.DataFrame = hindcast.iloc[self.possible_to_correct].copy()
         self.satellite = satellite.copy()
-        self.hindcast_sat_corr = hindcast.copy()
-        self.params_sat_corr = self.calibration("satellite")
+        self.hindcast_sat_corr: pd.DataFrame = hindcast.copy()
+        self.params_sat_corr: np.ndarray = self.calibration("satellite")
         if buoy[0]:
-            self.buoy = buoy[1].copy()
-            self.buoy_longitude = buoy_longitude
-            self.buoy_latitude = buoy_latitude
+            self.buoy: pd.DataFrame = buoy[1].copy()
+            self.buoy_longitude: float | None = buoy_longitude
+            self.buoy_latitude: float | None = buoy_latitude
         if buoy_corrections:
-            self.hindcast_buoy_corr = hindcast.copy()
-            self.params_buoy_corr = self.calibration("buoy")
+            self.hindcast_buoy_corr: pd.DataFrame = hindcast.copy()
+            self.params_buoy_corr: np.ndarray = self.calibration("buoy")
         else:
-            print("\n No buoy corrections will be done!! \n")
+            self.logger.info("No buoy corrections will be done!!")
 
-    def calibration(self, calibration_type):
-        """Calibrates hindcast with satellite or buoy data. This calibration
-        is performed using a linear regression and selecting only those
-        parameters that are significantly representative
-        ------------
+        # Exclude large or non-pickleable attributes from model saving
+        self._exclude_attributes += [
+            "hindcast",
+            "satellite",
+            "hindcast_sat_corr",
+            "hindcast_buoy_corr",
+        ]
+
+    def calibration(self, calibration_type: str) -> np.ndarray:
+        """
+        Calibrates hindcast with satellite or buoy data using linear regression.
+        Only parameters that are significantly representative are selected.
+
         Parameters
-        calibration_type: (str) Type of calibration to be done
-            it can be : (satellite, buoy)
-        ------------
+        ----------
+        calibration_type : str
+            Type of calibration to be done ('satellite' or 'buoy').
+
         Returns
-        Corrected data and calculated params
+        -------
+        np.ndarray
+            Calibration parameters used for correction.
+
+        Raises
+        ------
+        ValueError
+            If calibration_type is not valid.
         """
 
-        print(" -------------------------------------------------------- ")
-        print(calibration_type.upper() + " CALIBRATION will be performed")
-        print(" -------------------------------------------------------- \n ")
+        self.logger.info(f"{calibration_type.upper()} CALIBRATION will be performed")
 
         # Initializes satellite data to calibrate
         if calibration_type == "satellite":
@@ -397,24 +426,32 @@ class CalVal(object):
             )
         print(" \n  \n ")
 
-        # return
         return params
 
-    def satellite_values(self, ini_lat, end_lat, ini_lon, end_lon):
-        """Performs the time calibration step that allows us to perform the
-        calibration between the hindcast and the satellite data
-        ------------
+    def satellite_values(
+        self, ini_lat: float, end_lat: float, ini_lon: float, end_lon: float
+    ) -> tuple[np.ndarray, pd.DataFrame]:
+        """
+        Performs the time calibration step between hindcast and satellite data.
+
         Parameters
-        Lats and lons to generate the box with the satellite data that
-        will be used, previously selected by input
-        ------------
+        ----------
+        ini_lat : float
+            South latitude of the satellite box.
+        end_lat : float
+            North latitude of the satellite box.
+        ini_lon : float
+            West longitude of the satellite box.
+        end_lon : float
+            East longitude of the satellite box.
+
         Returns
-        Significant wave height for the satellite and a reduced dataframe
-        for the hindcast data
+        -------
+        tuple[np.ndarray, pd.DataFrame]
+            Significant wave height for the satellite and a reduced dataframe for the hindcast data.
         """
 
-        # SATELLITE
-        print("Selecting the satellite data choosed... \n ")
+        self.logger.info("Selecting the satellite data chosen...")
 
         self.satellite = self.satellite.isel(
             TIME=np.where(self.satellite.LATITUDE.values > ini_lat)[0]
@@ -488,7 +525,25 @@ class CalVal(object):
 
         return wave_height_cal, calibration
 
-    def density_scatter(self, x, y):
+    def density_scatter(
+        self, x: np.ndarray, y: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Computes a density scatter for two arrays using gaussian KDE.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            X values.
+        y : np.ndarray
+            Y values.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray, np.ndarray]
+            Sorted x, y, and density values.
+        """
+
         xy = np.vstack([x, y])
         z = gaussian_kde(xy)(xy)
         idx = z.argsort()
@@ -496,7 +551,34 @@ class CalVal(object):
 
         return (x1, y1, z)
 
-    def validation_scatter(self, axs, x, y, xlabel, ylabel, title):
+    def validation_scatter(
+        self,
+        axs: plt.Axes,
+        x: np.ndarray,
+        y: np.ndarray,
+        xlabel: str,
+        ylabel: str,
+        title: str,
+    ) -> None:
+        """
+        Plots a density scatter and Q-Q plot for validation.
+
+        Parameters
+        ----------
+        axs : plt.Axes
+            Matplotlib axes to plot on.
+        x : np.ndarray
+            X values.
+        y : np.ndarray
+            Y values.
+        xlabel : str
+            X-axis label.
+        ylabel : str
+            Y-axis label.
+        title : str
+            Plot title.
+        """
+
         x2, y2, z = self.density_scatter(x, y)
 
         # plot
@@ -547,20 +629,32 @@ class CalVal(object):
             bbox=props,
         )
 
-    def calibration_plots(self, xx1, xx2, hs, data, coefs, big_title):
-        """Plots differnet graphs for the calibration of hindcast data with
-        buoy and satellite information. Plots are explained by their own
-        ------------
+    def calibration_plots(
+        self,
+        xx1: np.ndarray,
+        xx2: np.ndarray,
+        hs: np.ndarray,
+        data: pd.DataFrame,
+        coefs: np.ndarray,
+        big_title: str,
+    ) -> None:
+        """
+        Plots graphs for the calibration of hindcast data with buoy and satellite information.
+
         Parameters
-        xx1: No corrected data
-        xx2: Corrected data
-        hs: Satellite / Buoy data that has been used to calibrate
-        data: Dataframe with more hindcast information
-        coefs: Parameters calculated in the calibration
-        big_title: Can be 'Buoy' or 'Satellite'
-        ------------
-        Returns
-        Different auto explicative plots
+        ----------
+        xx1 : np.ndarray
+            Not corrected data.
+        xx2 : np.ndarray
+            Corrected data.
+        hs : np.ndarray
+            Satellite / Buoy data used to calibrate.
+        data : pd.DataFrame
+            Dataframe with more hindcast information.
+        coefs : np.ndarray
+            Parameters calculated in the calibration.
+        big_title : str
+            Can be 'Buoy' or 'Satellite'.
         """
 
         num = "1"
@@ -651,15 +745,18 @@ class CalVal(object):
         # show results
         plt.show()
 
-    def buoy_comparison(self, comparison_type, buoy_name="Buoy NAME"):
-        """Compares data with buoy, even if it's been corrected or not
-        ------------
+    def buoy_comparison(
+        self, comparison_type: str, buoy_name: str = "Buoy NAME"
+    ) -> None:
+        """
+        Compares data with buoy, even if it's been corrected or not.
+
         Parameters
-        comparison_type: Type of comparison to be done
-                         (raw, sat_corr, buoy_corr)
-        ------------
-        Returns
-        Different auto explicative plots
+        ----------
+        comparison_type : str
+            Type of comparison to be done ('raw', 'sat_corr', 'buoy_corr').
+        buoy_name : str, optional
+            Name of the buoy.
         """
 
         # Initialize the data to compare
@@ -768,15 +865,18 @@ class CalVal(object):
         # show results
         plt.show()
 
-    def buoy_validation(self, validation_type, buoy_name="Buoy NAME"):
-        """Validate data with buoy, even if it's been corrected or not
-        ------------
+    def buoy_validation(
+        self, validation_type: str, buoy_name: str = "Buoy NAME"
+    ) -> None:
+        """
+        Validate data with buoy, even if it's been corrected or not.
+
         Parameters
-        validation_type: Type of comparison to be done
-                         (raw, sat_corr, buoy_corr)
-        ------------
-        Returns
-        Different auto explicative plots
+        ----------
+        validation_type : str
+            Type of comparison to be done ('raw', 'sat_corr', 'buoy_corr').
+        buoy_name : str, optional
+            Name of the buoy.
         """
 
         # Initialize the data to validate
