@@ -105,7 +105,7 @@ def join_colormaps(
 
         bounds1 = np.linspace(value_range1[0], value_range1[1], 129)
         bounds2 = np.linspace(value_range2[0], value_range2[1], 129)
-        all_bounds = np.concatenate([bounds1[:-1], bounds2])
+        all_bounds = np.sort(np.concatenate([bounds1[:-1], bounds2]))
 
         norm = BoundaryNorm(boundaries=all_bounds, ncolors=len(newcolors))
 
