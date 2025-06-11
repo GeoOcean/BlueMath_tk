@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Union
 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -6,21 +6,23 @@ import matplotlib as mpl
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+import xarray as xr
 from matplotlib import pyplot as plt
-from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
+from ..core.decorators import validate_data_calval
 from ..core.models import BlueMathModel
-from ..core.plotting.scatter import validation_scatter
 
 
-def get_matching_times(
+def get_matching_times_between_arrays(
     times1: np.ndarray,
     times2: np.ndarray,
-    min_time: int = 2,
+    min_time_diff: int,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Finds matching time indices between two arrays of timestamps.
-    For each time in times1, finds the closest time in times2 that is within min_time hours.
+    For each time in times1, finds the closest time in times2 that is within min_time_diff hours.
     Returns the indices of matching times in both arrays.
 
     Parameters
@@ -29,7 +31,7 @@ def get_matching_times(
         First array of timestamps (reference times).
     times2 : np.ndarray
         Second array of timestamps (times to match against).
-    min_time : int, optional
+    min_time_diff : int, optional
         Maximum time difference in hours for considering times as matching.
 
     Returns
@@ -49,7 +51,7 @@ def get_matching_times(
         min_diff = np.min(time_diffs)
 
         # If minimum difference is within threshold, record the indices
-        if min_diff < np.timedelta64(min_time, "h"):
+        if min_diff < np.timedelta64(min_time_diff, "h"):
             min_index = np.argmin(time_diffs)
             indices1 = np.append(indices1, i)
             indices2 = np.append(indices2, min_index)
@@ -136,111 +138,106 @@ def process_imos_satellite_data(
 class CalVal(BlueMathModel):
     """
     Calibrates wave data using reference data.
-    The calibration can be validated with additional data if available.
-
-    Attributes
-    ----------
-    data : pd.DataFrame
-        Original data to be calibrated.
-    data_to_calibrate : pd.DataFrame
-        Data used for calibration.
-    data_to_validate : pd.DataFrame
-        Data used for validation (optional).
-    n_parts : int
-        Number of partitions in the wave data.
-    longitude : float
-        Longitude of the data point.
-    latitude : float
-        Latitude of the data point.
-    validation_longitude : float
-        Longitude of the validation point (if available).
-    validation_latitude : float
-        Latitude of the validation point (if available).
-    calibrated_data : pd.DataFrame
-        Data after calibration.
-    calibration_params : np.ndarray
-        Calibration parameters.
     """
 
-    def __init__(
-        self,
-        data: pd.DataFrame,
-        data_to_calibrate: pd.DataFrame,
-        data_to_validate: pd.DataFrame = None,
-        n_parts: int = 3,
-        longitude: float = None,
-        latitude: float = None,
-        validation_longitude: float = None,
-        validation_latitude: float = None,
-    ) -> None:
+    direction_bin_size: int = 22.5
+    direction_bins: np.ndarray = np.arange(
+        direction_bin_size, 360.5, direction_bin_size
+    )
+
+    def __init__(self) -> None:
         """
         Initialize the CalVal class.
-
-        Parameters
-        ----------
-        data : pd.DataFrame
-            Data to be calibrated.
-        data_to_calibrate : pd.DataFrame
-            Data used for calibration.
-        data_to_validate : pd.DataFrame, optional
-            Data used for validation (if available).
-        n_parts : int, optional
-            Number of partitions in the wave data.
-        longitude : float, optional
-            Longitude of the data point.
-        latitude : float, optional
-            Latitude of the data point.
-        validation_longitude : float, optional
-            Longitude of the validation point (if available).
-        validation_latitude : float, optional
-            Latitude of the validation point (if available).
         """
 
         super().__init__()
         self.set_logger_name(name="CalVal", level="INFO", console=True)
 
         # Save input data
-        self._data = data.copy()
-        self._data_to_calibrate = data_to_calibrate.copy()
-        self._data_to_validate = (
-            data_to_validate.copy() if data_to_validate is not None else None
-        )
-
-        # Save parameters
-        self.n_parts = n_parts
-        self.longitude = longitude
-        self.latitude = latitude
-        self.validation_longitude = validation_longitude
-        self.validation_latitude = validation_latitude
+        self._data: pd.DataFrame = None
+        self._data_longitude: float = None
+        self._data_latitude: float = None
+        self._data_to_calibrate: pd.DataFrame = None
+        self._min_time_diff: int = None
 
         # Initialize calibration results
-        self._data_to_fit = None
+        self._data_to_fit: Tuple[pd.DataFrame, pd.DataFrame] = (None, None)
         self._calibration_model: sm.OLS = None
-        self._calibrated_data = data.copy()
-        self._calibration_params = None
-
-        # Plot data domains
-        self._plot_data_domains()
+        self._calibrated_data: pd.DataFrame = None
+        self._calibration_params: pd.Series = None
 
         # Exclude large attributes from model saving
         self._exclude_attributes += [
             "_data",
-            "_data_to_fit",
             "_data_to_calibrate",
-            "_data_to_validate",
+            "_data_to_fit",
         ]
+
+    @property
+    def calibration_model(self) -> sm.OLS:
+        """Returns the calibration model."""
+
+        if self._calibration_model is None:
+            raise ValueError(
+                "Calibration model is not available. Please run the fit method first."
+            )
+
+        return self._calibration_model
 
     @property
     def calibrated_data(self) -> pd.DataFrame:
         """Returns the calibrated data."""
+
+        if self._calibrated_data is None:
+            raise ValueError(
+                "Calibrated data is not available. Please run the fit method first."
+            )
+
         return self._calibrated_data
 
     @property
-    def calibration_params(self) -> np.ndarray:
+    def calibration_params(self) -> pd.Series:
         """Returns the calibration parameters."""
+
+        if self._calibration_params is None:
+            raise ValueError(
+                "Calibration parameters are not available. Please run the fit method first."
+            )
+
         return self._calibration_params
 
-    def _plot_data_domains(self) -> None:
+    def plot_calibration_results(self) -> Tuple[Figure, Axes]:
+        """
+        Plots the calibration results.
+        """
+
+        fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+
+        sea_correction = self.calibration_params["sea_correction"].values()
+        swell_correction = self.calibration_params["swell_correction"].values()
+
+        for ax, coeffs, title in zip(
+            axs[0, :],
+            [sea_correction, swell_correction],
+            ["SEA $Correction$", "SWELL 1 $Correction$"],
+        ):
+            norm = 0.3
+            fracs = np.repeat(10, len(coeffs))
+            my_norm = mpl.colors.Normalize(1 - norm, 1 + norm)
+            my_cmap = mpl.cm.get_cmap("bwr", len(coeffs))
+            ax.pie(
+                fracs,
+                labels=None,
+                colors=my_cmap(my_norm(coeffs)),
+                startangle=90,
+                counterclock=False,
+                radius=1.2,
+            )
+            ax.set_title(title, fontweight="bold")
+
+        return fig, axs
+
+    def _plot_data_domains(self) -> Tuple[Figure, Axes]:
         """
         Plots the domains of the data points.
         """
@@ -248,7 +245,7 @@ class CalVal(BlueMathModel):
         fig, ax = plt.subplots(
             figsize=(10, 10),
             subplot_kw={
-                "projection": ccrs.PlateCarree(central_longitude=self.longitude)
+                "projection": ccrs.PlateCarree(central_longitude=self._data_longitude)
             },
         )
 
@@ -271,43 +268,28 @@ class CalVal(BlueMathModel):
 
         # Plot main data point
         ax.scatter(
-            self.longitude,
-            self.latitude,
+            self._data_longitude,
+            self._data_latitude,
             s=50,
             c="red",
             zorder=10,
             transform=ccrs.PlateCarree(),
         )
 
-        # Plot validation point if available
-        if (
-            self.validation_longitude is not None
-            and self.validation_latitude is not None
-        ):
-            ax.scatter(
-                self.validation_longitude,
-                self.validation_latitude,
-                s=50,
-                c="orange",
-                zorder=10,
-                transform=ccrs.PlateCarree(),
-            )
-
         # Set plot extent
         ax.set_extent(
             [
-                self.longitude - 2,
-                self.longitude + 2,
-                self.latitude - 2,
-                self.latitude + 2,
+                self._data_longitude - 2,
+                self._data_longitude + 2,
+                self._data_latitude - 2,
+                self._data_latitude + 2,
             ]
         )
-
         ax.add_feature(land_10m)
-        plt.show()
 
-    @staticmethod
-    def _create_vec_direc(waves: np.ndarray, direcs: np.ndarray) -> np.ndarray:
+        return fig, ax
+
+    def _create_vec_direc(self, waves: np.ndarray, direcs: np.ndarray) -> np.ndarray:
         """
         Creates a vector of wave heights for each directional bin.
 
@@ -324,21 +306,47 @@ class CalVal(BlueMathModel):
             Matrix of wave heights for each directional bin.
         """
 
-        data = np.zeros((len(waves), 16))
+        data = np.zeros((len(waves), len(self.direction_bins)))
         for i in range(len(waves)):
-            if ((i / len(waves)) * 100) % 5 == 0:
-                print(f"{str((i / len(waves)) * 100)}% completed...")
             if direcs[i] < 0:
                 direcs[i] = direcs[i] + 360
             if direcs[i] > 0 and waves[i] > 0:
-                bin_idx = int(direcs[i] / 22.5)
+                bin_idx = int(direcs[i] / self.direction_bin_size)
                 data[i, bin_idx] = waves[i]
 
         return data
 
+    @staticmethod
+    def _get_nparts(data: pd.DataFrame) -> int:
+        """
+        Gets the number of parts in the wave data.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            Wave data.
+
+        Returns
+        -------
+        int
+            The number of parts in the wave data.
+        """
+
+        return len([col for col in data.columns if col.startswith("Hswell")])
+
     def _get_joined_sea_swell_data(self, data: pd.DataFrame) -> np.ndarray:
         """
         Joins the sea and swell data.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            Wave data.
+
+        Returns
+        -------
+        np.ndarray
+            The joined sea and swell matrix.
         """
 
         # Process sea waves
@@ -346,42 +354,47 @@ class CalVal(BlueMathModel):
 
         # Process swells
         Hs_swells = np.zeros(Hsea.shape)
-        for part in range(1, self.n_parts + 1):
+        for part in range(1, self._get_nparts(data) + 1):
             Hs_swells += (
                 self._create_vec_direc(data[f"Hswell{part}"], data[f"Dirswell{part}"])
             ) ** 2
 
         # Combine sea and swell matrices
-        Hs_ncorr_mat = np.concatenate([Hsea**2, Hs_swells], axis=1)
+        sea_swell_matrix = np.concatenate([Hsea**2, Hs_swells], axis=1)
 
-        return Hs_ncorr_mat
+        return sea_swell_matrix
 
+    @validate_data_calval
     def fit(
         self,
-        min_time: int = 2,
-    ) -> np.ndarray:
+        data: pd.DataFrame,
+        data_longitude: float,
+        data_latitude: float,
+        data_to_calibrate: pd.DataFrame,
+        min_time_diff: int = 2,
+    ) -> None:
         """
         Calibrates the data using reference data.
-
-        Parameters
-        ----------
-        min_time : int, optional
-            Minimum time difference in hours for matching.
-
-        Returns
-        -------
-        np.ndarray
-            Calibration parameters.
         """
+
+        # Save input data
+        self._data = data.copy()
+        self._data_longitude = data_longitude
+        self._data_latitude = data_latitude
+        self._data_to_calibrate = data_to_calibrate.copy()
+        self._min_time_diff = min_time_diff
+
+        # Plot data domains
+        self._plot_data_domains()
 
         # Construct matrices for calibration
         self.logger.info("Constructing matrices and calibrating...")
 
         # Get matching times
-        times_data_to_fit, times_data_to_calibrate = get_matching_times(
+        times_data_to_fit, times_data_to_calibrate = get_matching_times_between_arrays(
             self._data.index.values,
             self._data_to_calibrate.index.values,
-            min_time=min_time,
+            min_time_diff=self._min_time_diff,
         )
         self._data_to_fit = (
             self._data.iloc[times_data_to_fit],
@@ -389,123 +402,112 @@ class CalVal(BlueMathModel):
         )
 
         # Get joined sea and swell data
-        Hs_ncorr_mat = self._get_joined_sea_swell_data(self._data_to_fit[0])
+        sea_swell_matrix = self._get_joined_sea_swell_data(self._data_to_fit[0])
 
         # Perform calibration
-        X = sm.add_constant(Hs_ncorr_mat)
+        X = sm.add_constant(sea_swell_matrix)
         self._calibration_model = sm.OLS(self._data_to_fit[1]["Hs_CAL"] ** 2, X)
         calibrated_model_results = self._calibration_model.fit()
 
-        # Save calibration results
-        self._calibration_params = calibrated_model_results.params
+        # Get significant correction coefficients
+        significant_model_params = [
+            model_param
+            if calibrated_model_results.pvalues[imp] < 0.05 and model_param > 0
+            else 1.0
+            for imp, model_param in enumerate(calibrated_model_results.params)
+        ]
 
-        return calibrated_model_results
+        # Save sea and swell correction coefficients
+        self._calibration_params = {
+            "sea_correction": {
+                ip: param
+                for ip, param in enumerate(
+                    np.sqrt(significant_model_params[: len(self.direction_bins)])
+                )
+            },
+            "swell_correction": {
+                ip: param
+                for ip, param in enumerate(
+                    np.sqrt(significant_model_params[len(self.direction_bins) :])
+                )
+            },
+        }
 
-    def predict(self, data: pd.DataFrame) -> np.ndarray:
+    def predict(
+        self, data: Union[pd.DataFrame, xr.Dataset]
+    ) -> Union[pd.DataFrame, xr.Dataset]:
         """
         Predicts the wave heights using the calibration model.
         """
 
-        # Get joined sea and swell data
-        Hs_ncorr_mat = self._get_joined_sea_swell_data(data)
-
-        # Predict wave heights
-        return np.sqrt(self._calibration_model.predict(Hs_ncorr_mat))
-
-    def plot_calibration_results(self) -> None:
-        """
-        Plots calibration results.
-        """
-
-        # Get matching times
-        times_data, times_data_to_validate = get_matching_times(
-            self._data.index.values,
-            self._data_to_validate.index.values,
-            min_time=1,
-        )
-        self._data = self._data.iloc[times_data]
-        self._data_to_validate = self._data_to_validate.iloc[times_data_to_validate]
-
-        fig, axs = plt.subplots(2, 3, figsize=(15, 8), constrained_layout=True)
-        fig.subplots_adjust(hspace=0.4, wspace=0.1)
-        fig.suptitle(
-            "Wave data calibration with IMOS satellite data",
-            y=0.99,
-            fontsize=12,
-            fontweight="bold",
-        )
-
-        for i in range(2):
-            for j in range(3):
-                if i == j == 0 or i == 1 and j == 0:
-                    if i == 0:
-                        x, y = self._data_to_validate["Hs_VAL"], self._data["Hs"]
-                        title = "Not corrected, $H_{s}$ (m)"
-                    else:
-                        x, y = self._data_to_validate["Hs_VAL"], self._data["Hs_CORR"]
-                        title = "Corrected, $H_{s}$ (m)"
-
-                    validation_scatter(axs[i, j], x, y, "Buoy", "CSIRO", title)
-
-                elif i == 0 and j == 1 or i == 0 and j == 2:
-                    if j == 1:
-                        dataj1 = self._data[["Dirsea", "Hsea"]].dropna(
-                            axis=0, how="any"
-                        )
-                        x, y = dataj1["Dirsea"], dataj1["Hsea"]
-                        index = 2
-                        title = "SEA $Wave$ $Climate$"
-                    else:
-                        dataj2 = self._data[["Dirswell1", "Hswell1"]].dropna(
-                            axis=0, how="any"
-                        )
-                        x, y = dataj2["Dirswell1"], dataj2["Hswell1"]
-                        index = 3
-                        title = "SWELL 1 $Wave$ $Climate$"
-
-                    x = (x * np.pi) / 180
-                    axs[i, j].axis("off")
-                    axs[i, j] = fig.add_subplot(2, 3, index, projection="polar")
-                    x2, y2, z = self._density_scatter(x, y)
-                    axs[i, j].scatter(x2, y2, c=z, s=3, cmap="jet")
-                    axs[i, j].set_theta_zero_location("N", offset=0)
-                    axs[i, j].set_xticklabels(
-                        ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+        if isinstance(data, xr.Dataset):
+            self.logger.warning(
+                "Spectra data detected. Correcting data by peak directions."
+            )
+            corrected_data = data.copy()  # Copy data to avoid modifying original data
+            peak_directions = corrected_data.spec.stats(["dp"]).load()
+            correction_coeffs = np.ones(peak_directions.dp.shape)
+            for n_part in peak_directions.part:
+                if n_part == 0:
+                    correction_coeffs[n_part, :] = np.array(
+                        [
+                            self.calibration_params["sea_correction"][
+                                int(peak_direction / self.direction_bin_size)
+                            ]
+                            for peak_direction in peak_directions.isel(
+                                part=n_part
+                            ).dp.values
+                        ]
                     )
-                    axs[i, j].xaxis.grid(True, color="lavender", linestyle="-")
-                    axs[i, j].yaxis.grid(True, color="lavender", linestyle="-")
-                    axs[i, j].set_theta_direction(-1)
-                    axs[i, j].set_xlabel("$\u03b8_{m}$ ($\degree$)")
-                    axs[i, j].set_ylabel("$H_{s}$ (m)", labelpad=20)
-                    axs[i, j].set_title(title, pad=15, fontweight="bold")
-
                 else:
-                    if j == 1:
-                        color_vals = self._calibration_params[0:16]
-                        title = "SEA $Correction$"
-                    else:
-                        color_vals = self._calibration_params[16:32]
-                        title = "SWELL 1 $Correction$"
-
-                    norm = 0.3
-                    fracs = np.repeat(10, 16)
-                    my_norm = mpl.colors.Normalize(1 - norm, 1 + norm)
-                    my_cmap = mpl.cm.get_cmap("bwr", len(color_vals))
-                    axs[i, j].pie(
-                        fracs,
-                        labels=None,
-                        colors=my_cmap(my_norm(color_vals)),
-                        startangle=90,
-                        counterclock=False,
-                        radius=1.2,
+                    correction_coeffs[n_part, :] = np.array(
+                        [
+                            self.calibration_params["swell_correction"][
+                                int(peak_direction / self.direction_bin_size)
+                            ]
+                            for peak_direction in peak_directions.isel(
+                                part=n_part
+                            ).dp.values
+                        ]
                     )
-                    axs[i, j].set_title(title, fontweight="bold")
+            corrected_data["corr_coeffs"] = (("part", "time"), correction_coeffs)
+            corrected_data["corr_efth"] = (
+                corrected_data.efth * corrected_data.corr_coeffs
+            )
 
-                    if j == 2:
-                        ax1_divider = make_axes_locatable(axs[i, j])
-                        cax1 = ax1_divider.append_axes("right", size="7%", pad="2%")
-                        cb = mpl.colorbar.ColorbarBase(cax1, cmap=my_cmap, norm=my_norm)
-                        cb.set_label("Correction Coefficients")
-                        cb.outline.set_color("white")
+            return corrected_data
 
-        plt.show()
+        elif isinstance(data, pd.DataFrame):
+            self.logger.warning("Wave data detected. Correcting data.")
+            corrected_data = data.copy()
+            corrected_data["Hsea"] = (
+                corrected_data["Hsea"] ** 2
+                * np.array(
+                    [
+                        self.calibration_params["sea_correction"][
+                            int(peak_direction / self.direction_bin_size)
+                        ]
+                        for peak_direction in corrected_data["Dirsea"]
+                    ]
+                )
+                ** 2
+            )
+            corrected_data["Hs_CORR"] = corrected_data["Hsea"]
+            for n_part in range(1, self._get_nparts(corrected_data) + 1):
+                corrected_data[f"Hswell{n_part}"] = (
+                    corrected_data[f"Hswell{n_part}"] ** 2
+                    * np.array(
+                        [
+                            self.calibration_params["swell_correction"][
+                                int(peak_direction / self.direction_bin_size)
+                            ]
+                            for peak_direction in corrected_data[f"Dirswell{n_part}"]
+                        ]
+                    )
+                    ** 2
+                )
+                corrected_data["Hs_CORR"] += corrected_data[f"Hswell{n_part}"]
+
+            corrected_data["Hs_CORR"] = np.sqrt(corrected_data["Hs_CORR"])
+
+            return corrected_data[["Hs", "Hs_CORR"]]
