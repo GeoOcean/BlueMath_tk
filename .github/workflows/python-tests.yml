@@ -48,6 +48,6 @@ jobs:
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate bluemath-tk
           python -m unittest discover tests/datamining/
-          python -m unittest discover tests/downloaders/
+          python -m unittest discover tests/distributions/
           python -m unittest discover tests/interpolation/
           python -m unittest discover tests/wrappers/
