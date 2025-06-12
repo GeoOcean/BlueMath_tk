@@ -461,7 +461,7 @@ def validate_data_calval(func):
         data_longitude: float,
         data_latitude: float,
         data_to_calibrate: pd.DataFrame,
-        min_time_diff: int = 2,
+        max_time_diff: int = 2,
     ):
         if not isinstance(data, pd.DataFrame):
             raise TypeError("Data must be a pandas DataFrame")
@@ -480,8 +480,8 @@ def validate_data_calval(func):
             raise ValueError("Data to calibrate must contain a column named 'LATITUDE'")
         if "Hs_CAL" not in data_to_calibrate.columns:
             raise ValueError("Data to calibrate must contain a column named 'Hs_CAL'")
-        if not isinstance(min_time_diff, int) or min_time_diff <= 0:
-            raise ValueError("Minimum time difference must be an integer and > 0")
+        if not isinstance(max_time_diff, int) or max_time_diff <= 0:
+            raise ValueError("Maximum time difference must be an integer and > 0")
 
         return func(
             self,
@@ -489,7 +489,7 @@ def validate_data_calval(func):
             data_longitude,
             data_latitude,
             data_to_calibrate,
-            min_time_diff,
+            max_time_diff,
         )
 
     return wrapper
