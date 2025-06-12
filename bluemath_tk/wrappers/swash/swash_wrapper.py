@@ -7,7 +7,7 @@ import pandas as pd
 import xarray as xr
 from scipy.signal import find_peaks
 
-from ...waves.series import series_TMA, waves_dispersion
+from ...waves.series import series_regular_monochromatic, series_TMA, waves_dispersion
 from ...waves.spectra import spectral_analysis
 from ...waves.statistics import upcrossing
 from .._base_wrappers import BaseModelWrapper
@@ -206,7 +206,9 @@ class SwashModelWrapper(BaseModelWrapper):
             "gamma": case_context["gamma"],
             "deltat": case_context["deltat"],
         }
-        waves = series_TMA(waves=waves_dict, depth=self.depth_array[0])
+        # waves = series_TMA(waves=waves_dict, depth=self.depth_array[0])
+        waves = series_regular_monochromatic(waves=waves_dict)
+
         # Save the waves to a file
         self.write_array_in_file(
             array=waves, filename=os.path.join(case_dir, "waves.bnd")
@@ -736,10 +738,10 @@ class HySwashVeggyModelWrapper(SwashModelWrapper):
         # Build the input vegetation file
         plants = np.zeros((len(self.depth_array)))
         plants[
-            int(self.fixed_parameters["Plants_ini"]) : int(
-                self.fixed_parameters["Plants_fin"]
+            int(case_context["Plants_end"] - case_context["Wv"]) : int(
+                case_context["Plants_end"]
             )
-        ] = case_context["plants_density"]
+        ] = case_context["Nv"]
         np.savetxt(os.path.join(case_dir, "plants.txt"), plants, fmt="%.6f")
 
 

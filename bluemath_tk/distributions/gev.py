@@ -6,7 +6,7 @@ from scipy.special import gamma
 from ._base_distributions import BaseDistribution, FitResult, fit_dist
 
 
-class gev(BaseDistribution):
+class GEV(BaseDistribution):
     """
     Generalized Extreme Value (GEV) distribution class.
 
@@ -18,6 +18,8 @@ class gev(BaseDistribution):
         The complete name of the distribution (GEV).
     nparams : int
         Number of GEV parameters.
+    param_names : List[str]
+        Names of GEV parameters (location, scale, shape).
 
     Methods
     -------
@@ -52,10 +54,10 @@ class gev(BaseDistribution):
 
     Examples
     --------
-    >>> from bluemath_tk.distributions.gev import gev
-    >>> gev_pdf = gev.pdf(x, loc=0, scale=1, shape=0.1)
-    >>> gev_cdf = gev.cdf(x, loc=0, scale=1, shape=0.1)
-    >>> gev_qf = gev.qf(p, loc=0, scale=1, shape=0.1)
+    >>> from bluemath_tk.distributions.gev import GEV
+    >>> gev_pdf = GEV.pdf(x, loc=0, scale=1, shape=0.1)
+    >>> gev_cdf = GEV.cdf(x, loc=0, scale=1, shape=0.1)
+    >>> gev_qf = GEV.qf(p, loc=0, scale=1, shape=0.1)
     """
 
     def __init__(self) -> None:
@@ -80,7 +82,7 @@ class gev(BaseDistribution):
         """
         Name of parameters of GEV
         """
-        return ["location", "scale", "shape"]
+        return ["loc", "scale", "shape"]
 
     @staticmethod
     def pdf(
@@ -210,7 +212,7 @@ class gev(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        sp = 1 - gev.cdf(x, loc=loc, scale=scale, shape=shape)
+        sp = 1 - GEV.cdf(x, loc=loc, scale=scale, shape=shape)
 
         return sp
 
@@ -286,26 +288,27 @@ class gev(BaseDistribution):
         ----------
         nll : float
             Negative Log-Likelihood value
-
-        Raises
-        ------
-        ValueError
-            If scale is not greater than 0.
         """
 
         if scale <= 0:
             nll = np.inf  # Return a large value for invalid scale
 
-        y = (data - loc) / scale
-
-        # Gumbel case (shape = 0)
-        if shape == 0.0:
-            nll = data.shape[0] * np.log(scale) + np.sum(
-                np.exp(-y) + np.sum(-y)
-            )  # Gumbel case
-
-        # General case (Weibull and Frechet, shape != 0)
         else:
+            y = (data - loc) / scale
+
+            # # Gumbel case (shape = 0)
+            # if shape == 0.0:
+            #     pass
+            #     nll = data.shape[0] * np.log(scale) + np.sum(
+            #         np.exp(-y) + np.sum(-y)
+            #     )  # Gumbel case
+
+            # # General case (Weibull and Frechet, shape != 0)
+            # else:
+
+            shape = (
+                np.maximum(shape, 1e-8) if shape > 0 else np.minimum(shape, -1e-8)
+            )  # Avoid division by zero
             y = 1 + shape * y
             if any(y <= 0):
                 nll = np.inf  # Return a large value for invalid y
@@ -340,7 +343,7 @@ class gev(BaseDistribution):
             success status, and negative log-likelihood value.
         """
         # Fit the GEV distribution to the data using the fit_dist function
-        return fit_dist(gev, data, **kwargs)
+        return fit_dist(GEV, data, **kwargs)
 
     @staticmethod
     def random(
@@ -556,7 +559,7 @@ class gev(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        std = np.sqrt(gev.variance(loc, scale, shape))
+        std = np.sqrt(GEV.variance(loc, scale, shape))
 
         return std
 
@@ -595,10 +598,10 @@ class gev(BaseDistribution):
             raise ValueError("Scale parameter must be > 0")
 
         stats = {
-            "mean": float(gev.mean(loc, scale, shape)),
-            "median": float(gev.median(loc, scale, shape)),
-            "variance": float(gev.variance(loc, scale, shape)),
-            "std": float(gev.std(loc, scale, shape)),
+            "mean": float(GEV.mean(loc, scale, shape)),
+            "median": float(GEV.median(loc, scale, shape)),
+            "variance": float(GEV.variance(loc, scale, shape)),
+            "std": float(GEV.std(loc, scale, shape)),
         }
 
         return stats

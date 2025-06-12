@@ -136,4 +136,5 @@ class LHS(BaseSampling):
             sample=lhs_samples, l_bounds=lower_bounds, u_bounds=upper_bounds
         )
         self._data = pd.DataFrame(data=lhs_scaled_data, columns=dimensions_names)
+
         return self.data
