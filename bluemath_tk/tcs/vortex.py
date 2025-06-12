@@ -1,6 +1,10 @@
+from datetime import datetime
+from os import path as op
+
 import numpy as np
 import pandas as pd
 import xarray as xr
+from scipy.interpolate import RegularGridInterpolator
 
 from ..core.geo import geo_distance_cartesian, geodesic_distance
 
@@ -209,3 +213,147 @@ def vortex_model_grid(
         },
         coords={ylab: cg_lat, xlab: cg_lon, "time": times},
     )
+
+
+def vortex2delft_3D_FM_nc(
+    mesh: xr.Dataset,
+    ds_vortex: xr.Dataset,
+    path_output: str,
+    ds_name: str = "forcing_Tonga_vortex.nc",
+    fotcing_ext: str = "GreenSurge_GFDcase_wind.ext",
+) -> None:
+    """
+    Convert the vortex dataset to a Delft3D FM compatible netCDF forcing file.
+
+    Parameters
+    ----------
+    mesh : xarray.Dataset
+        The mesh dataset containing the node coordinates.
+    ds_vortex : xarray.Dataset
+        The vortex dataset containing wind speed and pressure data.
+    path_output : str
+        The output path where the netCDF file will be saved.
+    ds_name : str
+        The name of the output netCDF file, default is "forcing_Tonga_vortex.nc".
+    forcing_ext : str
+        The extension for the forcing file, default is "GreenSurge_GFDcase_wind.ext".
+    """
+    longitude = mesh.mesh2d_node_x.values
+    latitude = mesh.mesh2d_node_y.values
+    n_time = ds_vortex.time.size
+
+    lat_interp = xr.DataArray(latitude, dims="node")
+    lon_interp = xr.DataArray(longitude, dims="node")
+
+    angle = np.deg2rad((270 - ds_vortex.Dir.values) % 360)
+    W = ds_vortex.W.values
+
+    ds_vortex_interp = ds_vortex.drop_vars(["Dir", "W"])
+
+    ds_vortex_interp["windx"] = (
+        (
+            "lat",
+            "lon",
+            "time",
+        ),
+        (W * np.cos(angle)).astype(np.float32),
+    )
+    ds_vortex_interp["windy"] = (
+        ("lat", "lon", "time"),
+        (W * np.sin(angle)).astype(np.float32),
+    )
+
+    ds_vortex_interp = ds_vortex_interp.rename(
+        {
+            "p": "airpressure",
+            "lon": "longitude",
+            "lat": "latitude",
+        }
+    )
+
+    forcing_dataset = ds_vortex_interp.interp(
+        latitude=lat_interp, longitude=lon_interp
+    ).transpose("time", "node")
+    forcing_dataset["time"] = np.arange(n_time)
+
+    reference_date_str = (
+        ds_vortex.time.values[0]
+        .astype("M8[ms]")
+        .astype(datetime)
+        .strftime("%Y-%m-%d %H:%M:%S")
+    )
+
+    forcing_dataset["windx"].attrs = {
+        "coordinates": "time node",
+        "long_name": "Wind speed in x direction",
+        "standard_name": "windx",
+        "units": "m s-1",
+    }
+    forcing_dataset["windy"].attrs = {
+        "coordinates": "time node",
+        "long_name": "Wind speed in y direction",
+        "standard_name": "windy",
+        "units": "m s-1",
+    }
+
+    forcing_dataset["airpressure"].attrs = {
+        "coordinates": "time node",
+        "long_name": "Atmospheric Pressure",
+        "standard_name": "air_pressure",
+        "units": "Pa",
+    }
+
+    forcing_dataset["time"].attrs = {
+        "standard_name": "time",
+        "long_name": f"Time - hours since {reference_date_str} +00:00",
+        "time_origin": f"{reference_date_str}",
+        "units": f"hours since {reference_date_str} +00:00",
+        "calendar": "gregorian",
+        "description": "Time definition for the forcing data",
+    }
+
+    forcing_dataset["longitude"].attrs = {
+        "description": "Longitude of each mesh node of the computational grid",
+        "standard_name": "longitude",
+        "long_name": "longitude",
+        "units": "degrees_east",
+    }
+    forcing_dataset["latitude"].attrs = {
+        "description": "Latitude of each mesh node of the computational grid",
+        "standard_name": "latitude",
+        "long_name": "latitude",
+        "units": "degrees_north",
+    }
+
+    forcing_dataset.to_netcdf(
+        op.join(path_output, ds_name),
+        "w",
+        "NETCDF3_CLASSIC",
+        unlimited_dims="time",
+    )
+
+    texte = f"""QUANTITY=windx
+FILENAME={ds_name}
+VARNAME =windx
+FILETYPE=11
+METHOD=3
+OPERAND=O
+
+QUANTITY=windy
+FILENAME={ds_name}
+VARNAME =windy
+FILETYPE=11
+METHOD=3
+OPERAND=O
+
+QUANTITY=airpressure
+FILENAME={ds_name}
+VARNAME =airpressure
+FILETYPE=11
+METHOD=3
+OPERAND=O"""
+
+    with open(
+        op.join(path_output, fotcing_ext), "w", encoding="utf-8"
+    ) as f:
+        f.write(texte)
