@@ -19,6 +19,18 @@ sbatch_file_example = """#!/bin/bash
 
 case_dir=$(ls | awk "NR == $SLURM_ARRAY_TASK_ID")
 launchDelft3d.sh --case-dir $case_dir
+
+output_file="${case_dir}/dflowfmoutput/GreenSurge_GFDcase_map.nc"
+output_file_compressed="${case_dir}/dflowfmoutput/GreenSurge_GFDcase_map_compressed.nc"
+output_file_compressed_tmp="${case_dir}/dflowfmoutput/GreenSurge_GFDcase_map_compressed_tmp.nc"
+
+ncap2 -s 'mesh2d_s1=float(mesh2d_s1)' -v -O "$output_file" "$output_file_compressed_tmp"
+ncks -4 -L 4 "$output_file_compressed_tmp" "$output_file_compressed"
+
+rm "$output_file_compressed_tmp"
+if [[ "$SLURM_ARRAY_TASK_ID" -ne 1 ]]; then
+  rm "$output_file"
+fi
 """
 
 
@@ -147,6 +159,43 @@ def format_zeros(mat_shape):
     return "\n".join("0 " * mat_shape[1] for _ in range(mat_shape[0]))
 
 
+def actualize_grid_info(
+    path_ds_origin: str,
+    ds_GFD_calc_info: xr.Dataset,
+) -> None:
+    """
+    Actualizes the grid information in the GFD calculation info dataset
+    by adding the node coordinates and triangle connectivity from the original dataset.
+    Parameters
+    ----------
+    path_ds_origin : str
+        Path to the original dataset containing the mesh2d node coordinates.
+    ds_GFD_calc_info : xr.Dataset
+        The dataset containing the GFD calculation information to be updated.
+    Returns
+    -------
+    ds_GFD_calc_info : xr.Dataset
+        The updated dataset with the node coordinates and triangle connectivity.
+    """
+
+    ds_ori = xr.open_dataset(path_ds_origin)
+
+    ds_GFD_calc_info["node_computation_longitude"] = (
+        ("node_cumputation_index",),
+        ds_ori.mesh2d_node_x.values,
+    )
+    ds_GFD_calc_info["node_computation_latitude"] = (
+        ("node_cumputation_index",),
+        ds_ori.mesh2d_node_y.values,
+    )
+    ds_GFD_calc_info["triangle_computation_connectivity"] = (
+        ("element_computation_index", "triangle_forcing_nodes"),
+        (ds_ori.mesh2d_face_nodes.values - 1).astype("int32"),
+    )
+
+    return ds_GFD_calc_info
+
+
 class GreenSurgeModelWrapper(Delft3dModelWrapper):
     """
     Wrapper for the Delft3d model for Greensurge.
@@ -265,12 +314,6 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
             ds_GFD_info=case_context.get("ds_GFD_info"),
         )
 
-        # Copy .nc into each dir
-        self.copy_files(
-            src=case_context.get("grid_nc_file"),
-            dst=op.join(case_dir, op.basename(case_context.get("grid_nc_file"))),
-        )
-
     def postprocess_case(self, case_dir: str) -> None:
         """
         Postprocess the case output file.
@@ -281,15 +324,28 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
             The case directory.
         """
 
-        output_file = op.join(case_dir, "dflowfmoutput/GreenSurge_GFDcase_map.nc.nc")
+        output_file = op.join(case_dir, "dflowfmoutput/GreenSurge_GFDcase_map.nc")
         output_file_compressed = op.join(
             case_dir, "dflowfmoutput/GreenSurge_GFDcase_map_compressed.nc"
         )
-        postprocess_command = f"""
-            ncap2 -s 'mesh2d_s1=float(mesh2d_s1)' -v -O "{output_file}" "{output_file_compressed}"
-            ncks -4 -L 4 "{output_file_compressed}" "{output_file_compressed}"
-            rm "{output_file}"
-        """
+        output_file_compressed_tmp = op.join(
+            case_dir, "dflowfmoutput/GreenSurge_GFDcase_map_compressed_tmp.nc"
+        )
+        if case_dir == self.output_dir[0]:
+            # If the case_dir is the output_dir, we do not remove the original file
+            postprocess_command = f"""
+                ncap2 -s 'mesh2d_s1=float(mesh2d_s1)' -v -O "{output_file}" "{output_file_compressed_tmp}"
+                ncks -4 -L 4 "{output_file_compressed_tmp}" "{output_file_compressed}"
+                rm "{output_file_compressed_tmp}"
+            """
+        else:
+            postprocess_command = f"""
+                ncap2 -s 'mesh2d_s1=float(mesh2d_s1)' -v -O "{output_file}" "{output_file_compressed_tmp}"
+                ncks -4 -L 4 "{output_file_compressed_tmp}" "{output_file_compressed}"
+                rm "{output_file_compressed_tmp}"
+                rm "{output_file}"
+            """
+
         self._exec_bash_commands(
             str_cmd=postprocess_command,
             cwd=case_dir,
@@ -320,51 +376,16 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
                 "Not all cases are finished. Please check the status of the cases."
             )
 
-        case_ext = "/dflowfmoutput/GreenSurge_GFDcase_map.nc"
-
-        NumT = len(ds_GFD_info.teselas)
-        ND = len(ds_GFD_info.Wdir)
-        NT = np.arange(NumT)
-        NDD = np.arange(ND)
-        NNT, DDir_BD = np.meshgrid(NT, NDD)
-
-        NT_str = NNT.flatten().astype(str)
-        Dir_BD_str = DDir_BD.flatten().astype(str)
-
-        file_paths = np.char.add(self.output_dir, "/GF_T_")
-        file_paths = np.char.add(file_paths, NT_str)
-        file_paths = np.char.add(file_paths, "_D_")
-        file_paths = np.char.add(file_paths, Dir_BD_str)
-        file_paths = np.char.add(file_paths, case_ext)
-
-        self.logger.info(f"Read {len(file_paths)} netcdf files")
-
-        DS_tri = xr.open_dataset(file_paths[0])
-        el_calc = DS_tri.mesh2d_face_nodes.values.astype(int) - 1
-        mesh2d_node_x = DS_tri.mesh2d_node_x.values
-        mesh2d_node_y = DS_tri.mesh2d_node_y.values
-        mesh2d_nNodes = len(mesh2d_node_x)
-        mesh2d_nNodes = np.arange(1, mesh2d_nNodes + 1, 1)
-        celdas = len(el_calc)
-        celdas = np.arange(1, celdas + 1, 1)
-        NN = [1, 2, 3]
-        GFD_calculo_info = xr.Dataset(
-            coords={
-                "celdas": (("celdas"), celdas),
-                "mesh2d_nNodes": (("mesh2d_nNodes"), mesh2d_nNodes),
-                "NN": (("NN"), NN),
-            },
-            data_vars={
-                "node_triangle": (("celdas", "NN"), el_calc),
-                "mesh2d_node_x": (("mesh2d_nNodes"), mesh2d_node_x),
-                "mesh2d_node_y": (("mesh2d_nNodes"), mesh2d_node_y),
-            },
+        path_computation = op.join(
+            self.cases_dirs[0], "dflowfmoutput/GreenSurge_GFDcase_map.nc"
         )
-        GFD_calculo_info.to_netcdf(
-            op.join(self.output_dir, "Data_4_GFD_calculo_info.nc"),
-            "w",
-            "NETCDF3_CLASSIC",
-        )
+        ds_GFD_info = actualize_grid_info(path_computation, ds_GFD_info)
+        dirname, basename = os.path.split(ds_GFD_info.encoding["source"])
+        name, ext = os.path.splitext(basename)
+        new_filepath = os.path.join(dirname, f"{name}_updated{ext}")
+        ds_GFD_info.to_netcdf(new_filepath)
+
+        case_ext = "dflowfmoutput/GreenSurge_GFDcase_map_compressed.nc"
 
         def preprocess(dataset):
             file_name = dataset.encoding.get("source", "Unknown")
@@ -372,31 +393,25 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
             tes_i = int(file_name.split("_T_")[-1].split("_D_")[0])
             dataset = (
                 dataset[["mesh2d_s1"]]
-                .expand_dims(["tes", "dir"])
-                .assign_coords(tes=[tes_i], dir=[dir_i])
+                .expand_dims(["forcing_cell"])
+                .assign_coords(forcing_cell=[tes_i])
             )
-            self.logger.info(f"Loaded {file_name} with tes={tes_i} and dir={dir_i}")
+            self.logger.info(
+                f"Loaded {file_name} with forcing_cell={tes_i} and dir={dir_i}"
+            )
             return dataset
 
-        folder_postprocess = op.join(self.output_dir, "GreenSurge_DB")
+        folder_postprocess = op.join(self.output_dir, "GreenSurge_Postprocess")
         os.makedirs(folder_postprocess, exist_ok=True)
 
-        D1 = xr.open_mfdataset(
-            file_paths,
-            parallel=parallel,
-            combine="by_coords",
-            preprocess=preprocess,
-        )
-
-        def save_direction(idx):
-            D1.load().isel(dir=idx).to_netcdf(
-                op.join(folder_postprocess, f"GreenSurge_DB_{idx}.nc")
+        dir_steps = self.fixed_parameters["dir_steps"]
+        for idx in range(dir_steps):
+            paths = self.cases_dirs[idx::dir_steps]
+            file_paths = [op.join(case_dir, case_ext) for case_dir in paths]
+            DS = xr.open_mfdataset(
+                file_paths,
+                parallel=parallel,
+                combine="by_coords",
+                preprocess=preprocess,
             )
-            self.logger.info(f"Saved GreenSurge_DB_{idx}.nc")
-
-        list(map(save_direction, NDD))
-        T_values = False
-        D_values = False
-        post_eje = False
-
-        return D1, T_values, D_values, post_eje
+            DS.load().to_netcdf(op.join(folder_postprocess, f"GreenSurge_DB_{idx}.nc"))

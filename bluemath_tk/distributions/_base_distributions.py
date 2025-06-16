@@ -1,13 +1,13 @@
 from __future__ import annotations
+
 from abc import abstractmethod
 from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import minimize, OptimizeResult
+from scipy.optimize import OptimizeResult, minimize
 
 from ..core.models import BlueMathModel
-
 
 
 class BaseDistribution(BlueMathModel):
@@ -442,7 +442,7 @@ class FitResult(BlueMathModel):
                 "Invalid plot type. Use 'hist', 'pp', 'qq', 'return_period', or 'all'."
             )
 
-    def pp(self, ax: plt.axes = None) -> Tuple[plt.figure, plt.axes]: 
+    def pp(self, ax: plt.axes = None) -> Tuple[plt.figure, plt.axes]:
         """
         Probability plot of the fitted distribution.
 
@@ -619,16 +619,15 @@ def fit_dist(dist: BaseDistribution, data: np.ndarray, **kwargs) -> FitResult:
     fixed_params = {}
     for i, name in enumerate(param_names):
         # Check both numerical (f0, f1, f2) and named (floc, fscale, fshape) fixed parameters
-        num_key = f'f{i}'
+        num_key = f"f{i}"
         if num_key in kwargs:
             fixed_params[i] = kwargs[num_key]
-
 
     # Create list of free parameters (those not fixed)
     free_params = [i for i in range(nparams) if i not in fixed_params]
     # n_free = len(free_params)
 
-   # Default optimization settings for free parameters only
+    # Default optimization settings for free parameters only
     default_x0 = np.asarray([np.mean(data), np.std(data)] + [0.1] * (nparams - 2))
     x0 = kwargs.get("x0", default_x0)
     x0_free = np.array([x0[i] for i in free_params])
@@ -653,8 +652,9 @@ def fit_dist(dist: BaseDistribution, data: np.ndarray, **kwargs) -> FitResult:
         return dist.nll(data, *full_params)
 
     # Perform optimization only on free parameters
-    result = minimize(fun=obj, x0=x0_free, method=method, 
-                     bounds=bounds_free, options=options)
+    result = minimize(
+        fun=obj, x0=x0_free, method=method, bounds=bounds_free, options=options
+    )
 
     # Reconstruct full parameter vector for final result
     full_params = np.zeros(nparams)
@@ -671,10 +671,7 @@ def fit_dist(dist: BaseDistribution, data: np.ndarray, **kwargs) -> FitResult:
     # but with the full parameter vector
     # TODO: Add hess info or hess_inv info to compute confidence intervals in FitResult
     modified_result = OptimizeResult(
-        x=full_params,
-        success=result.success,
-        fun=result.fun,
-        message=result.message,
+        x=full_params, success=result.success, fun=result.fun, message=result.message
         hess_inv=result.hess_inv if hasattr(result, 'hess_inv') else None,  
     )
 

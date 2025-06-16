@@ -40,12 +40,12 @@ dependencies = [
     "plotly",
     "cartopy",
     "jinja2",
-    "requests",
     "aiohttp",
     "minisom",
     "statsmodels",
     "regionmask",
     "cdsapi",
+    "ecmwf-opendata",
     "ipykernel",
     "ipywidgets",
     "cmocean",
@@ -57,12 +57,7 @@ dependencies = [
 docs = ["sphinx", "sphinx-rtd-theme", "jupyter-sphinx", "myst-parser"]
 waves = ["wavespectra", "olas"]
 num-models = ["hydromt-sfincs"]
-ocsmesh = ["bluemath-tk-ocsmesh-setup"]
 deep = ["tensorflow", "keras"]
-
-[project.scripts]
-
-bluemath-tk-ocsmesh-setup = "bluemath_tk.setup.ocsmesh:post_install"
 
 [project.urls]
 

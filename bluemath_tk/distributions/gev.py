@@ -292,7 +292,7 @@ class GEV(BaseDistribution):
 
         if scale <= 0:
             nll = np.inf  # Return a large value for invalid scale
-        
+
         else:
             y = (data - loc) / scale
 
@@ -306,7 +306,9 @@ class GEV(BaseDistribution):
             # # General case (Weibull and Frechet, shape != 0)
             # else:
 
-            shape = np.maximum(shape, 1e-8) if shape > 0 else np.minimum(shape, -1e-8)  # Avoid division by zero
+            shape = (
+                np.maximum(shape, 1e-8) if shape > 0 else np.minimum(shape, -1e-8)
+            )  # Avoid division by zero
             y = 1 + shape * y
             if any(y <= 0):
                 nll = np.inf  # Return a large value for invalid y

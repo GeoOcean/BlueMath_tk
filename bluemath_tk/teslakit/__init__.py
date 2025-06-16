@@ -2,10 +2,8 @@
 Project: BlueMath_tk
 Sub-Module: teslakit
 Author: GeoOcean Research Group, Universidad de Cantabria
-Creation Date: 19 March 2025
-License: MIT
 Repository: https://github.com/GeoOcean/BlueMath_tk.git
-Status: Under development (Working but not finished)
+Status: OLD VERSION WORKING (MUST be updated soon)
 """
 
 from . import (

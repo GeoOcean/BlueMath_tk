@@ -437,3 +437,59 @@ def validate_data_xwt(func):
         )
 
     return wrapper
+
+
+def validate_data_calval(func):
+    """
+    Decorator to validate data in CalVal class fit method.
+
+    Parameters
+    ----------
+    func : callable
+        The function to be decorated
+
+    Returns
+    -------
+    callable
+        The decorated function
+    """
+
+    @functools.wraps(func)
+    def wrapper(
+        self,
+        data: pd.DataFrame,
+        data_longitude: float,
+        data_latitude: float,
+        data_to_calibrate: pd.DataFrame,
+        max_time_diff: int = 2,
+    ):
+        if not isinstance(data, pd.DataFrame):
+            raise TypeError("Data must be a pandas DataFrame")
+        if not isinstance(data_longitude, float):
+            raise TypeError("Longitude must be a float")
+        data_longitude = data_longitude % 360
+        if not isinstance(data_latitude, float):
+            raise TypeError("Latitude must be a float")
+        if not isinstance(data_to_calibrate, pd.DataFrame):
+            raise TypeError("Data to calibrate must be a pandas DataFrame")
+        if "LONGITUDE" not in data_to_calibrate.columns:
+            raise ValueError(
+                "Data to calibrate must contain a column named 'LONGITUDE'"
+            )
+        if "LATITUDE" not in data_to_calibrate.columns:
+            raise ValueError("Data to calibrate must contain a column named 'LATITUDE'")
+        if "Hs_CAL" not in data_to_calibrate.columns:
+            raise ValueError("Data to calibrate must contain a column named 'Hs_CAL'")
+        if not isinstance(max_time_diff, int) or max_time_diff <= 0:
+            raise ValueError("Maximum time difference must be an integer and > 0")
+
+        return func(
+            self,
+            data,
+            data_longitude,
+            data_latitude,
+            data_to_calibrate,
+            max_time_diff,
+        )
+
+    return wrapper
