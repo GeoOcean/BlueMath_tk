@@ -9,27 +9,27 @@ GEOOCEAN_THREDDS_DATA = "https://geoocean.sci.unican.es/thredds/dodsC/geoceanDat
 # Default paths dictionary
 PATHS = {
     "SHYTCWAVES_COEFS": op.join(
-        GEOOCEAN_CLUSTER_DATA,
+        GEOOCEAN_THREDDS_DATA,
         "GEOOCEAN/SHyTCWaves_bulk/ibtracs_coef_pmin_wmax.nc",
     ),
     "SHYTCWAVES_BULK": op.join(
-        GEOOCEAN_CLUSTER_DATA,
+        GEOOCEAN_THREDDS_DATA,
         "GEOOCEAN/SHyTCWaves_bulk/library_shytcwaves_bulk_params_int32.nc",
     ),
     "SHYTCWAVES_MDA": op.join(
-        GEOOCEAN_CLUSTER_DATA,
+        GEOOCEAN_THREDDS_DATA,
         "GEOOCEAN/SHyTCWaves_bulk/shytcwaves_mda.nc",
     ),
     "SHYTCWAVES_MDA_INDICES": op.join(
-        GEOOCEAN_CLUSTER_DATA,
+        GEOOCEAN_THREDDS_DATA,
         "GEOOCEAN/SHyTCWaves_bulk/shytcwaves_mda_indices.nc",
     ),
     "SHYTCWAVES_MDA_MASK_INDICES": op.join(
-        GEOOCEAN_CLUSTER_DATA,
+        GEOOCEAN_THREDDS_DATA,
         "GEOOCEAN/SHyTCWaves_bulk/mda_mask_indices.nc",
     ),
     "SHYTCWAVES_MDA_MASK_INDICES_LOWRES": op.join(
-        GEOOCEAN_CLUSTER_DATA,
+        GEOOCEAN_THREDDS_DATA,
         "GEOOCEAN/SHyTCWaves_bulk/mda_mask_indices_lowres.nc",
     ),
 }

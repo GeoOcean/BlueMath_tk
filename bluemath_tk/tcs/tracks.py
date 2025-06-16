@@ -152,7 +152,7 @@ def get_center_information(center: str = "WMO") -> Dict[str, Union[str, None]]:
         "pressure": centers_config_params[center]["id"] + "_pres",
         "maxwinds": centers_config_params[center]["id"] + "_wind",
         "rmw": centers_config_params[center]["id"] + "_rmw"
-        if center in ["usa", "reunion", "bom"]
+        if center in ["USA", "REUNION", "BOM"]
         else None,
         "dist2land": "dist2land",
     }
@@ -228,8 +228,10 @@ def check_and_plot_track_data(track_data: xr.Dataset) -> plt.Figure:
             axes[3].set_title("Radii of max winds [nmile]", fontweight="bold")
 
     # plot attributes
-    for ax in axes:
+    for i, ax in enumerate(axes):
         ax.legend(loc="upper left")
+        if i > 0:
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
 
     return fig
 
@@ -997,8 +999,8 @@ def historic_track_interpolation(
     # select Pmin-Wmax polynomial fitting coefficients (IBTrACS center,basin)
     xds_coef = ibtracs_fit_pmin_wmax()
     coefs = xds_coef.sel(
-        center=st_center,  # .encode("utf-8")
-        basin=st_basin,  # .astype("bytes")
+        center=st_center.encode("utf-8"),
+        basin=st_basin.astype("bytes"),
     ).coef.values[:]
 
     p1, p2, p3, p4 = coefs[:, 0], coefs[:, 1], coefs[:, 2], coefs[:, 3]
