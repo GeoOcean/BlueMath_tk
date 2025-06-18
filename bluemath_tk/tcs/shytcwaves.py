@@ -11,7 +11,7 @@ from ..config.paths import PATHS
 from ..core.constants import EARTH_RADIUS
 from ..core.geo import geodesic_azimuth, geodesic_distance_azimuth, shoot
 from ..datamining.mda import find_nearest_indices
-from ..waves.superpoint import stations_superposition
+from ..waves.superpoint import superpoint_calculation
 from .tracks import (
     get_vmean,
     historic_track_interpolation,
@@ -1410,10 +1410,10 @@ def historic2shytcwaves_cluster(
                 )
 
                 # build superpoint
-                xds_shy_sp = stations_superposition(
-                    xds_shy_spec,
+                xds_shy_sp = superpoint_calculation(
+                    xds_shy_spec.efth,
+                    "point",
                     dict_site["sectors"],
-                    dict_site["deg_superposition"],
                 )
                 # store
                 xds_shy_sp.to_netcdf(
