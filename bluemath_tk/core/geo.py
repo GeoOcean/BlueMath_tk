@@ -15,6 +15,9 @@ DEG2RAD = pi / 180.0
 RAD2DEG = 180.0 / pi
 
 
+# TODO: Check which functions are implemented in Pyproj library!
+
+
 def convert_to_radians(*args: Union[float, np.ndarray]) -> tuple:
     """
     Convert degree inputs to radians.

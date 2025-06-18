@@ -11,7 +11,7 @@ from ..config.paths import PATHS
 from ..core.constants import EARTH_RADIUS
 from ..core.geo import geodesic_distance, geodesic_distance_azimuth, shoot
 
-# Configuration dictionaries and constants
+# Configuration dictionaries and constants for IBTrACS data
 centers_config_params: Dict[str, Dict[str, Union[str, List[str], float]]] = {
     "USA": {
         "id": "usa",
@@ -99,7 +99,7 @@ all_basins: List[str] = ["NA", "SA", "EP", "WP", "SP", "NI", "SI"]
 
 def get_center_information(center: str = "WMO") -> Dict[str, Union[str, None]]:
     """
-    Get the center information from the configuration parameters.
+    Get the center information from the configuration parameters for IBTrACS data.
 
     Parameters
     ----------
@@ -183,11 +183,6 @@ def check_and_plot_track_data(track_data: xr.Dataset) -> plt.Figure:
     - Longitude values are converted to [0-360º] convention
     - Wind speeds are converted to 1-minute average using center-specific factors
     - Variables that are entirely NaN are omitted from plots
-
-    Examples
-    --------
-    >>> fig = check_and_plot_track_data(track_data)
-    >>> plt.show()
     """
 
     fig, axes = plt.subplots(1, 4, figsize=(20, 4))
@@ -259,6 +254,7 @@ def filter_track_by_basin(tracks_data: xr.Dataset, id_basin: str) -> xr.Dataset:
     >>> print(sp_tracks.storm.size)
     """
 
+    # TODO: check whether just [0, :] is needed, as it is the only one used
     return tracks_data.isel(
         storm=np.where(tracks_data.basin.values[0, :].astype(str) == id_basin)
     )
@@ -300,7 +296,7 @@ def ibtracs_fit_pmin_wmax(ibtracs_data: xr.Dataset = None, N: int = 3) -> xr.Dat
         return xr.open_dataset(PATHS["SHYTCWAVES_COEFS"])
 
     except Exception as e:
-        print(f"File could not be found: {PATHS['SHYTCWAVES_COEFS']}. Error: {e}")
+        print(f"File could not be opened: {PATHS['SHYTCWAVES_COEFS']}. Error: {e}")
 
         coef_fit = np.nan * np.zeros((len(all_centers), len(all_basins), N + 1))
         pres_data = np.nan * np.zeros((len(all_centers), len(all_basins), 200000))
@@ -438,8 +434,7 @@ def wind2rmw(wmax: np.ndarray, vmean: np.ndarray, latitude: np.ndarray) -> np.nd
     Examples
     --------
     >>> rmw = wind2rmw(np.array([100]), np.array([10]), np.array([25]))
-    >>> print(f"{rmw[0]:.1f}")
-    30.5
+    array([26.51])
     """
 
     pifac = np.arccos(-1) / 180  # pi/180
@@ -509,8 +504,7 @@ def get_vmean(
     Examples
     --------
     >>> gamma, v, vx, vy = get_vmean(0, 0, 0, 1, 6)
-    >>> print(f"{v:.1f}")  # Translation speed in km/h
-    18.5
+    (270.0, 18.55, 18.55, 5.68e-15)
     """
 
     arcl_h, gamma_h = geodesic_distance_azimuth(lat2, lon2, lat1, lon1)  # great circle
@@ -518,10 +512,10 @@ def get_vmean(
     r = arcl_h * np.pi / 180.0 * EARTH_RADIUS  # distance between coordinates [km]
     vmean = r / deltat  # translation speed [km/h]
 
-    vu = vmean * np.sin((gamma_h + 180) * np.pi / 180)
+    vx = vmean * np.sin((gamma_h + 180) * np.pi / 180)
     vy = vmean * np.cos((gamma_h + 180) * np.pi / 180)
 
-    return gamma_h, vmean, vu, vy  # [º], [km/h]
+    return gamma_h, vmean, vx, vy  # [º], [km/h]
 
 
 def wind2pres(
@@ -529,17 +523,18 @@ def wind2pres(
 ) -> np.ndarray:
     """
     Convert maximum wind speeds to minimum central pressure using fitted coefficients.
+    As many other functions in this module, this works for IBTrACS data for the moment.
 
     Parameters
     ----------
     xds_coef : xr.Dataset
-        Dataset containing polynomial fitting coefficients for Pmin-Wmax relationship
+        Dataset containing polynomial fitting coefficients for Pmin-Wmax relationship.
     st_wind : np.ndarray
-        Storm maximum winds in knots (1-min average)
+        Storm maximum winds in knots (1-min average).
     st_center : str
-        Storm center/agency identifier (e.g., 'WMO', 'TOKYO')
+        Storm center/agency identifier (e.g., 'WMO', 'TOKYO').
     st_basin : str
-        Storm basin identifier (e.g., 'NA', 'WP')
+        Storm basin identifier (e.g., 'NA', 'WP').
 
     Returns
     -------
@@ -556,11 +551,11 @@ def wind2pres(
     Examples
     --------
     >>> pres = wind2pres(coef_dataset, np.array([100]), 'WMO', 'NA')
-    >>> print(f"{pres[0]:.1f}")
-    955.2
+    array([955.2])
     """
 
     pmin_pred = []
+
     for iwind in st_wind:
         # select Pmin-Wmax coefficients
         coeff = xds_coef.sel(center=st_center, basin=st_basin).coef.values[:]
@@ -998,10 +993,16 @@ def historic_track_interpolation(
 
     # select Pmin-Wmax polynomial fitting coefficients (IBTrACS center,basin)
     xds_coef = ibtracs_fit_pmin_wmax()
-    coefs = xds_coef.sel(
-        center=st_center.encode("utf-8"),
-        basin=st_basin.astype("bytes"),
-    ).coef.values[:]
+    try:
+        coefs = xds_coef.sel(
+            center=st_center,
+            basin=st_basin,
+        ).coef.values[:]
+    except Exception:
+        coefs = xds_coef.sel(
+            center=st_center.encode("utf-8"),
+            basin=st_basin.astype("bytes"),
+        ).coef.values[:]
 
     p1, p2, p3, p4 = coefs[:, 0], coefs[:, 1], coefs[:, 2], coefs[:, 3]
     wind_estimate = (
