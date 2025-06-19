@@ -400,10 +400,10 @@ class BinWavesWrapper(SwanModelWrapper):
     """
 
     def build_case(self, case_dir: str, case_context: dict) -> None:
-        # Build the input files for the BinWaves model.
-        write_array_in_file(self.depth_array, f"{case_dir}/depth.dat")
-        # Write location file
-        write_array_in_file(self.locations, f"{case_dir}/locations.loc")
+        if self.depth_array is not None:
+            write_array_in_file(self.depth_array, f"{case_dir}/depth.dat")
+        if self.locations is not None:
+            write_array_in_file(self.locations, f"{case_dir}/locations.loc")
 
         # Construct the input spectrum
         input_spectrum = construct_partition(
