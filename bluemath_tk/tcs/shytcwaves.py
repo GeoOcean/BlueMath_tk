@@ -32,7 +32,7 @@ from .tracks import (
 
 def storm2stopmotion(df_storm: pd.DataFrame) -> pd.DataFrame:
     """
-    Generate stopmotion units from storm track segments.
+    Generate stopmotion segments from storm track.
 
     Parameters
     ----------
@@ -49,7 +49,7 @@ def storm2stopmotion(df_storm: pd.DataFrame) -> pd.DataFrame:
     Returns
     -------
     pd.DataFrame
-        Stopmotion units with columns:
+        Stopmotion segments with columns:
         - vseg : Mean translational speed (kt)
         - dvseg : Speed variation (kt)
         - pseg : Segment pressure (mbar)
@@ -72,7 +72,7 @@ def storm2stopmotion(df_storm: pd.DataFrame) -> pd.DataFrame:
 
     Notes
     -----
-    The function generates stopmotion units methodology from 6-hour storm track segments:
+    The function generates stopmotion segments methodology from 6-hour storm track segments:
 
     A. Warmup segment (24h):
         - 4 segments to define start/end coordinates
@@ -88,10 +88,7 @@ def storm2stopmotion(df_storm: pd.DataFrame) -> pd.DataFrame:
     is multiplied by -1).
     """
 
-    # no need to remove NaTs,NaNs -> historic_track_preprocessing
-    # no need to remove wind/rmw -> historic_track_interpolation filled gaps
-
-    # remove NaN
+    # remove NaNs
     df_ = df_storm.dropna()
     df_["time"] = df_.index.values
 
@@ -244,12 +241,12 @@ def stopmotion_interpolation(
     t_prop: int = 42,
 ) -> Tuple[List[pd.DataFrame], List[pd.DataFrame]]:
     """
-    Generate SWAN cases in cartesian coordinates from stopmotion parameterized units.
+    Generate SWAN cases in cartesian coordinates from stopmotion parameterized segments.
 
     Parameters
     ----------
     df_seg : pd.DataFrame
-        Stopmotion parameterized units containing:
+        Stopmotion segments containing:
         - vseg : Mean translational speed (kt)
         - pseg : Segment pressure (mbar)
         - wseg : Maximum winds (kt)
@@ -260,6 +257,7 @@ def stopmotion_interpolation(
         - dwseg : Wind variation (kt)
         - drseg : RMW variation (nmile)
         - daseg : Azimuth variation (degrees)
+
     st : pd.DataFrame, optional
         Real storm track data. If None, MDA segments are used (unrelated to historic tracks).
     t_warm : int, optional
@@ -273,6 +271,7 @@ def stopmotion_interpolation(
     -------
     Tuple[List[pd.DataFrame], List[pd.DataFrame]]
         Two lists containing:
+
         1. List of storm track DataFrames with columns:
            - x, y : Cartesian coordinates (m)
            - lon, lat : Geographic coordinates (degrees)
@@ -283,6 +282,7 @@ def stopmotion_interpolation(
            - vmax : Maximum winds (kt)
            - rmw : RMW (nmile)
            - latitude : Latitude with hemisphere sign
+
         2. List of empty wave event DataFrames with columns:
            - hs, t02, dir, spr : Wave parameters
            - U10, V10 : Wind components
@@ -683,6 +683,7 @@ def stopmotion_st_bmu(
         - case : Storm segments
         - point : Control points
         - time : Time steps
+
         Contains variables:
         - hs : Significant wave height
         - tp : Peak period
@@ -1263,14 +1264,17 @@ def historic2shytcwaves_cluster(
         Storm name.
     storm : xr.Dataset
         Storm track dataset with standard IBTrACS variables:
+
         Required:
-            - longitude, latitude : Storm coordinates
-            - pressure : Central pressure (mbar)
-            - maxwinds : Maximum sustained winds (kt)
+        - longitude, latitude : Storm coordinates
+        - pressure : Central pressure (mbar)
+        - maxwinds : Maximum sustained winds (kt)
+
         Optional:
-            - rmw : Radius of maximum winds (nmile)
-            - dist2land : Distance to land
-            - basin : Basin identifier
+        - rmw : Radius of maximum winds (nmile)
+        - dist2land : Distance to land
+        - basin : Basin identifier
+
     center : str
         IBTrACS center code.
     lon : np.ndarray
@@ -1280,12 +1284,13 @@ def historic2shytcwaves_cluster(
     dict_site : dict, optional
         Site data for superpoint building. Default is None.
         Must contain:
-            - lonpts : Longitude coordinates
-            - latpts : Latitude coordinates
-            - namepts : Site names
-            - site : Site identifier
-            - sectors : Sectors
-            - deg_superposition : Superposition degree
+        - lonpts : Longitude coordinates
+        - latpts : Latitude coordinates
+        - namepts : Site names
+        - site : Site identifier
+        - sectors : Sectors
+        - deg_superposition : Superposition degree
+
     calibration : bool, optional
         Whether to apply SHyTCWaves calibration. Default is True.
     mode : str, optional

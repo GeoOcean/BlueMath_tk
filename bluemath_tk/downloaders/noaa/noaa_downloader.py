@@ -151,10 +151,11 @@ class NOAADownloader(BaseDownloader):
         ----------
         data_type : str
             The data type to download.
-                - 'bulk_parameters'
-                - 'wave_spectra'
-                - 'directional_spectra'
-                - 'wind_forecast'
+            - 'bulk_parameters'
+            - 'wave_spectra'
+            - 'directional_spectra'
+            - 'wind_forecast'
+
         load_df : bool, optional
             Whether to load and return the DataFrame after downloading.
             Default is False.
@@ -739,7 +740,7 @@ class NOAADownloader(BaseDownloader):
                 header_lines = []
                 while True:
                     line = f.readline().strip()
-                    if not line.startswith("#"):
+                    if not line.startswith("YYYY") or line.startswith("#"):
                         break
                     header_lines.append(line)
 
