@@ -740,7 +740,7 @@ class NOAADownloader(BaseDownloader):
                 header_lines = []
                 while True:
                     line = f.readline().strip()
-                    if not line.startswith("YYYY") or line.startswith("#"):
+                    if not line.startswith("#") or not line.startswith("YYYY"):
                         break
                     header_lines.append(line)
 
