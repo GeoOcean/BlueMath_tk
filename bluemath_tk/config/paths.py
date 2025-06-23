@@ -76,7 +76,8 @@ def get_paths(verbose: bool = True) -> dict:
             if "thredds" in file_path:
                 print(f"WARNING: {file_name} is a Thredds path.")
         print(
-            "You can update any path or add new paths with the update_paths function."
+            "You can update any path or add new paths with the update_paths function,"
+            " from bluemath_tk.config.paths."
         )
         print("Example: update_paths({'SHYTCWAVES_COEFS': '/new/path/to/data'})")
 
