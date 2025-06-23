@@ -123,6 +123,7 @@ def validation_scatter(
     xlabel: str,
     ylabel: str,
     title: str,
+    cmap: str = "rainbow",
 ) -> None:
     """
     Plot a density scatter and Q-Q plot for validation.
@@ -141,12 +142,14 @@ def validation_scatter(
         Label for the Y-axis.
     title : str
         Title for the plot.
+    cmap : str, optional
+        Colormap to use for the scatter plot. Default is "rainbow".
     """
 
     x2, y2, z = density_scatter(x, y)
 
     # plot
-    axs.scatter(x2, y2, c=z, s=5, cmap="rainbow")
+    axs.scatter(x2, y2, c=z, s=5, cmap=cmap)
 
     # labels
     axs.set_xlabel(xlabel)
@@ -178,7 +181,7 @@ def validation_scatter(
     label = "\n".join(
         (
             r"RMSE = %.2f" % (rmse_e,),
-            r"mse =  %.2f" % (mse,),
+            r"MSE =  %.2f" % (mse,),
             r"BIAS = %.2f" % (BIAS,),
             R"SI = %.2f" % (SI,),
         )

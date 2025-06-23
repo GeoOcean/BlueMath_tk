@@ -113,7 +113,7 @@ def process_imos_satellite_data(
 
     Notes
     -----
-    The returned DataFrame can be used directly as the `data_to_calibrate` argument in CalVal.fit.
+    - The returned DataFrame can be used directly as the `data_to_calibrate` argument in CalVal.fit.
     """
 
     # Filter satellite data by coordinates
@@ -175,8 +175,8 @@ class CalVal(BlueMathModel):
     calibration_params : dict
         Dictionary with 'sea_correction' and 'swell_correction' correction coefficients.
 
-    Example
-    -------
+    Examples
+    --------
     .. jupyter-execute::
 
         import pandas as pd
@@ -236,6 +236,7 @@ class CalVal(BlueMathModel):
         self._exclude_attributes += [
             "_data",
             "_data_to_calibrate",
+            "_data_to_fit",
         ]
 
     @property
@@ -320,6 +321,7 @@ class CalVal(BlueMathModel):
                 self._data_latitude + 2,
             ]
         )
+        ax.set_facecolor("lightblue")
         ax.add_feature(land_10m)
 
         return fig, ax
@@ -385,7 +387,7 @@ class CalVal(BlueMathModel):
         """
 
         # Process sea waves
-        Hsea = self._create_vec_direc(data["Hsea"], data["Dirsea"])
+        Hsea = self._create_vec_direc(data["Hsea"], data["Dirsea"]) ** 2
 
         # Process swells
         Hs_swells = np.zeros(Hsea.shape)
@@ -395,7 +397,7 @@ class CalVal(BlueMathModel):
             ) ** 2
 
         # Combine sea and swell matrices
-        sea_swell_matrix = np.concatenate([Hsea**2, Hs_swells], axis=1)
+        sea_swell_matrix = np.concatenate([Hsea, Hs_swells], axis=1)
 
         return sea_swell_matrix
 
@@ -411,8 +413,10 @@ class CalVal(BlueMathModel):
         """
         Calibrate the model data using reference (calibration) data.
 
-        This method matches the model data and calibration data in time, constructs directionally-binned sea and swell matrices,
-        and fits a linear regression to obtain correction coefficients for each direction bin.
+        This method matches the model data and calibration data in time,
+        constructs directionally-binned sea and swell matrices,
+        and fits a linear regression to obtain correction coefficients
+        for each direction bin.
 
         Parameters
         ----------
@@ -437,8 +441,12 @@ class CalVal(BlueMathModel):
 
         Notes
         -----
-        After calling this method, the calibration parameters are stored in `self.calibration_params` and the calibrated data
-        is available in `self.calibrated_data`.
+        - After calling this method, the calibration parameters are stored in `self.calibration_params`
+        and the calibrated data is available in `self.calibrated_data`.
+        - The calibration is directionally dependent, meaning it uses different correction coefficients
+        for different wave directions.
+        - The coefficients with p-values greater than 0.05 or negative values are set to 1.0,
+        indicating no correction is applied for those directions.
         """
 
         self.logger.info("Starting calibration fit procedure.")
@@ -502,12 +510,12 @@ class CalVal(BlueMathModel):
         }
 
         # Save calibrated data to be used in plot_calibration_results()
-        self._calibrated_data = self.predict(self._data_to_fit[0])
+        self._calibrated_data = self.correct(self._data_to_fit[0])
         self._calibrated_data["Hs_CAL"] = self._data_to_fit[1]["Hs_CAL"].values
 
         self.logger.info("Calibration fit procedure completed.")
 
-    def predict(
+    def correct(
         self, data: Union[pd.DataFrame, xr.Dataset]
     ) -> Union[pd.DataFrame, xr.Dataset]:
         """
@@ -518,7 +526,7 @@ class CalVal(BlueMathModel):
         data : pd.DataFrame or xr.Dataset
             Data to correct. If DataFrame, must contain columns:
                 - 'Hs', 'Hsea', 'Dirsea', 'Hswell1', 'Dirswell1', ...
-            If xarray.Dataset, must have variables 'efth' and 'dp' (directional spectra).
+            If xarray.Dataset, must have variable 'efth' and dimension 'part'.
 
         Returns
         -------
@@ -528,7 +536,7 @@ class CalVal(BlueMathModel):
 
         Notes
         -----
-        The correction is directionally dependent and uses the coefficients obtained from `fit`.
+        - The correction is directionally dependent and uses the coefficients obtained from `fit`.
         """
 
         if self._calibration_params is None:
@@ -625,17 +633,12 @@ class CalVal(BlueMathModel):
         -------
         Tuple[Figure, list]
             The matplotlib Figure and a list of Axes objects for all subplots.
-
-        Notes
-        -----
-        This function is intended for visual inspection of the calibration quality and the
-        directional distribution of corrections.
         """
 
         self.logger.info("Plotting calibration results.")
 
         fig = plt.figure(figsize=(10, 15))
-        gs = fig.add_gridspec(7, 2, wspace=0.4, hspace=0.7)
+        gs = fig.add_gridspec(8, 2, wspace=0.4, hspace=0.7)
 
         # Create subplots with proper projections
         ax1 = fig.add_subplot(gs[:2, 0])  # Sea correction pie
@@ -644,11 +647,11 @@ class CalVal(BlueMathModel):
         ax2_cbar = fig.add_subplot(gs[2, 1])  # Swell correction colorbar
         ax3 = fig.add_subplot(gs[3:5, 0])  # No correction scatter
         ax4 = fig.add_subplot(gs[3:5, 1])  # With correction scatter
-        ax5 = fig.add_subplot(gs[5:7, 0], projection="polar")  # Sea climate
-        ax6 = fig.add_subplot(gs[5:7, 1], projection="polar")  # Swell climate
+        ax5 = fig.add_subplot(gs[6:, 0], projection="polar")  # Sea climate
+        ax6 = fig.add_subplot(gs[6:, 1], projection="polar")  # Swell climate
 
         # Plot sea correction pie chart
-        sea_norm = 0.3  # Smaller range for sea
+        sea_norm = 0.35  # Normalization factor for sea correction
         sea_fracs = np.repeat(10, len(self.calibration_params["sea_correction"]))
         sea_norm = mpl.colors.Normalize(1 - sea_norm, 1 + sea_norm)
         sea_cmap = mpl.cm.get_cmap(
@@ -689,7 +692,7 @@ class CalVal(BlueMathModel):
         )
 
         # Plot swell correction pie chart
-        swell_norm = 0.6  # Larger range for swell
+        swell_norm = 0.35  # Normalization factor for swell correction
         swell_fracs = np.repeat(10, len(self.calibration_params["swell_correction"]))
         swell_norm = mpl.colors.Normalize(1 - swell_norm, 1 + swell_norm)
         swell_cmap = mpl.cm.get_cmap(
@@ -732,8 +735,8 @@ class CalVal(BlueMathModel):
         # Plot no correction scatter
         validation_scatter(
             axs=ax3,
-            x=self._calibrated_data["Hs"].values,
-            y=self._calibrated_data["Hs_CAL"].values,
+            x=self.calibrated_data["Hs"].values,
+            y=self.calibrated_data["Hs_CAL"].values,
             xlabel="Hindcast",
             ylabel="Satellite",
             title="No Correction",
@@ -742,8 +745,8 @@ class CalVal(BlueMathModel):
         # Plot with correction scatter
         validation_scatter(
             axs=ax4,
-            x=self._calibrated_data["Hs_CORR"].values,
-            y=self._calibrated_data["Hs_CAL"].values,
+            x=self.calibrated_data["Hs_CORR"].values,
+            y=self.calibrated_data["Hs_CAL"].values,
             xlabel="Hindcast",
             ylabel="Satellite",
             title="With Correction",
@@ -751,8 +754,8 @@ class CalVal(BlueMathModel):
 
         # Plot sea wave climate
         x, y, z = density_scatter(
-            self._data["Dirsea"] * np.pi / 180,
-            self._data["Hsea"],
+            self._data["Dirsea"].iloc[::10] * np.pi / 180,
+            self._data["Hsea"].iloc[::10],
         )
         ax5.scatter(x, y, c=z, s=3, cmap="jet")
         ax5.set_theta_zero_location("N", offset=0)
@@ -762,12 +765,12 @@ class CalVal(BlueMathModel):
         ax5.set_theta_direction(-1)
         ax5.set_xlabel("$\u03b8_{m}$ ($\degree$)")
         ax5.set_ylabel("$H_{s}$ (m)", labelpad=20)
-        ax5.set_title("SEA $Wave$ $Climate$", pad=15, fontweight="bold")
+        ax5.set_title("SEA $Wave$ $Climate$", pad=35, fontweight="bold")
 
         # Plot swell wave climate
         x, y, z = density_scatter(
-            self._data["Dirswell1"] * np.pi / 180,
-            self._data["Hswell1"],
+            self._data["Dirswell1"].iloc[::10] * np.pi / 180,
+            self._data["Hswell1"].iloc[::10],
         )
         ax6.scatter(x, y, c=z, s=3, cmap="jet")
         ax6.set_theta_zero_location("N", offset=0)
@@ -777,7 +780,7 @@ class CalVal(BlueMathModel):
         ax6.set_theta_direction(-1)
         ax6.set_xlabel("$\u03b8_{m}$ ($\degree$)")
         ax6.set_ylabel("$H_{s}$ (m)", labelpad=20)
-        ax6.set_title("SWELL 1 $Wave$ $Climate$", pad=15, fontweight="bold")
+        ax6.set_title("SWELL 1 $Wave$ $Climate$", pad=35, fontweight="bold")
 
         return fig, [ax1, ax2, ax1_cbar, ax2_cbar, ax3, ax4, ax5, ax6]
 
@@ -802,16 +805,12 @@ class CalVal(BlueMathModel):
         Tuple[Figure, list]
             The matplotlib Figure and a list of Axes objects:
             [time series axis, scatter (no correction), scatter (corrected)].
-
-        Notes
-        -----
-        This function is intended for visual validation of the calibration performance.
         """
 
         if "Hs_VAL" not in data_to_validate.columns:
             raise ValueError("Validation data is missing required column: 'Hs_VAL'")
 
-        data_corr = self.predict(data=self._data)
+        data_corr = self.correct(data=self._data)
         data_times, data_to_validate_times = get_matching_times_between_arrays(
             times1=data_corr.index,
             times2=data_to_validate.index,
