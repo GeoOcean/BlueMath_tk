@@ -32,6 +32,10 @@ PATHS = {
         GEOOCEAN_THREDDS_DATA,
         "GEOOCEAN/SHyTCWaves_bulk/mda_mask_indices_lowres.nc",
     ),
+    "SHYTCWAVES_SPECTRA": op.join(
+        GEOOCEAN_CLUSTER_DATA,
+        "GEOOCEAN/SHyTCWaves/",
+    ),
 }
 
 
@@ -52,15 +56,30 @@ def update_paths(new_paths: dict) -> None:
     PATHS.update(new_paths)
 
 
-def get_paths() -> dict:
+def get_paths(verbose: bool = True) -> dict:
     """
     Get the paths dictionary.
+
+    Parameters
+    ----------
+    verbose : bool, optional
+        Whether to print warnings about Thredds paths. Default is True.
 
     Returns
     -------
     dict
         Dictionary containing the paths.
     """
+
+    if verbose:
+        for file_name, file_path in PATHS.items():
+            if "thredds" in file_path:
+                print(f"WARNING: {file_name} is a Thredds path.")
+        print(
+            "You can update any path or add new paths with the update_paths function,"
+            " from bluemath_tk.config.paths."
+        )
+        print("Example: update_paths({'SHYTCWAVES_COEFS': '/new/path/to/data'})")
 
     return PATHS
 
