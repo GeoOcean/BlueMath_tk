@@ -26,6 +26,28 @@ def superpoint_calculation(
     xr.DataArray
         A new DataArray where each point is the sum of spectral data from all stations
         for the specified directional sector.
+
+    Notes
+    -----
+    If your stations_data is saved in different files, you can load them all and then
+    concatenate them using xr.open_mfdataset function. Example below:
+
+    ```python
+    files = [
+        "path/to/station1.nc",
+        "path/to/station2.nc",
+        "path/to/station3.nc"
+    ]
+
+    def load_station_data(ds: xr.Dataset) -> xr.DataArray:
+        return ds.efth.expand_dims("station")
+
+    stations_data = xr.open_mfdataset(
+        files,
+        concat_dim="station",
+        preprocess=load_station_data,
+    )
+    ```
     """
 
     superpoint_dataarray = xr.zeros_like(

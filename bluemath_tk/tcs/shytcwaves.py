@@ -7,12 +7,12 @@ import pandas as pd
 import xarray as xr
 from tqdm import tqdm
 
-from ..config.paths import PATHS
 from ..core.constants import EARTH_RADIUS
 from ..core.geo import geodesic_azimuth, geodesic_distance_azimuth, shoot
 from ..datamining.mda import find_nearest_indices
 from ..waves.superpoint import superpoint_calculation
 from .tracks import (
+    PATHS,
     get_vmean,
     historic_track_interpolation,
     historic_track_preprocessing,

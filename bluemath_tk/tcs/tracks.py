@@ -7,9 +7,11 @@ import pandas as pd
 import xarray as xr
 from numpy import polyfit
 
-from ..config.paths import PATHS
+from ..config.paths import get_paths
 from ..core.constants import EARTH_RADIUS
 from ..core.geo import geodesic_distance, geodesic_distance_azimuth, shoot
+
+PATHS = get_paths(verbose=True)
 
 # Configuration dictionaries and constants for IBTrACS data
 centers_config_params: Dict[str, Dict[str, Union[str, List[str], float]]] = {
