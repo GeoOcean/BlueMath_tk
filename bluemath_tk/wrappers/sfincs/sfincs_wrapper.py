@@ -1,12 +1,10 @@
-import os.path as op
 from typing import List
-import numpy as np
-from datetime import timedelta
 
+import numpy as np
 from hydromt_sfincs import SfincsModel
 
 from .._base_wrappers import BaseModelWrapper
-from .._utils_wrappers import copy_files
+
 
 class SfincsModelWrapper(BaseModelWrapper):
     """
@@ -51,6 +49,7 @@ class SfincsModelWrapper(BaseModelWrapper):
         self.set_logger_name(
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
         )
+
 
 class SfincsAlbaModelWrapper(SfincsModelWrapper):
     """
@@ -100,17 +99,19 @@ class SfincsAlbaModelWrapper(SfincsModelWrapper):
         Setup the infiltration for the SFINCS model.
         """
 
-        p_infiltration = case_context.get('path_to_inf_tif')
-        ant_moisture = 'avg'
+        p_infiltration = case_context.get("path_to_inf_tif")
+        ant_moisture = "avg"
 
         dataset_inf = sf.data_catalog.get_rasterdataset(p_infiltration)
 
         dataset_inf.name = "cn_{0}".format(ant_moisture)
 
-        sf.setup_cn_infiltration(dataset_inf.compute(), antecedent_moisture='{0}'.format(ant_moisture))
+        sf.setup_cn_infiltration(
+            dataset_inf.compute(), antecedent_moisture="{0}".format(ant_moisture)
+        )
 
         return dataset_inf
-    
+
     def setup_outflow(self, sf: SfincsModel, case_context: dict) -> None:
         """
         Setup the outflow for the SFINCS model.
@@ -135,8 +136,8 @@ class SfincsAlbaModelWrapper(SfincsModelWrapper):
 
     def set_tstop(self, case_context: dict) -> str:
         """
-        Determine the end time (TSTOP) for the simulation based on 
-        precipitation and water level forcing, add 1 hour, 
+        Determine the end time (TSTOP) for the simulation based on
+        precipitation and water level forcing, add 1 hour,
         and return it formatted as 'YYYYMMDD HHMMSS'.
         """
 
@@ -146,7 +147,7 @@ class SfincsAlbaModelWrapper(SfincsModelWrapper):
         tstop_times = []
 
         if precip_forcing is not None:
-            tstop_precip = precip_forcing['time'].values[-1]
+            tstop_precip = precip_forcing["time"].values[-1]
             tstop_times.append(tstop_precip)
 
         if waterlevel_forcing is not None:
@@ -158,58 +159,60 @@ class SfincsAlbaModelWrapper(SfincsModelWrapper):
 
         # Get the latest time and add one hour
         tstop_max = max(tstop_times)
-        tstop_plus_1h = (tstop_max + np.timedelta64(1, 'h')).astype('datetime64[s]').item()
+        tstop_plus_1h = (
+            (tstop_max + np.timedelta64(1, "h")).astype("datetime64[s]").item()
+        )
 
         # Format to 'YYYYMMDD HHMMSS'
-        formatted_tstop = tstop_plus_1h.strftime('%Y%m%d %H%M%S')
+        formatted_tstop = tstop_plus_1h.strftime("%Y%m%d %H%M%S")
 
         return formatted_tstop
 
-    def build_template_case(self, case_context: dict, templates_dir: str) -> None:
+    def build_template_case(self) -> None:
         """
         Build a base SFINCS model case used as a template for multiple simulations.
-        This function sets up all the static components of the model that are 
-        common to all cases, such as grid definition, DEM, friction, 
+        This function sets up all the static components of the model that are
+        common to all cases, such as grid definition, DEM, friction,
         infiltration, subgrid configuration, and boundary masks.
         """
 
-        sf = SfincsModel(root=templates_dir, mode="w+")
+        sf = SfincsModel(root=self.templates_dir, mode="w+")
 
         sf.setup_grid(
-            x0=case_context["x0"],
-            y0=case_context["y0"],
-            dx=case_context["dx"],
-            dy=case_context["dy"],
-            nmax=case_context["nmax"],
-            mmax=case_context["mmax"],
-            rotation=case_context["rotation"],
-            epsg=case_context["epsg"],
+            x0=self.fixed_parameters["x0"],
+            y0=self.fixed_parameters["y0"],
+            dx=self.fixed_parameters["dx"],
+            dy=self.fixed_parameters["dy"],
+            nmax=self.fixed_parameters["nmax"],
+            mmax=self.fixed_parameters["mmax"],
+            rotation=self.fixed_parameters["rotation"],
+            epsg=self.fixed_parameters["epsg"],
         )
 
-        datasets_dep = self.setup_dem(sf=sf, case_context=case_context)
+        datasets_dep = self.setup_dem(sf=sf, case_context=self.fixed_parameters)
 
         sf.setup_mask_active(
-            mask=case_context.get("path_to_mask"),
+            mask=self.fixed_parameters.get("path_to_mask"),
         )
 
-        datasets_rgh = self.setup_friction(sf, case_context=case_context)
+        datasets_rgh = self.setup_friction(sf, case_context=self.fixed_parameters)
 
-        dataset_inf = self.setup_infiltration(sf, case_context=case_context)
+        _dataset_inf = self.setup_infiltration(sf, case_context=self.fixed_parameters)
 
         sf.setup_subgrid(
-             datasets_dep=datasets_dep,
-             datasets_rgh=datasets_rgh,
-             nr_subgrid_pixels=case_context.get("nr_subgrid_pixels"),
-             write_dep_tif=True,
-             write_man_tif=False,
+            datasets_dep=datasets_dep,
+            datasets_rgh=datasets_rgh,
+            nr_subgrid_pixels=self.fixed_parameters.get("nr_subgrid_pixels"),
+            write_dep_tif=True,
+            write_man_tif=False,
         )
 
-        self.setup_outflow(sf=sf, case_context=case_context)
+        self.setup_outflow(sf=sf, case_context=self.fixed_parameters)
 
-        self.setup_waterlevel_mask(sf=sf, case_context=case_context)
+        self.setup_waterlevel_mask(sf=sf, case_context=self.fixed_parameters)
 
         sf.write()
-        
+
     def build_case(self, case_context: dict, case_dir: str) -> None:
         """
         Build the base SFINCS model. This includes setting up the grid,
@@ -249,7 +252,7 @@ class SfincsAlbaModelWrapper(SfincsModelWrapper):
         if case_context.get("gdf_obs") is not None:
             sf.setup_observation_points(locations=case_context.get("gdf_obs"))
 
-        #if case_context.get("precipitation_forcing") is not None and case_context.get("waterlevel_forcing") is not None:
+        # if case_context.get("precipitation_forcing") is not None and case_context.get("waterlevel_forcing") is not None:
         #    self.setup_rivers(sf)
         #    sf.setup_river_inflow(
         #        rivers=case_context.get("precipitation_forcing"), keep_rivers_geom=True
@@ -257,7 +260,6 @@ class SfincsAlbaModelWrapper(SfincsModelWrapper):
 
         sf.write_forcing()
 
-        sf.config['tstop'] = self.set_tstop(case_context=case_context)
+        sf.config["tstop"] = self.set_tstop(case_context=case_context)
 
         sf.write()
-
