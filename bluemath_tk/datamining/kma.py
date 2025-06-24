@@ -1,8 +1,9 @@
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
+from sklearn.linear_model import LinearRegression
 
 from ..core.decorators import validate_data_kma
 from ._base_datamining import BaseClustering
@@ -20,7 +21,7 @@ class KMAError(Exception):
 
 class KMA(BaseClustering):
     """
-    K-Means (KMA) class.
+    K-Means Algorithm (KMA) class.
 
     This class performs the K-Means algorithm on a given dataframe.
 
@@ -46,12 +47,8 @@ class KMA(BaseClustering):
         The selected normalized centroids.
     centroid_real_indices : np.array
         The real indices of the selected centroids.
-
-    Notes
-    -----
-    - The K-Means algorithm is used to cluster data points into k clusters.
-    - The K-Means algorithm is sensitive to the initial centroids.
-    - The K-Means algorithm is not suitable for large datasets.
+    is_fitted : bool
+        A flag indicating whether the model is fitted or not.
 
     Examples
     --------
@@ -63,15 +60,15 @@ class KMA(BaseClustering):
 
         data = pd.DataFrame(
             {
-                'Hs': np.random.rand(1000) * 7,
-                'Tp': np.random.rand(1000) * 20,
-                'Dir': np.random.rand(1000) * 360
+                "Hs": np.random.rand(1000) * 7,
+                "Tp": np.random.rand(1000) * 20,
+                "Dir": np.random.rand(1000) * 360
             }
         )
         kma = KMA(num_clusters=5)
         nearest_centroids_idxs, nearest_centroids_df = kma.fit_predict(
             data=data,
-            directional_variables=['Dir'],
+            directional_variables=["Dir"],
         )
 
         kma.plot_selected_centroids(plot_text=True)
@@ -103,7 +100,7 @@ class KMA(BaseClustering):
         """
 
         super().__init__()
-        self.set_logger_name(name=self.__class__.__name__, console=False)
+        self.set_logger_name(name=self.__class__.__name__)
 
         if num_clusters > 0:
             self.num_clusters = int(num_clusters)
@@ -136,20 +133,26 @@ class KMA(BaseClustering):
         self.normalized_centroids: pd.DataFrame = pd.DataFrame()
         self.centroid_real_indices: np.array = np.array([])
         self.is_fitted: bool = False
-
-        self._exclude_attributes = [
-            "_data",
-            "_normalized_data",
-            "_data_to_fit",
-        ]
+        self.regression_guided: dict = {}
 
     @property
     def kma(self) -> KMeans:
         return self._kma
 
     @kma.setter
-    def kma(self, kwargs) -> None:
-        self._kma = KMeans(**kwargs)
+    def kma(self, kma_params_dict) -> None:
+        """
+        Setter for the KMeans object.
+
+        Parameters
+        ----------
+        kma_params_dict : dict
+            A dictionary with KMeans parameters.
+            The keys should be the same as the KMeans parameters.
+            Example: {"n_clusters": 5, "random_state": 42}
+        """
+
+        self._kma = KMeans(**kma_params_dict)
 
     @property
     def data(self) -> pd.DataFrame:
@@ -175,6 +178,57 @@ class KMA(BaseClustering):
 
         return self._data_to_fit
 
+    @staticmethod
+    def add_regression_guided(
+        data: pd.DataFrame, vars: List[str], alpha: List[float]
+    ) -> pd.DataFrame:
+        """
+        Calculate regression-guided variables.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The data to fit the K-Means algorithm.
+        vars : List[str]
+            The variables to use for regression-guided clustering.
+        alpha : List[float]
+            The alpha values to use for regression-guided clustering.
+
+        Returns
+        -------
+        pd.DataFrame
+            The data with the regression-guided variables.
+        """
+
+        # Stack guiding variables into (time, n_vars) array
+        X = data.drop(columns=vars)
+        Y = np.stack([data[var].values for var in vars], axis=1)
+
+        # Normalize input features
+        X_std = X.std().replace(0, 1)
+        X_norm = X / X_std
+
+        # Add intercept column to input
+        X_design = np.column_stack((np.ones(len(X)), X_norm.values))
+
+        # Normalize guiding targets
+        Y_std = np.nanstd(Y, axis=0)
+        Y_std[Y_std == 0] = 1.0
+
+        # Fit regression model to predict guiding vars from input
+        model = LinearRegression(fit_intercept=False).fit(X_design, Y / Y_std)
+        Y_pred = model.predict(X_design) * Y_std  # De-normalize predictions
+
+        # Weight columns by input alpha
+        X_weight = 1.0 - np.sum(alpha)
+        X_scaled = X_weight * X.values
+        Y_scaled = Y_pred * alpha
+
+        df = pd.DataFrame(np.hstack([X_scaled, Y_scaled]), index=data.index)
+        df.columns = list(X.columns) + vars
+
+        return df
+
     @validate_data_kma
     def fit(
         self,
@@ -183,26 +237,27 @@ class KMA(BaseClustering):
         custom_scale_factor: dict = {},
         min_number_of_points: int = None,
         max_number_of_iterations: int = 10,
-        normalize_data: bool = True,
+        normalize_data: bool = False,
+        regression_guided: Dict[str, List] = {},
     ) -> None:
         """
         Fit the K-Means algorithm to the provided data.
 
-        This method initializes centroids for the K-Means algorithm using the
-        provided dataframe and custom scale factor.
-        It normalizes the data, and returns the calculated centroids.
-
-        TODO: Implement KMA regression guided with variable.
+        TODO: Add option to force KMA initialization with MDA centroids.
 
         Parameters
         ----------
         data : pd.DataFrame
             The input data to be used for the KMA algorithm.
         directional_variables : List[str], optional
-            A list of directional variables (will be transformed to u and v).
+            A list of directional variables that will be transformed to u and v components.
+            Then, to use custom_scale_factor, you must specify the variables names with the u and v suffixes.
+            Example: directional_variables=["Dir"], custom_scale_factor={"Dir_u": [0, 1], "Dir_v": [0, 1]}.
             Default is [].
         custom_scale_factor : dict, optional
             A dictionary specifying custom scale factors for normalization.
+            If normalize_data is True, this will be used to normalize the data.
+            Example: {"Hs": [0, 10], "Tp": [0, 10]}.
             Default is {}.
         min_number_of_points : int, optional
             The minimum number of points to consider a cluster.
@@ -212,34 +267,27 @@ class KMA(BaseClustering):
             This is used when min_number_of_points is not None.
             Default is 10.
         normalize_data : bool, optional
-            A flag to normalize the data. Default is True.
+            A flag to normalize the data.
+            If True, the data will be normalized using the custom_scale_factor.
+            Default is False.
+        regression_guided: dict, optional
+            A dictionary specifying regression-guided clustering variables and relative weights.
+            Example: {"vars": ["Fe"], "alpha": [0.6]}.
+            Default is {}.
         """
 
-        self._data = data.copy()
-        self.directional_variables = directional_variables.copy()
-        for directional_variable in self.directional_variables:
-            u_comp, v_comp = self.get_uv_components(
-                x_deg=self.data[directional_variable].values
+        if regression_guided:
+            data = self.add_regression_guided(
+                data=data,
+                vars=regression_guided.get("vars", None),
+                alpha=regression_guided.get("alpha", None),
             )
-            self._data[f"{directional_variable}_u"] = u_comp
-            self._data[f"{directional_variable}_v"] = v_comp
-        self.data_variables = list(self.data.columns)
 
-        # Get just the data to be used in the fitting
-        self._data_to_fit = self.data.copy()
-        for directional_variable in self.directional_variables:
-            self.data_to_fit.drop(columns=[directional_variable], inplace=True)
-        self.fitting_variables = list(self.data_to_fit.columns)
-
-        if normalize_data:
-            self.custom_scale_factor = custom_scale_factor.copy()
-        else:
-            self.custom_scale_factor = {
-                fitting_variable: (0, 1) for fitting_variable in self.fitting_variables
-            }
-        # Normalize data using custom min max scaler
-        self._normalized_data, self.scale_factor = self.normalize(
-            data=self.data_to_fit, custom_scale_factor=self.custom_scale_factor
+        super().fit(
+            data=data,
+            directional_variables=directional_variables,
+            custom_scale_factor=custom_scale_factor,
+            normalize_data=normalize_data,
         )
 
         # Fit K-Means algorithm
@@ -273,6 +321,7 @@ class KMA(BaseClustering):
         self.centroids = self.denormalize(
             normalized_data=self.normalized_centroids, scale_factor=self.scale_factor
         )
+
         for directional_variable in self.directional_variables:
             self.centroids[directional_variable] = self.get_degrees_from_uv(
                 xu=self.centroids[f"{directional_variable}_u"].values,
@@ -301,17 +350,8 @@ class KMA(BaseClustering):
         if self.is_fitted is False:
             raise KMAError("KMA model is not fitted.")
 
-        data = data.copy()  # Avoid modifying the original data to predict
-        for directional_variable in self.directional_variables:
-            u_comp, v_comp = self.get_uv_components(
-                x_deg=data[directional_variable].values
-            )
-            data[f"{directional_variable}_u"] = u_comp
-            data[f"{directional_variable}_v"] = v_comp
-            data.drop(columns=[directional_variable], inplace=True)
-        normalized_data, _ = self.normalize(
-            data=data, custom_scale_factor=self.scale_factor
-        )
+        normalized_data = super().predict(data=data)
+
         y = self.kma.predict(X=normalized_data)
 
         return pd.DataFrame(
@@ -325,7 +365,8 @@ class KMA(BaseClustering):
         custom_scale_factor: dict = {},
         min_number_of_points: int = None,
         max_number_of_iterations: int = 10,
-        normalize_data: bool = True,
+        normalize_data: bool = False,
+        regression_guided: Dict[str, List] = {},
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Fit the K-Means algorithm to the provided data and predict the nearest centroid
@@ -336,10 +377,14 @@ class KMA(BaseClustering):
         data : pd.DataFrame
             The input data to be used for the KMA algorithm.
         directional_variables : List[str], optional
-            A list of directional variables (will be transformed to u and v).
+            A list of directional variables that will be transformed to u and v components.
+            Then, to use custom_scale_factor, you must specify the variables names with the u and v suffixes.
+            Example: directional_variables=["Dir"], custom_scale_factor={"Dir_u": [0, 1], "Dir_v": [0, 1]}.
             Default is [].
-        custom_scale_factor : dict
+        custom_scale_factor : dict, optional
             A dictionary specifying custom scale factors for normalization.
+            If normalize_data is True, this will be used to normalize the data.
+            Example: {"Hs": [0, 10], "Tp": [0, 10]}.
             Default is {}.
         min_number_of_points : int, optional
             The minimum number of points to consider a cluster.
@@ -349,7 +394,13 @@ class KMA(BaseClustering):
             This is used when min_number_of_points is not None.
             Default is 10.
         normalize_data : bool, optional
-            A flag to normalize the data. Default is True.
+            A flag to normalize the data.
+            If True, the data will be normalized using the custom_scale_factor.
+            Default is False.
+        regression_guided: dict, optional
+            A dictionary specifying regression-guided clustering variables and relative weights.
+            Example: {"vars": ["Fe"], "alpha": [0.6]}.
+            Default is {}.
 
         Returns
         -------
@@ -365,6 +416,7 @@ class KMA(BaseClustering):
             min_number_of_points=min_number_of_points,
             max_number_of_iterations=max_number_of_iterations,
             normalize_data=normalize_data,
+            regression_guided=regression_guided,
         )
 
         return self.predict(data=data)

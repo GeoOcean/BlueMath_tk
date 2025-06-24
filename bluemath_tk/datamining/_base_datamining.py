@@ -4,24 +4,19 @@ from typing import List, Tuple
 import numpy as np
 import pandas as pd
 import xarray as xr
-from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 from ..core.models import BlueMathModel
 from ..core.plotting.base_plotting import DefaultStaticPlotting
+from ..core.plotting.scatter import plot_scatters_in_triangle
+from ..core.plotting.utils import get_list_of_colors_for_colormap
 
 
 class BaseSampling(BlueMathModel):
     """
     Base class for all sampling BlueMath models.
     This class provides the basic structure for all sampling models.
-
-    Methods
-    -------
-    generate : pd.DataFrame
-        Generates samples.
-    plot_generated_data : Tuple[plt.figure, plt.axes]
-        Plots the generated data on a scatter plot matrix.
     """
 
     @abstractmethod
@@ -52,7 +47,7 @@ class BaseSampling(BlueMathModel):
         self,
         data_color: str = "blue",
         **kwargs,
-    ) -> Tuple[plt.figure, plt.axes]:
+    ) -> Tuple[Figure, Axes]:
         """
         Plots the generated data on a scatter plot matrix.
 
@@ -65,9 +60,9 @@ class BaseSampling(BlueMathModel):
 
         Returns
         -------
-        plt.figure
+        Figure
             The figure object containing the plot.
-        plt.axes
+        Axes
             Array of axes objects for the subplots.
 
         Raises
@@ -76,40 +71,14 @@ class BaseSampling(BlueMathModel):
             If the data is empty.
         """
 
-        if not self.data.empty:
-            variables_names = list(self.data.columns)
-            num_variables = len(variables_names)
-        else:
+        if self.data.empty:
             raise ValueError("Data must be a non-empty DataFrame with columns to plot.")
 
-        # Create figure and axes
-        default_static_plot = DefaultStaticPlotting()
-        fig, axes = default_static_plot.get_subplots(
-            nrows=num_variables - 1,
-            ncols=num_variables - 1,
-            sharex=False,
-            sharey=False,
+        fig, axes = plot_scatters_in_triangle(
+            dataframes=[self.data],
+            data_colors=[data_color],
+            **kwargs,
         )
-        if isinstance(axes, Axes):
-            axes = np.array([[axes]])
-
-        for c1, v1 in enumerate(variables_names[1:]):
-            for c2, v2 in enumerate(variables_names[:-1]):
-                default_static_plot.plot_scatter(
-                    ax=axes[c2, c1],
-                    x=self.data[v1],
-                    y=self.data[v2],
-                    c=data_color,
-                    **kwargs,
-                )
-                if c1 == c2:
-                    axes[c2, c1].set_xlabel(variables_names[c1 + 1])
-                    axes[c2, c1].set_ylabel(variables_names[c2])
-                elif c1 > c2:
-                    axes[c2, c1].xaxis.set_ticklabels([])
-                    axes[c2, c1].yaxis.set_ticklabels([])
-                else:
-                    fig.delaxes(axes[c2, c1])
 
         return fig, axes
 
@@ -118,79 +87,79 @@ class BaseClustering(BlueMathModel):
     """
     Base class for all clustering BlueMath models.
     This class provides the basic structure for all clustering models.
-
-    Methods
-    -------
-    fit : None
-        Fits the model to the data.
-    predict : pd.DataFrame
-        Predicts the clusters for the provided data.
-    fit_predict : pd.DataFrame
-        Fits the model to the data and predicts the clusters.
-    plot_selected_centroids : Tuple[plt.figure, plt.axes]
-        Plots data and selected centroids on a scatter plot matrix.
-    plot_data_as_clusters : Tuple[plt.figure, plt.axes]
-        Plots data as nearest clusters.
     """
 
     @abstractmethod
     def __init__(self) -> None:
         super().__init__()
 
-    @abstractmethod
-    def fit(self, *args, **kwargs) -> None:
-        """
-        Fits the model to the data.
-
-        Parameters
-        ----------
-        *args : list
-            Positional arguments.
-        **kwargs : dict
-            Keyword arguments.
-        """
-
-        pass
+        self._exclude_attributes = [
+            "_data",
+            "_normalized_data",
+            "_data_to_fit",
+        ]
 
     @abstractmethod
-    def predict(self, *args, **kwargs) -> pd.DataFrame:
+    def fit(
+        self,
+        data: pd.DataFrame,
+        directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
+        normalize_data: bool = False,
+    ) -> None:
         """
-        Predicts the clusters for the provided data.
-
-        Parameters
-        ----------
-        *args : list
-            Positional arguments.
-        **kwargs : dict
-            Keyword arguments.
-
-        Returns
-        -------
-        pd.DataFrame
-            The predicted clusters.
+        Preprocess some data to be used in the fit of children classes.
         """
 
-        return pd.DataFrame()
+        self._data = data.copy()
+        self.directional_variables = directional_variables.copy()
+        for directional_variable in self.directional_variables:
+            u_comp, v_comp = self.get_uv_components(
+                x_deg=self.data[directional_variable].values
+            )
+            self.data[f"{directional_variable}_u"] = u_comp
+            self.data[f"{directional_variable}_v"] = v_comp
+        self.data_variables = list(self.data.columns)
+
+        # Get just the data to be used in the training
+        self._data_to_fit = self.data.copy()
+        for directional_variable in self.directional_variables:
+            self.data_to_fit.drop(columns=[directional_variable], inplace=True)
+        self.fitting_variables = list(self.data_to_fit.columns)
+
+        if normalize_data:
+            self.custom_scale_factor = custom_scale_factor.copy()
+        else:
+            self.logger.info(
+                "Normalization is disabled. Set normalize_data to True to enable normalization."
+            )
+            self.custom_scale_factor = {
+                fitting_variable: (0, 1) for fitting_variable in self.fitting_variables
+            }
+        # Normalize data using custom min max scaler
+        self._normalized_data, self.scale_factor = self.normalize(
+            data=self.data_to_fit, custom_scale_factor=self.custom_scale_factor
+        )
 
     @abstractmethod
-    def fit_predict(self, *args, **kwargs) -> pd.DataFrame:
+    def predict(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Fits the model to the data and predicts the clusters.
-
-        Parameters
-        ----------
-        *args : list
-            Positional arguments.
-        **kwargs : dict
-            Keyword arguments.
-
-        Returns
-        -------
-        pd.DataFrame
-            The predicted clusters.
+        Preprocess some data to be used in the predict of children classes.
         """
 
-        return pd.DataFrame()
+        data = data.copy()  # Avoid modifying the original data to predict
+        for directional_variable in self.directional_variables:
+            u_comp, v_comp = self.get_uv_components(
+                x_deg=data[directional_variable].values
+            )
+            data[f"{directional_variable}_u"] = u_comp
+            data[f"{directional_variable}_v"] = v_comp
+            data.drop(columns=[directional_variable], inplace=True)
+        normalized_data, _ = self.normalize(
+            data=data, custom_scale_factor=self.scale_factor
+        )
+
+        return normalized_data
 
     def plot_selected_centroids(
         self,
@@ -198,7 +167,7 @@ class BaseClustering(BlueMathModel):
         centroids_color: str = "red",
         plot_text: bool = False,
         **kwargs,
-    ) -> Tuple[plt.figure, plt.axes]:
+    ) -> Tuple[Figure, Axes]:
         """
         Plots data and selected centroids on a scatter plot matrix.
 
@@ -215,9 +184,9 @@ class BaseClustering(BlueMathModel):
 
         Returns
         -------
-        plt.figure
+        Figure
             The figure object containing the plot.
-        plt.axes
+        Axes
             Array of axes objects for the subplots.
 
         Raises
@@ -231,59 +200,27 @@ class BaseClustering(BlueMathModel):
             and list(self.data.columns) != []
         ):
             variables_names = list(self.data.columns)
-            num_variables = len(variables_names)
         else:
             raise ValueError(
                 "Data and centroids must have the same number of columns > 0."
             )
 
-        # Create figure and axes
-        default_static_plot = DefaultStaticPlotting()
-        fig, axes = default_static_plot.get_subplots(
-            nrows=num_variables - 1,
-            ncols=num_variables - 1,
-            sharex=False,
-            sharey=False,
+        fig, axes = plot_scatters_in_triangle(
+            dataframes=[self.data, self.centroids],
+            data_colors=[data_color, centroids_color],
+            **kwargs,
         )
-        if isinstance(axes, Axes):
-            axes = np.array([[axes]])
-
-        for c1, v1 in enumerate(variables_names[1:]):
-            for c2, v2 in enumerate(variables_names[:-1]):
-                default_static_plot.plot_scatter(
-                    ax=axes[c2, c1],
-                    x=self.data[v1],
-                    y=self.data[v2],
-                    c=data_color,
-                    alpha=0.6,
-                    **kwargs,
-                )
-                if self.centroids is not None:
-                    default_static_plot.plot_scatter(
-                        ax=axes[c2, c1],
-                        x=self.centroids[v1],
-                        y=self.centroids[v2],
-                        c=centroids_color,
-                        alpha=0.9,
-                        **kwargs,
-                    )
-                    if plot_text:
-                        for i in range(self.centroids.shape[0]):
-                            axes[c2, c1].text(
-                                self.centroids[v1][i],
-                                self.centroids[v2][i],
-                                str(i + 1),
-                                fontsize=12,
-                                fontweight="bold",
-                            )
-                if c1 == c2:
-                    axes[c2, c1].set_xlabel(variables_names[c1 + 1])
-                    axes[c2, c1].set_ylabel(variables_names[c2])
-                elif c1 > c2:
-                    axes[c2, c1].xaxis.set_ticklabels([])
-                    axes[c2, c1].yaxis.set_ticklabels([])
-                else:
-                    fig.delaxes(axes[c2, c1])
+        if plot_text:
+            for c1, v1 in enumerate(variables_names[1:]):
+                for c2, v2 in enumerate(variables_names[:-1]):
+                    for i in range(self.centroids.shape[0]):
+                        axes[c2, c1].text(
+                            self.centroids[v1][i],
+                            self.centroids[v2][i],
+                            str(i + 1),
+                            fontsize=12,
+                            fontweight="bold",
+                        )
 
         return fig, axes
 
@@ -292,7 +229,7 @@ class BaseClustering(BlueMathModel):
         data: pd.DataFrame,
         nearest_centroids: np.ndarray,
         **kwargs,
-    ) -> Tuple[plt.figure, plt.axes]:
+    ) -> Tuple[Figure, Axes]:
         """
         Plots data as nearest clusters.
 
@@ -307,9 +244,9 @@ class BaseClustering(BlueMathModel):
 
         Returns
         -------
-        plt.figure
+        Figure
             The figure object containing the plot.
-        plt.axes
+        Axes
             The axes object for the plot.
         """
 
@@ -337,7 +274,7 @@ class BaseClustering(BlueMathModel):
             axes = np.array([[axes]])
 
         # Gets colors for clusters and append to each nearest centroid
-        colors_for_clusters = default_static_plot.get_list_of_colors_for_colormap(
+        colors_for_clusters = get_list_of_colors_for_colormap(
             cmap="jet", num_colors=self.centroids.shape[0]
         )
         nearest_centroids_colors = [colors_for_clusters[i] for i in nearest_centroids]

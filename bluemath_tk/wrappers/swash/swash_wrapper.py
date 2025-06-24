@@ -7,7 +7,7 @@ import pandas as pd
 import xarray as xr
 from scipy.signal import find_peaks
 
-from ...waves.series import series_TMA, waves_dispersion
+from ...waves.series import series_regular_monochromatic, series_TMA, waves_dispersion
 from ...waves.spectra import spectral_analysis
 from ...waves.statistics import upcrossing
 from .._base_wrappers import BaseModelWrapper
@@ -206,7 +206,9 @@ class SwashModelWrapper(BaseModelWrapper):
             "gamma": case_context["gamma"],
             "deltat": case_context["deltat"],
         }
-        waves = series_TMA(waves=waves_dict, depth=self.depth_array[0])
+        # waves = series_TMA(waves=waves_dict, depth=self.depth_array[0])
+        waves = series_regular_monochromatic(waves=waves_dict)
+
         # Save the waves to a file
         self.write_array_in_file(
             array=waves, filename=os.path.join(case_dir, "waves.bnd")
@@ -723,3 +725,39 @@ class SwashModelWrapper(BaseModelWrapper):
         ds = ds.assign_coords({"case_num": [output_nc["case_num"].values]})
 
         return ds
+
+
+class HySwashVeggyModelWrapper(SwashModelWrapper):
+    """
+    Wrapper for the SWASH model with vegetation.
+    """
+
+    def build_case(self, case_context: dict, case_dir: str) -> None:
+        super().build_case(case_context=case_context, case_dir=case_dir)
+
+        # Build the input vegetation file
+        plants = np.zeros((len(self.depth_array)))
+        plants[
+            int(case_context["Plants_end"] - case_context["Wv"]) : int(
+                case_context["Plants_end"]
+            )
+        ] = case_context["Nv"]
+        np.savetxt(os.path.join(case_dir, "plants.txt"), plants, fmt="%.6f")
+
+
+class ChySwashModelWrapper(SwashModelWrapper):
+    """
+    Wrapper for the SWASH model with friction.
+    """
+
+    default_Cf = 0.0002
+
+    def build_case(self, case_context: dict, case_dir: str) -> None:
+        super().build_case(case_context=case_context, case_dir=case_dir)
+
+        # Build the input friction file
+        friction = np.ones((len(self.depth_array))) * self.default_Cf
+        friction[
+            int(self.fixed_parameters["Cf_ini"]) : int(self.fixed_parameters["Cf_fin"])
+        ] = case_context["Cf"]
+        np.savetxt(os.path.join(case_dir, "friction.txt"), friction, fmt="%.6f")

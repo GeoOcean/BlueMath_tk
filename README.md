@@ -6,6 +6,8 @@
   <img alt="PyPI" src="https://img.shields.io/pypi/v/BlueMath_tk">
   <img alt="Conda (channel only)" src="https://img.shields.io/conda/vn/conda-forge/BlueMath_tk">
   <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/BlueMath_tk">
+  <a href="https://github.com/astral-sh/ruff"><img alt="Ruff" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json"></a>
+  <a href="https://deepwiki.com/GeoOcean/BlueMath_tk"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 Module collection for custom climate data analysis. The main objective of this Python package is to provide a set of statistical tools tailored for climate data analysis, with a focus on statistical classification and prediction.

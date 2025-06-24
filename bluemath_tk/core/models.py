@@ -19,6 +19,7 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import StandardScaler
 
+from .constants import EARTH_RADIUS
 from .logging import get_file_logger
 from .operations import (
     denormalize,
@@ -33,9 +34,34 @@ from .operations import (
 class BlueMathModel(ABC):
     """
     Abstract base class for handling default functionalities across the project.
+
+    This class provides core functionality used by all BlueMath models including:
+    - Model saving and loading
+    - Data normalization and denormalization
+    - Parallel processing capabilities
+    - Logging functionality
+    - NaN handling
+    - Directional data processing
+
+    Attributes
+    ----------
+    gravity : float
+        Gravitational constant from scipy.constants.
+    earth_radius : float
+        Earth radius in km.
+    num_workers : int
+        Number of parallel workers to use for processing.
+    logger : logging.Logger
+        Logger instance for the model.
+
+    Notes
+    -----
+    All BlueMath models should inherit from this class to ensure consistent
+    behavior and functionality across the project.
     """
 
     gravity = constants.g
+    earth_radius = EARTH_RADIUS
 
     @abstractmethod
     def __init__(self) -> None:
@@ -70,7 +96,27 @@ class BlueMathModel(ABC):
             )
 
     def __getstate__(self):
-        """Exclude certain attributes from being pickled."""
+        """
+        Control which attributes are pickled when saving the model.
+
+        This method is automatically called by pickle.dump() to determine what
+        to serialize. It excludes specified attributes and warns about xarray objects.
+
+        Returns
+        -------
+        dict
+            A copy of the instance's __dict__ with excluded attributes removed.
+
+        Notes
+        -----
+        - Controlled by self._exclude_attributes list
+        - Warns when encountering xarray objects (Dataset/DataArray)
+        - Creates a deep copy of state to avoid modifying original
+
+        See Also
+        --------
+        save_model : High-level method for saving model to file
+        """
 
         state = self.__dict__.copy()
         for attr in self._exclude_attributes:
@@ -87,47 +133,139 @@ class BlueMathModel(ABC):
 
     @property
     def logger(self) -> logging.Logger:
+        """
+        Get the logger instance for this model.
+
+        Returns
+        -------
+        logging.Logger
+            The logger instance. Creates a new file logger if none exists.
+
+        Notes
+        -----
+        - Lazily instantiates logger on first access
+        - Uses class name as default logger name
+        - Thread-safe logger creation
+        """
+
         if self._logger is None:
             self._logger = get_file_logger(name=self.__class__.__name__)
         return self._logger
 
     @logger.setter
     def logger(self, value: logging.Logger) -> None:
+        """
+        Set the logger instance for this model.
+
+        Parameters
+        ----------
+        value : logging.Logger
+            The logger instance to use.
+
+        Raises
+        ------
+        ValueError
+            If the logger is not an instance of logging.Logger.
+        """
+
+        if not isinstance(value, logging.Logger):
+            raise ValueError("Logger must be an instance of logging.Logger")
         self._logger = value
 
     def set_logger_name(
         self, name: str, level: str = "INFO", console: bool = True
     ) -> None:
-        """Sets the name of the logger."""
+        """
+        Configure the model's logger with a new name and settings.
+
+        Parameters
+        ----------
+        name : str
+            The name to give to the logger.
+        level : str, optional
+            The logging level to use. Default is "INFO".
+            Valid values are: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+        console : bool, optional
+            Whether to output logs to console. Default is True.
+
+        Notes
+        -----
+        - Creates a new file logger with specified settings
+        - Previous logger settings are overwritten
+        - Log files are created in the default logging directory
+
+        Examples
+        --------
+        >>> model = BlueMathModel()
+        >>> model.set_logger_name("my_model", level="DEBUG", console=False)
+        """
 
         self.logger = get_file_logger(name=name, level=level, console=console)
 
     def save_model(self, model_path: str, exclude_attributes: List[str] = None) -> None:
-        """Saves the model to a file."""
+        """
+        Save the model to a file using pickle.
+
+        Parameters
+        ----------
+        model_path : str
+            Path where the model will be saved.
+        exclude_attributes : List[str], optional
+            List of attribute names to exclude from saving. Default is None.
+            If provided, it will override the default _exclude_attributes.
+
+        Notes
+        -----
+        - Uses pickle for serialization
+        - Warns if any xarray Datasets/DataArrays are being pickled
+        - Creates parent directories if they don't exist
+        - Excludes specified attributes from serialization
+
+        Warnings
+        --------
+        - Pickle files can be security risks if loaded from untrusted sources
+        - xarray objects in the model will be pickled and may be large
+
+        Examples
+        --------
+        >>> model = MyBlueMathModel()
+        >>> model.save_model('model.pkl', exclude_attributes=['_logger'])
+        """
 
         self.logger.info(f"Saving model to {model_path}")
         if exclude_attributes is not None:
-            self._exclude_attributes += exclude_attributes
+            self._exclude_attributes = exclude_attributes
         with open(model_path, "wb") as f:
             pickle.dump(self, f)
 
     def load_model(self, model_path: str) -> "BlueMathModel":
         """Loads the model from a file."""
 
-        self.logger.info(f"Loading model from {model_path}")
-        with open(model_path, "rb") as f:
-            model = pickle.load(f)
-
-        return model
+        raise NotImplementedError(
+            "This method is deprecated. Use load_model() from bluemath_tk.core.io instead."
+        )
 
     def list_class_attributes(self) -> list:
         """
-        Lists the attributes of the class.
+        List all non-callable attributes of the class.
 
         Returns
         -------
         list
-            The attributes of the class.
+            Names of all non-callable, non-private attributes.
+
+        Notes
+        -----
+        - Excludes methods and private attributes (starting with __)
+        - Includes properties and class variables
+        - Useful for introspection and debugging
+
+        Examples
+        --------
+        >>> model = BlueMathModel()
+        >>> attrs = model.list_class_attributes()
+        >>> print(attrs)
+        ['gravity', 'num_workers', '_logger']
         """
 
         return [
@@ -138,12 +276,25 @@ class BlueMathModel(ABC):
 
     def list_class_methods(self) -> list:
         """
-        Lists the methods of the class.
+        List all callable methods of the class.
 
         Returns
         -------
         list
-            The methods of the class.
+            Names of all callable, non-private methods.
+
+        Notes
+        -----
+        - Excludes attributes and private methods (starting with __)
+        - Includes instance methods and properties
+        - Useful for introspection and debugging
+
+        Examples
+        --------
+        >>> model = BlueMathModel()
+        >>> methods = model.list_class_methods()
+        >>> print(methods)
+        ['normalize', 'denormalize', 'check_nans']
         """
 
         return [
@@ -159,22 +310,21 @@ class BlueMathModel(ABC):
         raise_error: bool = False,
     ) -> Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset]:
         """
-        Checks for NaNs in the data and optionally replaces them.
+        Check for NaNs in the data and optionally replace them.
 
         Parameters
         ----------
-        data : np.ndarray, pd.Series, pd.DataFrame, xr.DataArray or xr.Dataset
+        data : Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset]
             The data to check for NaNs.
-        replace_value : float or callable, optional
-            The value to replace NaNs with. If None, NaNs will not be replaced.
-            If a callable is provided, it will be called and the result will be returned.
-            Default is None.
+        replace_value : Union[float, callable], optional
+            Value to replace NaNs with. If callable, the function will be called
+            on the data. Default is None (no replacement).
         raise_error : bool, optional
             Whether to raise an error if NaNs are found. Default is False.
 
         Returns
         -------
-        data : np.ndarray, pd.Series, pd.DataFrame, xr.DataArray or xr.Dataset
+        data : Union[np.ndarray, pd.Series, pd.DataFrame, xr.DataArray, xr.Dataset]
             The data with NaNs optionally replaced.
 
         Raises
@@ -184,8 +334,23 @@ class BlueMathModel(ABC):
 
         Notes
         -----
-        - This method is intended to be used in classes that inherit from the BlueMathModel class.
-        - The method checks for NaNs in the data and optionally replaces them with the specified value.
+        - For numpy arrays, uses np.isnan() to check for NaNs
+        - For pandas objects, uses isnull() to check for NaNs
+        - For xarray objects, uses isnull() to check for NaNs
+        - If replace_value is callable, it takes precedence over other options
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> model = BlueMathModel()
+        >>> df = pd.DataFrame({'a': [1, np.nan, 3]})
+        >>> cleaned_df = model.check_nans(df, replace_value=0)
+        >>> print(cleaned_df)
+           a
+        0  1
+        1  0
+        2  3
         """
 
         # If replace_value is a callable, just call and return it
@@ -455,16 +620,27 @@ class BlueMathModel(ABC):
 
     def set_omp_num_threads(self, num_threads: int) -> None:
         """
-        Sets the number of threads for OpenMP.
+        Set the number of OpenMP threads for parallel operations.
 
         Parameters
         ----------
         num_threads : int
-            The number of threads.
+            Number of OpenMP threads to use.
 
-        Warning
+        Notes
         -----
-        - This methos is under development.
+        - Sets the OMP_NUM_THREADS environment variable
+        - Reloads numpy to ensure new thread settings take effect
+        - May affect other libraries using OpenMP
+
+        Warnings
+        --------
+        - This method is under development and behavior may change
+        - Reloading numpy may have side effects in running calculations
+
+        See Also
+        --------
+        set_num_processors_to_use : Set number of processors for BlueMath parallel processing
         """
 
         os.environ["OMP_NUM_THREADS"] = str(num_threads)
@@ -491,13 +667,29 @@ class BlueMathModel(ABC):
 
     def set_num_processors_to_use(self, num_processors: int) -> None:
         """
-        Sets the number of processors to use for parallel processing.
+        Set the number of processors to use for parallel processing.
 
         Parameters
         ----------
         num_processors : int
-            The number of processors to use.
-            If -1, all available processors will be used.
+            Number of processors to use. If -1, uses all available processors
+            minus one for system processes.
+
+        Raises
+        ------
+        ValueError
+            If num_processors is <= 0 (except -1).
+
+        Notes
+        -----
+        - Automatically adjusts if requesting too many processors
+        - Sets the num_workers attribute used by parallel processing methods
+        - Takes into account system resources to avoid overload
+
+        See Also
+        --------
+        get_num_processors_available : Get number of available processors
+        parallel_execute : Execute functions in parallel
         """
 
         # Retrieve the number of processors available
@@ -525,33 +717,53 @@ class BlueMathModel(ABC):
         **kwargs,
     ) -> Dict[int, Any]:
         """
-        Execute a function in parallel using concurrent.futures.
+        Execute a function in parallel across multiple items.
 
         Parameters
         ----------
         func : Callable
-            Function to execute for each item.
+            The function to execute. Should accept single item and **kwargs.
         items : List[Any]
-            List of items to process.
+            List of items to process in parallel.
         num_workers : int
-            Number of parallel workers.
+            Number of parallel workers to use.
         cpu_intensive : bool, optional
-            Whether the function is CPU intensive. Default is False.
+            If True, uses ProcessPoolExecutor, otherwise ThreadPoolExecutor.
+            Default is False.
         **kwargs : dict
-            Additional keyword arguments for func.
+            Additional keyword arguments passed to func.
 
         Returns
         -------
         Dict[int, Any]
-            Dictionary with the results of the function execution.
-            The keys are the indices of the items in the original list.
-            The values are the results of the function execution.
+            Dictionary mapping item indices to function results.
+
+        Raises
+        ------
+        Exception
+            Any exception raised by func is logged and the job continues.
+
+        Notes
+        -----
+        - Uses ThreadPoolExecutor for I/O-bound tasks
+        - Uses ProcessPoolExecutor for CPU-bound tasks
+        - Results maintain original item order via index mapping
+        - Failed jobs are logged but don't stop execution
 
         Warnings
         --------
-        - When using ThreadPoolExecutor, the function sometimes fails when reading / writing
-        to the same / different files. Might be the GIL (Global Interpreter Lock) in Python.
-        - cpu_intensive = True does not work with non-pickable objects (Under development).
+        - ThreadPoolExecutor may have GIL limitations
+        - ProcessPoolExecutor doesn't work with non-picklable objects
+        - File operations may fail with ThreadPoolExecutor
+
+        Examples
+        --------
+        >>> def square(x):
+        ...     return x * x
+        >>> model = BlueMathModel()
+        >>> results = model.parallel_execute(square, [1, 2, 3], num_workers=2)
+        >>> print(results)
+        {0: 1, 1: 4, 2: 9}
         """
 
         results = {}

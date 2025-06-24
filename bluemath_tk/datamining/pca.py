@@ -318,6 +318,10 @@ class PCA(BaseReduction):
             not_nan_positions = np.where(
                 np.mean(~np.isnan(var_to_clean_values), axis=0) > var_to_clean_threshold
             )[0]
+            self.logger.warning(
+                f"Using {len(not_nan_positions)} out of {var_to_clean_values.shape[1]} available variables"
+                "If this is originated by using few times, please check 'nan_threshold_to_drop' parameter in fit method"
+            )
             var_value_to_replace_nans = self.value_to_replace_nans.get(
                 var_to_clean,
                 self.value_to_replace_nans.get(
@@ -568,7 +572,10 @@ class PCA(BaseReduction):
             The value to replace NaNs for each variable. Default is {}.
         nan_threshold_to_drop : dict, optional
             The threshold percentage to drop NaNs for each variable.
-            By default, variables with less than 90% of valid values are dropped.
+            By default, variables with less than 90% of valid values are dropped, which
+            corresponds to {'ALL_vars': 0.9}.
+            To for example use all available data for variable 'wind', you must provide
+            nan_threshold_to_drop: {'wind': 1e-9}.
             Default is {}.
         scale_data : bool, optional
             If True, scale the data. Default is True.
@@ -675,7 +682,10 @@ class PCA(BaseReduction):
             The value to replace NaNs for each variable. Default is {}.
         nan_threshold_to_drop : dict, optional
             The threshold percentage to drop NaNs for each variable.
-            By default, variables with more than 10% of NaNs are dropped.
+            By default, variables with less than 90% of valid values are dropped, which
+            corresponds to {'ALL_vars': 0.9}.
+            To for example use all available data for variable 'wind', you must provide
+            nan_threshold_to_drop: {'wind': 1e-9}.
             Default is {}.
         scale_data : bool, optional
             If True, scale the data. Default is True.

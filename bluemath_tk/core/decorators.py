@@ -73,6 +73,7 @@ def validate_data_mda(func):
         directional_variables: List[str] = [],
         custom_scale_factor: dict = {},
         first_centroid_seed: int = None,
+        normalize_data: bool = False,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -91,8 +92,15 @@ def validate_data_mda(func):
                 raise ValueError(
                     "First centroid seed must be an integer >= 0 and < num of data points"
                 )
+        if not isinstance(normalize_data, bool):
+            raise TypeError("Normalize data must be a boolean")
         return func(
-            self, data, directional_variables, custom_scale_factor, first_centroid_seed
+            self,
+            data,
+            directional_variables,
+            custom_scale_factor,
+            first_centroid_seed,
+            normalize_data,
         )
 
     return wrapper
@@ -121,26 +129,43 @@ def validate_data_kma(func):
         custom_scale_factor: dict = {},
         min_number_of_points: int = None,
         max_number_of_iterations: int = 10,
-        normalize_data: bool = True,
+        normalize_data: bool = False,
+        regression_guided: Dict[str, List] = {},
     ):
         if data is None:
-            raise ValueError("Data cannot be None")
+            raise ValueError("data cannot be None")
         elif not isinstance(data, pd.DataFrame):
-            raise TypeError("Data must be a pandas DataFrame")
+            raise TypeError("data must be a pandas DataFrame")
         if not isinstance(directional_variables, list):
-            raise TypeError("Directional variables must be a list")
+            raise TypeError("directional_variables must be a list")
         if not isinstance(custom_scale_factor, dict):
-            raise TypeError("Custom scale factor must be a dict")
+            raise TypeError("custom_scale_factor must be a dict")
         if min_number_of_points is not None:
             if not isinstance(min_number_of_points, int) or min_number_of_points <= 0:
-                raise ValueError("Minimum number of points must be integer and > 0")
+                raise ValueError("min_number_of_points must be integer and > 0")
         if (
             not isinstance(max_number_of_iterations, int)
             or max_number_of_iterations <= 0
         ):
-            raise ValueError("Maximum number of iterations must be integer and > 0")
+            raise ValueError("max_number_of_iterations must be integer and > 0")
         if not isinstance(normalize_data, bool):
-            raise TypeError("Normalize data must be a boolean")
+            raise TypeError("normalize_data must be a boolean")
+        if not isinstance(regression_guided, dict):
+            raise TypeError("regression_guided must be a dictionary")
+        if not all(
+            isinstance(var, str) and var in data.columns
+            for var in regression_guided.get("vars", [])
+        ):
+            raise TypeError(
+                "regression_guided vars must be a list of strings and must exist in data"
+            )
+        if not all(
+            isinstance(alpha, float) and alpha >= 0 and alpha <= 1
+            for alpha in regression_guided.get("alpha", [])
+        ):
+            raise TypeError(
+                "regression_guided alpha must be a list of floats between 0 and 1"
+            )
         return func(
             self,
             data,
@@ -149,6 +174,7 @@ def validate_data_kma(func):
             min_number_of_points,
             max_number_of_iterations,
             normalize_data,
+            regression_guided,
         )
 
     return wrapper
@@ -174,7 +200,9 @@ def validate_data_som(func):
         self,
         data: pd.DataFrame,
         directional_variables: List[str] = [],
+        custom_scale_factor: dict = {},
         num_iteration: int = 1000,
+        normalize_data: bool = False,
     ):
         if data is None:
             raise ValueError("Data cannot be None")
@@ -182,9 +210,20 @@ def validate_data_som(func):
             raise TypeError("Data must be a pandas DataFrame")
         if not isinstance(directional_variables, list):
             raise TypeError("Directional variables must be a list")
+        if not isinstance(custom_scale_factor, dict):
+            raise TypeError("Custom scale factor must be a dict")
         if not isinstance(num_iteration, int) or num_iteration <= 0:
             raise ValueError("Number of iterations must be integer and > 0")
-        return func(self, data, directional_variables, num_iteration)
+        if not isinstance(normalize_data, bool):
+            raise TypeError("Normalize data must be a boolean")
+        return func(
+            self,
+            data,
+            directional_variables,
+            custom_scale_factor,
+            num_iteration,
+            normalize_data,
+        )
 
     return wrapper
 
@@ -395,6 +434,62 @@ def validate_data_xwt(func):
             data,
             fit_params,
             variable_to_sort_bmus,
+        )
+
+    return wrapper
+
+
+def validate_data_calval(func):
+    """
+    Decorator to validate data in CalVal class fit method.
+
+    Parameters
+    ----------
+    func : callable
+        The function to be decorated
+
+    Returns
+    -------
+    callable
+        The decorated function
+    """
+
+    @functools.wraps(func)
+    def wrapper(
+        self,
+        data: pd.DataFrame,
+        data_longitude: float,
+        data_latitude: float,
+        data_to_calibrate: pd.DataFrame,
+        max_time_diff: int = 2,
+    ):
+        if not isinstance(data, pd.DataFrame):
+            raise TypeError("Data must be a pandas DataFrame")
+        if not isinstance(data_longitude, float):
+            raise TypeError("Longitude must be a float")
+        data_longitude = data_longitude % 360
+        if not isinstance(data_latitude, float):
+            raise TypeError("Latitude must be a float")
+        if not isinstance(data_to_calibrate, pd.DataFrame):
+            raise TypeError("Data to calibrate must be a pandas DataFrame")
+        if "LONGITUDE" not in data_to_calibrate.columns:
+            raise ValueError(
+                "Data to calibrate must contain a column named 'LONGITUDE'"
+            )
+        if "LATITUDE" not in data_to_calibrate.columns:
+            raise ValueError("Data to calibrate must contain a column named 'LATITUDE'")
+        if "Hs_CAL" not in data_to_calibrate.columns:
+            raise ValueError("Data to calibrate must contain a column named 'Hs_CAL'")
+        if not isinstance(max_time_diff, int) or max_time_diff <= 0:
+            raise ValueError("Maximum time difference must be an integer and > 0")
+
+        return func(
+            self,
+            data,
+            data_longitude,
+            data_latitude,
+            data_to_calibrate,
+            max_time_diff,
         )
 
     return wrapper

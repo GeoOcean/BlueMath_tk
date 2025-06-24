@@ -65,9 +65,10 @@ def normalize(
     ...     }
     ... )
     >>> normalized_data, scale_factor = normalize(data=df)
+
     >>> import numpy as np
     >>> import xarray as xr
-    >>> from bluemath_tk.core.data import normalize
+    >>> from bluemath_tk.core.operations import normalize
     >>> ds = xr.Dataset(
     ...     {
     ...         "Hs": (("time",), np.random.rand(1000) * 7),
@@ -85,6 +86,7 @@ def normalize(
         vars_to_normalize = list(data.data_vars)
     else:
         raise TypeError("Data must be a pandas DataFrame or an xarray Dataset")
+
     normalized_data = data.copy()  # Copy data to avoid bad memory replacements
     scale_factor = (
         custom_scale_factor.copy()
@@ -122,6 +124,7 @@ def normalize(
         normalized_data[data_var] = (normalized_data[data_var] - data_var_min) / (
             data_var_max - data_var_min
         )
+
     return normalized_data, scale_factor
 
 
@@ -173,6 +176,7 @@ def denormalize(
     ...     "Dir": [0, 360],
     ... }
     >>> denormalized_data = denormalize(normalized_data=df, scale_factor=scale_factor)
+
     >>> import numpy as np
     >>> import xarray as xr
     >>> from bluemath_tk.core.operations import denormalize
@@ -204,6 +208,7 @@ def denormalize(
             data[data_var] * (scale_factor[data_var][1] - scale_factor[data_var][0])
             + scale_factor[data_var][0]
         )
+
     return data
 
 
@@ -263,6 +268,7 @@ def standarize(
             },
             coords=data.coords,
         )
+
     return standarized_data, scaler
 
 
@@ -308,6 +314,7 @@ def destandarize(
             },
             coords=standarized_data.coords,
         )
+
     return data
 
 

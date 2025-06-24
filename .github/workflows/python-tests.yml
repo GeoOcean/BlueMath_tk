@@ -6,14 +6,16 @@ on:
       - develop
     types:
       - opened
+      - synchronize
 
 jobs:
   python-tests:
     runs-on: ${{ matrix.os }}
+    
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
       fail-fast: false
 
     steps:
@@ -25,16 +27,27 @@ jobs:
         with:
           auto-update-conda: true
       
-      - name: Modify environment file with Python version
-        run: sed -i "s/python=[0-9.]\+/python=${{ matrix.python-version }}/" environment.yml        
-
       - name: Create conda environment
-        run: conda env create -f environment.yml
+        run: conda create -n bluemath-tk python=${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          source /usr/share/miniconda/etc/profile.d/conda.sh
+          conda activate bluemath-tk
+          pip install bluemath-tk
+          pip install ruff
+
+      - name: Run Ruff
+        run: |
+          source /usr/share/miniconda/etc/profile.d/conda.sh
+          conda activate bluemath-tk
+          ruff check bluemath_tk/datamining/
 
       - name: Run tests
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate bluemath-tk
-          python --version
           python -m unittest discover tests/datamining/
+          python -m unittest discover tests/distributions/
           python -m unittest discover tests/interpolation/
+          python -m unittest discover tests/wrappers/
