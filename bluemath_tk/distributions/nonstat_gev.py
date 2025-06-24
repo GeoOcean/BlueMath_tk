@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,9 +12,14 @@ from ..core.models import BlueMathModel
 
 class NonStatGEV(BlueMathModel):
     """
+    Non-Stationary Generalized Extreme Value Distribution
+
     Class to implement the Non-Stationary GEV including trends and/or covariates
     in the location, scale and shape parameters. This methodology selects the
-    covariates and trends based on which of them minimize the Akaike Information Criteria (AIC)
+    covariates and trends based on which of them minimize the Akaike Information Criteria (AIC).
+
+    This class is based in the work of R. Mínguez et al. 2010. "Pseudooptimal parameter selection 
+    of non-stationary generalized extreme value models for environmental variables". Environ. Model. Softw. 25, 1592-1607.
 
     Parameters
     ----------
@@ -25,7 +30,7 @@ class NonStatGEV(BlueMathModel):
     covariates: np.ndarray | pd.DataFrame, default=None.
         Covariates to include for location, scale and shape parameters.
     kt : np.ndarray, default=None.
-        Frequency of blocks, if None, it is assumed to be 1.
+        Frequency of block maxima, if None, it is assumed to be 1.
     trends: bool, defaul=False.
         Whether trends should be included, if so, t must be passed.
     quanval : float, default=0.95.
@@ -44,9 +49,9 @@ class NonStatGEV(BlueMathModel):
         self,
         xt: np.ndarray,
         t: np.ndarray,
-        covariates: np.ndarray | pd.DataFrame = None,
+        covariates: Optional[np.ndarray | pd.DataFrame] = None,
         trends: bool = False,
-        kt: np.ndarray = None,
+        kt: Optional[np.ndarray] = None,
         quanval: float = 0.95,
     ):
         """
@@ -58,10 +63,10 @@ class NonStatGEV(BlueMathModel):
         self.t = t
         self.covariates = covariates
         self.trends = trends
-        if kt is not None:
-            self.kt = kt
-        else:
+        if kt is None:
             self.kt = np.ones_like(xt) 
+        else:
+            self.kt = kt
         self.quanval = quanval
 
         # Initialize parameters associated to the GEV
@@ -163,7 +168,6 @@ class NonStatGEV(BlueMathModel):
         ######### HARMONIC Iterative process #########
         print("Starting Harmonic iterative process")
         for iter in range(self.max_iter):
-            # TODO: AÑADIR EL PROCESO ARMONICO
             ### Step 2: Fit for the selected parameters (initial step is stationary)
             fit_result = self._fit(nmu, npsi, ngamma)
 
@@ -809,20 +813,22 @@ class NonStatGEV(BlueMathModel):
             else:
                 print("Shape trend is NOT significative")
                 self.ntrend_sh = 0
+            
+        fit_result["AIC"] = self.AICini
 
         return fit_result
 
     def _fit(
         self,
-        nmu=0,
-        npsi=0,
-        ngamma=0,
-        list_loc=[],
-        ntrend_loc=0,
-        list_sc=[],
-        ntrend_sc=0,
-        list_sh=[],
-        ntrend_sh=0,
+        nmu: int=0,
+        npsi: int=0,
+        ngamma: int=0,
+        list_loc: list=[],
+        ntrend_loc: int=0,
+        list_sc: list=[],
+        ntrend_sc: int=0,
+        list_sh: list=[],
+        ntrend_sh: int=0,
     ) -> dict:
         """
         Auxiliar function to determine the optimal parameters of given Non-Stationary GEV
@@ -1006,12 +1012,12 @@ class NonStatGEV(BlueMathModel):
                 npsi,
                 ngamma,
                 ntrend_loc,
-                self.covariates.iloc[:, list_loc],
+                list_loc,
                 ntrend_sc,
-                self.covariates.iloc[:, list_loc],
+                list_loc,
                 ntrend_sh,
-                self.covariates.iloc[:, list_loc],
-            ),  # TODO: COMPROBAR ESTOS ARGUMENTOS
+                list_loc,
+            ),
             options={"gtol": 1e-8},  # Options
             method="trust-constr",
         )
@@ -1190,18 +1196,20 @@ class NonStatGEV(BlueMathModel):
         else:
             fit_result["gamma_cov"] = None
 
+        return fit_result
+
     def _auxmin_loglikelihood(
         self,
-        x,
-        nmu,
-        npsi,
-        ngamma,
-        ntrend_loc=0,
-        list_loc=[],
-        ntrend_sc=0,
-        list_sc=[],
-        ntrend_sh=0,
-        list_sh=[],
+        x: np.ndarray,
+        nmu:int=0,
+        npsi:int=0,
+        ngamma:int=0,
+        ntrend_loc:int=0,
+        list_loc:list=[],
+        ntrend_sc:int=0,
+        list_sc:list=[],
+        ntrend_sh:int=0,
+        list_sh:list=[],
     ) -> float:
         """
         Function used for minimizing in the 'self._optimize_parameters' where the Negative loglikelihood of the GEV will be minimized
@@ -1228,6 +1236,7 @@ class NonStatGEV(BlueMathModel):
                 ValueError("Check data x, t, indices: funcion aux loglikelihood")
 
         # Evaluate the location parameter at each time t as a function of the actual values of the parameters given by x
+        # TODO: MIRAR SI SE PUEDE HACER ESTO EN UNA LINEA CON self._evaluate_params
         if ntrend_loc == 0 and nind_loc == 0:
             mut1 = self._parametro(x[0], x[1 : 1 + nmu])  # beta0, beta
         elif ntrend_loc == 0 and nind_loc != 0:
@@ -2074,21 +2083,20 @@ class NonStatGEV(BlueMathModel):
 
     def fit(
         self,
-        nmu,
-        npsi,
-        ngamma,
-        ntrend_loc=0,
-        list_loc=[],
-        ntrend_sc=0,
-        list_sc=[],
-        ntrend_sh=0,
-        list_sh=[],
+        nmu: int = 0,
+        npsi: int = 0,
+        ngamma: int = 0,
+        ntrend_loc: int = 1,
+        list_loc: Optional[Union[list, str]] = "all",
+        ntrend_sc: int = 1,
+        list_sc: Optional[Union[list, str]] = "all",
+        ntrend_sh: int = 1,
+        list_sh: Optional[Union[list, str]] = "all",
     ) -> dict:
         """
-        Function to determine the optimal parameters of given Non-Stationary GEV considering all the covariates
+        Function to determine the optimal parameters of Non-Stationary GEV for given covariates, trends and harmonics.
 
-        TODO: QUIZAS QUITAR ESTA FUNCION Y DEJAR SOLO LA _fit PORQUE AL FINAL HACEN LO MISMO O AÑADIR
-        ALGO PARA AJUSTAR USANDO TODAS LAS COVARIABLES DE FORMA MAS FACIL (PONER COMO DEFAULT)
+        By default the method fits a Non-Stationary GEV including trends in all the parameters, all possible covariates and no harmonics
 
         Parameters
         ----------
@@ -2098,21 +2106,24 @@ class NonStatGEV(BlueMathModel):
             Number of harmonics to be included in the scale parameter
         neps : int
             Number of harmonics to be included in the shape parameter
-        list_loc : list, default=[]
+        list_loc : list or str, default="all"
             List of indices of covariates to be included in the location parameter.
-        ntrend_loc : int, default=0
+            If None,no covariates are included in the location parameter.
+        ntrend_loc : int, default=1
             If trends in location are included.
-        list_sc : list, default=[]
+        list_sc : list or str, default="all"
             List of indices of covariates to be included in the scale parameter.
-        ntrend_sc : int, default=0
+            If None,no covariates are included in the scale parameter.
+        ntrend_sc : int, default=1
             If trends in scale are included.
-        list_sh : list, default=[]
+        list_sh : list or str, default="all"
             List of indices of covariates to be included in the shape parameter.
-        ntrend_sh : int, default=0
+            If None,no covariates are included in the shape parameter.
+        ntrend_sh : int, default=1
             If trends in shape are included.
 
         Returns
-        ----------
+        -------
         fit_result : dict
             Dictionary with the optimal parameters and other information about the fit.
             The keys of the dictionary are:
@@ -2123,16 +2134,29 @@ class NonStatGEV(BlueMathModel):
             - hessian: Hessian matrix of the log-likelihood function at the optimal solution
             - AIC: Akaike Information Criterion value at the optimal solution
         """
+        if list_loc == "all":
+            list_loc = list(range(self.covariates.shape[1]))
+        elif list_loc is None:
+            list_loc = []
+        if list_sc == "all":
+            list_sc = list(range(self.covariates.shape[1]))
+        elif list_loc is None:
+            list_loc = []
+        if list_sh == "all":
+            list_sh = list(range(self.covariates.shape[1]))
+        elif list_loc is None:
+            list_loc = []
+
         fit_result = self._fit(
-            nmu,
-            npsi,
-            ngamma,
-            list_loc,
-            ntrend_loc,
-            list_sc,
-            ntrend_sc,
-            list_sh,
-            ntrend_sh,
+            nmu=nmu,
+            npsi=npsi,
+            ngamma=ngamma,
+            list_loc=list_loc,
+            ntrend_loc=ntrend_loc,
+            list_sc=list_sc,
+            ntrend_sc=ntrend_sc,
+            list_sh=list_sh,
+            ntrend_sh=ntrend_sh,
         )
 
         return fit_result
@@ -2150,7 +2174,7 @@ class NonStatGEV(BlueMathModel):
             Number of parameters in the model
 
         Returns
-        ----------
+        -------
         aic : float
             AIC value
         """
@@ -2159,21 +2183,21 @@ class NonStatGEV(BlueMathModel):
 
     def _loglikelihood(
         self,
-        beta0: float=None,
-        beta: np.ndarray=None,
-        betaT: float=None,
-        beta_cov: np.ndarray=None,
-        alpha0: float=None,
-        alpha: np.ndarray=None,
-        alphaT: float=None,
-        alpha_cov: np.ndarray=None,
-        gamma0: float=None,
-        gamma: np.ndarray=None,
-        gammaT: float=None,
-        gamma_cov: np.ndarray=None,
-        list_loc: list=[],
-        list_sc: list=[],
-        list_sh: list=[],
+        beta0: Optional[float] = None,
+        beta: Optional[np.ndarray] = None,
+        betaT: Optional[float] = None,
+        beta_cov: Optional[np.ndarray] = None,
+        alpha0: Optional[float] = None,
+        alpha: Optional[np.ndarray] = None,
+        alphaT: Optional[float] = None,
+        alpha_cov: Optional[np.ndarray] = None,
+        gamma0: Optional[float] = None,
+        gamma: Optional[np.ndarray] = None,
+        gammaT: Optional[float] = None,
+        gamma_cov: Optional[np.ndarray] = None,
+        list_loc: Optional[list] = None,
+        list_sc: Optional[list] = None,
+        list_sh: Optional[list] = None,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Function to calculate the loglikelihood function, the Jacobian and the Hessian for a given parameterization
@@ -2212,7 +2236,7 @@ class NonStatGEV(BlueMathModel):
             list of covariates included in the shape parameter
 
         Returns
-        ----------
+        -------
         f : np.ndarray
             Optimal loglikelihood function
         Jx : np.ndarray
@@ -2261,6 +2285,13 @@ class NonStatGEV(BlueMathModel):
         if gamma_cov is None:
             gamma_cov = np.empty(0)
 
+        if list_loc is None:
+            list_loc = []
+        if list_sc is None:
+            list_sc = []
+        if list_sh is None:
+            list_sh = []
+
         covariates_loc = self.covariates.iloc[:, list_loc].values
         covariates_sc = self.covariates.iloc[:, list_sc].values
         covariates_sh = self.covariates.iloc[:, list_sh].values
@@ -2288,23 +2319,22 @@ class NonStatGEV(BlueMathModel):
         nind_sh = gamma_cov.size
 
         # Evaluate the parameters
-        # TODO: COMPROBAR LOS INPUTS
         mut1, psit1, epst = self._evaluate_params(
-            beta0,
-            beta,
-            alpha0,
-            alpha,
-            gamma0,
-            gamma,
-            betaT,
-            beta_cov,
-            alphaT,
-            alpha_cov,
-            gammaT,
-            gamma_cov,
-            covariates_loc,
-            covariates_sc,
-            covariates_sh,
+            beta0=beta0,
+            beta=beta,
+            betaT=betaT,
+            beta_cov=beta_cov,
+            alpha0=alpha0,
+            alpha=alpha,
+            alphaT=alphaT,
+            alpha_cov=alpha_cov,
+            gamma0=gamma0,
+            gamma=gamma,
+            gammaT=gammaT,
+            gamma_cov=gamma_cov,
+            covariates_loc=covariates_loc,
+            covariates_sc=covariates_sc,
+            covariates_sh=covariates_sh
         )
 
         # The values whose shape parameter is almost 0 correspond to the Gumbel distribution
@@ -3444,42 +3474,54 @@ class NonStatGEV(BlueMathModel):
 
     def _parametro(
         self,
-        alpha0=None,
-        alpha=None,
-        betaT=None,
-        covariates=None,
-        varphi=None,
-        indicesint=None,
-        times=None,
-        x=None,
+        beta0: Optional[float]=None,
+        beta: Optional[np.ndarray]=None,
+        betaT: Optional[float]=None,
+        beta_cov: Optional[np.ndarray]=None,
+        covariates: Optional[np.ndarray]=None,
+        indicesint: Optional[np.ndarray]=None,
+        times: Optional[np.ndarray]=None,
+        x: Optional[np.ndarray]=None,
     ) -> np.ndarray:
         """
         This function computes the location, scale and shape parameters for given parameters. Expressions by (2)-(3) in the paper
 
-        Inputs:
-        - alpha0: Value of the intercept
-        - alpha: Value of the harmonics terms
-        - betaT: tendency for the location parameter, just need to include a number in order to consider it, otherwise leave it empty
-        - covariates: Covariates data related to the location parameter, a matrix including the data at time t for each covariate
-        - varphi: covariate parameter vector associated with the location parameter, just need to include a list of numbers of length the number of covariates, otherwise leave it empty
-        - indicesint: covariate mean values in the integral interval
-        - times: times when covariates are known, nearest value (function _search)
+        Parameters
+        ----------
+        beta0 : float, optional
+            Value of the intercept
+        beta : np.ndarray, optional
+            Value of the harmonics terms
+        betaT : float, optional
+            Trend parameter
+        beta_cov : np.ndarray, optional
+            Covariate parameters
+        covariates : np.ndarray, optional
+            Covariate matrix, where each column corresponds to a covariate and each row to a time point
+        indicesint : np.ndarray, optional
+            Covariate mean values in the integral interval
+        times : np.ndarray, optional
+            Times when covariates are known, used to find the nearest value using self._search
+        x : np.ndarray, optional
+            Specific time point to evaluate the parameters at, if None, uses the times given
 
-        Output:
-        - y: values of the parameter
+        Returns 
+        -------
+        y : np.ndarray
+            Values of the parameter
         """
 
-        if alpha is None:
-            alpha = np.empty(0)
-        if betaT is None or betaT.size == 0:
+        if beta is None:
+            beta = np.empty(0)
+        if betaT is None:
             betaT = np.empty(0)
             ntend = 0
         else:
             ntend = 1
+        if beta_cov is None:
+            beta_cov = np.empty(0)
         if covariates is None:
             covariates = np.empty((0, 0))
-        if varphi is None:
-            varphi = np.empty(0)
         if indicesint is None:
             indicesint = np.empty((0, 0))
         if times is None:
@@ -3492,21 +3534,21 @@ class NonStatGEV(BlueMathModel):
         m = len(t)
 
         na, nind = covariates.shape
-        nparam = len(alpha)
+        nparam = len(beta)
         # Chek if the number of parameters is even
         if nparam % 2 != 0:
             raise ValueError("Parameter number must be even")
 
         # Adding the intercept term
-        if alpha0 is not None and np.asarray(alpha0).size > 0:
-            y = alpha0 * np.ones(m)
+        if beta0 is not None and np.asarray(beta0).size > 0:
+            y = beta0 * np.ones(m)
         else:
             y = np.zeros(m)
 
         # Adding the harmonic part
         if nparam > 0:
             for i in range(nparam // 2):
-                y += alpha[2 * i] * np.cos((i + 1) * 2 * np.pi * t) + alpha[
+                y += beta[2 * i] * np.cos((i + 1) * 2 * np.pi * t) + beta[
                     2 * i + 1
                 ] * np.sin((i + 1) * 2 * np.pi * t)
 
@@ -3519,20 +3561,27 @@ class NonStatGEV(BlueMathModel):
             if indicesint.shape[1] > 0:
                 if times.shape[1] == 0:
                     for i in range(nind):
-                        y += varphi[i] * indicesint[i]
+                        y += beta_cov[i] * indicesint[i]
                 else:
                     for i in range(nind):
                         indicesintaux = self._search(times, covariates[:, i])
-                        y += varphi[i] * indicesintaux
+                        y += beta_cov[i] * indicesintaux
             else:
                 for i in range(nind):
-                    y += varphi[i] * covariates[:, i]
+                    y += beta_cov[i] * covariates[:, i]
 
         return y
 
-    def _search(self, times, values):
+    def _search(self, times: np.ndarray, values: np.ndarray) -> np.ndarray:
         """
         Function to search the nearest value of certain time to use in self._parametro function
+
+        Parameters
+        ----------
+        times : np.ndarray
+            Times when covariates are known
+        values : np.ndarray
+            Values of the covariates at those times
         """
         n = times.shape[0]
         yin = np.zeros_like(self.t)
@@ -3550,43 +3599,83 @@ class NonStatGEV(BlueMathModel):
 
     def _evaluate_params(
         self,
-        beta0=None,
-        beta=None,
-        alpha0=None,
-        alpha=None,
-        gamma0=None,
-        gamma=None,
-        betaT=None,
-        varphi=None,
-        betaT2=None,
-        varphi2=None,
-        varphi3=None,
-        covariates_loc=None,
-        covariates_sc=None,
-        covariates_sh=None,
+        beta0: Optional[float]=None,
+        beta: Optional[np.ndarray]=None,
+        betaT: Optional[float]=None,
+        beta_cov: Optional[np.ndarray]=None,
+        alpha0: Optional[float]=None,
+        alpha: Optional[np.ndarray]=None,
+        alphaT: Optional[float]=None,
+        alpha_cov: Optional[np.ndarray]=None,
+        gamma0: Optional[float]=None,
+        gamma: Optional[np.ndarray]=None,
+        gammaT: Optional[float]=None,
+        gamma_cov: Optional[np.ndarray]=None,
+        covariates_loc: Optional[np.ndarray]=None,
+        covariates_sc: Optional[np.ndarray]=None,
+        covariates_sh: Optional[np.ndarray]=None,
     ):
         """
         Function to evaluate the parameters in the corresponding values
+
+        Parameters
+        ----------
+        beta0 : float, optional
+            Intercept for location parameter
+        beta : np.ndarray, optional
+            Harmonic coefficients for location parameter
+        betaT : float, optional
+            Trend parameter for location parameter
+        beta_cov : np.ndarray, optional
+            Covariate coefficients for location parameter
+        alpha0 : float, optional
+            Intercept for scale parameter
+        alpha : np.ndarray, optional
+            Harmonic coefficients for scale parameter
+        alphaT : float, optional
+            Trend parameter for scale parameter
+        alpha_cov : np.ndarray, optional
+            Covariate coefficients for scale parameter
+        gamma0 : float, optional
+            Intercept for shape parameter
+        gamma : np.ndarray, optional
+            Harmonic coefficients for shape parameter
+        gammaT : float, optional
+            Trend parameter for shape parameter
+        gamma_cov : np.ndarray, optional
+            Covariate coefficients for shape parameter
+        covariates_loc : np.ndarray, optional
+            Covariates for location parameter
+        covariates_sc : np.ndarray, optional
+            Covariates for scale parameter
+        covariates_sh : np.ndarray, optional
+            Covariates for shape parameter
         """
         # Evaluate the location parameter at each time t as function of the actual values of the parameters given by p
-        mut1 = self._parametro(beta0, beta, betaT, covariates_loc, varphi)
+        mut1 = self._parametro(beta0, beta, betaT, beta_cov, covariates_loc)
         # Evaluate the scale parameter at each time t as function of the actual values of the parameters given by p
-        psit1 = np.exp(self._parametro(alpha0, alpha, betaT2, covariates_sc, varphi2))
+        psit1 = np.exp(self._parametro(alpha0, alpha, alphaT, alpha_cov, covariates_sc))
         # Evaluate the shape parameter at each time t as function of the actual values of the parameters given by p
-        epst = self._parametro(gamma0, gamma, None, covariates_sh, varphi3)
+        epst = self._parametro(gamma0, gamma, gammaT, gamma_cov, covariates_sh)
 
         return mut1, psit1, epst
 
     @staticmethod
-    def _Dparam(t, i):
+    def _Dparam(t: float | np.ndarray, i: int) -> float | np.ndarray:
         """
         Derivative of the location, scale and shape fucntions with respect to harmonic parameters. It corresponds to the rhs in equation (A.11) of the paper
-        Input:
-        -t: time in yearly scale
-        -i: harmonic number
 
-        Output:
-        -dp: Corresponding derivative
+        Parameters
+        ----------
+        t : float or np.ndarray 
+            Time in yearly scale
+        i : int
+            Harmonic index
+
+        Returns
+        -------
+        dp : float or np.ndarray
+            Corresponding derivative
         """
 
         if i % 2 == 0:
@@ -3595,48 +3684,61 @@ class NonStatGEV(BlueMathModel):
             dp = np.cos((i + 1) / 2 * 2 * np.pi * t)
         return dp
 
-    def _quantile(self, harm=False):
+    def _quantile(self, harm=False) -> np.ndarray:
         """
         Calculates the quantile q associated with a given parameterization, the main input is quanval introduced in __init__ (default 0.95)
+
+        Parameters
+        ----------
+        harm : bool, default=False
+            If True, the quantile is calculated for the harmonic parameters only, otherwise it includes the trend and covariates parameters
+
+        Returns
+        -------
+        Q : np.ndarray
+            Quantile values at each time t
         """
 
         if harm:
             betaT = None
-            betaT2 = None
+            alphaT = None
+            gammaT = None
             cov_loc = None
-            varphi = None
+            beta_cov = None
             cov_sc = None
-            varphi2 = None
+            alpha_cov = None
             cov_sh = None
-            varphi3 = None
+            gamma_cov = None
         else:
             betaT = self.betaT
-            betaT2 = self.betaT2
-            cov_loc = self.covariates[:, self.list_loc]
-            varphi = self.varphi
-            cov_sc = self.covariates[:, self.list_sc]
-            varphi2 = self.varphi2
-            cov_sh = self.covariates[:, self.list_sh]
-            varphi3 = self.varphi3
+            alphaT = self.alphaT
+            gammaT = self.gammaT
+            cov_loc = self.covariates.iloc[:, self.list_loc]
+            beta_cov = self.beta_cov
+            cov_sc = self.covariates.iloc[:, self.list_sc]
+            alpha_cov = self.alpha_cov
+            cov_sh = self.covariates.iloc[:, self.list_sh]
+            gamma_cov = self.gamma_cov
 
         Q = np.zeros(len(self.xt))
 
         # Evaluate the parameters
         mut1, psit1, epst = self._evaluate_params(
-            self.beta0,
-            self.beta,
-            self.alpha0,
-            self.alpha,
-            self.gamma0,
-            self.gamma,
-            betaT,
-            varphi,
-            betaT2,
-            varphi2,
-            varphi3,
-            cov_loc,
-            cov_sc,
-            cov_sh,
+            beta0=self.beta0,
+            beta=self.beta,
+            betaT=betaT,
+            beta_cov=beta_cov,
+            alpha0=self.alpha0,
+            alpha=self.alpha,
+            alphaT=alphaT,
+            alpha_cov=alpha_cov,
+            gamma0=self.gamma0,
+            gamma=self.gamma,
+            gammaT=gammaT,
+            gamma_cov=gamma_cov,
+            covariates_loc=cov_loc,
+            covariates_sc=cov_sc,
+            covariates_sh=cov_sh
         )
 
         # The values whose shape parameter is almost cero corresponds to the GUMBEL distribution, locate their positions if they exist
@@ -3667,24 +3769,30 @@ class NonStatGEV(BlueMathModel):
     def plot(self, return_plot=True):
         """
         Plot the location, scale and shape parameters, also the PP plot and QQ plot
+
+        Parameters
+        ----------
+        return_plot : bool, default=True
+            If True, return period plot is plotted
         """
 
         # Parameter Evaluation
         mut1, psit1, epst = self._evaluate_params(
-            self.beta0,
-            self.beta,
-            self.alpha0,
-            self.alpha,
-            self.gamma0,
-            self.gamma,
-            self.betaT,
-            self.varphi,
-            self.betaT2,
-            self.varphi2,
-            self.varphi3,
-            self.covariates[:, self.list_loc],
-            self.covariates[:, self.list_sc],
-            self.covariates[:, self.list_sh],
+            beta0=self.beta0,
+            beta=self.beta,
+            betaT=self.betaT,
+            beta_cov=self.beta_cov,
+            alpha0=self.alpha0,
+            alpha=self.alpha,
+            alphaT=self.alphaT,
+            alpha_cov=self.alpha_cov,
+            gamma0=self.gamma0,
+            gamma=self.gamma,
+            gammaT=self.gammaT,
+            gamma_cov=self.gamma_cov,
+            covariates_loc=self.covariates[:, self.list_loc],
+            covariates_sc=self.covariates[:, self.list_sc],
+            covariates_sh=self.covariates[:, self.list_sh]
         )
 
         posG = np.where(np.abs(epst) <= 1e-8)[0]
@@ -4260,20 +4368,21 @@ class NonStatGEV(BlueMathModel):
 
         # Evaluate the parameters
         mut1, psit1, epst = self._evaluate_params(
-            self.beta0,
-            self.beta,
-            self.alpha0,
-            self.alpha,
-            self.gamma0,
-            self.gamma,
-            self.betaT,
-            self.varphi,
-            self.betaT2,
-            self.varphi2,
-            self.varphi3,
-            self.covariates[:, self.list_loc],
-            self.covariates[:, self.list_sc],
-            self.covariates[:, self.list_sh],
+            beta0=self.beta0,
+            beta=self.beta,
+            betaT=self.betaT,
+            beta_cov=self.beta_cov,
+            alpha0=self.alpha0,
+            alpha=self.alpha,
+            alphaT=self.alphaT,
+            alpha_cov=self.alpha_cov,
+            gamma0=self.gamma0,
+            gamma=self.gamma,
+            gammaT=self.gammaT,
+            gamma_cov=self.gamma_cov,
+            covariates_loc=self.covariates[:, self.list_loc],
+            covariates_sc=self.covariates[:, self.list_sc],
+            covariates_sh=self.covariates[:, self.list_sh]
         )
 
         # The values whose shape parameter is almost cero corresponds to the GUMBEL distribution, locate their positions if they exist
@@ -4308,20 +4417,21 @@ class NonStatGEV(BlueMathModel):
 
         # Evaluate the parameters
         mut1, psit1, epst = self._evaluate_params(
-            self.beta0,
-            self.beta,
-            self.alpha0,
-            self.alpha,
-            self.gamma0,
-            self.gamma,
-            self.betaT,
-            self.varphi,
-            self.betaT2,
-            self.varphi2,
-            self.varphi3,
-            self.covariates[:, self.list_loc],
-            self.covariates[:, self.list_sc],
-            self.covariates[:, self.list_sh],
+            beta0=self.beta0,
+            beta=self.beta,
+            betaT=self.betaT,
+            beta_cov=self.beta_cov,
+            alpha0=self.alpha0,
+            alpha=self.alpha,
+            alphaT=self.alphaT,
+            alpha_cov=self.alpha_cov,
+            gamma0=self.gamma0,
+            gamma=self.gamma,
+            gammaT=self.gammaT,
+            gamma_cov=self.gamma_cov,
+            covariates_loc=self.covariates[:, self.list_loc],
+            covariates_sc=self.covariates[:, self.list_sc],
+            covariates_sh=self.covariates[:, self.list_sh]
         )
 
         # The values whose shape parameter is almost cero corresponds to the GUMBEL distribution, locate their positions if they exist
@@ -4635,20 +4745,21 @@ class NonStatGEV(BlueMathModel):
 
         # Evaluate the parameters
         mut1, psit1, epst = self._evaluate_params(
-            self.beta0,
-            self.beta,
-            self.alpha0,
-            self.alpha,
-            self.gamma0,
-            self.gamma,
-            self.betaT,
-            self.varphi,
-            self.betaT2,
-            self.varphi2,
-            self.varphi3,
-            self.covariates[:, self.list_loc],
-            self.covariates[:, self.list_sc],
-            self.covariates[:, self.list_sh],
+            beta0=self.beta0,
+            beta=self.beta,
+            betaT=self.betaT,
+            beta_cov=self.beta_cov,
+            alpha0=self.alpha0,
+            alpha=self.alpha,
+            alphaT=self.alphaT,
+            alpha_cov=self.alpha_cov,
+            gamma0=self.gamma0,
+            gamma=self.gamma,
+            gammaT=self.gammaT,
+            gamma_cov=self.gamma_cov,
+            covariates_loc=self.covariates[:, self.list_loc],
+            covariates_sc=self.covariates[:, self.list_sc],
+            covariates_sh=self.covariates[:, self.list_sh]
         )
 
         # The values whose shape parameter is almost cero corresponds to the GUMBEL distribution, locate their positions if they exist
@@ -4902,20 +5013,21 @@ class NonStatGEV(BlueMathModel):
 
         # Evaluate the parameters
         mut1, psit1, epst = self._evaluate_params(
-            self.beta0,
-            self.beta,
-            self.alpha0,
-            self.alpha,
-            self.gamma0,
-            self.gamma,
-            self.betaT,
-            self.varphi,
-            self.betaT2,
-            self.varphi2,
-            self.varphi3,
-            self.covariates[:, self.list_loc],
-            self.covariates[:, self.list_sc],
-            self.covariates[:, self.list_sh],
+            beta0=self.beta0,
+            beta=self.beta,
+            betaT=self.betaT,
+            beta_cov=self.beta_cov,
+            alpha0=self.alpha0,
+            alpha=self.alpha,
+            alphaT=self.alphaT,
+            alpha_cov=self.alpha_cov,
+            gamma0=self.gamma0,
+            gamma=self.gamma,
+            gammaT=self.gammaT,
+            gamma_cov=self.gamma_cov,
+            covariates_loc=self.covariates[:, self.list_loc],
+            covariates_sc=self.covariates[:, self.list_sc],
+            covariates_sh=self.covariates[:, self.list_sh]
         )
 
         # The values whose shape parameter is almost cero corresponds to the GUMBEL distribution, locate their positions if they exist
