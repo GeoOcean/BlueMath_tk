@@ -55,7 +55,7 @@ class NonStatGEV(BlueMathModel):
         quanval: float = 0.95,
     ):
         """
-        Initiliaze the NonStationary GEV.
+        Initiliaze the Non-Stationary GEV.
         """
 
         # Initialize arguments
@@ -134,15 +134,15 @@ class NonStatGEV(BlueMathModel):
             - gamma0    -> Optimal constant parameter related to shape
             - gamma     -> Optimal harmonic vector associated with shape
             - betaT     -> Optimal location trend parameter
-            - auxvarphi -> Optimal location covariate vector
+            - auxbeta_cov -> Optimal location covariate vector
             - betaT     -> Optimal scale trend parameter
-            - auxvarphi -> Optimal scale covariate vector
+            - auxbeta_cov -> Optimal scale covariate vector
             - grad      -> Gradient of the log-likelihood function with the sign changed at the optimal solution
             - hessian   -> Hessian of the log-likelihood function with the sign changed at the optimal solution
             - popt      -> vector including the optimal values for the parameters in the following order:
-                        beta0, beta, betaT, varphi, alpha0, alpha, betaT2, varphi2, gamma0, gamma
+                        beta0, beta, betaT, beta_cov, alpha0, alpha, alphaT, alpha_cov, gamma0, gamma
             - stdpara   -> vector including the standard deviation of the optimal values for the parameters in the following order:
-                        beta0, beta, betaT, varphi, alpha0, alpha, betaT2, varphi2, gamma0, gamma
+                        beta0, beta, betaT, beta_cov, alpha0, alpha, alphaT, alpha_cov, gamma0, gamma
         """
 
         self.max_iter = max_iter  # Set maximum number of iterations
@@ -648,7 +648,7 @@ class NonStatGEV(BlueMathModel):
                 ### Step 11: Obtain the maximum-likelihood estimators for the selected parameters and
                 # calculate the Akaike Information criterion objective function AIC
                 # TODO: DEFINE PROPERLY
-                # concatvalues = [popt[0:1 + 2 * nmu], varphiini_loc, popt[1 + 2 * nmu : 2 + 2 * nmu + 2 * npsi], varphiini_sc, np.zeros(self.ngamma0), np.zeros(2 * ngamma), varphiini_sh]
+                # concatvalues = [popt[0:1 + 2 * nmu], beta_covini_loc, popt[1 + 2 * nmu : 2 + 2 * nmu + 2 * npsi], beta_covini_sc, np.zeros(self.ngamma0), np.zeros(2 * ngamma), beta_covini_sh]
                 # pini = np.concatenate([np.asarray(v) for v in concatvalues if v is not None])
                 fit_result = self._fit(self.nmu, self.npsi, self.ngamma)
 
@@ -709,7 +709,7 @@ class NonStatGEV(BlueMathModel):
             # Location trends
             ntrend_loc = 1
 
-            # concatvalues = [popt[0:1 + 2 * nmu], np.zeros(ntrend_loc), varphiini_loc, popt[1 + 2 * nmu : 2 + 2 * nmu + 2 * npsi], varphiini_sc, np.zeros(self.ngamma0), np.zeros(2 * ngamma), varphiini_sh]
+            # concatvalues = [popt[0:1 + 2 * nmu], np.zeros(ntrend_loc), beta_covini_loc, popt[1 + 2 * nmu : 2 + 2 * nmu + 2 * npsi], beta_covini_sc, np.zeros(self.ngamma0), np.zeros(2 * ngamma), beta_covini_sh]
             # pini = np.concatenate([np.asarray(v) for v in concatvalues if v is not None])
             fit_result = self._fit()
 
@@ -745,7 +745,7 @@ class NonStatGEV(BlueMathModel):
             # Scale trend
             ntrend_sc = 1
 
-            # concatvalues = [popt[0:1 + 2 * nmu], np.zeros(ntrend_loc), varphiini_loc, popt[1 + 2 * nmu : 2 + 2 * nmu + 2 * npsi], varphiini_sc, np.zeros(self.ngamma0), np.zeros(2 * ngamma), varphiini_sh]
+            # concatvalues = [popt[0:1 + 2 * nmu], np.zeros(ntrend_loc), beta_covini_loc, popt[1 + 2 * nmu : 2 + 2 * nmu + 2 * npsi], beta_covini_sc, np.zeros(self.ngamma0), np.zeros(2 * ngamma), beta_covini_sh]
             # pini = np.concatenate([np.asarray(v) for v in concatvalues if v is not None])
             fit_result = self._fit()
 
@@ -781,7 +781,7 @@ class NonStatGEV(BlueMathModel):
             # Shape trends
             ntrend_sh = 1
 
-            # concatvalues = [popt[0:1 + 2 * nmu], np.zeros(ntrend_loc), varphiini_loc, popt[1 + 2 * nmu : 2 + 2 * nmu + 2 * npsi], varphiini_sc, np.zeros(self.ngamma0), np.zeros(2 * ngamma), varphiini_sh]
+            # concatvalues = [popt[0:1 + 2 * nmu], np.zeros(ntrend_loc), beta_covini_loc, popt[1 + 2 * nmu : 2 + 2 * nmu + 2 * npsi], beta_covini_sc, np.zeros(self.ngamma0), np.zeros(2 * ngamma), beta_covini_sh]
             # pini = np.concatenate([np.asarray(v) for v in concatvalues if v is not None])
             fit_result = self._fit()
 
@@ -1212,7 +1212,7 @@ class NonStatGEV(BlueMathModel):
         list_sh:list=[],
     ) -> float:
         """
-        Function used for minimizing in the 'self._optimize_parameters' where the Negative loglikelihood of the GEV will be minimized
+        Function used for minimizing in the 'self._fit' where the Negative loglikelihood of the GEV will be minimized
         """
         # Cheking the inputs
         covariates_loc = self.covariates.iloc[:, list_loc].values
@@ -1236,7 +1236,6 @@ class NonStatGEV(BlueMathModel):
                 ValueError("Check data x, t, indices: funcion aux loglikelihood")
 
         # Evaluate the location parameter at each time t as a function of the actual values of the parameters given by x
-        # TODO: MIRAR SI SE PUEDE HACER ESTO EN UNA LINEA CON self._evaluate_params
         if ntrend_loc == 0 and nind_loc == 0:
             mut1 = self._parametro(x[0], x[1 : 1 + nmu])  # beta0, beta
         elif ntrend_loc == 0 and nind_loc != 0:
@@ -1311,7 +1310,7 @@ class NonStatGEV(BlueMathModel):
                     ],
                     np.array(x[2 + nmu + ntrend_loc + nind_loc + npsi]),
                 )
-            )  # alpha0, alpha, betaT2
+            )  # alpha0, alpha, alphaT
         else:
             psit1 = np.exp(
                 self._parametro(
@@ -1335,10 +1334,498 @@ class NonStatGEV(BlueMathModel):
                         + nind_sc
                     ],
                 )
-            )  # alpha0, alpha, betaT2, alpha_cov
+            )  # alpha0, alpha, alphaT, alpha_cov
 
         # Evaluate the shape parameter at each time t as a function of the actual values of the parameters given by x
-        # TODO: Añadir gammaT
+        if self.ngamma0 != 0:
+            if ntrend_sh == 0 and nind_sh == 0:
+                epst = self._parametro(
+                    x[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + nind_sc],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                )  # gamma0, gamma
+            elif ntrend_sh == 0 and nind_sh != 0:
+                epst = self._parametro(
+                    x[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + nind_sc],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    None,
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                        + nind_sh
+                    ],
+                    covariates_sh,
+                )  # gamma0, gamma, gamma_cov
+            elif ntrend_sh != 0 and nind_sh == 0:
+                epst = self._parametro(
+                    x[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + nind_sc],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ]
+                )   # gamma0, gamma, gammaT
+            else:
+                epst = self._parametro(
+                    x[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + nind_sc],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                        + nind_sh
+                    ],
+                    covariates_sh,
+                )  # gamma0, gamma, gammaT, gamma_cov
+        # If intercept in shape is not included
+        else:
+            if ntrend_sh == 0 and nind_sh == 0:
+                epst = self._parametro(
+                    None,
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                )  # gamma
+            elif ntrend_sh == 0 and nind_sh != 0:
+                epst = self._parametro(
+                    None,
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    None,
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                        + nind_sh
+                    ],
+                    covariates_sh,
+                )  # gamma, gamma_cov
+            elif ntrend_sh != 0 and nind_sh == 0:
+                epst = self._parametro(
+                    None,
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                )   # gamma, gammaT
+            else:
+                epst = self._parametro(
+                    None,
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                        + nind_sh
+                    ],
+                    covariates_sh,
+                )  # gamma, gammaT, gamma_cov
+        
+        # The values whose shape parameter is almost 0 correspond to the Gumbel distribution
+        posG = list(np.where(np.abs(epst) <= 1e-8)[0])
+        # The remaining values correspond to Weibull or Frechet
+        pos = list(np.where(np.abs(epst) > 1e-8)[0])
+
+        # The corresponding Gumbel values are set to 1 to avoid numerical problems, note that in this case, the Gumbel expressions are used
+        epst[posG] = 1
+
+        # Modify the parameters to include the length of the data
+        mut = mut1
+        psit = psit1
+        mut[pos] = mut1[pos] + psit1[pos] * (self.kt[pos] ** epst[pos] - 1) / epst[pos]
+        psit[pos] = psit1[pos] * self.kt[pos] ** epst[pos]
+        # Modify the parameters to include the length of the data in Gumbel
+        mut[posG] = mut[posG] + psit[posG] * np.log(self.kt[posG])
+
+        # Evaluate auxiliarly variables
+        xn = (self.xt - mut) / psit
+        z = 1 + epst * xn
+
+        # Since z-values must be greater than 0 in order to avoid numerical problems, their values are set to be greater than 1e-8
+        z = np.maximum(1e-8, z)
+        zn = z ** (-1 / epst)
+
+        # Evaluate the loglikelihood function with the sign changed, not that the general and Gumbel expressions are used
+        f = np.sum(
+            -np.log(self.kt[pos])
+            + np.log(psit[pos])
+            + (1 + 1 / epst[pos]) * np.log(z[pos])
+            + self.kt[pos] * zn[pos]
+        ) + np.sum(
+            -np.log(self.kt[posG])
+            + np.log(psit[posG])
+            + xn[posG]
+            + self.kt[posG] * np.exp(-xn[posG])
+        )
+
+        return f
+
+    def _auxmin_loglikelihood_grad(
+        self,
+        x,
+        nmu,
+        npsi,
+        ngamma,
+        ntrend_loc=0,
+        list_loc=[],
+        ntrend_sc=0,
+        list_sc=[],
+        ntrend_sh=0,
+        list_sh=[],
+    ) -> np.ndarray:
+        """
+        TODO: ELIMINAR ESTO Y USAR EL GRADIENTE NUMERICO
+        Function used for minimizing in the 'self._optimize_parameters' where the Negative loglikelihood of the GEV will be minimized
+        """
+        # Cheking the inputs
+        covariates_loc = self.covariates.iloc[:, list_loc].values
+        covariates_sc = self.covariates.iloc[:, list_sc].values
+        covariates_sh = self.covariates.iloc[:, list_sh].values
+
+        # Check consistency of the data
+        na1, nind_loc = covariates_loc.shape
+        if nind_loc > 0 and na1 > 0:
+            if na1 != len(self.xt) or na1 != len(self.t) or len(self.xt) != len(self.t):
+                ValueError("Check data x, t, indices: funcion aux loglikelihood")
+
+        na2, nind_sc = covariates_sc.shape
+        if nind_sc > 0 and na2 > 0:
+            if na2 != len(self.xt) or na2 != len(self.t) or len(self.xt) != len(self.t):
+                ValueError("Check data x, t, indices: funcion aux loglikelihood")
+
+        na3, nind_sh = covariates_sh.shape
+        if nind_sh > 0 and na3 > 0:
+            if na3 != len(self.xt) or na3 != len(self.t) or len(self.xt) != len(self.t):
+                ValueError("Check data x, t, indices: funcion aux loglikelihood")
+
+        # Evaluate the location parameter at each time t as a function of the actual values of the parameters given by x
+        if ntrend_loc == 0 and nind_loc == 0:
+            mut1 = self._parametro(x[0], x[1 : 1 + nmu])  # beta0, beta
+        elif ntrend_loc == 0 and nind_loc != 0:
+            mut1 = self._parametro(
+                x[0],
+                x[1 : 1 + nmu],
+                None,
+                covariates_loc,
+                x[1 + nmu + ntrend_loc : 1 + nmu + ntrend_loc + nind_loc],
+            )  # beta0, beta, beta_cov
+        elif ntrend_loc != 0 and nind_loc == 0:
+            mut1 = self._parametro(
+                x[0], x[1 : 1 + nmu], np.array(x[1 + nmu])
+            )  # beta0, beta, betaT
+        else:
+            mut1 = self._parametro(
+                x[0],
+                x[1 : 1 + nmu],
+                np.array(x[1 + nmu]),
+                covariates_loc,
+                x[1 + nmu + ntrend_loc : 1 + nmu + ntrend_loc + nind_loc],
+            )  # beta0, beta, betaT, beta_cov
+
+        # Evaluate the scale parameter at each time t as a function of the actual values of the parameters given by x
+        if ntrend_sc == 0 and nind_sc == 0:
+            psit1 = np.exp(
+                self._parametro(
+                    x[1 + nmu + ntrend_loc + nind_loc],
+                    x[
+                        2 + nmu + ntrend_loc + nind_loc : 2
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                    ],
+                )
+            )  # alpha0, alpha
+        elif ntrend_sc == 0 and nind_sc != 0:
+            psit1 = np.exp(
+                self._parametro(
+                    x[1 + nmu + ntrend_loc + nind_loc],
+                    x[
+                        2 + nmu + ntrend_loc + nind_loc : 2
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                    ],
+                    None,
+                    covariates_sc,
+                    x[
+                        2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc : 2
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                    ],
+                )
+            )  # alpha0, alpha, alpha_cov
+        elif ntrend_sc != 0 and nind_sc == 0:
+            psit1 = np.exp(
+                self._parametro(
+                    x[1 + nmu + ntrend_loc + nind_loc],
+                    x[
+                        2 + nmu + ntrend_loc + nind_loc : 2
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                    ],
+                    np.array(x[2 + nmu + ntrend_loc + nind_loc + npsi]),
+                )
+            )  # alpha0, alpha, alphaT
+        else:
+            psit1 = np.exp(
+                self._parametro(
+                    x[1 + nmu + ntrend_loc + nind_loc],
+                    x[
+                        2 + nmu + ntrend_loc + nind_loc : 2
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                    ],
+                    np.array(x[2 + nmu + ntrend_loc + nind_loc + npsi]),
+                    covariates_sc,
+                    x[
+                        2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc : 2
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                    ],
+                )
+            )  # alpha0, alpha, alphaT, alpha_cov
+
+        # Evaluate the shape parameter at each time t as a function of the actual values of the parameters given by x
         if self.ngamma0 == 1:
             if self.ngamma == 0 and nind_sh == 0:
                 epst = self._parametro(
@@ -1536,381 +2023,6 @@ class NonStatGEV(BlueMathModel):
                 )  # gamma, gamma_cov
 
         # The values whose shape parameter is almost 0 correspond to the Gumbel distribution
-        posG = list(np.where(np.abs(epst) <= 1e-8)[0])
-        # The remaining values correspond to Weibull or Frechet
-        pos = list(np.where(np.abs(epst) > 1e-8)[0])
-
-        # The corresponding Gumbel values are set to 1 to avoid numerical problems, note that in this case, the Gumbel expressions are used
-        epst[posG] = 1
-
-        # Modify the parameters to include the length of the data
-        mut = mut1
-        psit = psit1
-        mut[pos] = mut1[pos] + psit1[pos] * (self.kt[pos] ** epst[pos] - 1) / epst[pos]
-        psit[pos] = psit1[pos] * self.kt[pos] ** epst[pos]
-        # Modify the parameters to include the length of the data in Gumbel
-        mut[posG] = mut[posG] + psit[posG] * np.log(self.kt[posG])
-
-        # Evaluate auxiliarly variables
-        xn = (self.xt - mut) / psit
-        z = 1 + epst * xn
-
-        # Since z-values must be greater than 0 in order to avoid numerical problems, their values are set to be greater than 1e-8
-        z = np.maximum(1e-8, z)
-        zn = z ** (-1 / epst)
-
-        # Evaluate the loglikelihood function with the sign changed, not that the general and Gumbel expressions are used
-        f = np.sum(
-            -np.log(self.kt[pos])
-            + np.log(psit[pos])
-            + (1 + 1 / epst[pos]) * np.log(z[pos])
-            + self.kt[pos] * zn[pos]
-        ) + np.sum(
-            -np.log(self.kt[posG])
-            + np.log(psit[posG])
-            + xn[posG]
-            + self.kt[posG] * np.exp(-xn[posG])
-        )
-
-        return f
-
-    def _auxmin_loglikelihood_grad(
-        self,
-        x,
-        nmu,
-        npsi,
-        ngamma,
-        ntrend_loc=0,
-        list_loc=[],
-        ntrend_sc=0,
-        list_sc=[],
-        ntrend_sh=0,
-        list_sh=[],
-    ) -> np.ndarray:
-        """
-        TODO: ELIMINAR ESTO Y USAR EL GRADIENTE NUMERICO
-        Function used for minimizing in the 'self._optimize_parameters' where the Negative loglikelihood of the GEV will be minimized
-        """
-        # Cheking the inputs
-        covariates_loc = self.covariates.iloc[:, list_loc].values
-        covariates_sc = self.covariates.iloc[:, list_sc].values
-        covariates_sh = self.covariates.iloc[:, list_sh].values
-
-        # Check consistency of the data
-        na1, nind_loc = covariates_loc.shape
-        if nind_loc > 0 and na1 > 0:
-            if na1 != len(self.xt) or na1 != len(self.t) or len(self.xt) != len(self.t):
-                ValueError("Check data x, t, indices: funcion aux loglikelihood")
-
-        na2, nind_sc = covariates_sc.shape
-        if nind_sc > 0 and na2 > 0:
-            if na2 != len(self.xt) or na2 != len(self.t) or len(self.xt) != len(self.t):
-                ValueError("Check data x, t, indices: funcion aux loglikelihood")
-
-        na3, nind_sh = covariates_sh.shape
-        if nind_sh > 0 and na3 > 0:
-            if na3 != len(self.xt) or na3 != len(self.t) or len(self.xt) != len(self.t):
-                ValueError("Check data x, t, indices: funcion aux loglikelihood")
-
-        # Evaluate the location parameter at each time t as a function of the actual values of the parameters given by x
-        if ntrend_loc == 0 and nind_loc == 0:
-            mut1 = self._parametro(x[0], x[1 : 1 + nmu])  # beta0, beta
-        elif ntrend_loc == 0 and nind_loc != 0:
-            mut1 = self._parametro(
-                x[0],
-                x[1 : 1 + nmu],
-                None,
-                covariates_loc,
-                x[1 + nmu + ntrend_loc : 1 + nmu + ntrend_loc + nind_loc],
-            )  # beta0, beta, varphi
-        elif ntrend_loc != 0 and nind_loc == 0:
-            mut1 = self._parametro(
-                x[0], x[1 : 1 + nmu], np.array(x[1 + nmu])
-            )  # beta0, beta, betaT
-        else:
-            mut1 = self._parametro(
-                x[0],
-                x[1 : 1 + nmu],
-                np.array(x[1 + nmu]),
-                covariates_loc,
-                x[1 + nmu + ntrend_loc : 1 + nmu + ntrend_loc + nind_loc],
-            )  # beta0, beta, betaT, varphi
-
-        # Evaluate the scale parameter at each time t as a function of the actual values of the parameters given by x
-        if ntrend_sc == 0 and nind_sc == 0:
-            psit1 = np.exp(
-                self._parametro(
-                    x[1 + nmu + ntrend_loc + nind_loc],
-                    x[
-                        2 + nmu + ntrend_loc + nind_loc : 2
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                    ],
-                )
-            )  # alpha0, alpha
-        elif ntrend_sc == 0 and nind_sc != 0:
-            psit1 = np.exp(
-                self._parametro(
-                    x[1 + nmu + ntrend_loc + nind_loc],
-                    x[
-                        2 + nmu + ntrend_loc + nind_loc : 2
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                    ],
-                    None,
-                    covariates_sc,
-                    x[
-                        2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc : 2
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc
-                    ],
-                )
-            )  # alpha0, alpha, varphi2
-        elif ntrend_sc != 0 and nind_sc == 0:
-            psit1 = np.exp(
-                self._parametro(
-                    x[1 + nmu + ntrend_loc + nind_loc],
-                    x[
-                        2 + nmu + ntrend_loc + nind_loc : 2
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                    ],
-                    np.array(x[2 + nmu + ntrend_loc + nind_loc + npsi]),
-                )
-            )  # alpha0, alpha, betaT2
-        else:
-            psit1 = np.exp(
-                self._parametro(
-                    x[1 + nmu + ntrend_loc + nind_loc],
-                    x[
-                        2 + nmu + ntrend_loc + nind_loc : 2
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                    ],
-                    np.array(x[2 + nmu + ntrend_loc + nind_loc + npsi]),
-                    covariates_sc,
-                    x[
-                        2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc : 2
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc
-                    ],
-                )
-            )  # alpha0, alpha, betaT2, varphi2
-
-        # Evaluate the shape parameter at each time t as a function of the actual values of the parameters given by x
-        if self.ngamma0 == 1:
-            if self.ngamma == 0 and nind_sh == 0:
-                epst = self._parametro(
-                    x[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + nind_sc],
-                    None,
-                )  # gamma0
-            elif self.ngamma != 0 and nind_sh == 0:
-                epst = self._parametro(
-                    x[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + nind_sc],
-                    x[
-                        2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc : 2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc
-                        + ngamma
-                    ],
-                )  # gamma0, gamma
-            elif self.ngamma == 0 and nind_sh != 0:
-                epst = self._parametro(
-                    x[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + nind_sc],
-                    None,
-                    None,
-                    covariates_sh,
-                    x[
-                        2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc
-                        + ngamma : 2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc
-                        + ngamma
-                        + nind_sh
-                    ],
-                )  # gamma0, varphi3
-            else:
-                epst = self._parametro(
-                    x[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + nind_sc],
-                    x[
-                        2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc : 2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc
-                        + ngamma
-                    ],
-                    None,
-                    covariates_sh,
-                    x[
-                        2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc
-                        + ngamma : 2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc
-                        + ngamma
-                        + nind_sh
-                    ],
-                )  # gamma0, gamma, varphi3
-        else:
-            if self.ngamma == 0 and nind_sh == 0:
-                epst = 0 * mut1  # Gumbel
-            elif self.ngamma != 0 and nind_sh == 0:
-                epst = self._parametro(
-                    None,
-                    x[
-                        2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc : 2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc
-                        + ngamma
-                    ],
-                )  # gamma
-            elif self.ngamma == 0 and nind_sh != 0:
-                epst = self._parametro(
-                    None,
-                    None,
-                    None,
-                    covariates_sh,
-                    x[
-                        2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc
-                        + ngamma : 2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc
-                        + ngamma
-                        + nind_sh
-                    ],
-                )  # varphi3
-            else:
-                epst = self._parametro(
-                    None,
-                    x[
-                        2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc : 2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc
-                        + ngamma
-                    ],
-                    None,
-                    covariates_sh,
-                    x[
-                        2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc
-                        + ngamma : 2
-                        + self.ngamma0
-                        + nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + npsi
-                        + ntrend_sc
-                        + nind_sc
-                        + ngamma
-                        + nind_sh
-                    ],
-                )  # gamma, varphi3
-
-        # The values whose shape parameter is almost 0 correspond to the Gumbel distribution
         posG = np.where(np.abs(epst) <= 1e-8)[0]
         # The remaining values correspond to Weibull or Frechet
         pos = np.where(np.abs(epst) > 1e-8)[0]
@@ -1998,14 +2110,14 @@ class NonStatGEV(BlueMathModel):
                     aux += Dmut[k] * Dmutastmut[k] * self._Dparam(self.t[k], i + 1)
                 Jx[i + 1] = aux
 
-        # Jacobian elements related to the location parameters betaT, varphi (equation A.9)
+        # Jacobian elements related to the location parameters betaT, beta_cov (equation A.9)
         if ntrend_loc > 0:
             Jx[1 + nmu] = np.sum(Dmut * self.t * Dmutastmut)  # betaT
         if nind_loc > 0:
             for i in range(nind_loc):
                 Jx[1 + nmu + ntrend_loc + i] = np.sum(
                     Dmut * covariates_loc[:, i] * Dmutastmut
-                )  # varphi_i
+                )  # beta_cov_i
 
         # Jacobian elements related to the scale parameters alpha0, alpha (equation A.7)
         Jx[1 + nmu + ntrend_loc + nind_loc] = np.sum(
@@ -2022,18 +2134,18 @@ class NonStatGEV(BlueMathModel):
                         * (Dpsit[k] * Dpsitastpsit[k] + Dmut[k] * Dmutastpsit[k])
                     )
                 Jx[2 + nmu + ntrend_loc + nind_loc + i] = aux  # alpha
-        # Jacobian elements related to the scale parameters betaT2 and varphi (equation A.10)
+        # Jacobian elements related to the scale parameters alphaT and beta_cov (equation A.10)
         if ntrend_sc > 0:
             Jx[2 + nmu + ntrend_loc + nind_loc + npsi] = np.sum(
                 (Dpsit * Dpsitastpsit + Dmut * Dmutastpsit) * self.t * psit1
-            )  # betaT2
+            )  # alphaT
         if nind_sc > 0:
             for i in range(nind_sc):
                 Jx[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + i] = np.sum(
                     (Dpsit * Dpsitastpsit + Dmut * Dmutastpsit)
                     * covariates_sc[:, i]
                     * psit1
-                )  # varphi2
+                )  # alpha_cov
 
         # Jacobian elements related to the shape parameters gamma0 and gamma (equation A.10)
         if self.ngamma0 == 1:
@@ -2060,7 +2172,7 @@ class NonStatGEV(BlueMathModel):
                     + i
                 ] = aux
 
-        # Jacobian elements related to the shape parameters varphi3 (defined by Victor)
+        # Jacobian elements related to the shape parameters gamma_cov (defined by Victor)
         if nind_sh > 0:
             for i in range(nind_sh):
                 Jx[
@@ -2421,6 +2533,7 @@ class NonStatGEV(BlueMathModel):
             + nind_loc
             + ntrend_sc
             + nind_sc
+            + ntrend_sh
             + nind_sh
         )
         # Jacobian elements related to the location parameters beta0 and beta, equation (A.6) in the paper
@@ -2434,14 +2547,14 @@ class NonStatGEV(BlueMathModel):
                     aux += Dmut[k] * Dmutastmut[k] * self._Dparam(tt, i + 1)
                 Jx[i + 1] = aux
 
-        # Jacobian elements related to the location parameters betaT, varphi (equation A.9)
+        # Jacobian elements related to the location parameters betaT, beta_cov (equation A.9)
         if ntrend_loc > 0:
             Jx[1 + nmu] = np.sum(Dmut * self.t * Dmutastmut)  # betaT
         if nind_loc > 0:
             for i in range(nind_loc):
                 Jx[1 + nmu + ntrend_loc + i] = np.sum(
                     Dmut * covariates_loc[:, i] * Dmutastmut
-                )  # varphi_i
+                )  # beta_cov_i
 
         # Jacobian elements related to the scale parameters alpha0, alpha (equation A.7)
         Jx[1 + nmu + ntrend_loc + nind_loc] = np.sum(
@@ -2458,18 +2571,18 @@ class NonStatGEV(BlueMathModel):
                         * (Dpsit[k] * Dpsitastpsit[k] + Dmut[k] * Dmutastpsit[k])
                     )
                 Jx[2 + nmu + ntrend_loc + nind_loc + i] = aux  # alpha
-        # Jacobian elements related to the scale parameters betaT2 and varphi (equation A.10)
+        # Jacobian elements related to the scale parameters alphaT and beta_cov (equation A.10)
         if ntrend_sc > 0:
             Jx[2 + nmu + ntrend_loc + nind_loc + npsi] = np.sum(
                 (Dpsit * Dpsitastpsit + Dmut * Dmutastpsit) * self.t * psit1
-            )  # betaT2
+            )  # alphaT
         if nind_sc > 0:
             for i in range(nind_sc):
                 Jx[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + i] = np.sum(
                     (Dpsit * Dpsitastpsit + Dmut * Dmutastpsit)
                     * covariates_sc[:, i]
                     * psit1
-                )  # varphi2
+                )  # alpha_cov
 
         # Jacobian elements related to the shape parameters gamma0 and gamma (equation A.10)
         if self.ngamma0 == 1:
@@ -2509,7 +2622,8 @@ class NonStatGEV(BlueMathModel):
                 + nind_sc
                 + ngamma
             ] = np.sum(Depst * self.t)
-        # Jacobian elements related to the shape parameters varphi3 (defined by Victor)
+
+        # Jacobian elements related to the shape parameters gamma_cov (defined by Victor)
         if nind_sh > 0:
             for i in range(nind_sh):
                 Jx[
@@ -2583,6 +2697,7 @@ class NonStatGEV(BlueMathModel):
                 + nind_loc
                 + ntrend_sc
                 + nind_sc
+                + ntrend_sh
                 + nind_sh,
                 2
                 + self.ngamma0
@@ -2593,6 +2708,7 @@ class NonStatGEV(BlueMathModel):
                 + nind_loc
                 + ntrend_sc
                 + nind_sc
+                + ntrend_sh
                 + nind_sh,
             )
         )
@@ -2605,20 +2721,20 @@ class NonStatGEV(BlueMathModel):
         # Sub-block number 2, betaT^2
         if ntrend_loc > 0:
             Hxx[1 + nmu, 1 + nmu] = np.sum(D2mut * (self.t**2))
-        # Sub-block number 3, varphi_i*varphi_j
+        # Sub-block number 3, beta_cov_i*beta_cov_j
         if nind_loc > 0:
             for i in range(nind_loc):
                 for j in range(i + 1):
                     Hxx[1 + nmu + ntrend_loc + i, 1 + nmu + ntrend_loc + j] = np.sum(
                         D2mut * covariates_loc[:, i] * covariates_loc[:, j]
                     )
-        # Sub-block number 4, betaT2^2
+        # Sub-block number 4, alphaT^2
         if ntrend_sc > 0:
             Hxx[
                 2 + nmu + npsi + ntrend_loc + nind_loc,
                 2 + nmu + npsi + ntrend_loc + nind_loc,
             ] = np.sum((D2psit * psit + Dpsit) * psit * (self.t**2))
-        # Sub-block number 5, varphi2_i*varphi2_j
+        # Sub-block number 5, alpha_cov_i*alpha_cov_j
         if nind_sc > 0:
             for i in range(nind_sc):
                 for j in range(i + 1):
@@ -2648,10 +2764,11 @@ class NonStatGEV(BlueMathModel):
                     2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
                     2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
                 ] = np.sum(D2epst)
-        # Sub-block added by Victor, varphi3_i*varphi3_j
+        # Sub-block added by Victor, gamma_cov_i*gamma_cov_j
         if nind_sh > 0:
             for i in range(nind_sh):
                 for j in range(i + 1):
+                    # Add -1 if the model is GUMBEL in all the values
                     if len(posG) == len(self.xt) and i == j:
                         Hxx[
                             2
@@ -2663,6 +2780,7 @@ class NonStatGEV(BlueMathModel):
                             + nind_loc
                             + ntrend_sc
                             + nind_sc
+                            + ntrend_sh
                             + i,
                             2
                             + self.ngamma0
@@ -2673,6 +2791,7 @@ class NonStatGEV(BlueMathModel):
                             + nind_loc
                             + ntrend_sc
                             + nind_sc
+                            + ntrend_sh
                             + j,
                         ] = -1
                     else:
@@ -2686,6 +2805,7 @@ class NonStatGEV(BlueMathModel):
                             + nind_loc
                             + ntrend_sc
                             + nind_sc
+                            + ntrend_sh
                             + i,
                             2
                             + self.ngamma0
@@ -2696,8 +2816,31 @@ class NonStatGEV(BlueMathModel):
                             + nind_loc
                             + ntrend_sc
                             + nind_sc
+                            + ntrend_sh
                             + j,
                         ] = np.sum(D2epst * covariates_sh[:, i] * covariates_sh[:, j])
+        # Sub-block number , gammaT^2
+        if ntrend_sh > 0:
+            Hxx[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc
+            ] = np.sum(D2epst * self.t**2)
 
         # Sub-block number 8 (Scale exponential involved), beta0*alpha0
         Hxx[1 + nmu + ntrend_loc + nind_loc, 0] = np.sum(Dmutpsit * psit)
@@ -2715,51 +2858,119 @@ class NonStatGEV(BlueMathModel):
         # Sub-block number 11, beta0*betaT
         if ntrend_loc > 0:
             Hxx[1 + nmu, 0] = np.sum(D2mut * self.t)
-        # Sub-block number 12 (Scale exponential involved), beta0*betaT2
+        # Sub-block number 12 (Scale exponential involved), beta0*alphaT
         if ntrend_sc > 0:
             Hxx[2 + nmu + ntrend_loc + nind_loc + npsi, 0] = np.sum(
                 Dmutpsit * self.t * psit
             )
-        # Sub-block number 52 (Scale exponential involved), betaT2*alpha0
+        # Sub-block number 52 (Scale exponential involved), alphaT*alpha0
         if ntrend_sc > 0:
             Hxx[
                 2 + nmu + ntrend_loc + nind_loc + npsi, 1 + nmu + ntrend_loc + nind_loc
             ] = np.sum((D2psit * psit + Dpsit) * self.t * psit)
-        # Sub-block number 48 (Scale exponential involved), betaT*betaT2
+        # Sub-block number 48 (Scale exponential involved), betaT*alphaT
         if ntrend_loc > 0 and ntrend_sc > 0:
             Hxx[2 + nmu + ntrend_loc + nind_loc + npsi, 1 + nmu] = np.sum(
                 Dmutpsit * self.t * self.t * psit
             )
-        # Sub-block number 13, beta0*varphi_i
+        if ntrend_sh > 0:
+            # Sub-block number, beta0*gammaT
+            Hxx[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
+                0
+            ] = np.sum(Dmutepst * self.t)
+            # Sub-block number (Scale exponential involved), alpha0*gammaT
+            Hxx[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
+                1 + nmu + ntrend_loc + nind_loc
+            ] = np.sum(Dpsitepst * psit * self.t)
+            # Sub-block number, gamma0*gammaT
+            Hxx[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
+                2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc
+            ] = np.sum(D2epst * self.t)
+        if ntrend_sh > 0 and ntrend_loc > 0:
+            # Sub-block number, betaT*gammaT
+            Hxx[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
+                2 + nmu + ntrend_loc + nind_loc + npsi
+            ] = np.sum(Dpsitepst * psit * self.t**2)
+        if ntrend_sh > 0 and ntrend_sc > 0:
+            # Sub-block number, alphaT*gammaT
+            Hxx[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
+                1 + nmu
+            ] = np.sum(Dmutepst * self.t**2)
+        # Sub-block number 13, beta0*beta_cov_i
         if nind_loc > 0:
             for i in range(nind_loc):
                 Hxx[1 + nmu + ntrend_loc + i, 0] = np.sum(D2mut * covariates_loc[:, i])
-        # Sub-block number 14 (Scale exponential involved), beta0*varphi2_i
+        # Sub-block number 14 (Scale exponential involved), beta0*alpha_cov_i
         if nind_sc > 0:
             for i in range(nind_sc):
                 Hxx[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + i, 0] = np.sum(
                     Dmutpsit * covariates_sc[:, i] * psit
                 )
-        # Sub-block number 53 (Scale exponential involved), alpha0*varphi2_i
+        # Sub-block number 53 (Scale exponential involved), alpha0*alpha_cov_i
         if nind_sc > 0:
             for i in range(nind_sc):
                 Hxx[
                     2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + i,
                     1 + nmu + ntrend_loc + nind_loc,
                 ] = np.sum((D2psit * psit + Dpsit) * covariates_sc[:, i] * psit)
-        # Sub-block number 49 (Scale exponential involved), betaT*varphi2_i
+        # Sub-block number 49 (Scale exponential involved), betaT*alpha_cov_i
         if ntrend_loc > 0 and nind_sc > 0:
             for i in range(nind_sc):
                 Hxx[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + i, 1 + nmu] = (
                     np.sum(Dmutpsit * self.t * covariates_sc[:, i] * psit)
                 )
-        # Sub-block number 15, betaT*varphi_i
+        # Sub-block number 15, betaT*beta_cov_i
         if nind_loc > 0 and ntrend_loc > 0:
             for i in range(nind_loc):
                 Hxx[1 + nmu + ntrend_loc + i, 1 + nmu] = np.sum(
                     D2mut * self.t * covariates_loc[:, i]
                 )
-        # Sub-block number 16, betaT2*varphi2_i
+        # Sub-block number 16, alphaT*alpha_cov_i
         if nind_sc > 0 and ntrend_sc > 0:
             for i in range(nind_sc):
                 Hxx[
@@ -2768,6 +2979,62 @@ class NonStatGEV(BlueMathModel):
                 ] = np.sum(
                     (D2psit * psit + Dpsit) * self.t * covariates_sc[:, i] * psit
                 )
+        # Sub-block number (Scale exponential involved), alpha_cov_i*gammaT
+        if nind_sc > 0 and ntrend_sh > 0:
+            for i in range(nind_sc):
+                Hxx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ngamma
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc,
+                    2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + i
+                ] = np.sum(Dpsitepst * psit * covariates_sc[:, i] * self.t)
+        # Sub-block number (Scale exponential involved), beta_cov_i*gammaT
+        if nind_loc > 0 and ntrend_sh > 0:
+            for i in range(nind_loc):
+                Hxx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ngamma
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc,
+                    1 + nmu + ntrend_loc + i
+                ] = np.sum(Dmutepst * covariates_loc[:, i] * self.t)
+        # Sub-block number (Scale exponential involved), gamma_cov_i*gammaT
+        if nind_sh > 0 and ntrend_sh > 0:
+            for i in range(nind_sh):
+                Hxx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ngamma
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc
+                    + ntrend_sh
+                    + i,
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ngamma
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc
+                ] = np.sum(D2epst * covariates_sh[:, i] * self.t)
+        
         # Sub-block number 17, alpha0*betaT
         if ntrend_loc > 0:
             Hxx[1 + nmu + ntrend_loc + nind_loc, 1 + nmu] = np.sum(
@@ -2778,33 +3045,33 @@ class NonStatGEV(BlueMathModel):
             Hxx[
                 2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc, 1 + nmu
             ] = np.sum(Dmutepst * self.t)
-        # Sub-block number 19 (Scale exponential involved), gamma0*betaT2
+        # Sub-block number 19 (Scale exponential involved), gamma0*alphaT
         if ntrend_sc > 0 and self.ngamma0 == 1:
             Hxx[
                 2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
                 2 + nmu + ntrend_loc + nind_loc + npsi,
             ] = np.sum(Dpsitepst * self.t * psit)
-        # Sub-block number 20 (Scale exponential involved), alpha0*varphi_i
+        # Sub-block number 20 (Scale exponential involved), alpha0*beta_cov_i
         if nind_loc > 0:
             for i in range(nind_loc):
                 Hxx[1 + nmu + ntrend_loc + nind_loc, 1 + nmu + ntrend_loc + i] = np.sum(
                     Dmutpsit * covariates_loc[:, i] * psit
                 )
-        # Sub-block number 21, gamma0*varphi_i
+        # Sub-block number 21, gamma0*beta_cov_i
         if nind_loc > 0 and self.ngamma0 == 1:
             for i in range(nind_loc):
                 Hxx[
                     2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
                     1 + nmu + ntrend_loc + i,
                 ] = np.sum(Dmutepst * covariates_loc[:, i])
-        # Sub-block number 22 (Scale exponential involved), gamma0*varphi2_i
+        # Sub-block number 22 (Scale exponential involved), gamma0*alpha_cov_i
         if nind_sc > 0 and self.ngamma0 == 1:
             for i in range(nind_sc):
                 Hxx[
                     2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
                     2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + i,
                 ] = np.sum(Dpsitepst * covariates_sc[:, i] * psit)
-        # Sub-block added by Victor, gamma0*varphi3_i
+        # Sub-block added by Victor, gamma0*gamma_cov_i
         if nind_sh > 0 and self.ngamma0 == 1:
             for i in range(nind_sh):
                 Hxx[
@@ -2817,6 +3084,7 @@ class NonStatGEV(BlueMathModel):
                     + nind_loc
                     + ntrend_sc
                     + nind_sc
+                    + ntrend_sh
                     + i,
                     2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
                 ] = np.sum(D2epst * covariates_sh[:, i])
@@ -2867,8 +3135,27 @@ class NonStatGEV(BlueMathModel):
                     aux = 0
                     for k, tt in enumerate(self.t):
                         aux += Dmutpsit[k] * tt * self._Dparam(tt, i + 1) * psit[k]
-                    # Sub-block number 46 (Scale exponential involved), betaT2*beta_i
+                    # Sub-block number 46 (Scale exponential involved), alphaT*beta_i
                     Hxx[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc, 1 + i] = aux
+            if ntrend_sh > 0:
+                for i in range(nmu):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += Dmutepst[k] * tt * self._Dparam(tt, i + 1)
+                    # Sub-block number 46 (Scale exponential involved), beta_i*gammaT
+                    Hxx[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + npsi
+                        + ngamma
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc, 
+                        1 + i
+                    ] = aux
+                    
             if nind_loc > 0:
                 for i in range(nmu):
                     for j in range(nind_loc):
@@ -2879,7 +3166,7 @@ class NonStatGEV(BlueMathModel):
                                 * covariates_loc[k, j]
                                 * self._Dparam(tt, i + 1)
                             )
-                        # Sub-block number 28, beta_i*varphi_j
+                        # Sub-block number 28, beta_i*beta_cov_j
                         Hxx[1 + nmu + ntrend_loc + j, 1 + i] = aux
             if nind_sc > 0:
                 for i in range(nmu):
@@ -2892,7 +3179,7 @@ class NonStatGEV(BlueMathModel):
                                 * self._Dparam(tt, i + 1)
                                 * psit[k]
                             )
-                        # Sub-block number 47 (Scale exponential involved), beta_i*varphi2_j
+                        # Sub-block number 47 (Scale exponential involved), beta_i*alpha_cov_j
                         Hxx[
                             2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + j,
                             1 + i,
@@ -2907,7 +3194,7 @@ class NonStatGEV(BlueMathModel):
                                 * covariates_sh[k, j]
                                 * self._Dparam(tt, i + 1)
                             )
-                        # Sub-block added by Victor, beta_j*varphi3_i
+                        # Sub-block added by Victor, beta_j*gamma_cov_i
                         Hxx[
                             2
                             + self.ngamma0
@@ -2918,6 +3205,7 @@ class NonStatGEV(BlueMathModel):
                             + nind_loc
                             + ntrend_sc
                             + nind_sc
+                            + ntrend_sh
                             + j,
                             1 + i,
                         ] = aux
@@ -2982,7 +3270,7 @@ class NonStatGEV(BlueMathModel):
                                 * self._Dparam(tt, i + 1)
                                 * psit[k]
                             )
-                        # Sub-block number 34 (Scale exponential involved), alpha_i*varphi_j
+                        # Sub-block number 34 (Scale exponential involved), alpha_i*beta_cov_j
                         Hxx[
                             2 + nmu + ntrend_loc + nind_loc + i,
                             1 + nmu + ntrend_loc + j,
@@ -2998,7 +3286,7 @@ class NonStatGEV(BlueMathModel):
                                 * self._Dparam(tt, i + 1)
                                 * psit[k]
                             )
-                        # Sub-block added by Victor (scale exponential involved), alpha_i*varphi3_j
+                        # Sub-block added by Victor (scale exponential involved), alpha_i*gamma_cov_j
                         Hxx[
                             2
                             + self.ngamma0
@@ -3009,9 +3297,28 @@ class NonStatGEV(BlueMathModel):
                             + nind_loc
                             + ntrend_sc
                             + nind_sc
+                            + ntrend_sh
                             + j,
-                            2 + nmu + ntrend_loc + nind_loc + i,
+                            2 + nmu + ntrend_loc + nind_loc + i
                         ] = aux
+            if ntrend_sh > 0:
+                for i in range(nmu):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += Dpsitepst[k] * tt * psit * self._Dparam(tt, i + 1)
+                    # Sub-block number 46 (Scale exponential involved), alpha_i*gammaT
+                    Hxx[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + npsi
+                        + ngamma
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc, 
+                        2 + nmu + ntrend_loc + nind_loc + i
+                    ] = aux
         if ngamma > 0:
             for i in range(ngamma):
                 # First element associated to the constant value (first column)
@@ -3140,7 +3447,7 @@ class NonStatGEV(BlueMathModel):
                     aux = 0
                     for k, tt in enumerate(self.t):
                         aux += Dpsitepst[k] * tt * self._Dparam(tt, i + 1) * psit[k]
-                    # Sub-block number 44 (Scale exponential involved), gamma_i*betaT2
+                    # Sub-block number 44 (Scale exponential involved), gamma_i*alphaT
                     Hxx[
                         2
                         + self.ngamma0
@@ -3153,6 +3460,32 @@ class NonStatGEV(BlueMathModel):
                         + i,
                         2 + nmu + npsi + ntrend_loc + nind_loc,
                     ] = aux
+            if ntrend_sh > 0:
+                for i in range(nmu):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += D2epst[k] * tt * self._Dparam(tt, i + 1)
+                    # Sub-block number 46 (Scale exponential involved), gamma_i*gammaT
+                    Hxx[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + npsi
+                        + ngamma
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc, 
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + npsi
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + i
+                    ] = aux
             if nind_loc > 0:
                 for i in range(ngamma):
                     for j in range(nind_loc):
@@ -3163,7 +3496,7 @@ class NonStatGEV(BlueMathModel):
                                 * covariates_loc[k, j]
                                 * self._Dparam(tt, i + 1)
                             )
-                        # Sub-block number 40, gamma_i*varphi_j
+                        # Sub-block number 40, gamma_i*beta_cov_j
                         Hxx[
                             2
                             + self.ngamma0
@@ -3187,7 +3520,7 @@ class NonStatGEV(BlueMathModel):
                                 * self._Dparam(tt, i + 1)
                                 * psit[k]
                             )
-                        # Sub-block number 45 (Scale exponential involved), gamma_i*varphi2_j
+                        # Sub-block number 45 (Scale exponential involved), gamma_i*alpha_cov_j
                         Hxx[
                             2
                             + self.ngamma0
@@ -3210,7 +3543,7 @@ class NonStatGEV(BlueMathModel):
                                 * covariates_sh[k, j]
                                 * self._Dparam(tt, i + 1)
                             )
-                        # Sub-block added by Victor, gamma_i*varphi3_j
+                        # Sub-block added by Victor, gamma_i*gamma_cov_j
                         Hxx[
                             2
                             + self.ngamma0
@@ -3221,6 +3554,7 @@ class NonStatGEV(BlueMathModel):
                             + nind_loc
                             + ntrend_sc
                             + nind_sc
+                            + ntrend_sh
                             + j,
                             2
                             + self.ngamma0
@@ -3238,14 +3572,14 @@ class NonStatGEV(BlueMathModel):
                 aux = 0
                 for k, tt in enumerate(self.t):
                     aux += Dmutpsit[k] * tt * covariates_loc[k, i] * psit[k]
-                # Sub-block number 50 (Scale exponential involved), varphi_i*betaT2
+                # Sub-block number 50 (Scale exponential involved), beta_cov_i*alphaT
                 Hxx[
                     2 + nmu + ntrend_loc + nind_loc + npsi, 1 + nmu + ntrend_loc + i
                 ] = aux
         if nind_loc > 0 and nind_sc > 0:
             for i in range(nind_loc):
                 for j in range(nind_sc):
-                    # Sub-block number 51 (Scale exponential involved), varphi_i*varphi2_j
+                    # Sub-block number 51 (Scale exponential involved), beta_cov_i*alpha_cov_j
                     Hxx[
                         2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + j,
                         1 + nmu + ntrend_loc + i,
@@ -3255,7 +3589,7 @@ class NonStatGEV(BlueMathModel):
         if nind_loc > 0 and nind_sh > 0:
             for i in range(nind_loc):
                 for j in range(nind_sh):
-                    # Sub-block added by Victor, varphi_i*varphi3_j
+                    # Sub-block added by Victor, beta_cov_i*gamma_cov_j
                     Hxx[
                         2
                         + self.ngamma0
@@ -3266,13 +3600,14 @@ class NonStatGEV(BlueMathModel):
                         + nind_loc
                         + ntrend_sc
                         + nind_sc
+                        + ntrend_sh
                         + j,
                         1 + nmu + ntrend_loc + i,
                     ] = np.sum(Dmutepst * covariates_loc[:, i] * covariates_sh[:, j])
         if nind_sc > 0 and nind_sh > 0:
             for i in range(nind_sc):
                 for j in range(nind_sh):
-                    # Sub-block added by Victor (scale exponential involved), varphi2_i*varphi3_j
+                    # Sub-block added by Victor (scale exponential involved), alpha_cov_i*gamma_cov_j
                     Hxx[
                         2
                         + self.ngamma0
@@ -3283,6 +3618,7 @@ class NonStatGEV(BlueMathModel):
                         + nind_loc
                         + ntrend_sc
                         + nind_sc
+                        + ntrend_sh
                         + j,
                         2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + i,
                     ] = np.sum(
@@ -3293,7 +3629,7 @@ class NonStatGEV(BlueMathModel):
                 aux = 0
                 for k, tt in enumerate(self.t):
                     aux += Dmutepst[k] * tt * covariates_sh[k, i]
-                # Sub-block added by Victor, betaT*varphi3_i
+                # Sub-block added by Victor, betaT*gamma_cov_i
                 Hxx[
                     2
                     + self.ngamma0
@@ -3304,6 +3640,7 @@ class NonStatGEV(BlueMathModel):
                     + nind_loc
                     + ntrend_sc
                     + nind_sc
+                    + ntrend_sh
                     + i,
                     1 + nmu,
                 ] = aux
@@ -3317,7 +3654,7 @@ class NonStatGEV(BlueMathModel):
                         * self._Dparam(tt, i + 1)
                         * psit[k]
                     )
-                # Sub-block number 54 (Scale exponential involved), alpha_i*betaT2
+                # Sub-block number 54 (Scale exponential involved), alpha_i*alphaT
                 Hxx[
                     2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc,
                     2 + nmu + ntrend_loc + nind_loc + i,
@@ -3333,7 +3670,7 @@ class NonStatGEV(BlueMathModel):
                             * self._Dparam(tt, i + 1)
                             * psit[k]
                         )
-                    # Sub-block number 55 (Scale exponential involved), alpha_i*varphi2_j
+                    # Sub-block number 55 (Scale exponential involved), alpha_i*alpha_cov_j
                     Hxx[
                         2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + j,
                         2 + nmu + ntrend_loc + nind_loc + i,
@@ -3401,7 +3738,7 @@ class NonStatGEV(BlueMathModel):
 
         if nind_sh > 0:
             for i in range(nind_sh):
-                # Sub-block added by Victor, beta0*varphi3_i
+                # Sub-block added by Victor, beta0*gamma_cov_i
                 Hxx[
                     2
                     + self.ngamma0
@@ -3412,10 +3749,11 @@ class NonStatGEV(BlueMathModel):
                     + nind_loc
                     + ntrend_sc
                     + nind_sc
+                    + ntrend_sh
                     + i,
                     0,
                 ] = np.sum(Dmutepst * covariates_sh[:, i])
-                # Sub-block added by Victor (scale exponential involved), alpha0*varphi3_i
+                # Sub-block added by Victor (scale exponential involved), alpha0*gamma_cov_i
                 Hxx[
                     2
                     + self.ngamma0
@@ -3426,6 +3764,7 @@ class NonStatGEV(BlueMathModel):
                     + nind_loc
                     + ntrend_sc
                     + nind_sc
+                    + ntrend_sh
                     + i,
                     1 + nmu + ntrend_loc + nind_loc,
                 ] = np.sum(Dpsitepst * psit * covariates_sh[:, i])
@@ -3433,7 +3772,7 @@ class NonStatGEV(BlueMathModel):
                 aux = 0
                 for k, tt in enumerate(self.t):
                     aux += Dpsitepst[k] * tt * covariates_sh[k, i] * psit[k]
-                # Sub-bloc added by Victor (scale exponential involved), betaT2*varphi3_i
+                # Sub-bloc added by Victor (scale exponential involved), alphaT*gamma_cov_i
                 Hxx[
                     2
                     + self.ngamma0
@@ -3444,6 +3783,7 @@ class NonStatGEV(BlueMathModel):
                     + nind_loc
                     + ntrend_sc
                     + nind_sc
+                    + ntrend_sh
                     + i,
                     1 + nmu + npsi + ntrend_loc + nind_loc,
                 ] = aux
@@ -3453,7 +3793,16 @@ class NonStatGEV(BlueMathModel):
 
         return f, Jx, Hxx
 
-    def _update_params(self, **kwargs) -> None:
+    def _update_params(self, **kwargs: dict) -> None:
+        """
+        Updating the parameters of the class with the given keyword arguments.
+        Used in the fitting process to update based on fit_result.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Dictionary containing the parameters to update. 
+        """
         self.beta0 = kwargs.get("beta0")
         self.beta = kwargs.get("beta")
         self.betaT = kwargs.get("betaT")
@@ -3912,9 +4261,9 @@ class NonStatGEV(BlueMathModel):
 
         if (
             self.betaT is None
-            and self.betaT2 is None
-            and self.varphi.size == 0
-            and self.varphi2.size == 0
+            and self.alphaT is None
+            and self.beta_cov.size == 0
+            and self.alpha_cov.size == 0
         ):
             t_ord = np.argsort(t_anual)
             fig, ax1 = plt.subplots(figsize=(10, 6))
@@ -4513,14 +4862,14 @@ class NonStatGEV(BlueMathModel):
                         Dmut[k] * Dmutastmut[k] * self._Dparam(self.t[k], i + 1)
                     )
 
-        # Jacobian elements related to the location parameters betaT, varphi (equation A.9)
+        # Jacobian elements related to the location parameters betaT, beta_cov (equation A.9)
         if self.ntend_loc > 0:
             Dq[1 + 2 * self.nmu, :] = Dmut * self.t * Dmutastmut  # betaT
         if self.nind_loc > 0:
             for i in range(self.nind_loc):
                 Dq[1 + 2 * self.nmu + self.ntend_loc + i, :] = (
                     Dmut * self.covariates[:, self.list_loc[i]] * Dmutastmut
-                )  # varphi_i
+                )  # beta_cov_i
 
         # Jacobian elements related to the scale parameters alpha0, alpha (equation A.7)
         Dq[1 + 2 * self.nmu + self.ntend_loc + self.nind_loc, :] = psit1 * (
@@ -4535,11 +4884,11 @@ class NonStatGEV(BlueMathModel):
                         * psit1[k]
                         * (Dpsit[k] * Dpsitastpsit[k] + Dmut[k] * Dmutastpsit[k])
                     )  # alpha
-        # Jacobian elements related to the scale parameters betaT2 and varphi (equation A.10)
+        # Jacobian elements related to the scale parameters alphaT and beta_cov (equation A.10)
         if self.ntend_sc > 0:
             Dq[2 + 2 * self.nmu + self.ntend_loc + self.nind_loc + 2 * self.npsi, :] = (
                 (Dpsit * Dpsitastpsit + Dmut * Dmutastpsit) * self.t * psit1
-            )  # betaT2
+            )  # alphaT
         if self.nind_sc > 0:
             for i in range(self.nind_sc):
                 Dq[
@@ -4555,7 +4904,7 @@ class NonStatGEV(BlueMathModel):
                     (Dpsit * Dpsitastpsit + Dmut * Dmutastpsit)
                     * self.covariates[:, self.list_sc[i]]
                     * psit1
-                )  # varphi2
+                )  # alpha_cov
 
         # Jacobian elements related to the shape parameters gamma0 and gamma (equation A.10)
         if self.neps0 == 1:
@@ -4604,7 +4953,7 @@ class NonStatGEV(BlueMathModel):
                     :,
                 ] = (
                     Depst + Dpsit * Dpsitastepst + Dmut * Dmutastepst
-                ) * self.covariates[:, self.list_sh[i]]  # varphi3
+                ) * self.covariates[:, self.list_sh[i]]  # gamma_cov
 
         return Dq
 
@@ -4625,10 +4974,10 @@ class NonStatGEV(BlueMathModel):
             self.gamma0,
             self.gamma,
             self.betaT,
-            self.varphi,
-            self.betaT2,
-            self.varphi2,
-            self.varphi3,
+            self.beta_cov,
+            self.alphaT,
+            self.alpha_cov,
+            self.gamma_cov,
             self.covariates[:, self.list_loc],
             self.covariates[:, self.list_sc],
             self.covariates[:, self.list_sh],
@@ -4683,14 +5032,14 @@ class NonStatGEV(BlueMathModel):
                         Dmut[k] * Dmutastmut[k] * self._Dparam(t[k], i + 1)
                     )
 
-        # Jacobian elements related to the location parameters betaT, varphi (equation A.9)
+        # Jacobian elements related to the location parameters betaT, beta_cov (equation A.9)
         if self.ntend_loc > 0:
             Dermut[1 + 2 * self.nmu, :] = Dmut * t * Dmutastmut  # betaT
         if self.nind_loc > 0:
             for i in range(self.nind_loc):
                 Dermut[1 + 2 * self.nmu + self.ntend_loc + i, :] = (
                     Dmut * self.covariates[:, self.list_loc[i]] * Dmutastmut
-                )  # varphi_i
+                )  # beta_cov_i
 
         # Jacobian elements related to the scale parameters alpha0, alpha (equation A.7)
         Derpsit[0, :] = psit1 * (Dpsit * Dpsitastpsit + Dmut * Dmutastpsit)  # alpha0
@@ -4703,18 +5052,18 @@ class NonStatGEV(BlueMathModel):
                         * psit1[k]
                         * (Dpsit[k] * Dpsitastpsit[k] + Dmut[k] * Dmutastpsit[k])
                     )  # alpha
-        # Jacobian elements related to the scale parameters betaT2 and varphi (equation A.10)
+        # Jacobian elements related to the scale parameters alphaT and beta_cov (equation A.10)
         if self.ntend_sc > 0:
             Derpsit[1 + 2 * self.npsi, :] = (
                 (Dpsit * Dpsitastpsit + Dmut * Dmutastpsit) * t * psit1
-            )  # betaT2
+            )  # alphaT
         if self.nind_sc > 0:
             for i in range(self.nind_sc):
                 Derpsit[1 + 2 * self.npsi + self.ntend_sc + i, :] = (
                     (Dpsit * Dpsitastpsit + Dmut * Dmutastpsit)
                     * self.covariates[:, self.list_sc[i]]
                     * psit1
-                )  # varphi2
+                )  # alpha_cov
 
         # Jacobian elements related to the shape parameters gamma0 and gamma (equation A.10)
         if self.neps0 == 1:
@@ -4731,7 +5080,7 @@ class NonStatGEV(BlueMathModel):
             for i in range(self.nind_sh):
                 Derpsit[self.neps0 + 2 * self.neps + 1, :] = (
                     Depst + Dpsit * Dpsitastepst + Dmut * Dmutastepst
-                ) * self.covariates[:, self.list_sh[i]]  # varphi3
+                ) * self.covariates[:, self.list_sh[i]]  # gamma_cov
 
         return Dermut, Derpsit, Derepst
 
@@ -4842,14 +5191,14 @@ class NonStatGEV(BlueMathModel):
                 for k in range(len(self.t)):
                     Dq[i + 1, k] = Dqmut[k] * Dmutastmut[k] * self._Dparam(t[k], i + 1)
 
-        # Jacobian elements related to the location parameters betaT, varphi (equation A.9)
+        # Jacobian elements related to the location parameters betaT, beta_cov (equation A.9)
         if self.ntend_loc > 0:
             Dq[1 + 2 * self.nmu, :] = Dqmut * t * Dmutastmut  # betaT
         if self.nind_loc > 0:
             for i in range(self.nind_loc):
                 Dq[1 + 2 * self.nmu + self.ntend_loc + i, :] = (
                     Dqmut * self.covariates[:, self.list_loc[i]] * Dmutastmut
-                )  # varphi_i
+                )  # beta_cov_i
 
         # Jacobian elements related to the scale parameters alpha0, alpha (equation A.7)
         Dq[1 + 2 * self.nmu + self.ntend_loc + self.nind_loc, :] = psit1 * (
@@ -4864,11 +5213,11 @@ class NonStatGEV(BlueMathModel):
                         * psit1[k]
                         * (Dqpsit[k] * Dpsitastpsit[k] + Dqmut[k] * Dmutastpsit[k])
                     )  # alpha
-        # Jacobian elements related to the scale parameters betaT2 and varphi (equation A.10)
+        # Jacobian elements related to the scale parameters alphaT and beta_cov (equation A.10)
         if self.ntend_sc > 0:
             Dq[2 + 2 * self.nmu + self.ntend_loc + self.nind_loc + 2 * self.npsi, :] = (
                 (Dqpsit * Dpsitastpsit + Dqmut * Dmutastpsit) * t * psit1
-            )  # betaT2
+            )  # alphaT
         if self.nind_sc > 0:
             for i in range(self.nind_sc):
                 Dq[
@@ -4884,7 +5233,7 @@ class NonStatGEV(BlueMathModel):
                     (Dqpsit * Dpsitastpsit + Dqmut * Dmutastpsit)
                     * self.covariates[:, self.list_sc[i]]
                     * psit1
-                )  # varphi2
+                )  # alpha_cov
 
         # Jacobian elements related to the shape parameters gamma0 and gamma (equation A.10)
         if self.neps0 == 1:
@@ -4935,7 +5284,7 @@ class NonStatGEV(BlueMathModel):
                     :,
                 ] = (
                     Dqepst + Dqpsit * Dpsitastepst + Dqmut * Dmutastepst
-                ) * self.covariates[:, self.list_sc[i]]  # varphi3
+                ) * self.covariates[:, self.list_sc[i]]  # gamma_cov
 
         return Dq
 
@@ -5195,9 +5544,9 @@ class NonStatGEV(BlueMathModel):
         gamma0=None,
         gamma=None,
         betaT=None,
-        betaT2=None,
-        varphi=None,
-        varphi2=None,
+        alphaT=None,
+        beta_cov=None,
+        alpha_cov=None,
     ):
         """
         Function to compute the aggregated quantile for certain parameters
@@ -5216,12 +5565,12 @@ class NonStatGEV(BlueMathModel):
             gamma = self.gamma
         if betaT is None:
             betaT = self.betaT
-        if betaT2 is None:
-            betaT2 = self.betaT2
-        if varphi is None:
-            varphi = self.varphi
-        if varphi2 is None:
-            varphi2 = self.varphi2
+        if alphaT is None:
+            alphaT = self.alphaT
+        if beta_cov is None:
+            beta_cov = self.beta_cov
+        if alpha_cov is None:
+            alpha_cov = self.alpha_cov
 
         q = np.array([q])
         t0 = np.array([t0])
@@ -5241,12 +5590,12 @@ class NonStatGEV(BlueMathModel):
         # For the required period the mean value of the corresponding covariates is calculated and considered constant for the rest of the study
         if len(self.t) > 0:
             pos = np.where((self.t >= t0) & (self.t <= t1))[0]
-            cov_locint = np.zeros(len(varphi))
-            cov_scint = np.zeros(len(varphi2))
+            cov_locint = np.zeros(len(beta_cov))
+            cov_scint = np.zeros(len(alpha_cov))
             if len(pos) > 0:
-                for i in range(len(varphi)):
+                for i in range(len(beta_cov)):
                     cov_locint[i] = np.mean(self.covariates[pos, self.list_loc[i]])
-                for i in range(len(varphi2)):
+                for i in range(len(alpha_cov)):
                     cov_scint[i] = np.mean(self.covariates[pos, self.list_sc[i]])
         else:
             cov_locint = None
@@ -5261,7 +5610,7 @@ class NonStatGEV(BlueMathModel):
                 beta,
                 betaT,
                 self.covariates[:, self.list_loc],
-                varphi,
+                beta_cov,
                 cov_locint,
                 self.t,
                 x,
@@ -5274,9 +5623,9 @@ class NonStatGEV(BlueMathModel):
                 self._parametro(
                     alpha0,
                     alpha,
-                    betaT2,
+                    alphaT,
                     self.covariates[:, self.list_sc],
-                    varphi2,
+                    alpha_cov,
                     cov_scint,
                     self.t,
                     x,
@@ -5308,9 +5657,9 @@ class NonStatGEV(BlueMathModel):
                         gamma0,
                         gamma,
                         betaT,
-                        betaT2,
-                        varphi,
-                        varphi2,
+                        alphaT,
+                        beta_cov,
+                        alpha_cov,
                     ),
                     float(t0[il]),
                     float(t1[il]),
@@ -5330,9 +5679,9 @@ class NonStatGEV(BlueMathModel):
                         gamma0,
                         gamma,
                         betaT,
-                        betaT2,
-                        varphi,
-                        varphi2,
+                        alphaT,
+                        beta_cov,
+                        alpha_cov,
                     ),
                     float(t0[il]),
                     float(t1[il]),
@@ -5367,9 +5716,9 @@ class NonStatGEV(BlueMathModel):
         gamma0,
         gamma,
         betaT,
-        betaT2,
-        varphi,
-        varphi2,
+        alphaT,
+        beta_cov,
+        alpha_cov,
     ):
         """
         Function to solve the quantile
@@ -5381,7 +5730,7 @@ class NonStatGEV(BlueMathModel):
             beta,
             betaT,
             self.covariates[:, self.list_loc],
-            varphi,
+            beta_cov,
             indicesint,
             self.t,
             t,
@@ -5391,9 +5740,9 @@ class NonStatGEV(BlueMathModel):
             self._parametro(
                 alpha0,
                 alpha,
-                betaT2,
+                alphaT,
                 self.covariates[:, self.list_sc],
-                varphi2,
+                alpha_cov,
                 indices2int,
                 self.t,
                 t,
@@ -5445,9 +5794,9 @@ class NonStatGEV(BlueMathModel):
         gamma0,
         gamma,
         betaT,
-        betaT2,
-        varphi,
-        varphi2,
+        alphaT,
+        beta_cov,
+        alpha_cov,
     ):
         """
         Function to solve the quantile
@@ -5458,7 +5807,7 @@ class NonStatGEV(BlueMathModel):
             beta,
             betaT,
             self.covariates[:, self.list_loc],
-            varphi,
+            beta_cov,
             indicesint,
             self.t,
             t,
@@ -5468,9 +5817,9 @@ class NonStatGEV(BlueMathModel):
             self._parametro(
                 alpha0,
                 alpha,
-                betaT2,
+                alphaT,
                 self.covariates[:, self.list_sc],
-                varphi2,
+                alpha_cov,
                 indices2int,
                 self.t,
                 t,
@@ -5558,19 +5907,19 @@ class NonStatGEV(BlueMathModel):
                 - self._aggquantile(q, t0, t1, betaT=self.betaT * (1 - epsi))[0]
             ) / (2 * self.betaT * epsi)
 
-        # varphi derivative
+        # beta_cov derivative
         if self.nind_loc != 0:
             for i in range(self.nind_loc):
                 aux += 1
-                if self.varphi[i] != 0:
-                    varphilb = self.varphi
-                    varphiub = self.varphi
-                    varphilb[i] = self.varphi[i] * (1 + epsi)
-                    varphiub[i] = self.varphi[i] * (1 - epsi)
+                if self.beta_cov[i] != 0:
+                    beta_covlb = self.beta_cov
+                    beta_covub = self.beta_cov
+                    beta_covlb[i] = self.beta_cov[i] * (1 + epsi)
+                    beta_covub[i] = self.beta_cov[i] * (1 - epsi)
                     jacob[aux] = (
-                        self._aggquantile(q, t0, t1, varphi=varphilb[i])[0]
-                        - self._aggquantile(q, t0, t1, varphi=varphilb[i])[0]
-                    ) / (2 * self.varphi[i] * epsi)
+                        self._aggquantile(q, t0, t1, beta_cov=beta_covlb[i])[0]
+                        - self._aggquantile(q, t0, t1, beta_cov=beta_covlb[i])[0]
+                    ) / (2 * self.beta_cov[i] * epsi)
                 else:
                     jacob[aux] = 0
 
@@ -5598,23 +5947,23 @@ class NonStatGEV(BlueMathModel):
         if self.ntend_sc != 0:
             aux += 1
             jacob[aux] = (
-                self._aggquantile(q, t0, t1, betaT2=self.betaT2 * (1 + epsi))[0]
-                - self._aggquantile(q, t0, t1, betaT2=self.betaT2 * (1 - epsi))[0]
-            ) / (2 * self.betaT2 * epsi)
+                self._aggquantile(q, t0, t1, alphaT=self.alphaT * (1 + epsi))[0]
+                - self._aggquantile(q, t0, t1, alphaT=self.alphaT * (1 - epsi))[0]
+            ) / (2 * self.alphaT * epsi)
 
-        # varphi derivative
+        # beta_cov derivative
         if self.nind_sc != 0:
             for i in range(self.nind_sc):
                 aux += 1
-                if self.varphi2[i] != 0:
-                    varphilb2 = self.varphi2
-                    varphiub2 = self.varphi2
-                    varphilb2[i] = self.varphi2[i] * (1 + epsi)
-                    varphiub2[i] = self.varphi2[i] * (1 - epsi)
+                if self.alpha_cov[i] != 0:
+                    beta_covlb2 = self.alpha_cov
+                    beta_covub2 = self.alpha_cov
+                    beta_covlb2[i] = self.alpha_cov[i] * (1 + epsi)
+                    beta_covub2[i] = self.alpha_cov[i] * (1 - epsi)
                     jacob[aux] = (
-                        self._aggquantile(q, t0, t1, varphi2=varphilb2[i])[0]
-                        - self._aggquantile(q, t0, t1, varphi2=varphilb2[i])[0]
-                    ) / (2 * self.varphi2[i] * epsi)
+                        self._aggquantile(q, t0, t1, alpha_cov=beta_covlb2[i])[0]
+                        - self._aggquantile(q, t0, t1, alpha_cov=beta_covlb2[i])[0]
+                    ) / (2 * self.alpha_cov[i] * epsi)
                 else:
                     jacob[aux] = 0
 
