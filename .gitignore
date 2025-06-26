@@ -77,6 +77,7 @@ docs/_build/
 docs/logs/
 docs/jupyter_execute/
 docs/*.pkl
+.ruff_cache/
 
 # MkDocs documentation (production)
 site/
