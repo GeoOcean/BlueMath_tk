@@ -3,7 +3,8 @@ from typing import List, Tuple, Union
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.colors import Colormap, ListedColormap, BoundaryNorm
+from matplotlib.colors import BoundaryNorm, Colormap, ListedColormap
+
 
 def get_list_of_colors_for_colormap(
     cmap: Union[str, Colormap], num_colors: int
@@ -53,6 +54,7 @@ def create_cmap_from_colors(
 
     return colors.LinearSegmentedColormap.from_list(name, rgb_colors, N=256)
 
+
 def join_colormaps(
     cmap1: Union[str, List[str], Colormap],
     cmap2: Union[str, List[str], Colormap],
@@ -63,7 +65,7 @@ def join_colormaps(
     value_range2: Tuple[float, float] = None,
 ) -> Tuple[ListedColormap, BoundaryNorm]:
     """
-    Join two colormaps into one, with value ranges specified for each. 
+    Join two colormaps into one, with value ranges specified for each.
 
     Parameters
     ----------
@@ -102,7 +104,6 @@ def join_colormaps(
 
     # Create corresponding boundaries in data space
     if value_range1 is not None and value_range2 is not None:
-
         bounds1 = np.linspace(value_range1[0], value_range1[1], 129)
         bounds2 = np.linspace(value_range2[0], value_range2[1], 129)
         all_bounds = np.sort(np.concatenate([bounds1[:-1], bounds2]))
