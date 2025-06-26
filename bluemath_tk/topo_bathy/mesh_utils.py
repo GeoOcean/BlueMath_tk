@@ -237,7 +237,8 @@ def clip_bathymetry(
         dest.write(out_image)
     return mean_raster_resolution
 
-def get_raster_resolution(raster_path: str)-> float:
+
+def get_raster_resolution(raster_path: str) -> float:
     """
     Get the mean resolution of a raster in meters.
 
@@ -346,7 +347,7 @@ def plot_boundaries(mesh: jigsaw_msh_t, ax: Axes, to_geo: callable = None) -> No
                     lambda geom: transform(to_geo, geom)
                 )
             gdf.plot(ax=ax, color=color, label=label)
-        except Exception as e:
+        except Exception as _e:
             print(f"No {label} boundaries available")
 
     plot_boundary(mesh.boundaries.ocean(), color="b", label="Ocean")
@@ -1095,18 +1096,6 @@ def define_mesh_target_size(
     return mesh_spacing
 
 
-if __name__ == "__main__":
-    # Example usage
-    from pyproj import Transformer
-    from shapely.geometry import Polygon
-
-    base_shape = Polygon([(0, 0), (1, 1), (1, 0), (0, 0)])
-    project = Transformer.from_crs("EPSG:4326", "EPSG:32630").transform
-    simpl_UTM = 100.0  # Simplification tolerance in meters
-    simplified_shape = simply_polygon(base_shape, simpl_UTM, project)
-    print(simplified_shape)
-
-
 def read_lines(poly_line: str) -> MultiLineString:
     """
     Reads a CSV file containing coordinates of a polyline and returns a MultiLineString.
@@ -1135,6 +1124,7 @@ def read_lines(poly_line: str) -> MultiLineString:
     if current_segment:
         segments.append(LineString(current_segment))
     return MultiLineString(segments)
+
 
 def get_raster_resolution_meters(lon_center, lat_center, raster_resolution, project):
     """
@@ -1165,3 +1155,15 @@ def get_raster_resolution_meters(lon_center, lat_center, raster_resolution, proj
         ]
     )
     return raster_resolution_meters
+
+
+if __name__ == "__main__":
+    # Example usage
+    from pyproj import Transformer
+    from shapely.geometry import Polygon
+
+    base_shape = Polygon([(0, 0), (1, 1), (1, 0), (0, 0)])
+    project = Transformer.from_crs("EPSG:4326", "EPSG:32630").transform
+    simpl_UTM = 100.0  # Simplification tolerance in meters
+    simplified_shape = simply_polygon(base_shape, simpl_UTM, project)
+    print(simplified_shape)
