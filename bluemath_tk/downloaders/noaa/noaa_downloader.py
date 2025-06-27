@@ -36,7 +36,7 @@ class NOAADownloader(BaseDownloader):
         noaa_downloader = NOAADownloader(
             base_path_to_download="/path/to/NOAA/",  # Will be created if not available
             debug=True,
-            check=False,
+            check=True,
         )
 
         # Download buoy bulk parameters and load DataFrame
