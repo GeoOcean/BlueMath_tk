@@ -1,0 +1,21 @@
+bluemath\_tk.setup package
+==========================
+
+Submodules
+----------
+
+bluemath\_tk.setup.ocsmesh module
+---------------------------------
+
+.. automodule:: bluemath_tk.setup.ocsmesh
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.setup
+   :members:
+   :show-inheritance:
+   :undoc-members:

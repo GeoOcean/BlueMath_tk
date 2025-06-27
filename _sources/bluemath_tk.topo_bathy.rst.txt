@@ -1,0 +1,45 @@
+bluemath\_tk.topo\_bathy package
+================================
+
+Submodules
+----------
+
+bluemath\_tk.topo\_bathy.OCSMod module
+--------------------------------------
+
+.. automodule:: bluemath_tk.topo_bathy.OCSMod
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.topo\_bathy.mesh\_utils module
+-------------------------------------------
+
+.. automodule:: bluemath_tk.topo_bathy.mesh_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.topo\_bathy.profiles module
+----------------------------------------
+
+.. automodule:: bluemath_tk.topo_bathy.profiles
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.topo\_bathy.swan\_grid module
+------------------------------------------
+
+.. automodule:: bluemath_tk.topo_bathy.swan_grid
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.topo_bathy
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,21 @@
+bluemath\_tk.downloaders.ecmwf package
+======================================
+
+Submodules
+----------
+
+bluemath\_tk.downloaders.ecmwf.ecmwf\_downloader module
+-------------------------------------------------------
+
+.. automodule:: bluemath_tk.downloaders.ecmwf.ecmwf_downloader
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.downloaders.ecmwf
+   :members:
+   :show-inheritance:
+   :undoc-members:

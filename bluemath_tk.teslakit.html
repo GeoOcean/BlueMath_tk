@@ -1,0 +1,265 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.teslakit package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.teslakit.io package" href="bluemath_tk.teslakit.io.html" />
+    <link rel="prev" title="bluemath_tk.tcs package" href="bluemath_tk.tcs.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.additive.html">bluemath_tk.additive package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.setup.html">bluemath_tk.setup package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tcs.html">bluemath_tk.tcs package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.teslakit package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.teslakit.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-teslakit-package">
+<h1>bluemath_tk.teslakit package<a class="headerlink" href="#bluemath-tk-teslakit-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.teslakit.io.html">bluemath_tk.teslakit.io package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.io.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.io.html#bluemath-tk-teslakit-io-aux-nc-module">bluemath_tk.teslakit.io.aux_nc module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.io.html#bluemath-tk-teslakit-io-cfs-module">bluemath_tk.teslakit.io.cfs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.io.html#bluemath-tk-teslakit-io-getinfo-module">bluemath_tk.teslakit.io.getinfo module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.io.html#bluemath-tk-teslakit-io-matlab-module">bluemath_tk.teslakit.io.matlab module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.io.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.html">bluemath_tk.teslakit.numerical_models package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html">bluemath_tk.teslakit.numerical_models.swan package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath-tk-teslakit-numerical-models-swan-geo-module">bluemath_tk.teslakit.numerical_models.swan.geo module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath-tk-teslakit-numerical-models-swan-io-module">bluemath_tk.teslakit.numerical_models.swan.io module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath-tk-teslakit-numerical-models-swan-storms-module">bluemath_tk.teslakit.numerical_models.swan.storms module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath-tk-teslakit-numerical-models-swan-temp-plots-module">bluemath_tk.teslakit.numerical_models.swan.temp_plots module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath-tk-teslakit-numerical-models-swan-wrap-module">bluemath_tk.teslakit.numerical_models.swan.wrap module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.teslakit.test.html">bluemath_tk.teslakit.test package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-slr-timeseries-module">bluemath_tk.teslakit.test.SLR_timeseries module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-roi-hy-sim-slr-storm-module">bluemath_tk.teslakit.test.roi_hy_sim_slr_storm module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-roi-hycreww-historical-module">bluemath_tk.teslakit.test.roi_hycreww_historical module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-roi-hycreww-sim-module">bluemath_tk.teslakit.test.roi_hycreww_sim module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-alr-module">bluemath_tk.teslakit.test.test_alr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-climate-emulator-module">bluemath_tk.teslakit.test.test_climate_emulator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-custom-dateutils-module">bluemath_tk.teslakit.test.test_custom_dateutils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-estela-module">bluemath_tk.teslakit.test.test_estela module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-extremes-module">bluemath_tk.teslakit.test.test_extremes module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-hycreww-module">bluemath_tk.teslakit.test.test_hycreww module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-intradaily-module">bluemath_tk.teslakit.test.test_intradaily module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-kma-module">bluemath_tk.teslakit.test.test_kma module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-mda-module">bluemath_tk.teslakit.test.test_mda module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-mjo-module">bluemath_tk.teslakit.test.test_mjo module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-pca-module">bluemath_tk.teslakit.test.test_pca module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-project-site-module">bluemath_tk.teslakit.test.test_project_site module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-rbf-module">bluemath_tk.teslakit.test.test_rbf module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-statistical-module">bluemath_tk.teslakit.test.test_statistical module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-storms-module">bluemath_tk.teslakit.test.test_storms module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-tides-module">bluemath_tk.teslakit.test.test_tides module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-waves-module">bluemath_tk.teslakit.test.test_waves module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.test.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.teslakit.util.html">bluemath_tk.teslakit.util package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.util.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.util.html#bluemath-tk-teslakit-util-operations-module">bluemath_tk.teslakit.util.operations module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.util.html#bluemath-tk-teslakit-util-time-operations-module">bluemath_tk.teslakit.util.time_operations module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.util.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-alr-module">
+<h2>bluemath_tk.teslakit.alr module<a class="headerlink" href="#bluemath-tk-teslakit-alr-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-alr-aic-module">
+<h2>bluemath_tk.teslakit.alr_AIC module<a class="headerlink" href="#bluemath-tk-teslakit-alr-aic-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-climate-emulator-module">
+<h2>bluemath_tk.teslakit.climate_emulator module<a class="headerlink" href="#bluemath-tk-teslakit-climate-emulator-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-database-module">
+<h2>bluemath_tk.teslakit.database module<a class="headerlink" href="#bluemath-tk-teslakit-database-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-estela-module">
+<h2>bluemath_tk.teslakit.estela module<a class="headerlink" href="#bluemath-tk-teslakit-estela-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-extremes-module">
+<h2>bluemath_tk.teslakit.extremes module<a class="headerlink" href="#bluemath-tk-teslakit-extremes-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-intradaily-module">
+<h2>bluemath_tk.teslakit.intradaily module<a class="headerlink" href="#bluemath-tk-teslakit-intradaily-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-kma-module">
+<h2>bluemath_tk.teslakit.kma module<a class="headerlink" href="#bluemath-tk-teslakit-kma-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-mda-module">
+<h2>bluemath_tk.teslakit.mda module<a class="headerlink" href="#bluemath-tk-teslakit-mda-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-mjo-module">
+<h2>bluemath_tk.teslakit.mjo module<a class="headerlink" href="#bluemath-tk-teslakit-mjo-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-pca-module">
+<h2>bluemath_tk.teslakit.pca module<a class="headerlink" href="#bluemath-tk-teslakit-pca-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-rbf-module">
+<h2>bluemath_tk.teslakit.rbf module<a class="headerlink" href="#bluemath-tk-teslakit-rbf-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-statistical-module">
+<h2>bluemath_tk.teslakit.statistical module<a class="headerlink" href="#bluemath-tk-teslakit-statistical-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-storms-module">
+<h2>bluemath_tk.teslakit.storms module<a class="headerlink" href="#bluemath-tk-teslakit-storms-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-tides-module">
+<h2>bluemath_tk.teslakit.tides module<a class="headerlink" href="#bluemath-tk-teslakit-tides-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bluemath-tk-teslakit-waves-module">
+<h2>bluemath_tk.teslakit.waves module<a class="headerlink" href="#bluemath-tk-teslakit-waves-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-contents">
+<h2>Module contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.tcs.html" class="btn btn-neutral float-left" title="bluemath_tk.tcs package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.teslakit.io.html" class="btn btn-neutral float-right" title="bluemath_tk.teslakit.io package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

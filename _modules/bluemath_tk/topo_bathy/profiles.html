@@ -1,0 +1,489 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.topo_bathy.profiles &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.topo_bathy.profiles</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.topo_bathy.profiles</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">interpolate</span>
+
+
+<div class="viewcode-block" id="reef">
+<a class="viewcode-back" href="../../../bluemath_tk.topo_bathy.html#bluemath_tk.topo_bathy.profiles.reef">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">reef</span><span class="p">(</span>
+    <span class="n">dx</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">h0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">Slope1</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">Slope2</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">Wreef</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">Wfore</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">bCrest</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">emsl</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a reef morphologic profile based on Pearson et al. 2017.</span>
+
+<span class="sd">    This function creates a bathymetric profile for reef environments with</span>
+<span class="sd">    distinct sections: fore reef, reef slope, reef flat, and inner slope.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dx : float</span>
+<span class="sd">        Bathymetry mesh resolution at x axes (m)</span>
+<span class="sd">    h0 : float</span>
+<span class="sd">        Offshore depth (m)</span>
+<span class="sd">    Slope1 : float</span>
+<span class="sd">        Fore shore slope (dimensionless)</span>
+<span class="sd">    Slope2 : float</span>
+<span class="sd">        Inner shore slope (dimensionless)</span>
+<span class="sd">    Wreef : float</span>
+<span class="sd">        Reef bed width (m)</span>
+<span class="sd">    Wfore : float</span>
+<span class="sd">        Flume length before fore toe (m)</span>
+<span class="sd">    bCrest : float</span>
+<span class="sd">        Beach height (m)</span>
+<span class="sd">    emsl : float</span>
+<span class="sd">        Mean sea level (m)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Depth data values representing the reef profile (m)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The profile consists of several sections:</span>
+<span class="sd">    - Fore reef: constant depth at offshore level</span>
+<span class="sd">    - Reef slope: linear slope from offshore to reef flat</span>
+<span class="sd">    - Reef flat: constant depth at mean sea level</span>
+<span class="sd">    - Inner slope: linear slope from reef flat to beach</span>
+<span class="sd">    - Plane beach: gentle slope for overtopping dissipation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># flume length</span>
+    <span class="n">W_inner</span> <span class="o">=</span> <span class="n">bCrest</span> <span class="o">/</span> <span class="n">Slope2</span>
+    <span class="n">W1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">h0</span> <span class="o">-</span> <span class="n">emsl</span><span class="p">)</span> <span class="o">/</span> <span class="n">Slope1</span><span class="p">)</span>
+
+    <span class="c1"># sections length</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Wfore</span><span class="p">,</span> <span class="n">dx</span><span class="p">)</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">W1</span><span class="p">,</span> <span class="n">dx</span><span class="p">)</span>
+    <span class="n">x3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Wreef</span><span class="p">,</span> <span class="n">dx</span><span class="p">)</span>
+    <span class="n">x4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">W_inner</span><span class="p">,</span> <span class="n">dx</span><span class="p">)</span>
+
+    <span class="c1"># curve equation</span>
+    <span class="n">y_fore</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x1</span><span class="p">))</span> <span class="o">+</span> <span class="p">[</span><span class="n">h0</span><span class="p">]</span>
+    <span class="n">y1</span> <span class="o">=</span> <span class="o">-</span><span class="n">Slope1</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">+</span> <span class="n">h0</span>
+    <span class="n">y2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x3</span><span class="p">))</span> <span class="o">+</span> <span class="n">emsl</span>
+    <span class="n">y_inner</span> <span class="o">=</span> <span class="o">-</span><span class="n">Slope2</span> <span class="o">*</span> <span class="n">x4</span> <span class="o">+</span> <span class="n">emsl</span>
+
+    <span class="c1"># overtopping cases: an inshore plane beach to dissipate overtopped flux</span>
+    <span class="n">plane</span> <span class="o">=</span> <span class="mf">0.005</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">y_inner</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># concatenate depth</span>
+    <span class="n">depth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">y_fore</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">y_inner</span><span class="p">,</span> <span class="n">plane</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">depth</span></div>
+
+
+
+<div class="viewcode-block" id="linear">
+<a class="viewcode-back" href="../../../bluemath_tk.topo_bathy.html#bluemath_tk.topo_bathy.profiles.linear">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">linear</span><span class="p">(</span><span class="n">dx</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">h0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">bCrest</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">Wfore</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a simple linear profile (y = m * x + n).</span>
+
+<span class="sd">    This function creates a bathymetric profile with a constant slope</span>
+<span class="sd">    from offshore to the beach crest.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dx : float</span>
+<span class="sd">        Bathymetry mesh resolution at x axes (m)</span>
+<span class="sd">    h0 : float</span>
+<span class="sd">        Offshore depth (m)</span>
+<span class="sd">    bCrest : float</span>
+<span class="sd">        Beach height (m)</span>
+<span class="sd">    m : float</span>
+<span class="sd">        Profile slope (dimensionless)</span>
+<span class="sd">    Wfore : float</span>
+<span class="sd">        Flume length before slope toe (m)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Depth data values representing the linear profile (m)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The profile consists of:</span>
+<span class="sd">    - Fore section: constant depth at offshore level</span>
+<span class="sd">    - Main slope: linear slope from offshore to beach</span>
+<span class="sd">    - Beach slope: linear slope from sea level to beach crest</span>
+<span class="sd">    - Plane beach: gentle slope for overtopping dissipation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Flume length</span>
+    <span class="n">W1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">h0</span> <span class="o">/</span> <span class="n">m</span><span class="p">)</span>
+    <span class="n">W2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">bCrest</span> <span class="o">/</span> <span class="n">m</span><span class="p">)</span>
+
+    <span class="c1"># Sections length</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Wfore</span><span class="p">,</span> <span class="n">dx</span><span class="p">)</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">W1</span><span class="p">,</span> <span class="n">dx</span><span class="p">)</span>
+    <span class="n">x3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">W2</span><span class="p">,</span> <span class="n">dx</span><span class="p">)</span>
+
+    <span class="c1"># Curve equation</span>
+    <span class="n">y_fore</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x1</span><span class="p">))</span> <span class="o">+</span> <span class="p">[</span><span class="n">h0</span><span class="p">]</span>
+    <span class="n">y1</span> <span class="o">=</span> <span class="o">-</span><span class="n">m</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">+</span> <span class="n">h0</span>
+    <span class="n">y2</span> <span class="o">=</span> <span class="o">-</span><span class="n">m</span> <span class="o">*</span> <span class="n">x3</span>
+
+    <span class="c1"># Overtopping cases: an inshore plane beach to dissipate overtopped flux</span>
+    <span class="n">plane</span> <span class="o">=</span> <span class="mf">0.005</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">y2</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">y2</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Length bed = 2 L</span>
+
+    <span class="c1"># concatenate depth</span>
+    <span class="n">depth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">y_fore</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">plane</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">depth</span></div>
+
+
+
+<div class="viewcode-block" id="parabolic">
+<a class="viewcode-back" href="../../../bluemath_tk.topo_bathy.html#bluemath_tk.topo_bathy.profiles.parabolic">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parabolic</span><span class="p">(</span>
+    <span class="n">dx</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">h0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">xBeach</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">bCrest</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a parabolic profile (y = A * x^(2/3)).</span>
+
+<span class="sd">    This function creates a bathymetric profile following the equilibrium</span>
+<span class="sd">    beach profile theory with a parabolic shape.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dx : float</span>
+<span class="sd">        Bathymetry mesh resolution at x axes (m)</span>
+<span class="sd">    h0 : float</span>
+<span class="sd">        Offshore depth (m)</span>
+<span class="sd">    A : float</span>
+<span class="sd">        Parabola coefficient (m^(1/3))</span>
+<span class="sd">    xBeach : float</span>
+<span class="sd">        Beach length (m)</span>
+<span class="sd">    bCrest : float</span>
+<span class="sd">        Beach height (m)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Depth data values representing the parabolic profile (m)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The profile follows the equilibrium beach profile theory where</span>
+<span class="sd">    depth varies as x^(2/3) from the shoreline to the closure depth.</span>
+<span class="sd">    The beach section is linear from the shoreline to the beach crest.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">lx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">xBeach</span><span class="p">,</span> <span class="n">dx</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">bCrest</span> <span class="o">/</span> <span class="n">xBeach</span><span class="p">)</span> <span class="o">*</span> <span class="n">lx</span>
+
+    <span class="n">depth</span><span class="p">,</span> <span class="n">xl</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+
+    <span class="k">while</span> <span class="n">z</span> <span class="o">&lt;=</span> <span class="n">h0</span><span class="p">:</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="n">x</span> <span class="o">**</span> <span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">depth</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">xl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">+=</span> <span class="n">dx</span>
+
+    <span class="n">f</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">xl</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span>
+    <span class="n">xnew</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span> <span class="o">*</span> <span class="n">dx</span><span class="p">)),</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">ynew</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">xnew</span><span class="p">)</span>
+
+    <span class="c1"># concatenate depth</span>
+    <span class="n">depth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">ynew</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">y</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">depth</span></div>
+
+
+
+<div class="viewcode-block" id="biparabolic">
+<a class="viewcode-back" href="../../../bluemath_tk.topo_bathy.html#bluemath_tk.topo_bathy.profiles.biparabolic">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">biparabolic</span><span class="p">(</span>
+    <span class="n">h0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">hsig</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">omega_surf_list</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">TR</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a biparabolic profile based on Bernabeu et al. 2013.</span>
+
+<span class="sd">    This function creates a bathymetric profile with two parabolic sections</span>
+<span class="sd">    separated by a discontinuity point, suitable for mixed-sediment beaches.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    h0 : float</span>
+<span class="sd">        Offshore water level (m)</span>
+<span class="sd">    hsig : float</span>
+<span class="sd">        Significant wave height (m)</span>
+<span class="sd">    omega_surf_list : float or np.ndarray</span>
+<span class="sd">        Intertidal dimensionless fall velocity (1 &lt;= omega_surf &lt;= 5)</span>
+<span class="sd">    TR : float</span>
+<span class="sd">        Tidal range (m)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Depth data values representing the biparabolic profile (m)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The biparabolic profile consists of:</span>
+<span class="sd">    - Lower section: parabolic profile for fine sediments</span>
+<span class="sd">    - Upper section: parabolic profile for coarse sediments</span>
+<span class="sd">    - Discontinuity point: transition between the two sections</span>
+<span class="sd">    - The profile is centered on mean tide level</span>
+
+<span class="sd">    The empirical parameters A, B, C, D are adjusted based on the</span>
+<span class="sd">    dimensionless fall velocity parameter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Discontinuity point</span>
+    <span class="n">hr</span> <span class="o">=</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">hsig</span> <span class="o">+</span> <span class="n">TR</span>
+
+    <span class="c1"># Legal point</span>
+    <span class="n">_ha</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">hsig</span> <span class="o">+</span> <span class="n">TR</span>
+
+    <span class="c1"># Empirical adjusted parameters</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="mf">0.21</span> <span class="o">-</span> <span class="mf">0.02</span> <span class="o">*</span> <span class="n">omega_surf_list</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="mf">0.89</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.24</span> <span class="o">*</span> <span class="n">omega_surf_list</span><span class="p">)</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="mf">0.06</span> <span class="o">+</span> <span class="mf">0.04</span> <span class="o">*</span> <span class="n">omega_surf_list</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="mf">0.22</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.83</span> <span class="o">*</span> <span class="n">omega_surf_list</span><span class="p">)</span>
+
+    <span class="c1"># Different values for the height</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="mi">150</span><span class="p">)</span>
+    <span class="n">h_cont</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Important points for the profile</span>
+    <span class="n">_xr</span> <span class="o">=</span> <span class="p">(</span><span class="n">hr</span> <span class="o">/</span> <span class="n">A</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">B</span> <span class="o">/</span> <span class="p">(</span><span class="n">A</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)))</span> <span class="o">*</span> <span class="n">hr</span><span class="o">**</span><span class="mi">3</span>
+
+    <span class="c1"># Lines for the profile</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">Xx</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">xX</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">hs</span> <span class="ow">in</span> <span class="n">h</span><span class="p">:</span>  <span class="c1"># For each vertical point</span>
+        <span class="k">if</span> <span class="n">hs</span> <span class="o">&lt;</span> <span class="n">hr</span><span class="p">:</span>
+            <span class="n">x_max</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">xapp</span> <span class="o">=</span> <span class="p">(</span><span class="n">hs</span> <span class="o">/</span> <span class="n">A</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">B</span> <span class="o">/</span> <span class="p">(</span><span class="n">A</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)))</span> <span class="o">*</span> <span class="n">hs</span><span class="o">**</span><span class="mi">3</span>
+            <span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xapp</span><span class="p">)</span>
+            <span class="n">x_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">xapp</span><span class="p">,</span> <span class="n">x_max</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">hs</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">hr</span> <span class="o">-</span> <span class="mf">1.5</span><span class="p">):</span>
+                <span class="n">Xxapp</span> <span class="o">=</span> <span class="p">(</span><span class="n">hs</span> <span class="o">/</span> <span class="n">C</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">D</span> <span class="o">/</span> <span class="p">(</span><span class="n">C</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)))</span> <span class="o">*</span> <span class="n">hs</span><span class="o">**</span><span class="mi">3</span>
+                <span class="n">Xx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Xxapp</span><span class="p">)</span>
+                <span class="n">h_cont</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Xapp</span> <span class="o">=</span> <span class="p">(</span><span class="n">hs</span> <span class="o">/</span> <span class="n">C</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">D</span> <span class="o">/</span> <span class="p">(</span><span class="n">C</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)))</span> <span class="o">*</span> <span class="n">hs</span><span class="o">**</span><span class="mi">3</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">hs</span> <span class="o">-</span> <span class="n">hr</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.1</span><span class="p">:</span>
+                <span class="n">x_diff</span> <span class="o">=</span> <span class="n">x_max</span> <span class="o">-</span> <span class="n">Xapp</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Xapp</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">hs</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">hr</span> <span class="o">+</span> <span class="mf">1.5</span><span class="p">):</span>
+                <span class="n">xXapp</span> <span class="o">=</span> <span class="p">(</span><span class="n">hs</span> <span class="o">/</span> <span class="n">A</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">B</span> <span class="o">/</span> <span class="p">(</span><span class="n">A</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)))</span> <span class="o">*</span> <span class="n">hs</span><span class="o">**</span><span class="mi">3</span>
+                <span class="n">xX</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xXapp</span><span class="p">)</span>
+                <span class="n">h_cont</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hs</span><span class="p">)</span>
+
+    <span class="n">h_cont</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">h_cont</span><span class="p">)</span>
+    <span class="n">x_tot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">+</span> <span class="n">x_diff</span><span class="p">))</span>
+    <span class="c1"># x_cont = np.concatenate((np.array(Xx)+x_diff, np.array(xX)))</span>
+
+    <span class="c1"># Centering the y-axis in the mean tide</span>
+    <span class="n">xnew</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">x_tot</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># xnew_border = np.arange(x_tot[-1]-x_cont[0], x_cont[-1]-x_cont[-1], 1)</span>
+    <span class="n">depth</span> <span class="o">=</span> <span class="n">h</span> <span class="o">-</span> <span class="n">TR</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="c1"># border = (-h_cont+TR/2)</span>
+
+    <span class="n">f</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">x_tot</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span>
+    <span class="c1"># f1 = interpolate.interp1d(x_cont, border)</span>
+    <span class="n">ynew</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">xnew</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># ynew_border = f1(xnew_border)[::-1]</span>
+
+    <span class="n">depth</span> <span class="o">=</span> <span class="p">(</span><span class="n">h</span> <span class="o">-</span> <span class="n">TR</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># border = (-h_cont+TR/2)[::-1]</span>
+
+    <span class="c1"># plot</span>
+    <span class="c1"># TODO: move plot to plots.py</span>
+    <span class="c1"># fig, ax = plt.subplots(1, figsize = (12, 4))</span>
+    <span class="c1"># ax.plot(xnew, -ynew, color=&#39;k&#39;, zorder=3)</span>
+    <span class="c1"># ax.fill_between(xnew, np.zeros((len(xnew)))+(-ynew[0]),</span>
+    <span class="c1">#                -ynew,facecolor=&quot;wheat&quot;, alpha=1, zorder=2)</span>
+    <span class="c1"># ax.scatter(x_tot[-1]-xr, -hr+TR/2, s=30, c=&#39;red&#39;, label=&#39;Discontinuity point&#39;, zorder=5)</span>
+    <span class="c1"># ax.fill_between(xnew, -ynew, np.zeros(len(xnew)), facecolor=&quot;deepskyblue&quot;, alpha=0.5, zorder=1)</span>
+    <span class="c1"># ax.axhline(-ha+TR/2, color=&#39;grey&#39;, ls=&#39;-.&#39;, label=&#39;Available region&#39;)</span>
+    <span class="c1"># ax.axhline(TR/2, color=&#39;silver&#39;, ls=&#39;--&#39;, label=&#39;HT&#39;)</span>
+    <span class="c1"># ax.axhline(0, color=&#39;lightgrey&#39;, ls=&#39;--&#39;, label=&#39;MSL&#39;)</span>
+    <span class="c1"># ax.axhline(-TR/2, color=&#39;silver&#39;, ls=&#39;--&#39;, label=&#39;LT&#39;)</span>
+    <span class="c1"># ax.scatter(xnew_border, -ynew_border, c=&#39;k&#39;, s=1, marker=&#39;_&#39;, zorder=4)</span>
+
+    <span class="c1"># attrbs</span>
+    <span class="c1"># ax.set_ylim(-ynew[0], -ynew[-1]+1)</span>
+    <span class="c1"># ax.set_xlim(0, x_tot[-1])</span>
+    <span class="c1"># set_title  = &#39;$\Omega_{sf}$ = &#39; + str(omega_surf_list)</span>
+    <span class="c1"># set_title += &#39;, TR = &#39; + str(TR)</span>
+    <span class="c1"># ax.set_title(set_title)</span>
+    <span class="c1"># ax.legend(loc=&#39;upper left&#39;)</span>
+    <span class="c1"># ax.set_ylabel(&#39;$Depth$ $[m]$&#39;, fontweight=&#39;bold&#39;)</span>
+    <span class="c1"># ax.set_xlabel(&#39;$X$ $[m]$&#39;, fontweight=&#39;bold&#39;)</span>
+
+    <span class="c1"># TODO: deph or ynew ?</span>
+    <span class="k">return</span> <span class="n">ynew</span></div>
+
+
+
+<div class="viewcode-block" id="custom_profile">
+<a class="viewcode-back" href="../../../bluemath_tk.topo_bathy.html#bluemath_tk.topo_bathy.profiles.custom_profile">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">custom_profile</span><span class="p">(</span>
+    <span class="n">dx</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">emsl</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">xs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">ys</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a custom N-point profile from user-defined coordinates.</span>
+
+<span class="sd">    This function creates a bathymetric profile by interpolating between</span>
+<span class="sd">    user-specified x,y coordinate pairs.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dx : float</span>
+<span class="sd">        Bathymetry mesh resolution at x axes (m)</span>
+<span class="sd">    emsl : float</span>
+<span class="sd">        Mean sea level (m) - used for reference but not directly applied</span>
+<span class="sd">    xs : list or np.ndarray</span>
+<span class="sd">        X coordinate values (m)</span>
+<span class="sd">    ys : list or np.ndarray</span>
+<span class="sd">        Y coordinate values (m) - positive values represent elevation above MSL</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Depth data values representing the custom profile (m)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function uses linear interpolation between the provided points.</span>
+<span class="sd">    The output depths are negative values (below sea level) as is</span>
+<span class="sd">    conventional for bathymetric data.</span>
+
+<span class="sd">    The xs and ys arrays must have the same length and be sorted</span>
+<span class="sd">    in increasing x order for proper interpolation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># flume length</span>
+    <span class="n">xnew</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">xs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dx</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">)</span>
+    <span class="n">ynew</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">xnew</span><span class="p">)</span>
+
+    <span class="n">depth</span> <span class="o">=</span> <span class="o">-</span><span class="n">ynew</span>
+
+    <span class="k">return</span> <span class="n">depth</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

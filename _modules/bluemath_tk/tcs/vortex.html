@@ -1,0 +1,439 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.tcs.vortex &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.tcs.vortex</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.tcs.vortex</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.geo</span><span class="w"> </span><span class="kn">import</span> <span class="n">geo_distance_cartesian</span><span class="p">,</span> <span class="n">geodesic_distance</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Dynamic Holland Model for Wind Vortex Fields</span>
+<span class="sd">This module implements the Dynamic Holland Model to generate wind vortex fields</span>
+<span class="sd">from storm track parameters. It computes wind speed and direction based on</span>
+<span class="sd">the storm&#39;s position, pressure, and wind parameters, using either spherical or</span>
+<span class="sd">cartesian coordinates.</span>
+<span class="sd">The model is optimized for vectorized operations to enhance performance.</span>
+<span class="sd">It supports both spherical coordinates (latitude, longitude) and cartesian</span>
+<span class="sd">coordinates (x, y) for storm track data.</span>
+<span class="sd">The output is an xarray Dataset containing wind speed and direction.</span>
+<span class="sd">The model is based on the Dynamic Holland Model, which uses storm parameters</span>
+<span class="sd">to compute wind fields, considering factors like the Coriolis effect,</span>
+<span class="sd">central pressure deficit, and the radius of maximum winds.</span>
+<span class="sd">This implementation is designed to be efficient and scalable, suitable for</span>
+<span class="sd">large datasets and real-time applications.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="vortex_model_grid">
+<a class="viewcode-back" href="../../../bluemath_tk.tcs.html#bluemath_tk.tcs.vortex.vortex_model_grid">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">vortex_model_grid</span><span class="p">(</span>
+    <span class="n">storm_track</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">cg_lon</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">cg_lat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">coords_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;SPHERICAL&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate wind vortex fields from storm track parameters using the Dynamic Holland Model.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    storm_track : pd.DataFrame</span>
+<span class="sd">        DataFrame containing storm track parameters.</span>
+<span class="sd">        - obligatory fields: vfx, vfy, p0, pn, vmax, rmw</span>
+<span class="sd">        - for SPHERICAL coordinates: lon, lat</span>
+<span class="sd">        - for CARTESIAN coordinates: x, y, latitude</span>
+<span class="sd">    cg_lon : np.ndarray</span>
+<span class="sd">        Computational grid longitudes.</span>
+<span class="sd">    cg_lat : np.ndarray</span>
+<span class="sd">        Computational grid latitudes.</span>
+<span class="sd">    cg_lon, cg_lat : np.ndarray</span>
+<span class="sd">        Computational grid in longitudes and latitudes.</span>
+<span class="sd">    coords_mode : str</span>
+<span class="sd">        &#39;SPHERICAL&#39; for spherical coordinates (latitude, longitude),</span>
+<span class="sd">        &#39;CARTESIAN&#39; for Cartesian coordinates (x, y).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    xarray.Dataset</span>
+<span class="sd">        Dataset containing wind speed W, direction Dir (º from north),</span>
+<span class="sd">        and pressure p at each grid point.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; storm_track = pd.DataFrame({</span>
+<span class="sd">    ...     &#39;vfx&#39;: [10, 12], &#39;vfy&#39;: [5, 6],</span>
+<span class="sd">    ...     &#39;p0&#39;: [1000, 990], &#39;pn&#39;: [980, 970],</span>
+<span class="sd">    ...     &#39;vmax&#39;: [50, 55], &#39;rmw&#39;: [30, 35],</span>
+<span class="sd">    ...     &#39;lon&#39;: [10, 12], &#39;lat&#39;: [20, 22]</span>
+<span class="sd">    ... })</span>
+<span class="sd">    &gt;&gt;&gt; cg_lon = np.array([10, 11, 12])</span>
+<span class="sd">    &gt;&gt;&gt; cg_lat = np.array([20, 21, 22])</span>
+<span class="sd">    &gt;&gt;&gt; coords_mode = &#39;SPHERICAL&#39;</span>
+<span class="sd">    &gt;&gt;&gt; result = vortex_model_grid(storm_track, cg_lon, cg_lat, coords_mode)</span>
+<span class="sd">    &gt;&gt;&gt; print(result)</span>
+<span class="sd">    &lt;xarray.Dataset&gt;</span>
+<span class="sd">    Dimensions:  (lat: 3, lon: 3, time: 2)</span>
+<span class="sd">    Coordinates:</span>
+<span class="sd">    * lat      (lat) float64 20.0 21.0 22.0</span>
+<span class="sd">    * lon      (lon) float64 10.0 11.0 12.0</span>
+<span class="sd">    * time     (time) datetime64[ns] 2023-10-01 2023-10-02</span>
+<span class="sd">    Data variables:</span>
+<span class="sd">    W        (lat, lon, time) float64 0.0 0.0 0.0 ... 0.0 0.0 0.0</span>
+<span class="sd">    Dir      (lat, lon, time) float64 0.0 0.0 0.0 ... 0.0 0.0 0.0</span>
+<span class="sd">    p        (lat, lon, time) float64 0.0 0.0 0.0 ... 0.0 0.0 0.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Convert negative longitudes to 0-360 range</span>
+    <span class="n">converted_coords</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">coords_mode</span> <span class="o">==</span> <span class="s2">&quot;SPHERICAL&quot;</span><span class="p">:</span>
+        <span class="n">cg_lon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cg_lon</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">cg_lon</span> <span class="o">+</span> <span class="mi">360</span><span class="p">,</span> <span class="n">cg_lon</span><span class="p">)</span>
+        <span class="n">converted_coords</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># Define model constants</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="mf">0.9</span>  <span class="c1"># Conversion factor of wind speed</span>
+    <span class="n">rho_air</span> <span class="o">=</span> <span class="mf">1.15</span>  <span class="c1"># Air density [kg/m³]</span>
+    <span class="n">omega</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">86184.2</span>  <span class="c1"># Earth&#39;s rotation rate [rad/s]</span>
+    <span class="n">deg2rad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>  <span class="c1"># Degrees to radians conversion</span>
+    <span class="n">conv_1min_to_10min</span> <span class="o">=</span> <span class="mf">0.93</span>  <span class="c1"># Convert 1-min avg winds to 10-min avg</span>
+
+    <span class="c1"># Extract storm parameters from the DataFrame</span>
+    <span class="n">vfx</span><span class="p">,</span> <span class="n">vfy</span> <span class="o">=</span> <span class="n">storm_track</span><span class="o">.</span><span class="n">vfx</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">storm_track</span><span class="o">.</span><span class="n">vfy</span><span class="o">.</span><span class="n">values</span>  <span class="c1"># [kt] translation</span>
+    <span class="n">p0</span><span class="p">,</span> <span class="n">pn</span> <span class="o">=</span> <span class="n">storm_track</span><span class="o">.</span><span class="n">p0</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">storm_track</span><span class="o">.</span><span class="n">pn</span><span class="o">.</span><span class="n">values</span>  <span class="c1"># [mbar] pressure</span>
+    <span class="n">vmax</span><span class="p">,</span> <span class="n">rmw</span> <span class="o">=</span> <span class="n">storm_track</span><span class="o">.</span><span class="n">vmax</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">storm_track</span><span class="o">.</span><span class="n">rmw</span><span class="o">.</span><span class="n">values</span>  <span class="c1"># [kt], [nmile]</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="n">storm_track</span><span class="o">.</span><span class="n">index</span>  <span class="c1"># time values</span>
+
+    <span class="c1"># Select coordinates depending on mode</span>
+    <span class="k">if</span> <span class="n">coords_mode</span> <span class="o">==</span> <span class="s2">&quot;SPHERICAL&quot;</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">lat</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">storm_track</span><span class="o">.</span><span class="n">lon</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">storm_track</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">storm_track</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">lat</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">storm_track</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">storm_track</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">storm_track</span><span class="o">.</span><span class="n">latitude</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Check if the storm is in the southern hemisphere</span>
+    <span class="n">is_southern</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">lat</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Create 2D meshgrid of computational grid</span>
+    <span class="n">lon2d</span><span class="p">,</span> <span class="n">lat2d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">cg_lon</span><span class="p">,</span> <span class="n">cg_lat</span><span class="p">)</span>
+    <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cg_lat</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">cg_lon</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">p0</span><span class="p">))</span>
+
+    <span class="c1"># Initialize output arrays for wind magnitude and direction</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="c1"># Loop over time steps to compute vortex fields</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">p0</span><span class="p">)):</span>
+        <span class="n">lo</span><span class="p">,</span> <span class="n">la</span><span class="p">,</span> <span class="n">la0</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lat</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># Skip time steps with NaN values</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">([</span><span class="n">lo</span><span class="p">,</span> <span class="n">la</span><span class="p">,</span> <span class="n">la0</span><span class="p">,</span> <span class="n">p0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">pn</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">vfx</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">vfy</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">vmax</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">rmw</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Compute distance between grid points and storm center</span>
+        <span class="k">if</span> <span class="n">coords_mode</span> <span class="o">==</span> <span class="s2">&quot;SPHERICAL&quot;</span><span class="p">:</span>
+            <span class="n">geo_dis</span> <span class="o">=</span> <span class="n">geodesic_distance</span><span class="p">(</span><span class="n">lat2d</span><span class="p">,</span> <span class="n">lon2d</span><span class="p">,</span> <span class="n">la</span><span class="p">,</span> <span class="n">lo</span><span class="p">)</span>
+            <span class="n">RE</span> <span class="o">=</span> <span class="mf">6378.135</span> <span class="o">*</span> <span class="mi">1000</span>  <span class="c1"># Earth radius [m]</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">geo_dis</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span> <span class="o">*</span> <span class="n">RE</span>
+        <span class="k">elif</span> <span class="n">coords_mode</span> <span class="o">==</span> <span class="s2">&quot;CARTESIAN&quot;</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">geo_distance_cartesian</span><span class="p">(</span><span class="n">lat2d</span><span class="p">,</span> <span class="n">lon2d</span><span class="p">,</span> <span class="n">la</span><span class="p">,</span> <span class="n">lo</span><span class="p">)</span>
+
+        <span class="c1"># Compute direction from storm center to each grid point</span>
+        <span class="n">dlat</span> <span class="o">=</span> <span class="p">(</span><span class="n">lat2d</span> <span class="o">-</span> <span class="n">la</span><span class="p">)</span> <span class="o">*</span> <span class="n">deg2rad</span>
+        <span class="n">dlon</span> <span class="o">=</span> <span class="p">(</span><span class="n">lon2d</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span> <span class="o">*</span> <span class="n">deg2rad</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">dlat</span><span class="p">,</span> <span class="o">-</span><span class="n">dlon</span> <span class="k">if</span> <span class="n">is_southern</span> <span class="k">else</span> <span class="n">dlon</span><span class="p">)</span>
+
+        <span class="c1"># Compute central pressure deficit [Pa]</span>
+        <span class="n">CPD</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="n">pn</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">p0</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+
+        <span class="c1"># Compute Coriolis parameter</span>
+        <span class="n">coriolis</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">omega</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">la0</span><span class="p">)</span> <span class="o">*</span> <span class="n">deg2rad</span><span class="p">)</span>
+
+        <span class="c1"># Compute adjusted gradient wind speed</span>
+        <span class="n">v_trans</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">vfx</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">vfy</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>  <span class="c1"># [kt] translation magnitude</span>
+        <span class="n">vkt</span> <span class="o">=</span> <span class="n">vmax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">v_trans</span>  <span class="c1"># corrected max wind [kt]</span>
+        <span class="n">vgrad</span> <span class="o">=</span> <span class="n">vkt</span> <span class="o">/</span> <span class="n">beta</span>  <span class="c1"># gradient wind [kt]</span>
+        <span class="n">vm</span> <span class="o">=</span> <span class="n">vgrad</span> <span class="o">*</span> <span class="mf">0.52</span>  <span class="c1"># convert to [m/s]</span>
+
+        <span class="c1"># Compute radius and nondimensional radius</span>
+        <span class="n">rm</span> <span class="o">=</span> <span class="n">rmw</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.852</span> <span class="o">*</span> <span class="mi">1000</span>  <span class="c1"># [m]</span>
+        <span class="n">rn</span> <span class="o">=</span> <span class="n">rm</span> <span class="o">/</span> <span class="n">r</span>  <span class="c1"># nondimensional</span>
+
+        <span class="c1"># Compute Holland B parameter, with bounds</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">rho_air</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">vm</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="n">CPD</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">)</span>
+
+        <span class="c1"># Gradient wind velocity at each grid point</span>
+        <span class="n">vg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">rn</span><span class="o">**</span><span class="n">B</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">rn</span><span class="o">**</span><span class="n">B</span><span class="p">)</span> <span class="o">*</span> <span class="n">vm</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">r</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">coriolis</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">r</span> <span class="o">*</span> <span class="n">coriolis</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Convert to wind components at 10m height</span>
+        <span class="n">sign</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">is_southern</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">ve</span> <span class="o">=</span> <span class="n">sign</span> <span class="o">*</span> <span class="n">vg</span> <span class="o">*</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">*</span> <span class="n">conv_1min_to_10min</span>
+        <span class="n">vn</span> <span class="o">=</span> <span class="n">vg</span> <span class="o">*</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">*</span> <span class="n">conv_1min_to_10min</span>
+
+        <span class="c1"># Add translation velocity components</span>
+        <span class="n">vtae</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">vg</span><span class="p">)</span> <span class="o">/</span> <span class="n">vgrad</span><span class="p">)</span> <span class="o">*</span> <span class="n">vfx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">vtan</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">vg</span><span class="p">)</span> <span class="o">/</span> <span class="n">vgrad</span><span class="p">)</span> <span class="o">*</span> <span class="n">vfy</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">vfe</span> <span class="o">=</span> <span class="n">ve</span> <span class="o">+</span> <span class="n">vtae</span>
+        <span class="n">vfn</span> <span class="o">=</span> <span class="n">vn</span> <span class="o">+</span> <span class="n">vtan</span>
+
+        <span class="c1"># Total wind magnitude [m/s]</span>
+        <span class="n">W</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">vfe</span><span class="p">,</span> <span class="n">vfn</span><span class="p">)</span>
+
+        <span class="c1"># Pressure gradient to estimate wind direction</span>
+        <span class="n">pr</span> <span class="o">=</span> <span class="n">p0</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">pn</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">p0</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">rn</span><span class="o">**</span><span class="n">B</span><span class="p">))</span>  <span class="c1"># surface pressure</span>
+        <span class="n">p</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">pr</span>
+        <span class="n">py</span><span class="p">,</span> <span class="n">px</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">pr</span><span class="p">)</span>
+        <span class="n">angle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">py</span><span class="p">,</span> <span class="n">px</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">la0</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="c1"># Wind direction in degrees from north (clockwise)</span>
+        <span class="n">D</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">270</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">angle</span><span class="p">))</span> <span class="o">%</span> <span class="mi">360</span>
+
+    <span class="c1"># Define coordinate labels based on coordinate mode</span>
+    <span class="n">ylab</span><span class="p">,</span> <span class="n">xlab</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;lat&quot;</span><span class="p">,</span> <span class="s2">&quot;lon&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">coords_mode</span> <span class="o">==</span> <span class="s2">&quot;SPHERICAL&quot;</span> <span class="k">else</span> <span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">converted_coords</span><span class="p">:</span>
+        <span class="c1"># Convert longitudes back to -180 to 180 range if they were converted</span>
+        <span class="n">cg_lon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cg_lon</span> <span class="o">&gt;</span> <span class="mi">180</span><span class="p">,</span> <span class="n">cg_lon</span> <span class="o">-</span> <span class="mi">360</span><span class="p">,</span> <span class="n">cg_lon</span><span class="p">)</span>
+
+    <span class="c1"># Return results as xarray Dataset</span>
+    <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;W&quot;</span><span class="p">:</span> <span class="p">((</span><span class="n">ylab</span><span class="p">,</span> <span class="n">xlab</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">W</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;m/s&quot;</span><span class="p">}),</span>
+            <span class="s2">&quot;Dir&quot;</span><span class="p">:</span> <span class="p">((</span><span class="n">ylab</span><span class="p">,</span> <span class="n">xlab</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">D</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;º&quot;</span><span class="p">}),</span>
+            <span class="s2">&quot;p&quot;</span><span class="p">:</span> <span class="p">((</span><span class="n">ylab</span><span class="p">,</span> <span class="n">xlab</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">p</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;Pa&quot;</span><span class="p">}),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="n">ylab</span><span class="p">:</span> <span class="n">cg_lat</span><span class="p">,</span> <span class="n">xlab</span><span class="p">:</span> <span class="n">cg_lon</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">times</span><span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="vortex2delft_3D_FM_nc">
+<a class="viewcode-back" href="../../../bluemath_tk.tcs.html#bluemath_tk.tcs.vortex.vortex2delft_3D_FM_nc">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">vortex2delft_3D_FM_nc</span><span class="p">(</span>
+    <span class="n">mesh</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+    <span class="n">ds_vortex</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert the vortex dataset to a Delft3D FM compatible netCDF forcing file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mesh : xarray.Dataset</span>
+<span class="sd">        The mesh dataset containing the node coordinates.</span>
+<span class="sd">    ds_vortex : xarray.Dataset</span>
+<span class="sd">        The vortex dataset containing wind speed and pressure data.</span>
+<span class="sd">    path_output : str</span>
+<span class="sd">        The output path where the netCDF file will be saved.</span>
+<span class="sd">    ds_name : str</span>
+<span class="sd">        The name of the output netCDF file, default is &quot;forcing_Tonga_vortex.nc&quot;.</span>
+<span class="sd">    forcing_ext : str</span>
+<span class="sd">        The extension for the forcing file, default is &quot;GreenSurge_GFDcase_wind.ext&quot;.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    xarray.Dataset</span>
+<span class="sd">        A dataset containing the interpolated wind speed and pressure data,</span>
+<span class="sd">        ready for use in Delft3D FM.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">longitude</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">mesh2d_node_x</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">latitude</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">mesh2d_node_y</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">n_time</span> <span class="o">=</span> <span class="n">ds_vortex</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="n">lat_interp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">latitude</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="s2">&quot;node&quot;</span><span class="p">)</span>
+    <span class="n">lon_interp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">longitude</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="s2">&quot;node&quot;</span><span class="p">)</span>
+
+    <span class="n">angle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">((</span><span class="mi">270</span> <span class="o">-</span> <span class="n">ds_vortex</span><span class="o">.</span><span class="n">Dir</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span><span class="p">)</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">ds_vortex</span><span class="o">.</span><span class="n">W</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="n">ds_vortex_interp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;windx&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="p">(</span><span class="s2">&quot;latitude&quot;</span><span class="p">,</span> <span class="s2">&quot;longitude&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">W</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;windy&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="p">(</span><span class="s2">&quot;latitude&quot;</span><span class="p">,</span> <span class="s2">&quot;longitude&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">W</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;airpressure&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="p">(</span><span class="s2">&quot;latitude&quot;</span><span class="p">,</span> <span class="s2">&quot;longitude&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span>
+                <span class="n">ds_vortex</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;latitude&quot;</span><span class="p">:</span> <span class="n">ds_vortex</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="s2">&quot;longitude&quot;</span><span class="p">:</span> <span class="n">ds_vortex</span><span class="o">.</span><span class="n">lon</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_time</span><span class="p">),</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="n">forcing_dataset</span> <span class="o">=</span> <span class="n">ds_vortex_interp</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">latitude</span><span class="o">=</span><span class="n">lat_interp</span><span class="p">,</span> <span class="n">longitude</span><span class="o">=</span><span class="n">lon_interp</span><span class="p">)</span>
+
+    <span class="n">reference_date_str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">ds_vortex</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;M8[ms]&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">datetime</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">forcing_dataset</span><span class="p">[</span><span class="s2">&quot;windx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;coordinates&quot;</span><span class="p">:</span> <span class="s2">&quot;time node&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;long_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Wind speed in x direction&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;windx&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;m s-1&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">forcing_dataset</span><span class="p">[</span><span class="s2">&quot;windy&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;coordinates&quot;</span><span class="p">:</span> <span class="s2">&quot;time node&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;long_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Wind speed in y direction&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;windy&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;m s-1&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">forcing_dataset</span><span class="p">[</span><span class="s2">&quot;airpressure&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;coordinates&quot;</span><span class="p">:</span> <span class="s2">&quot;time node&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;long_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Atmospheric Pressure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;air_pressure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;Pa&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">forcing_dataset</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;long_name&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Time - hours since </span><span class="si">{</span><span class="n">reference_date_str</span><span class="si">}</span><span class="s2"> +00:00&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;time_origin&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">reference_date_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;hours since </span><span class="si">{</span><span class="n">reference_date_str</span><span class="si">}</span><span class="s2"> +00:00&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;calendar&quot;</span><span class="p">:</span> <span class="s2">&quot;gregorian&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Time definition for the forcing data&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">forcing_dataset</span><span class="p">[</span><span class="s2">&quot;longitude&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Longitude of each mesh node of the computational grid&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;longitude&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;long_name&quot;</span><span class="p">:</span> <span class="s2">&quot;longitude&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;degrees_east&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">forcing_dataset</span><span class="p">[</span><span class="s2">&quot;latitude&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Latitude of each mesh node of the computational grid&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;latitude&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;long_name&quot;</span><span class="p">:</span> <span class="s2">&quot;latitude&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;degrees_north&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">forcing_dataset</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+bluemath\_tk.wrappers.schism package
+====================================
+
+Submodules
+----------
+
+bluemath\_tk.wrappers.schism.schism\_example module
+---------------------------------------------------
+
+.. automodule:: bluemath_tk.wrappers.schism.schism_example
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.wrappers.schism.schism\_wrapper module
+---------------------------------------------------
+
+.. automodule:: bluemath_tk.wrappers.schism.schism_wrapper
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.wrappers.schism
+   :members:
+   :show-inheritance:
+   :undoc-members:

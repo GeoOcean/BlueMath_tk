@@ -1,0 +1,713 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.waves.series &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.waves.series</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.waves.series</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<div class="viewcode-block" id="energy_spectrum">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.series.energy_spectrum">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">energy_spectrum</span><span class="p">(</span><span class="n">hs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate JONSWAP energy spectrum for given wave parameters.</span>
+
+<span class="sd">    This function computes the energy spectrum S(f) using the JONSWAP spectral model,</span>
+<span class="sd">    which is commonly used for wind-generated waves in deep water.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    hs : float</span>
+<span class="sd">        Significant wave height in meters.</span>
+<span class="sd">    tp : float</span>
+<span class="sd">        Peak period in seconds.</span>
+<span class="sd">    gamma : float</span>
+<span class="sd">        JONSWAP peak enhancement factor (typically 1-7, default 3.3).</span>
+<span class="sd">    duration : int</span>
+<span class="sd">        Number of frequency points for the spectrum.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    List[float]</span>
+<span class="sd">        Energy spectrum values S(f) for each frequency.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The JONSWAP spectrum combines the Pierson-Moskowitz spectrum with a peak</span>
+<span class="sd">    enhancement factor. The spectrum is defined as:</span>
+
+<span class="sd">    S(f) = Beta * (Hs^2) * (Tp^-4) * (f^-5) * exp(-1.25 * (Tp*f)^-4) * gamma^exp(-((Tp*f-1)^2)/(2*sigma^2))</span>
+
+<span class="sd">    where sigma varies based on frequency relative to peak frequency.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Defining frequency series - tend length</span>
+    <span class="n">freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
+
+    <span class="n">S</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">fp</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">tp</span>
+
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">freqs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">f</span> <span class="o">&lt;=</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">sigma</span> <span class="o">=</span> <span class="mf">0.07</span>
+        <span class="k">if</span> <span class="n">f</span> <span class="o">&gt;</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">sigma</span> <span class="o">=</span> <span class="mf">0.09</span>
+
+        <span class="n">Beta</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.06238</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.23</span> <span class="o">+</span> <span class="mf">0.0336</span> <span class="o">*</span> <span class="n">gamma</span> <span class="o">-</span> <span class="mf">0.185</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.9</span> <span class="o">+</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="mf">1.094</span> <span class="o">-</span> <span class="mf">0.01915</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">Sf</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">Beta</span>
+            <span class="o">*</span> <span class="p">(</span><span class="n">hs</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="o">*</span> <span class="p">(</span><span class="n">tp</span><span class="o">**-</span><span class="mi">4</span><span class="p">)</span>
+            <span class="o">*</span> <span class="p">(</span><span class="n">f</span><span class="o">**-</span><span class="mi">5</span><span class="p">)</span>
+            <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.25</span> <span class="o">*</span> <span class="p">(</span><span class="n">tp</span> <span class="o">*</span> <span class="n">f</span><span class="p">)</span> <span class="o">**</span> <span class="o">-</span><span class="mi">4</span><span class="p">)</span>
+            <span class="o">*</span> <span class="n">gamma</span> <span class="o">**</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">((</span><span class="o">-</span><span class="p">((</span><span class="n">tp</span> <span class="o">*</span> <span class="n">f</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span>
+        <span class="p">)</span>
+        <span class="n">S</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Sf</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">S</span></div>
+
+
+
+<div class="viewcode-block" id="series_Jonswap">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.series.series_Jonswap">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">series_Jonswap</span><span class="p">(</span><span class="n">waves</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate surface elevation time series from JONSWAP spectrum.</span>
+
+<span class="sd">    This function generates a time series of surface elevation using the JONSWAP</span>
+<span class="sd">    spectral model. The elevation is computed by summing harmonic components</span>
+<span class="sd">    with random phases.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    waves : Dict[str, Union[float, int]]</span>
+<span class="sd">        Dictionary containing wave parameters:</span>
+<span class="sd">        - &#39;H&#39;: Significant wave height (m)</span>
+<span class="sd">        - &#39;T&#39;: Peak period (s)</span>
+<span class="sd">        - &#39;gamma&#39;: JONSWAP peak enhancement factor</span>
+<span class="sd">        - &#39;warmup&#39;: Spin-up time (s)</span>
+<span class="sd">        - &#39;deltat&#39;: Time step (s)</span>
+<span class="sd">        - &#39;tendc&#39;: Simulation period (s)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        2D array with shape (n_time_steps, 2) containing:</span>
+<span class="sd">        - Column 0: Time values (s)</span>
+<span class="sd">        - Column 1: Surface elevation values (m)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The surface elevation is generated by:</span>
+<span class="sd">    1. Computing the JONSWAP energy spectrum</span>
+<span class="sd">    2. Converting spectrum to amplitude components</span>
+<span class="sd">    3. Summing harmonic components with random phases</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># waves properties</span>
+    <span class="n">hs</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span>
+    <span class="n">tp</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">]</span>
+    <span class="n">gamma</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;gamma&quot;</span><span class="p">]</span>
+    <span class="n">warmup</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;warmup&quot;</span><span class="p">]</span>
+    <span class="n">deltat</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;deltat&quot;</span><span class="p">]</span>
+    <span class="n">tendc</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;tendc&quot;</span><span class="p">]</span>
+
+    <span class="c1"># series duration</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tendc</span> <span class="o">+</span> <span class="n">warmup</span><span class="p">)</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">deltat</span><span class="p">)</span>
+
+    <span class="c1"># series frequency</span>
+    <span class="c1"># why? wee user manual</span>
+    <span class="n">freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
+    <span class="n">delta_f</span> <span class="o">=</span> <span class="n">freqs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">freqs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># calculate energy spectrum</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">energy_spectrum</span><span class="p">(</span><span class="n">hs</span><span class="p">,</span> <span class="n">tp</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
+
+    <span class="c1"># series elevation</span>
+    <span class="n">teta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">)))</span>
+
+    <span class="c1"># calculate aij</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">freqs</span><span class="p">)):</span>
+        <span class="n">ai</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">S</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">delta_f</span><span class="p">)</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+        <span class="c1"># calculate elevation</span>
+        <span class="n">teta</span> <span class="o">=</span> <span class="n">teta</span> <span class="o">+</span> <span class="n">ai</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">freqs</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">*</span> <span class="n">time</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span>
+
+    <span class="c1"># generate series dataframe</span>
+    <span class="n">series</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">series</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span>
+    <span class="n">series</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">teta</span>
+
+    <span class="k">return</span> <span class="n">series</span></div>
+
+
+
+<div class="viewcode-block" id="series_TMA">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.series.series_TMA">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">series_TMA</span><span class="p">(</span><span class="n">waves</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">depth</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate surface elevation time series from TMA spectrum.</span>
+
+<span class="sd">    This function generates a time series of surface elevation using the TMA</span>
+<span class="sd">    spectral model, which extends the JONSWAP spectrum to include depth effects.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    waves : Dict[str, Union[float, int]]</span>
+<span class="sd">        Dictionary containing wave parameters:</span>
+<span class="sd">        - &#39;H&#39;: Significant wave height (m)</span>
+<span class="sd">        - &#39;T&#39;: Peak period (s)</span>
+<span class="sd">        - &#39;gamma&#39;: JONSWAP peak enhancement factor</span>
+<span class="sd">        - &#39;warmup&#39;: Spin-up time (s)</span>
+<span class="sd">        - &#39;deltat&#39;: Time step (s)</span>
+<span class="sd">        - &#39;comptime&#39;: Simulation period (s)</span>
+<span class="sd">    depth : float</span>
+<span class="sd">        Water depth in meters.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        2D array with shape (n_time_steps, 2) containing:</span>
+<span class="sd">        - Column 0: Time values (s)</span>
+<span class="sd">        - Column 1: Surface elevation values (m)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The TMA spectrum modifies the JONSWAP spectrum to account for depth effects</span>
+<span class="sd">    using a depth function fi that depends on wave number and depth.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># waves properties</span>
+    <span class="n">hs</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span>
+    <span class="n">tp</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">]</span>
+    <span class="n">gamma</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;gamma&quot;</span><span class="p">]</span>
+    <span class="n">warmup</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;warmup&quot;</span><span class="p">]</span>
+    <span class="n">deltat</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;deltat&quot;</span><span class="p">]</span>
+    <span class="n">comptime</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;comptime&quot;</span><span class="p">]</span>
+    <span class="n">_g</span> <span class="o">=</span> <span class="mf">9.801</span>
+
+    <span class="c1"># series duration</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">comptime</span> <span class="o">+</span> <span class="n">warmup</span><span class="p">)</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">deltat</span><span class="p">)</span>
+
+    <span class="c1"># series frequency</span>
+    <span class="c1"># why? wee user manual</span>
+    <span class="n">freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
+    <span class="n">delta_f</span> <span class="o">=</span> <span class="n">freqs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">freqs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># calculate JONSWAP energy spectrum</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">energy_spectrum</span><span class="p">(</span><span class="n">hs</span><span class="p">,</span> <span class="n">tp</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
+    <span class="n">m0_Jonswap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">freqs</span><span class="p">)</span>
+
+    <span class="c1"># Transform JONSWAP into TMA by (omega, h)</span>
+    <span class="n">S_TMA</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">pf</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">freqs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        omega = 2 * np.pi * f</span>
+<span class="sd">        </span>
+<span class="sd">        thv = omega * np.sqrt(depth / g)</span>
+<span class="sd">        if thv &lt; 1: </span>
+<span class="sd">            fi = 0.5 * (thv)**2</span>
+<span class="sd">        elif (thv &gt;= 1) and (thv &lt; 2):</span>
+<span class="sd">            fi = 1 - 0.5 * (2 - thv)**2</span>
+<span class="sd">        else:</span>
+<span class="sd">            fi = 1</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># S_TMA.append(S[pf] * fi)</span>
+
+        <span class="c1"># As in Holthuijsen</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">waves_dispersion</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">f</span><span class="p">,</span> <span class="n">depth</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">L</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">k</span> <span class="o">*</span> <span class="n">depth</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sinh</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">k</span> <span class="o">*</span> <span class="n">depth</span><span class="p">))))</span>
+        <span class="n">fi</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">depth</span><span class="p">)</span>
+
+        <span class="n">S_TMA</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">S</span><span class="p">[</span><span class="n">pf</span><span class="p">]</span> <span class="o">*</span> <span class="n">fi</span><span class="p">)</span>
+
+    <span class="n">m0_TMA</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">S_TMA</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">freqs</span><span class="p">)</span>
+
+    <span class="n">S_TMA_mod</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="p">(</span><span class="n">m0_Jonswap</span> <span class="o">/</span> <span class="n">m0_TMA</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">S_TMA</span><span class="p">]</span>
+
+    <span class="c1"># series elevation</span>
+    <span class="n">teta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">)))</span>
+
+    <span class="c1"># calculate aij</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">freqs</span><span class="p">)):</span>
+        <span class="n">ai</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">S_TMA_mod</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">delta_f</span><span class="p">)</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+        <span class="c1"># calculate elevation</span>
+        <span class="n">teta</span> <span class="o">=</span> <span class="n">teta</span> <span class="o">+</span> <span class="n">ai</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">freqs</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">*</span> <span class="n">time</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span>
+
+    <span class="c1"># generate series dataframe</span>
+    <span class="n">series</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">series</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span>
+    <span class="n">series</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">teta</span>
+
+    <span class="k">return</span> <span class="n">series</span></div>
+
+
+
+<div class="viewcode-block" id="series_TMA_bimodal">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.series.series_TMA_bimodal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">series_TMA_bimodal</span><span class="p">(</span><span class="n">waves</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">depth</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate surface elevation time series from bimodal TMA spectrum.</span>
+
+<span class="sd">    This function generates a time series of surface elevation using a bimodal</span>
+<span class="sd">    TMA spectral model, combining two wave systems with different characteristics.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    waves : Dict[str, Union[float, int]]</span>
+<span class="sd">        Dictionary containing wave parameters for two wave systems:</span>
+<span class="sd">        - &#39;Hs1&#39;: Significant wave height of system 1 (m)</span>
+<span class="sd">        - &#39;Tp1&#39;: Peak period of system 1 (s)</span>
+<span class="sd">        - &#39;gamma1&#39;: JONSWAP peak enhancement factor for system 1</span>
+<span class="sd">        - &#39;Hs2&#39;: Significant wave height of system 2 (m)</span>
+<span class="sd">        - &#39;Tp2&#39;: Peak period of system 2 (s)</span>
+<span class="sd">        - &#39;gamma2&#39;: JONSWAP peak enhancement factor for system 2</span>
+<span class="sd">        - &#39;warmup&#39;: Spin-up time (s)</span>
+<span class="sd">        - &#39;deltat&#39;: Time step (s)</span>
+<span class="sd">        - &#39;tendc&#39;: Simulation period (s)</span>
+<span class="sd">    depth : float</span>
+<span class="sd">        Water depth in meters.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        2D array with shape (n_time_steps, 2) containing:</span>
+<span class="sd">        - Column 0: Time values (s)</span>
+<span class="sd">        - Column 1: Surface elevation values (m)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The bimodal spectrum is created by summing two TMA spectra, each representing</span>
+<span class="sd">    a different wave system (e.g., wind sea and swell).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># waves properties</span>
+    <span class="n">hs1</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;Hs1&quot;</span><span class="p">]</span>
+    <span class="n">tp1</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;Tp1&quot;</span><span class="p">]</span>
+    <span class="n">gamma1</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;gamma1&quot;</span><span class="p">]</span>
+    <span class="n">hs2</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;Hs2&quot;</span><span class="p">]</span>
+    <span class="n">tp2</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;Tp2&quot;</span><span class="p">]</span>
+    <span class="n">gamma2</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;gamma2&quot;</span><span class="p">]</span>
+    <span class="n">warmup</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;warmup&quot;</span><span class="p">]</span>
+    <span class="n">deltat</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;deltat&quot;</span><span class="p">]</span>
+    <span class="n">tendc</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;tendc&quot;</span><span class="p">]</span>
+
+    <span class="c1"># series duration</span>
+    <span class="c1"># TODO: puede que haya algun problema en esta suma</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tendc</span> <span class="o">+</span> <span class="n">warmup</span><span class="p">)</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">deltat</span><span class="p">)</span>
+
+    <span class="c1"># series frequency</span>
+    <span class="n">freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
+    <span class="n">delta_f</span> <span class="o">=</span> <span class="n">freqs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">freqs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># calculate energy spectrum for each wave system</span>
+    <span class="n">S1</span> <span class="o">=</span> <span class="n">energy_spectrum</span><span class="p">(</span><span class="n">hs1</span><span class="p">,</span> <span class="n">tp1</span><span class="p">,</span> <span class="n">gamma1</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
+    <span class="n">S2</span> <span class="o">=</span> <span class="n">energy_spectrum</span><span class="p">(</span><span class="n">hs2</span><span class="p">,</span> <span class="n">tp2</span><span class="p">,</span> <span class="n">gamma2</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
+
+    <span class="n">m01_Jonswap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">S1</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">freqs</span><span class="p">)</span>
+    <span class="n">m02_Jonswap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">S2</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">freqs</span><span class="p">)</span>
+
+    <span class="c1"># Transform JONSWAP into TMA by (omega, h)</span>
+    <span class="n">S_TMA_1</span><span class="p">,</span> <span class="n">S_TMA_2</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">pf</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">freqs</span><span class="p">):</span>
+        <span class="c1"># As in Holthuijsen</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">waves_dispersion</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">f</span><span class="p">,</span> <span class="n">depth</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">L</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">k</span> <span class="o">*</span> <span class="n">depth</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sinh</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">k</span> <span class="o">*</span> <span class="n">depth</span><span class="p">))))</span>
+        <span class="n">fi</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">depth</span><span class="p">)</span>
+
+        <span class="n">S_TMA_1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">S1</span><span class="p">[</span><span class="n">pf</span><span class="p">]</span> <span class="o">*</span> <span class="n">fi</span><span class="p">)</span>
+        <span class="n">S_TMA_2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">S2</span><span class="p">[</span><span class="n">pf</span><span class="p">]</span> <span class="o">*</span> <span class="n">fi</span><span class="p">)</span>
+
+    <span class="n">m0_TMA_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">S_TMA_1</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">freqs</span><span class="p">)</span>
+    <span class="n">m0_TMA_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">S_TMA_2</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">freqs</span><span class="p">)</span>
+
+    <span class="n">S_TMA_mod_1</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="p">(</span><span class="n">m01_Jonswap</span> <span class="o">/</span> <span class="n">m0_TMA_1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">S_TMA_1</span><span class="p">]</span>
+    <span class="n">S_TMA_mod_2</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="p">(</span><span class="n">m02_Jonswap</span> <span class="o">/</span> <span class="n">m0_TMA_2</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">S_TMA_2</span><span class="p">]</span>
+
+    <span class="c1"># bimodal wave spectra</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">S_TMA_mod_1</span><span class="p">,</span> <span class="n">S_TMA_mod_2</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># series elevation</span>
+    <span class="n">teta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">)))</span>
+
+    <span class="c1"># calculate aij</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">freqs</span><span class="p">)):</span>
+        <span class="n">ai</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">S</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">delta_f</span><span class="p">)</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+        <span class="c1"># calculate elevation</span>
+        <span class="n">teta</span> <span class="o">=</span> <span class="n">teta</span> <span class="o">+</span> <span class="n">ai</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">freqs</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">*</span> <span class="n">time</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span>
+
+    <span class="c1"># generate series dataframe</span>
+    <span class="n">series</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">series</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span>
+    <span class="n">series</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">teta</span>
+
+    <span class="k">return</span> <span class="n">series</span></div>
+
+
+
+<div class="viewcode-block" id="series_Jonswap_bimodal">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.series.series_Jonswap_bimodal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">series_Jonswap_bimodal</span><span class="p">(</span><span class="n">waves</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate surface elevation time series from bimodal JONSWAP spectrum.</span>
+
+<span class="sd">    This function generates a time series of surface elevation using a bimodal</span>
+<span class="sd">    JONSWAP spectral model, combining two wave systems with different characteristics.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    waves : Dict[str, Union[float, int]]</span>
+<span class="sd">        Dictionary containing wave parameters for two wave systems:</span>
+<span class="sd">        - &#39;Hs1&#39;: Significant wave height of system 1 (m)</span>
+<span class="sd">        - &#39;Tp1&#39;: Peak period of system 1 (s)</span>
+<span class="sd">        - &#39;gamma1&#39;: JONSWAP peak enhancement factor for system 1</span>
+<span class="sd">        - &#39;Hs2&#39;: Significant wave height of system 2 (m)</span>
+<span class="sd">        - &#39;Tp2&#39;: Peak period of system 2 (s)</span>
+<span class="sd">        - &#39;gamma2&#39;: JONSWAP peak enhancement factor for system 2</span>
+<span class="sd">        - &#39;warmup&#39;: Spin-up time (s)</span>
+<span class="sd">        - &#39;deltat&#39;: Time step (s)</span>
+<span class="sd">        - &#39;tendc&#39;: Simulation period (s)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        2D array with shape (n_time_steps, 2) containing:</span>
+<span class="sd">        - Column 0: Time values (s)</span>
+<span class="sd">        - Column 1: Surface elevation values (m)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The bimodal spectrum is created by summing two JONSWAP spectra, each representing</span>
+<span class="sd">    a different wave system (e.g., wind sea and swell).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># waves properties</span>
+    <span class="n">hs1</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;Hs1&quot;</span><span class="p">]</span>
+    <span class="n">tp1</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;Tp1&quot;</span><span class="p">]</span>
+    <span class="n">gamma1</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;gamma1&quot;</span><span class="p">]</span>
+    <span class="n">hs2</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;Hs2&quot;</span><span class="p">]</span>
+    <span class="n">tp2</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;Tp2&quot;</span><span class="p">]</span>
+    <span class="n">gamma2</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;gamma2&quot;</span><span class="p">]</span>
+    <span class="n">warmup</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;warmup&quot;</span><span class="p">]</span>
+    <span class="n">deltat</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;deltat&quot;</span><span class="p">]</span>
+    <span class="n">tendc</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;tendc&quot;</span><span class="p">]</span>
+
+    <span class="c1"># series duration</span>
+    <span class="c1"># TODO: puede que haya algun problema en esta suma</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tendc</span> <span class="o">+</span> <span class="n">warmup</span><span class="p">)</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">deltat</span><span class="p">)</span>
+
+    <span class="c1"># series frequency</span>
+    <span class="n">freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
+    <span class="n">delta_f</span> <span class="o">=</span> <span class="n">freqs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">freqs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># calculate energy spectrum for each wave system</span>
+    <span class="n">S1</span> <span class="o">=</span> <span class="n">energy_spectrum</span><span class="p">(</span><span class="n">hs1</span><span class="p">,</span> <span class="n">tp1</span><span class="p">,</span> <span class="n">gamma1</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
+    <span class="n">S2</span> <span class="o">=</span> <span class="n">energy_spectrum</span><span class="p">(</span><span class="n">hs2</span><span class="p">,</span> <span class="n">tp2</span><span class="p">,</span> <span class="n">gamma2</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
+    <span class="c1"># bimodal wave spectra</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">S1</span><span class="p">,</span> <span class="n">S2</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># series elevation</span>
+    <span class="n">teta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">)))</span>
+
+    <span class="c1"># calculate aij</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">freqs</span><span class="p">)):</span>
+        <span class="n">ai</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">S</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">delta_f</span><span class="p">)</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+        <span class="c1"># calculate elevation</span>
+        <span class="n">teta</span> <span class="o">=</span> <span class="n">teta</span> <span class="o">+</span> <span class="n">ai</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">freqs</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">*</span> <span class="n">time</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span>
+
+    <span class="c1"># generate series dataframe</span>
+    <span class="n">series</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">series</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span>
+    <span class="n">series</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">teta</span>
+
+    <span class="k">return</span> <span class="n">series</span></div>
+
+
+
+<div class="viewcode-block" id="series_regular_monochromatic">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.series.series_regular_monochromatic">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">series_regular_monochromatic</span><span class="p">(</span><span class="n">waves</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate monochromatic regular wave time series.</span>
+
+<span class="sd">    This function generates a time series of surface elevation for monochromatic</span>
+<span class="sd">    regular waves with constant amplitude and frequency.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    waves : Dict[str, Union[float, int]]</span>
+<span class="sd">        Dictionary containing wave parameters:</span>
+<span class="sd">        - &#39;T&#39;: Wave period (s)</span>
+<span class="sd">        - &#39;H&#39;: Wave height (m)</span>
+<span class="sd">        - &#39;warmup&#39;: Spin-up time (s)</span>
+<span class="sd">        - &#39;deltat&#39;: Time step (s)</span>
+<span class="sd">        - &#39;comptime&#39;: Simulation period (s)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        2D array with shape (n_time_steps, 2) containing:</span>
+<span class="sd">        - Column 0: Time values (s)</span>
+<span class="sd">        - Column 1: Surface elevation values (m)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The surface elevation follows a simple cosine function:</span>
+<span class="sd">    η(t) = (H/2) * cos(2πt/T)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># waves properties</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">]</span>
+    <span class="n">H</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span>
+    <span class="c1"># WL = waves[&quot;WL&quot;]</span>
+    <span class="n">warmup</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;warmup&quot;</span><span class="p">]</span>
+    <span class="n">deltat</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;deltat&quot;</span><span class="p">]</span>
+    <span class="n">tendc</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;comptime&quot;</span><span class="p">]</span>
+
+    <span class="c1"># series duration</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="n">tendc</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">warmup</span><span class="p">)</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">deltat</span><span class="p">)</span>
+
+    <span class="c1"># series elevation</span>
+    <span class="n">teta</span> <span class="o">=</span> <span class="p">(</span><span class="n">H</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">T</span><span class="p">)</span> <span class="o">*</span> <span class="n">time</span><span class="p">)</span>
+
+    <span class="c1"># generate series dataframe</span>
+    <span class="n">series</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">series</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span>
+    <span class="n">series</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">teta</span>
+
+    <span class="k">return</span> <span class="n">series</span></div>
+
+
+
+<div class="viewcode-block" id="series_regular_bichromatic">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.series.series_regular_bichromatic">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">series_regular_bichromatic</span><span class="p">(</span><span class="n">waves</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate bichromatic regular wave time series.</span>
+
+<span class="sd">    This function generates a time series of surface elevation for bichromatic</span>
+<span class="sd">    regular waves, combining two monochromatic components.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    waves : Dict[str, Union[float, int]]</span>
+<span class="sd">        Dictionary containing wave parameters:</span>
+<span class="sd">        - &#39;T1&#39;: Period of component 1 (s)</span>
+<span class="sd">        - &#39;T2&#39;: Period of component 2 (s)</span>
+<span class="sd">        - &#39;H&#39;: Wave height (m)</span>
+<span class="sd">        - &#39;WL&#39;: Water level (m)</span>
+<span class="sd">        - &#39;warmup&#39;: Spin-up time (s)</span>
+<span class="sd">        - &#39;deltat&#39;: Time step (s)</span>
+<span class="sd">        - &#39;tendc&#39;: Simulation period (s)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        2D array with shape (n_time_steps, 2) containing:</span>
+<span class="sd">        - Column 0: Time values (s)</span>
+<span class="sd">        - Column 1: Surface elevation values (m)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The surface elevation is the sum of two cosine components:</span>
+<span class="sd">    η(t) = (H/2) * cos(2πt/T1) + (H/2) * cos(2πt/T2)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># waves properties</span>
+    <span class="n">T1</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;T1&quot;</span><span class="p">]</span>
+    <span class="n">T2</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;T2&quot;</span><span class="p">]</span>
+    <span class="n">H</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span>
+    <span class="n">_WL</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;WL&quot;</span><span class="p">]</span>
+    <span class="n">warmup</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;warmup&quot;</span><span class="p">]</span>
+    <span class="n">deltat</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;deltat&quot;</span><span class="p">]</span>
+    <span class="n">tendc</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="s2">&quot;tendc&quot;</span><span class="p">]</span>
+
+    <span class="c1"># series duration</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="n">tendc</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">warmup</span><span class="p">)</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">deltat</span><span class="p">)</span>
+
+    <span class="c1"># series elevation</span>
+    <span class="n">teta</span> <span class="o">=</span> <span class="p">(</span><span class="n">H</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">T1</span><span class="p">)</span> <span class="o">*</span> <span class="n">time</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">H</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span>
+        <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">T2</span><span class="p">)</span> <span class="o">*</span> <span class="n">time</span>
+    <span class="p">)</span>
+
+    <span class="c1"># generate series dataframe</span>
+    <span class="n">series</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">series</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span>
+    <span class="n">series</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">teta</span>
+
+    <span class="k">return</span> <span class="n">series</span></div>
+
+
+
+<div class="viewcode-block" id="waves_dispersion">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.series.waves_dispersion">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">waves_dispersion</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Solve the wave dispersion relation to calculate wavelength, wave number, and phase speed.</span>
+
+<span class="sd">    This function solves the linear wave dispersion relation to determine wave</span>
+<span class="sd">    properties in water of finite depth.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    T : float</span>
+<span class="sd">        Wave period in seconds.</span>
+<span class="sd">    h : float</span>
+<span class="sd">        Water depth in meters.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[float, float, float]</span>
+<span class="sd">        A tuple containing:</span>
+<span class="sd">        - L: Wavelength in meters</span>
+<span class="sd">        - k: Wave number in radians per meter</span>
+<span class="sd">        - c: Phase speed in meters per second</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The dispersion relation is solved iteratively using:</span>
+<span class="sd">    L = (g*T²)/(2π) * tanh(2πh/L)</span>
+
+<span class="sd">    where g is gravitational acceleration (9.81 m/s²).</span>
+
+<span class="sd">    The wave number k = 2π/L and phase speed c = √(g*tanh(kh)/k).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">L1</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">L2</span> <span class="o">=</span> <span class="p">((</span><span class="mf">9.81</span> <span class="o">*</span> <span class="n">T</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">h</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">L1</span><span class="p">)</span>
+    <span class="n">umbral</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">while</span> <span class="n">umbral</span> <span class="o">&gt;</span> <span class="mf">0.1</span><span class="p">:</span>
+        <span class="n">L2</span> <span class="o">=</span> <span class="p">((</span><span class="mf">9.81</span> <span class="o">*</span> <span class="n">T</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">((</span><span class="n">h</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">/</span> <span class="n">L1</span><span class="p">)</span>
+        <span class="n">umbral</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">L2</span> <span class="o">-</span> <span class="n">L1</span><span class="p">)</span>
+        <span class="n">L1</span> <span class="o">=</span> <span class="n">L2</span>
+
+    <span class="n">L</span> <span class="o">=</span> <span class="n">L2</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">/</span> <span class="n">L</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">9.8</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span> <span class="o">/</span> <span class="n">k</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
