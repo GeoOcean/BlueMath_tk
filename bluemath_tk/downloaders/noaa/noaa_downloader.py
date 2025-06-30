@@ -36,7 +36,7 @@ class NOAADownloader(BaseDownloader):
         noaa_downloader = NOAADownloader(
             base_path_to_download="/path/to/NOAA/",  # Will be created if not available
             debug=True,
-            check=True,
+            check=False,
         )
 
         # Download buoy bulk parameters and load DataFrame
@@ -740,7 +740,7 @@ class NOAADownloader(BaseDownloader):
                 header_lines = []
                 while True:
                     line = f.readline().strip()
-                    if not line.startswith("#") or not line.startswith("YYYY"):
+                    if not line.startswith("#") and not line.startswith("YYYY"):
                         break
                     header_lines.append(line)
 
