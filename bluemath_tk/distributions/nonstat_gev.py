@@ -829,7 +829,7 @@ class NonStatGEV(BlueMathModel):
             )
             self.loglike_iter[self.nit + 1] = -fit_result_aux["negloglikelihood"]
 
-            if self.AIC_iter[self.nit + 1] < self.AIC_iter[self.nit]:
+            if self.AIC_iter[self.nit + 1] < self.AICini:
                 self.AICini = self.AIC_iter[self.nit + 1]
                 print("Location trend is significative")
                 print("Location trend AIC: ", self.AICini)
@@ -970,7 +970,7 @@ class NonStatGEV(BlueMathModel):
                     + 2 * ngamma
                     + nind_sh
                 ]
-                * np.ones,  # Shape initial parameter gamma0, gamma, gammaT, gamma_cov
+                * np.ones(nind_sh),  # Shape initial parameter gamma0, gamma, gammaT, gamma_cov
             ]
             xini = np.concatenate(
                 [np.asarray(v) for v in concatvalues if v is not None]
@@ -1062,7 +1062,7 @@ class NonStatGEV(BlueMathModel):
                 + 2 * ngamma
                 + nind_sh
             ]
-            * np.ones,  # Shape initial parameter gamma0, gamma, gammaT, gamma_cov
+            * np.ones(nind_sh),  # Shape initial parameter gamma0, gamma, gammaT, gamma_cov
         ]
         xini = np.concatenate([np.asarray(v) for v in concatvalues if v is not None])
         fit_result = self._fit(
