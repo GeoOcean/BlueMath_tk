@@ -94,12 +94,10 @@ def plot_mesh_vals(
         The axes with the plot.
     """
 
-    # Copy coordinates to avoid modifying original mesh
     crd = np.array(msh_t.vert2["coord"], copy=True)
     cnn = msh_t.tria3["index"]
     val = msh_t.value.flatten()
 
-    # Transform to geographic coordinates if needed
     if to_geo is not None:
         crd[:, 0], crd[:, 1] = to_geo(crd[:, 0], crd[:, 1])
 
@@ -426,17 +424,6 @@ def simply_polygon(base_shape: Polygon, simpl_UTM: float, project) -> Polygon:
     -------
     Polygon
         The simplified polygon in geographic coordinates.
-
-    Examples
-    --------
-    >>> from shapely.geometry import Polygon
-    >>> from pyproj import Transformer
-    >>> from shapely.ops import transform
-    >>> base_shape = Polygon([(0, 0), (1, 1), (1, 0), (0, 0)])
-    >>> project = Transformer.from_crs("EPSG:4326", "EPSG:32630").transform
-    >>> simpl_UTM = 100.0  # Simplification tolerance in meters
-    >>> simplified_shape = simply_polygon(base_shape, simpl_UTM, project)
-    >>> print(simplified_shape)
     """
 
     base_shape_utm = transform(project, base_shape)
@@ -471,17 +458,6 @@ def remove_islands(base_shape: Polygon, threshold_area: float, project) -> Polyg
     -------
     Polygon
         The polygon with small interior rings removed, transformed back to geographic coordinates.
-
-    Examples
-    --------
-    >>> from shapely.geometry import Polygon
-    >>> from pyproj import Transformer
-    >>> from shapely.ops import transform
-    >>> base_shape = Polygon([(0, 0), (1, 1), (1, 0), (0, 0)])
-    >>> project = Transformer.from_crs("EPSG:4326", "EPSG:32630").transform
-    >>> threshold_area = 100.0  # Minimum area for interior rings in square meters
-    >>> simplified_shape = remove_islands(base_shape, threshold_area, project)
-    >>> print(simplified_shape)
     """
 
     base_shape_utm = transform(project, base_shape)
@@ -552,17 +528,6 @@ def calculate_edges(Elmts: np.ndarray) -> np.ndarray:
     np.ndarray
         A 2D array of shape (n_edges, 2) containing the unique edges,
         each represented by a pair of node indices.
-
-    Examples
-    --------
-    >>> Elmts = np.array([[0, 1, 2], [1, 2, 3], [2, 0, 3]])
-    >>> edges = calculate_edges(Elmts)
-    >>> print(edges)
-    [[0 1]
-     [0 2]
-     [1 2]
-     [1 3]
-     [2 3]]
     """
 
     perc = 0
@@ -901,15 +866,6 @@ def compute_circumcenter(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray) -> np.n
     -------
     np.ndarray
         2D coordinates of the circumcenter.
-
-    Examples
-    --------
-    >>> p0 = np.array([0, 0])
-    >>> p1 = np.array([1, 0])
-    >>> p2 = np.array([0, 1])
-    >>> center = compute_circumcenter(p0, p1, p2)
-    >>> print(center)
-    [0.5 0.5]
     """
 
     A = p1 - p0
@@ -943,13 +899,6 @@ def build_edge_to_cells(elements: np.ndarray) -> Dict[Tuple[int, int], List[int]
     -------
     edge_to_cells : Dict[Tuple[int, int], List[int]]
         Dictionary mapping edges to the list of adjacent element indices.
-
-    Examples
-    --------
-    >>> elements = np.array([[0, 1, 2], [1, 2, 3], [2, 0, 3]])
-    >>> edge_to_cells = build_edge_to_cells(elements)
-    >>> print(edge_to_cells)
-    {(0, 1): [0], (0, 2): [0, 2], (1, 2): [0, 1], (1, 3): [1], (2, 3): [1]}
     """
 
     edge_to_cells = defaultdict(list)
@@ -985,15 +934,6 @@ def detect_circumcenter_too_close(
     -------
     bad_elements_mask : np.ndarray
         Boolean mask indicating which elements are problematic (True if bad).
-
-    Examples
-    --------
-    >>> X = np.array([0, 1, 0, 1])
-    >>> Y = np.array([0, 0, 1, 1])
-    >>> elements = np.array([[0, 1, 2], [1, 3, 2]])
-    >>> bad_elements = detect_circumcenter_too_close(X, Y, elements, aj_threshold=0.1)
-    >>> print(bad_elements)
-    [False False]
     """
 
     nodes = np.column_stack((X, Y))
@@ -1155,15 +1095,3 @@ def get_raster_resolution_meters(lon_center, lat_center, raster_resolution, proj
         ]
     )
     return raster_resolution_meters
-
-
-if __name__ == "__main__":
-    # Example usage
-    from pyproj import Transformer
-    from shapely.geometry import Polygon
-
-    base_shape = Polygon([(0, 0), (1, 1), (1, 0), (0, 0)])
-    project = Transformer.from_crs("EPSG:4326", "EPSG:32630").transform
-    simpl_UTM = 100.0  # Simplification tolerance in meters
-    simplified_shape = simply_polygon(base_shape, simpl_UTM, project)
-    print(simplified_shape)

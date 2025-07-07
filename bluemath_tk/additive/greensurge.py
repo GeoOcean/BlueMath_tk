@@ -413,6 +413,12 @@ def plot_GS_vs_dynamic_windsetup_swath(
         Maximum value for the color scale. Default is None.
     figsize : tuple, optional
         Figure size. Default is (10, 8).
+    Returns
+    -------
+    fig : Figure
+        The figure object containing the plots.
+    axs : list of Axes
+        List of Axes objects for the two subplots.
     """
 
     warnings.filterwarnings("ignore", message="All-NaN slice encountered")
@@ -477,6 +483,7 @@ def plot_GS_vs_dynamic_windsetup_swath(
 
     for ax in axs:
         ax.set_extent([lon_min, lon_max, lat_min, lat_max])
+    return fig, axs
 
 
 def GS_windsetup_reconstruction_with_postprocess(
