@@ -232,12 +232,33 @@ def clip_bathymetry(
                     "transform": out_transform,
                 }
             )
-        res_x, res_y = src.res
-        mean_resolution = (abs(res_x) + abs(res_y)) / 2
-
+        mean_raster_resolution = get_raster_resolution(path)
     with rasterio.open(output_path, "w", **out_meta) as dest:
         dest.write(out_image)
+    return mean_raster_resolution
 
+
+def get_raster_resolution(raster_path: str) -> float:
+    """
+    Get the mean resolution of a raster in meters.
+
+    Parameters
+    ----------
+    raster_path : str
+        Path to the raster file.
+    Returns
+    -------
+    float
+        Mean resolution of the raster in meters.
+    ----------
+    Notes
+    This function uses rasterio to open the raster file and extract its resolution.
+    The mean resolution is calculated as the average of the absolute values of the x and y resolutions.
+    """
+
+    with rasterio.open(raster_path) as src:
+        res_x, res_y = src.res
+        mean_resolution = (abs(res_x) + abs(res_y)) / 2
     return mean_resolution
 
 
@@ -326,8 +347,8 @@ def plot_boundaries(mesh: jigsaw_msh_t, ax: Axes, to_geo: callable = None) -> No
                     lambda geom: transform(to_geo, geom)
                 )
             gdf.plot(ax=ax, color=color, label=label)
-        except Exception as e:
-            print(f"No {label} boundaries available. Error: {e}")
+        except Exception as _e:
+            print(f"No {label} boundaries available")
 
     plot_boundary(mesh.boundaries.ocean(), color="b", label="Ocean")
     plot_boundary(mesh.boundaries.interior(), color="g", label="Islands")
@@ -563,7 +584,7 @@ def calculate_edges(Elmts: np.ndarray) -> np.ndarray:
     return Links_unique
 
 
-def adcirc2netcdf(Path_grd: str, netcdf_path: str) -> None:
+def adcirc2DFlowFM(Path_grd: str, netcdf_path: str) -> None:
     """
     Converts ADCIRC grid data to a NetCDF Delft3DFM format.
 
@@ -576,7 +597,7 @@ def adcirc2netcdf(Path_grd: str, netcdf_path: str) -> None:
 
     Examples
     --------
-    >>> adcirc2netcdf("path/to/grid.grd", "path/to/output.nc")
+    >>> adcirc2DFlowFM("path/to/grid.grd", "path/to/output.nc")
     >>> print("NetCDF file created successfully.")
     """
 
@@ -1075,18 +1096,6 @@ def define_mesh_target_size(
     return mesh_spacing
 
 
-if __name__ == "__main__":
-    # Example usage
-    from pyproj import Transformer
-    from shapely.geometry import Polygon
-
-    base_shape = Polygon([(0, 0), (1, 1), (1, 0), (0, 0)])
-    project = Transformer.from_crs("EPSG:4326", "EPSG:32630").transform
-    simpl_UTM = 100.0  # Simplification tolerance in meters
-    simplified_shape = simply_polygon(base_shape, simpl_UTM, project)
-    print(simplified_shape)
-
-
 def read_lines(poly_line: str) -> MultiLineString:
     """
     Reads a CSV file containing coordinates of a polyline and returns a MultiLineString.
@@ -1115,3 +1124,46 @@ def read_lines(poly_line: str) -> MultiLineString:
     if current_segment:
         segments.append(LineString(current_segment))
     return MultiLineString(segments)
+
+
+def get_raster_resolution_meters(lon_center, lat_center, raster_resolution, project):
+    """
+    Calculate the raster resolution in meters based on the center coordinates and the raster resolution in degrees.
+
+    Parameters
+    ----------
+    lon_center : float
+        Longitude of the center point.
+    lat_center : float
+        Latitude of the center point.
+    raster_resolution : float
+        Raster resolution in degrees.
+    Returns
+    -------
+    float
+        Raster resolution in meters.
+    """
+    x_center, y_center = project(lon_center, lat_center)
+    x_center_raster_resolution, y_center_raster_resolution = project(
+        lon_center + raster_resolution / np.sqrt(2),
+        lat_center + raster_resolution / np.sqrt(2),
+    )
+    raster_resolution_meters = np.mean(
+        [
+            abs(x_center - x_center_raster_resolution),
+            abs(y_center - y_center_raster_resolution),
+        ]
+    )
+    return raster_resolution_meters
+
+
+if __name__ == "__main__":
+    # Example usage
+    from pyproj import Transformer
+    from shapely.geometry import Polygon
+
+    base_shape = Polygon([(0, 0), (1, 1), (1, 0), (0, 0)])
+    project = Transformer.from_crs("EPSG:4326", "EPSG:32630").transform
+    simpl_UTM = 100.0  # Simplification tolerance in meters
+    simplified_shape = simply_polygon(base_shape, simpl_UTM, project)
+    print(simplified_shape)

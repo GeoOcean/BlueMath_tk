@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -158,7 +160,7 @@ def vortex_model_grid(
         vm = vgrad * 0.52  # convert to [m/s]
 
         # Compute radius and nondimensional radius
-        rm = rmw[i] * 1852  # [m]
+        rm = rmw[i] * 1.852 * 1000  # [m]
         rn = rm / r  # nondimensional
 
         # Compute Holland B parameter, with bounds
@@ -205,7 +207,118 @@ def vortex_model_grid(
         {
             "W": ((ylab, xlab, "time"), W, {"units": "m/s"}),
             "Dir": ((ylab, xlab, "time"), D, {"units": "º"}),
-            "p": ((ylab, xlab, "time"), p, {"units": "Pa"}),
+            "p": ((ylab, xlab, "time"), p * 100, {"units": "Pa"}),
         },
         coords={ylab: cg_lat, xlab: cg_lon, "time": times},
     )
+
+
+def vortex2delft_3D_FM_nc(
+    mesh: xr.Dataset,
+    ds_vortex: xr.Dataset,
+) -> xr.Dataset:
+    """
+    Convert the vortex dataset to a Delft3D FM compatible netCDF forcing file.
+
+    Parameters
+    ----------
+    mesh : xarray.Dataset
+        The mesh dataset containing the node coordinates.
+    ds_vortex : xarray.Dataset
+        The vortex dataset containing wind speed and pressure data.
+    path_output : str
+        The output path where the netCDF file will be saved.
+    ds_name : str
+        The name of the output netCDF file, default is "forcing_Tonga_vortex.nc".
+    forcing_ext : str
+        The extension for the forcing file, default is "GreenSurge_GFDcase_wind.ext".
+    Returns
+    -------
+    xarray.Dataset
+        A dataset containing the interpolated wind speed and pressure data,
+        ready for use in Delft3D FM.
+    """
+    longitude = mesh.mesh2d_node_x.values
+    latitude = mesh.mesh2d_node_y.values
+    n_time = ds_vortex.time.size
+
+    lat_interp = xr.DataArray(latitude, dims="node")
+    lon_interp = xr.DataArray(longitude, dims="node")
+
+    angle = np.deg2rad((270 - ds_vortex.Dir.values) % 360)
+    W = ds_vortex.W.values
+
+    ds_vortex_interp = xr.Dataset(
+        {
+            "windx": (
+                ("latitude", "longitude", "time"),
+                (W * np.cos(angle)).astype(np.float32),
+            ),
+            "windy": (
+                ("latitude", "longitude", "time"),
+                (W * np.sin(angle)).astype(np.float32),
+            ),
+            "airpressure": (
+                ("latitude", "longitude", "time"),
+                ds_vortex.p.values.astype(np.float32),
+            ),
+        },
+        coords={
+            "latitude": ds_vortex.lat.values,
+            "longitude": ds_vortex.lon.values,
+            "time": np.arange(n_time),
+        },
+    )
+
+    forcing_dataset = ds_vortex_interp.interp(latitude=lat_interp, longitude=lon_interp)
+
+    reference_date_str = (
+        ds_vortex.time.values[0]
+        .astype("M8[ms]")
+        .astype(datetime)
+        .strftime("%Y-%m-%d %H:%M:%S")
+    )
+
+    forcing_dataset["windx"].attrs = {
+        "coordinates": "time node",
+        "long_name": "Wind speed in x direction",
+        "standard_name": "windx",
+        "units": "m s-1",
+    }
+    forcing_dataset["windy"].attrs = {
+        "coordinates": "time node",
+        "long_name": "Wind speed in y direction",
+        "standard_name": "windy",
+        "units": "m s-1",
+    }
+
+    forcing_dataset["airpressure"].attrs = {
+        "coordinates": "time node",
+        "long_name": "Atmospheric Pressure",
+        "standard_name": "air_pressure",
+        "units": "Pa",
+    }
+
+    forcing_dataset["time"].attrs = {
+        "standard_name": "time",
+        "long_name": f"Time - hours since {reference_date_str} +00:00",
+        "time_origin": f"{reference_date_str}",
+        "units": f"hours since {reference_date_str} +00:00",
+        "calendar": "gregorian",
+        "description": "Time definition for the forcing data",
+    }
+
+    forcing_dataset["longitude"].attrs = {
+        "description": "Longitude of each mesh node of the computational grid",
+        "standard_name": "longitude",
+        "long_name": "longitude",
+        "units": "degrees_east",
+    }
+    forcing_dataset["latitude"].attrs = {
+        "description": "Latitude of each mesh node of the computational grid",
+        "standard_name": "latitude",
+        "long_name": "latitude",
+        "units": "degrees_north",
+    }
+
+    return forcing_dataset

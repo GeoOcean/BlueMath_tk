@@ -2,7 +2,16 @@ import numpy as np
 import xarray as xr
 
 
-def get_2d_dataset():
+def get_2d_dataset() -> xr.Dataset:
+    """
+    Get a 2D dataset with 3D coordinates.
+
+    Returns
+    -------
+    xr.Dataset
+        A 2D dataset with 3D coordinates.
+    """
+
     # Define the coordinates
     coord1 = np.linspace(-100, 100, 20)
     coord2 = np.linspace(-100, 100, 20)

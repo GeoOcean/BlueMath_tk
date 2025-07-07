@@ -5,14 +5,16 @@ import numpy as np
 from shapely.geometry import Point, Polygon
 from shapely.vectorized import contains
 
-# from .constants import EARTH_RADIUS_NM
-EARTH_RADIUS_NM = 6378.135 / 1.852  # DELETE: This is to test __name__ == "__main__"
+from .constants import EARTH_RADIUS_NM
 
 # Constants
 FLATTENING = 1 / 298.257223563
 EPS = 0.00000000005
 DEG2RAD = pi / 180.0
 RAD2DEG = 180.0 / pi
+
+
+# TODO: Check which functions are implemented in Pyproj library!
 
 
 def convert_to_radians(*args: Union[float, np.ndarray]) -> tuple:
@@ -76,7 +78,7 @@ def geodesic_distance(
     >>> geodesic_distance(0, 0, 0, 90)
     90.0
     >>> geodesic_distance([0, 45], [0, -90], [0, -45], [90, 90])
-    array([90., 90.])
+    array([90., 180.])
     """
 
     lon1, lat1, lon2, lat2 = convert_to_radians(lon1, lat1, lon2, lat2)
@@ -159,7 +161,7 @@ def geodesic_azimuth(
     >>> geodesic_azimuth(0, 0, 0, 90)
     90.0
     >>> geodesic_azimuth([0, 45], [0, -90], [0, -45], [90, 90])
-    array([90., 45.])
+    array([90., 90.])
     """
 
     lon1, lat1, lon2, lat2 = convert_to_radians(lon1, lat1, lon2, lat2)
@@ -544,23 +546,3 @@ def mask_points_outside_polygon(
     num_inside = np.sum(inside, axis=1)
 
     return num_inside < 3
-
-
-if __name__ == "__main__":
-    # Examples with float inputs
-    print(geodesic_distance(0, 0, 0, 90))
-    print(geodesic_azimuth(0, 0, 0, 90))
-    print(geodesic_distance_azimuth(0, 0, 0, 90))
-    print(shoot(0, 0, 90, 111.195))
-
-    # Examples with numpy arrays
-    lat1 = np.array([0, 45])
-    lon1 = np.array([0, -90])
-    lat2 = np.array([0, -45])
-    lon2 = np.array([90, 90])
-    print(geodesic_distance(lat1, lon1, lat2, lon2))
-    print(geodesic_azimuth(lat1, lon1, lat2, lon2))
-    print(geodesic_distance_azimuth(lat1, lon1, lat2, lon2))
-    azimuth = np.array([90, 45])
-    maxdist = np.array([111.195, 111.195])
-    print(shoot(lon1, lat1, azimuth, maxdist))
