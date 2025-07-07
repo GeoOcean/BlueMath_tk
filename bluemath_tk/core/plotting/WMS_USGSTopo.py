@@ -1,13 +1,19 @@
 import math
-import requests
 from io import BytesIO
-from PIL import Image
-import matplotlib.pyplot as plt
+from typing import Tuple
+
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+import matplotlib.pyplot as plt
+import requests
+from PIL import Image
+
+from ..constants import EARTH_RADIUS
+
+EARTH_RADIUS_M = EARTH_RADIUS * 1000  # Convert km to m
 
 
-def deg2num(lat: float, lon: float, zoom: int) -> tuple[int, int]:
+def deg2num(lat: float, lon: float, zoom: int) -> Tuple[int, int]:
     """
     Converts geographic coordinates to tile numbers for a given zoom level.
 
@@ -27,16 +33,18 @@ def deg2num(lat: float, lon: float, zoom: int) -> tuple[int, int]:
     ytile : int
         Tile number in y-direction.
     """
+
     lat_rad = math.radians(lat)
     n = 2.0**zoom
     xtile = int((lon + 180.0) / 360.0 * n)
     ytile = int(
         (1.0 - math.log(math.tan(lat_rad) + 1 / math.cos(lat_rad)) / math.pi) / 2.0 * n
     )
+
     return xtile, ytile
 
 
-def num2deg(xtile: int, ytile: int, zoom: int) -> tuple[float, float]:
+def num2deg(xtile: int, ytile: int, zoom: int) -> Tuple[float, float]:
     """
     Converts tile numbers back to geographic coordinates.
 
@@ -56,14 +64,16 @@ def num2deg(xtile: int, ytile: int, zoom: int) -> tuple[float, float]:
     lon : float
         Longitude in degrees.
     """
+
     n = 2.0**zoom
     lon = xtile / n * 360.0 - 180.0
     lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))
     lat = math.degrees(lat_rad)
+
     return lat, lon
 
 
-def lonlat_to_webmercator(lon: float, lat: float) -> tuple[float, float]:
+def lonlat_to_webmercator(lon: float, lat: float) -> Tuple[float, float]:
     """
     Converts lon/lat to Web Mercator projection coordinates in meters.
 
@@ -81,15 +91,16 @@ def lonlat_to_webmercator(lon: float, lat: float) -> tuple[float, float]:
     y : float
         Y coordinate in meters.
     """
-    R = 6378137.0
-    x = R * math.radians(lon)
-    y = R * math.log(math.tan((math.pi / 4) + math.radians(lat) / 2))
+
+    x = EARTH_RADIUS_M * math.radians(lon)
+    y = EARTH_RADIUS_M * math.log(math.tan((math.pi / 4) + math.radians(lat) / 2))
+
     return x, y
 
 
 def tile_bounds_meters(
     x_start: int, y_start: int, x_end: int, y_end: int, zoom: int
-) -> tuple[float, float, float, float]:
+) -> Tuple[float, float, float, float]:
     """
     Computes the bounding box of the tile region in Web Mercator meters.
 
@@ -98,10 +109,12 @@ def tile_bounds_meters(
     xmin, ymin, xmax, ymax : float
         Bounding box in meters (Web Mercator projection).
     """
+
     lat1, lon1 = num2deg(x_start, y_start, zoom)
     lat2, lon2 = num2deg(x_end + 1, y_end + 1, zoom)
     x1, y1 = lonlat_to_webmercator(lon1, lat2)
     x2, y2 = lonlat_to_webmercator(lon2, lat1)
+
     return x1, y1, x2, y2
 
 
@@ -116,12 +129,14 @@ def calculate_zoom(
     zoom : int
         Estimated zoom level.
     """
-    WORLD_MAP_WIDTH = 2 * math.pi * 6378137
+
+    WORLD_MAP_WIDTH = 2 * math.pi * EARTH_RADIUS_M
     x1, _ = lonlat_to_webmercator(lon_min, 0)
     x2, _ = lonlat_to_webmercator(lon_max, 0)
     region_width_m = abs(x2 - x1)
     meters_per_pixel_desired = region_width_m / display_width_px
     zoom = math.log2(WORLD_MAP_WIDTH / (tile_size * meters_per_pixel_desired))
+
     return int(round(zoom))
 
 
@@ -139,6 +154,7 @@ def get_cartopy_scale(zoom: int) -> str:
     scale : str
         One of '110m', '50m', or '10m'.
     """
+
     if zoom >= 9:
         return "10m"
     elif zoom >= 6:
@@ -157,7 +173,7 @@ def plot_usgs_raster_map(
     mask_ocean: bool = False,
     add_features: bool = True,
     display_width_px: int = 1024,
-) -> tuple[plt.Figure, plt.Axes]:
+) -> Tuple[plt.Figure, plt.Axes]:
     """
     Downloads and displays a USGS raster map for the given bounding box.
 
@@ -174,6 +190,7 @@ def plot_usgs_raster_map(
     display_width_px : int, optional
         Approximate pixel width for display (default is 1024).
     """
+
     tile_size = 256
     if zoom is None:
         zoom = calculate_zoom(lon_min, lon_max, display_width_px, tile_size)
@@ -221,4 +238,21 @@ def plot_usgs_raster_map(
 
     if mask_ocean:
         ax.add_feature(cfeature.OCEAN.with_scale(scale), facecolor="w", zorder=3)
+
     return fig, ax
+
+
+if __name__ == "__main__":
+    lat_min, lat_max = 35.406, 54.372
+    lon_min, lon_max = -13.148, 12.325
+    fig, ax = plot_usgs_raster_map(
+        lat_min,
+        lat_max,
+        lon_min,
+        lon_max,
+        zoom=None,
+        verbose=True,
+        add_features=False,
+        mask_ocean=True,
+    )
+    fig.show()
