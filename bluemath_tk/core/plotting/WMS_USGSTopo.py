@@ -162,6 +162,27 @@ def get_cartopy_scale(zoom: int) -> str:
     else:
         return "110m"
 
+def webmercator_to_lonlat(x: float, y: float) -> Tuple[float, float]:
+    """
+    Converts Web Mercator projection coordinates (meters) to lon/lat.
+
+    Parameters
+    ----------
+    x : float
+        X coordinate in meters (Web Mercator).
+    y : float
+        Y coordinate in meters (Web Mercator).
+
+    Returns
+    -------
+    lon : float
+        Longitude in degrees.
+    lat : float
+        Latitude in degrees.
+    """
+    lon = math.degrees(x / EARTH_RADIUS_M)
+    lat = math.degrees(2 * math.atan(math.exp(y / EARTH_RADIUS_M)) - math.pi / 2)
+    return lon, lat
 
 def plot_usgs_raster_map(
     lat_min: float,
@@ -218,14 +239,18 @@ def plot_usgs_raster_map(
                 print(f"Error fetching tile {x},{y}: {e}")
 
     xmin, ymin, xmax, ymax = tile_bounds_meters(x_start, y_start, x_end, y_end, zoom)
+    lon_min, lat_min = webmercator_to_lonlat(xmin, ymin)
+    lon_max, lat_max = webmercator_to_lonlat(xmax, ymax)
 
-    crs_tiles = ccrs.Mercator.GOOGLE
+    print(f"Converted bounds to degrees: lon_min={lon_min}, lon_max={lon_max}, lat_min={lat_min}, lat_max={lat_max}")
+
+    crs_tiles = ccrs.PlateCarree()
     fig = plt.figure(figsize=(12, 8))
     ax = plt.axes(projection=crs_tiles)
-    ax.set_extent([xmin, xmax, ymin, ymax], crs=crs_tiles)
+    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=crs_tiles)
 
     ax.imshow(
-        map_img, origin="upper", extent=[xmin, xmax, ymin, ymax], transform=crs_tiles
+        map_img, origin="upper", extent=[xmin, xmax, ymin, ymax], transform=ccrs.Mercator.GOOGLE
     )
     scale = get_cartopy_scale(zoom)
     if verbose:
