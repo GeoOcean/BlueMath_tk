@@ -842,10 +842,11 @@ class NonStatGEV(BlueMathModel):
 
             # Scale trend
             ntrend_sc = 1
+            
 
             concatvalues = [
                 fit_result["x"][0 : 1 + 2 * nmu],
-                np.zeros(ntrend_loc),
+                np.zeros(self.ntrend_loc),
                 fit_result["x"][
                     1 + 2 * nmu : 1 + 2 * nmu + nind_loc
                 ],  # Location initial parameter beta0, beta, betaT, beta_cov
@@ -879,6 +880,7 @@ class NonStatGEV(BlueMathModel):
             xini = np.concatenate(
                 [np.asarray(v) for v in concatvalues if v is not None]
             )
+
             fit_result = self._fit(
                 self.nmu,
                 self.npsi,
@@ -926,14 +928,14 @@ class NonStatGEV(BlueMathModel):
 
             concatvalues = [
                 fit_result["x"][0 : 1 + 2 * nmu],
-                np.zeros(ntrend_loc),
+                np.zeros(self.ntrend_loc),
                 fit_result["x"][
                     1 + 2 * nmu : 1 + 2 * nmu + nind_loc
                 ],  # Location initial parameter beta0, beta, betaT, beta_cov
                 fit_result["x"][
                     1 + 2 * nmu + nind_loc : 2 + 2 * nmu + nind_loc + 2 * npsi
                 ],
-                np.zeros(ntrend_sc),
+                np.zeros(self.ntrend_sc),
                 fit_result["x"][
                     2 + 2 * nmu + nind_loc + 2 * npsi : 2
                     + 2 * nmu
@@ -1020,12 +1022,12 @@ class NonStatGEV(BlueMathModel):
         # Final parameters values
         concatvalues = [
             fit_result["x"][0 : 1 + 2 * nmu],
-            np.zeros(ntrend_loc),
+            np.zeros(self.ntrend_loc),
             fit_result["x"][
                 1 + 2 * nmu : 1 + 2 * nmu + nind_loc
             ],  # Location initial parameter beta0, beta, betaT, beta_cov
             fit_result["x"][1 + 2 * nmu + nind_loc : 2 + 2 * nmu + nind_loc + 2 * npsi],
-            np.zeros(ntrend_sc),
+            np.zeros(self.ntrend_sc),
             fit_result["x"][
                 2 + 2 * nmu + nind_loc + 2 * npsi : 2
                 + 2 * nmu
@@ -1045,7 +1047,7 @@ class NonStatGEV(BlueMathModel):
                 + 2 * ngamma
             ]
             * np.ones(2 * ngamma),
-            0.01 * np.ones(ntrend_sh),
+            0.01 * np.ones(self.ntrend_sh),
             fit_result["x"][
                 2
                 + 2 * nmu
@@ -2700,6 +2702,7 @@ class NonStatGEV(BlueMathModel):
         list_sc: Optional[Union[list, str]] = "all",
         ntrend_sh: int = 1,
         list_sh: Optional[Union[list, str]] = "all",
+        plot: bool = False,
     ) -> dict:
         """
         Function to determine the optimal parameters of Non-Stationary GEV for given covariates, trends and harmonics.
@@ -2714,21 +2717,23 @@ class NonStatGEV(BlueMathModel):
             Number of harmonics to be included in the scale parameter
         ngamma : int
             Number of harmonics to be included in the shape parameter
+        ntrend_loc : int, default=1
+            If trends in location are included.
         list_loc : list or str, default="all"
             List of indices of covariates to be included in the location parameter.
             If None,no covariates are included in the location parameter.
-        ntrend_loc : int, default=1
-            If trends in location are included.
+        ntrend_sc : int, default=1
+            If trends in scale are included.
         list_sc : list or str, default="all"
             List of indices of covariates to be included in the scale parameter.
             If None,no covariates are included in the scale parameter.
-        ntrend_sc : int, default=1
-            If trends in scale are included.
+        ntrend_sh : int, default=1
+            If trends in shape are included.
         list_sh : list or str, default="all"
             List of indices of covariates to be included in the shape parameter.
             If None,no covariates are included in the shape parameter.
-        ntrend_sh : int, default=1
-            If trends in shape are included.
+        plot : bool, default=False
+            If True, plot the diagnostic plots
 
         Returns
         -------
@@ -2740,7 +2745,7 @@ class NonStatGEV(BlueMathModel):
             - gamma0, gamma, gammaT, gamma_cov: Shape parameters (intercept, harmonic, trend, covariates)
             - negloglikelihood: Negative log-likelihood value at the optimal solution
             - hessian: Hessian matrix of the log-likelihood function at the optimal solution
-            - AIC: Akaike Information Criterion value at the optimal solution
+            - invI0: Inverse of Fisher information matrix
         """
         if list_loc == "all":
             list_loc = list(range(self.covariates.shape[1]))
@@ -2754,6 +2759,13 @@ class NonStatGEV(BlueMathModel):
             list_sh = list(range(self.covariates.shape[1]))
         elif list_loc is None:
             list_loc = []
+        
+        self.list_loc = list_loc
+        self.ntrend_loc = ntrend_loc
+        self.list_sc = list_sc
+        self.ntrend_sc = ntrend_sc
+        self.list_sh = list_sh
+        self.ntrend_sh = ntrend_sh
 
         fit_result = self._fit(
             nmu=nmu,
@@ -2766,6 +2778,40 @@ class NonStatGEV(BlueMathModel):
             list_sh=list_sh,
             ntrend_sh=ntrend_sh,
         )
+
+        # Update parameters in the class
+        self._update_params(**fit_result)
+
+        # Compute the final loglikelihood and the information matrix
+        f, Jx, Hxx = self._loglikelihood(
+            beta0=self.beta0,
+            beta=self.beta,
+            betaT=self.betaT,
+            beta_cov=self.beta_cov,
+            alpha0=self.alpha0,
+            alpha=self.alpha,
+            alphaT=self.alphaT,
+            alpha_cov=self.alpha_cov,
+            gamma0=self.gamma0,
+            gamma=self.gamma,
+            gammaT=self.gammaT,
+            gamma_cov=self.gamma_cov,
+            list_loc=self.list_loc,
+            list_sc=self.list_sc,
+            list_sh=self.list_sh,
+        )
+        fit_result["loglikelihood"] = f
+        fit_result["grad"] = Jx
+        fit_result["hessian"] = Hxx
+
+        self.invI0 = np.linalg.inv(-Hxx)
+        fit_result["invI0"] = self.invI0
+
+        std_param = np.sqrt(np.diag(self.invI0))
+        fit_result["std_param"] = std_param
+
+        if plot:
+            self.plot()
 
         return fit_result
 
@@ -3807,7 +3853,7 @@ class NonStatGEV(BlueMathModel):
                 for i in range(nmu):
                     aux = 0
                     for k, tt in enumerate(self.t):
-                        aux += Dpsitepst[k] * tt * psit * self._Dparam(tt, i + 1)
+                        aux += Dpsitepst[k] * tt * psit[k] * self._Dparam(tt, i + 1)
                     # Sub-block number 46 (Scale exponential involved), alpha_i*gammaT
                     Hxx[
                         2
@@ -4364,7 +4410,7 @@ class NonStatGEV(BlueMathModel):
 
         if beta is None:
             beta = np.empty(0)
-        if betaT is None:
+        if betaT is None or betaT.size == 0:
             betaT = np.empty(0)
             ntend = 0
         else:
@@ -4564,11 +4610,11 @@ class NonStatGEV(BlueMathModel):
             betaT = self.betaT
             alphaT = self.alphaT
             gammaT = self.gammaT
-            cov_loc = self.covariates.iloc[:, self.list_loc]
+            cov_loc = self.covariates.iloc[:, self.list_loc].values
             beta_cov = self.beta_cov
-            cov_sc = self.covariates.iloc[:, self.list_sc]
+            cov_sc = self.covariates.iloc[:, self.list_sc].values
             alpha_cov = self.alpha_cov
-            cov_sh = self.covariates.iloc[:, self.list_sh]
+            cov_sh = self.covariates.iloc[:, self.list_sh].values
             gamma_cov = self.gamma_cov
 
         Q = np.zeros(len(self.xt))
