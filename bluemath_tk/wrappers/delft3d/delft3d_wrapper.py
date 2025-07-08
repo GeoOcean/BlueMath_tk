@@ -17,6 +17,9 @@ sbatch_file_example = """#!/bin/bash
 #SBATCH --mem=4gb               # Memory per node in GB (see also --mem-per-cpu)
 #SBATCH --time=24:00:00
 
+source /home/grupos/geocean/faugeree/miniforge3/etc/profile.d/conda.sh
+conda activate GreenSurge
+
 case_dir=$(ls | awk "NR == $SLURM_ARRAY_TASK_ID")
 launchDelft3d.sh --case-dir $case_dir
 
@@ -24,13 +27,11 @@ output_file="${case_dir}/dflowfmoutput/GreenSurge_GFDcase_map.nc"
 output_file_compressed="${case_dir}/dflowfmoutput/GreenSurge_GFDcase_map_compressed.nc"
 output_file_compressed_tmp="${case_dir}/dflowfmoutput/GreenSurge_GFDcase_map_compressed_tmp.nc"
 
-ncap2 -s 'mesh2d_s1=float(mesh2d_s1)' -v -O "$output_file" "$output_file_compressed_tmp"
-ncks -4 -L 4 "$output_file_compressed_tmp" "$output_file_compressed"
-
-rm "$output_file_compressed_tmp"
-if [[ "$SLURM_ARRAY_TASK_ID" -ne 1 ]]; then
-  rm "$output_file"
-fi
+ncap2 -s 'mesh2d_s1=float(mesh2d_s1)' -v -O "$output_file" "$output_file_compressed_tmp" && {
+  ncks -4 -L 4 "$output_file_compressed_tmp" "$output_file_compressed"
+  rm "$output_file_compressed_tmp"
+  [[ "$SLURM_ARRAY_TASK_ID" -ne 1 ]] && rm "$output_file"
+}
 """
 
 
@@ -149,14 +150,14 @@ class Delft3dModelWrapper(BaseModelWrapper):
         )
 
 
-def format_matrix(mat):
-    return "\n".join(
-        " ".join(f"{x:.1f}" if abs(x) > 0.01 else "0" for x in line) for line in mat
-    )
+# def format_matrix(mat):
+#     return "\n".join(
+#         " ".join(f"{x:.1f}" if abs(x) > 0.01 else "0" for x in line) for line in mat
+#     )
 
 
-def format_zeros(mat_shape):
-    return "\n".join("0 " * mat_shape[1] for _ in range(mat_shape[0]))
+# def format_zeros(mat_shape):
+#     return "\n".join("0 " * mat_shape[1] for _ in range(mat_shape[0]))
 
 
 def actualize_grid_info(
