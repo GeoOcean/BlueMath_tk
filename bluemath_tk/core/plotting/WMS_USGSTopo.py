@@ -162,6 +162,7 @@ def get_cartopy_scale(zoom: int) -> str:
     else:
         return "110m"
 
+
 def webmercator_to_lonlat(x: float, y: float) -> Tuple[float, float]:
     """
     Converts Web Mercator projection coordinates (meters) to lon/lat.
@@ -184,6 +185,7 @@ def webmercator_to_lonlat(x: float, y: float) -> Tuple[float, float]:
     lat = math.degrees(2 * math.atan(math.exp(y / EARTH_RADIUS_M)) - math.pi / 2)
     return lon, lat
 
+
 def plot_usgs_raster_map(
     lat_min: float,
     lat_max: float,
@@ -194,6 +196,9 @@ def plot_usgs_raster_map(
     mask_ocean: bool = False,
     add_features: bool = True,
     display_width_px: int = 1024,
+    figsize: Tuple[int, int] = (12, 8),
+    fig: plt.Figure = None,
+    ax: plt.Axes = None,
 ) -> Tuple[plt.Figure, plt.Axes]:
     """
     Downloads and displays a USGS raster map for the given bounding box.
@@ -242,27 +247,31 @@ def plot_usgs_raster_map(
     lon_min, lat_min = webmercator_to_lonlat(xmin, ymin)
     lon_max, lat_max = webmercator_to_lonlat(xmax, ymax)
 
-    print(f"Converted bounds to degrees: lon_min={lon_min}, lon_max={lon_max}, lat_min={lat_min}, lat_max={lat_max}")
-
-    crs_tiles = ccrs.PlateCarree()
-    fig = plt.figure(figsize=(12, 8))
-    ax = plt.axes(projection=crs_tiles)
-    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=crs_tiles)
-
-    ax.imshow(
-        map_img, origin="upper", extent=[xmin, xmax, ymin, ymax], transform=ccrs.Mercator.GOOGLE
-    )
     scale = get_cartopy_scale(zoom)
     if verbose:
         print(f"Using Cartopy scale: {scale}")
 
+    crs_tiles = ccrs.PlateCarree()
+    if fig is None or ax is None:
+        fig = plt.figure(figsize=figsize)
+        ax = plt.axes(projection=crs_tiles)
+
+    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=crs_tiles)
+
+    ax.imshow(
+        map_img,
+        origin="upper",
+        extent=[xmin, xmax, ymin, ymax],
+        transform=ccrs.Mercator.GOOGLE,
+    )
+
     if add_features:
         ax.add_feature(cfeature.BORDERS.with_scale(scale), linewidth=0.8)
-        ax.add_feature(cfeature.COASTLINE.with_scale(scale))
+        ax.add_feature(cfeature.COASTLINE.with_scale(scale), zorder=1)
         ax.add_feature(cfeature.STATES.with_scale(scale), linewidth=0.5)
 
     if mask_ocean:
-        ax.add_feature(cfeature.OCEAN.with_scale(scale), facecolor="w", zorder=3)
+        ax.add_feature(cfeature.OCEAN.with_scale(scale), facecolor="w", zorder=1)
 
     return fig, ax
 
