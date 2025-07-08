@@ -1,8 +1,8 @@
 import time
 from typing import Callable, List, Tuple
 
-import numpy as np
 import dask.array as da
+import numpy as np
 import pandas as pd
 from scipy.optimize import fmin, fminbound
 

@@ -1,14 +1,16 @@
-from typing import List
 import copy
 import time
+from typing import List
+
 import numpy as np
 import pandas as pd
-from scipy.optimize import fmin, fminbound
 from scipy.interpolate import RBFInterpolator
-from sklearn.model_selection import KFold
+from scipy.optimize import fmin, fminbound
 from sklearn.metrics import mean_squared_error
-from ._base_interpolation import BaseInterpolation
+from sklearn.model_selection import KFold
+
 from ..core.decorators import validate_data_rbf
+from ._base_interpolation import BaseInterpolation
 
 
 class RBFError(Exception):
