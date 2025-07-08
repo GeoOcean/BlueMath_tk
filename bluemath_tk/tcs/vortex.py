@@ -1,10 +1,8 @@
 from datetime import datetime
-from os import path as op
 
 import numpy as np
 import pandas as pd
 import xarray as xr
-from scipy.interpolate import RegularGridInterpolator
 
 from ..core.geo import geo_distance_cartesian, geodesic_distance
 
@@ -162,7 +160,7 @@ def vortex_model_grid(
         vm = vgrad * 0.52  # convert to [m/s]
 
         # Compute radius and nondimensional radius
-        rm = rmw[i] * 1852  # [m]
+        rm = rmw[i] * 1.852 * 1000  # [m]
         rn = rm / r  # nondimensional
 
         # Compute Holland B parameter, with bounds
@@ -209,7 +207,7 @@ def vortex_model_grid(
         {
             "W": ((ylab, xlab, "time"), W, {"units": "m/s"}),
             "Dir": ((ylab, xlab, "time"), D, {"units": "º"}),
-            "p": ((ylab, xlab, "time"), p, {"units": "Pa"}),
+            "p": ((ylab, xlab, "time"), p * 100, {"units": "Pa"}),
         },
         coords={ylab: cg_lat, xlab: cg_lon, "time": times},
     )
@@ -218,10 +216,7 @@ def vortex_model_grid(
 def vortex2delft_3D_FM_nc(
     mesh: xr.Dataset,
     ds_vortex: xr.Dataset,
-    path_output: str,
-    ds_name: str = "forcing_Tonga_vortex.nc",
-    fotcing_ext: str = "GreenSurge_GFDcase_wind.ext",
-) -> None:
+) -> xr.Dataset:
     """
     Convert the vortex dataset to a Delft3D FM compatible netCDF forcing file.
 
@@ -237,6 +232,11 @@ def vortex2delft_3D_FM_nc(
         The name of the output netCDF file, default is "forcing_Tonga_vortex.nc".
     forcing_ext : str
         The extension for the forcing file, default is "GreenSurge_GFDcase_wind.ext".
+    Returns
+    -------
+    xarray.Dataset
+        A dataset containing the interpolated wind speed and pressure data,
+        ready for use in Delft3D FM.
     """
     longitude = mesh.mesh2d_node_x.values
     latitude = mesh.mesh2d_node_y.values
@@ -248,33 +248,29 @@ def vortex2delft_3D_FM_nc(
     angle = np.deg2rad((270 - ds_vortex.Dir.values) % 360)
     W = ds_vortex.W.values
 
-    ds_vortex_interp = ds_vortex.drop_vars(["Dir", "W"])
-
-    ds_vortex_interp["windx"] = (
-        (
-            "lat",
-            "lon",
-            "time",
-        ),
-        (W * np.cos(angle)).astype(np.float32),
-    )
-    ds_vortex_interp["windy"] = (
-        ("lat", "lon", "time"),
-        (W * np.sin(angle)).astype(np.float32),
-    )
-
-    ds_vortex_interp = ds_vortex_interp.rename(
+    ds_vortex_interp = xr.Dataset(
         {
-            "p": "airpressure",
-            "lon": "longitude",
-            "lat": "latitude",
-        }
+            "windx": (
+                ("latitude", "longitude", "time"),
+                (W * np.cos(angle)).astype(np.float32),
+            ),
+            "windy": (
+                ("latitude", "longitude", "time"),
+                (W * np.sin(angle)).astype(np.float32),
+            ),
+            "airpressure": (
+                ("latitude", "longitude", "time"),
+                ds_vortex.p.values.astype(np.float32),
+            ),
+        },
+        coords={
+            "latitude": ds_vortex.lat.values,
+            "longitude": ds_vortex.lon.values,
+            "time": np.arange(n_time),
+        },
     )
 
-    forcing_dataset = ds_vortex_interp.interp(
-        latitude=lat_interp, longitude=lon_interp
-    ).transpose("time", "node")
-    forcing_dataset["time"] = np.arange(n_time)
+    forcing_dataset = ds_vortex_interp.interp(latitude=lat_interp, longitude=lon_interp)
 
     reference_date_str = (
         ds_vortex.time.values[0]
@@ -325,35 +321,4 @@ def vortex2delft_3D_FM_nc(
         "units": "degrees_north",
     }
 
-    forcing_dataset.to_netcdf(
-        op.join(path_output, ds_name),
-        "w",
-        "NETCDF3_CLASSIC",
-        unlimited_dims="time",
-    )
-
-    texte = f"""QUANTITY=windx
-FILENAME={ds_name}
-VARNAME =windx
-FILETYPE=11
-METHOD=3
-OPERAND=O
-
-QUANTITY=windy
-FILENAME={ds_name}
-VARNAME =windy
-FILETYPE=11
-METHOD=3
-OPERAND=O
-
-QUANTITY=airpressure
-FILENAME={ds_name}
-VARNAME =airpressure
-FILETYPE=11
-METHOD=3
-OPERAND=O"""
-
-    with open(
-        op.join(path_output, fotcing_ext), "w", encoding="utf-8"
-    ) as f:
-        f.write(texte)
+    return forcing_dataset

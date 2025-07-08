@@ -94,12 +94,10 @@ def plot_mesh_vals(
         The axes with the plot.
     """
 
-    # Copy coordinates to avoid modifying original mesh
     crd = np.array(msh_t.vert2["coord"], copy=True)
     cnn = msh_t.tria3["index"]
     val = msh_t.value.flatten()
 
-    # Transform to geographic coordinates if needed
     if to_geo is not None:
         crd[:, 0], crd[:, 1] = to_geo(crd[:, 0], crd[:, 1])
 
@@ -232,12 +230,33 @@ def clip_bathymetry(
                     "transform": out_transform,
                 }
             )
-        res_x, res_y = src.res
-        mean_resolution = (abs(res_x) + abs(res_y)) / 2
-
+        mean_raster_resolution = get_raster_resolution(path)
     with rasterio.open(output_path, "w", **out_meta) as dest:
         dest.write(out_image)
+    return mean_raster_resolution
 
+
+def get_raster_resolution(raster_path: str) -> float:
+    """
+    Get the mean resolution of a raster in meters.
+
+    Parameters
+    ----------
+    raster_path : str
+        Path to the raster file.
+    Returns
+    -------
+    float
+        Mean resolution of the raster in meters.
+    ----------
+    Notes
+    This function uses rasterio to open the raster file and extract its resolution.
+    The mean resolution is calculated as the average of the absolute values of the x and y resolutions.
+    """
+
+    with rasterio.open(raster_path) as src:
+        res_x, res_y = src.res
+        mean_resolution = (abs(res_x) + abs(res_y)) / 2
     return mean_resolution
 
 
@@ -326,8 +345,8 @@ def plot_boundaries(mesh: jigsaw_msh_t, ax: Axes, to_geo: callable = None) -> No
                     lambda geom: transform(to_geo, geom)
                 )
             gdf.plot(ax=ax, color=color, label=label)
-        except Exception as e:
-            print(f"No {label} boundaries available. Error: {e}")
+        except Exception as _e:
+            print(f"No {label} boundaries available")
 
     plot_boundary(mesh.boundaries.ocean(), color="b", label="Ocean")
     plot_boundary(mesh.boundaries.interior(), color="g", label="Islands")
@@ -405,17 +424,6 @@ def simply_polygon(base_shape: Polygon, simpl_UTM: float, project) -> Polygon:
     -------
     Polygon
         The simplified polygon in geographic coordinates.
-
-    Examples
-    --------
-    >>> from shapely.geometry import Polygon
-    >>> from pyproj import Transformer
-    >>> from shapely.ops import transform
-    >>> base_shape = Polygon([(0, 0), (1, 1), (1, 0), (0, 0)])
-    >>> project = Transformer.from_crs("EPSG:4326", "EPSG:32630").transform
-    >>> simpl_UTM = 100.0  # Simplification tolerance in meters
-    >>> simplified_shape = simply_polygon(base_shape, simpl_UTM, project)
-    >>> print(simplified_shape)
     """
 
     base_shape_utm = transform(project, base_shape)
@@ -450,17 +458,6 @@ def remove_islands(base_shape: Polygon, threshold_area: float, project) -> Polyg
     -------
     Polygon
         The polygon with small interior rings removed, transformed back to geographic coordinates.
-
-    Examples
-    --------
-    >>> from shapely.geometry import Polygon
-    >>> from pyproj import Transformer
-    >>> from shapely.ops import transform
-    >>> base_shape = Polygon([(0, 0), (1, 1), (1, 0), (0, 0)])
-    >>> project = Transformer.from_crs("EPSG:4326", "EPSG:32630").transform
-    >>> threshold_area = 100.0  # Minimum area for interior rings in square meters
-    >>> simplified_shape = remove_islands(base_shape, threshold_area, project)
-    >>> print(simplified_shape)
     """
 
     base_shape_utm = transform(project, base_shape)
@@ -531,17 +528,6 @@ def calculate_edges(Elmts: np.ndarray) -> np.ndarray:
     np.ndarray
         A 2D array of shape (n_edges, 2) containing the unique edges,
         each represented by a pair of node indices.
-
-    Examples
-    --------
-    >>> Elmts = np.array([[0, 1, 2], [1, 2, 3], [2, 0, 3]])
-    >>> edges = calculate_edges(Elmts)
-    >>> print(edges)
-    [[0 1]
-     [0 2]
-     [1 2]
-     [1 3]
-     [2 3]]
     """
 
     perc = 0
@@ -563,7 +549,7 @@ def calculate_edges(Elmts: np.ndarray) -> np.ndarray:
     return Links_unique
 
 
-def adcirc2netcdf(Path_grd: str, netcdf_path: str) -> None:
+def adcirc2DFlowFM(Path_grd: str, netcdf_path: str) -> None:
     """
     Converts ADCIRC grid data to a NetCDF Delft3DFM format.
 
@@ -576,7 +562,7 @@ def adcirc2netcdf(Path_grd: str, netcdf_path: str) -> None:
 
     Examples
     --------
-    >>> adcirc2netcdf("path/to/grid.grd", "path/to/output.nc")
+    >>> adcirc2DFlowFM("path/to/grid.grd", "path/to/output.nc")
     >>> print("NetCDF file created successfully.")
     """
 
@@ -880,15 +866,6 @@ def compute_circumcenter(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray) -> np.n
     -------
     np.ndarray
         2D coordinates of the circumcenter.
-
-    Examples
-    --------
-    >>> p0 = np.array([0, 0])
-    >>> p1 = np.array([1, 0])
-    >>> p2 = np.array([0, 1])
-    >>> center = compute_circumcenter(p0, p1, p2)
-    >>> print(center)
-    [0.5 0.5]
     """
 
     A = p1 - p0
@@ -922,13 +899,6 @@ def build_edge_to_cells(elements: np.ndarray) -> Dict[Tuple[int, int], List[int]
     -------
     edge_to_cells : Dict[Tuple[int, int], List[int]]
         Dictionary mapping edges to the list of adjacent element indices.
-
-    Examples
-    --------
-    >>> elements = np.array([[0, 1, 2], [1, 2, 3], [2, 0, 3]])
-    >>> edge_to_cells = build_edge_to_cells(elements)
-    >>> print(edge_to_cells)
-    {(0, 1): [0], (0, 2): [0, 2], (1, 2): [0, 1], (1, 3): [1], (2, 3): [1]}
     """
 
     edge_to_cells = defaultdict(list)
@@ -964,15 +934,6 @@ def detect_circumcenter_too_close(
     -------
     bad_elements_mask : np.ndarray
         Boolean mask indicating which elements are problematic (True if bad).
-
-    Examples
-    --------
-    >>> X = np.array([0, 1, 0, 1])
-    >>> Y = np.array([0, 0, 1, 1])
-    >>> elements = np.array([[0, 1, 2], [1, 3, 2]])
-    >>> bad_elements = detect_circumcenter_too_close(X, Y, elements, aj_threshold=0.1)
-    >>> print(bad_elements)
-    [False False]
     """
 
     nodes = np.column_stack((X, Y))
@@ -1075,18 +1036,6 @@ def define_mesh_target_size(
     return mesh_spacing
 
 
-if __name__ == "__main__":
-    # Example usage
-    from pyproj import Transformer
-    from shapely.geometry import Polygon
-
-    base_shape = Polygon([(0, 0), (1, 1), (1, 0), (0, 0)])
-    project = Transformer.from_crs("EPSG:4326", "EPSG:32630").transform
-    simpl_UTM = 100.0  # Simplification tolerance in meters
-    simplified_shape = simply_polygon(base_shape, simpl_UTM, project)
-    print(simplified_shape)
-
-
 def read_lines(poly_line: str) -> MultiLineString:
     """
     Reads a CSV file containing coordinates of a polyline and returns a MultiLineString.
@@ -1115,3 +1064,34 @@ def read_lines(poly_line: str) -> MultiLineString:
     if current_segment:
         segments.append(LineString(current_segment))
     return MultiLineString(segments)
+
+
+def get_raster_resolution_meters(lon_center, lat_center, raster_resolution, project):
+    """
+    Calculate the raster resolution in meters based on the center coordinates and the raster resolution in degrees.
+
+    Parameters
+    ----------
+    lon_center : float
+        Longitude of the center point.
+    lat_center : float
+        Latitude of the center point.
+    raster_resolution : float
+        Raster resolution in degrees.
+    Returns
+    -------
+    float
+        Raster resolution in meters.
+    """
+    x_center, y_center = project(lon_center, lat_center)
+    x_center_raster_resolution, y_center_raster_resolution = project(
+        lon_center + raster_resolution / np.sqrt(2),
+        lat_center + raster_resolution / np.sqrt(2),
+    )
+    raster_resolution_meters = np.mean(
+        [
+            abs(x_center - x_center_raster_resolution),
+            abs(y_center - y_center_raster_resolution),
+        ]
+    )
+    return raster_resolution_meters
