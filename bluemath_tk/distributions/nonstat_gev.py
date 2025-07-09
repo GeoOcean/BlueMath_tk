@@ -117,7 +117,6 @@ class NonStatGEV(BlueMathModel):
         # Color palette
         self.colors = default_colors
 
-
     def auto_adjust(self, max_iter: int = 1000, plot: bool = False) -> dict:
         """
         This method automatically select and calculate the parameters which minimize the AIC related to
@@ -847,7 +846,6 @@ class NonStatGEV(BlueMathModel):
 
             # Scale trend
             ntrend_sc = 1
-            
 
             concatvalues = [
                 fit_result["x"][0 : 1 + 2 * nmu],
@@ -977,7 +975,9 @@ class NonStatGEV(BlueMathModel):
                     + 2 * ngamma
                     + nind_sh
                 ]
-                * np.ones(nind_sh),  # Shape initial parameter gamma0, gamma, gammaT, gamma_cov
+                * np.ones(
+                    nind_sh
+                ),  # Shape initial parameter gamma0, gamma, gammaT, gamma_cov
             ]
             xini = np.concatenate(
                 [np.asarray(v) for v in concatvalues if v is not None]
@@ -1069,7 +1069,9 @@ class NonStatGEV(BlueMathModel):
                 + 2 * ngamma
                 + nind_sh
             ]
-            * np.ones(nind_sh),  # Shape initial parameter gamma0, gamma, gammaT, gamma_cov
+            * np.ones(
+                nind_sh
+            ),  # Shape initial parameter gamma0, gamma, gammaT, gamma_cov
         ]
         xini = np.concatenate([np.asarray(v) for v in concatvalues if v is not None])
         fit_result = self._fit(
@@ -2752,6 +2754,9 @@ class NonStatGEV(BlueMathModel):
             - hessian: Hessian matrix of the log-likelihood function at the optimal solution
             - invI0: Inverse of Fisher information matrix
         """
+        if nmu % 2 != 0 or npsi % 2 != 0 or ngamma % 2 != 0:
+            raise ValueError("Check the input of harmonics, must be even!")
+
         if list_loc == "all":
             list_loc = list(range(self.covariates.shape[1]))
         elif list_loc is None:
@@ -2764,7 +2769,7 @@ class NonStatGEV(BlueMathModel):
             list_sh = list(range(self.covariates.shape[1]))
         elif list_loc is None:
             list_loc = []
-        
+
         self.list_loc = list_loc
         self.ntrend_loc = ntrend_loc
         self.list_sc = list_sc
@@ -6176,7 +6181,9 @@ class NonStatGEV(BlueMathModel):
             cov_shint = np.zeros(len(gamma_cov))
             if len(pos) > 0:
                 for i in range(len(beta_cov)):
-                    cov_locint[i] = np.mean(self.covariates[pos, self.list_loc[i]].values)
+                    cov_locint[i] = np.mean(
+                        self.covariates[pos, self.list_loc[i]].values
+                    )
                 for i in range(len(alpha_cov)):
                     cov_scint[i] = np.mean(self.covariates[pos, self.list_sc[i]].values)
                 for i in range(len(gamma_cov)):
