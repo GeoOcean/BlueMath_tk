@@ -53,7 +53,7 @@ class NonStatGEV(BlueMathModel):
     >>> from bluemath_tk.distributions.nonstat_gev import NonStatGEV
     >>> nonstat_gev = NonStatGEV(x, t, covariates, trends=True)
     >>> fit_result = nonstat_gev.auto_adjust()
-    >>> fit_result = nonstat_gev.fit(nmu=1,npsi=1,ngamma=1,ntrend_loc=1,list_loc="all",ntrend_sc=1,list_sc="all",ntrend_sh=1,list_sh="all")
+    >>> fit_result = nonstat_gev.fit(nmu=2,npsi=2,ngamma=2,ntrend_loc=1,list_loc="all",ntrend_sc=1,list_sc="all",ntrend_sh=1,list_sh="all")
     """
 
     def __init__(
