@@ -8,6 +8,7 @@ from scipy.optimize import minimize
 from scipy.stats import norm
 
 from ..core.models import BlueMathModel
+from ..core.plotting.colors import default_colors
 
 
 class NonStatGEV(BlueMathModel):
@@ -112,6 +113,10 @@ class NonStatGEV(BlueMathModel):
         self.ngamma = 0  # Number of parameters of harmonic part of shape
         self.nind_sh = 0  # Number of parameters of covariates part of shape
         self.ntrend_sh = 0  # Number of parameters of trend part of shape
+
+        # Color palette
+        self.colors = default_colors
+
 
     def auto_adjust(self, max_iter: int = 1000, plot: bool = False) -> dict:
         """
@@ -732,9 +737,9 @@ class NonStatGEV(BlueMathModel):
                     self.list_loc = list_loc
                     self.nind_loc = nind_loc
                     self.list_sc = list_sc
-                    self.nind_loc = nind_sc
+                    self.nind_sc = nind_sc
                     self.list_sh = list_sh
-                    self.nind_loc = nind_sh
+                    self.nind_sh = nind_sh
                 else:
                     if posmaxparam == 0:
                         list_loc = list_loc[:-1]
@@ -755,9 +760,9 @@ class NonStatGEV(BlueMathModel):
                     self.list_loc = list_loc
                     self.nind_loc = nind_loc
                     self.list_sc = list_sc
-                    self.nind_loc = nind_sc
+                    self.nind_sc = nind_sc
                     self.list_sh = list_sh
-                    self.nind_loc = nind_sh
+                    self.nind_sh = nind_sh
                     break
 
         print("End of Covariates iterative process")
@@ -2839,15 +2844,15 @@ class NonStatGEV(BlueMathModel):
         self,
         beta0: Optional[float] = None,
         beta: Optional[np.ndarray] = None,
-        betaT: Optional[float] = None,
+        betaT: Optional[float | np.ndarray] = None,
         beta_cov: Optional[np.ndarray] = None,
         alpha0: Optional[float] = None,
         alpha: Optional[np.ndarray] = None,
-        alphaT: Optional[float] = None,
+        alphaT: Optional[float | np.ndarray] = None,
         alpha_cov: Optional[np.ndarray] = None,
         gamma0: Optional[float] = None,
         gamma: Optional[np.ndarray] = None,
-        gammaT: Optional[float] = None,
+        gammaT: Optional[float | np.ndarray] = None,
         gamma_cov: Optional[np.ndarray] = None,
         list_loc: Optional[list] = None,
         list_sc: Optional[list] = None,
@@ -2862,7 +2867,7 @@ class NonStatGEV(BlueMathModel):
             Optimal constant parameter related to location
         beta : np.ndarray, default=None
             Optimal harmonic vector associated with location
-        betaT : float, default=None
+        betaT : float or np.ndarray, default=None
             Optimal location trend parameter
         beta_cov : np.ndarray, default=None
             Optimal location covariate vector
@@ -2870,7 +2875,7 @@ class NonStatGEV(BlueMathModel):
             Optimal constant parameter related to scale
         alpha : np.ndarray, default=None
             Optimal harmonic vector associated with scale
-        alphaT : float, default=None
+        alphaT : float or np.ndarray, default=None
             Optimal scale trend parameter
         alpha_cov : np.ndarray, default=None
             Optimal scale covariate vector
@@ -2878,7 +2883,7 @@ class NonStatGEV(BlueMathModel):
             Optimal constant parameter related to shape
         gamma : np.ndarray, default=None
             Optimal harmonic vector associated with shape
-        gammaT : float, default=None
+        gammaT : float or np.ndarray, default=None
             Optimal shape trend parameter
         gamma_cov : np.ndarray, default=None
             Optimal shape covariate vector
@@ -2907,7 +2912,7 @@ class NonStatGEV(BlueMathModel):
             nmu = 0
         else:
             nmu = beta.size
-        if betaT is None:
+        if betaT is None or np.asarray(betaT).size == 0:
             # betaT = np.empty(0)
             ntrend_loc = 0
         else:
@@ -2921,7 +2926,7 @@ class NonStatGEV(BlueMathModel):
             npsi = 0
         else:
             npsi = alpha.size
-        if alphaT is None:
+        if alphaT is None or np.asarray(alphaT).size == 0:
             # alphaT = np.empty(0)
             ntrend_sc = 0
         else:
@@ -2935,7 +2940,7 @@ class NonStatGEV(BlueMathModel):
             ngamma = 0
         else:
             ngamma = gamma.size
-        if gammaT is None:
+        if gammaT is None or np.asarray(gammaT).size == 0:
             # gammaT = np.empty(0)
             ntrend_sh = 0
         else:
@@ -4687,9 +4692,9 @@ class NonStatGEV(BlueMathModel):
             gamma=self.gamma,
             gammaT=self.gammaT,
             gamma_cov=self.gamma_cov,
-            covariates_loc=self.covariates[:, self.list_loc],
-            covariates_sc=self.covariates[:, self.list_sc],
-            covariates_sh=self.covariates[:, self.list_sh],
+            covariates_loc=self.covariates.iloc[:, self.list_loc].values,
+            covariates_sc=self.covariates.iloc[:, self.list_sc].values,
+            covariates_sh=self.covariates.iloc[:, self.list_sh].values,
         )
 
         posG = np.where(np.abs(epst) <= 1e-8)[0]
@@ -5279,9 +5284,9 @@ class NonStatGEV(BlueMathModel):
             gamma=self.gamma,
             gammaT=self.gammaT,
             gamma_cov=self.gamma_cov,
-            covariates_loc=self.covariates[:, self.list_loc],
-            covariates_sc=self.covariates[:, self.list_sc],
-            covariates_sh=self.covariates[:, self.list_sh],
+            covariates_loc=self.covariates.iloc[:, self.list_loc].values,
+            covariates_sc=self.covariates.iloc[:, self.list_sc].values,
+            covariates_sh=self.covariates.iloc[:, self.list_sh].values,
         )
 
         # The values whose shape parameter is almost cero corresponds to the GUMBEL distribution, locate their positions if they exist
@@ -5328,9 +5333,9 @@ class NonStatGEV(BlueMathModel):
             gamma=self.gamma,
             gammaT=self.gammaT,
             gamma_cov=self.gamma_cov,
-            covariates_loc=self.covariates[:, self.list_loc],
-            covariates_sc=self.covariates[:, self.list_sc],
-            covariates_sh=self.covariates[:, self.list_sh],
+            covariates_loc=self.covariates.iloc[:, self.list_loc].values,
+            covariates_sc=self.covariates.iloc[:, self.list_sc].values,
+            covariates_sh=self.covariates.iloc[:, self.list_sh].values,
         )
 
         # The values whose shape parameter is almost cero corresponds to the GUMBEL distribution, locate their positions if they exist
@@ -5419,7 +5424,7 @@ class NonStatGEV(BlueMathModel):
         if self.nind_loc > 0:
             for i in range(self.nind_loc):
                 Dq[1 + 2 * self.nmu + self.ntrend_loc + i, :] = (
-                    Dmut * self.covariates[:, self.list_loc[i]] * Dmutastmut
+                    Dmut * self.covariates.iloc[:, self.list_loc[i]] * Dmutastmut
                 )  # beta_cov_i
 
         # Jacobian elements related to the scale parameters alpha0, alpha (equation A.7)
@@ -5453,7 +5458,7 @@ class NonStatGEV(BlueMathModel):
                     :,
                 ] = (
                     (Dpsit * Dpsitastpsit + Dmut * Dmutastpsit)
-                    * self.covariates[:, self.list_sc[i]]
+                    * self.covariates.iloc[:, self.list_sc[i]]
                     * psit1
                 )  # alpha_cov
 
@@ -5519,7 +5524,7 @@ class NonStatGEV(BlueMathModel):
                     :,
                 ] = (
                     Depst + Dpsit * Dpsitastepst + Dmut * Dmutastepst
-                ) * self.covariates[:, self.list_sh[i]]  # gamma_cov
+                ) * self.covariates.iloc[:, self.list_sh[i]]  # gamma_cov
 
         return Dq
 
@@ -5544,9 +5549,9 @@ class NonStatGEV(BlueMathModel):
             self.alphaT,
             self.alpha_cov,
             self.gamma_cov,
-            self.covariates[:, self.list_loc],
-            self.covariates[:, self.list_sc],
-            self.covariates[:, self.list_sh],
+            self.covariates.iloc[:, self.list_loc].values,
+            self.covariates.iloc[:, self.list_sc].values,
+            self.covariates.iloc[:, self.list_sh].values,
         )
 
         # The values whose shape parameter is almost cero corresponds to the GUMBEL distribution, locate their positions if they exist
@@ -5606,7 +5611,7 @@ class NonStatGEV(BlueMathModel):
         if self.nind_loc > 0:
             for i in range(self.nind_loc):
                 Dermut[1 + 2 * self.nmu + self.ntrend_loc + i, :] = (
-                    Dmut * self.covariates[:, self.list_loc[i]] * Dmutastmut
+                    Dmut * self.covariates.iloc[:, self.list_loc[i]] * Dmutastmut
                 )  # beta_cov_i
 
         # Jacobian elements related to the scale parameters alpha0, alpha (equation A.7)
@@ -5629,7 +5634,7 @@ class NonStatGEV(BlueMathModel):
             for i in range(self.nind_sc):
                 Derpsit[1 + 2 * self.npsi + self.ntrend_sc + i, :] = (
                     (Dpsit * Dpsitastpsit + Dmut * Dmutastpsit)
-                    * self.covariates[:, self.list_sc[i]]
+                    * self.covariates.iloc[:, self.list_sc[i]]
                     * psit1
                 )  # alpha_cov
 
@@ -5653,7 +5658,7 @@ class NonStatGEV(BlueMathModel):
             for i in range(self.nind_sh):
                 Derepst[self.ngamma0 + 2 * self.ngamma + self.ntrend_sh + i, :] = (
                     Depst + Dpsit * Dpsitastepst + Dmut * Dmutastepst
-                ) * self.covariates[:, self.list_sh[i]]  # gamma_cov
+                ) * self.covariates.iloc[:, self.list_sh[i]]  # gamma_cov
 
         return Dermut, Derpsit, Derepst
 
@@ -5679,9 +5684,9 @@ class NonStatGEV(BlueMathModel):
             gamma=self.gamma,
             gammaT=self.gammaT,
             gamma_cov=self.gamma_cov,
-            covariates_loc=self.covariates[:, self.list_loc],
-            covariates_sc=self.covariates[:, self.list_sc],
-            covariates_sh=self.covariates[:, self.list_sh],
+            covariates_loc=self.covariates.iloc[:, self.list_loc].values,
+            covariates_sc=self.covariates.iloc[:, self.list_sc].values,
+            covariates_sh=self.covariates.iloc[:, self.list_sh].values,
         )
 
         # The values whose shape parameter is almost cero corresponds to the GUMBEL distribution, locate their positions if they exist
@@ -5771,7 +5776,7 @@ class NonStatGEV(BlueMathModel):
         if self.nind_loc > 0:
             for i in range(self.nind_loc):
                 Dq[1 + 2 * self.nmu + self.ntrend_loc + i, :] = (
-                    Dqmut * self.covariates[:, self.list_loc[i]] * Dmutastmut
+                    Dqmut * self.covariates.iloc[:, self.list_loc[i]] * Dmutastmut
                 )  # beta_cov_i
 
         # Jacobian elements related to the scale parameters alpha0, alpha (equation A.7)
@@ -5805,7 +5810,7 @@ class NonStatGEV(BlueMathModel):
                     :,
                 ] = (
                     (Dqpsit * Dpsitastpsit + Dqmut * Dmutastpsit)
-                    * self.covariates[:, self.list_sc[i]]
+                    * self.covariates.iloc[:, self.list_sc[i]]
                     * psit1
                 )  # alpha_cov
 
@@ -5873,7 +5878,7 @@ class NonStatGEV(BlueMathModel):
                     :,
                 ] = (
                     Dqepst + Dqpsit * Dpsitastepst + Dqmut * Dmutastepst
-                ) * self.covariates[:, self.list_sc[i]]  # gamma_cov
+                ) * self.covariates.iloc[:, self.list_sh[i]]  # gamma_cov
 
         return Dq
 
@@ -5963,9 +5968,9 @@ class NonStatGEV(BlueMathModel):
             gamma=self.gamma,
             gammaT=self.gammaT,
             gamma_cov=self.gamma_cov,
-            covariates_loc=self.covariates[:, self.list_loc],
-            covariates_sc=self.covariates[:, self.list_sc],
-            covariates_sh=self.covariates[:, self.list_sh],
+            covariates_loc=self.covariates.iloc[:, self.list_loc].values,
+            covariates_sc=self.covariates.iloc[:, self.list_sc].values,
+            covariates_sh=self.covariates.iloc[:, self.list_sh].values,
         )
 
         # The values whose shape parameter is almost cero corresponds to the GUMBEL distribution, locate their positions if they exist
@@ -6096,7 +6101,7 @@ class NonStatGEV(BlueMathModel):
             plt.semilogx(Ts, stdlo, "--k", linewidth=1.1)
             plt.semilogx(Ts, stdup, "--k", linewidth=1.1)
         plt.xlabel("Return Period (years)")
-        plt.ylabel(r"$H_s^{max}$")
+        plt.ylabel(r"$x$")
         plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
         plt.xticks([1, 2, 5, 10, 20, 50, 100, 250, 500])
         plt.xlim(left=1.8, right=Ts[-1] + 50)
@@ -6105,21 +6110,6 @@ class NonStatGEV(BlueMathModel):
         plt.grid(True)
         plt.margins(x=0.1)
         plt.show()
-
-        ### plt.figure(figsize=(10,6))
-        ### for i in range(nts):
-        ###     col = np.random.uniform(0, 1, 3)
-        ###     plt.plot(np.arange(1, ny + 1) - 0.5, quanaggr[i,:], color=col)
-        ### plt.xlabel("Return Period (years)")
-        ### plt.ylabel(r"$H_s^{max}$")
-        ### plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-        ### plt.xticks([1, 2, 5, 10, 20, 50, 100, 250, 500])
-        ### plt.xlim(left=1.8,right=Ts[-1]+50)
-        ### plt.ylim(bottom=0)
-        ### plt.title(f"Aggregate Quantiles ({self.var_name})")
-        ### plt.grid(True)
-        ### plt.margins(x=0.1)
-        ### plt.show()
 
     def _aggquantile(
         self,
@@ -6186,11 +6176,11 @@ class NonStatGEV(BlueMathModel):
             cov_shint = np.zeros(len(gamma_cov))
             if len(pos) > 0:
                 for i in range(len(beta_cov)):
-                    cov_locint[i] = np.mean(self.covariates[pos, self.list_loc[i]])
+                    cov_locint[i] = np.mean(self.covariates[pos, self.list_loc[i]].values)
                 for i in range(len(alpha_cov)):
-                    cov_scint[i] = np.mean(self.covariates[pos, self.list_sc[i]])
+                    cov_scint[i] = np.mean(self.covariates[pos, self.list_sc[i]].values)
                 for i in range(len(gamma_cov)):
-                    cov_shint[i] = np.mean(self.covariates[pos, self.list_sh[i]])
+                    cov_shint[i] = np.mean(self.covariates[pos, self.list_sh[i]].values)
         else:
             cov_locint = None
             cov_scint = None
@@ -6205,7 +6195,7 @@ class NonStatGEV(BlueMathModel):
                 beta,
                 betaT,
                 beta_cov,
-                self.covariates[:, self.list_loc],
+                self.covariates.iloc[:, self.list_loc].values,
                 cov_locint,
                 self.t,
                 x,
@@ -6220,7 +6210,7 @@ class NonStatGEV(BlueMathModel):
                     alpha,
                     alphaT,
                     alpha_cov,
-                    self.covariates[:, self.list_sc],
+                    self.covariates.iloc[:, self.list_sc].values,
                     cov_scint,
                     self.t,
                     x,
@@ -6334,7 +6324,7 @@ class NonStatGEV(BlueMathModel):
             beta,
             betaT,
             beta_cov,
-            self.covariates[:, self.list_loc],
+            self.covariates.iloc[:, self.list_loc].values,
             indicesint,
             self.t,
             t,
@@ -6346,7 +6336,7 @@ class NonStatGEV(BlueMathModel):
                 alpha,
                 alphaT,
                 alpha_cov,
-                self.covariates[:, self.list_sc],
+                self.covariates.iloc[:, self.list_sc].values,
                 indices2int,
                 self.t,
                 t,
@@ -6358,7 +6348,7 @@ class NonStatGEV(BlueMathModel):
             gamma,
             gammaT,
             gamma_cov,
-            self.covariates[:, self.list_sh],
+            self.covariates.iloc[:, self.list_sh].values,
             indices3int,
             self.t,
             t,
@@ -6423,7 +6413,7 @@ class NonStatGEV(BlueMathModel):
             beta,
             betaT,
             beta_cov,
-            self.covariates[:, self.list_loc],
+            self.covariates.iloc[:, self.list_loc].values,
             indicesint,
             self.t,
             t,
@@ -6434,8 +6424,8 @@ class NonStatGEV(BlueMathModel):
                 alpha0,
                 alpha,
                 alphaT,
-                self.covariates[:, self.list_sc],
                 alpha_cov,
+                self.covariates.iloc[:, self.list_sc].values,
                 indices2int,
                 self.t,
                 t,
@@ -6447,7 +6437,7 @@ class NonStatGEV(BlueMathModel):
             gamma,
             gammaT,
             gamma_cov,
-            self.covariates[:, self.list_sh],
+            self.covariates.iloc[:, self.list_sh].values,
             indices3int,
             self.t,
             t,
