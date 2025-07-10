@@ -19,6 +19,9 @@ The package also includes a set of utility functions for processing climate data
 ```sh
 pip install bluemath-tk
 ```
+```sh
+conda install conda-forge::bluemath-tk
+```
 
 ## Project status
 
