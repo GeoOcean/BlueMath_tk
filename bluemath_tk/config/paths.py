@@ -75,6 +75,9 @@ def get_paths(verbose: bool = True) -> dict:
         for file_name, file_path in PATHS.items():
             if "thredds" in file_path:
                 print(f"WARNING: {file_name} is a Thredds path.")
+            elif "lustre" in file_path:
+                print(f"WARNING: {file_name} is a GeoOcean cluster path.")
+                print("* Data access can be requested to bluemath@unican.es")
         print(
             "You can update any path or add new paths with the update_paths function,"
             " from bluemath_tk.config.paths."

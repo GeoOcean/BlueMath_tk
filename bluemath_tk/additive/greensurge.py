@@ -1,6 +1,5 @@
-#import datetime as datetime
-from datetime import datetime
 import warnings
+from datetime import datetime
 from functools import partial
 from multiprocessing import Pool, cpu_count
 from typing import Tuple
@@ -17,7 +16,8 @@ from tqdm import tqdm
 
 from ..core.plotting.colors import hex_colors_land, hex_colors_water
 from ..core.plotting.utils import join_colormaps
-from bluemath_tk.topo_bathy.mesh_utils import read_adcirc_grd
+from ..topo_bathy.mesh_utils import read_adcirc_grd
+
 
 def get_regular_grid(
     node_computation_longitude: np.ndarray,
@@ -169,7 +169,7 @@ def plot_GS_input_wind_partition(
         constrained_layout=True,
     )
     time = xds_vortex_GS.time.isel(time=i_time)
-    
+
     ax1.set_title("Vortex wind")
     ax2.set_title("Wind partition (GreenSurge)")
 
@@ -268,8 +268,7 @@ def plot_GS_input_wind_partition(
 
 
 def plot_greensurge_setup(
-    info_ds: xr.Dataset, figsize: tuple = (10, 10),
-    fig:  Figure = None, ax: Axes = None
+    info_ds: xr.Dataset, figsize: tuple = (10, 10), fig: Figure = None, ax: Axes = None
 ) -> Tuple[Figure, Axes]:
     """
     Plot the GreenSurge mesh setup from the provided dataset.
@@ -331,12 +330,12 @@ def plot_greensurge_setup(
 
     for t in range(num_elements):
         node0, node1, node2 = Conectivity[t]
-        x = (
+        _x = (
             node_forcing_longitude[int(node0)]
             + node_forcing_longitude[int(node1)]
             + node_forcing_longitude[int(node2)]
         ) / 3
-        y = (
+        _y = (
             node_forcing_latitude[int(node0)]
             + node_forcing_latitude[int(node1)]
             + node_forcing_latitude[int(node2)]
@@ -414,6 +413,12 @@ def plot_GS_vs_dynamic_windsetup_swath(
         Maximum value for the color scale. Default is None.
     figsize : tuple, optional
         Figure size. Default is (10, 8).
+    Returns
+    -------
+    fig : Figure
+        The figure object containing the plots.
+    axs : list of Axes
+        List of Axes objects for the two subplots.
     """
 
     warnings.filterwarnings("ignore", message="All-NaN slice encountered")
@@ -475,8 +480,10 @@ def plot_GS_vs_dynamic_windsetup_swath(
     lon_max = np.nanmax(Longitude_dynamic)
     lat_min = np.nanmin(Latitude_dynamic)
     lat_max = np.nanmax(Latitude_dynamic)
+
     for ax in axs:
         ax.set_extent([lon_min, lon_max, lat_min, lat_max])
+    return fig, axs
 
 
 def GS_windsetup_reconstruction_with_postprocess(
@@ -822,7 +829,9 @@ def plot_GS_TG_validation_timeseries(
     lon_obs = np.where(lon_obs > 180, lon_obs - 360, lon_obs)
 
     nface_index = extract_pos_nearest_points_tri(ds_GFD_info, lon_obs, lat_obs)
-    mesh2d_nFaces = extract_pos_nearest_points_tri(ds_WL_dynamic_WindSetUp, lon_obs, lat_obs)
+    mesh2d_nFaces = extract_pos_nearest_points_tri(
+        ds_WL_dynamic_WindSetUp, lon_obs, lat_obs
+    )
     pos_lon_IB, pos_lat_IB = extract_pos_nearest_points(ds_WL_GS_IB, lon_obs, lat_obs)
 
     time = ds_WL_GS_WindSetUp.WL.time
@@ -830,7 +839,9 @@ def plot_GS_TG_validation_timeseries(
     ds_WL_GS_IB = ds_WL_GS_IB.interp(time=time)
 
     WL_GS = ds_WL_GS_WindSetUp.WL.sel(nface=nface_index).values.squeeze()
-    WL_dyn = ds_WL_dynamic_WindSetUp.mesh2d_s1.sel(mesh2d_nFaces=mesh2d_nFaces).values.squeeze()
+    WL_dyn = ds_WL_dynamic_WindSetUp.mesh2d_s1.sel(
+        mesh2d_nFaces=mesh2d_nFaces
+    ).values.squeeze()
     WL_IB = ds_WL_GS_IB.IB.values[pos_lat_IB, pos_lon_IB, :].squeeze()
     WL_TG = tide_gauge.SS.values
 
@@ -956,7 +967,7 @@ def extract_pos_nearest_points_tri(
         lat_mesh = ds_mesh_info.mesh2d_face_y.values
         type_ds = 1
 
-    nface_index = []#np.zeros(len(lon_points))
+    nface_index = []  # np.zeros(len(lon_points))
 
     for i in range(len(lon_points)):
         lon = lon_points[i]
@@ -966,10 +977,12 @@ def extract_pos_nearest_points_tri(
         min_idx = np.argmin(distances)
 
         if type_ds == 0:
-            #nface_index[i] = ds_mesh_info.node_cumputation_index.values[min_idx].astype(int)
-            nface_index.append(ds_mesh_info.node_cumputation_index.values[min_idx].astype(int))
+            # nface_index[i] = ds_mesh_info.node_cumputation_index.values[min_idx].astype(int)
+            nface_index.append(
+                ds_mesh_info.node_cumputation_index.values[min_idx].astype(int)
+            )
         elif type_ds == 1:
-            #nface_index[i] = ds_mesh_info.mesh2d_nFaces.values[min_idx].astype(int)
+            # nface_index[i] = ds_mesh_info.mesh2d_nFaces.values[min_idx].astype(int)
             nface_index.append(ds_mesh_info.mesh2d_nFaces.values[min_idx].astype(int))
 
     return nface_index
@@ -1001,8 +1014,8 @@ def extract_pos_nearest_points(
     lon_mesh = ds_mesh_info.lon.values
     lat_mesh = ds_mesh_info.lat.values
 
-    pos_lon_points_mesh = []#= np.zeros(len(lon_points))
-    pos_lat_points_mesh = [] #= np.zeros(len(lat_points))
+    pos_lon_points_mesh = []  # = np.zeros(len(lon_points))
+    pos_lat_points_mesh = []  # = np.zeros(len(lat_points))
 
     for i in range(len(lon_points)):
         lon = lon_points[i]
@@ -1035,7 +1048,7 @@ def pressure_to_IB(xds_presure: xr.Dataset) -> xr.Dataset:
     """
 
     p = xds_presure.p.values
-    IB = (101325 - p) /10000  # Convert pressure (Pa) to inverse barometer (m)
+    IB = (101325 - p) / 10000  # Convert pressure (Pa) to inverse barometer (m)
 
     xds_presure_modified = xds_presure.copy()
     xds_presure_modified["IB"] = (("lat", "lon", "time"), IB)
@@ -1219,6 +1232,7 @@ def GS_windsetup_reconstruction_with_postprocess_parallel(
 
     return ds_wind_setup
 
+
 def build_greensurge_infos_dataset(
     path_grd_calc: str,
     path_grd_forz: str,
@@ -1231,7 +1245,7 @@ def build_greensurge_infos_dataset(
     reference_date_dt: datetime,
     Eddy: float,
     Chezy: float,
-    )-> xr.Dataset :
+) -> xr.Dataset:
     """
     Build a structured dataset containing simulation parameters for hybrid modeling.
 
@@ -1302,40 +1316,101 @@ def build_greensurge_infos_dataset(
             node_forcing_index=("node_forcing_index", node_forcing_indices),
             element_forcing_index=("element_forcing_index", element_forcing_indices),
             node_cumputation_index=("node_cumputation_index", node_cumputation_index),
-            element_computation_index=("element_computation_index", element_computation_indices),
-
+            element_computation_index=(
+                "element_computation_index",
+                element_computation_indices,
+            ),
         ),
         data_vars=dict(
-            triangle_computation_connectivity=(("element_computation_index", "triangle_forcing_nodes"), Elmts_calc[:, 2:5].astype(int),
-                {"description": "Indices of nodes forming each triangular element of the computational grid (counter-clockwise order)"}),
-            node_forcing_longitude=("node_forcing_index", Nodes_forz[:, 1],
-                {"units": "degrees_east", "description": "Longitude of each mesh node of the forcing grid"}),
-            node_forcing_latitude=("node_forcing_index", Nodes_forz[:, 2],
-                {"units": "degrees_north", "description": "Latitude of each mesh node of the forcing grid"}),
-            triangle_forcing_connectivity=(("element_forcing_index", "triangle_forcing_nodes"), Elmts_forz[:, 2:5].astype(int),
-                {"description": "Indices of nodes forming each triangular element of the forcing grid (counter-clockwise order)"}),
-
-            wind_directions=("wind_direction_index", wind_directions,
-                {"units": "degrees", "description": "Discretized wind directions (0 to 360°)"}),
-            total_elements=((), num_elements,
-                {"description": "Total number of triangular elements in the mesh"}),
-            simulation_duration_hours=((), simulation_duration_hours,
-                {"units": "hours", "description": "Total duration of the simulation"}),
-            time_step_hours=((), simulation_time_step_hours,
-                {"units": "hours", "description": "Time step used in the simulation"}),
-            wind_speed=((), wind_speed,
-                {"units": "m/s", "description": "Wind speed for each discretized direction"}),
-            location_name=((), site,
-                {"description": "Name of case study location"}),
-            eddy_viscosity=((), Eddy,
-                {"units": "m²/s", "description": "Eddy viscosity used in the simulation"}),
-            chezy_coefficient=((), Chezy,
-                {"description": "Chezy coefficient used for bottom friction"}),
-            reference_date=((), reference_date_str,
-                {"description": "Reference start date of the simulation"}),
-            forcing_time_step=((), forcing_time_step,
-                {"units": "hour", "description": "Time step used for applying external forcing data"}),
-        )
+            triangle_computation_connectivity=(
+                ("element_computation_index", "triangle_forcing_nodes"),
+                Elmts_calc[:, 2:5].astype(int),
+                {
+                    "description": "Indices of nodes forming each triangular element of the computational grid (counter-clockwise order)"
+                },
+            ),
+            node_forcing_longitude=(
+                "node_forcing_index",
+                Nodes_forz[:, 1],
+                {
+                    "units": "degrees_east",
+                    "description": "Longitude of each mesh node of the forcing grid",
+                },
+            ),
+            node_forcing_latitude=(
+                "node_forcing_index",
+                Nodes_forz[:, 2],
+                {
+                    "units": "degrees_north",
+                    "description": "Latitude of each mesh node of the forcing grid",
+                },
+            ),
+            triangle_forcing_connectivity=(
+                ("element_forcing_index", "triangle_forcing_nodes"),
+                Elmts_forz[:, 2:5].astype(int),
+                {
+                    "description": "Indices of nodes forming each triangular element of the forcing grid (counter-clockwise order)"
+                },
+            ),
+            wind_directions=(
+                "wind_direction_index",
+                wind_directions,
+                {
+                    "units": "degrees",
+                    "description": "Discretized wind directions (0 to 360°)",
+                },
+            ),
+            total_elements=(
+                (),
+                num_elements,
+                {"description": "Total number of triangular elements in the mesh"},
+            ),
+            simulation_duration_hours=(
+                (),
+                simulation_duration_hours,
+                {"units": "hours", "description": "Total duration of the simulation"},
+            ),
+            time_step_hours=(
+                (),
+                simulation_time_step_hours,
+                {"units": "hours", "description": "Time step used in the simulation"},
+            ),
+            wind_speed=(
+                (),
+                wind_speed,
+                {
+                    "units": "m/s",
+                    "description": "Wind speed for each discretized direction",
+                },
+            ),
+            location_name=((), site, {"description": "Name of case study location"}),
+            eddy_viscosity=(
+                (),
+                Eddy,
+                {
+                    "units": "m²/s",
+                    "description": "Eddy viscosity used in the simulation",
+                },
+            ),
+            chezy_coefficient=(
+                (),
+                Chezy,
+                {"description": "Chezy coefficient used for bottom friction"},
+            ),
+            reference_date=(
+                (),
+                reference_date_str,
+                {"description": "Reference start date of the simulation"},
+            ),
+            forcing_time_step=(
+                (),
+                forcing_time_step,
+                {
+                    "units": "hour",
+                    "description": "Time step used for applying external forcing data",
+                },
+            ),
+        ),
     )
 
     simulation_dataset["time_forcing_index"].attrs = {
@@ -1351,15 +1426,14 @@ def build_greensurge_infos_dataset(
         "description": "Longitude of each mesh node of the computational grid",
         "standard_name": "longitude",
         "long_name": "longitude",
-        "units": "degrees_east"
+        "units": "degrees_east",
     }
     simulation_dataset["node_computation_latitude"].attrs = {
         "description": "Latitude of each mesh node of the computational grid",
         "standard_name": "latitude",
         "long_name": "latitude",
-        "units": "degrees_north"
+        "units": "degrees_north",
     }
-
 
     simulation_dataset.attrs = {
         "title": "Hybrid Simulation Input Dataset",
@@ -1370,11 +1444,12 @@ def build_greensurge_infos_dataset(
     }
     return simulation_dataset
 
+
 def plot_greensurge_setup_with_raster(
     simulation_dataset,
     path_grd_calc,
     figsize=(7, 7),
-)-> None:
+) -> None:
     """
     Plot the GreenSurge setup with raster bathymetry.
 
@@ -1398,12 +1473,12 @@ def plot_greensurge_setup_with_raster(
     Nodes_calc, Elmts_calc, lines_calc = read_adcirc_grd(path_grd_calc)
 
     fig, ax = plt.subplots(
-            subplot_kw={"projection": ccrs.PlateCarree()},
-            figsize=figsize,
-            constrained_layout=True,
-        )
+        subplot_kw={"projection": ccrs.PlateCarree()},
+        figsize=figsize,
+        constrained_layout=True,
+    )
 
-    #ax.set_facecolor("#518134")
+    # ax.set_facecolor("#518134")
     Longitude_nodes_calc = Nodes_calc[:, 1]
     Latitude_nodes_calc = Nodes_calc[:, 2]
     Elements_calc = Elmts_calc[:, 2:5].astype(int)
@@ -1432,10 +1507,17 @@ def plot_greensurge_setup_with_raster(
     )
     cbar = plt.colorbar(tpc, ax=ax)
     cbar.set_label("Depth (m)")
-    
-    plot_greensurge_setup(simulation_dataset, figsize=(7, 7), ax=ax, fig=fig);
 
-def plot_triangle_points(lon_all: np.ndarray, lat_all: np.ndarray, i: int, ds_GFD_info: xr.Dataset, figsize: tuple = (7, 7))-> None:
+    plot_greensurge_setup(simulation_dataset, figsize=(7, 7), ax=ax, fig=fig)
+
+
+def plot_triangle_points(
+    lon_all: np.ndarray,
+    lat_all: np.ndarray,
+    i: int,
+    ds_GFD_info: xr.Dataset,
+    figsize: tuple = (7, 7),
+) -> None:
     """
     Plot a triangle and points selection for GreenSurge.
     Parameters
@@ -1451,7 +1533,6 @@ def plot_triangle_points(lon_all: np.ndarray, lat_all: np.ndarray, i: int, ds_GF
     figsize : tuple, optional
         Size of the figure, by default (7, 7).
     """
-
 
     lon_points = lon_all[i]
     lat_points = lat_all[i]
@@ -1484,7 +1565,13 @@ def plot_triangle_points(lon_all: np.ndarray, lat_all: np.ndarray, i: int, ds_GF
     ax.legend()
     fig.show()
 
-def interp_vortex_to_triangles(xds_vortex_GS: xr.Dataset, lon_all: np.ndarray, lat_all: np.ndarray, type: str="tri_mean")-> xr.Dataset:
+
+def interp_vortex_to_triangles(
+    xds_vortex_GS: xr.Dataset,
+    lon_all: np.ndarray,
+    lat_all: np.ndarray,
+    type: str = "tri_mean",
+) -> xr.Dataset:
     """
     Interpolates the vortex model data to the triangle points.
     Parameters
@@ -1549,8 +1636,10 @@ def interp_vortex_to_triangles(xds_vortex_GS: xr.Dataset, lon_all: np.ndarray, l
 
     return xds_vortex_interp
 
-def load_GS_database( xds_vortex_interp: xr.Dataset, ds_GFD_info: xr.Dataset, p_GFD_libdir: str)-> xr.Dataset:
-    
+
+def load_GS_database(
+    xds_vortex_interp: xr.Dataset, ds_GFD_info: xr.Dataset, p_GFD_libdir: str
+) -> xr.Dataset:
     """
     Load the Green Surge database based on the interpolated vortex data.
     Parameters
@@ -1601,6 +1690,7 @@ def load_GS_database( xds_vortex_interp: xr.Dataset, ds_GFD_info: xr.Dataset, p_
 
     return greensurge_dataset
 
+
 def plot_GS_validation_timeseries(
     ds_WL_GS_WindSetUp: xr.Dataset,
     ds_WL_GS_IB: xr.Dataset,
@@ -1632,11 +1722,13 @@ def plot_GS_validation_timeseries(
     WLmax : float, optional
         Maximum water level for the plot. Default is None.
     """
- 
+
     lon_obs = [lon - 360 if lon > 180 else lon for lon in lon_obs]
 
     nface_index = extract_pos_nearest_points_tri(ds_GFD_info, lon_obs, lat_obs)
-    mesh2d_nFaces = extract_pos_nearest_points_tri(ds_WL_dynamic_WindSetUp, lon_obs, lat_obs)
+    mesh2d_nFaces = extract_pos_nearest_points_tri(
+        ds_WL_dynamic_WindSetUp, lon_obs, lat_obs
+    )
     pos_lon_IB, pos_lat_IB = extract_pos_nearest_points(ds_WL_GS_IB, lon_obs, lat_obs)
 
     time = ds_WL_GS_WindSetUp.WL.time
@@ -1695,7 +1787,9 @@ def plot_GS_validation_timeseries(
     ax_map.legend(loc="upper left", fontsize="small")
     time_vals = time.values
     n_series = len(lon_obs)
-    ax_ts = gridspec.GridSpecFromSubplotSpec(n_series, 1, subplot_spec=gs[0, 1], hspace=0.3)
+    ax_ts = gridspec.GridSpecFromSubplotSpec(
+        n_series, 1, subplot_spec=gs[0, 1], hspace=0.3
+    )
     if WLmin is None or WLmax is None:
         typee = 1
     else:
@@ -1706,7 +1800,7 @@ def plot_GS_validation_timeseries(
         ax_map.text(
             lon_obs[i],
             lat_obs[i],
-            f"Point {i+1}",
+            f"Point {i + 1}",
             color="k",
             fontsize=10,
             transform=ccrs.PlateCarree(),
@@ -1714,8 +1808,15 @@ def plot_GS_validation_timeseries(
             va="bottom",
         )
         ax = fig.add_subplot(ax_ts[i, 0])
-        ax.plot(time_vals, WL_SS_dyn[:,i], c="blue", label=f"Dynamic simulation Point {i+1}")
-        ax.plot(time_vals, WL_SS_GS[:,i], c="tomato", label=f"GreenSurge Point {i+1}")
+        ax.plot(
+            time_vals,
+            WL_SS_dyn[:, i],
+            c="blue",
+            label=f"Dynamic simulation Point {i + 1}",
+        )
+        ax.plot(
+            time_vals, WL_SS_GS[:, i], c="tomato", label=f"GreenSurge Point {i + 1}"
+        )
         ax.set_ylabel("Water level (m)")
         ax.legend()
         if i != n_series - 1:
@@ -1723,17 +1824,17 @@ def plot_GS_validation_timeseries(
         if typee == 1:
             WLmax = (
                 max(
-                    np.nanmax(WL_SS_dyn[:,i]),
-                    np.nanmax(WL_SS_GS[:,i]),
-                    np.nanmax(WL_GS[:,i]),
+                    np.nanmax(WL_SS_dyn[:, i]),
+                    np.nanmax(WL_SS_GS[:, i]),
+                    np.nanmax(WL_GS[:, i]),
                 )
                 * 1.05
             )
             WLmin = (
                 min(
-                    np.nanmin(WL_SS_dyn[:,i]),
-                    np.nanmin(WL_SS_GS[:,i]),
-                    np.nanmin(WL_GS[:,i]),
+                    np.nanmin(WL_SS_dyn[:, i]),
+                    np.nanmin(WL_SS_GS[:, i]),
+                    np.nanmin(WL_GS[:, i]),
                 )
                 * 1.05
             )

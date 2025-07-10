@@ -258,12 +258,12 @@ def standarize(
         standarized_data = pd.DataFrame(standarized_data, columns=data.columns)
     elif isinstance(data, xr.Dataset):
         if transform:
-            standarized_data = scaler.transform(X=data.to_array().values)
+            standarized_data = scaler.transform(X=data.to_array().values.T)
         else:
-            standarized_data = scaler.fit_transform(X=data.to_array().values)
+            standarized_data = scaler.fit_transform(X=data.to_array().values.T)
         standarized_data = xr.Dataset(
             {
-                var_name: (tuple(data.coords), standarized_data[i_var])
+                var_name: (tuple(data.coords), standarized_data[:, i_var])
                 for i_var, var_name in enumerate(data.data_vars)
             },
             coords=data.coords,
@@ -306,10 +306,10 @@ def destandarize(
         data = scaler.inverse_transform(X=standarized_data.values)
         data = pd.DataFrame(data, columns=standarized_data.columns)
     elif isinstance(standarized_data, xr.Dataset):
-        data = scaler.inverse_transform(X=standarized_data.to_array().values)
+        data = scaler.inverse_transform(X=standarized_data.to_array().values.T)
         data = xr.Dataset(
             {
-                var_name: (tuple(standarized_data.coords), data[i_var])
+                var_name: (tuple(standarized_data.coords), data[:, i_var])
                 for i_var, var_name in enumerate(standarized_data.data_vars)
             },
             coords=standarized_data.coords,
@@ -435,7 +435,7 @@ def convert_utm_to_lonlat(
         )
 
     # Return the LonLat coordinates
-    return lon, lat
+    return np.round(lon, 6), np.round(lat, 6)
 
 
 def convert_lonlat_to_utm(
@@ -573,11 +573,5 @@ def mathematical_to_nautical(math_degrees: np.ndarray) -> np.ndarray:
         Directional angle in nautical convention
     """
 
-    # Rotate the angle by 360 degrees
-    if math_degrees == 0:
-        reversed_angle = 0
-    else:
-        reversed_angle = 360 - math_degrees
-
     # Convert mathematical degrees to nautical degrees
-    return (reversed_angle + 90) % 360
+    return (90 - math_degrees) % 360
