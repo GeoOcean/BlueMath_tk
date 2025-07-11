@@ -6157,6 +6157,8 @@ class NonStatGEV(BlueMathModel):
             beta_cov = self.beta_cov
         if alpha_cov is None:
             alpha_cov = self.alpha_cov
+        if gamma_cov is None:
+            gamma_cov = self.gamma_cov
 
         q = np.array([q])
         t0 = np.array([t0])
@@ -6209,7 +6211,7 @@ class NonStatGEV(BlueMathModel):
             ),
             0,
             1,
-        )
+        )[0]
         std = quad(
             lambda x: np.exp(
                 self._parametro(
@@ -6225,7 +6227,7 @@ class NonStatGEV(BlueMathModel):
             ),
             0,
             1,
-        )
+        )[0]
 
         for il in range(m):
             # for jl in range(n)
