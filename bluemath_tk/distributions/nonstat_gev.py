@@ -1593,6 +1593,34 @@ class NonStatGEV(BlueMathModel):
     ) -> float:
         """
         Function used for minimizing in the 'self._fit' where the Negative loglikelihood of the GEV will be minimized
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Parameter vector to optimize
+        nmu : int, default=0
+            Number of harmonics included in location
+        npsi : int, default=0
+            Number of harmonics included in scale
+        ngamma : int, default=0
+            Number of harmonics included in shape
+        ntrend_loc : int, default=0
+            Whether to include trends in location
+        list_loc : list, default=[]
+            List of covariates indices to include in location
+        ntrend_sc : int, default=0
+            Whether to include trends in scale
+        list_sc : list, default=[]
+            List of covariates indices to include in scale
+        ntrend_sh : int, default=0
+            Whether to include trends in shape
+        list_sh : list, default=[]
+            List of covariates indices to include in shape
+
+        Return
+        ------
+        f : float
+            Negative loglikelihood value of the Non-stationary GEV
         """
         # Cheking the inputs
         covariates_loc = self.covariates.iloc[:, list_loc].values
@@ -2081,6 +2109,34 @@ class NonStatGEV(BlueMathModel):
     ) -> np.ndarray:
         """
         Function used for minimizing in the 'self._optimize_parameters' where the Negative loglikelihood of the GEV will be minimized
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Parameter vector to optimize
+        nmu : int, default=0
+            Number of harmonics included in location
+        npsi : int, default=0
+            Number of harmonics included in scale
+        ngamma : int, default=0
+            Number of harmonics included in shape
+        ntrend_loc : int, default=0
+            Whether to include trends in location
+        list_loc : list, default=[]
+            List of covariates indices to include in location
+        ntrend_sc : int, default=0
+            Whether to include trends in scale
+        list_sc : list, default=[]
+            List of covariates indices to include in scale
+        ntrend_sh : int, default=0
+            Whether to include trends in shape
+        list_sh : list, default=[]
+            List of covariates indices to include in shape
+
+        Return
+        ------
+        Jx : np.ndarray
+            Gradient of negative loglikelihood value of the Non-stationary GEV
         """
         # Cheking the inputs
         covariates_loc = self.covariates.iloc[:, list_loc].values
@@ -4677,6 +4733,8 @@ class NonStatGEV(BlueMathModel):
         """
         Plot the location, scale and shape parameters, also the PP plot and QQ plot
 
+        Return period plot is plotted if and only if no covariates and trends are included
+
         Parameters
         ----------
         return_plot : bool, default=True
@@ -5218,7 +5276,7 @@ class NonStatGEV(BlueMathModel):
 
     def QQplot(self):
         """
-        Print QQ plot
+        QQ plot
         """
         Ze = -np.log(-np.log(np.arange(1, len(self.xt) + 1) / (len(self.xt) + 1)))
         Zm = self.kt * self._Zstandardt()
@@ -5271,6 +5329,11 @@ class NonStatGEV(BlueMathModel):
     def _Zstandardt(self):
         """
         Calculates the standardized variable corresponding to the given parameters
+
+        Return
+        ------
+        Zt : 
+            Standarized variable of the given parameters
         """
 
         Zt = np.zeros(len(self.xt))
@@ -5317,9 +5380,14 @@ class NonStatGEV(BlueMathModel):
 
         return Zt
 
-    def _Dzweibull(self):
+    def _Dzweibull(self) -> np.ndarray:
         """
         Calculates the derivatives of the standardized maximum with respect to parameters
+
+        Return
+        ------
+        Dq : np.ndarray
+            Derivative of standarized variable of the given parameters
         """
 
         nd = len(self.t)
@@ -5533,9 +5601,18 @@ class NonStatGEV(BlueMathModel):
 
         return Dq
 
-    def _Dmupsiepst(self):
+    def _Dmupsiepst(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        Calculates the derivatives of the standardized maximum with respect to parameters
+        Calculates the derivatives of the standarized maximum with respect to parameters
+
+        Return
+        ------
+        Dermut : np.ndarray
+            Derivative of standarized maximum of location
+        Derpsit : np.ndarray
+            Derivative of standarized maximum of scale
+        Derepst : np.ndarray
+            Derivative of standarized maximum of shape
         """
 
         t = self.t % 1
@@ -5667,9 +5744,14 @@ class NonStatGEV(BlueMathModel):
 
         return Dermut, Derpsit, Derepst
 
-    def _DQuantile(self):
+    def _DQuantile(self) -> np.ndarray:
         """
         Calculates the quantile derivative associated with a given parameterization with respect model parameters
+
+        Return
+        ------
+        Dq : np.ndarray
+            Quantile derivative
         """
 
         t = self.t % 1
@@ -5955,6 +6037,11 @@ class NonStatGEV(BlueMathModel):
     def _CDFGEVt(self):
         """
         Calculates the GEV distribution function corresponding to the given parameters
+
+        Return
+        ------
+        F : np.ndarray
+            Cumulative distribution function values of Non-stationary GEV for the data
         """
 
         F = np.zeros(len(self.xt))
@@ -6007,7 +6094,12 @@ class NonStatGEV(BlueMathModel):
 
     def ReturnPeriodPlot(self, annualplot=True):
         """
-        Funtion to plot the Aggregated Return period plot for each month and if annualplot, the annual Return period (default True)
+        Funtion to plot the Aggregated Return period plot for each month and the annual Return period
+
+        Parameters
+        ----------
+        annualplot : bool, default=True
+            Whether to plot the annual return period plot
         """
 
         # Ts = np.array([2, 5, 10, 20, 25, 50, 75, 100, 200, 300, 400, 500])
@@ -6136,6 +6228,39 @@ class NonStatGEV(BlueMathModel):
     ):
         """
         Function to compute the aggregated quantile for certain parameters
+
+        Parameters
+        ----------
+        q : 
+            Quantile value
+        t0 :
+            Starting point of integration interval
+        t1 :
+            Ending point of integration interval
+        beta0 : default=None
+            Stationary part of location parameter
+        beta : default=None
+            Harmonic part of location parameter
+        alpha0 : default=None,
+            Stationary part of scale parameter
+        alpha : default=None
+            Harmonic part of scale parameter
+        gamma0: default=None
+            Stationary part of shape parameter
+        gamma : default=None,
+            Harmonic part of shape parameter
+        betaT : default=None
+            Trend part of location parameter
+        alphaT : default=None
+            Trend part of scale parameter
+        gammaT : default=None
+            Trend part of shape parameter
+        beta_cov : default=None
+            Covariate part of location parameter
+        alpha_cov : default=None
+            Covariate part of scale parameter
+        gamma_cov : default=None
+            Covariate part of shape parameter
         """
         if beta0 is None:
             beta0 = self.beta0
