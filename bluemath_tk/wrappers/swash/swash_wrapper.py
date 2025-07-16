@@ -206,13 +206,16 @@ class SwashModelWrapper(BaseModelWrapper):
             "gamma": case_context["gamma"],
             "deltat": case_context["deltat"],
         }
+
+        case_context["Tp"] = waves_dict["T"] 
+
         # waves = series_TMA(waves=waves_dict, depth=self.depth_array[0])
-        waves = series_regular_monochromatic(waves=waves_dict)
+        #waves = series_regular_monochromatic(waves=waves_dict)
 
         # Save the waves to a file
-        self.write_array_in_file(
-            array=waves, filename=os.path.join(case_dir, "waves.bnd")
-        )
+        #self.write_array_in_file(
+        #    array=waves, filename=os.path.join(case_dir, "waves.bnd")
+        #)
 
         # Calculate computational parameters
         # Assuming there is always 1m of setup due to (IG, VLF)
