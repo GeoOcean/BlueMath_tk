@@ -7,9 +7,8 @@ import pandas as pd
 import xarray as xr
 from scipy.signal import find_peaks
 
-from ...waves.series import series_regular_monochromatic, series_TMA, waves_dispersion
+from ...waves.series import series_TMA, waves_dispersion
 from ...waves.spectra import spectral_analysis
-from ...waves.statistics import upcrossing
 from .._base_wrappers import BaseModelWrapper
 
 np.random.seed(42)  # TODO: check global behavior.
@@ -38,40 +37,6 @@ class SwashModelWrapper(BaseModelWrapper):
         The available launchers for the wrapper.
     postprocess_functions : dict
         The postprocess functions for the wrapper.
-
-    Methods
-    -------
-    build_cases -> None
-        Create the cases folders and render the input files.
-    list_available_postprocess_vars -> List[str]
-        List available postprocess variables.
-    _read_tabfile -> pd.DataFrame
-        Read a tab file and return a pandas DataFrame.
-    _convert_case_output_files_to_nc -> xr.Dataset
-        Convert tab files to netCDF file.
-    get_case_percentage_from_file -> float
-        Get the case percentage from the output log file.
-    monitor_cases -> pd.DataFrame
-        Monitor the cases and log relevant information.
-    postprocess_case -> xr.Dataset
-        Convert tab ouput files to netCDF file.
-    join_postprocessed_files -> xr.Dataset
-        Join postprocessed files in a single Dataset.
-    find_maximas -> Tuple[np.ndarray, np.ndarray]
-        Find the individual maxima of an array.
-    get_waterlevel -> xr.Dataset
-        Get water level from the output netCDF file.
-    calculate_runup2 -> xr.Dataset
-        Calculates runup 2% (Ru2) from the output netCDF file.
-    calculate_runup -> xr.Dataset
-        Stores runup from the output netCDF file.
-    calculate_setup -> xr.Dataset
-        Calculates mean setup (Msetup) from the output netCDF file.
-    calculate_statistical_analysis -> xr.Dataset
-        Calculates zero-upcrossing analysis to obtain individual wave heights (Hi) and wave periods (Ti).
-    calculate_spectral_analysis -> xr.Dataset
-        Makes a water level spectral analysis (scipy.signal.welch)
-        then separates incident waves, infragravity waves, very low frequency waves.
     """
 
     default_parameters = {
@@ -206,16 +171,10 @@ class SwashModelWrapper(BaseModelWrapper):
             "gamma": case_context["gamma"],
             "deltat": case_context["deltat"],
         }
+        case_context["waves_dict"] = waves_dict
 
-        case_context["Tp"] = waves_dict["T"] 
-
-        # waves = series_TMA(waves=waves_dict, depth=self.depth_array[0])
-        #waves = series_regular_monochromatic(waves=waves_dict)
-
-        # Save the waves to a file
-        #self.write_array_in_file(
-        #    array=waves, filename=os.path.join(case_dir, "waves.bnd")
-        #)
+        # Define the peak period
+        case_context["Tp"] = waves_dict["T"]
 
         # Calculate computational parameters
         # Assuming there is always 1m of setup due to (IG, VLF)
@@ -757,6 +716,14 @@ class ChySwashModelWrapper(SwashModelWrapper):
 
     def build_case(self, case_context: dict, case_dir: str) -> None:
         super().build_case(case_context=case_context, case_dir=case_dir)
+
+        # Build the input waves file
+        waves = series_TMA(waves=case_context["waves_dict"], depth=self.depth_array[0])
+
+        # Save the waves to a file
+        self.write_array_in_file(
+            array=waves, filename=os.path.join(case_dir, "waves.bnd")
+        )
 
         # Build the input friction file
         friction = np.ones((len(self.depth_array))) * self.default_Cf
