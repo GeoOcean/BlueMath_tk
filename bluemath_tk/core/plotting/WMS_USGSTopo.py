@@ -169,6 +169,7 @@ def plot_usgs_raster_map(
     lon_min: float,
     lon_max: float,
     zoom: int = None,
+    source: str = "arcgis",
     verbose: bool = True,
     mask_ocean: bool = False,
     add_features: bool = True,
@@ -180,15 +181,39 @@ def plot_usgs_raster_map(
     Parameters
     ----------
     lat_min : float
-        Minimum latitude of the region.
+        Minimum latitude of the bounding box.
     lat_max : float
-        Maximum latitude of the region.
+        Maximum latitude of the bounding box.
     lon_min : float
-        Minimum longitude of the region.
+        Minimum longitude of the bounding box.
     lon_max : float
-        Maximum longitude of the region.
+        Maximum longitude of the bounding box.
+    zoom : int, optional
+        Zoom level (default is None, which auto-calculates based on bounding box).
+    source : str, optional
+        Source of the map tiles (default is "arcgis"). Options include:
+        - "arcgis" (Esri World Imagery)
+        - "google" (Google Maps Satellite)
+        - "eox" (EOX Sentinel-2 Cloudless)
+        - "osm" (OpenStreetMap Standard Tiles)
+        - "amazon" (Amazon Terrarium Elevation Tiles)
+        - "esri_world" (Esri World Imagery)
+        - "geoportail_fr" (Geoportail France Orthophotos)
+        - "ign_spain_pnoa" (IGN Spain PNOA Orthophotos)
+    verbose : bool, optional
+        If True, prints additional information about the source and zoom level.
+    mask_ocean : bool, optional
+        If True, masks ocean areas in the map.
+    add_features : bool, optional
+        If True, adds borders, coastlines, and states to the map.
     display_width_px : int, optional
-        Approximate pixel width for display (default is 1024).
+        Width of the display in pixels (default is 1024).
+    Returns
+    -------
+    fig : plt.Figure
+        The matplotlib figure containing the map.
+    ax : plt.Axes
+        The matplotlib axes with the map projection.
     """
 
     tile_size = 256
@@ -203,11 +228,117 @@ def plot_usgs_raster_map(
     height = y_end - y_start + 1
 
     map_img = Image.new("RGB", (width * tile_size, height * tile_size))
-    tile_url = "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"
+    if source == "arcgis":
+        tile_url = "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+        z_max = 19
+        if verbose:
+            print(
+                "Using Esri World Imagery (ArcGIS):\n"
+                "- Free for public and non-commercial use\n"
+                "- Commercial use allowed under Esri terms of service\n"
+                "- Attribution required: 'Tiles © Esri — Sources: Esri, Earthstar Geographics, CNES/Airbus DS, "
+                "USDA, USGS, AeroGRID, IGN, and the GIS User Community'\n"
+                "- Max zoom ~19"
+            )
+
+    elif source == "google":
+        tile_url = "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+        z_max = 21
+        if verbose:
+            print(
+                "Using Google Maps Satellite:\n"
+                "- NOT license-free\n"
+                "- Usage outside official Google Maps SDKs/APIs is prohibited\n"
+                "- Commercial use requires a paid license from Google\n"
+                "- May be blocked without an API key\n"
+                "- Max zoom ~21"
+            )
+
+    elif source == "eox":
+        tile_url = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg"
+        z_max = 16
+        if verbose:
+            print(
+                "Using EOX Sentinel-2 Cloudless:\n"
+                "- Based on Copernicus Sentinel-2 data processed by EOX\n"
+                "- Licensed under Creative Commons BY-NC-SA 4.0 (non-commercial use only)\n"
+                "- Attribution required: 'Sentinel-2 cloudless – © EOX, based on modified Copernicus Sentinel data 2016–2024'\n"
+                "- Versions from 2016–2017 are under CC BY 4.0 (commercial use allowed)\n"
+                "- Max zoom ~16"
+            )
+
+    elif source == "osm":
+        tile_url = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        z_max = 19
+        if verbose:
+            print(
+                "Using OpenStreetMap Standard Tiles:\n"
+                "- Free and open-source (ODbL license)\n"
+                "- Commercial use allowed with attribution\n"
+                "- Attribution required: '© OpenStreetMap contributors'\n"
+                "- Max zoom ~19"
+            )
+    
+    elif source == "amazon":
+        tile_url = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
+        z_max = 15
+        if verbose:
+            print(
+                "Using Amazon Terrarium Elevation Tiles:\n"
+                "- Free for public use\n"
+                "- Attribution recommended: 'Amazon Terrarium'\n"
+                "- Max zoom ~15"
+            )
+
+    elif source == "esri_world":
+        tile_url = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+        z_max = 19
+        if verbose:
+            print(
+                "Using Esri World Imagery:\n"
+                "- High-resolution global imagery\n"
+                "- Free with attribution under Esri terms\n"
+                "- Max zoom ~19"
+            )
+
+    elif source == "geoportail_fr":
+        tile_url = ("https://data.geopf.fr/wmts?"
+                    "REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0"
+                    "&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg"
+                    "&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&TILEMATRIX={z}"
+                    "&TILEROW={y}&TILECOL={x}")
+        z_max = 19
+        if verbose:
+            print(
+                "Using Geoportail France (Orthophotos):\n"
+                "- Aerial orthophotos from the French National Institute (IGN)\n"
+                "- Free for public use under Etalab license\n"
+                "- Attribution: Geoportail France / IGN\n"
+                "- Max zoom ~19"
+            )
+    elif source == "ign_spain_pnoa":
+        tile_url = ("https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{y_inv}.jpeg")
+        z_max = 19
+        if verbose:
+            print(
+                "Using IGN Spain PNOA Orthophotos:\n"
+                "- High-resolution aerial imagery (PNOA program)\n"
+                "- Provided by IGN/CNIG (Government of Spain)\n"
+                "- Free to use under Creative Commons BY 4.0 license\n"
+                "- Attribution required: 'Ortofotografía PNOA – © IGN / CNIG (Gobierno de España) – CC BY 4.0'\n"
+                "- Max zoom ~19"
+            )
+    
+    if zoom > z_max:
+        zoom = z_max
 
     for x in range(x_start, x_end + 1):
         for y in range(y_start, y_end + 1):
-            url = tile_url.format(z=zoom, x=x, y=y)
+            if source == "ign_spain_pnoa":
+                y_inv = (2**zoom - 1) - y
+                url = tile_url.format(z=zoom, x=x, y_inv=y_inv)
+            else:
+                url = tile_url.format(z=zoom, x=x, y=y)
             try:
                 response = requests.get(url, timeout=10)
                 tile = Image.open(BytesIO(response.content))
@@ -219,13 +350,12 @@ def plot_usgs_raster_map(
 
     xmin, ymin, xmax, ymax = tile_bounds_meters(x_start, y_start, x_end, y_end, zoom)
 
-    crs_tiles = ccrs.Mercator.GOOGLE
+    crs_tiles = ccrs.PlateCarree()
     fig = plt.figure(figsize=(12, 8))
     ax = plt.axes(projection=crs_tiles)
-    ax.set_extent([xmin, xmax, ymin, ymax], crs=crs_tiles)
-
+    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=crs_tiles)
     ax.imshow(
-        map_img, origin="upper", extent=[xmin, xmax, ymin, ymax], transform=crs_tiles
+        map_img, origin="upper", extent=[xmin, xmax, ymin, ymax], transform=ccrs.Mercator.GOOGLE
     )
     scale = get_cartopy_scale(zoom)
     if verbose:
@@ -237,7 +367,7 @@ def plot_usgs_raster_map(
         ax.add_feature(cfeature.STATES.with_scale(scale), linewidth=0.5)
 
     if mask_ocean:
-        ax.add_feature(cfeature.OCEAN.with_scale(scale), facecolor="w", zorder=3)
+        ax.add_feature(cfeature.OCEAN.with_scale(scale), facecolor="w", zorder=1)
 
     return fig, ax
 
@@ -256,3 +386,4 @@ if __name__ == "__main__":
         mask_ocean=True,
     )
     fig.show()
+
