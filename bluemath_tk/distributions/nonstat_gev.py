@@ -2819,18 +2819,25 @@ class NonStatGEV(BlueMathModel):
             list_loc = []
         if list_sc == "all":
             list_sc = list(range(self.covariates.shape[1]))
-        elif list_loc is None:
-            list_loc = []
+        elif list_sc is None:
+            list_sc = []
         if list_sh == "all":
             list_sh = list(range(self.covariates.shape[1]))
-        elif list_loc is None:
-            list_loc = []
+        elif list_sh is None:
+            list_sh = []
+
+        self.nmu = nmu
+        self.npsi = npsi
+        self.ngamma = ngamma
 
         self.list_loc = list_loc
+        self.nind_loc = len(list_loc)
         self.ntrend_loc = ntrend_loc
         self.list_sc = list_sc
+        self.nind_sc = len(list_sc)
         self.ntrend_sc = ntrend_sc
         self.list_sh = list_sh
+        self.nind_sh = len(list_sh)
         self.ntrend_sh = ntrend_sh
 
         fit_result = self._fit(
@@ -4497,7 +4504,7 @@ class NonStatGEV(BlueMathModel):
         m = len(t)
 
         na, nind = covariates.shape
-        nparam = len(beta)
+        nparam = beta.size
         # Chek if the number of parameters is even
         if nparam % 2 != 0:
             raise ValueError("Parameter number must be even")
@@ -5620,20 +5627,21 @@ class NonStatGEV(BlueMathModel):
 
         # Evaluate the parameters
         mut1, psit1, epst = self._evaluate_params(
-            self.beta0,
-            self.beta,
-            self.alpha0,
-            self.alpha,
-            self.gamma0,
-            self.gamma,
-            self.betaT,
-            self.beta_cov,
-            self.alphaT,
-            self.alpha_cov,
-            self.gamma_cov,
-            self.covariates.iloc[:, self.list_loc].values,
-            self.covariates.iloc[:, self.list_sc].values,
-            self.covariates.iloc[:, self.list_sh].values,
+            beta0=self.beta0,
+            beta=self.beta,
+            betaT=self.betaT,
+            beta_cov=self.beta_cov,
+            alpha0=self.alpha0,
+            alpha=self.alpha,
+            alphaT=self.alphaT,
+            alpha_cov=self.alpha_cov,
+            gamma0=self.gamma0,
+            gamma=self.gamma,
+            gammaT=self.gammaT,
+            gamma_cov=self.gamma_cov,
+            covariates_loc=self.covariates.iloc[:, self.list_loc].values,
+            covariates_sc=self.covariates.iloc[:, self.list_sc].values,
+            covariates_sh=self.covariates.iloc[:, self.list_sh].values,
         )
 
         # The values whose shape parameter is almost cero corresponds to the GUMBEL distribution, locate their positions if they exist
