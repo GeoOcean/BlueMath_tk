@@ -1,10 +1,14 @@
 import numpy as np
 import xarray as xr
 
-
 def generate_grid_parameters(
     bathy_data: xr.DataArray,
-    buffer_distance: float = None,
+    alpc: float = 0,
+    xpc: float = None,
+    ypc: float = None,
+    xlenc: float = None,
+    ylenc: float = None,
+    buffer_distance: float = None, 
 ) -> dict:
     """
     Generate grid parameters for the SWAN model based on bathymetry.
@@ -12,41 +16,35 @@ def generate_grid_parameters(
     Parameters
     ----------
     bathy_data : xr.DataArray
-        Bathymetry data with dimensions 'lat' and 'lon'.
-
+                Bathymetry data.
+        Must have the following dimensions:
+        - lon/x: longitude or x coordinate
+        - lat/y: latitude or y coordinate
+    alpc: float
+        Computational Grid Rotation angle in degrees.
+    xpc: float
+        X origin.
+    ypc: float
+        Y origin.
 
     Returns
     -------
     dict
         Dictionary with grid configuration for SWAN input.
 
-    Raises
-    ------
-    ValueError
-        If coord_type is not 'geographic' or 'cartesian'.
-
+    
     Contact
     -------
-    @bellidog on GitHub
+    @
     """
-
     """
     Generate the grid parameters for the SWAN model.
-
-    Parameters
-    ----------
-    bathy_data : xr.DataArray
-        Bathymetry data.
-        Must have the following dimensions:
-        - lon/x: longitude or x coordinate
-        - lat/y: latitude or y coordinate
 
     Returns
     -------
     dict
         Grid parameters for the SWAN model.
     """
-
     # Determine coordinate system based on coordinate names
     coord_names = list(bathy_data.coords)
 
@@ -54,6 +52,7 @@ def generate_grid_parameters(
     if any(name in ["lon", "longitude"] for name in coord_names):
         x_coord = next(name for name in coord_names if name in ["lon", "longitude"])
         y_coord = next(name for name in coord_names if name in ["lat", "latitude"])
+        is_geographic = True
         # coord_type = 'geographic'
     else:
         x_coord = next(
@@ -62,6 +61,7 @@ def generate_grid_parameters(
         y_coord = next(
             name for name in coord_names if name in ["y", "Y", "cy", "northing"]
         )
+        is_geographic = False
     #     coord_type = 'cartesian'
 
     # if coord_type not in ["geographic", "cartesian"]:
@@ -70,9 +70,6 @@ def generate_grid_parameters(
     # use_int = coord_type == "cartesian"
     # cast = int if use_int else float
 
-    # Get the main parameters from user input
-    print("Please enter the following parameters:")
-    alpc = float(input("Enter rotation angle in degrees (alpc): "))
 
     # Get resolution from cropped data
     grid_resolution_x = abs(
@@ -83,13 +80,7 @@ def generate_grid_parameters(
     )
 
     if alpc != 0:
-        xpc = float(input("Enter x origin (xpc): "))
-        ypc = float(input("Enter y origin (ypc): "))
-        xlenc = float(input("Enter grid length in x (xlenc): "))
-        ylenc = float(input("Enter grid length in y (ylenc): "))
-
         angle_rad = np.radians(alpc)
-
         # Create rotation matrix
         R = np.array(
             [
@@ -109,9 +100,8 @@ def generate_grid_parameters(
         # Translate to corner position
         x = rotated[:, 0] + xpc
         y = rotated[:, 1] + ypc
-
-        # TODO: This is a temporary buffer distance, it should be adjusted to the actual grid size
-        # Get bounds with buffer
+        corners = np.column_stack([x, y])
+        
         x_min = np.min(x) - buffer_distance
         x_max = np.max(x) + buffer_distance
         y_min = np.min(y) - buffer_distance
@@ -127,7 +117,7 @@ def generate_grid_parameters(
             }  # Note: slice from max to min for descending coordinates
         )
 
-        fixed_parameters = {
+        grid_parameters = {
             "xpc": xpc,
             "ypc": ypc,
             "alpc": alpc,
@@ -143,11 +133,11 @@ def generate_grid_parameters(
             "dxinp": grid_resolution_x,  # resolution from cropped data
             "dyinp": grid_resolution_y,  # resolution from cropped data
         }
-        return fixed_parameters, cropped
+        return grid_parameters, cropped, corners
 
     else:
         # Compute parameters from full bathymetry
-        return {
+        grid_parameters = {
             "xpc": float(np.nanmin(bathy_data[x_coord])),  # origin x
             "ypc": float(np.nanmin(bathy_data[y_coord])),  # origin y
             "alpc": alpc,  # x-axis direction
@@ -161,7 +151,7 @@ def generate_grid_parameters(
             "myc": len(bathy_data[y_coord]) - 1,  # num mesh y
             "xpinp": float(np.nanmin(bathy_data[x_coord])),  # origin x
             "ypinp": float(np.nanmin(bathy_data[y_coord])),  # origin y
-            "alpinp": alpc,  # x-axis direction
+            "alpinp":0,  # x-axis direction
             "mxinp": len(bathy_data[x_coord]) - 1,  # num mesh x
             "myinp": len(bathy_data[y_coord]) - 1,  # num mesh y
             "dxinp": float(
@@ -170,4 +160,6 @@ def generate_grid_parameters(
             "dyinp": float(
                 abs(bathy_data[y_coord][1].values - bathy_data[y_coord][0].values)
             ),  # resolution y
-        }
+        }       
+        return grid_parameters
+
