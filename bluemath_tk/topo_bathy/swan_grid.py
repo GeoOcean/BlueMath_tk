@@ -61,14 +61,6 @@ def generate_grid_parameters(
         y_coord = next(
             name for name in coord_names if name in ["y", "Y", "cy", "northing"]
         )
-        is_geographic = False
-    #     coord_type = 'cartesian'
-
-    # if coord_type not in ["geographic", "cartesian"]:
-    #     raise ValueError("coord_type must be 'geographic' or 'cartesian'.")
-
-    # use_int = coord_type == "cartesian"
-    # cast = int if use_int else float
 
 
     # Get resolution from cropped data
@@ -136,6 +128,8 @@ def generate_grid_parameters(
         return grid_parameters, cropped, corners
 
     else:
+
+        
         # Compute parameters from full bathymetry
         grid_parameters = {
             "xpc": float(np.nanmin(bathy_data[x_coord])),  # origin x
