@@ -354,7 +354,6 @@ class CalVal(BlueMathModel):
                 else:
                     bin_idx = int(direcs[i] / self.direction_bin_size)
                 data[i, bin_idx] = waves[i]
-      
 
         return data
 
@@ -562,7 +561,9 @@ class CalVal(BlueMathModel):
                     correction_coeffs[n_part, :] = np.array(
                         [
                             self.calibration_params["sea_correction"][
-                                int(peak_direction / self.direction_bin_size) if peak_direction < 360 else 0 #TODO: Check if this with Javi
+                                int(peak_direction / self.direction_bin_size)
+                                if peak_direction < 360
+                                else 0  # TODO: Check if this with Javi
                             ]
                             for peak_direction in peak_directions.isel(
                                 part=n_part
@@ -573,7 +574,9 @@ class CalVal(BlueMathModel):
                     correction_coeffs[n_part, :] = np.array(
                         [
                             self.calibration_params["swell_correction"][
-                                int(peak_direction / self.direction_bin_size) if peak_direction < 360 else 0 #TODO: Check if this with Javi
+                                int(peak_direction / self.direction_bin_size)
+                                if peak_direction < 360
+                                else 0  # TODO: Check if this with Javi
                             ]
                             for peak_direction in peak_directions.isel(
                                 part=n_part
@@ -599,7 +602,9 @@ class CalVal(BlueMathModel):
                 * np.array(
                     [
                         self.calibration_params["sea_correction"][
-                            int(peak_direction / self.direction_bin_size) if peak_direction < 360 else 0
+                            int(peak_direction / self.direction_bin_size)
+                            if peak_direction < 360
+                            else 0
                         ]
                         for peak_direction in corrected_data["Dirsea"]
                     ]
@@ -613,7 +618,9 @@ class CalVal(BlueMathModel):
                     * np.array(
                         [
                             self.calibration_params["swell_correction"][
-                                int(peak_direction / self.direction_bin_size) if peak_direction < 360 else 0
+                                int(peak_direction / self.direction_bin_size)
+                                if peak_direction < 360
+                                else 0
                             ]
                             for peak_direction in corrected_data[f"Dirswell{n_part}"]
                         ]
@@ -764,7 +771,7 @@ class CalVal(BlueMathModel):
         valid_mask = np.isfinite(sea_dirs) & np.isfinite(sea_heights)
         sea_dirs_valid = sea_dirs[valid_mask]
         sea_heights_valid = sea_heights[valid_mask]
-        
+
         if len(sea_dirs_valid) > 0:
             x, y, z = density_scatter(sea_dirs_valid, sea_heights_valid)
             ax5.scatter(x, y, c=z, s=3, cmap="jet")
@@ -784,7 +791,7 @@ class CalVal(BlueMathModel):
         valid_mask = np.isfinite(swell_dirs) & np.isfinite(swell_heights)
         swell_dirs_valid = swell_dirs[valid_mask]
         swell_heights_valid = swell_heights[valid_mask]
-        
+
         if len(swell_dirs_valid) > 0:
             x, y, z = density_scatter(swell_dirs_valid, swell_heights_valid)
             ax6.scatter(x, y, c=z, s=3, cmap="jet")

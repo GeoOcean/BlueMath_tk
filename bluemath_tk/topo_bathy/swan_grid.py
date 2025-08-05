@@ -1,6 +1,7 @@
 import numpy as np
 import xarray as xr
 
+
 def generate_grid_parameters(
     bathy_data: xr.DataArray,
     alpc: float = 0,
@@ -8,7 +9,7 @@ def generate_grid_parameters(
     ypc: float = None,
     xlenc: float = None,
     ylenc: float = None,
-    buffer_distance: float = None, 
+    buffer_distance: float = None,
 ) -> dict:
     """
     Generate grid parameters for the SWAN model based on bathymetry.
@@ -31,20 +32,8 @@ def generate_grid_parameters(
     -------
     dict
         Dictionary with grid configuration for SWAN input.
+    """
 
-    
-    Contact
-    -------
-    @
-    """
-    """
-    Generate the grid parameters for the SWAN model.
-
-    Returns
-    -------
-    dict
-        Grid parameters for the SWAN model.
-    """
     # Determine coordinate system based on coordinate names
     coord_names = list(bathy_data.coords)
 
@@ -52,8 +41,6 @@ def generate_grid_parameters(
     if any(name in ["lon", "longitude"] for name in coord_names):
         x_coord = next(name for name in coord_names if name in ["lon", "longitude"])
         y_coord = next(name for name in coord_names if name in ["lat", "latitude"])
-        is_geographic = True
-        # coord_type = 'geographic'
     else:
         x_coord = next(
             name for name in coord_names if name in ["x", "X", "cx", "easting"]
@@ -61,7 +48,6 @@ def generate_grid_parameters(
         y_coord = next(
             name for name in coord_names if name in ["y", "Y", "cy", "northing"]
         )
-
 
     # Get resolution from cropped data
     grid_resolution_x = abs(
@@ -93,7 +79,7 @@ def generate_grid_parameters(
         x = rotated[:, 0] + xpc
         y = rotated[:, 1] + ypc
         corners = np.column_stack([x, y])
-        
+
         x_min = np.min(x) - buffer_distance
         x_max = np.max(x) + buffer_distance
         y_min = np.min(y) - buffer_distance
@@ -128,8 +114,6 @@ def generate_grid_parameters(
         return grid_parameters, cropped, corners
 
     else:
-
-        
         # Compute parameters from full bathymetry
         grid_parameters = {
             "xpc": float(np.nanmin(bathy_data[x_coord])),  # origin x
@@ -145,7 +129,7 @@ def generate_grid_parameters(
             "myc": len(bathy_data[y_coord]) - 1,  # num mesh y
             "xpinp": float(np.nanmin(bathy_data[x_coord])),  # origin x
             "ypinp": float(np.nanmin(bathy_data[y_coord])),  # origin y
-            "alpinp":0,  # x-axis direction
+            "alpinp": 0,  # x-axis direction
             "mxinp": len(bathy_data[x_coord]) - 1,  # num mesh x
             "myinp": len(bathy_data[y_coord]) - 1,  # num mesh y
             "dxinp": float(
@@ -154,6 +138,5 @@ def generate_grid_parameters(
             "dyinp": float(
                 abs(bathy_data[y_coord][1].values - bathy_data[y_coord][0].values)
             ),  # resolution y
-        }       
+        }
         return grid_parameters
-
