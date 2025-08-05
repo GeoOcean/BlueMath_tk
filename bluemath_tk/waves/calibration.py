@@ -348,8 +348,13 @@ class CalVal(BlueMathModel):
             if direcs[i] < 0:
                 direcs[i] = direcs[i] + 360
             if direcs[i] > 0 and waves[i] > 0:
-                bin_idx = int(direcs[i] / self.direction_bin_size)
+                # Handle direction = 360° case by mapping to the first bin (0-22.5°)
+                if direcs[i] >= 360:
+                    bin_idx = 0
+                else:
+                    bin_idx = int(direcs[i] / self.direction_bin_size)
                 data[i, bin_idx] = waves[i]
+      
 
         return data
 
@@ -557,7 +562,7 @@ class CalVal(BlueMathModel):
                     correction_coeffs[n_part, :] = np.array(
                         [
                             self.calibration_params["sea_correction"][
-                                int(peak_direction / self.direction_bin_size)
+                                int(peak_direction / self.direction_bin_size) if peak_direction < 360 else 0 #TODO: Check if this with Javi
                             ]
                             for peak_direction in peak_directions.isel(
                                 part=n_part
@@ -568,7 +573,7 @@ class CalVal(BlueMathModel):
                     correction_coeffs[n_part, :] = np.array(
                         [
                             self.calibration_params["swell_correction"][
-                                int(peak_direction / self.direction_bin_size)
+                                int(peak_direction / self.direction_bin_size) if peak_direction < 360 else 0 #TODO: Check if this with Javi
                             ]
                             for peak_direction in peak_directions.isel(
                                 part=n_part
@@ -594,7 +599,7 @@ class CalVal(BlueMathModel):
                 * np.array(
                     [
                         self.calibration_params["sea_correction"][
-                            int(peak_direction / self.direction_bin_size)
+                            int(peak_direction / self.direction_bin_size) if peak_direction < 360 else 0
                         ]
                         for peak_direction in corrected_data["Dirsea"]
                     ]
@@ -608,7 +613,7 @@ class CalVal(BlueMathModel):
                     * np.array(
                         [
                             self.calibration_params["swell_correction"][
-                                int(peak_direction / self.direction_bin_size)
+                                int(peak_direction / self.direction_bin_size) if peak_direction < 360 else 0
                             ]
                             for peak_direction in corrected_data[f"Dirswell{n_part}"]
                         ]
@@ -753,11 +758,16 @@ class CalVal(BlueMathModel):
         )
 
         # Plot sea wave climate
-        x, y, z = density_scatter(
-            self._data["Dirsea"].iloc[::10] * np.pi / 180,
-            self._data["Hsea"].iloc[::10],
-        )
-        ax5.scatter(x, y, c=z, s=3, cmap="jet")
+        sea_dirs = self._data["Dirsea"].iloc[::10] * np.pi / 180
+        sea_heights = self._data["Hsea"].iloc[::10]
+        # Filter out NaN and infinite values
+        valid_mask = np.isfinite(sea_dirs) & np.isfinite(sea_heights)
+        sea_dirs_valid = sea_dirs[valid_mask]
+        sea_heights_valid = sea_heights[valid_mask]
+        
+        if len(sea_dirs_valid) > 0:
+            x, y, z = density_scatter(sea_dirs_valid, sea_heights_valid)
+            ax5.scatter(x, y, c=z, s=3, cmap="jet")
         ax5.set_theta_zero_location("N", offset=0)
         ax5.set_xticklabels(["N", "NE", "E", "SE", "S", "SW", "W", "NW"])
         ax5.xaxis.grid(True, color="lavender", linestyle="-")
@@ -768,11 +778,16 @@ class CalVal(BlueMathModel):
         ax5.set_title("SEA $Wave$ $Climate$", pad=35, fontweight="bold")
 
         # Plot swell wave climate
-        x, y, z = density_scatter(
-            self._data["Dirswell1"].iloc[::10] * np.pi / 180,
-            self._data["Hswell1"].iloc[::10],
-        )
-        ax6.scatter(x, y, c=z, s=3, cmap="jet")
+        swell_dirs = self._data["Dirswell1"].iloc[::10] * np.pi / 180
+        swell_heights = self._data["Hswell1"].iloc[::10]
+        # Filter out NaN and infinite values
+        valid_mask = np.isfinite(swell_dirs) & np.isfinite(swell_heights)
+        swell_dirs_valid = swell_dirs[valid_mask]
+        swell_heights_valid = swell_heights[valid_mask]
+        
+        if len(swell_dirs_valid) > 0:
+            x, y, z = density_scatter(swell_dirs_valid, swell_heights_valid)
+            ax6.scatter(x, y, c=z, s=3, cmap="jet")
         ax6.set_theta_zero_location("N", offset=0)
         ax6.set_xticklabels(["N", "NE", "E", "SE", "S", "SW", "W", "NW"])
         ax6.xaxis.grid(True, color="lavender", linestyle="-")
