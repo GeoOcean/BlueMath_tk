@@ -1,5 +1,4 @@
 from datetime import datetime
-from os import path as op
 
 import numpy as np
 import pandas as pd
@@ -251,9 +250,18 @@ def vortex2delft_3D_FM_nc(
 
     ds_vortex_interp = xr.Dataset(
         {
-            "windx": (("latitude", "longitude", "time"), (W * np.cos(angle)).astype(np.float32)),
-            "windy": (("latitude", "longitude", "time"), (W * np.sin(angle)).astype(np.float32)),
-            "airpressure": (("latitude", "longitude", "time"), ds_vortex.p.values.astype(np.float32)),
+            "windx": (
+                ("latitude", "longitude", "time"),
+                (W * np.cos(angle)).astype(np.float32),
+            ),
+            "windy": (
+                ("latitude", "longitude", "time"),
+                (W * np.sin(angle)).astype(np.float32),
+            ),
+            "airpressure": (
+                ("latitude", "longitude", "time"),
+                ds_vortex.p.values.astype(np.float32),
+            ),
         },
         coords={
             "latitude": ds_vortex.lat.values,
@@ -262,9 +270,7 @@ def vortex2delft_3D_FM_nc(
         },
     )
 
-    forcing_dataset = ds_vortex_interp.interp(
-        latitude=lat_interp, longitude=lon_interp
-    )
+    forcing_dataset = ds_vortex_interp.interp(latitude=lat_interp, longitude=lon_interp)
 
     reference_date_str = (
         ds_vortex.time.values[0]
