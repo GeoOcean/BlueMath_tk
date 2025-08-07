@@ -319,7 +319,7 @@ class PCA(BaseReduction):
                 np.mean(~np.isnan(var_to_clean_values), axis=0) > var_to_clean_threshold
             )[0]
             self.logger.warning(
-                f"Using {len(not_nan_positions)} out of {var_to_clean_values.shape[1]} available variables"
+                f"Using {len(not_nan_positions)} out of {var_to_clean_values.shape[1]} available variables \n"
                 "If this is originated by using few times, please check 'nan_threshold_to_drop' parameter in fit method"
             )
             var_value_to_replace_nans = self.value_to_replace_nans.get(
