@@ -223,6 +223,8 @@ class SchismHyCoFfEE(SchismModelWrapper):
             The case directory.
         """
 
+        print(case_context["case_num"])
+
         # Calculate the start and end times in seconds
         qp = case_context.get("Qp")
         qb = case_context.get("Qb")
@@ -277,6 +279,8 @@ class SchismHyCoFfEE(SchismModelWrapper):
             t = np.arange(0, timef * 3600, int_min)
             # interpolamos caudal a esa resolución temporal
             f = interp1d(hidro_seg, hidro_Qp, kind="linear")
+            # f = interp1d(hidro_seg, hidro_Qp, kind="linear", fill_value="extrapolate", bounds_error=False) # CAMBIADO!!!!
+
             t2 = np.arange(0, np.max(hidro_seg), int_min)
             hidro_Qp_5_1 = f(t2)
             t3 = np.max(t) - np.max(t2)
