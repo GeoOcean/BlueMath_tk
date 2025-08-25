@@ -671,8 +671,11 @@ def fit_dist(dist: BaseDistribution, data: np.ndarray, **kwargs) -> FitResult:
     # but with the full parameter vector
     # TODO: Add hess info or hess_inv info to compute confidence intervals in FitResult
     modified_result = OptimizeResult(
-        x=full_params, success=result.success, fun=result.fun, message=result.message,
-        hess_inv=result.hess_inv if hasattr(result, 'hess_inv') else None
+        x=full_params,
+        success=result.success,
+        fun=result.fun,
+        message=result.message,
+        hess_inv=result.hess_inv if hasattr(result, "hess_inv") else None,
     )
 
     # Return the fitting result as a FitResult object

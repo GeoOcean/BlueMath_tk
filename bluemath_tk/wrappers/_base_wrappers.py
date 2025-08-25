@@ -90,6 +90,10 @@ class BaseModelWrapper(BlueMathModel, ABC):
             The names of the templates to use. Default is "all".
         default_parameters : dict, optional
             The default parameters for the cases. Default is None.
+
+        Warnings
+        --------
+        All fixed_parameters and metamodel_parameters must be strings.
         """
 
         super().__init__()
