@@ -132,6 +132,11 @@ class PCA(BaseReduction):
             If n_components is not an integer when it is greater than or equal to 1.
         """
 
+        super().__init__()
+        self.set_logger_name(
+            name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
+        )
+
         initial_msg = f"""
         -------------------------------------------------------------------
         | Initializing PCA reduction model with the following parameters:
@@ -140,12 +145,7 @@ class PCA(BaseReduction):
         | For more information, please refer to the documentation.
         -------------------------------------------------------------------
         """
-        print(initial_msg)
-
-        super().__init__()
-        self.set_logger_name(
-            name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
-        )
+        self.logger.info(initial_msg)
 
         if n_components <= 0:
             raise ValueError("Number of components must be greater than 0.")
