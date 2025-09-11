@@ -16,18 +16,33 @@ from ..core.plotting.base_plotting import DefaultStaticPlotting
 
 
 def generate_swan_cases(
-    frequencies_array: np.ndarray,
-    directions_array: np.ndarray,
+    frequencies_array: np.ndarray = None,
+    directions_array: np.ndarray = None,
+    direction_range: tuple = (0, 360),
+    direction_divisions: int = 24,
+    direction_sector: tuple = None,
+    frequency_range: tuple = (0.035, 0.5),
+    frequency_divisions: int = 29,
+    gamma: float = 50,
+    spr: float = 2,
 ) -> xr.Dataset:
     """
     Generate the SWAN cases monocromatic wave parameters.
 
     Parameters
     ----------
-    directions_array : np.ndarray
-        The directions array.
-    frequencies_array : np.ndarray
-        The frequencies array.
+    frequencies_array : np.ndarray, optional
+        The frequencies array. If None, it is generated using frequency_range and frequency_divisions.
+    directions_array : np.ndarray, optional
+        The directions array. If None, it is generated using direction_range and direction_divisions.
+    direction_range : tuple
+        (min, max) range for directions in degrees.
+    direction_divisions : int
+        Number of directional divisions.
+    frequency_range : tuple
+        (min, max) range for frequencies in Hz.
+    frequency_divisions : int
+        Number of frequency divisions.
 
     Returns
     -------
@@ -35,9 +50,33 @@ def generate_swan_cases(
         The SWAN monocromatic cases Dataset with coordinates freq and dir.
     """
 
-    # Wave parameters
-    gamma = 50  # waves gamma
-    spr = 2  # waves directional spread
+    # Auto-generate directions if not provided
+    if directions_array is None:
+        step = (direction_range[1] - direction_range[0]) / direction_divisions
+        directions_array = np.arange(
+            direction_range[0] + step / 2, direction_range[1], step
+        )
+
+    if direction_sector is not None:
+        start, end = direction_sector
+        if start < end:
+            directions_array = directions_array[
+                (directions_array >= start) & (directions_array <= end)
+            ]
+        else:  # caso circular, ej. 270–90
+            directions_array = directions_array[
+                (directions_array >= start) | (directions_array <= end)
+            ]
+
+    # Auto-generate frequencies if not provided
+    if frequencies_array is None:
+        frequencies_array = np.geomspace(
+            frequency_range[0], frequency_range[1], frequency_divisions
+        )
+
+    # Constants for SWAN
+    gamma = gamma  # waves gamma
+    spr = spr  # waves directional spread
 
     # Initialize data arrays for each variable
     hs = np.zeros((len(directions_array), len(frequencies_array)))
@@ -54,11 +93,11 @@ def generate_swan_cases(
 
     # Create xarray Dataset
     ds = xr.Dataset(
-        data_vars={
-            "hs": (["dir", "freq"], hs),
-            "tp": (["dir", "freq"], tp),
-            "spr": (["dir", "freq"], spr_arr),
-            "gamma": (["dir", "freq"], gamma_arr),
+        {
+            "hs": (("dir", "freq"), hs),
+            "tp": (("dir", "freq"), tp),
+            "spr": (("dir", "freq"), spr_arr),
+            "gamma": (("dir", "freq"), gamma_arr),
         },
         coords={
             "dir": directions_array,
@@ -115,6 +154,7 @@ def process_kp_coefficients(
     concatened_kp = output_kp_list[0]
     for file in output_kp_list[1:]:
         concatened_kp = xr.concat([concatened_kp, file], dim="case_num")
+
     return concatened_kp.fillna(0.0).sortby("freq").sortby("dir")
 
 

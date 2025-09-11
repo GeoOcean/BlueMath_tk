@@ -37,10 +37,7 @@ def get_dynamic_estela_predictor(
     time - t, where t is specified in the estela dataset.
 
     Parameters
-    ----------ltimes = estela.where(estela.F >= 0, np.nan).traveltime.astype(int)
-    estela_max_traveltime = estela_traveltimes.max().values
-    for traveltime in range(estela_max_traveltime):
-        data = data.w
+    ----------
     data : xr.Dataset
         The input dataset with dimensions longitude, latitude, and time.
     estela : xr.Dataset
@@ -82,9 +79,11 @@ def get_dynamic_estela_predictor(
         if "longitude" not in estela.dims or "latitude" not in estela.dims:
             raise ValueError("Estela must have longitude and latitude dimensions.")
         estela = estela.interp_like(data)  # TODO: Check NaNs interpolation
+
     data = data.chunk({"time": 365}).where(estela.F >= 0.0, np.nan)
     estela_traveltimes = estela.where(estela.F >= 0, np.nan).traveltime.astype(int)
     estela_max_traveltime = estela_traveltimes.max().values
+
     for traveltime in range(estela_max_traveltime):
         data = data.where(estela_traveltimes != traveltime, data.shift(time=traveltime))
 
