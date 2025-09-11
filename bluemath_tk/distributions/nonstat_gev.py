@@ -77,7 +77,7 @@ class NonStatGEV(BlueMathModel):
         self.t = t
         if covariates is None:
             self.include_covariates = False
-            self.covariates = pd.DataFrame({'A' : []})
+            self.covariates = pd.DataFrame({"A": []})
         else:
             self.include_covariates = True
             self.covariates = covariates
@@ -206,7 +206,9 @@ class NonStatGEV(BlueMathModel):
                     + nind_sh
                     + ntrend_sh
                 )
-                self.AIC_iter[iter] = self._AIC(-fit_result["negloglikelihood"], n_params)
+                self.AIC_iter[iter] = self._AIC(
+                    -fit_result["negloglikelihood"], n_params
+                )
 
                 ### Step 4: Sensitivity of optimal loglikelihood respect to possible additional harmonics
                 # for the location, scale and shape parameters.
@@ -214,17 +216,23 @@ class NonStatGEV(BlueMathModel):
                 fit_result_aux = fit_result.copy()
                 # Location
                 if fit_result["beta"] is not None:
-                    fit_result_aux["beta"] = np.concatenate((fit_result["beta"], [0, 0]))
+                    fit_result_aux["beta"] = np.concatenate(
+                        (fit_result["beta"], [0, 0])
+                    )
                 else:
                     fit_result_aux["beta"] = np.array([0, 0])
                 # Scale
                 if fit_result["alpha"] is not None:
-                    fit_result_aux["alpha"] = np.concatenate((fit_result["alpha"], [0, 0]))
+                    fit_result_aux["alpha"] = np.concatenate(
+                        (fit_result["alpha"], [0, 0])
+                    )
                 else:
                     fit_result_aux["alpha"] = np.array([0, 0])
                 # Shape
                 if fit_result["gamma"] is not None:
-                    fit_result_aux["gamma"] = np.concatenate((fit_result["gamma"], [0, 0]))
+                    fit_result_aux["gamma"] = np.concatenate(
+                        (fit_result["gamma"], [0, 0])
+                    )
                 else:
                     fit_result_aux["gamma"] = np.array([0, 0])
 
@@ -470,7 +478,7 @@ class NonStatGEV(BlueMathModel):
             if fit_result["gamma0"] is None:
                 self.ngamma0 = 0
             elif np.abs(fit_result["gamma0"]) <= 1e-8:
-                self.ngamma0 = 0    
+                self.ngamma0 = 0
 
             # Compute AIC and Loglikelihood
             self.loglike_iter[iter] = -fit_result["negloglikelihood"]
@@ -4566,13 +4574,15 @@ class NonStatGEV(BlueMathModel):
         # Adding the harmonic part
         if nparam > 0:
             for i in range(nparam // 2):
-                y = y +  beta[2 * i] * np.cos((i + 1) * 2 * np.pi * t) + beta[
-                    2 * i + 1
-                ] * np.sin((i + 1) * 2 * np.pi * t)
+                y = (
+                    y
+                    + beta[2 * i] * np.cos((i + 1) * 2 * np.pi * t)
+                    + beta[2 * i + 1] * np.sin((i + 1) * 2 * np.pi * t)
+                )
 
         # Adding the tendency part
         if ntend > 0:
-            y = y +  betaT * t
+            y = y + betaT * t
 
         # Adding the covariate part
         if nind > 0:
@@ -4787,7 +4797,7 @@ class NonStatGEV(BlueMathModel):
 
         return Q
 
-    def plot(self, return_plot=True, save=False):
+    def plot(self, return_plot: bool = True, save: bool = False):
         """
         Plot the location, scale and shape parameters, also the PP plot and QQ plot
 
@@ -4797,6 +4807,8 @@ class NonStatGEV(BlueMathModel):
         ----------
         return_plot : bool, default=True
             If True, return period plot is plotted
+        save : bool, default=False
+            If True, save all the figures in a "Figures/"
         """
 
         # Parameter Evaluation
@@ -5028,13 +5040,13 @@ class NonStatGEV(BlueMathModel):
             #     self.t, ci_low_psit, ci_up_psit, color=self.colors[1], alpha=0.3
             # )
             l3 = ax1.plot(
-                self.t, 
-                quan95, 
-                linestyle="dashed", 
-                # color=self.colors[2], 
+                self.t,
+                quan95,
+                linestyle="dashed",
+                # color=self.colors[2],
                 color="tab:orange",
-                linewidth=1, 
-                label="Quantile 95%"
+                linewidth=1,
+                label="Quantile 95%",
             )
             # TODO: Add aggregated return period lines
             # rt_10 = np.zeros(40)
@@ -5070,7 +5082,9 @@ class NonStatGEV(BlueMathModel):
         ax1.grid(True)
         handles = [
             # art for art in l0 + l1 + l2 + l3 + l4 + l5 + l6 + l7 if not art.get_label().startswith("_")
-            art for art in l0 + l1 + l2 + l3 if not art.get_label().startswith("_")
+            art
+            for art in l0 + l1 + l2 + l3
+            if not art.get_label().startswith("_")
         ]
         ax1.legend(handles=handles, loc="best")
         # ax2.set_ylim(0,1.5)
@@ -5167,7 +5181,10 @@ class NonStatGEV(BlueMathModel):
         ax1.margins(x=0.01)
         plt.xticks(month_positions, month_initials)
         if save:
-            plt.savefig(f"Figures/Location_Scale_Parameters_FirstYear_{self.var_name}.png", dpi=300)
+            plt.savefig(
+                f"Figures/Location_Scale_Parameters_FirstYear_{self.var_name}.png",
+                dpi=300,
+            )
         plt.show()
 
         # Creating the first monthly plot if not monthly or annual data
@@ -5326,7 +5343,9 @@ class NonStatGEV(BlueMathModel):
             plt.legend(loc="best")
             plt.grid(True)
             if save:
-                plt.savefig(f"Figures/Harmonic_Location_Parameter_{self.var_name}.png", dpi=300)
+                plt.savefig(
+                    f"Figures/Harmonic_Location_Parameter_{self.var_name}.png", dpi=300
+                )
             plt.show()
 
         ### Scale parameter plot
@@ -5365,7 +5384,9 @@ class NonStatGEV(BlueMathModel):
             plt.ylabel(r"$\psi_t$")
             plt.grid(True)
             if save:
-                plt.savefig(f"Figures/Harmonic_Scale_Parameter_{self.var_name}.png", dpi=300)
+                plt.savefig(
+                    f"Figures/Harmonic_Scale_Parameter_{self.var_name}.png", dpi=300
+                )
             plt.show()
 
         #### PP Plot
@@ -5384,9 +5405,14 @@ class NonStatGEV(BlueMathModel):
         ) and return_plot:
             self.ReturnPeriodPlot()
 
-    def QQplot(self,save=False):
+    def QQplot(self, save: bool = False):
         """
         QQ plot
+
+        Parameters
+        ----------
+        save : bool, default=False
+            If True, save the plot in "Figures/"
         """
         Ze = -np.log(-np.log(np.arange(1, len(self.xt) + 1) / (len(self.xt) + 1)))
         Zm = self.kt * self._Zstandardt()
@@ -5444,7 +5470,7 @@ class NonStatGEV(BlueMathModel):
 
         Return
         ------
-        Zt : 
+        Zt :
             Standarized variable of the given parameters
         """
 
@@ -5543,7 +5569,7 @@ class NonStatGEV(BlueMathModel):
 
         # Since z-values must be greater than 0 in order to avoid numerical problems, their values are set to be greater than 1e-8
         z = np.maximum(1e-8, z)
-        zn = z ** (-1 / epst)
+        # zn = z ** (-1 / epst)
 
         Dmut = np.zeros(nd)
         Dpsit = np.zeros(nd)
@@ -6085,6 +6111,11 @@ class NonStatGEV(BlueMathModel):
     def PPplot(self, save=False):
         """
         PP plot
+
+        Parameters
+        ----------
+        save : bool, default=False
+            If True, save the plot in "Figures/"
         """
         # Empirical distribution function value
         Fe = np.arange(1, len(self.xt) + 1) / (len(self.xt) + 1)
@@ -6256,7 +6287,7 @@ class NonStatGEV(BlueMathModel):
                 )
 
         ## Plot the return periods
-        datemax_mod = self.t % 1
+        # datemax_mod = self.t % 1
         labels = [
             "January",
             "February",
@@ -6340,13 +6371,13 @@ class NonStatGEV(BlueMathModel):
         beta_cov=None,
         alpha_cov=None,
         gamma_cov=None,
-    ):
+    ) -> np.ndarray:
         """
         Function to compute the aggregated quantile for certain parameters
 
         Parameters
         ----------
-        q : 
+        q :
             Quantile value
         t0 :
             Starting point of integration interval
@@ -6376,6 +6407,11 @@ class NonStatGEV(BlueMathModel):
             Covariate part of scale parameter
         gamma_cov : default=None
             Covariate part of shape parameter
+
+        Return
+        ------
+        zqout : np.ndarray
+            Aggregated return period
         """
         if beta0 is None:
             beta0 = self.beta0
@@ -6427,9 +6463,13 @@ class NonStatGEV(BlueMathModel):
                         self.covariates.iloc[pos, self.list_loc[i]].values
                     )
                 for i in range(len(alpha_cov)):
-                    cov_scint[i] = np.mean(self.covariates.iloc[pos, self.list_sc[i]].values)
+                    cov_scint[i] = np.mean(
+                        self.covariates.iloc[pos, self.list_sc[i]].values
+                    )
                 for i in range(len(gamma_cov)):
-                    cov_shint[i] = np.mean(self.covariates.iloc[pos, self.list_sh[i]].values)
+                    cov_shint[i] = np.mean(
+                        self.covariates.iloc[pos, self.list_sh[i]].values
+                    )
         else:
             cov_locint = None
             cov_scint = None
@@ -6562,9 +6602,13 @@ class NonStatGEV(BlueMathModel):
         beta_cov,
         alpha_cov,
         gamma_cov,
-    ):
+    ) -> np.ndarray:
         """
-        Function to solve the quantile
+        Auxiliar function to solve the quantile
+
+        Return
+        ------
+        zn : np.ndarray
         """
 
         # Evaluate the location parameter at each time t as a function of the actual values of the parameters given by p
@@ -6654,7 +6698,11 @@ class NonStatGEV(BlueMathModel):
         gamma_cov,
     ):
         """
-        Function to solve the quantile
+        Auxiliar Function to solve the quantile derivative
+
+        Return
+        ------
+        zn : np.ndarray
         """
         # Evaluate the location parameter at each time t as a function of the actual values of the parameters given by p
         mut1 = self._parametro(
@@ -6721,9 +6769,14 @@ class NonStatGEV(BlueMathModel):
 
         return zn
 
-    def _ConfidInterQuanAggregate(self, q, t0, t1):
+    def _ConfidInterQuanAggregate(self, q, t0, t1) -> np.ndarray:
         """
         Auxiliar function to compute the std for the aggregated quantiles
+
+        Return
+        ------
+        stdQuan : np.ndarray
+            Standard deviation of quantile
         """
         # Total length of the data
         n = (
@@ -6880,4 +6933,3 @@ class NonStatGEV(BlueMathModel):
         stdQuan = np.sqrt(jacob.T @ self.invI0 @ jacob)
 
         return stdQuan
-        
