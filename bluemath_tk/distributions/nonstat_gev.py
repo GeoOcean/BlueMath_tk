@@ -1,3 +1,4 @@
+import os
 from typing import Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -61,6 +62,7 @@ class NonStatGEV(BlueMathModel):
         xt: np.ndarray,
         t: np.ndarray,
         covariates: Optional[np.ndarray | pd.DataFrame] = None,
+        harms: bool = True,
         trends: bool = False,
         kt: Optional[np.ndarray] = None,
         quanval: float = 0.95,
@@ -73,7 +75,13 @@ class NonStatGEV(BlueMathModel):
         # Initialize arguments
         self.xt = xt
         self.t = t
-        self.covariates = covariates
+        if covariates is None:
+            self.include_covariates = False
+            self.covariates = pd.DataFrame({"A": []})
+        else:
+            self.include_covariates = True
+            self.covariates = covariates
+        self.harms = harms
         self.trends = trends
         if kt is None:
             self.kt = np.ones_like(xt)
@@ -170,20 +178,262 @@ class NonStatGEV(BlueMathModel):
         ntrend_sh = 0  # Number of parameters of trend part of shape
 
         ######### HARMONIC Iterative process #########
-        print("Starting Harmonic iterative process")
-        for iter in range(self.max_iter):
-            ### Step 2: Fit for the selected parameters (initial step is stationary)
+        if self.harms:
+            print("Starting Harmonic iterative process")
+            for iter in range(self.max_iter):
+                ### Step 2: Fit for the selected parameters (initial step is stationary)
+                fit_result = self._fit(nmu, npsi, ngamma)
+
+                # Check if the model is Gumbel
+                self.ngamma0 = 1
+                if fit_result["gamma0"] is None:
+                    self.ngamma0 = 0
+                elif np.abs(fit_result["gamma0"]) <= 1e-8:
+                    self.ngamma0 = 0
+
+                # Compute AIC and Loglikelihood
+                self.loglike_iter[iter] = -fit_result["negloglikelihood"]
+                n_params = (
+                    2
+                    + self.ngamma0
+                    + 2 * nmu
+                    + 2 * npsi
+                    + 2 * ngamma
+                    + nind_loc
+                    + ntrend_loc
+                    + nind_sc
+                    + ntrend_sc
+                    + nind_sh
+                    + ntrend_sh
+                )
+                self.AIC_iter[iter] = self._AIC(
+                    -fit_result["negloglikelihood"], n_params
+                )
+
+                ### Step 4: Sensitivity of optimal loglikelihood respect to possible additional harmonics
+                # for the location, scale and shape parameters.
+                # Note that the new parameter values are set to zero since derivatives do not depend on them
+                fit_result_aux = fit_result.copy()
+                # Location
+                if fit_result["beta"] is not None:
+                    fit_result_aux["beta"] = np.concatenate(
+                        (fit_result["beta"], [0, 0])
+                    )
+                else:
+                    fit_result_aux["beta"] = np.array([0, 0])
+                # Scale
+                if fit_result["alpha"] is not None:
+                    fit_result_aux["alpha"] = np.concatenate(
+                        (fit_result["alpha"], [0, 0])
+                    )
+                else:
+                    fit_result_aux["alpha"] = np.array([0, 0])
+                # Shape
+                if fit_result["gamma"] is not None:
+                    fit_result_aux["gamma"] = np.concatenate(
+                        (fit_result["gamma"], [0, 0])
+                    )
+                else:
+                    fit_result_aux["gamma"] = np.array([0, 0])
+
+                auxf, auxJx, auxHxx = self._loglikelihood(
+                    beta0=fit_result_aux["beta0"],
+                    beta=fit_result_aux["beta"],
+                    alpha0=fit_result_aux["alpha0"],
+                    alpha=fit_result_aux["alpha"],
+                    gamma0=fit_result_aux["gamma0"],
+                    gamma=fit_result_aux["gamma"],
+                )
+
+                # Inverse of the Information Matrix (auxHxx)
+                auxI0 = np.linalg.inv(-auxHxx)
+
+                # Updating the best model
+                if iter > 0:
+                    # TODO: Implement another criterias (Proflike)
+                    if self.AIC_iter[iter] < self.AIC_iter[iter - 1]:
+                        modelant = np.array([nmu, npsi, ngamma])
+                else:
+                    modelant = np.array([nmu, npsi, ngamma])
+
+                ### Step 5: Compute maximum perturbation
+                pos = 1
+                # Perturbation for location
+                max_val = np.abs(
+                    auxJx[2 * nmu : 2 * nmu + 2].T
+                    @ auxI0[2 * nmu : 2 * nmu + 2, 2 * nmu : 2 * nmu + 2]
+                    @ auxJx[2 * nmu : 2 * nmu + 2]
+                )
+                # Perturbation for scale
+                auxmax = abs(
+                    auxJx[
+                        2 + 2 * nmu + ntrend_loc + nind_loc + 2 * npsi + 2 : 2
+                        + 2 * nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + 2 * npsi
+                        + 2
+                        + 2
+                    ].T
+                    @ auxI0[
+                        2 + 2 * nmu + ntrend_loc + nind_loc + 2 * npsi + 2 : 2
+                        + 2 * nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + 2 * npsi
+                        + 2
+                        + 2,
+                        2 + 2 * nmu + ntrend_loc + nind_loc + 2 * npsi + 2 : 2
+                        + 2 * nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + 2 * npsi
+                        + 2
+                        + 2,
+                    ]
+                    @ auxJx[
+                        2 + 2 * nmu + ntrend_loc + nind_loc + 2 * npsi + 2 : 2
+                        + 2 * nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + 2 * npsi
+                        + 2
+                        + 2
+                    ]
+                )
+                if auxmax > max_val:
+                    max_val = auxmax
+                    pos = 2
+
+                # Perturbation for shape
+                auxmax = abs(
+                    auxJx[
+                        2
+                        + self.ngamma0
+                        + 2 * nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + 2 * npsi
+                        + 2 * ngamma
+                        + 4 : 2
+                        + self.ngamma0
+                        + 2 * nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + 2 * npsi
+                        + 2 * ngamma
+                        + 4
+                        + 2
+                    ].T
+                    @ auxI0[
+                        2
+                        + self.ngamma0
+                        + 2 * nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + 2 * npsi
+                        + 2 * ngamma
+                        + 4 : 2
+                        + self.ngamma0
+                        + 2 * nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + 2 * npsi
+                        + 2 * ngamma
+                        + 4
+                        + 2,
+                        2
+                        + self.ngamma0
+                        + 2 * nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + 2 * npsi
+                        + 2 * ngamma
+                        + 4 : 2
+                        + self.ngamma0
+                        + 2 * nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + 2 * npsi
+                        + 2 * ngamma
+                        + 4
+                        + 2,
+                    ]
+                    @ auxJx[
+                        2
+                        + self.ngamma0
+                        + 2 * nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + 2 * npsi
+                        + 2 * ngamma
+                        + 4 : 2
+                        + self.ngamma0
+                        + 2 * nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + 2 * npsi
+                        + 2 * ngamma
+                        + 4
+                        + 2
+                    ]
+                )
+                if auxmax > max_val:
+                    max_val = auxmax
+                    pos = 3
+
+                # If maximum perturbation corresponds to location, include a new harmonic
+                if pos == 1:
+                    nmu += 1
+                # If maximum perturbation corresponds to scale, include a new harmonic
+                if pos == 2:
+                    npsi += 1
+                # If maximum perturbation corresponds to shape, include a new harmonic
+                if pos == 3:
+                    ngamma += 1
+
+                print("Iteration: ", iter, "- AIC: ", self.AIC_iter[iter])
+                if iter > 0:
+                    if self.AIC_iter[iter] > self.AIC_iter[iter - 1]:
+                        model = modelant
+                        self.AICini = self.AIC_iter[iter - 1]
+                        # loglikeobjITini = self.loglike_iter[iter - 1]
+                        break
+                    else:
+                        model = np.array([nmu, npsi, ngamma])
+
+            self.niter_harm = iter
+            self.nit = iter
+            print("End of the Harmonic iterative process")
+
+            ######### End of the Harmonic iterative process
+            # Obtaining the MLE for the best model
+            nmu = model[0]
+            npsi = model[1]
+            ngamma = model[2]
+
+            # CHECKING THE SHAPE PARAMETER
+            self.ngamma0 = (
+                0  # Force the elimination of the constant shape parameter (gamma0)
+            )
             fit_result = self._fit(nmu, npsi, ngamma)
 
-            # Check if the model is Gumbel
-            self.ngamma0 = 1
-            if fit_result["gamma0"] is None:
-                self.ngamma0 = 0
-            elif np.abs(fit_result["gamma0"]) <= 1e-8:
-                self.ngamma0 = 0
-
-            # Compute AIC and Loglikelihood
-            self.loglike_iter[iter] = -fit_result["negloglikelihood"]
             n_params = (
                 2
                 + self.ngamma0
@@ -197,255 +447,55 @@ class NonStatGEV(BlueMathModel):
                 + nind_sh
                 + ntrend_sh
             )
-            self.AIC_iter[iter] = self._AIC(-fit_result["negloglikelihood"], n_params)
-
-            ### Step 4: Sensitivity of optimal loglikelihood respect to possible additional harmonics
-            # for the location, scale and shape parameters.
-            # Note that the new parameter values are set to zero since derivatives do not depend on them
-            fit_result_aux = fit_result.copy()
-            # Location
-            if fit_result["beta"] is not None:
-                fit_result_aux["beta"] = np.concatenate((fit_result["beta"], [0, 0]))
-            else:
-                fit_result_aux["beta"] = np.array([0, 0])
-            # Scale
-            if fit_result["alpha"] is not None:
-                fit_result_aux["alpha"] = np.concatenate((fit_result["alpha"], [0, 0]))
-            else:
-                fit_result_aux["alpha"] = np.array([0, 0])
-            # Shape
-            if fit_result["gamma"] is not None:
-                fit_result_aux["gamma"] = np.concatenate((fit_result["gamma"], [0, 0]))
-            else:
-                fit_result_aux["gamma"] = np.array([0, 0])
-
-            auxf, auxJx, auxHxx = self._loglikelihood(
-                beta0=fit_result_aux["beta0"],
-                beta=fit_result_aux["beta"],
-                alpha0=fit_result_aux["alpha0"],
-                alpha=fit_result_aux["alpha"],
-                gamma0=fit_result_aux["gamma0"],
-                gamma=fit_result_aux["gamma"],
+            self.AIC_iter[self.niter_harm + 1] = self._AIC(
+                -fit_result["negloglikelihood"], n_params
             )
+            self.loglike_iter[self.niter_harm + 1] = -fit_result["negloglikelihood"]
 
-            # Inverse of the Information Matrix (auxHxx)
-            auxI0 = np.linalg.inv(-auxHxx)
+            if self.AICini < self.AIC_iter[self.niter_harm + 1]:
+                # The constant shape parameter (gamma0) is significative
+                self.ngamma0 = 1
+                fit_result = self._fit(nmu, npsi, ngamma)
 
-            # Updating the best model
-            if iter > 0:
-                # TODO: Implement another criterias (Proflike)
-                if self.AIC_iter[iter] < self.AIC_iter[iter - 1]:
-                    modelant = np.array([nmu, npsi, ngamma])
-            else:
-                modelant = np.array([nmu, npsi, ngamma])
+            print("Harmonic AIC:", self.AICini, "\n")
 
-            ### Step 5: Compute maximum perturbation
-            pos = 1
-            # Perturbation for location
-            max_val = np.abs(
-                auxJx[2 * nmu : 2 * nmu + 2].T
-                @ auxI0[2 * nmu : 2 * nmu + 2, 2 * nmu : 2 * nmu + 2]
-                @ auxJx[2 * nmu : 2 * nmu + 2]
-            )
-            # Perturbation for scale
-            auxmax = abs(
-                auxJx[
-                    2 + 2 * nmu + ntrend_loc + nind_loc + 2 * npsi + 2 : 2
-                    + 2 * nmu
-                    + ntrend_loc
-                    + nind_loc
-                    + 2 * npsi
-                    + 2
-                    + 2
-                ].T
-                @ auxI0[
-                    2 + 2 * nmu + ntrend_loc + nind_loc + 2 * npsi + 2 : 2
-                    + 2 * nmu
-                    + ntrend_loc
-                    + nind_loc
-                    + 2 * npsi
-                    + 2
-                    + 2,
-                    2 + 2 * nmu + ntrend_loc + nind_loc + 2 * npsi + 2 : 2
-                    + 2 * nmu
-                    + ntrend_loc
-                    + nind_loc
-                    + 2 * npsi
-                    + 2
-                    + 2,
-                ]
-                @ auxJx[
-                    2 + 2 * nmu + ntrend_loc + nind_loc + 2 * npsi + 2 : 2
-                    + 2 * nmu
-                    + ntrend_loc
-                    + nind_loc
-                    + 2 * npsi
-                    + 2
-                    + 2
-                ]
-            )
-            if auxmax > max_val:
-                max_val = auxmax
-                pos = 2
+            self._update_params(**fit_result)
+            self.nmu = nmu
+            self.npsi = npsi
+            self.ngamma = ngamma
+        else:
+            # Set 0 the number of harmonics parameters
+            self.nmu = 0
+            self.npsi = 0
+            self.ngamma = 0
 
-            # Perturbation for shape
-            auxmax = abs(
-                auxJx[
-                    2
-                    + self.ngamma0
-                    + 2 * nmu
-                    + ntrend_loc
-                    + nind_loc
-                    + ntrend_sc
-                    + nind_sc
-                    + 2 * npsi
-                    + 2 * ngamma
-                    + 4 : 2
-                    + self.ngamma0
-                    + 2 * nmu
-                    + ntrend_loc
-                    + nind_loc
-                    + ntrend_sc
-                    + nind_sc
-                    + 2 * npsi
-                    + 2 * ngamma
-                    + 4
-                    + 2
-                ].T
-                @ auxI0[
-                    2
-                    + self.ngamma0
-                    + 2 * nmu
-                    + ntrend_loc
-                    + nind_loc
-                    + ntrend_sc
-                    + nind_sc
-                    + 2 * npsi
-                    + 2 * ngamma
-                    + 4 : 2
-                    + self.ngamma0
-                    + 2 * nmu
-                    + ntrend_loc
-                    + nind_loc
-                    + ntrend_sc
-                    + nind_sc
-                    + 2 * npsi
-                    + 2 * ngamma
-                    + 4
-                    + 2,
-                    2
-                    + self.ngamma0
-                    + 2 * nmu
-                    + ntrend_loc
-                    + nind_loc
-                    + ntrend_sc
-                    + nind_sc
-                    + 2 * npsi
-                    + 2 * ngamma
-                    + 4 : 2
-                    + self.ngamma0
-                    + 2 * nmu
-                    + ntrend_loc
-                    + nind_loc
-                    + ntrend_sc
-                    + nind_sc
-                    + 2 * npsi
-                    + 2 * ngamma
-                    + 4
-                    + 2,
-                ]
-                @ auxJx[
-                    2
-                    + self.ngamma0
-                    + 2 * nmu
-                    + ntrend_loc
-                    + nind_loc
-                    + ntrend_sc
-                    + nind_sc
-                    + 2 * npsi
-                    + 2 * ngamma
-                    + 4 : 2
-                    + self.ngamma0
-                    + 2 * nmu
-                    + ntrend_loc
-                    + nind_loc
-                    + ntrend_sc
-                    + nind_sc
-                    + 2 * npsi
-                    + 2 * ngamma
-                    + 4
-                    + 2
-                ]
-            )
-            if auxmax > max_val:
-                max_val = auxmax
-                pos = 3
+            fit_result = self._fit(self.nmu, self.npsi, self.ngamma)
 
-            # If maximum perturbation corresponds to location, include a new harmonic
-            if pos == 1:
-                nmu += 1
-            # If maximum perturbation corresponds to scale, include a new harmonic
-            if pos == 2:
-                npsi += 1
-            # If maximum perturbation corresponds to shape, include a new harmonic
-            if pos == 3:
-                ngamma += 1
-
-            print("Iteration: ", iter, "- AIC: ", self.AIC_iter[iter])
-            if iter > 0:
-                if self.AIC_iter[iter] > self.AIC_iter[iter - 1]:
-                    model = modelant
-                    self.AICini = self.AIC_iter[iter - 1]
-                    loglikeobjITini = self.loglike_iter[iter - 1]
-                    break
-                else:
-                    model = np.array([nmu, npsi, ngamma])
-
-        self.niter_harm = iter
-        self.nit = iter
-        print("End of the Harmonic iterative process")
-
-        ######### End of the Harmonic iterative process
-        # Obtaining the MLE for the best model
-        nmu = model[0]
-        npsi = model[1]
-        ngamma = model[2]
-
-        # CHECKING THE SHAPE PARAMETER
-        self.ngamma0 = (
-            0  # Force the elimination of the constant shape parameter (gamma0)
-        )
-        fit_result = self._fit(nmu, npsi, ngamma)
-
-        n_params = (
-            2
-            + self.ngamma0
-            + 2 * nmu
-            + 2 * npsi
-            + 2 * ngamma
-            + nind_loc
-            + ntrend_loc
-            + nind_sc
-            + ntrend_sc
-            + nind_sh
-            + ntrend_sh
-        )
-        self.AIC_iter[self.niter_harm + 1] = self._AIC(
-            -fit_result["negloglikelihood"], n_params
-        )
-        self.loglike_iter[self.niter_harm + 1] = -fit_result["negloglikelihood"]
-
-        if self.AICini < self.AIC_iter[self.niter_harm + 1]:
-            # The constant shape parameter (gamma0) is significative
+            iter = 0
+            self.niter_harm = iter
+            # Check if the model is Gumbel
             self.ngamma0 = 1
-            fit_result = self._fit(nmu, npsi, ngamma)
+            if fit_result["gamma0"] is None:
+                self.ngamma0 = 0
+            elif np.abs(fit_result["gamma0"]) <= 1e-8:
+                self.ngamma0 = 0
 
-        print("Harmonic AIC:", self.AICini, "\n")
-
-        self._update_params(**fit_result)
-        self.nmu = nmu
-        self.npsi = npsi
-        self.ngamma = ngamma
+            # Compute AIC and Loglikelihood
+            self.loglike_iter[iter] = -fit_result["negloglikelihood"]
+            n_params = (
+                2
+                + self.ngamma0
+                + 2 * self.nmu
+                + 2 * self.npsi
+                + 2 * self.ngamma
+                + nind_loc
+                + ntrend_loc
+                + nind_sc
+                + ntrend_sc
+                + nind_sh
+                + ntrend_sh
+            )
+            self.AIC_iter[iter] = self._AIC(-fit_result["negloglikelihood"], n_params)
 
         ######### COVARIATES Iterative process #########
         nrows, nind_cov = self.covariates.shape  # Number of covariates
@@ -453,21 +503,19 @@ class NonStatGEV(BlueMathModel):
         # Auxiliar variables related to location parameter
         beta_cov = np.asarray([])
         list_loc = []  # List of covariates for location
-        auxcov_loc = self.covariates.iloc[:, list_loc].values
+        # auxcov_loc = self.covariates.iloc[:, list_loc].values
         # Auxiliar variables related to scale parameter
         alpha_cov = np.asarray([])
         list_sc = []
-        auxcov_sc = self.covariates.iloc[:, list_sc].values
+        # auxcov_sc = self.covariates.iloc[:, list_sc].values
         # Auxiliar variables related to shape parameter
         gamma_cov = np.asarray([])
         list_sh = []
-        auxcov_sh = self.covariates.iloc[:, list_sh].values
+        # auxcov_sh = self.covariates.iloc[:, list_sh].values
 
         auxlist_cov = list(np.arange(nind_cov))
 
-        if self.covariates is None:
-            print("No covariates provided, skipping Covariates iterative process")
-        else:
+        if self.include_covariates:
             print("Starting Covariates iterative process")
             for iter in range(self.niter_harm + 1, self.max_iter):
                 self.ngamma0 = 1
@@ -673,9 +721,9 @@ class NonStatGEV(BlueMathModel):
                     )  # Initialize the new covariate as zero
 
                 # Update auxiliar covariates
-                auxcov_loc = self.covariates.iloc[:, list_loc].values
-                auxcov_sc = self.covariates.iloc[:, list_sc].values
-                auxcov_sh = self.covariates.iloc[:, list_sh].values
+                # auxcov_loc = self.covariates.iloc[:, list_loc].values
+                # auxcov_sc = self.covariates.iloc[:, list_sc].values
+                # auxcov_sh = self.covariates.iloc[:, list_sh].values
 
                 ### Step 11: Obtain the maximum-likelihood estimators for the selected parameters and
                 # calculate the Akaike Information criterion objective function AIC
@@ -764,8 +812,16 @@ class NonStatGEV(BlueMathModel):
                     self.nind_sh = nind_sh
                     break
 
-        print("End of Covariates iterative process")
-        print("Covariates AIC:", self.AICini, "\n")
+            print("End of Covariates iterative process")
+            print("Covariates AIC:", self.AICini, "\n")
+        else:
+            print("No covariates provided, skipping Covariates iterative process", "\n")
+            self.list_loc = list_loc
+            self.nind_loc = nind_loc
+            self.list_sc = list_sc
+            self.nind_sc = nind_sc
+            self.list_sh = list_sh
+            self.nind_sh = nind_sh
 
         ######### TRENDS Iterative process #########
         if self.trends:
@@ -4493,9 +4549,9 @@ class NonStatGEV(BlueMathModel):
         if covariates is None:
             covariates = np.empty((0, 0))
         if indicesint is None:
-            indicesint = np.empty((0, 0))
+            indicesint = np.empty(0)
         if times is None:
-            times = np.empty((0, 0))
+            times = np.empty(0)
         if x is not None:
             t = np.array([x])
         else:
@@ -4518,27 +4574,29 @@ class NonStatGEV(BlueMathModel):
         # Adding the harmonic part
         if nparam > 0:
             for i in range(nparam // 2):
-                y += beta[2 * i] * np.cos((i + 1) * 2 * np.pi * t) + beta[
-                    2 * i + 1
-                ] * np.sin((i + 1) * 2 * np.pi * t)
+                y = (
+                    y
+                    + beta[2 * i] * np.cos((i + 1) * 2 * np.pi * t)
+                    + beta[2 * i + 1] * np.sin((i + 1) * 2 * np.pi * t)
+                )
 
         # Adding the tendency part
         if ntend > 0:
-            y += betaT * t
+            y = y + betaT * t
 
         # Adding the covariate part
         if nind > 0:
-            if indicesint.shape[1] > 0:
-                if times.shape[1] == 0:
+            if indicesint.shape[0] > 0:
+                if times.shape[0] == 0:
                     for i in range(nind):
-                        y += beta_cov[i] * indicesint[i]
+                        y = y + beta_cov[i] * indicesint[i]
                 else:
                     for i in range(nind):
                         indicesintaux = self._search(times, covariates[:, i])
-                        y += beta_cov[i] * indicesintaux
+                        y = y + beta_cov[i] * indicesintaux
             else:
                 for i in range(nind):
-                    y += beta_cov[i] * covariates[:, i]
+                    y = y + beta_cov[i] * covariates[:, i]
 
         return y
 
@@ -4558,7 +4616,7 @@ class NonStatGEV(BlueMathModel):
         pos = 0
         for j in range(len(self.t)):
             found = 0
-            while found == 0 and pos <= n:
+            while found == 0 and pos < n:
                 if self.t[j] < times[pos]:
                     yin[j] = values[pos]
                     found = 1
@@ -4654,7 +4712,7 @@ class NonStatGEV(BlueMathModel):
             dp = np.cos((i + 1) / 2 * 2 * np.pi * t)
         return dp
 
-    def _quantile(self, harm=False) -> np.ndarray:
+    def _quantile(self, prob=None, harm=False) -> np.ndarray:
         """
         Calculates the quantile q associated with a given parameterization, the main input is quanval introduced in __init__ (default 0.95)
 
@@ -4689,6 +4747,9 @@ class NonStatGEV(BlueMathModel):
             alpha_cov = self.alpha_cov
             cov_sh = self.covariates.iloc[:, self.list_sh].values
             gamma_cov = self.gamma_cov
+
+        if prob is None:
+            prob = self.quanval
 
         Q = np.zeros(len(self.xt))
 
@@ -4728,15 +4789,15 @@ class NonStatGEV(BlueMathModel):
         # Evaluate the quantile
         Q[pos] = (
             mut[pos]
-            - (1 - (-np.log(self.quanval) / self.kt[pos]) ** (-epst[pos]))
+            - (1 - (-np.log(prob) / self.kt[pos]) ** (-epst[pos]))
             * psit[pos]
             / epst[pos]
         )
-        Q[posG] = mut[posG] - psit[posG] * np.log(-np.log(self.quanval) / self.kt[posG])
+        Q[posG] = mut[posG] - psit[posG] * np.log(-np.log(prob) / self.kt[posG])
 
         return Q
 
-    def plot(self, return_plot=True):
+    def plot(self, return_plot: bool = True, save: bool = False):
         """
         Plot the location, scale and shape parameters, also the PP plot and QQ plot
 
@@ -4746,6 +4807,8 @@ class NonStatGEV(BlueMathModel):
         ----------
         return_plot : bool, default=True
             If True, return period plot is plotted
+        save : bool, default=False
+            If True, save all the figures in a "Figures/"
         """
 
         # Parameter Evaluation
@@ -4899,13 +4962,13 @@ class NonStatGEV(BlueMathModel):
                 linestyle="None",
                 color="black",
                 markersize=5,
-                label=r"$H_s^{max}$",
+                label="Data",
             )
             ax2 = ax1.twinx()
             l1 = ax1.plot(
                 t_anual[t_ord],
                 mut[t_ord],
-                label=r"$\mu_t$",
+                label="Location",
                 linewidth=2,
                 color=self.colors[0],
                 alpha=1,
@@ -4920,7 +4983,7 @@ class NonStatGEV(BlueMathModel):
             l2 = ax2.plot(
                 t_anual[t_ord],
                 psit[t_ord],
-                label=r"$\psi_t$",
+                label="Scale",
                 linewidth=2,
                 color=self.colors[1],
                 alpha=1,
@@ -4940,7 +5003,7 @@ class NonStatGEV(BlueMathModel):
                 markersize=5,
             )
         else:
-            fig, ax1 = plt.subplots(figsize=(10, 6))
+            fig, ax1 = plt.subplots(figsize=(20, 6))
             l0 = ax1.plot(
                 self.t,
                 self.xt,
@@ -4948,45 +5011,89 @@ class NonStatGEV(BlueMathModel):
                 linestyle="None",
                 color="black",
                 markersize=5,
-                label=r"$H_s^{max}$",
+                label="Data",
             )
             ax2 = ax1.twinx()
             l1 = ax1.plot(
                 self.t,
                 mut,
-                label=r"$\mu_t$",
+                label="Location",
                 linewidth=2,
-                color=self.colors[0],
+                # color=self.colors[0],
+                color="tab:blue",
                 alpha=1,
             )
-            ax1.fill_between(
-                self.t, ci_low_mut, ci_up_mut, color=self.colors[0], alpha=0.3
-            )
+            # ax1.fill_between(
+            #     self.t, ci_low_mut, ci_up_mut, color=self.colors[0], alpha=0.3
+            # )
+
             l2 = ax2.plot(
                 self.t,
                 psit,
-                label=r"$\psi_t$",
+                label="Scale",
                 linewidth=2,
-                color=self.colors[1],
+                # color=self.colors[1],
+                color="tab:green",
                 alpha=1,
             )
-            ax2.fill_between(
-                self.t, ci_low_psit, ci_up_psit, color=self.colors[1], alpha=0.3
-            )
+            # ax2.fill_between(
+            #     self.t, ci_low_psit, ci_up_psit, color=self.colors[1], alpha=0.3
+            # )
             l3 = ax1.plot(
-                self.t, quan95, linestyle="dashed", color=self.colors[2], markersize=5
+                self.t,
+                quan95,
+                linestyle="dashed",
+                # color=self.colors[2],
+                color="tab:orange",
+                linewidth=1,
+                label="Quantile 95%",
             )
+            # TODO: Add aggregated return period lines
+            # rt_10 = np.zeros(40)
+            # for year in range(40):
+            #     rt_10[year] = self._aggquantile(1-1/10, year, year+1)  # 10-year return level at each year
+            # rt_20 = np.zeros(40)
+            # for year in range(40):
+            #     rt_20[year] = self._aggquantile(1-1/20, year, year+1)
+            # rt_50 = np.zeros(40)
+            # for year in range(40):
+            #     rt_50[year] = self._aggquantile(1-1/50, year, year+1)
+            # rt_100 = np.zeros(40)
+            # for year in range(40):
+            #     rt_100[year] = self._aggquantile(1-1/100, year, year+1)
+            # l4 = ax1.plot(
+            #     np.arange(0,40), rt_10, linestyle="-", linewidth=1, label="10 years",
+            # )
+            # l5 = ax1.plot(
+            #     np.arange(0,40), rt_20, linestyle="-", linewidth=1, label="20 years",
+            # )
+            # l6 = ax1.plot(
+            #     np.arange(0,40), rt_50, linestyle="-", linewidth=1, label="50 years",
+            # )
+            # l7 = ax1.plot(
+            #     np.arange(0,40), rt_100, linestyle="-", linewidth=1, label="100 years",
+            # )
 
-        ax1.set_xlabel("Time (yearly scale)")
-        ax1.set_ylabel(r"$\mu_t$")
-        ax2.set_ylabel(r"$\psi_t$")
-        ax1.set_title(f"Location and Scale parameters ({self.var_name})")
+        ax1.set_xlabel("Time (years)")
+        ax1.set_ylabel(r"$\mu_t(m), Hs(m)$")
+        ax2.set_ylabel(r"$\psi_t(m)$")
+        # ax1.set_title(f"Evolution of location and scale parameters ({self.var_name})")
+        ax1.set_title(f"Evolution of adjustment ({self.var_name})")
         ax1.grid(True)
         handles = [
-            art for art in l0 + l1 + l2 + l3 if not art.get_label().startswith("_")
+            # art for art in l0 + l1 + l2 + l3 + l4 + l5 + l6 + l7 if not art.get_label().startswith("_")
+            art
+            for art in l0 + l1 + l2 + l3
+            if not art.get_label().startswith("_")
         ]
         ax1.legend(handles=handles, loc="best")
+        # ax2.set_ylim(0,1.5)
+        # ax1.set_xlim(-0.07, 40)
         ax1.margins(x=0.01)
+        if save:
+            os.makedirs("Figures", exist_ok=True)
+            # plt.savefig(f"Figures/Location_Scale_Parameters_{self.var_name}.png", dpi=300)
+            plt.savefig(f"Figures/Adjustment_Evolution_{self.var_name}.png", dpi=300)
         plt.show()
 
         # mu, mu-phi, mu+phi, points
@@ -5016,6 +5123,8 @@ class NonStatGEV(BlueMathModel):
         handles = [art for art in l0 + l1 + l3 if not art.get_label().startswith("_")]
         ax1.legend(handles=handles, loc="best")
         ax1.margins(x=0.01)
+        if save:
+            plt.savefig(f"Figures/Location_Parameter_{self.var_name}.png", dpi=300)
         plt.show()
 
         month_initials = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
@@ -5071,6 +5180,11 @@ class NonStatGEV(BlueMathModel):
         ax1.legend(handles=handles, loc="best")
         ax1.margins(x=0.01)
         plt.xticks(month_positions, month_initials)
+        if save:
+            plt.savefig(
+                f"Figures/Location_Scale_Parameters_FirstYear_{self.var_name}.png",
+                dpi=300,
+            )
         plt.show()
 
         # Creating the first monthly plot if not monthly or annual data
@@ -5131,6 +5245,8 @@ class NonStatGEV(BlueMathModel):
             ]
             ax1.legend(handles=handles, loc="best")
             ax1.margins(x=0.01)
+            if save:
+                plt.savefig(f"Figures/Shape_Parameter_{self.var_name}.png", dpi=300)
             plt.show()
 
         ### Shape parameter plot
@@ -5226,6 +5342,10 @@ class NonStatGEV(BlueMathModel):
             plt.xticks(month_positions, month_initials)
             plt.legend(loc="best")
             plt.grid(True)
+            if save:
+                plt.savefig(
+                    f"Figures/Harmonic_Location_Parameter_{self.var_name}.png", dpi=300
+                )
             plt.show()
 
         ### Scale parameter plot
@@ -5263,13 +5383,17 @@ class NonStatGEV(BlueMathModel):
             plt.xticks(month_positions, month_initials)
             plt.ylabel(r"$\psi_t$")
             plt.grid(True)
+            if save:
+                plt.savefig(
+                    f"Figures/Harmonic_Scale_Parameter_{self.var_name}.png", dpi=300
+                )
             plt.show()
 
         #### PP Plot
-        self.PPplot()
+        self.PPplot(save=save)
 
         #### QQ plot
-        self.QQplot()
+        self.QQplot(save=save)
 
         #### Return periods
         if (
@@ -5281,9 +5405,14 @@ class NonStatGEV(BlueMathModel):
         ) and return_plot:
             self.ReturnPeriodPlot()
 
-    def QQplot(self):
+    def QQplot(self, save: bool = False):
         """
         QQ plot
+
+        Parameters
+        ----------
+        save : bool, default=False
+            If True, save the plot in "Figures/"
         """
         Ze = -np.log(-np.log(np.arange(1, len(self.xt) + 1) / (len(self.xt) + 1)))
         Zm = self.kt * self._Zstandardt()
@@ -5331,6 +5460,8 @@ class NonStatGEV(BlueMathModel):
         plt.axis("square")
         plt.grid(True)
         plt.margins(x=0.1)
+        if save:
+            plt.savefig(f"Figures/QQplot_{self.var_name}.png", dpi=300)
         plt.show()
 
     def _Zstandardt(self):
@@ -5339,7 +5470,7 @@ class NonStatGEV(BlueMathModel):
 
         Return
         ------
-        Zt : 
+        Zt :
             Standarized variable of the given parameters
         """
 
@@ -5438,7 +5569,7 @@ class NonStatGEV(BlueMathModel):
 
         # Since z-values must be greater than 0 in order to avoid numerical problems, their values are set to be greater than 1e-8
         z = np.maximum(1e-8, z)
-        zn = z ** (-1 / epst)
+        # zn = z ** (-1 / epst)
 
         Dmut = np.zeros(nd)
         Dpsit = np.zeros(nd)
@@ -5977,9 +6108,14 @@ class NonStatGEV(BlueMathModel):
 
         return Dq
 
-    def PPplot(self):
+    def PPplot(self, save=False):
         """
         PP plot
+
+        Parameters
+        ----------
+        save : bool, default=False
+            If True, save the plot in "Figures/"
         """
         # Empirical distribution function value
         Fe = np.arange(1, len(self.xt) + 1) / (len(self.xt) + 1)
@@ -6040,6 +6176,8 @@ class NonStatGEV(BlueMathModel):
         plt.grid(True)
         plt.axis("square")
         plt.margins(x=0.1)
+        if save:
+            plt.savefig(f"Figures/PPplot_{self.var_name}.png", dpi=300)
         plt.show()
 
     def _CDFGEVt(self):
@@ -6149,7 +6287,7 @@ class NonStatGEV(BlueMathModel):
                 )
 
         ## Plot the return periods
-        datemax_mod = self.t % 1
+        # datemax_mod = self.t % 1
         labels = [
             "January",
             "February",
@@ -6233,13 +6371,13 @@ class NonStatGEV(BlueMathModel):
         beta_cov=None,
         alpha_cov=None,
         gamma_cov=None,
-    ):
+    ) -> np.ndarray:
         """
         Function to compute the aggregated quantile for certain parameters
 
         Parameters
         ----------
-        q : 
+        q :
             Quantile value
         t0 :
             Starting point of integration interval
@@ -6269,6 +6407,11 @@ class NonStatGEV(BlueMathModel):
             Covariate part of scale parameter
         gamma_cov : default=None
             Covariate part of shape parameter
+
+        Return
+        ------
+        zqout : np.ndarray
+            Aggregated return period
         """
         if beta0 is None:
             beta0 = self.beta0
@@ -6317,12 +6460,16 @@ class NonStatGEV(BlueMathModel):
             if len(pos) > 0:
                 for i in range(len(beta_cov)):
                     cov_locint[i] = np.mean(
-                        self.covariates[pos, self.list_loc[i]].values
+                        self.covariates.iloc[pos, self.list_loc[i]].values
                     )
                 for i in range(len(alpha_cov)):
-                    cov_scint[i] = np.mean(self.covariates[pos, self.list_sc[i]].values)
+                    cov_scint[i] = np.mean(
+                        self.covariates.iloc[pos, self.list_sc[i]].values
+                    )
                 for i in range(len(gamma_cov)):
-                    cov_shint[i] = np.mean(self.covariates[pos, self.list_sh[i]].values)
+                    cov_shint[i] = np.mean(
+                        self.covariates.iloc[pos, self.list_sh[i]].values
+                    )
         else:
             cov_locint = None
             cov_scint = None
@@ -6345,22 +6492,22 @@ class NonStatGEV(BlueMathModel):
             0,
             1,
         )[0]
-        std = quad(
-            lambda x: np.exp(
-                self._parametro(
-                    alpha0,
-                    alpha,
-                    alphaT,
-                    alpha_cov,
-                    self.covariates.iloc[:, self.list_sc].values,
-                    cov_scint,
-                    self.t,
-                    x,
-                )
-            ),
-            0,
-            1,
-        )[0]
+        # std = quad(
+        #     lambda x: np.exp(
+        #         self._parametro(
+        #             alpha0,
+        #             alpha,
+        #             alphaT,
+        #             alpha_cov,
+        #             self.covariates.iloc[:, self.list_sc].values,
+        #             cov_scint,
+        #             self.t,
+        #             x,
+        #         )
+        #     ),
+        #     0,
+        #     1,
+        # )[0]
 
         for il in range(m):
             # for jl in range(n)
@@ -6455,9 +6602,13 @@ class NonStatGEV(BlueMathModel):
         beta_cov,
         alpha_cov,
         gamma_cov,
-    ):
+    ) -> np.ndarray:
         """
-        Function to solve the quantile
+        Auxiliar function to solve the quantile
+
+        Return
+        ------
+        zn : np.ndarray
         """
 
         # Evaluate the location parameter at each time t as a function of the actual values of the parameters given by p
@@ -6547,7 +6698,11 @@ class NonStatGEV(BlueMathModel):
         gamma_cov,
     ):
         """
-        Function to solve the quantile
+        Auxiliar Function to solve the quantile derivative
+
+        Return
+        ------
+        zn : np.ndarray
         """
         # Evaluate the location parameter at each time t as a function of the actual values of the parameters given by p
         mut1 = self._parametro(
@@ -6614,9 +6769,14 @@ class NonStatGEV(BlueMathModel):
 
         return zn
 
-    def _ConfidInterQuanAggregate(self, q, t0, t1):
+    def _ConfidInterQuanAggregate(self, q, t0, t1) -> np.ndarray:
         """
         Auxiliar function to compute the std for the aggregated quantiles
+
+        Return
+        ------
+        stdQuan : np.ndarray
+            Standard deviation of quantile
         """
         # Total length of the data
         n = (
