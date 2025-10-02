@@ -4797,7 +4797,7 @@ class NonStatGEV(BlueMathModel):
 
         return Q
 
-    def plot(self, return_plot: bool = True, save: bool = False):
+    def plot(self, return_plot: bool = True, save: bool = False, init_year=2000):
         """
         Plot the location, scale and shape parameters, also the PP plot and QQ plot
 
@@ -4946,6 +4946,8 @@ class NonStatGEV(BlueMathModel):
         # Location and Scale parameter plotting
         t_anual = np.mod(self.t, 1)
         quan95 = self._quantile()
+        rp10 = self._quantile(1-1/10)
+        rp100 = self._quantile(1-1/100)
 
         if (
             self.betaT is None
@@ -4965,7 +4967,7 @@ class NonStatGEV(BlueMathModel):
                 label="Data",
             )
             ax2 = ax1.twinx()
-            l1 = ax1.plot(
+            ax1.plot(
                 t_anual[t_ord],
                 mut[t_ord],
                 label="Location",
@@ -4980,7 +4982,7 @@ class NonStatGEV(BlueMathModel):
                 color=self.colors[0],
                 alpha=0.3,
             )
-            l2 = ax2.plot(
+            ax2.plot(
                 t_anual[t_ord],
                 psit[t_ord],
                 label="Scale",
@@ -4995,7 +4997,7 @@ class NonStatGEV(BlueMathModel):
                 color=self.colors[1],
                 alpha=0.3,
             )
-            l3 = ax1.plot(
+            ax1.plot(
                 t_anual[t_ord],
                 quan95[t_ord],
                 linestyle="dashed",
@@ -5004,8 +5006,8 @@ class NonStatGEV(BlueMathModel):
             )
         else:
             fig, ax1 = plt.subplots(figsize=(20, 6))
-            l0 = ax1.plot(
-                self.t,
+            ax1.plot(
+                self.t + init_year,
                 self.xt,
                 marker="+",
                 linestyle="None",
@@ -5013,9 +5015,8 @@ class NonStatGEV(BlueMathModel):
                 markersize=5,
                 label="Data",
             )
-            ax2 = ax1.twinx()
-            l1 = ax1.plot(
-                self.t,
+            ax1.plot(
+                self.t+init_year,
                 mut,
                 label="Location",
                 linewidth=2,
@@ -5023,31 +5024,44 @@ class NonStatGEV(BlueMathModel):
                 color="tab:blue",
                 alpha=1,
             )
-            # ax1.fill_between(
-            #     self.t, ci_low_mut, ci_up_mut, color=self.colors[0], alpha=0.3
-            # )
+            ax1.fill_between(
+                self.t+init_year,
+                mut - psit,
+                mut + psit,
+                label=r"Location $\pm$ Scale",
+                color="tab:blue",
+                alpha=0.4
+            )
 
-            l2 = ax2.plot(
-                self.t,
-                psit,
-                label="Scale",
-                linewidth=2,
-                # color=self.colors[1],
-                color="tab:green",
-                alpha=1,
-            )
-            # ax2.fill_between(
-            #     self.t, ci_low_psit, ci_up_psit, color=self.colors[1], alpha=0.3
-            # )
-            l3 = ax1.plot(
-                self.t,
-                quan95,
-                linestyle="dashed",
-                # color=self.colors[2],
-                color="tab:orange",
+            ax1.plot(
+                self.t+init_year,
+                rp10,
+                label="10 years",
                 linewidth=1,
-                label="Quantile 95%",
+                color="tab:red",
+                linestyle="--",
+                alpha=.9,
             )
+
+            ax1.plot(
+                self.t+init_year,
+                rp100,
+                label="100 years",
+                linewidth=1,
+                color="tab:green",
+                linestyle="--",
+                alpha=.9,
+            )
+
+            ax1.plot(
+                self.t+init_year,
+                epst,
+                label="Shape",
+                linewidth=1,
+                color="tab:orange",
+                alpha=.9,
+            )
+
             # TODO: Add aggregated return period lines
             # rt_10 = np.zeros(40)
             # for year in range(40):
@@ -5075,56 +5089,19 @@ class NonStatGEV(BlueMathModel):
             # )
 
         ax1.set_xlabel("Time (years)")
-        ax1.set_ylabel(r"$\mu_t(m), Hs(m)$")
-        ax2.set_ylabel(r"$\psi_t(m)$")
+        ax1.set_ylabel(rf"$\mu_t(m)$, {self.var_name}")
         # ax1.set_title(f"Evolution of location and scale parameters ({self.var_name})")
-        ax1.set_title(f"Evolution of adjustment ({self.var_name})")
+        ax1.set_title(f"Evolution of parameters ({self.var_name})")
         ax1.grid(True)
-        handles = [
-            # art for art in l0 + l1 + l2 + l3 + l4 + l5 + l6 + l7 if not art.get_label().startswith("_")
-            art
-            for art in l0 + l1 + l2 + l3
-            if not art.get_label().startswith("_")
-        ]
-        ax1.legend(handles=handles, loc="best")
+        ax1.legend(loc="best")
         # ax2.set_ylim(0,1.5)
         # ax1.set_xlim(-0.07, 40)
         ax1.margins(x=0.01)
+        plt.tight_layout()
         if save:
             os.makedirs("Figures", exist_ok=True)
             # plt.savefig(f"Figures/Location_Scale_Parameters_{self.var_name}.png", dpi=300)
             plt.savefig(f"Figures/Adjustment_Evolution_{self.var_name}.png", dpi=300)
-        plt.show()
-
-        # mu, mu-phi, mu+phi, points
-        fig, ax1 = plt.subplots(figsize=(10, 6))
-        l0 = ax1.plot(
-            self.t,
-            self.xt,
-            marker="+",
-            linestyle="None",
-            color="black",
-            markersize=5,
-            label=r"$H_s^{max}$",
-        )
-        l1 = ax1.plot(
-            self.t, mut, label=r"$\mu_t$", linewidth=2, color=self.colors[0], alpha=1
-        )
-        ax1.fill_between(
-            self.t, mut - psit, mut + psit, color=self.colors[1], alpha=0.3
-        )
-        l3 = ax1.plot(
-            self.t, quan95, linestyle="dashed", color=self.colors[2], linewidth=2
-        )
-        ax1.set_xlabel("Time (yearly scale)")
-        ax1.set_ylabel(r"$\mu_t$")
-        ax1.set_title(f"Location parameter ({self.var_name})")
-        ax1.grid(True)
-        handles = [art for art in l0 + l1 + l3 if not art.get_label().startswith("_")]
-        ax1.legend(handles=handles, loc="best")
-        ax1.margins(x=0.01)
-        if save:
-            plt.savefig(f"Figures/Location_Parameter_{self.var_name}.png", dpi=300)
         plt.show()
 
         month_initials = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
@@ -5140,7 +5117,7 @@ class NonStatGEV(BlueMathModel):
             linestyle="None",
             color="black",
             markersize=5,
-            label=r"$H_s^{max}$",
+            label=f"{self.var_name}",
         )
         # ax2 = ax1.twinx()
         l1 = ax1.plot(
@@ -5198,7 +5175,7 @@ class NonStatGEV(BlueMathModel):
                 linestyle="None",
                 color="black",
                 markersize=5,
-                label=r"$H_s^{max}$",
+                label=f"{self.var_name}",
             )
             # ax2 = ax1.twinx()
             l1 = ax1.plot(
@@ -5221,6 +5198,7 @@ class NonStatGEV(BlueMathModel):
                 uppermaxs,
                 color=self.colors[0],
                 alpha=0.3,
+                label="Location +- scale"
             )
             # l2 = ax2.plot(self.t[mask_month], psit[mask_month], label=r'$\psi_t$', linewidth=2, color=self.colors[1], alpha=1)
             # ax2.fill_between(self.t[mask_month], ci_low_psit[mask_month], ci_up_psit[mask_month], color=self.colors[1],
@@ -5246,148 +5224,187 @@ class NonStatGEV(BlueMathModel):
             ax1.legend(handles=handles, loc="best")
             ax1.margins(x=0.01)
             if save:
-                plt.savefig(f"Figures/Shape_Parameter_{self.var_name}.png", dpi=300)
+                plt.savefig(f"Figures/Evolution_Location_FirstYear{self.var_name}.png", dpi=300)
             plt.show()
 
         ### Shape parameter plot
-        if self.ngamma > 0:
-            t_ord = np.argsort(t_anual)
+        # Confidence interval for epst
+        # ci_up = (
+        #     epst + norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdepst
+        # )
+        # ci_low = (
+        #     epst - norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdepst
+        # )
 
-            # Confidence interval for epst
-            ci_up = (
-                epst + norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdepst
-            )
-            ci_low = (
-                epst - norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdepst
-            )
+        # LOCATION 
+        plt.figure(figsize=(20, 6))
+        plt.plot(self.t + init_year, mut, color="tab:blue")
+        # plt.fill_between(
+        #     t_anual[t_ord],
+        #     ci_low[t_ord],
+        #     ci_up[t_ord],
+        #     color=self.colors[0],
+        #     alpha=0.3,
+        #     label=r"$\xi_t$ Confidence Interval",
+        # )
+        plt.title(f"Location parameter ({self.var_name})")
+        plt.xlabel("Time (yearly scale)")
+        plt.ylabel(r"$\mu_t$")
+        plt.grid(True)
+        if save:
+            plt.savefig(f"Figures/Evolution_Location{self.var_name}.png", dpi=300)
+        plt.show()
 
-            plt.figure(figsize=(10, 6))
-            plt.plot(t_anual[t_ord], epst[t_ord], color=self.colors[0])
-            plt.fill_between(
-                t_anual[t_ord],
-                ci_low[t_ord],
-                ci_up[t_ord],
-                color=self.colors[0],
-                alpha=0.3,
-                label=r"$\xi_t$ Confidence Interval",
-            )
-            plt.title(f"Shape parameter ({self.var_name})")
-            plt.xlabel("Time (yearly scale)")
-            plt.ylabel(r"$\xi_t$")
-            plt.xticks(month_positions, month_initials)
-            plt.grid(True)
-            plt.show()
+        # SCALE 
+        plt.figure(figsize=(20, 6))
+        plt.plot(self.t + init_year, psit, color="tab:green")
+        # plt.fill_between(
+        #     t_anual[t_ord],
+        #     ci_low[t_ord],
+        #     ci_up[t_ord],
+        #     color=self.colors[0],
+        #     alpha=0.3,
+        #     label=r"$\xi_t$ Confidence Interval",
+        # )
+        plt.title(f"Scale parameter ({self.var_name})")
+        plt.xlabel("Time (yearly scale)")
+        plt.ylabel(r"$\psi_t$")
+        plt.grid(True)
+        if save:
+            plt.savefig(f"Figures/Evolution_Scale{self.var_name}.png", dpi=300)
+        plt.show()
 
-        ### Harmonic Location parameter plot
-        if self.nmu > 0:
-            t_ord = np.argsort(t_anual)
-            quan95_2 = self._quantile(harm=True)
+        # SHAPE
+        plt.figure(figsize=(20, 6))
+        plt.plot(self.t + init_year, epst, color="tab:orange")
+        # plt.fill_between(
+        #     t_anual[t_ord],
+        #     ci_low[t_ord],
+        #     ci_up[t_ord],
+        #     color=self.colors[0],
+        #     alpha=0.3,
+        #     label=r"$\xi_t$ Confidence Interval",
+        # )
+        plt.title(f"Shape parameter ({self.var_name})")
+        plt.xlabel("Time (yearly scale)")
+        plt.ylabel(r"$\xi_t$")
+        plt.grid(True)
+        if save:
+            plt.savefig(f"Figures/Evolution_Shape{self.var_name}.png", dpi=300)
+        plt.show()
+       
+        
 
-            mut2 = self._parametro(self.beta0, self.beta)
-            # Confidence interval for mut
-            ci_up = mut2 + norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdmut
-            ci_low = (
-                mut2 - norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdmut
-            )
+        # ### Harmonic Location parameter plot
+        # if self.nmu > 0:
+        #     t_ord = np.argsort(t_anual)
+        #     quan95_2 = self._quantile(harm=True)
 
-            plt.figure(figsize=(10, 6))
-            plt.plot(
-                t_anual[t_ord],
-                self.xt[t_ord],
-                marker="+",
-                linestyle="None",
-                color="black",
-                markersize=5,
-                label=r"$H_s^{max}$",
-            )
-            plt.plot(
-                t_anual[t_ord],
-                mut2[t_ord],
-                label=r"$\mu_t$",
-                linewidth=2,
-                color=self.colors[0],
-            )
-            plt.fill_between(
-                t_anual[t_ord],
-                ci_low[t_ord],
-                ci_up[t_ord],
-                color=self.colors[0],
-                alpha=0.3,
-            )
-            # Confidence interval for the quantile
-            ci_up = (
-                quan95_2 + norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdDq
-            )
-            ci_low = (
-                quan95_2 - norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdDq
-            )
-            plt.plot(
-                t_anual[t_ord],
-                quan95_2[t_ord],
-                linestyle="dashed",
-                color=self.colors[1],
-                markersize=5,
-                label=rf"$q_{self.quanval}$",
-            )
-            plt.fill_between(
-                t_anual[t_ord],
-                ci_low[t_ord],
-                ci_up[t_ord],
-                color=self.colors[1],
-                alpha=0.3,
-            )
-            plt.title(f"Harmonic part of Location parameter ({self.var_name})")
-            plt.xlabel("Time (yearly scale)")
-            plt.ylabel(r"$\mu_t$")
-            plt.xticks(month_positions, month_initials)
-            plt.legend(loc="best")
-            plt.grid(True)
-            if save:
-                plt.savefig(
-                    f"Figures/Harmonic_Location_Parameter_{self.var_name}.png", dpi=300
-                )
-            plt.show()
+        #     mut2 = self._parametro(self.beta0, self.beta)
+        #     # Confidence interval for mut
+        #     ci_up = mut2 + norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdmut
+        #     ci_low = (
+        #         mut2 - norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdmut
+        #     )
 
-        ### Scale parameter plot
-        if self.npsi > 0:
-            t_ord = np.argsort(t_anual)
+        #     plt.figure(figsize=(10, 6))
+        #     plt.plot(
+        #         t_anual[t_ord],
+        #         self.xt[t_ord],
+        #         marker="+",
+        #         linestyle="None",
+        #         color="black",
+        #         markersize=5,
+        #         label=f"{self.var_name}",
+        #     )
+        #     plt.plot(
+        #         t_anual[t_ord],
+        #         mut2[t_ord],
+        #         label=r"$\mu_t$",
+        #         linewidth=2,
+        #         color=self.colors[0],
+        #     )
+        #     plt.fill_between(
+        #         t_anual[t_ord],
+        #         ci_low[t_ord],
+        #         ci_up[t_ord],
+        #         color=self.colors[0],
+        #         alpha=0.3,
+        #     )
+        #     # Confidence interval for the quantile
+        #     ci_up = (
+        #         quan95_2 + norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdDq
+        #     )
+        #     ci_low = (
+        #         quan95_2 - norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdDq
+        #     )
+        #     plt.plot(
+        #         t_anual[t_ord],
+        #         quan95_2[t_ord],
+        #         linestyle="dashed",
+        #         color=self.colors[1],
+        #         markersize=5,
+        #         label=rf"$q_{self.quanval}$",
+        #     )
+        #     plt.fill_between(
+        #         t_anual[t_ord],
+        #         ci_low[t_ord],
+        #         ci_up[t_ord],
+        #         color=self.colors[1],
+        #         alpha=0.3,
+        #     )
+        #     plt.title(f"Harmonic part of Location parameter ({self.var_name})")
+        #     plt.xlabel("Time (yearly scale)")
+        #     plt.ylabel(r"$\mu_t$")
+        #     plt.xticks(month_positions, month_initials)
+        #     plt.legend(loc="best")
+        #     plt.grid(True)
+        #     if save:
+        #         plt.savefig(
+        #             f"Figures/Harmonic_Location_Parameter_{self.var_name}.png", dpi=300
+        #         )
+        #     plt.show()
 
-            psit2 = np.exp(self._parametro(self.alpha0, self.alpha))
-            # Confidence interval for psit
-            ci_up = (
-                psit2 + norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdpsit
-            )
-            ci_low = (
-                psit2 - norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdpsit
-            )
+        # ### Scale parameter plot
+        # if self.npsi > 0:
+        #     t_ord = np.argsort(t_anual)
 
-            plt.figure(figsize=(10, 6))
-            plt.plot(
-                t_anual[t_ord],
-                psit2[t_ord],
-                label=r"$\psi_t$",
-                linewidth=2,
-                color=self.colors[0],
-            )
-            plt.fill_between(
-                t_anual[t_ord],
-                ci_low[t_ord],
-                ci_up[t_ord],
-                color=self.colors[0],
-                alpha=0.3,
-                label=r"$\psi_t$ Confidence Interval",
-            )
-            # plt.plot(t_anual[t_ord], quan95[t_ord], linestyle='dashed', color=self.colors[2], markersize=5, label=fr"$q_{self.quanval}$")
-            plt.title(f"Harmonic part of Scale parameter ({self.var_name})")
-            plt.xlabel("Time (yearly scale)")
-            plt.xticks(month_positions, month_initials)
-            plt.ylabel(r"$\psi_t$")
-            plt.grid(True)
-            if save:
-                plt.savefig(
-                    f"Figures/Harmonic_Scale_Parameter_{self.var_name}.png", dpi=300
-                )
-            plt.show()
+        #     psit2 = np.exp(self._parametro(self.alpha0, self.alpha))
+        #     # Confidence interval for psit
+        #     ci_up = (
+        #         psit2 + norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdpsit
+        #     )
+        #     ci_low = (
+        #         psit2 - norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdpsit
+        #     )
+
+        #     plt.figure(figsize=(10, 6))
+        #     plt.plot(
+        #         t_anual[t_ord],
+        #         psit2[t_ord],
+        #         label=r"$\psi_t$",
+        #         linewidth=2,
+        #         color=self.colors[0],
+        #     )
+        #     plt.fill_between(
+        #         t_anual[t_ord],
+        #         ci_low[t_ord],
+        #         ci_up[t_ord],
+        #         color=self.colors[0],
+        #         alpha=0.3,
+        #         label=r"$\psi_t$ Confidence Interval",
+        #     )
+        #     # plt.plot(t_anual[t_ord], quan95[t_ord], linestyle='dashed', color=self.colors[2], markersize=5, label=fr"$q_{self.quanval}$")
+        #     plt.title(f"Harmonic part of Scale parameter ({self.var_name})")
+        #     plt.xlabel("Time (yearly scale)")
+        #     plt.xticks(month_positions, month_initials)
+        #     plt.ylabel(r"$\psi_t$")
+        #     plt.grid(True)
+        #     if save:
+        #         plt.savefig(
+        #             f"Figures/Harmonic_Scale_Parameter_{self.var_name}.png", dpi=300
+        #         )
+        #     plt.show()
 
         #### PP Plot
         self.PPplot(save=save)
