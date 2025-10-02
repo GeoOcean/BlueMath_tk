@@ -1,23 +1,57 @@
+from typing import List, Union
+
 import numpy as np
 from scipy import interpolate
 
-# custom 2D profiles for SWASH numerical model cases
 
-
-def reef(dx, h0, Slope1, Slope2, Wreef, Wfore, bCrest, emsl):
+def reef(
+    dx: float,
+    h0: float,
+    Slope1: float,
+    Slope2: float,
+    Wreef: float,
+    Wfore: float,
+    bCrest: float,
+    emsl: float,
+) -> np.ndarray:
     """
-    Reef morphologic profile (Pearson et al. 2017)
+    Generate a reef morphologic profile based on Pearson et al. 2017.
 
-    dx:      bathymetry mesh resolution at x axes (m)
-    h0:      offshore depth (m)
-    Slope1:  fore shore slope
-    Slope2:  inner shore slope
-    Wreef:   reef bed width (m)
-    Wfore:   flume length before fore toe (m)
-    bCrest:  beach heigh (m)
-    emsl:    mean sea level (m)
+    This function creates a bathymetric profile for reef environments with
+    distinct sections: fore reef, reef slope, reef flat, and inner slope.
 
-    return depth data values
+    Parameters
+    ----------
+    dx : float
+        Bathymetry mesh resolution at x axes (m)
+    h0 : float
+        Offshore depth (m)
+    Slope1 : float
+        Fore shore slope (dimensionless)
+    Slope2 : float
+        Inner shore slope (dimensionless)
+    Wreef : float
+        Reef bed width (m)
+    Wfore : float
+        Flume length before fore toe (m)
+    bCrest : float
+        Beach height (m)
+    emsl : float
+        Mean sea level (m)
+
+    Returns
+    -------
+    np.ndarray
+        Depth data values representing the reef profile (m)
+
+    Notes
+    -----
+    The profile consists of several sections:
+    - Fore reef: constant depth at offshore level
+    - Reef slope: linear slope from offshore to reef flat
+    - Reef flat: constant depth at mean sea level
+    - Inner slope: linear slope from reef flat to beach
+    - Plane beach: gentle slope for overtopping dissipation
     """
 
     # flume length
@@ -45,17 +79,38 @@ def reef(dx, h0, Slope1, Slope2, Wreef, Wfore, bCrest, emsl):
     return depth
 
 
-def linear(dx, h0, bCrest, m, Wfore):
+def linear(dx: float, h0: float, bCrest: float, m: float, Wfore: float) -> np.ndarray:
     """
-    simple linear profile (y = m * x + n)
+    Generate a simple linear profile (y = m * x + n).
 
-    dx:      bathymetry mesh resolution at x axes (m)
-    h0:      offshore depth (m)
-    bCrest:  beach heigh (m)
-    m:       profile slope
-    Wfore:   flume length before slope toe (m)
+    This function creates a bathymetric profile with a constant slope
+    from offshore to the beach crest.
 
-    return depth data values
+    Parameters
+    ----------
+    dx : float
+        Bathymetry mesh resolution at x axes (m)
+    h0 : float
+        Offshore depth (m)
+    bCrest : float
+        Beach height (m)
+    m : float
+        Profile slope (dimensionless)
+    Wfore : float
+        Flume length before slope toe (m)
+
+    Returns
+    -------
+    np.ndarray
+        Depth data values representing the linear profile (m)
+
+    Notes
+    -----
+    The profile consists of:
+    - Fore section: constant depth at offshore level
+    - Main slope: linear slope from offshore to beach
+    - Beach slope: linear slope from sea level to beach crest
+    - Plane beach: gentle slope for overtopping dissipation
     """
 
     # Flume length
@@ -81,15 +136,38 @@ def linear(dx, h0, bCrest, m, Wfore):
     return depth
 
 
-def parabolic(dx, h0, A, xBeach, bCrest):
+def parabolic(
+    dx: float, h0: float, A: float, xBeach: float, bCrest: float
+) -> np.ndarray:
     """
-    Parabolic profile (y = A * x^(2/3))
+    Generate a parabolic profile (y = A * x^(2/3)).
 
-    dx:      bathymetry mesh resolution at x axes (m)
-    h0:      offshore depth (m)
-    A:       parabola coefficient
-    xBeach:  beach length(m)
-    bCrest:  beach heigh (m)
+    This function creates a bathymetric profile following the equilibrium
+    beach profile theory with a parabolic shape.
+
+    Parameters
+    ----------
+    dx : float
+        Bathymetry mesh resolution at x axes (m)
+    h0 : float
+        Offshore depth (m)
+    A : float
+        Parabola coefficient (m^(1/3))
+    xBeach : float
+        Beach length (m)
+    bCrest : float
+        Beach height (m)
+
+    Returns
+    -------
+    np.ndarray
+        Depth data values representing the parabolic profile (m)
+
+    Notes
+    -----
+    The profile follows the equilibrium beach profile theory where
+    depth varies as x^(2/3) from the shoreline to the closure depth.
+    The beach section is linear from the shoreline to the beach crest.
     """
 
     lx = np.arange(1, xBeach, dx)
@@ -114,14 +192,41 @@ def parabolic(dx, h0, A, xBeach, bCrest):
     return depth
 
 
-def biparabolic(h0, hsig, omega_surf_list, TR):
+def biparabolic(
+    h0: float, hsig: float, omega_surf_list: Union[float, np.ndarray], TR: float
+) -> np.ndarray:
     """
-    Biparabolic profile (Bernabeu et al. 2013)
+    Generate a biparabolic profile based on Bernabeu et al. 2013.
 
-    h0:          offshore water level (m)
-    hsig:        significant wave height (m)
-    omega_surf:  intertidal dimensionless fall velocity (1 <= omega_surf <= 5)
-    TR:          tidal range (m)
+    This function creates a bathymetric profile with two parabolic sections
+    separated by a discontinuity point, suitable for mixed-sediment beaches.
+
+    Parameters
+    ----------
+    h0 : float
+        Offshore water level (m)
+    hsig : float
+        Significant wave height (m)
+    omega_surf_list : float or np.ndarray
+        Intertidal dimensionless fall velocity (1 <= omega_surf <= 5)
+    TR : float
+        Tidal range (m)
+
+    Returns
+    -------
+    np.ndarray
+        Depth data values representing the biparabolic profile (m)
+
+    Notes
+    -----
+    The biparabolic profile consists of:
+    - Lower section: parabolic profile for fine sediments
+    - Upper section: parabolic profile for coarse sediments
+    - Discontinuity point: transition between the two sections
+    - The profile is centered on mean tide level
+
+    The empirical parameters A, B, C, D are adjusted based on the
+    dimensionless fall velocity parameter.
     """
 
     # Discontinuity point
@@ -212,14 +317,42 @@ def biparabolic(h0, hsig, omega_surf_list, TR):
     return ynew
 
 
-def custom_profile(dx, emsl, xs, ys):
+def custom_profile(
+    dx: float,
+    emsl: float,
+    xs: Union[List[float], np.ndarray],
+    ys: Union[List[float], np.ndarray],
+) -> np.ndarray:
     """
-    custom N points profile
+    Generate a custom N-point profile from user-defined coordinates.
 
-    dx:   bathymetry mesh resolution at x axes (m)
-    xs:    x values array
-    ys:    y values array
-    emsl:  mean sea level (m)
+    This function creates a bathymetric profile by interpolating between
+    user-specified x,y coordinate pairs.
+
+    Parameters
+    ----------
+    dx : float
+        Bathymetry mesh resolution at x axes (m)
+    emsl : float
+        Mean sea level (m) - used for reference but not directly applied
+    xs : list or np.ndarray
+        X coordinate values (m)
+    ys : list or np.ndarray
+        Y coordinate values (m) - positive values represent elevation above MSL
+
+    Returns
+    -------
+    np.ndarray
+        Depth data values representing the custom profile (m)
+
+    Notes
+    -----
+    The function uses linear interpolation between the provided points.
+    The output depths are negative values (below sea level) as is
+    conventional for bathymetric data.
+
+    The xs and ys arrays must have the same length and be sorted
+    in increasing x order for proper interpolation.
     """
 
     # flume length

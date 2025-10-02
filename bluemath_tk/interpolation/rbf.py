@@ -1,8 +1,8 @@
 import time
 from typing import Callable, List, Tuple
 
-import numpy as np
 import dask.array as da
+import numpy as np
 import pandas as pd
 from scipy.optimize import fmin, fminbound
 
@@ -210,6 +210,9 @@ class RBF(BaseInterpolation):
             If the smooth is not a positive float.
         """
 
+        super().__init__()
+        self.set_logger_name(name=self.__class__.__name__)
+
         initial_msg = f"""
         ---------------------------------------------------------------------------------
         | Initializing RBF interpolation model with the following parameters:
@@ -223,10 +226,8 @@ class RBF(BaseInterpolation):
         | Recommended lecture: https://link.springer.com/article/10.1023/A:1018975909870
         ---------------------------------------------------------------------------------
         """
-        print(initial_msg)
+        self.logger.info(initial_msg)
 
-        super().__init__()
-        self.set_logger_name(name=self.__class__.__name__)
         if not isinstance(sigma_min, float) or sigma_min < 0:
             raise ValueError("sigma_min must be a positive float.")
         self._sigma_min = sigma_min

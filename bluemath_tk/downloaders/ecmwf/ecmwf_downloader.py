@@ -33,7 +33,7 @@ class ECMWFDownloader(BaseDownloader):
             check=True,
         )
         dataset = ecmwf_downloader.download_data(
-            load_data=True,
+            load_data=False,
             param=["msl"],
             step=[0, 240],
             type="fc",

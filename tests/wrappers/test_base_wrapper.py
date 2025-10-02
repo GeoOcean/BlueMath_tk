@@ -4,15 +4,17 @@ import shutil
 import tempfile
 import unittest
 
-import numpy as np
 import xarray as xr
 
 from bluemath_tk.wrappers._base_wrappers import DummyModelWrapper
 
 
 class TestBaseModelWrapper(unittest.TestCase):
+    """Test the BaseModelWrapper class."""
+
     def setUp(self):
-        # Create a temporary directory for test files
+        """Set up the test environment."""
+
         self.test_dir = tempfile.mkdtemp()
         self.templates_dir = op.join(self.test_dir, "templates")
         self.output_dir = op.join(self.test_dir, "output")

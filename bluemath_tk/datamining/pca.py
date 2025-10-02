@@ -132,6 +132,11 @@ class PCA(BaseReduction):
             If n_components is not an integer when it is greater than or equal to 1.
         """
 
+        super().__init__()
+        self.set_logger_name(
+            name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
+        )
+
         initial_msg = f"""
         -------------------------------------------------------------------
         | Initializing PCA reduction model with the following parameters:
@@ -140,12 +145,7 @@ class PCA(BaseReduction):
         | For more information, please refer to the documentation.
         -------------------------------------------------------------------
         """
-        print(initial_msg)
-
-        super().__init__()
-        self.set_logger_name(
-            name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
-        )
+        self.logger.info(initial_msg)
 
         if n_components <= 0:
             raise ValueError("Number of components must be greater than 0.")
@@ -319,7 +319,7 @@ class PCA(BaseReduction):
                 np.mean(~np.isnan(var_to_clean_values), axis=0) > var_to_clean_threshold
             )[0]
             self.logger.warning(
-                f"Using {len(not_nan_positions)} out of {var_to_clean_values.shape[1]} available variables"
+                f"Using {len(not_nan_positions)} out of {var_to_clean_values.shape[1]} available variables \n"
                 "If this is originated by using few times, please check 'nan_threshold_to_drop' parameter in fit method"
             )
             var_value_to_replace_nans = self.value_to_replace_nans.get(
