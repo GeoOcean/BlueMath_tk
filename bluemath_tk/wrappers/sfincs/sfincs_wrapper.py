@@ -1,6 +1,9 @@
+import os
+import os.path as op
 from typing import List
 
 import numpy as np
+import pandas as pd
 from hydromt_sfincs import SfincsModel
 
 from .._base_wrappers import BaseModelWrapper
@@ -49,14 +52,6 @@ class SfincsModelWrapper(BaseModelWrapper):
         self.set_logger_name(
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
         )
-
-
-class SfincsAlbaModelWrapper(SfincsModelWrapper):
-    """
-    Wrapper for the SFINCS model.
-    This class is a subclass of the SfincsModelWrapper class and is
-    specifically designed for the Alba model.
-    """
 
     def setup_dem(self, sf: SfincsModel, case_context: dict) -> List[dict]:
         """
@@ -134,9 +129,9 @@ class SfincsAlbaModelWrapper(SfincsModelWrapper):
 
         sf.setup_mask_bounds(btype="waterlevel", include_mask=gdf, reset_bounds=True)
 
-    def set_tstop(self, case_context: dict) -> str:
+    def set_ctimes(self, case_context: dict) -> str:
         """
-        Determine the end time (TSTOP) for the simulation based on
+        Determine the start time (TSTART) end time (TSTOP) for the simulation based on
         precipitation and water level forcing, add 1 hour,
         and return it formatted as 'YYYYMMDD HHMMSS'.
         """
@@ -144,29 +139,39 @@ class SfincsAlbaModelWrapper(SfincsModelWrapper):
         precip_forcing = case_context.get("precipitation_forcing")
         waterlevel_forcing = case_context.get("waterlevel_forcing")
 
-        tstop_times = []
+        tstart_times, tstop_times = [], []
 
         if precip_forcing is not None:
+            tstart_precip = precip_forcing["time"].values[0]
             tstop_precip = precip_forcing["time"].values[-1]
+
+            tstart_times.append(tstart_precip)
             tstop_times.append(tstop_precip)
 
         if waterlevel_forcing is not None:
+            tstart_waterlevel = waterlevel_forcing.index.values[0]
             tstop_waterlevel = waterlevel_forcing.index.values[-1]
+
+            tstart_times.append(tstart_waterlevel)
             tstop_times.append(tstop_waterlevel)
+
+        if not tstart_times:
+            raise ValueError("No forcing data found to determine TSTART.")
 
         if not tstop_times:
             raise ValueError("No forcing data found to determine TSTOP.")
 
         # Get the latest time and add one hour
         tstop_max = max(tstop_times)
-        tstop_plus_1h = (
-            (tstop_max + np.timedelta64(1, "h")).astype("datetime64[s]").item()
-        )
+        tstop_plus_1h = tstop_max + np.timedelta64(1, "h")
 
-        # Format to 'YYYYMMDD HHMMSS'
-        formatted_tstop = tstop_plus_1h.strftime("%Y%m%d %H%M%S")
+        tstart_min = min(tstart_times)
 
-        return formatted_tstop
+        # Convert to pandas.Timestamp (works with numpy.datetime64) then format
+        formatted_tstop = pd.to_datetime(tstop_plus_1h).strftime("%Y%m%d %H%M%S")
+        formatted_tstart = pd.to_datetime(tstart_min).strftime("%Y%m%d %H%M%S")
+
+        return formatted_tstart, formatted_tstop
 
     def build_template_case(self) -> None:
         """
@@ -211,6 +216,8 @@ class SfincsAlbaModelWrapper(SfincsModelWrapper):
 
         self.setup_waterlevel_mask(sf=sf, case_context=self.fixed_parameters)
 
+        _ = sf.plot_basemap(bmap="sat", zoomlevel=12)
+
         sf.write()
 
     def build_case(self, case_context: dict, case_dir: str) -> None:
@@ -232,12 +239,33 @@ class SfincsAlbaModelWrapper(SfincsModelWrapper):
             rotation=case_context["rotation"],
             epsg=case_context["epsg"],
         )
+        tstart, tstop = self.set_ctimes(case_context=case_context)
 
-        if case_context.get("waterlevel_forcing") is not None:
+        sf.config["tstop"] = tstop
+        sf.config["tstart"] = tstart
+        sf.config["dtout"] = 60
+        sf.config["storemeteo"] = 1
+
+        if case_context.get("quickly_waterlevel_forcing") is not None:
+            """
+            NOTE - There is not a specific Python function yet, 
+            but one could call the setup_waterlevel_forcing function 
+            twice with saving the files in between and changing their names
+            """
+
             sf.setup_waterlevel_forcing(
-                timeseries=case_context.get("waterlevel_forcing"),
+                timeseries=case_context.get("quickly_waterlevel_forcing"),
                 locations=case_context.get("gdf_boundary_points"),
             )
+            sf.write_forcing()
+            os.rename(op.join(case_dir, "sfincs.bzs"), op.join(case_dir, "sfincs.bzi"))
+
+        if case_context.get("slowly_waterlevel_forcing") is not None:
+            sf.setup_waterlevel_forcing(
+                timeseries=case_context.get("slowly_waterlevel_forcing"),
+                locations=case_context.get("gdf_boundary_points"),
+            )
+            sf.write_forcing()
 
         if case_context.get("precipitation_forcing") is not None:
             sf.setup_precip_forcing_from_grid(
@@ -258,8 +286,6 @@ class SfincsAlbaModelWrapper(SfincsModelWrapper):
         #        rivers=case_context.get("precipitation_forcing"), keep_rivers_geom=True
         #    )
 
-        sf.write_forcing()
-
-        sf.config["tstop"] = self.set_tstop(case_context=case_context)
+        # sf.write_forcing()
 
         sf.write()
