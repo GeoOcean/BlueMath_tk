@@ -1157,8 +1157,6 @@ class NonStatGEV(BlueMathModel):
             + self.ntrend_sh
             + self.nind_sh
         )
-        fit_result["n_params"] = n_params
-        fit_result["AIC"] = self._AIC(-fit_result["negloglikelihood"], n_params)
 
         # Compute the final loglikelihood and the information matrix
         f, Jx, Hxx = self._loglikelihood(
@@ -1505,6 +1503,8 @@ class NonStatGEV(BlueMathModel):
 
             fit_result["x"] = result.x  # Optimal parameters vector
             fit_result["negloglikelihood"] = result.fun  # Optimal loglikelihood
+            fit_result["AIC"] = self._AIC(-fit_result["negloglikelihood"], n_params)
+            fit_result["n_params"] = n_params
             fit_result["success"] = result.success
             fit_result["message"] = result.message
             fit_result["grad"] = result.grad
@@ -1631,6 +1631,8 @@ class NonStatGEV(BlueMathModel):
             ]
         else:
             fit_result["gamma_cov"] = np.empty(0)
+
+        self.fit_result = fit_result
 
         return fit_result
 
@@ -5412,6 +5414,9 @@ class NonStatGEV(BlueMathModel):
         #### QQ plot
         self.QQplot(save=save)
 
+        #### Parameters Heatmap plot
+        # self.paramplot(save=save)
+
         #### Return periods
         if (
             self.ntrend_loc == 0
@@ -5421,6 +5426,93 @@ class NonStatGEV(BlueMathModel):
             and self.nind_sh == 0
         ) and return_plot:
             self.ReturnPeriodPlot()
+
+    def paramplot(self, save: bool=False):
+        """
+        Create a heatmap of parameter sensitivities for location, scale and shape.
+        """
+        # Get parameters 
+        loc_params = []
+        param_names = []
+        if self.fit_result["beta0"] is not None:
+            loc_params.append(self.fit_result["beta0"])
+            param_names.append("Intercept")
+        if self.fit_result["beta"].size > 0:
+            for i, b in enumerate(self.fit_result["beta"]):
+                loc_params.append(b)
+                param_names.append(f"PC{i}")
+        if self.fit_result["beta_cov"].size > 0:
+            for i, b in enumerate(self.fit_result["beta_cov"]):
+                loc_params.append(b)
+                param_names.append(f"{self.covariates.columns[i]}")
+        if self.fit_result["betaT"].size > 0:
+            loc_params.append(self.fit_result["betaT"])
+            param_names.append("Trend")
+            
+        # Scale parameters
+        scale_params = []
+        if self.fit_result["alpha0"] is not None:
+            scale_params.append(self.fit_result["alpha0"])
+        if self.fit_result["alpha"].size > 0:
+            scale_params.extend(self.fit_result["alpha"])
+        if self.fit_result["alpha_cov"].size > 0:
+            scale_params.extend(self.fit_result["alpha_cov"])
+        if self.fit_result["alphaT"].size > 0:
+            scale_params.append(self.fit_result["alphaT"])
+            
+        # Shape parameters 
+        shape_params = []
+        if self.fit_result["gamma0"] is not None:
+            shape_params.append(self.fit_result["gamma0"])
+        if self.fit_result["gamma"].size > 0:
+            shape_params.extend(self.fit_result["gamma"])
+        if self.fit_result["gamma_cov"].size > 0:
+            shape_params.extend(self.fit_result["gamma_cov"])
+        if self.fit_result["gammaT"].size > 0:
+            shape_params.append(self.fit_result["gammaT"])
+
+        # Create data matrix
+        max_len = max(len(param_names), len(scale_params), len(shape_params))
+        data = np.zeros((3, len(param_names)))
+        data[0,:len(loc_params)] = loc_params
+        data[1,:len(scale_params)] = scale_params  
+        data[2,:len(shape_params)] = shape_params
+
+        # Create figure
+        fig, ax = plt.subplots(figsize=(20,4))
+        
+        # Create heatmap
+        im = ax.imshow(data, cmap='RdBu', aspect='auto', vmin=-2, vmax=2)
+        
+        # Add colorbar
+        cbar = plt.colorbar(im)
+        cbar.set_label('Coefficient value')
+        
+        # Add text annotations
+        for i in range(data.shape[0]):
+            for j in range(data.shape[1]):
+                text = ax.text(j, i, f'{data[i, j]:.2f}',
+                            ha="center", va="center", color="black")
+                
+        # Configure axes
+        ax.set_xticks(np.arange(len(param_names)))
+        ax.set_yticks(np.arange(3))
+        ax.set_xticklabels(param_names)
+        ax.set_yticklabels(['Location', 'Scale', 'Shape'])
+        
+        # Rotate x labels for better readability
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+        
+        # Add title and adjust layout
+        ax.set_title('Time-dependent GEV Parameters')
+        ax.set_xlabel('Components')
+        
+        plt.tight_layout()
+        
+        if save:
+            plt.savefig(f"Figures/Parameters_Heatmap_{self.var_name}.png", dpi=300, bbox_inches='tight')
+        
+        plt.show()
 
     def QQplot(self, save: bool = False):
         """
@@ -6950,3 +7042,86 @@ class NonStatGEV(BlueMathModel):
         stdQuan = np.sqrt(jacob.T @ self.invI0 @ jacob)
 
         return stdQuan
+    
+    def summary(self):
+        """
+        Print a summary of the fitted model, including parameter estimates, standard errors and fit statistics.
+        """
+
+        std_params = np.sqrt(np.diag(self.invI0))
+        param_idx = 0
+
+        print(f"\nFitted Time-Dependent GEV model for {self.var_name}")
+        print("="*50)
+        print("\nLocation Parameters")
+        print("-"*20)
+        print(f"Beta0: {self.beta0:.4f} ({std_params[param_idx]:.4f})")
+        param_idx += 1
+        
+        # Harmonic terms for location
+        for i in range(self.nmu):
+            print(f"Beta{i+1} (sin): {self.beta[2*i]:.4f} ({std_params[param_idx]:.4f})")
+            param_idx += 1
+            print(f"Beta{i+1} (cos): {self.beta[2*i+1]:.4f} ({std_params[param_idx]:.4f})")
+            param_idx += 1
+        
+        # Trend in location
+        if self.ntrend_loc > 0:
+            print(f"BetaT: {self.betaT:.4f} ({std_params[param_idx]:.4f})")
+            param_idx += 1
+            
+        # Covariates in location    
+        for i in range(self.nind_loc):
+            print(f"Beta_cov{i+1}: {self.beta_cov[i]:.4f} ({std_params[param_idx]:.4f})")
+            param_idx += 1
+
+        print("\nScale Parameters") 
+        print("-"*20)
+        print(f"Alpha0: {self.alpha0:.4f} ({std_params[param_idx]:.4f})")
+        param_idx += 1
+        
+        # Harmonic terms for scale
+        for i in range(self.npsi):
+            print(f"Alpha{i+1} (sin): {self.alpha[2*i]:.4f} ({std_params[param_idx]:.4f})")
+            param_idx += 1
+            print(f"Alpha{i+1} (cos): {self.alpha[2*i+1]:.4f} ({std_params[param_idx]:.4f})")
+            param_idx += 1
+            
+        # Trend in scale
+        if self.ntrend_sc > 0:
+            print(f"AlphaT: {self.alphaT:.4f} ({std_params[param_idx]:.4f})")
+            param_idx += 1
+            
+        # Covariates in scale
+        for i in range(self.nind_sc):
+            print(f"Alpha_cov{i+1}: {self.alpha_cov[i]:.4f} ({std_params[param_idx]:.4f})")
+            param_idx += 1
+
+        print("\nShape Parameters")
+        print("-"*20)
+        if self.ngamma0 > 0:
+            print(f"Gamma0: {self.gamma0:.4f} ({std_params[param_idx]:.4f})")
+            param_idx += 1
+            
+        # Harmonic terms for shape    
+        for i in range(self.ngamma):
+            print(f"Gamma{i+1} (sin): {self.gamma[2*i]:.4f} ({std_params[param_idx]:.4f})")
+            param_idx += 1
+            print(f"Gamma{i+1} (cos): {self.gamma[2*i+1]:.4f} ({std_params[param_idx]:.4f})")
+            param_idx += 1
+            
+        # Trend in shape
+        if self.ntrend_sh > 0:
+            print(f"GammaT: {self.gammaT:.4f} ({std_params[param_idx]:.4f})")
+            param_idx += 1
+            
+        # Covariates in shape
+        for i in range(self.nind_sh):
+            print(f"Gamma_cov{i+1}: {self.gamma_cov[i]:.4f} ({std_params[param_idx]:.4f})")
+            param_idx += 1
+            
+        print("\nFit Statistics")
+        print("-"*20)
+        print(f"Log-likelihood: {-self.fit_result['negloglikelihood']:.4f}")
+        print(f"AIC: {self.fit_result['AIC']:.4f}")
+        print(f"Number of parameters: {self.fit_result['n_params']}")
