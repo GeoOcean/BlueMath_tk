@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.integrate import quad
-from scipy.optimize import minimize
+from scipy.optimize import minimize, root_scalar
 from scipy.stats import norm
 
 from ..core.models import BlueMathModel
@@ -4594,7 +4594,7 @@ class NonStatGEV(BlueMathModel):
                         y = y + beta_cov[i] * indicesint[i]
                 else:
                     for i in range(nind):
-                        indicesintaux = self._search(times, covariates[:, i], x)
+                        indicesintaux = self._search(times, covariates[:, i], np.asarray(x).flatten())
                         y = y + beta_cov[i] * indicesintaux
             else:
                 for i in range(nind):
@@ -6347,7 +6347,7 @@ class NonStatGEV(BlueMathModel):
 
         return F
 
-    def ReturnPeriodPlot(self, annualplot=True):
+    def ReturnPeriodPlot(self, annualplot=True, save=False):
         """
         Funtion to plot the Aggregated Return period plot for each month and the annual Return period
 
@@ -6357,10 +6357,10 @@ class NonStatGEV(BlueMathModel):
             Whether to plot the annual return period plot
         """
 
-        # Ts = np.array([2, 5, 10, 20, 25, 50, 75, 100, 200, 300, 400, 500])
-        Ts = np.concatenate(
-            (np.arange(2, 10, 1), np.arange(10, 100, 10), np.arange(100, 501, 100))
-        )
+        Ts = np.array([1.1, 1.5, 2, 3, 4, 5, 7.5, 10, 15, 20, 30, 40, 50, 75, 100, 150, 200, 500, 1000])
+        # Ts = np.concatenate(
+        #     (np.arange(2, 10, 1), np.arange(10, 100, 10), np.arange(100, 501, 100))
+        # )
 
         nts = len(Ts)
         quanaggrA = np.zeros(nts)
@@ -6371,9 +6371,10 @@ class NonStatGEV(BlueMathModel):
                 quanaggr[i, j] = self._aggquantile(1 - 1 / Ts[j], i / 12, (i + 1) / 12)[
                     0
                 ]
-                stdQuan = self._ConfidInterQuanAggregate(
-                    1 - 1 / Ts[j], i / 12, (i + 1) / 12
-                )
+                # stdQuan = self._ConfidInterQuanAggregate(
+                #     1 - 1 / Ts[j], i / 12, (i + 1) / 12
+                # )
+                stdQuan = 0.1
                 stdDqX[i, j] = stdQuan * norm.ppf(
                     1 - (1 - self.quanval) / 2, loc=0, scale=1
                 )
@@ -6386,8 +6387,8 @@ class NonStatGEV(BlueMathModel):
             stdup = np.zeros(nts)
             stdlo = np.zeros(nts)
             for i in range(nts):
-                stdQuan = self._ConfidInterQuanAggregate(1 - 1 / Ts[i], 0, 1)
-                # stdQuan = 0.1
+                # stdQuan = self._ConfidInterQuanAggregate(1 - 1 / Ts[i], 0, 1)
+                stdQuan = 0.1
                 stdup[i] = quanaggrA[i] + stdQuan * norm.ppf(
                     1 - (1 - self.quanval) / 2, loc=0, scale=1
                 )
@@ -6425,9 +6426,10 @@ class NonStatGEV(BlueMathModel):
             "#FF3333",
             "#33FF33",
         ]
-        plt.figure(figsize=(10, 6))
+        fig = plt.figure(figsize=(10, 6))
+        ax = fig.add_subplot()
         for i in range(12):
-            plt.semilogx(
+            ax.semilogx(
                 Ts,
                 quanaggr[i, :],
                 color=colors[i],
@@ -6438,7 +6440,7 @@ class NonStatGEV(BlueMathModel):
 
         # Anual return periods
         if annualplot:
-            plt.semilogx(Ts, quanaggrA, color="black", linewidth=2, label="Annual")
+            ax.semilogx(Ts, quanaggrA, color="black", linewidth=2, label="Annual")
             ny = int(np.ceil(self.t[-1]))
             hmax1 = np.zeros(ny)
             for j in range(ny):
@@ -6449,18 +6451,22 @@ class NonStatGEV(BlueMathModel):
             ProHsmaxsort = np.arange(1, len(hmaxsort) + 1) / (len(hmaxsort) + 1)
             Tapprox = 1 / (1 - ProHsmaxsort)
             idx = np.where(Tapprox >= 2)[0]
-            plt.semilogx(Tapprox[idx], hmaxsort[idx], "ok", markersize=1.6)
-            plt.semilogx(Ts, stdlo, "--k", linewidth=1.1)
-            plt.semilogx(Ts, stdup, "--k", linewidth=1.1)
-        plt.xlabel("Return Period (years)")
-        plt.ylabel(r"$x$")
-        plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-        plt.xticks([1, 2, 5, 10, 20, 50, 100, 250, 500])
-        plt.xlim(left=1.8, right=Ts[-1] + 50)
-        plt.ylim(bottom=0)
-        plt.title(f"Aggregate Quantiles ({self.var_name})")
-        plt.grid(True)
-        plt.margins(x=0.1)
+            ax.semilogx(Tapprox[idx], hmaxsort[idx], "ok", markersize=1.6)
+            ax.semilogx(Ts, stdlo, "--k", linewidth=1.1)
+            ax.semilogx(Ts, stdup, "--k", linewidth=1.1)
+        
+        ax.set_xlabel("Return Period (Years)")
+        ax.set_ylabel(f"{self.var_name}")
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        ax.set_xticks([1, 2, 5, 10, 20, 50, 100, 250, 500])
+        ax.set_xticklabels([1, 2, 5, 10, 20, 50, 100, 250, 500])
+        ax.set_xlim(left=1.8, right=Ts[-1] + 50)
+        ax.set_ylim(bottom=0)
+        ax.set_title(f"Aggregate Quantiles ({self.var_name})")
+        ax.grid(True)
+        plt.tight_layout()
+        if save:
+            plt.savefig(f"Figures/ReturnPeriod_{self.var_name}.png", dpi=300)
         plt.show()
 
     def _aggquantile(
@@ -6545,6 +6551,12 @@ class NonStatGEV(BlueMathModel):
         if gamma_cov is None:
             gamma_cov = self.gamma_cov
 
+
+        # Deal with scalars and vectors
+        beta_cov  = np.atleast_1d(beta_cov)  
+        alpha_cov = np.atleast_1d(alpha_cov)
+        gamma_cov = np.atleast_1d(gamma_cov)
+
         q = np.array([q])
         t0 = np.array([t0])
         t1 = np.array([t1])
@@ -6563,31 +6575,31 @@ class NonStatGEV(BlueMathModel):
         # For the required period the mean value of the corresponding covariates is calculated and considered constant for the rest of the study
         if len(self.t) > 0:
             pos = np.where((self.t >= t0) & (self.t <= t1))[0]
-            cov_locint = np.zeros(len(beta_cov))
-            cov_scint = np.zeros(len(alpha_cov))
-            cov_shint = np.zeros(len(gamma_cov))
+            cov_locint = np.zeros_like(beta_cov)
+            cov_scint = np.zeros_like(alpha_cov)
+            cov_shint = np.zeros_like(gamma_cov)
             if pos.size:
-                for i in range(len(beta_cov)):
+                for i in range(beta_cov.size):
                     cov_locint[i] = np.mean(
                         self.covariates.iloc[pos, self.list_loc[i]].values
                     )
-                for i in range(len(alpha_cov)):
+                for i in range(alpha_cov.size):
                     cov_scint[i] = np.mean(
                         self.covariates.iloc[pos, self.list_sc[i]].values
                     )
-                for i in range(len(gamma_cov)):
+                for i in range(gamma_cov.size):
                     cov_shint[i] = np.mean(
                         self.covariates.iloc[pos, self.list_sh[i]].values
                     )
         else:
-            cov_locint = np.zeros(len(beta_cov))
-            cov_scint = np.zeros(len(alpha_cov))
-            cov_shint = np.zeros(len(gamma_cov))
+            cov_locint = np.zeros(beta_cov.size)
+            cov_scint = np.zeros(alpha_cov.size)
+            cov_shint = np.zeros(gamma_cov.size)
 
         # Require quantile
         zqout = np.zeros(m)
 
-        media = bsimp(
+        media,_ = quad(
             lambda x: self._parametro(
                 beta0,
                 beta,
@@ -6618,80 +6630,117 @@ class NonStatGEV(BlueMathModel):
         #     1,
         # )[0]
 
+        # CHANGE THIS
+        # for il in range(m):
+        #     # for jl in range(n)
+        #     zq = media
+        #     err: float = 1
+        #     iter1: int = 1
+        #     integ: float = 0
+        #     while err > 1e-4 and iter1 < 1000:
+        #         zqold = zq
+        #         integ,_ = quad(
+        #             lambda x: self._fzeroquanint(
+        #                 x,
+        #                 zqold,
+        #                 q[il],
+        #                 cov_locint,
+        #                 cov_scint,
+        #                 cov_shint,
+        #                 beta0,
+        #                 beta,
+        #                 alpha0,
+        #                 alpha,
+        #                 gamma0,
+        #                 gamma,
+        #                 betaT,
+        #                 alphaT,
+        #                 gammaT,
+        #                 beta_cov,
+        #                 alpha_cov,
+        #                 gamma_cov,
+        #                 self.t,
+        #                 self.kt
+        #             ),
+        #             float(t0[il]),
+        #             float(t1[il]),
+        #         )
+        #         integ = integ + np.log(q[il]) / 12
+        #         dint,_ = quad(
+        #             lambda x: self._fzeroderiquanint(
+        #                 x,
+        #                 zqold,
+        #                 q[il],
+        #                 cov_locint,
+        #                 cov_scint,
+        #                 cov_shint,
+        #                 beta0,
+        #                 beta,
+        #                 alpha0,
+        #                 alpha,
+        #                 gamma0,
+        #                 gamma,
+        #                 betaT,
+        #                 alphaT,
+        #                 gammaT,
+        #                 beta_cov,
+        #                 alpha_cov,
+        #                 gamma_cov,
+        #                 self.t,
+        #                 self.kt
+        #             ),
+        #             float(t0[il]),
+        #             float(t1[il]),
+        #         )
+        #         zq = zq -integ / dint
+        #         if np.abs(zq) > 1e-5:
+        #             err = np.abs((zq - zqold) / zqold)
+        #         else:
+        #             err = np.abs(zq - zqold)
+        #         iter1 += 1
+        #     if iter1 == 1000:
+        #         zq = np.nan
+        #         Warning("Maximum number of Newton iterations")
+        #     if integ > 1e-2:
+        #         zq = np.nan
+        #         Warning("False zero, check it")
+        #     zqout[il] = zq
+
+        # return zqout
+
         for il in range(m):
-            # for jl in range(n)
-            zq = media
-            err: float = 1
-            iter1: int = 1
-            integ: float = 0
-            while err > 1e-4 and iter1 < 1000:
-                zqold = zq
-                integ = bsimp(
+            # function of z whose root we want
+            def F(z):
+                integ, _ = quad(
                     lambda x: self._fzeroquanint(
-                        x,
-                        zqold,
-                        q[il],
-                        cov_locint,
-                        cov_scint,
-                        cov_shint,
-                        beta0,
-                        beta,
-                        alpha0,
-                        alpha,
-                        gamma0,
-                        gamma,
-                        betaT,
-                        alphaT,
-                        gammaT,
-                        beta_cov,
-                        alpha_cov,
-                        gamma_cov,
-                        self.t,
-                        self.kt
-                    ),
-                    float(t0[il]),
-                    float(t1[il]),
+                        x, z, q[il],
+                        cov_locint, cov_scint, cov_shint,
+                        beta0, beta, alpha0, alpha,
+                        gamma0, gamma, betaT, alphaT, gammaT,
+                        beta_cov, alpha_cov, gamma_cov,
+                        self.t, self.kt),
+                    float(t0[il]), float(t1[il])
                 )
-                integ += np.log(q[il]) / 12
-                dint = bsimp(
-                    lambda x: self._fzeroderiquanint(
-                        x,
-                        zqold,
-                        q[il],
-                        cov_locint,
-                        cov_scint,
-                        cov_shint,
-                        beta0,
-                        beta,
-                        alpha0,
-                        alpha,
-                        gamma0,
-                        gamma,
-                        betaT,
-                        alphaT,
-                        gammaT,
-                        beta_cov,
-                        alpha_cov,
-                        gamma_cov,
-                        self.t,
-                        self.kt
-                    ),
-                    float(t0[il]),
-                    float(t1[il]),
+                return integ + np.log(q[il]) / 12.0
+
+            try:
+                # root finding: start near `media`, bracket if possible
+                sol = root_scalar(
+                    F,
+                    x0=media, x1=media + 1.0,   # secant starting points
+                    method="secant",
+                    xtol=1e-6, rtol=1e-6,
+                    maxiter=200
                 )
-                zq += -integ / dint
-                if np.abs(zq) > 1e-5:
-                    err = np.abs((zq - zqold) / zqold)
+                if sol.converged:
+                    if abs(F(sol.root)) < 1e-2:
+                        zqout[il] = sol.root
+                    else:
+                        zqout[il] = np.nan   # "False zero" check
                 else:
-                    err = np.abs(zq - zqold)
-                iter1 += 1
-            if iter1 == 1000:
-                zq = np.nan
-                Warning("Maximum number of Newton iterations")
-            if integ > 1e-2:
-                zq = np.nan
-                Warning("False zero, check it")
-            zqout[il] = zq
+                    zqout[il] = np.nan
+            except Exception:
+                zqout[il] = np.nan
 
         return zqout
 
@@ -6772,7 +6821,7 @@ class NonStatGEV(BlueMathModel):
         epst[posG] = 1
 
         if times is not None:
-           kt2 = np.interp(t, np.asarray(self.t, float), np.asarray(ktold, float))
+           kt2 = np.interp(t, np.asarray(self.t, float), np.asarray(ktold, float)).flatten()
         else:
             kt2 = np.ones_like(mut1)
 
@@ -6871,7 +6920,7 @@ class NonStatGEV(BlueMathModel):
         epst[posG] = 1
 
         if times is not None:
-           kt2 = np.interp(t, np.asarray(self.t, float), np.asarray(ktold, float))
+           kt2 = np.interp(t, np.asarray(self.t, float), np.asarray(ktold, float)).flatten()
         else:
             kt2 = np.ones_like(mut1)
 
