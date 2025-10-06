@@ -4594,7 +4594,7 @@ class NonStatGEV(BlueMathModel):
                         y = y + beta_cov[i] * indicesint[i]
                 else:
                     for i in range(nind):
-                        indicesintaux = self._search(times, covariates[:, i])
+                        indicesintaux = self._search(times, covariates[:, i], x)
                         y = y + beta_cov[i] * indicesintaux
             else:
                 for i in range(nind):
@@ -4602,7 +4602,7 @@ class NonStatGEV(BlueMathModel):
 
         return y
 
-    def _search(self, times: np.ndarray, values: np.ndarray) -> np.ndarray:
+    def _search(self, times: np.ndarray, values: np.ndarray, xs) -> np.ndarray:
         """
         Function to search the nearest value of certain time to use in self._parametro function
 
@@ -4614,12 +4614,12 @@ class NonStatGEV(BlueMathModel):
             Values of the covariates at those times
         """
         n = times.shape[0]
-        yin = np.zeros_like(self.t)
+        yin = np.zeros_like(xs)
         pos = 0
-        for j in range(len(self.t)):
+        for j in range(xs.size):
             found = 0
             while found == 0 and pos < n:
-                if self.t[j] < times[pos]:
+                if xs[j] < times[pos]:
                     yin[j] = values[pos]
                     found = 1
                 else:
@@ -6482,7 +6482,7 @@ class NonStatGEV(BlueMathModel):
         gamma_cov=None,
     ) -> np.ndarray:
         """
-        Function to compute the aggregated quantile for certain parameters
+        Function to compute the aggregated quantile between two time stamps
 
         Parameters
         ----------
@@ -6566,7 +6566,7 @@ class NonStatGEV(BlueMathModel):
             cov_locint = np.zeros(len(beta_cov))
             cov_scint = np.zeros(len(alpha_cov))
             cov_shint = np.zeros(len(gamma_cov))
-            if len(pos) > 0:
+            if pos.size:
                 for i in range(len(beta_cov)):
                     cov_locint[i] = np.mean(
                         self.covariates.iloc[pos, self.list_loc[i]].values
@@ -6580,14 +6580,14 @@ class NonStatGEV(BlueMathModel):
                         self.covariates.iloc[pos, self.list_sh[i]].values
                     )
         else:
-            cov_locint = None
-            cov_scint = None
-            cov_shint = None
+            cov_locint = np.zeros(len(beta_cov))
+            cov_scint = np.zeros(len(alpha_cov))
+            cov_shint = np.zeros(len(gamma_cov))
 
         # Require quantile
         zqout = np.zeros(m)
 
-        media = quad(
+        media = bsimp(
             lambda x: self._parametro(
                 beta0,
                 beta,
@@ -6600,7 +6600,7 @@ class NonStatGEV(BlueMathModel):
             ),
             0,
             1,
-        )[0]
+        )
         # std = quad(
         #     lambda x: np.exp(
         #         self._parametro(
@@ -6626,7 +6626,7 @@ class NonStatGEV(BlueMathModel):
             integ: float = 0
             while err > 1e-4 and iter1 < 1000:
                 zqold = zq
-                integ = quad(
+                integ = bsimp(
                     lambda x: self._fzeroquanint(
                         x,
                         zqold,
@@ -6646,12 +6646,14 @@ class NonStatGEV(BlueMathModel):
                         beta_cov,
                         alpha_cov,
                         gamma_cov,
+                        self.t,
+                        self.kt
                     ),
                     float(t0[il]),
                     float(t1[il]),
-                )[0]
+                )
                 integ += np.log(q[il]) / 12
-                dint = quad(
+                dint = bsimp(
                     lambda x: self._fzeroderiquanint(
                         x,
                         zqold,
@@ -6671,10 +6673,12 @@ class NonStatGEV(BlueMathModel):
                         beta_cov,
                         alpha_cov,
                         gamma_cov,
+                        self.t,
+                        self.kt
                     ),
                     float(t0[il]),
                     float(t1[il]),
-                )[0]
+                )
                 zq += -integ / dint
                 if np.abs(zq) > 1e-5:
                     err = np.abs((zq - zqold) / zqold)
@@ -6711,6 +6715,8 @@ class NonStatGEV(BlueMathModel):
         beta_cov,
         alpha_cov,
         gamma_cov,
+        times=None,
+        ktold=None
     ) -> np.ndarray:
         """
         Auxiliar function to solve the quantile
@@ -6719,6 +6725,8 @@ class NonStatGEV(BlueMathModel):
         ------
         zn : np.ndarray
         """
+        if ktold is None:
+            ktold=self.kt
 
         # Evaluate the location parameter at each time t as a function of the actual values of the parameters given by p
         mut1 = self._parametro(
@@ -6763,16 +6771,17 @@ class NonStatGEV(BlueMathModel):
         # The corresponding GUMBEl values are set to 1 to avoid numerical problems, note that for those cases the GUMBEL expressions are used
         epst[posG] = 1
 
-        # TODO: AÑadir
-        #### if times is not None:
-        ####    kt2 = spline
+        if times is not None:
+           kt2 = np.interp(t, np.asarray(self.t, float), np.asarray(ktold, float))
+        else:
+            kt2 = np.ones_like(mut1)
 
         mut = mut1
         psit = psit1
-        mut[pos] = mut1[pos] + psit1[pos] * (self.kt[pos] ** epst[pos] - 1) / epst[pos]
-        psit[pos] = psit1[pos] * self.kt[pos] ** epst[pos]
+        mut[pos] = mut1[pos] + psit1[pos] * (kt2[pos] ** epst[pos] - 1) / epst[pos]
+        psit[pos] = psit1[pos] * kt2[pos] ** epst[pos]
         # Modify the parameters to include Gumbel
-        mut[posG] += psit[posG] * np.log(self.kt[posG])
+        mut[posG] += psit[posG] * np.log(kt2[posG])
 
         # Evaluate the auxiliary variable
         xn = (zq - mut) / psit
@@ -6805,6 +6814,8 @@ class NonStatGEV(BlueMathModel):
         beta_cov,
         alpha_cov,
         gamma_cov,
+        times=None,
+        ktold=None,
     ):
         """
         Auxiliar Function to solve the quantile derivative
@@ -6813,6 +6824,9 @@ class NonStatGEV(BlueMathModel):
         ------
         zn : np.ndarray
         """
+        if ktold is None:
+            ktold = self.kt
+
         # Evaluate the location parameter at each time t as a function of the actual values of the parameters given by p
         mut1 = self._parametro(
             beta0,
@@ -6856,16 +6870,17 @@ class NonStatGEV(BlueMathModel):
         # The corresponding GUMBEl values are set to 1 to avoid numerical problems, note that for those cases the GUMBEL expressions are used
         epst[posG] = 1
 
-        # TODO: AÑadir
-        #### if times is not None:
-        ####    kt2 = spline
+        if times is not None:
+           kt2 = np.interp(t, np.asarray(self.t, float), np.asarray(ktold, float))
+        else:
+            kt2 = np.ones_like(mut1)
 
         mut = mut1
         psit = psit1
-        mut[pos] = mut1[pos] + psit1[pos] * (self.kt[pos] ** epst[pos] - 1) / epst[pos]
-        psit[pos] = psit1[pos] * self.kt[pos] ** epst[pos]
+        mut[pos] = mut1[pos] + psit1[pos] * (kt2[pos] ** epst[pos] - 1) / epst[pos]
+        psit[pos] = psit1[pos] * kt2[pos] ** epst[pos]
         # Modify the parameters to include Gumbel
-        mut[posG] += psit[posG] * np.log(self.kt[posG])
+        mut[posG] += psit[posG] * np.log(kt2[posG])
 
         # Evaluate the auxiliary variable
         xn = (zq - mut) / psit
@@ -7141,3 +7156,91 @@ class NonStatGEV(BlueMathModel):
         print(f"{'Log-likelihood:':<{stats_width}} {-self.fit_result['negloglikelihood']:>.4f}")
         print(f"{'AIC:':<{stats_width}} {self.fit_result['AIC']:>.4f}")
         print(f"{'Number of parameters:':<{stats_width}} {self.fit_result['n_params']}")
+
+
+
+
+def bsimp(fun, a, b, n=None, epsilon=1e-8, trace=0):
+    """
+    BSIMP   Numerically evaluate integral, low order method.
+    I = BSIMP('F',A,B) approximates the integral of F(X) from A to B 
+    within a relative error of 1e-3 using an iterative
+    Simpson's rule.  'F' is a string containing the name of the
+    function.  Function F must return a vector of output values if given
+    a vector of input values.%
+    I = BSIMP('F',A,B,EPSILON) integrates to a total error of EPSILON.  %
+    I = BSIMP('F',A,B,N,EPSILON,TRACE,TRACETOL) integrates to a 
+    relative error of EPSILON, 
+    beginning with n subdivisions of the interval [A,B],for non-zero 
+    TRACE traces the function 
+    evaluations with a point plot.
+    [I,cnt] = BSIMP(F,a,b,epsilon) also returns a function evaluation count.%
+    Roberto Minguez Solana%   Copyright (c) 2001 by Universidad de Cantabria
+    """
+    if n is None:
+        n = int(365*8*(b-a))
+
+    # The number of initial subintervals must be pair
+    if n % 2 != 0:
+        n = n + 1
+    
+    # Step 1:
+    h = (b-a)/n
+
+    # Step 3:
+    x = np.linspace(a, b, n+1)
+    y = fun(x)
+
+    # print("y size: ", y.size)
+    # print("n: ", n)
+    # TODO: 
+    # if trace:
+
+    auxI = 0
+    ainit = y[0] + y[n]
+    auxI1 = 0
+    auxI2 = 0
+
+    auxI1 = auxI1 + sum(y[1:n:2])
+    auxI2 = auxI2 + sum(y[2:n:2])
+
+    cnt = n
+
+    # Step 4
+    integral = (ainit + 4 * auxI1 + 2*auxI2) * h/3
+    auxtot = auxI1 + auxI2
+
+    # Step 5
+    integral1 = integral + epsilon*2
+    j = 2
+
+    # Step 6
+    error = 1 
+    while error > epsilon:
+        cnt = cnt + int(j*n//2)
+        # Step 7
+        integral1 = integral
+        # Step 8
+        x = np.linspace(a+h/j, b-h/j, int(j*n//2))
+        y = fun(x)
+
+        auxI = auxI + sum(y[0:int(j*n//2)])
+
+        # Step 9
+        integral = (ainit + 4 * auxI + 2*auxtot) * h/(3*j)
+
+        # Step 10
+        j = j*2
+
+        # Step 11
+        auxtot = auxtot + auxI
+        auxI = 0
+        # Error
+        if np.abs(integral1) > 1e-5:
+            error = np.abs((integral-integral1)/integral1)
+        else:
+            error = np.abs(integral-integral1)
+
+
+    return integral
+    
