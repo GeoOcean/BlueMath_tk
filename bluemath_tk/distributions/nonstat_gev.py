@@ -6450,8 +6450,9 @@ class NonStatGEV(BlueMathModel):
             hmaxsort = np.sort(hmax1)
             ProHsmaxsort = np.arange(1, len(hmaxsort) + 1) / (len(hmaxsort) + 1)
             Tapprox = 1 / (1 - ProHsmaxsort)
-            idx = np.where(Tapprox >= 2)[0]
-            ax.semilogx(Tapprox[idx], hmaxsort[idx], "ok", markersize=1.6)
+            # idx = np.where(Tapprox >= 2)[0]
+            # ax.semilogx(Tapprox[idx], hmaxsort[idx], "ok", markersize=1.6)
+            ax.semilogx(Tapprox, hmaxsort, "ok", markersize=2)
             ax.semilogx(Ts, stdlo, "--k", linewidth=1.1)
             ax.semilogx(Ts, stdup, "--k", linewidth=1.1)
         
@@ -6460,9 +6461,9 @@ class NonStatGEV(BlueMathModel):
         ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
         ax.set_xticks([1, 2, 5, 10, 20, 50, 100, 250, 500])
         ax.set_xticklabels([1, 2, 5, 10, 20, 50, 100, 250, 500])
-        ax.set_xlim(left=1.8, right=Ts[-1] + 50)
+        ax.set_xlim(left=0.9, right=Ts[-1] + 50)
         ax.set_ylim(bottom=0)
-        ax.set_title(f"Aggregate Quantiles ({self.var_name})")
+        # ax.set_title(f"Aggregate Quantiles ({self.var_name})")
         ax.grid(True)
         plt.tight_layout()
         if save:
@@ -6629,84 +6630,6 @@ class NonStatGEV(BlueMathModel):
         #     0,
         #     1,
         # )[0]
-
-        # CHANGE THIS
-        # for il in range(m):
-        #     # for jl in range(n)
-        #     zq = media
-        #     err: float = 1
-        #     iter1: int = 1
-        #     integ: float = 0
-        #     while err > 1e-4 and iter1 < 1000:
-        #         zqold = zq
-        #         integ,_ = quad(
-        #             lambda x: self._fzeroquanint(
-        #                 x,
-        #                 zqold,
-        #                 q[il],
-        #                 cov_locint,
-        #                 cov_scint,
-        #                 cov_shint,
-        #                 beta0,
-        #                 beta,
-        #                 alpha0,
-        #                 alpha,
-        #                 gamma0,
-        #                 gamma,
-        #                 betaT,
-        #                 alphaT,
-        #                 gammaT,
-        #                 beta_cov,
-        #                 alpha_cov,
-        #                 gamma_cov,
-        #                 self.t,
-        #                 self.kt
-        #             ),
-        #             float(t0[il]),
-        #             float(t1[il]),
-        #         )
-        #         integ = integ + np.log(q[il]) / 12
-        #         dint,_ = quad(
-        #             lambda x: self._fzeroderiquanint(
-        #                 x,
-        #                 zqold,
-        #                 q[il],
-        #                 cov_locint,
-        #                 cov_scint,
-        #                 cov_shint,
-        #                 beta0,
-        #                 beta,
-        #                 alpha0,
-        #                 alpha,
-        #                 gamma0,
-        #                 gamma,
-        #                 betaT,
-        #                 alphaT,
-        #                 gammaT,
-        #                 beta_cov,
-        #                 alpha_cov,
-        #                 gamma_cov,
-        #                 self.t,
-        #                 self.kt
-        #             ),
-        #             float(t0[il]),
-        #             float(t1[il]),
-        #         )
-        #         zq = zq -integ / dint
-        #         if np.abs(zq) > 1e-5:
-        #             err = np.abs((zq - zqold) / zqold)
-        #         else:
-        #             err = np.abs(zq - zqold)
-        #         iter1 += 1
-        #     if iter1 == 1000:
-        #         zq = np.nan
-        #         Warning("Maximum number of Newton iterations")
-        #     if integ > 1e-2:
-        #         zq = np.nan
-        #         Warning("False zero, check it")
-        #     zqout[il] = zq
-
-        # return zqout
 
         for il in range(m):
             # function of z whose root we want
