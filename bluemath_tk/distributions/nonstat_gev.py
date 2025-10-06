@@ -7047,81 +7047,97 @@ class NonStatGEV(BlueMathModel):
         """
         Print a summary of the fitted model, including parameter estimates, standard errors and fit statistics.
         """
-
         std_params = np.sqrt(np.diag(self.invI0))
         param_idx = 0
+        z_norm = norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1)
 
         print(f"\nFitted Time-Dependent GEV model for {self.var_name}")
-        print("="*50)
+        print("="*70)
+        
+        # Header format
+        param_header = "Parameter".ljust(15)
+        estimate_header = "Estimate".rjust(12)
+        se_header = "Std. Error".rjust(15)
+        ci_header = f"{self.quanval*100:.0f}% CI".center(25)
+        header = f"{param_header} {estimate_header} {se_header} {ci_header}"
+
         print("\nLocation Parameters")
-        print("-"*20)
-        print(f"Beta0: {self.beta0:.4f} ({std_params[param_idx]:.4f})")
+        print("-"*70)
+        print(header)
+        print("-"*70)
+        
+        # Parameter line format
+        def format_line(name, value, std_err):
+            ci_low = value - std_err*z_norm
+            ci_up = value + std_err*z_norm
+            return f"{name:<15} {value:>12.4f} {std_err:>15.4f} {f'[{ci_low:>8.4f},{ci_up:>8.4f}]':>25}"
+        
+        # Location parameters
+        print(format_line("Beta0", self.beta0, std_params[param_idx]))
         param_idx += 1
-        
-        # Harmonic terms for location
+
         for i in range(self.nmu):
-            print(f"Beta{i+1} (sin): {self.beta[2*i]:.4f} ({std_params[param_idx]:.4f})")
+            print(format_line(f"Beta{i+1} (sin)", self.beta[2*i], std_params[param_idx]))
             param_idx += 1
-            print(f"Beta{i+1} (cos): {self.beta[2*i+1]:.4f} ({std_params[param_idx]:.4f})")
+            print(format_line(f"Beta{i+1} (cos)", self.beta[2*i+1], std_params[param_idx]))
             param_idx += 1
         
-        # Trend in location
         if self.ntrend_loc > 0:
-            print(f"BetaT: {self.betaT:.4f} ({std_params[param_idx]:.4f})")
+            print(format_line("BetaT", self.betaT, std_params[param_idx]))
             param_idx += 1
             
-        # Covariates in location    
         for i in range(self.nind_loc):
-            print(f"Beta_cov{i+1}: {self.beta_cov[i]:.4f} ({std_params[param_idx]:.4f})")
+            print(format_line(f"Beta_cov{i+1}", self.beta_cov[i], std_params[param_idx]))
             param_idx += 1
 
         print("\nScale Parameters") 
-        print("-"*20)
-        print(f"Alpha0: {self.alpha0:.4f} ({std_params[param_idx]:.4f})")
+        print("-"*70)
+        print(header)
+        print("-"*70)
+        
+        print(format_line("Alpha0", self.alpha0, std_params[param_idx]))
         param_idx += 1
         
-        # Harmonic terms for scale
         for i in range(self.npsi):
-            print(f"Alpha{i+1} (sin): {self.alpha[2*i]:.4f} ({std_params[param_idx]:.4f})")
+            print(format_line(f"Alpha{i+1} (sin)", self.alpha[2*i], std_params[param_idx]))
             param_idx += 1
-            print(f"Alpha{i+1} (cos): {self.alpha[2*i+1]:.4f} ({std_params[param_idx]:.4f})")
+            print(format_line(f"Alpha{i+1} (cos)", self.alpha[2*i+1], std_params[param_idx]))
             param_idx += 1
             
-        # Trend in scale
         if self.ntrend_sc > 0:
-            print(f"AlphaT: {self.alphaT:.4f} ({std_params[param_idx]:.4f})")
+            print(format_line("AlphaT", self.alphaT, std_params[param_idx]))
             param_idx += 1
             
-        # Covariates in scale
         for i in range(self.nind_sc):
-            print(f"Alpha_cov{i+1}: {self.alpha_cov[i]:.4f} ({std_params[param_idx]:.4f})")
+            print(format_line(f"Alpha_cov{i+1}", self.alpha_cov[i], std_params[param_idx]))
             param_idx += 1
 
         print("\nShape Parameters")
-        print("-"*20)
+        print("-"*70)
+        print(header)
+        print("-"*70)
+        
         if self.ngamma0 > 0:
-            print(f"Gamma0: {self.gamma0:.4f} ({std_params[param_idx]:.4f})")
+            print(format_line("Gamma0", self.gamma0, std_params[param_idx]))
             param_idx += 1
             
-        # Harmonic terms for shape    
         for i in range(self.ngamma):
-            print(f"Gamma{i+1} (sin): {self.gamma[2*i]:.4f} ({std_params[param_idx]:.4f})")
+            print(format_line(f"Gamma{i+1} (sin)", self.gamma[2*i], std_params[param_idx]))
             param_idx += 1
-            print(f"Gamma{i+1} (cos): {self.gamma[2*i+1]:.4f} ({std_params[param_idx]:.4f})")
+            print(format_line(f"Gamma{i+1} (cos)", self.gamma[2*i+1], std_params[param_idx]))
             param_idx += 1
             
-        # Trend in shape
         if self.ntrend_sh > 0:
-            print(f"GammaT: {self.gammaT:.4f} ({std_params[param_idx]:.4f})")
+            print(format_line("GammaT", self.gammaT, std_params[param_idx]))
             param_idx += 1
             
-        # Covariates in shape
         for i in range(self.nind_sh):
-            print(f"Gamma_cov{i+1}: {self.gamma_cov[i]:.4f} ({std_params[param_idx]:.4f})")
+            print(format_line(f"Gamma_cov{i+1}", self.gamma_cov[i], std_params[param_idx]))
             param_idx += 1
-            
+                
         print("\nFit Statistics")
-        print("-"*20)
-        print(f"Log-likelihood: {-self.fit_result['negloglikelihood']:.4f}")
-        print(f"AIC: {self.fit_result['AIC']:.4f}")
-        print(f"Number of parameters: {self.fit_result['n_params']}")
+        print("-"*70)
+        stats_width = 30
+        print(f"{'Log-likelihood:':<{stats_width}} {-self.fit_result['negloglikelihood']:>.4f}")
+        print(f"{'AIC:':<{stats_width}} {self.fit_result['AIC']:>.4f}")
+        print(f"{'Number of parameters:':<{stats_width}} {self.fit_result['n_params']}")
