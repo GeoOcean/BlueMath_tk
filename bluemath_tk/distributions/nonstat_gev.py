@@ -6347,7 +6347,7 @@ class NonStatGEV(BlueMathModel):
 
         return F
 
-    def returnperiod_plot(self, annualplot=True, monthly_plot=False, save=False):
+    def returnperiod_plot(self, annualplot=True, monthly_plot=False, save=False, conf_int=False):
         """
         Funtion to plot the Aggregated Return period plot for each month and the annual Return period
 
@@ -6372,30 +6372,32 @@ class NonStatGEV(BlueMathModel):
                     quanaggr[i, j] = self._aggquantile(1 - 1 / Ts[j], i / 12, (i + 1) / 12)[
                         0
                     ]
+                    # DO NOT COMPUTE CONFIDENCE INTERVAL IN MONTHLY RETURN PERIODS
                     # stdQuan = self._ConfidInterQuanAggregate(
                     #     1 - 1 / Ts[j], i / 12, (i + 1) / 12
                     # )
-                    stdQuan = 0.1
-                    stdDqX[i, j] = stdQuan * norm.ppf(
-                        1 - (1 - self.quanval) / 2, loc=0, scale=1
-                    )
+                    # # stdQuan = 0.1
+                    # stdDqX[i, j] = stdQuan * norm.ppf(
+                    #     1 - (1 - self.quanval) / 2, loc=0, scale=1
+                    # )
 
         # If annual data has to be plotted
         if annualplot:
             for j in range(nts):
                 quanaggrA[j] = self._aggquantile(1 - 1 / Ts[j], 0, 1)[0]
             # Confidence intervals
-            stdup = np.zeros(nts)
-            stdlo = np.zeros(nts)
-            for i in range(nts):
-                # stdQuan = self._ConfidInterQuanAggregate(1 - 1 / Ts[i], 0, 1)
-                stdQuan = 0.1
-                stdup[i] = quanaggrA[i] + stdQuan * norm.ppf(
-                    1 - (1 - self.quanval) / 2, loc=0, scale=1
-                )
-                stdlo[i] = quanaggrA[i] - stdQuan * norm.ppf(
-                    1 - (1 - self.quanval) / 2, loc=0, scale=1
-                )
+            if conf_int:
+                stdup = np.zeros(nts)
+                stdlo = np.zeros(nts)
+                for i in range(nts):
+                    stdQuan = self._ConfidInterQuanAggregate(1 - 1 / Ts[i], 0, 1)
+                    # stdQuan = 0.1
+                    stdup[i] = quanaggrA[i] + stdQuan * norm.ppf(
+                        1 - (1 - self.quanval) / 2, loc=0, scale=1
+                    )
+                    stdlo[i] = quanaggrA[i] - stdQuan * norm.ppf(
+                        1 - (1 - self.quanval) / 2, loc=0, scale=1
+                    )
 
         ## Plot the return periods
         # datemax_mod = self.t % 1
@@ -6454,17 +6456,18 @@ class NonStatGEV(BlueMathModel):
             Tapprox = 1 / (1 - ProHsmaxsort)
             # idx = np.where(Tapprox >= 2)[0]
             # ax.semilogx(Tapprox[idx], hmaxsort[idx], "ok", markersize=1.6)
-            ax.semilogx(Tapprox, hmaxsort, "ok", markersize=2)
-            ax.semilogx(Ts, stdlo, "--k", linewidth=1.1)
-            ax.semilogx(Ts, stdup, "--k", linewidth=1.1)
-        
+            ax.semilogx(Tapprox, hmaxsort, "+", markersize=7, label="Data", color="black")
+            if conf_int:
+                ax.semilogx(Ts, stdlo, linewidth=1.1, color = "gray", linestyle='dashed')
+                ax.semilogx(Ts, stdup, linewidth=1.1, color="gray", linestyle='dashed')
+            
         ax.set_xlabel("Return Period (Years)")
         ax.set_ylabel(f"{self.var_name}")
         ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
         ax.set_xticks([1, 2, 5, 10, 20, 50, 100, 250, 500])
         ax.set_xticklabels([1, 2, 5, 10, 20, 50, 100, 250, 500])
         ax.set_xlim(left=0.9, right=Ts[-1] + 50)
-        ax.set_ylim(bottom=0)
+        # ax.set_ylim(bottom=0)
         # ax.set_title(f"Aggregate Quantiles ({self.var_name})")
         ax.grid(True)
         plt.tight_layout()
@@ -6489,6 +6492,10 @@ class NonStatGEV(BlueMathModel):
         beta_cov=None,
         alpha_cov=None,
         gamma_cov=None,
+        list_loc=None,
+        list_sc=None,
+        list_sh=None,
+        covariates=None
     ) -> np.ndarray:
         """
         Function to compute the aggregated quantile between two time stamps
@@ -6553,6 +6560,14 @@ class NonStatGEV(BlueMathModel):
             alpha_cov = self.alpha_cov
         if gamma_cov is None:
             gamma_cov = self.gamma_cov
+        if list_loc is None:
+            list_loc = self.list_loc
+        if list_sc is None:
+            list_sc = self.list_sc
+        if list_sh is None:
+            list_sh = self.list_sh
+        if covariates is None:
+            covariates = self.covariates
 
 
         # Deal with scalars and vectors
@@ -6584,15 +6599,15 @@ class NonStatGEV(BlueMathModel):
             if pos.size:
                 for i in range(beta_cov.size):
                     cov_locint[i] = np.mean(
-                        self.covariates.iloc[pos, self.list_loc[i]].values
+                        covariates.iloc[pos, list_loc[i]].values
                     )
                 for i in range(alpha_cov.size):
                     cov_scint[i] = np.mean(
-                        self.covariates.iloc[pos, self.list_sc[i]].values
+                        covariates.iloc[pos, list_sc[i]].values
                     )
                 for i in range(gamma_cov.size):
                     cov_shint[i] = np.mean(
-                        self.covariates.iloc[pos, self.list_sh[i]].values
+                        covariates.iloc[pos, list_sh[i]].values
                     )
         else:
             cov_locint = np.zeros(beta_cov.size)
@@ -6608,7 +6623,7 @@ class NonStatGEV(BlueMathModel):
                 beta,
                 betaT,
                 beta_cov,
-                self.covariates.iloc[:, self.list_loc].values,
+                covariates.iloc[:, list_loc].values,
                 cov_locint,
                 self.t,
                 x,
@@ -6934,8 +6949,8 @@ class NonStatGEV(BlueMathModel):
                     beta_covlb[i] = self.beta_cov[i] * (1 + epsi)
                     beta_covub[i] = self.beta_cov[i] * (1 - epsi)
                     jacob[aux] = (
-                        self._aggquantile(q, t0, t1, beta_cov=beta_covlb[i])[0]
-                        - self._aggquantile(q, t0, t1, beta_cov=beta_covlb[i])[0]
+                        self._aggquantile(q, t0, t1, beta_cov=np.atleast_1d(beta_covlb[i]), list_loc=np.atleast_1d(self.list_loc[i]))[0]
+                        - self._aggquantile(q, t0, t1, beta_cov=np.atleast_1d(beta_covlb[i]), list_loc=np.atleast_1d(self.list_loc[i]))[0]
                     ) / (2 * self.beta_cov[i] * epsi)
                 else:
                     jacob[aux] = 0
@@ -6978,8 +6993,8 @@ class NonStatGEV(BlueMathModel):
                     alpha_covlb[i] = self.alpha_cov[i] * (1 + epsi)
                     alpha_covub[i] = self.alpha_cov[i] * (1 - epsi)
                     jacob[aux] = (
-                        self._aggquantile(q, t0, t1, alpha_cov=alpha_covlb[i])[0]
-                        - self._aggquantile(q, t0, t1, alpha_cov=alpha_covlb[i])[0]
+                        self._aggquantile(q, t0, t1, alpha_cov=np.atleast_1d(alpha_covlb[i]), list_sc=np.atleast_1d(self.list_sc[i]))[0]
+                        - self._aggquantile(q, t0, t1, alpha_cov=np.atleast_1d(alpha_covlb[i]), list_sc=np.atleast_1d(self.list_sc[i]))[0]
                     ) / (2 * self.alpha_cov[i] * epsi)
                 else:
                     jacob[aux] = 0
@@ -7021,8 +7036,8 @@ class NonStatGEV(BlueMathModel):
                     gamma_covlb[i] = self.gamma_cov[i] * (1 + epsi)
                     gamma_covub[i] = self.gamma_cov[i] * (1 - epsi)
                     jacob[aux] = (
-                        self._aggquantile(q, t0, t1, gamma_cov=gamma_covlb[i])[0]
-                        - self._aggquantile(q, t0, t1, gamma_cov=gamma_covub[i])[0]
+                        self._aggquantile(q, t0, t1, gamma_cov=gamma_covlb[i], list_sh=np.atleast_1d(self.list_sh[i]))[0]
+                        - self._aggquantile(q, t0, t1, gamma_cov=gamma_covub[i], list_sh=np.atleast_1d(self.list_sh[i]))[0]
                     ) / (2 * self.gamma_cov[i] * epsi)
                 else:
                     jacob[aux] = 0
