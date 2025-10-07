@@ -4799,7 +4799,7 @@ class NonStatGEV(BlueMathModel):
 
         return Q
 
-    def plot(self, return_plot: bool = True, save: bool = False, init_year=2000):
+    def plot(self, return_plot: bool = False, save: bool = False, init_year=2000):
         """
         Plot the location, scale and shape parameters, also the PP plot and QQ plot
 
@@ -5425,7 +5425,7 @@ class NonStatGEV(BlueMathModel):
             and self.nind_sc == 0
             and self.nind_sh == 0
         ) and return_plot:
-            self.ReturnPeriodPlot()
+            self.returnperiod_plot()
 
     def paramplot(self, save: bool=False):
         """
@@ -6347,7 +6347,7 @@ class NonStatGEV(BlueMathModel):
 
         return F
 
-    def ReturnPeriodPlot(self, annualplot=True, save=False):
+    def returnperiod_plot(self, annualplot=True, monthly_plot=False, save=False):
         """
         Funtion to plot the Aggregated Return period plot for each month and the annual Return period
 
@@ -6366,18 +6366,19 @@ class NonStatGEV(BlueMathModel):
         quanaggrA = np.zeros(nts)
         quanaggr = np.zeros((12, nts))
         stdDqX = np.zeros((12, nts))
-        for i in range(12):
-            for j in range(nts):
-                quanaggr[i, j] = self._aggquantile(1 - 1 / Ts[j], i / 12, (i + 1) / 12)[
-                    0
-                ]
-                # stdQuan = self._ConfidInterQuanAggregate(
-                #     1 - 1 / Ts[j], i / 12, (i + 1) / 12
-                # )
-                stdQuan = 0.1
-                stdDqX[i, j] = stdQuan * norm.ppf(
-                    1 - (1 - self.quanval) / 2, loc=0, scale=1
-                )
+        if monthly_plot:
+            for i in range(12):
+                for j in range(nts):
+                    quanaggr[i, j] = self._aggquantile(1 - 1 / Ts[j], i / 12, (i + 1) / 12)[
+                        0
+                    ]
+                    # stdQuan = self._ConfidInterQuanAggregate(
+                    #     1 - 1 / Ts[j], i / 12, (i + 1) / 12
+                    # )
+                    stdQuan = 0.1
+                    stdDqX[i, j] = stdQuan * norm.ppf(
+                        1 - (1 - self.quanval) / 2, loc=0, scale=1
+                    )
 
         # If annual data has to be plotted
         if annualplot:
@@ -6428,15 +6429,16 @@ class NonStatGEV(BlueMathModel):
         ]
         fig = plt.figure(figsize=(10, 6))
         ax = fig.add_subplot()
-        for i in range(12):
-            ax.semilogx(
-                Ts,
-                quanaggr[i, :],
-                color=colors[i],
-                linestyle="-",
-                linewidth=1.2,
-                label=labels[i],
-            )
+        if monthly_plot:
+            for i in range(12):
+                ax.semilogx(
+                    Ts,
+                    quanaggr[i, :],
+                    color=colors[i],
+                    linestyle="-",
+                    linewidth=1.2,
+                    label=labels[i],
+                )
 
         # Anual return periods
         if annualplot:
