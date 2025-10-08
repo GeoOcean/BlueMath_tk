@@ -6702,6 +6702,7 @@ class NonStatGEV(BlueMathModel):
         for il in range(m):
             # function of z whose root we want
             def F(z):
+                self.logger.debug("Inicio quad()")
                 integ, _ = quad(
                     lambda x: self._fzeroquanint(
                         x,
@@ -6728,6 +6729,7 @@ class NonStatGEV(BlueMathModel):
                     float(t0[il]),
                     float(t1[il]),
                 )
+                self.logger.debug("Fin quad()")
                 return integ + np.log(q[il]) / 12.0
 
             try:
@@ -6783,6 +6785,7 @@ class NonStatGEV(BlueMathModel):
         ------
         zn : np.ndarray
         """
+        self.logger.debug("Inicio _fzeroquanint()")
         if ktold is None:
             ktold = self.kt
 
@@ -6852,6 +6855,7 @@ class NonStatGEV(BlueMathModel):
         # GUMBEL case
         zn[posG] = np.exp(-xn[posG])
 
+        self.logger.debug("Fin _fzeroquanint()")
         return zn
 
     def _fzeroderiquanint(
