@@ -6728,6 +6728,8 @@ class NonStatGEV(BlueMathModel):
                     ),
                     float(t0[il]),
                     float(t1[il]),
+                    epsabs = 1e-6,  # Absolute error in the numerical integration
+                    epsrel = 1e-6,  # Relative error in the numerical integration
                 )
                 self.logger.debug("Fin quad()")
                 return integ + np.log(q[il]) / 12.0
