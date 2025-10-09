@@ -1223,8 +1223,9 @@ class NonStatGEV(BlueMathModel):
         self.invI0 = np.linalg.inv(-Hxx)
         fit_result["invI0"] = self.invI0
 
-        std_param = np.sqrt(np.diag(self.invI0))
-        fit_result["std_param"] = std_param
+        std_params = np.sqrt(np.diag(self.invI0))
+        self.std_params = std_params
+        fit_result["std_params"] = std_params
 
         if plot:
             self.plot()
@@ -2988,8 +2989,10 @@ class NonStatGEV(BlueMathModel):
         self.invI0 = np.linalg.inv(-Hxx)
         fit_result["invI0"] = self.invI0
 
-        std_param = np.sqrt(np.diag(self.invI0))
-        fit_result["std_param"] = std_param
+
+        std_params = np.sqrt(np.diag(self.invI0))
+        self.std_params = std_params
+        fit_result["std_param"] = std_params
 
         if plot:
             self.plot()
@@ -4550,16 +4553,6 @@ class NonStatGEV(BlueMathModel):
 
         self.xopt = kwargs.get("x", None)
     
-    @staticmethod
-    @njit
-    def valva(x,y):
-        return x+y
-
-    @staticmethod
-    @njit
-    def cuadrado(x):
-        return x * x
-
     def _parametro(
         self,
         beta0: Optional[float] = None,
@@ -7290,7 +7283,7 @@ class NonStatGEV(BlueMathModel):
         """
         Print a summary of the fitted model, including parameter estimates, standard errors and fit statistics.
         """
-        std_params = np.sqrt(np.diag(self.invI0))
+        std_params = self.std_params
         param_idx = 0
         z_norm = norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1)
 
