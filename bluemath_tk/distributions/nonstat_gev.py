@@ -39,13 +39,10 @@ def search(times: np.ndarray, values: np.ndarray, xs) -> np.ndarray:
 
     # return yin
 
-    # Get insertion indices
-    idx = np.searchsorted(times, xs, side="right")
-    
-    # Clip to valid range (so no out-of-bounds)
-    idx = np.clip(idx, 0, len(times) - 1)
-    
-    return values[idx]
+    idx = np.searchsorted(times, xs, side='right')
+    mask = idx < len(times)
+
+    return values[idx[mask]]
 
 
 class NonStatGEV(BlueMathModel):
