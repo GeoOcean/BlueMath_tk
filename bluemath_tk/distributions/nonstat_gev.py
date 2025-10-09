@@ -10,6 +10,34 @@ from scipy.stats import norm
 
 from ..core.models import BlueMathModel
 from ..core.plotting.colors import default_colors
+from numba import njit, prange
+
+
+@njit
+def search(times: np.ndarray, values: np.ndarray, xs) -> np.ndarray:
+    """
+    Function to search the nearest value of certain time to use in self._parametro function
+
+    Parameters
+    ----------
+    times : np.ndarray
+        Times when covariates are known
+    values : np.ndarray
+        Values of the covariates at those times
+    """
+    n = times.shape[0]
+    yin = np.zeros_like(xs)
+    pos = 0
+    for j in range(xs.size):
+        found = 0
+        while found == 0 and pos < n:
+            if xs[j] < times[pos]:
+                yin[j] = values[pos]
+                found = 1
+            else:
+                pos += 1
+
+    return yin
 
 
 class NonStatGEV(BlueMathModel):
@@ -4514,6 +4542,16 @@ class NonStatGEV(BlueMathModel):
         self.gamma_cov = kwargs.get("gamma_cov", np.empty(0))
 
         self.xopt = kwargs.get("x", None)
+    
+    @staticmethod
+    @njit
+    def valva(x,y):
+        return x+y
+
+    @staticmethod
+    @njit
+    def cuadrado(x):
+        return x * x
 
     def _parametro(
         self,
@@ -4525,34 +4563,7 @@ class NonStatGEV(BlueMathModel):
         indicesint: Optional[np.ndarray] = None,
         times: Optional[np.ndarray] = None,
         x: Optional[np.ndarray] = None,
-    ) -> np.ndarray:
-        """
-        This function computes the location, scale and shape parameters for given parameters. Expressions by (2)-(3) in the paper
-
-        Parameters
-        ----------
-        beta0 : float, optional
-            Value of the intercept
-        beta : np.ndarray, optional
-            Value of the harmonics terms
-        betaT : float, optional
-            Trend parameter
-        beta_cov : np.ndarray, optional
-            Covariate parameters
-        covariates : np.ndarray, optional
-            Covariate matrix, where each column corresponds to a covariate and each row to a time point
-        indicesint : np.ndarray, optional
-            Covariate mean values in the integral interval
-        times : np.ndarray, optional
-            Times when covariates are known, used to find the nearest value using self._search
-        x : np.ndarray, optional
-            Specific time point to evaluate the parameters at, if None, uses the times given
-
-        Returns
-        -------
-        y : np.ndarray
-            Values of the parameter
-        """
+        ) -> np.ndarray:
 
         if beta is None:
             beta = np.empty(0)
@@ -4570,11 +4581,53 @@ class NonStatGEV(BlueMathModel):
         if times is None:
             times = np.empty(0)
         if x is not None:
-            t = np.array([x])
+            x = np.asarray([x])
         else:
-            t = self.t
+            x = self.t
 
-        m = len(t)
+        return self.parametro(beta0, beta, betaT, beta_cov, covariates, indicesint, times,x,ntend)
+
+    @staticmethod
+    @njit
+    def parametro(
+        beta0: Optional[float] = None,
+        beta: Optional[np.ndarray] = None,
+        betaT: Optional[float] = None,
+        beta_cov: Optional[np.ndarray] = None,
+        covariates: Optional[np.ndarray] = None,
+        indicesint: Optional[np.ndarray] = None,
+        times: Optional[np.ndarray] = None,
+        x: Optional[np.ndarray] = None,
+        ntend: Optional[int] = None,
+    ) -> np.ndarray:
+        """        This function computes the location, scale and shape parameters for given parameters. Expressions by (2)-(3) in the paper
+
+        Parameters
+        ----------
+        beta0 : float, optional
+            Value of the intercept
+        beta : np.ndarray, optional
+            Value of the harmonics terms
+        betaT : float, optional
+            Trend parameter
+        beta_cov : np.ndarray, optional
+            Covariate parameters
+        covariates : np.ndarray, optional
+            Covariate matrix, where each column corresponds to a covariate and each row to a time point
+        indicesint : np.ndarray, optional
+            Covariate mean values in the integral interval
+        times : np.ndarray, optional
+            Times when covariates are known, used to find the nearest value using self._search
+        t : np.ndarray, optional
+            Specific time point to evaluate the parameters at, if None, uses the times given
+
+        Returns
+        -------
+        y : np.ndarray
+            Values of the parameter
+        """
+  
+        m = len(x)
 
         na, nind = covariates.shape
         nparam = beta.size
@@ -4590,31 +4643,31 @@ class NonStatGEV(BlueMathModel):
 
         # Adding the harmonic part
         if nparam > 0:
-            for i in range(nparam // 2):
+            for i in prange(nparam // 2):
                 y = (
                     y
-                    + beta[2 * i] * np.cos((i + 1) * 2 * np.pi * t)
-                    + beta[2 * i + 1] * np.sin((i + 1) * 2 * np.pi * t)
+                    + beta[2 * i] * np.cos((i + 1) * 2 * np.pi * x)
+                    + beta[2 * i + 1] * np.sin((i + 1) * 2 * np.pi * x)
                 )
 
         # Adding the tendency part
         if ntend > 0:
-            y = y + betaT * t
+            y = y + betaT * x
 
         # Adding the covariate part
         if nind > 0:
             if indicesint.shape[0] > 0:
                 if times.shape[0] == 0:
-                    for i in range(nind):
+                    for i in prange(nind):
                         y = y + beta_cov[i] * indicesint[i]
                 else:
-                    for i in range(nind):
-                        indicesintaux = self._search(
-                            times, covariates[:, i], np.asarray(x).flatten()
+                    for i in prange(nind):
+                        indicesintaux = search(
+                            times, covariates[:, i], x.flatten()
                         )
                         y = y + beta_cov[i] * indicesintaux
             else:
-                for i in range(nind):
+                for i in prange(nind):
                     y = y + beta_cov[i] * covariates[:, i]
 
         return y
@@ -4644,6 +4697,7 @@ class NonStatGEV(BlueMathModel):
 
         return yin
 
+    
     def _evaluate_params(
         self,
         beta0: Optional[float] = None,
@@ -4971,14 +5025,16 @@ class NonStatGEV(BlueMathModel):
         rp100 = self._quantile(1 - 1 / 100)
 
         if (
-            self.betaT is None
-            and self.alphaT is None
+            self.betaT.size == 0
+            and self.alphaT.size == 0
+            and self.gammaT.size == 0
             and self.beta_cov.size == 0
             and self.alpha_cov.size == 0
+            and self.gamma_cov.size == 0
         ):
-            t_ord = np.argsort(t_anual)
+            t_ord = np.argsort(t_anual) 
             fig, ax1 = plt.subplots(figsize=(10, 6))
-            l0 = ax1.plot(
+            """ax1.plot(
                 t_anual[t_ord],
                 self.xt[t_ord],
                 marker="+",
@@ -4987,7 +5043,6 @@ class NonStatGEV(BlueMathModel):
                 markersize=5,
                 label="Data",
             )
-            ax2 = ax1.twinx()
             ax1.plot(
                 t_anual[t_ord],
                 mut[t_ord],
@@ -4998,33 +5053,146 @@ class NonStatGEV(BlueMathModel):
             )
             ax1.fill_between(
                 t_anual[t_ord],
-                ci_low_mut[t_ord],
-                ci_up_mut[t_ord],
-                color=self.colors[0],
+                mut[t_ord] - psit[t_ord],
+                mut[t_ord] + psit[t_ord],
+                label=r"Location $\pm$ Scale",
+                color="tab:blue",
                 alpha=0.3,
             )
-            ax2.plot(
-                t_anual[t_ord],
-                psit[t_ord],
-                label="Scale",
-                linewidth=2,
-                color=self.colors[1],
-                alpha=1,
-            )
-            ax2.fill_between(
-                t_anual[t_ord],
-                ci_low_psit[t_ord],
-                ci_up_psit[t_ord],
-                color=self.colors[1],
-                alpha=0.3,
-            )
+            # ax1.fill_between(
+            #     t_anual[t_ord],
+            #     ci_low_mut[t_ord],
+            #     ci_up_mut[t_ord],
+            #     color=self.colors[0],
+            #     alpha=0.3,
+            # )
+            # ax2.plot(
+            #     t_anual[t_ord],
+            #     psit[t_ord],
+            #     label="Scale",
+            #     linewidth=2,
+            #     color=self.colors[1],
+            #     alpha=1,
+            # )
+            # ax2.fill_between(
+            #     t_anual[t_ord],
+            #     ci_low_psit[t_ord],
+            #     ci_up_psit[t_ord],
+            #     color=self.colors[1],
+            #     alpha=0.3,
+            # )
+
             ax1.plot(
                 t_anual[t_ord],
                 quan95[t_ord],
                 linestyle="dashed",
                 color=self.colors[2],
                 markersize=5,
+                label="95th Quan"
             )
+
+            month_initials = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
+            month_positions = [(i + 0.5) / 12 for i in range(12)]
+
+            rt_10 = np.zeros(12) 
+            rt_50 = np.zeros(12) 
+            rt_100 = np.zeros(12) 
+            for i in range(12):
+                rt_10[i] = self._aggquantile(1-1/10, i/12, (i+1)/12)  # 10-year return level at each year
+                rt_50[i] = self._aggquantile(1-1/50, i/12, (i+1)/12)  # 50-year return level at each year
+                rt_100[i] = self._aggquantile(1-1/100, i/12, (i+1)/12) # 100-year return level 
+
+            ax1.plot(
+                month_positions, rt_10, linestyle="-", linewidth=1, label="10 years", color="tab:red"
+            )
+            ax1.plot(
+                month_positions, rt_50, linestyle="-", linewidth=1, label="50 years", color="tab:purple"
+            )
+            ax1.plot(
+                month_positions, rt_100, linestyle="-", linewidth=1, label="100 years", color="tab:green"
+            )"""
+
+            #############
+            month_initials = ["J", "A", "S", "O", "N", "D", "J", "F", "M", "A", "M", "J"]
+            month_positions = [(i + 0.5) / 12 for i in range(12)]
+
+            # Reorder the return periods to start from July
+            rt_10 = np.zeros(12) 
+            rt_50 = np.zeros(12) 
+            rt_100 = np.zeros(12)
+            for i in range(12):
+                # Map i to the correct month index (July = 0, June = 11)
+                month_idx = (i + 6) % 12
+                rt_10[i] = self._aggquantile(1-1/10, month_idx/12, (month_idx+1)/12)
+                rt_50[i] = self._aggquantile(1-1/50, month_idx/12, (month_idx+1)/12)
+                rt_100[i] = self._aggquantile(1-1/100, month_idx/12, (month_idx+1)/12)
+
+            # For the data points, shift the time values by 0.5 years
+            t_shifted = t_anual.copy()
+            t_shifted[t_anual < 0.5] += 0.5 
+            t_shifted[t_anual >= 0.5] -= 0.5
+
+            # Use t_shifted for plotting data points
+            ax1.plot(
+                t_shifted[t_ord],
+                self.xt[t_ord],
+                marker="+",
+                linestyle="None",
+                color="black",
+                markersize=5,
+                label="Data",
+            )
+
+            # Use t_shifted for other lines as well
+            ax1.plot(
+                t_shifted[t_ord],
+                mut[t_ord],
+                label="Location",
+                linewidth=2,
+                color=self.colors[0],
+                alpha=1,
+            )
+
+            ax1.fill_between(
+                t_anual[t_ord],
+                mut[t_ord] - psit[t_ord],
+                mut[t_ord] + psit[t_ord],
+                label=r"Location $\pm$ Scale",
+                color="tab:blue",
+                alpha=0.3,
+            )
+
+            ax1.plot(
+                month_positions, rt_10, linestyle="-", linewidth=1, label="10 years", color="tab:red"
+            )
+            ax1.plot(
+                month_positions, rt_50, linestyle="-", linewidth=1, label="50 years", color="tab:purple"
+            )
+            ax1.plot(
+                month_positions, rt_100, linestyle="-", linewidth=1, label="100 years", color="tab:green"
+            )
+
+
+
+            #############
+
+            ax1.set_title(f"Parameters Evolution ({self.var_name})")
+            ax1.set_xlabel("Time")
+            ax1.set_ylabel(r"$\mu_t$")
+            ax1.grid(True)
+            ax1.legend(loc="best")
+            ax1.margins(x=0.01)
+            ax1.set_xticks(month_positions, month_initials)
+            if save:
+                plt.savefig(
+                    f"Figures/Adjustment_Evolution_{self.var_name}.png",
+                    dpi=300,
+                )
+            plt.show()
+
+            
+
+
         else:
             fig, ax1 = plt.subplots(figsize=(20, 6))
             ax1.plot(
@@ -5054,25 +5222,25 @@ class NonStatGEV(BlueMathModel):
                 alpha=0.4,
             )
 
-            ax1.plot(
-                self.t + init_year,
-                rp10,
-                label="10 years",
-                linewidth=1,
-                color="tab:red",
-                linestyle="--",
-                alpha=0.9,
-            )
+            # ax1.plot(
+            #     self.t + init_year,
+            #     rp10,
+            #     label="10 years",
+            #     linewidth=1,
+            #     color="tab:red",
+            #     linestyle="--",
+            #     alpha=0.9,
+            # )
 
-            ax1.plot(
-                self.t + init_year,
-                rp100,
-                label="100 years",
-                linewidth=1,
-                color="tab:green",
-                linestyle="--",
-                alpha=0.9,
-            )
+            # ax1.plot(
+            #     self.t + init_year,
+            #     rp100,
+            #     label="100 years",
+            #     linewidth=1,
+            #     color="tab:green",
+            #     linestyle="--",
+            #     alpha=0.9,
+            # )
 
             ax1.plot(
                 self.t + init_year,
@@ -5088,12 +5256,18 @@ class NonStatGEV(BlueMathModel):
             # rt_10 = np.zeros(n_years)
             # for year in range(n_years):
             #     rt_10[year] = self._aggquantile(1-1/10, year, year+1)  # 10-year return level at each year
+            # rt_50 = np.zeros(n_years)
+            # for year in range(n_years):
+            #     rt_50[year] = self._aggquantile(1-1/50, year, year+1)  # 50-year return level at each year
             # rt_100 = np.zeros(n_years)
             # for year in range(n_years):
-            #     rt_100[year] = self._aggquantile(1-1/100, year, year+1)
+            #     rt_100[year] = self._aggquantile(1-1/100, year, year+1) # 100-year return level at each year
 
             # ax1.plot(
             #     np.arange(init_year,init_year+n_years), rt_10, linestyle="-", linewidth=1, label="10 years", color="tab:red"
+            # )
+            # ax1.plot(
+            #     np.arange(init_year,init_year+n_years), rt_50, linestyle="-", linewidth=1, label="50 years", color="tab:purple"
             # )
             # ax1.plot(
             #     np.arange(init_year, init_year+n_years), rt_100, linestyle="-", linewidth=1, label="100 years", color="tab:green"
@@ -5115,13 +5289,15 @@ class NonStatGEV(BlueMathModel):
             plt.savefig(f"Figures/Adjustment_Evolution_{self.var_name}.png", dpi=300)
         plt.show()
 
+
+        ###### 1st Year PLOT
         month_initials = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
         month_positions = [(i + 0.5) / 12 for i in range(12)]
 
         #### Creating the first year plot
         mask_year = (self.t >= 0) & (self.t <= 1)
         fig, ax1 = plt.subplots(figsize=(10, 6))
-        l0 = ax1.plot(
+        ax1.plot(
             self.t[mask_year],
             self.xt[mask_year],
             marker="+",
@@ -5130,8 +5306,7 @@ class NonStatGEV(BlueMathModel):
             markersize=5,
             label=f"{self.var_name}",
         )
-        # ax2 = ax1.twinx()
-        l1 = ax1.plot(
+        ax1.plot(
             self.t[mask_year],
             mut[mask_year],
             label=r"$\mu_t$",
@@ -5139,7 +5314,6 @@ class NonStatGEV(BlueMathModel):
             color=self.colors[0],
             alpha=1,
         )
-        # ax1.fill_between(self.t[mask_year], ci_low_mut[mask_year], ci_up_mut[mask_year], color=self.colors[0], alpha=0.3)
         uppermaxs = np.maximum(
             mut[mask_year] - psit[mask_year], mut[mask_year] + psit[mask_year]
         )
@@ -5149,9 +5323,7 @@ class NonStatGEV(BlueMathModel):
         ax1.fill_between(
             self.t[mask_year], lowermins, uppermaxs, color=self.colors[0], alpha=0.3
         )
-        # l2 = ax2.plot(self.t[mask_year], psit[mask_year], label=r'$\psi_t$', linewidth=2, color=self.colors[1], alpha=1)
-        # ax2.fill_between(self.t[mask_year], ci_low_psit[mask_year], ci_up_psit[mask_year], color=self.colors[1], alpha=0.3)
-        l3 = ax1.plot(
+        ax1.plot(
             self.t[mask_year],
             quan95[mask_year],
             linestyle="dashed",
@@ -5161,11 +5333,8 @@ class NonStatGEV(BlueMathModel):
         ax1.set_title(f"Location and Scale Parameters (First Year) ({self.var_name})")
         ax1.set_xlabel("Time")
         ax1.set_ylabel(r"$\mu_t$")
-        # ax2.set_ylabel(r'$\psi_t$')
         ax1.grid(True)
-        # handles = [art for art in l0 + l1 + l2 + l3 if not art.get_label().startswith('_')]
-        handles = [art for art in l0 + l1 + l3 if not art.get_label().startswith("_")]
-        ax1.legend(handles=handles, loc="best")
+        ax1.legend(loc="best")
         ax1.margins(x=0.01)
         plt.xticks(month_positions, month_initials)
         if save:
@@ -5175,72 +5344,81 @@ class NonStatGEV(BlueMathModel):
             )
         plt.show()
 
-        # Creating the first monthly plot if not monthly or annual data
-        mask_month = (self.t >= 0) & (self.t <= 1 / 12)
-        if sum(mask_month) > 1:
-            fig, ax1 = plt.subplots(figsize=(10, 6))
-            l0 = ax1.plot(
-                self.t[mask_month],
-                self.xt[mask_month],
-                marker="+",
-                linestyle="None",
-                color="black",
-                markersize=5,
-                label=f"{self.var_name}",
-            )
-            # ax2 = ax1.twinx()
-            l1 = ax1.plot(
-                self.t[mask_month],
-                mut[mask_month],
-                label=r"$\mu_t$",
-                linewidth=2,
-                color=self.colors[0],
-                alpha=1,
-            )
-            uppermaxs = np.maximum(
-                mut[mask_month] - psit[mask_month], mut[mask_month] + psit[mask_month]
-            )
-            lowermins = np.minimum(
-                mut[mask_month] - psit[mask_month], mut[mask_month] + psit[mask_month]
-            )
-            ax1.fill_between(
-                self.t[mask_month],
-                lowermins,
-                uppermaxs,
-                color=self.colors[0],
-                alpha=0.3,
-                label="Location +- scale",
-            )
-            # l2 = ax2.plot(self.t[mask_month], psit[mask_month], label=r'$\psi_t$', linewidth=2, color=self.colors[1], alpha=1)
-            # ax2.fill_between(self.t[mask_month], ci_low_psit[mask_month], ci_up_psit[mask_month], color=self.colors[1],
-            #                 alpha=0.3)
-            l3 = ax1.plot(
-                self.t[mask_month],
-                quan95[mask_month],
-                linestyle="dashed",
-                color=self.colors[2],
-                label="95th Quantile",
-            )
-            ax1.set_title(
-                f"Location and Scale Parameters (First Month) ({self.var_name})"
-            )
-            ax1.set_xlabel("Time (yearly scale)")
-            ax1.set_ylabel(r"$\mu_t$")
-            # ax2.set_ylabel(r'$\psi_t$')
-            ax1.grid(True)
-            # handles = [art for art in l0 + l1 + l2 + l3 if not art.get_label().startswith('_')]
-            handles = [
-                art for art in l0 + l1 + l3 if not art.get_label().startswith("_")
-            ]
-            ax1.legend(handles=handles, loc="best")
-            ax1.margins(x=0.01)
-            if save:
-                plt.savefig(
-                    f"Figures/Evolution_Location_FirstYear{self.var_name}.png", dpi=300
-                )
-            plt.show()
+        ### FIRST MONTH PLOT Creating the first monthly plot if not monthly or annual data
+        # mask_month = (self.t >= 0) & (self.t <= 1 / 12)
+        # if sum(mask_month) > 1:
+        #     fig, ax1 = plt.subplots(figsize=(10, 6))
+        #     ax1.plot(
+        #         self.t[mask_month],
+        #         self.xt[mask_month],
+        #         marker="+",
+        #         linestyle="None",
+        #         color="black",
+        #         markersize=5,
+        #         label=f"{self.var_name}",
+        #     )
+        #     # ax2 = ax1.twinx()
+        #     ax1.plot(
+        #         self.t[mask_month],
+        #         mut[mask_month],
+        #         label=r"$\mu_t$",
+        #         linewidth=2,
+        #         color=self.colors[0],
+        #         alpha=1,
+        #     )
+        #     uppermaxs = np.maximum(
+        #         mut[mask_month] - psit[mask_month], mut[mask_month] + psit[mask_month]
+        #     )
+        #     lowermins = np.minimum(
+        #         mut[mask_month] - psit[mask_month], mut[mask_month] + psit[mask_month]
+        #     )
+        #     ax1.fill_between(
+        #         self.t[mask_month],
+        #         lowermins,
+        #         uppermaxs,
+        #         color=self.colors[0],
+        #         alpha=0.3,
+        #         label="Location +- scale",
+        #     )
+            
+        #     # ax1.plot(
+        #     #     self.t[mask_month],
+        #     #     rt_10[mask_month],
+        #     #     linestyle="dashed",
+        #     #     color=self.colors[2],
+        #     #     label="10 years",
+        #     # )
+        #     # ax1.plot(
+        #     #     self.t[mask_month],
+        #     #     rt_50[mask_month],
+        #     #     linestyle="dashed",
+        #     #     color=self.colors[2],
+        #     #     label="50 years",
+        #     # )
+        #     # ax1.plot(
+        #     #     self.t[mask_month],
+        #     #     rt_100[mask_month],
+        #     #     linestyle="dashed",
+        #     #     color=self.colors[2],
+        #     #     label="100 years",
+        #     # )
+        #     ax1.set_title(
+        #         f"Location and Scale Parameters (First Month) ({self.var_name})"
+        #     )
+        #     ax1.set_xlabel("Time (yearly scale)")
+        #     ax1.set_ylabel(r"$\mu_t$")
+        #     # ax2.set_ylabel(r'$\psi_t$')
+        #     ax1.grid(True)
+        #     # handles = [art for art in l0 + l1 + l2 + l3 if not art.get_label().startswith('_')]
+        #     ax1.legend(loc="best")
+        #     ax1.margins(x=0.01)
+        #     if save:
+        #         plt.savefig(
+        #             f"Figures/Evolution_Location_FirstYear{self.var_name}.png", dpi=300
+        #         )
+        #     plt.show()
 
-        ### Shape parameter plot
+        #### Shape parameter plot
         # Confidence interval for epst
         # ci_up = (
         #     epst + norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdepst
@@ -5249,7 +5427,7 @@ class NonStatGEV(BlueMathModel):
         #     epst - norm.ppf(1 - (1 - self.quanval) / 2, loc=0, scale=1) * stdepst
         # )
 
-        # LOCATION
+        ##### LOCATION #####
         plt.figure(figsize=(20, 6))
         plt.plot(self.t + init_year, mut, color="tab:blue")
         # plt.fill_between(
@@ -5268,7 +5446,7 @@ class NonStatGEV(BlueMathModel):
             plt.savefig(f"Figures/Evolution_Location{self.var_name}.png", dpi=300)
         plt.show()
 
-        # SCALE
+        ##### SCALE #####
         plt.figure(figsize=(20, 6))
         plt.plot(self.t + init_year, psit, color="tab:green")
         # plt.fill_between(
@@ -5287,7 +5465,7 @@ class NonStatGEV(BlueMathModel):
             plt.savefig(f"Figures/Evolution_Scale{self.var_name}.png", dpi=300)
         plt.show()
 
-        # SHAPE
+        ##### SHAPE #####
         plt.figure(figsize=(20, 6))
         plt.plot(self.t + init_year, epst, color="tab:orange")
         # plt.fill_between(
@@ -6501,12 +6679,22 @@ class NonStatGEV(BlueMathModel):
         # Anual return periods
         if annualplot:
             ax.semilogx(Ts, quanaggrA, color="black", linewidth=2, label="Annual")
+            # ny = int(np.ceil(self.t[-1]))
+            # hmax1 = np.zeros(ny)
+            # for j in range(ny):
+            #     hmax1[j] = np.max(
+            #         self.xt[np.where((self.t >= j) & (self.t < j + 1))[0]]
+            #     )
+
+            # Vectorized way
             ny = int(np.ceil(self.t[-1]))
-            hmax1 = np.zeros(ny)
-            for j in range(ny):
-                hmax1[j] = np.max(
-                    self.xt[np.where((self.t >= j) & (self.t < j + 1))[0]]
-                )
+            # Create mask for each year's data
+            year_masks = [(self.t >= j) & (self.t < j + 1) for j in range(ny)]
+            # Calculate max values using masks and broadcasting
+            hmax1 = np.array([np.max(self.xt[mask]) if np.any(mask) else np.nan for mask in year_masks])
+            # Remove any NaN values if present
+            hmax1 = hmax1[~np.isnan(hmax1)]
+            
             hmaxsort = np.sort(hmax1)
             ProHsmaxsort = np.arange(1, len(hmaxsort) + 1) / (len(hmaxsort) + 1)
             Tapprox = 1 / (1 - ProHsmaxsort)
@@ -6682,22 +6870,25 @@ class NonStatGEV(BlueMathModel):
             0,
             1,
         )
-        # std = quad(
-        #     lambda x: np.exp(
-        #         self._parametro(
-        #             alpha0,
-        #             alpha,
-        #             alphaT,
-        #             alpha_cov,
-        #             self.covariates.iloc[:, self.list_sc].values,
-        #             cov_scint,
-        #             self.t,
-        #             x,
-        #         )
-        #     ),
-        #     0,
-        #     1,
-        # )[0]
+        std, _ = quad(
+            lambda x: np.exp(
+                self._parametro(
+                    alpha0,
+                    alpha,
+                    alphaT,
+                    alpha_cov,
+                    self.covariates.iloc[:, self.list_sc].values,
+                    cov_scint,
+                    self.t,
+                    x,
+                )
+            ),
+            0,
+            1,
+        )
+
+        a = media - 10
+        b = media + 10
 
         for il in range(m):
             # function of z whose root we want
@@ -6728,22 +6919,29 @@ class NonStatGEV(BlueMathModel):
                     ),
                     float(t0[il]),
                     float(t1[il]),
-                    epsabs = 1e-6,  # Absolute error in the numerical integration
-                    epsrel = 1e-6,  # Relative error in the numerical integration
+                    epsabs=1e-5, epsrel=1e-5
                 )
                 self.logger.debug("Fin quad()")
                 return integ + np.log(q[il]) / 12.0
-
+    
             try:
-                # root finding: start near `media`, bracket if possible
+                # sol = root_scalar(
+                #     F,
+                #     x0=media,
+                #     x1=media + 1.0,  # secant starting points
+                #     method="secant",
+                #     xtol=1e-6,
+                #     rtol=1e-6,
+                #     maxiter=200,
+                # )
+                
                 sol = root_scalar(
                     F,
-                    x0=media,
-                    x1=media + 1.0,  # secant starting points
-                    method="secant",
-                    xtol=1e-6,
-                    rtol=1e-6,
-                    maxiter=200,
+                    bracket=(a, b),
+                    method="toms748", 
+                    xtol=1e-6, 
+                    rtol=1e-6, 
+                    maxiter=100
                 )
                 if sol.converged:
                     if abs(F(sol.root)) < 1e-2:
