@@ -13,36 +13,36 @@ from ..core.plotting.colors import default_colors
 from numba import njit, prange
 
 
-@njit(fastmath=True)
-def search(times: np.ndarray, values: np.ndarray, xs) -> np.ndarray:
-    """
-    Function to search the nearest value of certain time to use in self._parametro function
+# @njit(fastmath=True)
+# def search(times: np.ndarray, values: np.ndarray, xs) -> np.ndarray:
+#     """
+#     Function to search the nearest value of certain time to use in self._parametro function
 
-    Parameters
-    ----------
-    times : np.ndarray
-        Times when covariates are known
-    values : np.ndarray
-        Values of the covariates at those times
-    """
-    # n = times.shape[0]
-    # yin = np.zeros_like(xs)
-    # pos = 0
-    # for j in range(xs.size):
-    #     found = 0
-    #     while found == 0 and pos < n:
-    #         if xs[j] < times[pos]:
-    #             yin[j] = values[pos]
-    #             found = 1
-    #         else:
-    #             pos += 1
+#     Parameters
+#     ----------
+#     times : np.ndarray
+#         Times when covariates are known
+#     values : np.ndarray
+#         Values of the covariates at those times
+#     """
+#     # n = times.shape[0]
+#     # yin = np.zeros_like(xs)
+#     # pos = 0
+#     # for j in range(xs.size):
+#     #     found = 0
+#     #     while found == 0 and pos < n:
+#     #         if xs[j] < times[pos]:
+#     #             yin[j] = values[pos]
+#     #             found = 1
+#     #         else:
+#     #             pos += 1
 
-    # return yin
+#     # return yin
 
-    idx = np.searchsorted(times, xs, side='right')
-    mask = idx < len(times)
+#     idx = np.searchsorted(times, xs, side='right')
+#     mask = idx < len(times)
 
-    return values[idx[mask]]
+#     return values[idx[mask]]
 
 
 class NonStatGEV(BlueMathModel):
@@ -4617,7 +4617,7 @@ class NonStatGEV(BlueMathModel):
         indicesint : np.ndarray, optional
             Covariate mean values in the integral interval
         times : np.ndarray, optional
-            Times when covariates are known, used to find the nearest value using self._search
+            Times when covariates are known, used to find the nearest value
         t : np.ndarray, optional
             Specific time point to evaluate the parameters at, if None, uses the times given
 
@@ -4658,45 +4658,32 @@ class NonStatGEV(BlueMathModel):
         if nind > 0:
             if indicesint.shape[0] > 0:
                 if times.shape[0] == 0:
-                    for i in prange(nind):
-                        y = y + beta_cov[i] * indicesint[i]
+                    # for i in prange(nind):
+                    #     y = y + beta_cov[i] * indicesint[i]
+                    y = y + indicesint @ beta_cov
                 else:
-                    for i in prange(nind):
-                        indicesintaux = search(
-                            times, covariates[:, i], x.flatten()
-                        )
-                        y = y + beta_cov[i] * indicesintaux
+                    # for i in prange(nind):
+                    #     indicesintaux = search(
+                    #         times, covariates[:, i], x.flatten()
+                    #     )
+                    #     y = y + beta_cov[i] * indicesintaux
+                    idx = np.searchsorted(times, x, side='right')
+                    valid = idx < times.size
+
+                    y_add = np.zeros_like(x, dtype=np.float64)
+                    if np.any(valid):
+                        # pick rows from covariates and do one matvec
+                        A = covariates[idx[valid], :]            # (k, nind)
+                        y_add[valid] = A @ beta_cov              # (k,)
+
+                    y = y + y_add
             else:
-                for i in prange(nind):
-                    y = y + beta_cov[i] * covariates[:, i]
+                # for i in prange(nind):
+                #     y = y + beta_cov[i] * covariates[:, i]
+                y = y + covariates @ beta_cov
+
 
         return y
-
-    def _search(self, times: np.ndarray, values: np.ndarray, xs) -> np.ndarray:
-        """
-        Function to search the nearest value of certain time to use in self._parametro function
-
-        Parameters
-        ----------
-        times : np.ndarray
-            Times when covariates are known
-        values : np.ndarray
-            Values of the covariates at those times
-        """
-        n = times.shape[0]
-        yin = np.zeros_like(xs)
-        pos = 0
-        for j in range(xs.size):
-            found = 0
-            while found == 0 and pos < n:
-                if xs[j] < times[pos]:
-                    yin[j] = values[pos]
-                    found = 1
-                else:
-                    pos += 1
-
-        return yin
-
     
     def _evaluate_params(
         self,
@@ -5170,7 +5157,7 @@ class NonStatGEV(BlueMathModel):
                 alpha=0.9,
             )
 
-            # TODO: Add aggregated return period lines
+            # Aggregated return period lines
             # n_years = int(np.ceil(self.t[-1]))
             # rt_10 = np.zeros(n_years)
             # for year in range(n_years):
