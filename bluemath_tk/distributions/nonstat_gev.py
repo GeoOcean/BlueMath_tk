@@ -13,7 +13,7 @@ from ..core.plotting.colors import default_colors
 from numba import njit, prange
 
 
-@njit
+@njit(fastmath=True)
 def search(times: np.ndarray, values: np.ndarray, xs) -> np.ndarray:
     """
     Function to search the nearest value of certain time to use in self._parametro function
@@ -25,19 +25,27 @@ def search(times: np.ndarray, values: np.ndarray, xs) -> np.ndarray:
     values : np.ndarray
         Values of the covariates at those times
     """
-    n = times.shape[0]
-    yin = np.zeros_like(xs)
-    pos = 0
-    for j in range(xs.size):
-        found = 0
-        while found == 0 and pos < n:
-            if xs[j] < times[pos]:
-                yin[j] = values[pos]
-                found = 1
-            else:
-                pos += 1
+    # n = times.shape[0]
+    # yin = np.zeros_like(xs)
+    # pos = 0
+    # for j in range(xs.size):
+    #     found = 0
+    #     while found == 0 and pos < n:
+    #         if xs[j] < times[pos]:
+    #             yin[j] = values[pos]
+    #             found = 1
+    #         else:
+    #             pos += 1
 
-    return yin
+    # return yin
+
+    # Get insertion indices
+    idx = np.searchsorted(times, xs, side="right")
+    
+    # Clip to valid range (so no out-of-bounds)
+    idx = np.clip(idx, 0, len(times) - 1)
+    
+    return values[idx]
 
 
 class NonStatGEV(BlueMathModel):
@@ -99,6 +107,8 @@ class NonStatGEV(BlueMathModel):
         """
         Initiliaze the Non-Stationary GEV.
         """
+        super().__init__()
+
         debug=1
         self.set_logger_name(
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
@@ -4588,7 +4598,7 @@ class NonStatGEV(BlueMathModel):
         return self.parametro(beta0, beta, betaT, beta_cov, covariates, indicesint, times,x,ntend)
 
     @staticmethod
-    @njit
+    @njit(fastmath=True)
     def parametro(
         beta0: Optional[float] = None,
         beta: Optional[np.ndarray] = None,
@@ -5032,85 +5042,7 @@ class NonStatGEV(BlueMathModel):
             and self.alpha_cov.size == 0
             and self.gamma_cov.size == 0
         ):
-            t_ord = np.argsort(t_anual) 
             fig, ax1 = plt.subplots(figsize=(10, 6))
-            """ax1.plot(
-                t_anual[t_ord],
-                self.xt[t_ord],
-                marker="+",
-                linestyle="None",
-                color="black",
-                markersize=5,
-                label="Data",
-            )
-            ax1.plot(
-                t_anual[t_ord],
-                mut[t_ord],
-                label="Location",
-                linewidth=2,
-                color=self.colors[0],
-                alpha=1,
-            )
-            ax1.fill_between(
-                t_anual[t_ord],
-                mut[t_ord] - psit[t_ord],
-                mut[t_ord] + psit[t_ord],
-                label=r"Location $\pm$ Scale",
-                color="tab:blue",
-                alpha=0.3,
-            )
-            # ax1.fill_between(
-            #     t_anual[t_ord],
-            #     ci_low_mut[t_ord],
-            #     ci_up_mut[t_ord],
-            #     color=self.colors[0],
-            #     alpha=0.3,
-            # )
-            # ax2.plot(
-            #     t_anual[t_ord],
-            #     psit[t_ord],
-            #     label="Scale",
-            #     linewidth=2,
-            #     color=self.colors[1],
-            #     alpha=1,
-            # )
-            # ax2.fill_between(
-            #     t_anual[t_ord],
-            #     ci_low_psit[t_ord],
-            #     ci_up_psit[t_ord],
-            #     color=self.colors[1],
-            #     alpha=0.3,
-            # )
-
-            ax1.plot(
-                t_anual[t_ord],
-                quan95[t_ord],
-                linestyle="dashed",
-                color=self.colors[2],
-                markersize=5,
-                label="95th Quan"
-            )
-
-            month_initials = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
-            month_positions = [(i + 0.5) / 12 for i in range(12)]
-
-            rt_10 = np.zeros(12) 
-            rt_50 = np.zeros(12) 
-            rt_100 = np.zeros(12) 
-            for i in range(12):
-                rt_10[i] = self._aggquantile(1-1/10, i/12, (i+1)/12)  # 10-year return level at each year
-                rt_50[i] = self._aggquantile(1-1/50, i/12, (i+1)/12)  # 50-year return level at each year
-                rt_100[i] = self._aggquantile(1-1/100, i/12, (i+1)/12) # 100-year return level 
-
-            ax1.plot(
-                month_positions, rt_10, linestyle="-", linewidth=1, label="10 years", color="tab:red"
-            )
-            ax1.plot(
-                month_positions, rt_50, linestyle="-", linewidth=1, label="50 years", color="tab:purple"
-            )
-            ax1.plot(
-                month_positions, rt_100, linestyle="-", linewidth=1, label="100 years", color="tab:green"
-            )"""
 
             #############
             month_initials = ["J", "A", "S", "O", "N", "D", "J", "F", "M", "A", "M", "J"]
@@ -5131,6 +5063,7 @@ class NonStatGEV(BlueMathModel):
             t_shifted = t_anual.copy()
             t_shifted[t_anual < 0.5] += 0.5 
             t_shifted[t_anual >= 0.5] -= 0.5
+            t_ord = np.argsort(t_shifted)
 
             # Use t_shifted for plotting data points
             ax1.plot(
@@ -5154,7 +5087,7 @@ class NonStatGEV(BlueMathModel):
             )
 
             ax1.fill_between(
-                t_anual[t_ord],
+                t_shifted[t_ord],
                 mut[t_ord] - psit[t_ord],
                 mut[t_ord] + psit[t_ord],
                 label=r"Location $\pm$ Scale",
@@ -5171,10 +5104,6 @@ class NonStatGEV(BlueMathModel):
             ax1.plot(
                 month_positions, rt_100, linestyle="-", linewidth=1, label="100 years", color="tab:green"
             )
-
-
-
-            #############
 
             ax1.set_title(f"Parameters Evolution ({self.var_name})")
             ax1.set_xlabel("Time")
