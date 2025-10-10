@@ -4,7 +4,7 @@ import numpy as np
 def block_maxima(
     x: np.ndarray,
     block_size: int | float = 365.25,
-    min_sep=2,
+    min_sep: int = 2,
 ):
     """
     Function to obtain the Block Maxima of given size taking into account
@@ -30,6 +30,18 @@ def block_maxima(
     ------
     ValueError
         Minimum separation must be smaller than (block_size+1)/2
+
+    Example
+    -------
+    >>> # 1-year of daily values
+    >>> x = np.random.lognormal(1, 1.2, size=365)
+
+    >>> # 5-day Block Maxima with 72h of independency
+    >>> idx, bmaxs = block_maxima(
+    >>>     x,
+    >>>     block_size=5,
+    >>>     min_sep=3
+    >>> )
     """
     block_size = int(np.ceil(block_size))
 
