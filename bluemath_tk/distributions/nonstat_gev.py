@@ -2918,9 +2918,6 @@ class NonStatGEV(BlueMathModel):
         """
         self.logger.debug("Fixed fit (.fit())")
 
-        if nmu % 2 != 0 or npsi % 2 != 0 or ngamma % 2 != 0:
-            raise ValueError("Check the input of harmonics, must be even!")
-
         if list_loc == "all":
             list_loc = list(range(self.covariates.shape[1]))
         elif list_loc is None:
@@ -5187,26 +5184,27 @@ class NonStatGEV(BlueMathModel):
             )
 
             # Aggregated return period lines
-            # n_years = int(np.ceil(self.t[-1]))
-            # rt_10 = np.zeros(n_years)
-            # for year in range(n_years):
-            #     rt_10[year] = self._aggquantile(1-1/10, year, year+1)  # 10-year return level at each year
-            # rt_50 = np.zeros(n_years)
-            # for year in range(n_years):
-            #     rt_50[year] = self._aggquantile(1-1/50, year, year+1)  # 50-year return level at each year
-            # rt_100 = np.zeros(n_years)
-            # for year in range(n_years):
-            #     rt_100[year] = self._aggquantile(1-1/100, year, year+1) # 100-year return level at each year
+            if return_plot:
+                n_years = int(np.ceil(self.t[-1]))
+                rt_10 = np.zeros(n_years)
+                for year in range(n_years):
+                    rt_10[year] = self._aggquantile(1-1/10, year, year+1)  # 10-year return level at each year
+                rt_50 = np.zeros(n_years)
+                for year in range(n_years):
+                    rt_50[year] = self._aggquantile(1-1/50, year, year+1)  # 50-year return level at each year
+                rt_100 = np.zeros(n_years)
+                for year in range(n_years):
+                    rt_100[year] = self._aggquantile(1-1/100, year, year+1) # 100-year return level at each year
 
-            # ax1.plot(
-            #     np.arange(init_year,init_year+n_years), rt_10, linestyle="-", linewidth=1, label="10 years", color="tab:red"
-            # )
-            # ax1.plot(
-            #     np.arange(init_year,init_year+n_years), rt_50, linestyle="-", linewidth=1, label="50 years", color="tab:purple"
-            # )
-            # ax1.plot(
-            #     np.arange(init_year, init_year+n_years), rt_100, linestyle="-", linewidth=1, label="100 years", color="tab:green"
-            # )
+                ax1.plot(
+                    np.arange(init_year,init_year+n_years), rt_10, linestyle="-", linewidth=1, label="10 years", color="tab:red"
+                )
+                ax1.plot(
+                    np.arange(init_year,init_year+n_years), rt_50, linestyle="-", linewidth=1, label="50 years", color="tab:purple"
+                )
+                ax1.plot(
+                    np.arange(init_year, init_year+n_years), rt_100, linestyle="-", linewidth=1, label="100 years", color="tab:green"
+                )
 
         ax1.set_xlabel("Time (years)")
         ax1.set_ylabel(rf"$\mu_t(m)$, {self.var_name}")
@@ -5226,8 +5224,8 @@ class NonStatGEV(BlueMathModel):
 
 
         ###### 1st Year PLOT
-        # month_initials = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
-        # month_positions = [(i + 0.5) / 12 for i in range(12)]
+        month_initials = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"]
+        month_positions = [i / 12 for i in range(12)]
 
         #### Creating the first year plot
         mask_year = (self.t >= 0) & (self.t <= 1)
