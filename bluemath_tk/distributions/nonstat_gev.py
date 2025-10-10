@@ -1282,9 +1282,9 @@ class NonStatGEV(BlueMathModel):
         # Fitting options
         if options is None:
             options = {
-                "gtol": 1e-5,
-                "xtol": 1e-5,
-                "barrier_tol": 1e-4,
+                "gtol": 1e-8,
+                "xtol": 1e-8,
+                "barrier_tol": 1e-6,
                 "maxiter": 500,
             }
 
@@ -7319,7 +7319,7 @@ class NonStatGEV(BlueMathModel):
 
         for i in range(self.nind_loc):
             print(
-                format_line(f"Beta_cov{i + 1}", self.beta_cov[i], std_params[param_idx])
+                format_line(f"{self.covariates.columns[self.list_loc[i]]}", self.beta_cov[i], std_params[param_idx])
             )
             param_idx += 1
 
@@ -7352,7 +7352,7 @@ class NonStatGEV(BlueMathModel):
         for i in range(self.nind_sc):
             print(
                 format_line(
-                    f"Alpha_cov{i + 1}", self.alpha_cov[i], std_params[param_idx]
+                    f"{self.covariates.columns[self.list_sc[i]]}", self.alpha_cov[i], std_params[param_idx]
                 )
             )
             param_idx += 1
@@ -7387,7 +7387,7 @@ class NonStatGEV(BlueMathModel):
         for i in range(self.nind_sh):
             print(
                 format_line(
-                    f"Gamma_cov{i + 1}", self.gamma_cov[i], std_params[param_idx]
+                    f"{self.covariates.columns[self.list_sh[i]]}", self.gamma_cov[i], std_params[param_idx]
                 )
             )
             param_idx += 1
