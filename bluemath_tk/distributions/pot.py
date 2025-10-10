@@ -5,7 +5,7 @@ def block_maxima(
     x: np.ndarray,
     block_size: int | float = 365.25,
     min_sep: int = 2,
-):
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Function to obtain the Block Maxima of given size taking into account
     minimum independence hypothesis
