@@ -1,13 +1,13 @@
 import numpy as np
 
+
 def block_maxima(
     x: np.ndarray,
     block_size: int | float = 365.25,
     min_sep=2,
-    peak_kwargs=None,
 ):
     """
-    Function to obtain the Block Maxima of given size taking into account 
+    Function to obtain the Block Maxima of given size taking into account
     minimum independence hypothesis
 
     Parameters
@@ -22,7 +22,7 @@ def block_maxima(
     Returns
     -------
     idx : np.ndarray
-        Indices of BM 
+        Indices of BM
     bmaxs : np.ndarray
         BM values
 
@@ -33,7 +33,7 @@ def block_maxima(
     """
     block_size = int(np.ceil(block_size))
 
-    if min_sep > (block_size+1) / 2:
+    if min_sep > (block_size + 1) / 2:
         raise ValueError("min_sep must be smaller than (block_size+1)/2")
 
     x = np.asarray(x)
@@ -57,23 +57,29 @@ def block_maxima(
         blocks.append(candidates_idx)
 
     def violates(i_left, i_right):
-            if i_left is None or i_right is None:
-                return False
-            return i_right - i_left < min_sep
+        if i_left is None or i_right is None:
+            return False
+        return i_right - i_left < min_sep
 
     changed = True
     while changed:
         changed = False
 
-        for b in range(n_blocks-1):
+        for b in range(n_blocks - 1):
             idx_left = segments_idx[b][blocks[b][0]]
-            idx_right = segments_idx[b+1][blocks[b+1][0]]
+            idx_right = segments_idx[b + 1][blocks[b + 1][0]]
             if not violates(idx_left, idx_right):
                 continue
             else:
-                idx_block_adjust = 0 if segments[b][blocks[b][0]] < segments[b+1][blocks[b+1][0]] else 1
-                blocks[b + idx_block_adjust] = np.delete(blocks[b + idx_block_adjust], 0)
-                changed=True
+                idx_block_adjust = (
+                    0
+                    if segments[b][blocks[b][0]] < segments[b + 1][blocks[b + 1][0]]
+                    else 1
+                )
+                blocks[b + idx_block_adjust] = np.delete(
+                    blocks[b + idx_block_adjust], 0
+                )
+                changed = True
                 break
 
     bmaxs = np.asarray([segments[b][blocks[b][0]] for b in range(n_blocks)])
