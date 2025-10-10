@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from scipy.integrate import quad
 from scipy.optimize import minimize, root_scalar
-from scipy.stats import norm
+from scipy.stats import norm, genextreme
 
 from ..core.models import BlueMathModel
 from ..core.plotting.colors import default_colors
@@ -5012,23 +5012,23 @@ class NonStatGEV(BlueMathModel):
         rp100 = self._quantile(1 - 1 / 100)
 
         if (
-            self.betaT.size == 0
-            and self.alphaT.size == 0
-            and self.gammaT.size == 0
-            and self.beta_cov.size == 0
-            and self.alpha_cov.size == 0
-            and self.gamma_cov.size == 0
+            self.ntrend_loc == 0
+            and self.ntrend_sc == 0
+            and self.ntrend_sh == 0
+            and self.nind_loc == 0
+            and self.nind_sc == 0
+            and self.nind_sh == 0
         ):
             fig, ax1 = plt.subplots(figsize=(10, 6))
 
             #############
-            month_initials = ["J", "A", "S", "O", "N", "D", "J", "F", "M", "A", "M", "J"]
-            month_positions = [(i + 0.5) / 12 for i in range(12)]
+            month_initials = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"]
+            month_positions = [i / 12 for i in range(12)]
 
             # Reorder the return periods to start from July
-            rt_10 = np.zeros(12) 
-            rt_50 = np.zeros(12) 
-            rt_100 = np.zeros(12)
+            rt_10 = np.zeros(13) 
+            rt_50 = np.zeros(13) 
+            rt_100 = np.zeros(13)
             for i in range(12):
                 # Map i to the correct month index (July = 0, June = 11)
                 month_idx = (i + 6) % 12
@@ -5036,21 +5036,49 @@ class NonStatGEV(BlueMathModel):
                 rt_50[i] = self._aggquantile(1-1/50, month_idx/12, (month_idx+1)/12)
                 rt_100[i] = self._aggquantile(1-1/100, month_idx/12, (month_idx+1)/12)
 
+            rt_10[12] = rt_10[0]
+            rt_50[12] = rt_50[0]
+            rt_100[12] = rt_100[0]
+
             # For the data points, shift the time values by 0.5 years
             t_shifted = t_anual.copy()
             t_shifted[t_anual < 0.5] += 0.5 
             t_shifted[t_anual >= 0.5] -= 0.5
             t_ord = np.argsort(t_shifted)
+            
+            ### Added by Tomas Carlotto
+            # Creating variables to store the evolution of pdf and sf over time
+            var_grid_resolution = 50 
+            # t_anual_ord = t_anual[t_ord]
+            mu_t =  mut[t_ord]
+            psi_t = psit[t_ord]
+            xi_t =  epst[t_ord]
+            # Definition of the Hs value grid
+            lim_max = np.max(self.xt)+1
+            lim_min = np.min(self.xt)
+            hvar = np.linspace(lim_min, lim_max, var_grid_resolution)       
+            t_grid, x_grid = np.meshgrid(t_shifted[t_ord], hvar)
+
+            # Calculating the 1-CDF for each grid point (Exceedance Probabilities)
+            sf = np.array([genextreme.sf(x_grid[:, i], c=-xi_t[i], loc=mu_t[i], scale=psi_t[i]) for i in range(len(t_shifted[t_ord]))]).T
+            # Calculating the Probability Density Function (pdf) for each grid point
+            pdf = np.array([genextreme.pdf(x_grid[:, i], c=-xi_t[i], loc=mu_t[i], scale=psi_t[i]) for i in range(len(t_shifted[t_ord]))]).T 
+
+            cf = ax1.contourf(t_shifted[t_ord], hvar, sf, levels=50, cmap="viridis_r")            
+            cbar = fig.colorbar(cf, ax=ax1)            
+            cbar.set_label("Exceedance probability", fontsize=12)
+            #===============
 
             # Use t_shifted for plotting data points
             ax1.plot(
                 t_shifted[t_ord],
                 self.xt[t_ord],
-                marker="+",
+                marker="o",
                 linestyle="None",
                 color="black",
                 markersize=5,
                 label="Data",
+                alpha=0.9
             )
 
             # Use t_shifted for other lines as well
@@ -5072,23 +5100,24 @@ class NonStatGEV(BlueMathModel):
                 alpha=0.3,
             )
 
+            month_positions_aux = [i/12 for i in range(13)]
             ax1.plot(
-                month_positions, rt_10, linestyle="-", linewidth=1, label="10 years", color="tab:red"
+                month_positions_aux, rt_10, linestyle="-", linewidth=1, label="10 years", color="tab:red"
             )
             ax1.plot(
-                month_positions, rt_50, linestyle="-", linewidth=1, label="50 years", color="tab:purple"
+                month_positions_aux, rt_50, linestyle="-", linewidth=1, label="50 years", color="tab:purple"
             )
             ax1.plot(
-                month_positions, rt_100, linestyle="-", linewidth=1, label="100 years", color="tab:green"
+                month_positions_aux, rt_100, linestyle="-", linewidth=1, label="100 years", color="tab:green"
             )
 
             ax1.set_title(f"Parameters Evolution ({self.var_name})")
-            ax1.set_xlabel("Time")
-            ax1.set_ylabel(r"$\mu_t$")
+            ax1.set_xlabel("Time (Months)")
+            ax1.set_ylabel(f"{self.var_name}")
             ax1.grid(True)
             ax1.legend(loc="best")
-            ax1.margins(x=0.01)
-            ax1.set_xticks(month_positions, month_initials)
+            ax1.set_xlim(0,1)
+            ax1.set_xticks(month_positions, month_initials, rotation=45)
             if save:
                 plt.savefig(
                     f"Figures/Adjustment_Evolution_{self.var_name}.png",
@@ -5197,8 +5226,8 @@ class NonStatGEV(BlueMathModel):
 
 
         ###### 1st Year PLOT
-        month_initials = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
-        month_positions = [(i + 0.5) / 12 for i in range(12)]
+        # month_initials = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
+        # month_positions = [(i + 0.5) / 12 for i in range(12)]
 
         #### Creating the first year plot
         mask_year = (self.t >= 0) & (self.t <= 1)
@@ -5510,10 +5539,42 @@ class NonStatGEV(BlueMathModel):
         #### Parameters Heatmap plot
         # self.paramplot(save=save)
 
+        #### 3D plot of pdf
+        if (
+            self.ntrend_loc == 0
+            and self.ntrend_sc == 0
+            and self.ntrend_sh == 0
+            and self.nind_loc == 0
+            and self.nind_sc == 0
+            and self.nind_sh == 0
+        ):
+            mu_t =  mut[t_ord]
+            psi_t = psit[t_ord]
+            xi_t =  epst[t_ord]
+            # Definition of the Hs value grid
+            lim_max = np.max(self.xt)+1
+            lim_min = np.min(self.xt)
+            hvar = np.linspace(lim_min, lim_max, var_grid_resolution)       
+            t_grid, x_grid = np.meshgrid(t_shifted[t_ord], hvar)
+            # Calculating the Probability Density Function (pdf) for each grid point
+            pdf = np.array([genextreme.pdf(x_grid[:, i], c=-xi_t[i], loc=mu_t[i], scale=psi_t[i]) for i in range(len(t_shifted[t_ord]))]).T 
+
+            fig = plt.figure(figsize=(15, 6))
+            ax = fig.add_subplot(projection='3d')
+            ax.plot_surface(t_grid, x_grid, pdf, cmap="viridis_r")
+            ax.set_zlim(0, 1)
+            ax.set_xlabel("Time (Months)")
+            ax.set_ylabel(f"{self.var_name}")
+            ax.set_zlabel("PDF")
+            ax.set_xticks(month_positions, month_initials)
+            ax.view_init(elev=40, azim=-25)
+            plt.show()
+
         #### Return periods
         if (
             self.ntrend_loc == 0
             and self.ntrend_sc == 0
+            and self.ntrend_sh == 0
             and self.nind_loc == 0
             and self.nind_sc == 0
             and self.nind_sh == 0
