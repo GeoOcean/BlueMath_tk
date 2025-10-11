@@ -816,6 +816,7 @@ class NonStatGEV(BlueMathModel):
 
                 if self.AIC_iter[iter] <= self.AIC_iter[iter - 1]:
                     # Update the parameters
+                    final_fit_result = fit_result
                     self.AICini = self.AIC_iter[iter]
                     self._update_params(**fit_result)
                     beta_cov = fit_result.get("beta_cov")
@@ -841,6 +842,7 @@ class NonStatGEV(BlueMathModel):
                         gamma_cov = gamma_cov[:-1]
                         nind_sh -= 1
 
+                    fit_result = final_fit_result
                     self.niter_cov = iter - self.niter_harm
                     self.nit = iter
 
@@ -1430,6 +1432,30 @@ class NonStatGEV(BlueMathModel):
                 + ngamma
             ] = 0.15
 
+        if ntrend_sh > 0:
+            lb[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc
+                + ngamma
+            ] = -0.15
+            ub[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc
+                + ngamma
+            ] = 0.15
+
         if nind_sh > 0:
             lb[
                 2
@@ -1440,7 +1466,8 @@ class NonStatGEV(BlueMathModel):
                 + nind_loc
                 + ntrend_sc
                 + nind_sc
-                + ngamma : 2
+                + ngamma
+                + ntrend_sh : 2
                 + self.ngamma0
                 + nmu
                 + npsi
@@ -1449,6 +1476,7 @@ class NonStatGEV(BlueMathModel):
                 + ntrend_sc
                 + nind_sc
                 + ngamma
+                + ntrend_sh
                 + nind_sh
             ] = -0.15
             ub[
@@ -1460,7 +1488,8 @@ class NonStatGEV(BlueMathModel):
                 + nind_loc
                 + ntrend_sc
                 + nind_sc
-                + ngamma : 2
+                + ngamma 
+                + ntrend_sh : 2
                 + self.ngamma0
                 + nmu
                 + npsi
@@ -1469,6 +1498,7 @@ class NonStatGEV(BlueMathModel):
                 + ntrend_sc
                 + nind_sc
                 + ngamma
+                + ntrend_sh
                 + nind_sh
             ] = 0.15
 
