@@ -1285,7 +1285,7 @@ class NonStatGEV(BlueMathModel):
                 "gtol": 1e-8,
                 "xtol": 1e-8,
                 "barrier_tol": 1e-6,
-                "maxiter": 500,
+                "maxiter": 1000,
             }
 
         # Total number of parameters to be estimated
@@ -1485,7 +1485,7 @@ class NonStatGEV(BlueMathModel):
         result = minimize(
             fun=self._auxmin_loglikelihood,
             jac=self._auxmin_loglikelihood_grad,  # Gradient information
-            hess="2-point",  # Hessian information, if applicable
+            hess=self._auxmin_loglikelihood_hess,  # Hessian information, if applicable
             x0=x_ini,
             bounds=bounds,
             args=(
@@ -1530,7 +1530,7 @@ class NonStatGEV(BlueMathModel):
             result = minimize(
                 fun=self._auxmin_loglikelihood,
                 jac=self._auxmin_loglikelihood_grad,  # Gradient information
-                hess="2-point",  # Hessian information, if applicable
+                hess=self._auxmin_loglikelihood_hess,  # Hessian information, if applicable
                 x0=fit_result["x"],
                 bounds=bounds,
                 args=(
@@ -2858,6 +2858,1827 @@ class NonStatGEV(BlueMathModel):
         Jx = -Jx
 
         return Jx
+    def _auxmin_loglikelihood_hess(
+        self,
+        x,
+        nmu,
+        npsi,
+        ngamma,
+        ntrend_loc=0,
+        list_loc=[],
+        ntrend_sc=0,
+        list_sc=[],
+        ntrend_sh=0,
+        list_sh=[],
+    ) -> np.ndarray:
+        """
+        Function used for minimizing in the 'self._optimize_parameters' where the Negative loglikelihood of the GEV will be minimized
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Parameter vector to optimize
+        nmu : int, default=0
+            Number of harmonics included in location
+        npsi : int, default=0
+            Number of harmonics included in scale
+        ngamma : int, default=0
+            Number of harmonics included in shape
+        ntrend_loc : int, default=0
+            Whether to include trends in location
+        list_loc : list, default=[]
+            List of covariates indices to include in location
+        ntrend_sc : int, default=0
+            Whether to include trends in scale
+        list_sc : list, default=[]
+            List of covariates indices to include in scale
+        ntrend_sh : int, default=0
+            Whether to include trends in shape
+        list_sh : list, default=[]
+            List of covariates indices to include in shape
+
+        Return
+        ------
+        Jx : np.ndarray
+            Gradient of negative loglikelihood value of the Non-stationary GEV
+        """
+        # Cheking the inputs
+        covariates_loc = self.covariates.iloc[:, list_loc].values
+        covariates_sc = self.covariates.iloc[:, list_sc].values
+        covariates_sh = self.covariates.iloc[:, list_sh].values
+
+        # Check consistency of the data
+        na1, nind_loc = covariates_loc.shape
+        if nind_loc > 0 and na1 > 0:
+            if na1 != len(self.xt) or na1 != len(self.t) or len(self.xt) != len(self.t):
+                ValueError("Check data x, t, indices: funcion aux loglikelihood")
+
+        na2, nind_sc = covariates_sc.shape
+        if nind_sc > 0 and na2 > 0:
+            if na2 != len(self.xt) or na2 != len(self.t) or len(self.xt) != len(self.t):
+                ValueError("Check data x, t, indices: funcion aux loglikelihood")
+
+        na3, nind_sh = covariates_sh.shape
+        if nind_sh > 0 and na3 > 0:
+            if na3 != len(self.xt) or na3 != len(self.t) or len(self.xt) != len(self.t):
+                ValueError("Check data x, t, indices: funcion aux loglikelihood")
+
+        # Evaluate the location parameter at each time t as a function of the actual values of the parameters given by x
+        if ntrend_loc == 0 and nind_loc == 0:
+            mut1 = self._parametro(x[0], x[1 : 1 + nmu])  # beta0, beta
+        elif ntrend_loc == 0 and nind_loc != 0:
+            mut1 = self._parametro(
+                x[0],
+                x[1 : 1 + nmu],
+                None,
+                x[1 + nmu + ntrend_loc : 1 + nmu + ntrend_loc + nind_loc],
+                covariates_loc,
+            )  # beta0, beta, beta_cov
+        elif ntrend_loc != 0 and nind_loc == 0:
+            mut1 = self._parametro(
+                x[0], x[1 : 1 + nmu], x[1 + nmu]
+            )  # beta0, beta, betaT
+        else:
+            mut1 = self._parametro(
+                x[0],
+                x[1 : 1 + nmu],
+                x[1 + nmu],
+                x[1 + nmu + ntrend_loc : 1 + nmu + ntrend_loc + nind_loc],
+                covariates_loc,
+            )  # beta0, beta, betaT, beta_cov
+
+        # Evaluate the scale parameter at each time t as a function of the actual values of the parameters given by x
+        if ntrend_sc == 0 and nind_sc == 0:
+            psit1 = np.exp(
+                self._parametro(
+                    x[1 + nmu + ntrend_loc + nind_loc],
+                    x[
+                        2 + nmu + ntrend_loc + nind_loc : 2
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                    ],
+                )
+            )  # alpha0, alpha
+        elif ntrend_sc == 0 and nind_sc != 0:
+            psit1 = np.exp(
+                self._parametro(
+                    x[1 + nmu + ntrend_loc + nind_loc],
+                    x[
+                        2 + nmu + ntrend_loc + nind_loc : 2
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                    ],
+                    None,
+                    x[
+                        2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc : 2
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                    ],
+                    covariates_sc,
+                )
+            )  # alpha0, alpha, alpha_cov
+        elif ntrend_sc != 0 and nind_sc == 0:
+            psit1 = np.exp(
+                self._parametro(
+                    x[1 + nmu + ntrend_loc + nind_loc],
+                    x[
+                        2 + nmu + ntrend_loc + nind_loc : 2
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                    ],
+                    x[2 + nmu + ntrend_loc + nind_loc + npsi],
+                )
+            )  # alpha0, alpha, alphaT
+        else:
+            psit1 = np.exp(
+                self._parametro(
+                    x[1 + nmu + ntrend_loc + nind_loc],
+                    x[
+                        2 + nmu + ntrend_loc + nind_loc : 2
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                    ],
+                    x[2 + nmu + ntrend_loc + nind_loc + npsi],
+                    x[
+                        2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc : 2
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                    ],
+                    covariates_sc,
+                )
+            )  # alpha0, alpha, alphaT, alpha_cov
+
+        # Evaluate the shape parameter at each time t as a function of the actual values of the parameters given by x
+        if self.ngamma0 != 0:
+            if ntrend_sh == 0 and nind_sh == 0:
+                epst = self._parametro(
+                    x[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + nind_sc],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                )  # gamma0, gamma
+            elif ntrend_sh == 0 and nind_sh != 0:
+                epst = self._parametro(
+                    x[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + nind_sc],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    None,
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                        + nind_sh
+                    ],
+                    covariates_sh,
+                )  # gamma0, gamma, gamma_cov
+            elif ntrend_sh != 0 and nind_sh == 0:
+                epst = self._parametro(
+                    x[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + nind_sc],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                )  # gamma0, gamma, gammaT
+            else:
+                epst = self._parametro(
+                    x[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + nind_sc],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                        + nind_sh
+                    ],
+                    covariates_sh,
+                )  # gamma0, gamma, gammaT, gamma_cov
+        # If intercept in shape is not included
+        else:
+            if ntrend_sh == 0 and nind_sh == 0:
+                epst = self._parametro(
+                    None,
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                )  # gamma
+            elif ntrend_sh == 0 and nind_sh != 0:
+                epst = self._parametro(
+                    None,
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    None,
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                        + nind_sh
+                    ],
+                    covariates_sh,
+                )  # gamma, gamma_cov
+            elif ntrend_sh != 0 and nind_sh == 0:
+                epst = self._parametro(
+                    None,
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                )  # gamma, gammaT
+            else:
+                epst = self._parametro(
+                    None,
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                    ],
+                    x[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma : 2
+                        + self.ngamma0
+                        + nmu
+                        + ntrend_loc
+                        + nind_loc
+                        + npsi
+                        + ntrend_sc
+                        + nind_sc
+                        + ngamma
+                        + nind_sh
+                    ],
+                    covariates_sh,
+                )  # gamma, gammaT, gamma_cov
+
+        # The values whose shape parameter is almost 0 correspond to the Gumbel distribution
+        posG = np.where(np.abs(epst) <= 1e-8)[0]
+        # The remaining values correspond to Weibull or Frechet
+        pos = np.where(np.abs(epst) > 1e-8)[0]
+
+        # The corresponding Gumbel values are set to 1 to avoid numerical problems, note that in this case, the Gumbel expressions are used
+        epst[posG] = 1
+
+        # Modify the parameters to include the length of the data
+        mut = mut1
+        psit = psit1
+        mut[pos] = mut1[pos] + psit1[pos] * (self.kt[pos] ** epst[pos] - 1) / epst[pos]
+        psit[pos] = psit1[pos] * self.kt[pos] ** epst[pos]
+        # Modify the parameters to include the length of the data in Gumbel
+        mut[posG] = mut[posG] + psit[posG] * np.log(self.kt[posG])
+
+        # Evaluate auxiliarly variables
+        xn = (self.xt - mut) / psit
+        z = 1 + epst * xn
+
+        # Since z-values must be greater than 0 in order to avoid numerical problems, their values are set to be greater than 1e-8
+        z = np.maximum(1e-8, z)
+        zn = z ** (-1 / epst)
+
+        # Evaluate the loglikelihood function, not that the general and Gumbel expressions are used
+        f = -np.sum(
+            -np.log(self.kt[pos])
+            + np.log(psit[pos])
+            + (1 + 1 / epst[pos]) * np.log(z[pos])
+            + self.kt[pos] * zn[pos]
+        ) - np.sum(
+            -np.log(self.kt[posG])
+            + np.log(psit[posG])
+            + xn[posG]
+            + self.kt[posG] * np.exp(-xn[posG])
+        )
+
+        ### Gradient of the loglikelihood
+        # Derivatives given by equations (A.1)-(A.3) in the paper
+        Dmut = (1 + epst - self.kt * zn) / (psit * z)
+        Dpsit = -(1 - xn * (1 - self.kt * zn)) / (psit * z)
+        Depst = (
+            zn
+            * (
+                xn * (self.kt - (1 + epst) / zn)
+                + z * (-self.kt + 1 / zn) * np.log(z) / epst
+            )
+            / (epst * z)
+        )
+
+        # Gumbel derivatives given by equations (A.4)-(A.5) in the paper
+        Dmut[posG] = (1 - self.kt[posG] * np.exp(-xn[posG])) / psit[posG]
+        Dpsit[posG] = (xn[posG] - 1 - self.kt[posG] * xn[posG] * np.exp(-xn[posG])) / (
+            psit[posG]
+        )
+        Depst[posG] = 0
+
+        ## New Derivatives
+        Dmutastmut = np.ones_like(self.kt)
+        Dmutastpsit = (-1 + self.kt**epst) / epst
+        Dmutastepst = (
+            psit1 * (1 + (self.kt**epst) * (epst * np.log(self.kt) - 1)) / (epst**2)
+        )
+
+        Dpsitastpsit = self.kt**epst
+        Dpsitastepst = np.log(self.kt) * psit1 * (self.kt**epst)
+
+        Dmutastpsit[posG] = np.log(self.kt[posG])
+        Dmutastepst[posG] = 0
+
+        Dpsitastpsit[posG] = 1
+        Dpsitastepst[posG] = 0
+
+        # Set the Jacobian to zero
+        Jx = np.zeros(
+            2
+            + self.ngamma0
+            + nmu
+            + npsi
+            + ngamma
+            + ntrend_loc
+            + nind_loc
+            + ntrend_sc
+            + nind_sc
+            + ntrend_sh
+            + nind_sh
+        )
+        # Jacobian elements related to the location parameters beta0 and beta, equation (A.6) in the paper
+        Jx[0] = np.dot(Dmut, Dmutastmut)
+
+        # If location harmonics are included
+        if nmu > 0:
+            for i in range(nmu):
+                aux = 0
+                for k, tt in enumerate(self.t):
+                    aux += Dmut[k] * Dmutastmut[k] * self._Dparam(tt, i + 1)
+                Jx[i + 1] = aux
+
+        # Jacobian elements related to the location parameters betaT, beta_cov (equation A.9)
+        if ntrend_loc > 0:
+            Jx[1 + nmu] = np.sum(Dmut * self.t * Dmutastmut)  # betaT
+        if nind_loc > 0:
+            for i in range(nind_loc):
+                Jx[1 + nmu + ntrend_loc + i] = np.sum(
+                    Dmut * covariates_loc[:, i] * Dmutastmut
+                )  # beta_cov_i
+
+        # Jacobian elements related to the scale parameters alpha0, alpha (equation A.7)
+        Jx[1 + nmu + ntrend_loc + nind_loc] = np.sum(
+            psit1 * (Dpsit * Dpsitastpsit + Dmut * Dmutastpsit)
+        )  # alpha0
+        # If scale harmonic are included
+        if npsi > 0:
+            for i in range(npsi):
+                aux = 0
+                for k, tt in enumerate(self.t):
+                    aux += (
+                        self._Dparam(tt, i + 1)
+                        * psit1[k]
+                        * (Dpsit[k] * Dpsitastpsit[k] + Dmut[k] * Dmutastpsit[k])
+                    )
+                Jx[2 + nmu + ntrend_loc + nind_loc + i] = aux  # alpha
+        # Jacobian elements related to the scale parameters alphaT and beta_cov (equation A.10)
+        if ntrend_sc > 0:
+            Jx[2 + nmu + ntrend_loc + nind_loc + npsi] = np.sum(
+                (Dpsit * Dpsitastpsit + Dmut * Dmutastpsit) * self.t * psit1
+            )  # alphaT
+        if nind_sc > 0:
+            for i in range(nind_sc):
+                Jx[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + i] = np.sum(
+                    (Dpsit * Dpsitastpsit + Dmut * Dmutastpsit)
+                    * covariates_sc[:, i]
+                    * psit1
+                )  # alpha_cov
+
+        # Jacobian elements related to the shape parameters gamma0 and gamma (equation A.10)
+        if self.ngamma0 == 1:
+            Jx[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + nind_sc] = np.sum(
+                Depst + Dpsit * Dpsitastepst + Dmut * Dmutastepst
+            )
+        # If shape harmonics are included
+        if ngamma > 0:
+            for i in range(ngamma):
+                aux = 0
+                for k, tt in enumerate(self.t):
+                    aux += (
+                        Depst[k] + Dpsit[k] * Dpsitastepst[k] + Dmut[k] * Dmutastepst[k]
+                    ) * self._Dparam(tt, i + 1)
+                Jx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + ntrend_loc
+                    + nind_loc
+                    + npsi
+                    + ntrend_sc
+                    + nind_sc
+                    + i
+                ] = aux
+
+        # Jacobian elements related to the shape parameters trend (defined by Victor)
+        if ntrend_sh > 0:
+            Jx[
+                2
+                + self.ngamma0
+                + nmu
+                + ntrend_loc
+                + nind_loc
+                + npsi
+                + ntrend_sc
+                + nind_sc
+                + ngamma
+            ] = np.sum(Depst * self.t)
+
+        # Jacobian elements related to the shape parameters gamma_cov (defined by Victor)
+        if nind_sh > 0:
+            for i in range(nind_sh):
+                Jx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + ntrend_loc
+                    + nind_loc
+                    + npsi
+                    + ntrend_sc
+                    + nind_sc
+                    + ngamma
+                    + ntrend_sh
+                    + i
+                ] = np.sum(Depst * covariates_sh[:, i])
+
+        ### Hessian matrix
+        # Derivatives given by equations (A.13)-(A.17) in the paper
+        D2mut = (1 + epst) * zn * (-1 + epst * z ** (1 / epst)) / ((z * psit) ** 2)
+        D2psit = (
+            -zn * xn * ((1 - epst) * xn - 2) + ((1 - 2 * xn) - epst * (xn**2))
+        ) / ((z * psit) ** 2)
+        D2epst = (
+            -zn
+            * (
+                xn
+                * (
+                    xn * (1 + 3 * epst)
+                    + 2
+                    + (-2 - epst * (3 + epst) * xn) * z ** (1 / epst)
+                )
+                + (z / (epst ** 2))
+                * np.log(z)
+                * (
+                    2 * epst * (-xn * (1 + epst) - 1 + z ** (1 + 1 / epst))
+                    + z * np.log(z)
+                )
+            )
+            / ((epst * z)**2)
+        )
+        Dmutpsit = -(1 + epst - (1 - xn) * zn) / ((z * psit) ** 2)
+        Dmutepst = (
+            -zn
+            * (
+                epst * (-(1 + epst) * xn - epst * (1 - xn) / zn)
+                + z * np.log(z)
+            )
+            / (psit * epst**2 * z**2)
+        )
+        Dpsitepst = xn * Dmutepst
+
+        # Corresponding Gumbel derivatives given by equations (A.18)-(A.20)
+        D2mut[posG] = -(np.exp(-xn[posG])) / (psit[posG] ** 2)
+        D2psit[posG] = (
+            (1 - 2 * xn[posG]) + np.exp(-xn[posG]) * (2 - xn[posG]) * xn[posG]
+        ) / (psit[posG] ** 2)
+        D2epst[posG] = 0
+        Dmutpsit[posG] = (-1 + np.exp(-xn[posG]) * (1 - xn[posG])) / (psit[posG] ** 2)
+        Dmutepst[posG] = 0
+        Dpsitepst[posG] = 0
+
+        # Initialize the Hessian matrix
+        Hxx = np.zeros(
+            (
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc
+                + ntrend_sh
+                + nind_sh,
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc
+                + ntrend_sh
+                + nind_sh,
+            )
+        )
+        # Elements of the Hessian matrix
+        # Sub-blocks following the order shown in Table 4 of the paper
+
+        ## DIAGONAL SUB-BLOCKS
+        # Sub-block number 1, beta0^2
+        Hxx[0, 0] = np.sum(D2mut)
+        # Sub-block number 2, betaT^2
+        if ntrend_loc > 0:
+            Hxx[1 + nmu, 1 + nmu] = np.sum(D2mut * (self.t**2))
+        # Sub-block number 3, beta_cov_i*beta_cov_j
+        if nind_loc > 0:
+            for i in range(nind_loc):
+                for j in range(i + 1):
+                    Hxx[1 + nmu + ntrend_loc + i, 1 + nmu + ntrend_loc + j] = np.sum(
+                        D2mut * covariates_loc[:, i] * covariates_loc[:, j]
+                    )
+        # Sub-block number 4, alphaT^2
+        if ntrend_sc > 0:
+            Hxx[
+                2 + nmu + npsi + ntrend_loc + nind_loc,
+                2 + nmu + npsi + ntrend_loc + nind_loc,
+            ] = np.sum((D2psit * psit + Dpsit) * psit * (self.t**2))
+        # Sub-block number 5, alpha_cov_i*alpha_cov_j
+        if nind_sc > 0:
+            for i in range(nind_sc):
+                for j in range(i + 1):
+                    Hxx[
+                        2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + i,
+                        2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + j,
+                    ] = np.sum(
+                        (D2psit * psit + Dpsit)
+                        * psit
+                        * covariates_sc[:, i]
+                        * covariates_sc[:, j]
+                    )
+        # Sub-block number 6, alpha0^2
+        Hxx[1 + nmu + ntrend_loc + nind_loc, 1 + nmu + ntrend_loc + nind_loc] = np.sum(
+            (D2psit * psit + Dpsit) * psit
+        )
+        # Sub-block number 7, gamma0^2
+        if self.ngamma0 == 1:
+            # If the shape parameter is added but later the result is GUMBEL
+            if len(posG) == len(self.xt):
+                Hxx[
+                    2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
+                    2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
+                ] = -1
+            else:
+                Hxx[
+                    2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
+                    2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
+                ] = np.sum(D2epst)
+        # Sub-block added by Victor, gamma_cov_i*gamma_cov_j
+        if nind_sh > 0:
+            for i in range(nind_sh):
+                for j in range(i + 1):
+                    # Add -1 if the model is GUMBEL in all the values
+                    if len(posG) == len(self.xt) and i == j:
+                        Hxx[
+                            2
+                            + self.ngamma0
+                            + nmu
+                            + npsi
+                            + ngamma
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + ntrend_sh
+                            + i,
+                            2
+                            + self.ngamma0
+                            + nmu
+                            + npsi
+                            + ngamma
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + ntrend_sh
+                            + j,
+                        ] = -1
+                    else:
+                        Hxx[
+                            2
+                            + self.ngamma0
+                            + nmu
+                            + npsi
+                            + ngamma
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + ntrend_sh
+                            + i,
+                            2
+                            + self.ngamma0
+                            + nmu
+                            + npsi
+                            + ngamma
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + ntrend_sh
+                            + j,
+                        ] = np.sum(D2epst * covariates_sh[:, i] * covariates_sh[:, j])
+        # Sub-block number , gammaT^2
+        if ntrend_sh > 0:
+            Hxx[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
+            ] = np.sum(D2epst * self.t**2)
+
+        # Sub-block number 8 (Scale exponential involved), beta0*alpha0
+        Hxx[1 + nmu + ntrend_loc + nind_loc, 0] = np.sum(Dmutpsit * psit)
+
+        if self.ngamma0 == 1:
+            # Sub-block number 9, beta0*gamma0
+            Hxx[2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc, 0] = (
+                np.sum(Dmutepst)
+            )
+            # Sub-block number 10 (Scale exponential involved), alpha0*gamma0
+            Hxx[
+                2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
+                1 + nmu + ntrend_loc + nind_loc,
+            ] = np.sum(Dpsitepst * psit)
+        # Sub-block number 11, beta0*betaT
+        if ntrend_loc > 0:
+            Hxx[1 + nmu, 0] = np.sum(D2mut * self.t)
+        # Sub-block number 12 (Scale exponential involved), beta0*alphaT
+        if ntrend_sc > 0:
+            Hxx[2 + nmu + ntrend_loc + nind_loc + npsi, 0] = np.sum(
+                Dmutpsit * self.t * psit
+            )
+        # Sub-block number 52 (Scale exponential involved), alphaT*alpha0
+        if ntrend_sc > 0:
+            Hxx[
+                2 + nmu + ntrend_loc + nind_loc + npsi, 1 + nmu + ntrend_loc + nind_loc
+            ] = np.sum((D2psit * psit + Dpsit) * self.t * psit)
+        # Sub-block number 48 (Scale exponential involved), betaT*alphaT
+        if ntrend_loc > 0 and ntrend_sc > 0:
+            Hxx[2 + nmu + ntrend_loc + nind_loc + npsi, 1 + nmu] = np.sum(
+                Dmutpsit * self.t * self.t * psit
+            )
+        if ntrend_sh > 0:
+            # Sub-block number, beta0*gammaT
+            Hxx[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
+                0,
+            ] = np.sum(Dmutepst * self.t)
+            # Sub-block number (Scale exponential involved), alpha0*gammaT
+            Hxx[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
+                1 + nmu + ntrend_loc + nind_loc,
+            ] = np.sum(Dpsitepst * psit * self.t)
+            # Sub-block number, gamma0*gammaT
+            Hxx[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
+                2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
+            ] = np.sum(D2epst * self.t)
+        if ntrend_sh > 0 and ntrend_loc > 0:
+            # Sub-block number, betaT*gammaT
+            Hxx[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
+                2 + nmu + ntrend_loc + nind_loc + npsi,
+            ] = np.sum(Dmutepst * self.t**2)
+        if ntrend_sh > 0 and ntrend_sc > 0:
+            # Sub-block number, alphaT*gammaT
+            Hxx[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
+                1 + nmu,
+            ] = np.sum(Dpsitepst * self.t**2 * psit)
+        # Sub-block number 13, beta0*beta_cov_i
+        if nind_loc > 0:
+            for i in range(nind_loc):
+                Hxx[1 + nmu + ntrend_loc + i, 0] = np.sum(D2mut * covariates_loc[:, i])
+        # Sub-block number 14 (Scale exponential involved), beta0*alpha_cov_i
+        if nind_sc > 0:
+            for i in range(nind_sc):
+                Hxx[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + i, 0] = np.sum(
+                    Dmutpsit * covariates_sc[:, i] * psit
+                )
+        # Sub-block number 53 (Scale exponential involved), alpha0*alpha_cov_i
+        if nind_sc > 0:
+            for i in range(nind_sc):
+                Hxx[
+                    2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + i,
+                    1 + nmu + ntrend_loc + nind_loc,
+                ] = np.sum((D2psit * psit + Dpsit) * covariates_sc[:, i] * psit)
+        # Sub-block number 49 (Scale exponential involved), betaT*alpha_cov_i
+        if ntrend_loc > 0 and nind_sc > 0:
+            for i in range(nind_sc):
+                Hxx[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + i, 1 + nmu] = (
+                    np.sum(Dmutpsit * self.t * covariates_sc[:, i] * psit)
+                )
+        # Sub-block number 15, betaT*beta_cov_i
+        if nind_loc > 0 and ntrend_loc > 0:
+            for i in range(nind_loc):
+                Hxx[1 + nmu + ntrend_loc + i, 1 + nmu] = np.sum(
+                    D2mut * self.t * covariates_loc[:, i]
+                )
+        # Sub-block number 16, alphaT*alpha_cov_i
+        if nind_sc > 0 and ntrend_sc > 0:
+            for i in range(nind_sc):
+                Hxx[
+                    2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + i,
+                    2 + nmu + ntrend_loc + nind_loc + npsi,
+                ] = np.sum(
+                    (D2psit * psit + Dpsit) * self.t * covariates_sc[:, i] * psit
+                )
+        # Sub-block number (Scale exponential involved), alpha_cov_i*gammaT
+        if nind_sc > 0 and ntrend_sh > 0:
+            for i in range(nind_sc):
+                Hxx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ngamma
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc,
+                    2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + i,
+                ] = np.sum(Dpsitepst * psit * covariates_sc[:, i] * self.t)
+        # Sub-block number (Scale exponential involved), beta_cov_i*gammaT
+        if nind_loc > 0 and ntrend_sh > 0:
+            for i in range(nind_loc):
+                Hxx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ngamma
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc,
+                    1 + nmu + ntrend_loc + i,
+                ] = np.sum(Dmutepst * covariates_loc[:, i] * self.t)
+        # Sub-block number, gamma_cov_i*gammaT
+        if nind_sh > 0 and ntrend_sh > 0:
+            for i in range(nind_sh):
+                Hxx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ngamma
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc
+                    + ntrend_sh
+                    + i,
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ngamma
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc,
+                ] = np.sum(D2epst * covariates_sh[:, i] * self.t)
+
+        # Sub-block number 17, alpha0*betaT
+        if ntrend_loc > 0:
+            Hxx[1 + nmu + ntrend_loc + nind_loc, 1 + nmu] = np.sum(
+                Dmutpsit * self.t * psit
+            )
+        # Sub-block number 18, gamma0*betaT
+        if ntrend_loc > 0 and self.ngamma0 == 1:
+            Hxx[
+                2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc, 1 + nmu
+            ] = np.sum(Dmutepst * self.t)
+        # Sub-block number 19 (Scale exponential involved), gamma0*alphaT
+        if ntrend_sc > 0 and self.ngamma0 == 1:
+            Hxx[
+                2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
+                2 + nmu + ntrend_loc + nind_loc + npsi,
+            ] = np.sum(Dpsitepst * self.t * psit)
+        # Sub-block number 20 (Scale exponential involved), alpha0*beta_cov_i
+        if nind_loc > 0:
+            for i in range(nind_loc):
+                Hxx[1 + nmu + ntrend_loc + nind_loc, 1 + nmu + ntrend_loc + i] = np.sum(
+                    Dmutpsit * covariates_loc[:, i] * psit
+                )
+        # Sub-block number 21, gamma0*beta_cov_i
+        if nind_loc > 0 and self.ngamma0 == 1:
+            for i in range(nind_loc):
+                Hxx[
+                    2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
+                    1 + nmu + ntrend_loc + i,
+                ] = np.sum(Dmutepst * covariates_loc[:, i])
+        # Sub-block number 22 (Scale exponential involved), gamma0*alpha_cov_i
+        if nind_sc > 0 and self.ngamma0 == 1:
+            for i in range(nind_sc):
+                Hxx[
+                    2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
+                    2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + i,
+                ] = np.sum(Dpsitepst * covariates_sc[:, i] * psit)
+        # Sub-block added by Victor, gamma0*gamma_cov_i
+        if nind_sh > 0 and self.ngamma0 == 1:
+            for i in range(nind_sh):
+                Hxx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ngamma
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc
+                    + ntrend_sh
+                    + i,
+                    2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
+                ] = np.sum(D2epst * covariates_sh[:, i])
+
+        if nmu > 0:
+            for i in range(nmu):
+                aux = 0
+                for k, tt in enumerate(self.t):
+                    aux += D2mut[k] * self._Dparam(tt, i + 1)
+                # Sub-block number 23, beta_i*beta0
+                Hxx[1 + i, 0] = aux
+                for j in range(i + 1):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += (
+                            D2mut[k] * self._Dparam(tt, i + 1) * self._Dparam(tt, j + 1)
+                        )
+                    # Sub-block number 24, beta_i,beta_j
+                    Hxx[1 + i, 1 + j] = aux
+
+            for i in range(nmu):
+                aux = 0
+                for k, tt in enumerate(self.t):
+                    aux += Dmutpsit[k] * self._Dparam(tt, i + 1) * psit[k]
+                # Sub-block number 25 (Scale exponential involved), beta_i*alpha0
+                Hxx[1 + nmu + ntrend_loc + nind_loc, 1 + i] = aux
+
+            if self.ngamma0 == 1:
+                for i in range(nmu):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += Dmutepst[k] * self._Dparam(tt, i + 1)
+                    # Sub-block number 26 (Scale exponential involved), beta_i*gamma0
+                    Hxx[
+                        2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
+                        1 + i,
+                    ] = aux
+            if ntrend_loc > 0:
+                for i in range(nmu):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += D2mut[k] * tt * self._Dparam(tt, i + 1)
+                    # Sub-block number 27, betaT*beta_i
+                    Hxx[1 + nmu, 1 + i] = aux
+
+            if ntrend_sc > 0:
+                for i in range(nmu):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += Dmutpsit[k] * tt * self._Dparam(tt, i + 1) * psit[k]
+                    # Sub-block number 46 (Scale exponential involved), alphaT*beta_i
+                    Hxx[2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc, 1 + i] = aux
+            if ntrend_sh > 0:
+                for i in range(nmu):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += Dmutepst[k] * tt * self._Dparam(tt, i + 1)
+                    # Sub-block number 46 (Scale exponential involved), beta_i*gammaT
+                    Hxx[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + npsi
+                        + ngamma
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc,
+                        1 + i,
+                    ] = aux
+
+            if nind_loc > 0:
+                for i in range(nmu):
+                    for j in range(nind_loc):
+                        aux = 0
+                        for k, tt in enumerate(self.t):
+                            aux += (
+                                D2mut[k]
+                                * covariates_loc[k, j]
+                                * self._Dparam(tt, i + 1)
+                            )
+                        # Sub-block number 28, beta_i*beta_cov_j
+                        Hxx[1 + nmu + ntrend_loc + j, 1 + i] = aux
+            if nind_sc > 0:
+                for i in range(nmu):
+                    for j in range(nind_sc):
+                        aux = 0
+                        for k, tt in enumerate(self.t):
+                            aux += (
+                                Dmutpsit[k]
+                                * covariates_sc[k, j]
+                                * self._Dparam(tt, i + 1)
+                                * psit[k]
+                            )
+                        # Sub-block number 47 (Scale exponential involved), beta_i*alpha_cov_j
+                        Hxx[
+                            2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + j,
+                            1 + i,
+                        ] = aux
+            if nind_sh > 0:
+                for i in range(nmu):
+                    for j in range(nind_sh):
+                        aux = 0
+                        for k, tt in enumerate(self.t):
+                            aux += (
+                                Dmutepst[k]
+                                * covariates_sh[k, j]
+                                * self._Dparam(tt, i + 1)
+                            )
+                        # Sub-block added by Victor, beta_j*gamma_cov_i
+                        Hxx[
+                            2
+                            + self.ngamma0
+                            + nmu
+                            + npsi
+                            + ngamma
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + ntrend_sh
+                            + j,
+                            1 + i,
+                        ] = aux
+        if npsi > 0:
+            for i in range(npsi):
+                aux = 0
+                for k, tt in enumerate(self.t):
+                    aux += (
+                        (D2psit[k] * psit[k] + Dpsit[k])
+                        * self._Dparam(tt, i + 1)
+                        * psit[k]
+                    )
+                # Sub-block number 29 (Scale exponential involved), alpha_i*alpha_0
+                Hxx[
+                    2 + nmu + ntrend_loc + nind_loc + i, 1 + ntrend_loc + nind_loc + nmu
+                ] = aux
+                for j in range(i + 1):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += (
+                            (D2psit[k] * psit[k] + Dpsit[k])
+                            * self._Dparam(tt, i + 1)
+                            * self._Dparam(tt, j + 1)
+                            * psit[k]
+                        )
+                    # Sub-block 30 (Scale exponential involved), alpha_i*alpha_j
+                    Hxx[
+                        2 + nmu + ntrend_loc + nind_loc + i,
+                        2 + nmu + ntrend_loc + nind_loc + j,
+                    ] = aux
+            if self.ngamma0 == 1:
+                for i in range(npsi):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += Dpsitepst[k] * self._Dparam(tt, i + 1) * psit[k]
+                    # Sub-block number 31 (Scale exponential involved), alpha_i*gamma0
+                    Hxx[
+                        2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
+                        2 + nmu + ntrend_loc + nind_loc + i,
+                    ] = aux
+            for i in range(npsi):
+                aux = 0
+                for k, tt in enumerate(self.t):
+                    aux += Dmutpsit[k] * self._Dparam(tt, i + 1) * psit[k]
+                # Sub-block number 32 (Scale exponential involved), beta0*alpha_i
+                Hxx[2 + nmu + ntrend_loc + nind_loc + i, 0] = aux
+            if ntrend_loc > 0:
+                for i in range(npsi):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += Dmutpsit[k] * tt * self._Dparam(tt, i + 1) * psit[k]
+                    # Sub-block number 33 (Scale exponential involved), alpha_i*betaT
+                    Hxx[2 + nmu + ntrend_loc + nind_loc + i, 1 + nmu] = aux
+            if nind_loc > 0:
+                for i in range(npsi):
+                    for j in range(nind_loc):
+                        aux = 0
+                        for k, tt in enumerate(self.t):
+                            aux += (
+                                Dmutpsit[k]
+                                * covariates_loc[k, j]
+                                * self._Dparam(tt, i + 1)
+                                * psit[k]
+                            )
+                        # Sub-block number 34 (Scale exponential involved), alpha_i*beta_cov_j
+                        Hxx[
+                            2 + nmu + ntrend_loc + nind_loc + i,
+                            1 + nmu + ntrend_loc + j,
+                        ] = aux
+            if nind_sh > 0:
+                for i in range(npsi):
+                    for j in range(nind_sh):
+                        aux = 0
+                        for k, tt in enumerate(self.t):
+                            aux += (
+                                Dpsitepst[k]
+                                * covariates_sh[k, j]
+                                * self._Dparam(tt, i + 1)
+                                * psit[k]
+                            )
+                        # Sub-block added by Victor (scale exponential involved), alpha_i*gamma_cov_j
+                        Hxx[
+                            2
+                            + self.ngamma0
+                            + nmu
+                            + npsi
+                            + ngamma
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + ntrend_sh
+                            + j,
+                            2 + nmu + ntrend_loc + nind_loc + i,
+                        ] = aux
+            if ntrend_sh > 0:
+                for i in range(nmu):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += Dpsitepst[k] * tt * psit[k] * self._Dparam(tt, i + 1)
+                    # Sub-block number 46 (Scale exponential involved), alpha_i*gammaT
+                    Hxx[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + npsi
+                        + ngamma
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc,
+                        2 + nmu + ntrend_loc + nind_loc + i,
+                    ] = aux
+        if ngamma > 0:
+            for i in range(ngamma):
+                # First element associated to the constant value (first column)
+                aux = 0
+                for k, tt in enumerate(self.t):
+                    aux += D2epst[k] * self._Dparam(tt, i + 1)
+                # Sub-block number 35, gamma_i*gamma0
+                Hxx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc
+                    + i,
+                    2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
+                ] = aux
+                for j in range(i + 1):
+                    # If shape parameters included but later everything is GUMBEL
+                    if j == i and len(posG) == len(self.xt):
+                        Hxx[
+                            2
+                            + self.ngamma0
+                            + nmu
+                            + npsi
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + i,
+                            2
+                            + self.ngamma0
+                            + nmu
+                            + npsi
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + j,
+                        ] = -1
+                    else:
+                        aux = 0
+                        for k, tt in enumerate(self.t):
+                            aux += (
+                                D2epst[k]
+                                * self._Dparam(tt, i + 1)
+                                * self._Dparam(tt, j + 1)
+                            )
+                        # Sub-block number 36, gamma_i*gamma_j
+                        Hxx[
+                            2
+                            + self.ngamma0
+                            + nmu
+                            + npsi
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + i,
+                            2
+                            + self.ngamma0
+                            + nmu
+                            + npsi
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + j,
+                        ] = aux
+            for i in range(ngamma):
+                aux = 0
+                for k, tt in enumerate(self.t):
+                    aux += Dpsitepst[k] * self._Dparam(tt, i + 1) * psit[k]
+                # Sub-block number 37 (Scale exponential involved) gamma_i*alpha0
+                Hxx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc
+                    + i,
+                    1 + nmu + ntrend_loc + nind_loc,
+                ] = aux
+            for i in range(ngamma):
+                aux = 0
+                for k, tt in enumerate(self.t):
+                    aux += Dmutepst[k] * self._Dparam(tt, i + 1)
+                # Sub-block number 38, gamma_i*beta0
+                Hxx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc
+                    + i,
+                    0,
+                ] = aux
+            if ntrend_loc > 0:
+                for i in range(ngamma):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += Dmutepst[k] * tt * self._Dparam(tt, i + 1)
+                    # Sub-block number 39, gamma_i*betaT
+                    Hxx[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + npsi
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + i,
+                        1 + nmu,
+                    ] = aux
+            if ntrend_sc > 0:
+                for i in range(ngamma):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += Dpsitepst[k] * tt * self._Dparam(tt, i + 1) * psit[k]
+                    # Sub-block number 44 (Scale exponential involved), gamma_i*alphaT
+                    Hxx[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + npsi
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + i,
+                        2 + nmu + npsi + ntrend_loc + nind_loc,
+                    ] = aux
+            if ntrend_sh > 0:
+                for i in range(nmu):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += D2epst[k] * tt * self._Dparam(tt, i + 1)
+                    # Sub-block number 46 (Scale exponential involved), gamma_i*gammaT
+                    Hxx[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + npsi
+                        + ngamma
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc,
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + npsi
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + i,
+                    ] = aux
+            if nind_loc > 0:
+                for i in range(ngamma):
+                    for j in range(nind_loc):
+                        aux = 0
+                        for k, tt in enumerate(self.t):
+                            aux += (
+                                Dmutepst[k]
+                                * covariates_loc[k, j]
+                                * self._Dparam(tt, i + 1)
+                            )
+                        # Sub-block number 40, gamma_i*beta_cov_j
+                        Hxx[
+                            2
+                            + self.ngamma0
+                            + nmu
+                            + npsi
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + i,
+                            1 + nmu + ntrend_loc + j,
+                        ] = aux
+            if nind_sc > 0:
+                for i in range(ngamma):
+                    for j in range(nind_sc):
+                        aux = 0
+                        for k, tt in enumerate(self.t):
+                            aux += (
+                                Dpsitepst[k]
+                                * covariates_sc[k, j]
+                                * self._Dparam(tt, i + 1)
+                                * psit[k]
+                            )
+                        # Sub-block number 45 (Scale exponential involved), gamma_i*alpha_cov_j
+                        Hxx[
+                            2
+                            + self.ngamma0
+                            + nmu
+                            + npsi
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + i,
+                            2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + j,
+                        ] = aux
+            if nind_sh > 0:
+                for i in range(ngamma):
+                    for j in range(nind_sh):
+                        aux = 0
+                        for k, tt in enumerate(self.t):
+                            aux += (
+                                D2psit[k]
+                                * covariates_sh[k, j]
+                                * self._Dparam(tt, i + 1)
+                            )
+                        # Sub-block added by Victor, gamma_i*gamma_cov_j
+                        Hxx[
+                            2
+                            + self.ngamma0
+                            + nmu
+                            + npsi
+                            + ngamma
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + ntrend_sh
+                            + j,
+                            2
+                            + self.ngamma0
+                            + nmu
+                            + npsi
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + i,
+                        ] = aux
+
+        if nind_loc > 0 and ntrend_sc > 0:
+            for i in range(nind_loc):
+                aux = 0
+                for k, tt in enumerate(self.t):
+                    aux += Dmutpsit[k] * tt * covariates_loc[k, i] * psit[k]
+                # Sub-block number 50 (Scale exponential involved), beta_cov_i*alphaT
+                Hxx[
+                    2 + nmu + ntrend_loc + nind_loc + npsi, 1 + nmu + ntrend_loc + i
+                ] = aux
+        if nind_loc > 0 and nind_sc > 0:
+            for i in range(nind_loc):
+                for j in range(nind_sc):
+                    # Sub-block number 51 (Scale exponential involved), beta_cov_i*alpha_cov_j
+                    Hxx[
+                        2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + j,
+                        1 + nmu + ntrend_loc + i,
+                    ] = np.sum(
+                        Dmutpsit * covariates_sc[:, j] * covariates_loc[:, i] * psit
+                    )
+        if nind_loc > 0 and nind_sh > 0:
+            for i in range(nind_loc):
+                for j in range(nind_sh):
+                    # Sub-block added by Victor, beta_cov_i*gamma_cov_j
+                    Hxx[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + npsi
+                        + ngamma
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + ntrend_sh
+                        + j,
+                        1 + nmu + ntrend_loc + i,
+                    ] = np.sum(Dmutepst * covariates_loc[:, i] * covariates_sh[:, j])
+        if nind_sc > 0 and nind_sh > 0:
+            for i in range(nind_sc):
+                for j in range(nind_sh):
+                    # Sub-block added by Victor (scale exponential involved), alpha_cov_i*gamma_cov_j
+                    Hxx[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + npsi
+                        + ngamma
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + ntrend_sh
+                        + j,
+                        2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + i,
+                    ] = np.sum(
+                        Dpsitepst * covariates_sc[:, i] * covariates_sh[:, j] * psit
+                    )
+        if nind_sh > 0 and ntrend_loc > 0:
+            for i in range(nind_sh):
+                # aux = 0
+                # for k, tt in enumerate(self.t):
+                #     aux += Dmutepst[k] * tt * covariates_sh[k, i]
+                # Sub-block added by Victor, betaT*gamma_cov_i
+                Hxx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ngamma
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc
+                    + ntrend_sh
+                    + i,
+                    1 + nmu,
+                ] = np.sum(Dmutepst * self.t * covariates_sh[:, i])
+        if ntrend_sc > 0:
+            for i in range(npsi):
+                aux = 0
+                for k, tt in enumerate(self.t):
+                    aux += (
+                        (D2psit[k] * psit[k] + Dpsit[k])
+                        * tt
+                        * self._Dparam(tt, i + 1)
+                        * psit[k]
+                    )
+                # Sub-block number 54 (Scale exponential involved), alpha_i*alphaT
+                Hxx[
+                    2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc,
+                    2 + nmu + ntrend_loc + nind_loc + i,
+                ] = aux
+        if nind_sc > 0:
+            for i in range(npsi):
+                for j in range(nind_sc):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += (
+                            (D2psit[k] * psit[k] + Dpsit[k])
+                            * covariates_sc[k, j]
+                            * self._Dparam(tt, i + 1)
+                            * psit[k]
+                        )
+                    # Sub-block number 55 (Scale exponential involved), alpha_i*alpha_cov_j
+                    Hxx[
+                        2 + nmu + ntrend_loc + nind_loc + npsi + ntrend_sc + j,
+                        2 + nmu + ntrend_loc + nind_loc + i,
+                    ] = aux
+        if nmu > 0 and npsi > 0:
+            for j in range(nmu):
+                for i in range(npsi):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += (
+                            Dmutpsit[k]
+                            * self._Dparam(tt, i + 1)
+                            * self._Dparam(tt, j + 1)
+                            * psit[k]
+                        )
+                    # Sub-block number 41 (Scale exponential involved), beta_j*alpha_i
+                    Hxx[2 + nmu + ntrend_loc + nind_loc + i, 1 + j] = aux
+        if nmu > 0 and ngamma > 0:
+            for j in range(nmu):
+                for i in range(ngamma):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += (
+                            Dmutepst[k]
+                            * self._Dparam(tt, i + 1)
+                            * self._Dparam(tt, j + 1)
+                        )
+                    # Sub-block number 42, beta_j*gamma_i
+                    Hxx[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + npsi
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + i,
+                        1 + j,
+                    ] = aux
+        if npsi > 0 and ngamma > 0:
+            for j in range(npsi):
+                for i in range(ngamma):
+                    aux = 0
+                    for k, tt in enumerate(self.t):
+                        aux += (
+                            Dpsitepst[k]
+                            * self._Dparam(tt, i + 1)
+                            * self._Dparam(tt, j + 1)
+                            * psit[k]
+                        )
+                    # Sub-block number 43 (Scale exponential involved), alpha_j*gamma_i
+                    Hxx[
+                        2
+                        + self.ngamma0
+                        + nmu
+                        + npsi
+                        + ntrend_loc
+                        + nind_loc
+                        + ntrend_sc
+                        + nind_sc
+                        + i,
+                        2 + nmu + ntrend_loc + nind_loc + j,
+                    ] = aux
+
+        if nind_sh > 0:
+            for i in range(nind_sh):
+                # Sub-block added by Victor, beta0*gamma_cov_i
+                Hxx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ngamma
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc
+                    + ntrend_sh
+                    + i,
+                    0,
+                ] = np.sum(Dmutepst * covariates_sh[:, i])
+                # Sub-block added by Victor (scale exponential involved), alpha0*gamma_cov_i
+                Hxx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ngamma
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc
+                    + ntrend_sh
+                    + i,
+                    1 + nmu + ntrend_loc + nind_loc,
+                ] = np.sum(Dpsitepst * psit * covariates_sh[:, i])
+
+                # aux = 0
+                # for k, tt in enumerate(self.t):
+                #     aux += Dpsitepst[k] * tt * covariates_sh[k, i] * psit[k]
+                # Sub-bloc added by Victor (scale exponential involved), alphaT*gamma_cov_i
+                Hxx[
+                    2
+                    + self.ngamma0
+                    + nmu
+                    + npsi
+                    + ngamma
+                    + ntrend_loc
+                    + nind_loc
+                    + ntrend_sc
+                    + nind_sc
+                    + ntrend_sh
+                    + i,
+                    1 + nmu + npsi + ntrend_loc + nind_loc,
+                ] = np.sum(Dpsitepst * self.t * covariates_sh[:, i] * psit)
+
+        # Simmetric part of the Hessian
+        Hxx = Hxx + np.tril(Hxx, -1).T
+        Hxx = -Hxx
+
+        return Hxx
 
     def fit(
         self,
