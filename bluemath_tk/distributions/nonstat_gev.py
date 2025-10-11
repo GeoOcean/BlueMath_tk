@@ -816,6 +816,7 @@ class NonStatGEV(BlueMathModel):
 
                 if self.AIC_iter[iter] <= self.AIC_iter[iter - 1]:
                     # Update the parameters
+                    final_fit_result = fit_result
                     self.AICini = self.AIC_iter[iter]
                     self._update_params(**fit_result)
                     beta_cov = fit_result.get("beta_cov")
@@ -841,6 +842,7 @@ class NonStatGEV(BlueMathModel):
                         gamma_cov = gamma_cov[:-1]
                         nind_sh -= 1
 
+                    fit_result = final_fit_result
                     self.niter_cov = iter - self.niter_harm
                     self.nit = iter
 
@@ -1281,12 +1283,15 @@ class NonStatGEV(BlueMathModel):
         """
         # Fitting options
         if options is None:
-            options = {
-                "gtol": 1e-8,
-                "xtol": 1e-8,
-                "barrier_tol": 1e-6,
-                "maxiter": 1000,
-            }
+            options = dict(
+                maxiter=20000,
+                # Aim for first-order optimality:
+                gtol=1e-8,          # or 1e-9 if your scaling is good
+                # Make f-decrease test essentially inactive:
+                ftol=1e-20,         # very small so it won’t trigger early
+                maxcor=20,          # more curvature memory
+                maxls=100           # more line-search steps
+            )
 
         # Total number of parameters to be estimated
         nmu = 2 * nmu
@@ -1430,6 +1435,30 @@ class NonStatGEV(BlueMathModel):
                 + ngamma
             ] = 0.15
 
+        if ntrend_sh > 0:
+            lb[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc
+                + ngamma
+            ] = -0.15
+            ub[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc
+                + ngamma
+            ] = 0.15
+
         if nind_sh > 0:
             lb[
                 2
@@ -1440,7 +1469,8 @@ class NonStatGEV(BlueMathModel):
                 + nind_loc
                 + ntrend_sc
                 + nind_sc
-                + ngamma : 2
+                + ngamma
+                + ntrend_sh : 2
                 + self.ngamma0
                 + nmu
                 + npsi
@@ -1449,6 +1479,7 @@ class NonStatGEV(BlueMathModel):
                 + ntrend_sc
                 + nind_sc
                 + ngamma
+                + ntrend_sh
                 + nind_sh
             ] = -0.15
             ub[
@@ -1460,7 +1491,8 @@ class NonStatGEV(BlueMathModel):
                 + nind_loc
                 + ntrend_sc
                 + nind_sc
-                + ngamma : 2
+                + ngamma 
+                + ntrend_sh : 2
                 + self.ngamma0
                 + nmu
                 + npsi
@@ -1469,6 +1501,7 @@ class NonStatGEV(BlueMathModel):
                 + ntrend_sc
                 + nind_sc
                 + ngamma
+                + ntrend_sh
                 + nind_sh
             ] = 0.15
 
@@ -1484,90 +1517,94 @@ class NonStatGEV(BlueMathModel):
         bounds = [(lb_i, up_i) for lb_i, up_i in zip(lb, ub)]
         result = minimize(
             fun=self._auxmin_loglikelihood,
-            jac=self._auxmin_loglikelihood_grad,  # Gradient information
-            hess=self._auxmin_loglikelihood_hess,  # Hessian information, if applicable
             x0=x_ini,
             bounds=bounds,
             args=(
                 nmu,
                 npsi,
-                ngamma,
+                ngamma, 
                 ntrend_loc,
                 list_loc,
-                ntrend_sc,
+                ntrend_sc, 
                 list_sc,
                 ntrend_sh,
                 list_sh,
             ),
-            options=options,  # Options
-            method="trust-constr",
+            method='L-BFGS-B',
+            jac=self._auxmin_loglikelihood_grad,
+            options={
+                'maxiter': options.get('maxiter', 1000),
+                'ftol': options.get('ftol', 1e-6),
+                'gtol': options.get('gtol', 1e-6),
+            }
         )
 
         fit_result["x"] = result.x  # Optimal parameters vector
-        fit_result["negloglikelihood"] = result.fun  # Optimal loglikelihood
+        fit_result["negloglikelihood"] = result.fun  # Optimal loglikelihood 
+        fit_result["AIC"] = self._AIC(-fit_result["negloglikelihood"], n_params)
+        fit_result["n_params"] = n_params
         fit_result["success"] = result.success
         fit_result["message"] = result.message
-        fit_result["grad"] = result.grad
-        fit_result["hess_inv"] = (
-            result.hess_inv if "hess_inv" in result else None
-        )  # 'hess_inv' is only available if 'hess' is provided
+        fit_result["grad"] = result.grad if hasattr(result, 'grad') else None
+        fit_result["jac"] = result.jac if hasattr(result, 'jac') else None
+        fit_result["hess_inv"] = result.hess_inv if hasattr(result, 'hess_inv') else None
 
-        # Check if any of the bounds related to shape parameters become active, if active increase or decrease the bound and call the optimization routine again
-        lambdas = result.v
-        auxlb = []
-        auxub = []
-        for i, v in enumerate(lambdas[0]):
-            if np.abs(fit_result["x"][i] - lb[i]) <= 1e-6 or v < -1e-6:
-                lb[i] -= 0.05
-                auxlb.append(i)
-            if np.abs(fit_result["x"][i] - ub[i]) <= 1e-6 or v > 1e-6:
-                ub[i] += 0.05
-                auxub.append(i)
+        # # Check if any of the bounds related to shape parameters become active, if active increase or decrease the bound and call the optimization routine again
+        # lambdas = result.v
+        # auxlb = []
+        # auxub = []
+        # for i, v in enumerate(lambdas[0]):
+        #     if np.abs(fit_result["x"][i] - lb[i]) <= 1e-6 or v < -1e-6:
+        #         lb[i] -= 0.05
+        #         auxlb.append(i)
+        #     if np.abs(fit_result["x"][i] - ub[i]) <= 1e-6 or v > 1e-6:
+        #         ub[i] += 0.05
+        #         auxub.append(i)
 
-        it = 0
-        while (len(auxlb) > 0 or len(auxub) > 0) and it < 10:
-            it += 1
-            result = minimize(
-                fun=self._auxmin_loglikelihood,
-                jac=self._auxmin_loglikelihood_grad,  # Gradient information
-                hess=self._auxmin_loglikelihood_hess,  # Hessian information, if applicable
-                x0=fit_result["x"],
-                bounds=bounds,
-                args=(
-                    nmu,
-                    npsi,
-                    ngamma,
-                    ntrend_loc,
-                    list_loc,
-                    ntrend_sc,
-                    list_sc,
-                    ntrend_sh,
-                    list_sh,
-                ),
-                options=options,  # Options
-                method="trust-constr",
-            )
+        # it = 0
+        # while (len(auxlb) > 0 or len(auxub) > 0) and it < 10:
+        #     it += 1
+        #     result = minimize(
+        #         fun=self._auxmin_loglikelihood,
+        #         jac=self._auxmin_loglikelihood_grad,  # Gradient information
+        #         hess=self._auxmin_loglikelihood_hess,  # Hessian information, if applicable
+        #         x0=fit_result["x"],
+        #         bounds=bounds,
+        #         args=(
+        #             nmu,
+        #             npsi,
+        #             ngamma,
+        #             ntrend_loc,
+        #             list_loc,
+        #             ntrend_sc,
+        #             list_sc,
+        #             ntrend_sh,
+        #             list_sh,
+        #         ),
+        #         options=options,  # Options
+        #         method="trust-constr",
+        #     )
 
-            fit_result["x"] = result.x  # Optimal parameters vector
-            fit_result["negloglikelihood"] = result.fun  # Optimal loglikelihood
-            fit_result["AIC"] = self._AIC(-fit_result["negloglikelihood"], n_params)
-            fit_result["n_params"] = n_params
-            fit_result["success"] = result.success
-            fit_result["message"] = result.message
-            fit_result["grad"] = result.grad
-            fit_result["hess_inv"] = (
-                result.hess_inv if "hess_inv" in result else None
-            )  # 'hess_inv' is only available if 'hess' is provided
-            fit_result["lambdas"] = result.v
-            auxlb = []
-            auxub = []
-            for i, v in enumerate(lambdas[0]):
-                if np.abs(fit_result["x"][i] - lb[i]) <= 1e-6 or v < -1e-6:
-                    lb[i] -= 0.05
-                    auxlb.append(i)
-                if np.abs(fit_result["x"][i] - ub[i]) <= 1e-6 or v > 1e-6:
-                    ub[i] += 0.05
-                    auxub.append(i)
+        #     fit_result["x"] = result.x  # Optimal parameters vector
+        #     fit_result["negloglikelihood"] = result.fun  # Optimal loglikelihood
+        #     fit_result["AIC"] = self._AIC(-fit_result["negloglikelihood"], n_params)
+        #     fit_result["n_params"] = n_params
+        #     fit_result["success"] = result.success
+        #     fit_result["message"] = result.message
+        #     fit_result["grad"] = result.grad
+        #     fit_result["hess_inv"] = (
+        #         result.hess_inv if "hess_inv" in result else None
+        #     )  # 'hess_inv' is only available if 'hess' is provided
+        #     fit_result["lambdas"] = result.v
+        #     auxlb = []
+        #     auxub = []
+        #     for i, v in enumerate(lambdas[0]):
+        #         if np.abs(fit_result["x"][i] - lb[i]) <= 1e-6 or v < -1e-6:
+        #             lb[i] -= 0.05
+        #             auxlb.append(i)
+        #         if np.abs(fit_result["x"][i] - ub[i]) <= 1e-6 or v > 1e-6:
+        #             ub[i] += 0.05
+        #             auxub.append(i)
 
         # Location parameter
         fit_result["beta0"] = fit_result["x"][0]
@@ -4804,6 +4841,10 @@ class NonStatGEV(BlueMathModel):
         fit_result["grad"] = Jx
         fit_result["hessian"] = Hxx
 
+        # if fit_result["hess_inv"] is not None:
+        #     self.invI0 = fit_result["hess_inv"]
+        # else:
+        #     self.invI0 = np.linalg.inv(-Hxx)
         self.invI0 = np.linalg.inv(-Hxx)
         fit_result["invI0"] = self.invI0
 
