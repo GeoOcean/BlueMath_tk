@@ -3384,23 +3384,23 @@ class NonStatGEV(BlueMathModel):
                     + 2
                     + (-2 - epst * (3 + epst) * xn) * z ** (1 / epst)
                 )
-                + (z / (epst * epst))
+                + (z / (epst ** 2))
                 * np.log(z)
                 * (
                     2 * epst * (-xn * (1 + epst) - 1 + z ** (1 + 1 / epst))
                     + z * np.log(z)
                 )
             )
-            / (epst * epst * z**2)
+            / ((epst * z)**2)
         )
         Dmutpsit = -(1 + epst - (1 - xn) * zn) / ((z * psit) ** 2)
         Dmutepst = (
             -zn
             * (
-                epst * (-(1 + epst) * xn - epst * (1 - xn) * z ** (1 / epst))
+                epst * (-(1 + epst) * xn - epst * (1 - xn) / zn)
                 + z * np.log(z)
             )
-            / (epst * epst * psit * z**2)
+            / (psit * epst**2 * z**2)
         )
         Dpsitepst = xn * Dmutepst
 
@@ -3655,7 +3655,7 @@ class NonStatGEV(BlueMathModel):
                 + ntrend_sc
                 + nind_sc,
                 2 + nmu + ntrend_loc + nind_loc + npsi,
-            ] = np.sum(Dpsitepst * psit * self.t**2)
+            ] = np.sum(Dmutepst * self.t**2)
         if ntrend_sh > 0 and ntrend_sc > 0:
             # Sub-block number, alphaT*gammaT
             Hxx[
@@ -3669,7 +3669,7 @@ class NonStatGEV(BlueMathModel):
                 + ntrend_sc
                 + nind_sc,
                 1 + nmu,
-            ] = np.sum(Dmutepst * self.t**2)
+            ] = np.sum(Dpsitepst * self.t**2 * psit)
         # Sub-block number 13, beta0*beta_cov_i
         if nind_loc > 0:
             for i in range(nind_loc):
@@ -3738,7 +3738,7 @@ class NonStatGEV(BlueMathModel):
                     + nind_sc,
                     1 + nmu + ntrend_loc + i,
                 ] = np.sum(Dmutepst * covariates_loc[:, i] * self.t)
-        # Sub-block number (Scale exponential involved), gamma_cov_i*gammaT
+        # Sub-block number, gamma_cov_i*gammaT
         if nind_sh > 0 and ntrend_sh > 0:
             for i in range(nind_sh):
                 Hxx[
@@ -4351,13 +4351,13 @@ class NonStatGEV(BlueMathModel):
                         + j,
                         2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + i,
                     ] = np.sum(
-                        Dmutepst * covariates_sc[:, i] * covariates_sh[:, j] * psit
+                        Dpsitepst * covariates_sc[:, i] * covariates_sh[:, j] * psit
                     )
         if nind_sh > 0 and ntrend_loc > 0:
             for i in range(nind_sh):
-                aux = 0
-                for k, tt in enumerate(self.t):
-                    aux += Dmutepst[k] * tt * covariates_sh[k, i]
+                # aux = 0
+                # for k, tt in enumerate(self.t):
+                #     aux += Dmutepst[k] * tt * covariates_sh[k, i]
                 # Sub-block added by Victor, betaT*gamma_cov_i
                 Hxx[
                     2
@@ -4372,7 +4372,7 @@ class NonStatGEV(BlueMathModel):
                     + ntrend_sh
                     + i,
                     1 + nmu,
-                ] = aux
+                ] = np.sum(Dmutepst * self.t * covariates_sh[:, i])
         if ntrend_sc > 0:
             for i in range(npsi):
                 aux = 0
@@ -4498,9 +4498,9 @@ class NonStatGEV(BlueMathModel):
                     1 + nmu + ntrend_loc + nind_loc,
                 ] = np.sum(Dpsitepst * psit * covariates_sh[:, i])
 
-                aux = 0
-                for k, tt in enumerate(self.t):
-                    aux += Dpsitepst[k] * tt * covariates_sh[k, i] * psit[k]
+                # aux = 0
+                # for k, tt in enumerate(self.t):
+                #     aux += Dpsitepst[k] * tt * covariates_sh[k, i] * psit[k]
                 # Sub-bloc added by Victor (scale exponential involved), alphaT*gamma_cov_i
                 Hxx[
                     2
@@ -4515,7 +4515,7 @@ class NonStatGEV(BlueMathModel):
                     + ntrend_sh
                     + i,
                     1 + nmu + npsi + ntrend_loc + nind_loc,
-                ] = aux
+                ] = np.sum(Dpsitepst * self.t * covariates_sh[:, i] * psit)
 
         # Simmetric part of the Hessian
         Hxx = Hxx + np.tril(Hxx, -1).T
