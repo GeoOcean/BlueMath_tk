@@ -1284,8 +1284,8 @@ class NonStatGEV(BlueMathModel):
         # Fitting options
         if options is None:
             options = {
-                "gtol": 1e-8,
-                "xtol": 1e-8,
+                "gtol": 1e-6,
+                "xtol": 1e-10,
                 "barrier_tol": 1e-6,
                 "maxiter": 1000,
             }
@@ -3390,17 +3390,17 @@ class NonStatGEV(BlueMathModel):
         zn = z ** (-1 / epst)
 
         # Evaluate the loglikelihood function, not that the general and Gumbel expressions are used
-        f = -np.sum(
-            -np.log(self.kt[pos])
-            + np.log(psit[pos])
-            + (1 + 1 / epst[pos]) * np.log(z[pos])
-            + self.kt[pos] * zn[pos]
-        ) - np.sum(
-            -np.log(self.kt[posG])
-            + np.log(psit[posG])
-            + xn[posG]
-            + self.kt[posG] * np.exp(-xn[posG])
-        )
+        # f = -np.sum(
+        #     -np.log(self.kt[pos])
+        #     + np.log(psit[pos])
+        #     + (1 + 1 / epst[pos]) * np.log(z[pos])
+        #     + self.kt[pos] * zn[pos]
+        # ) - np.sum(
+        #     -np.log(self.kt[posG])
+        #     + np.log(psit[posG])
+        #     + xn[posG]
+        #     + self.kt[posG] * np.exp(-xn[posG])
+        # )
 
         ### Gradient of the loglikelihood
         # Derivatives given by equations (A.1)-(A.3) in the paper
@@ -3829,20 +3829,6 @@ class NonStatGEV(BlueMathModel):
                 + nind_sc,
                 2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
             ] = np.sum(D2epst * self.t)
-        if ntrend_sh > 0 and ntrend_loc > 0:
-            # Sub-block number, betaT*gammaT
-            Hxx[
-                2
-                + self.ngamma0
-                + nmu
-                + npsi
-                + ngamma
-                + ntrend_loc
-                + nind_loc
-                + ntrend_sc
-                + nind_sc,
-                2 + nmu + ntrend_loc + nind_loc + npsi,
-            ] = np.sum(Dmutepst * self.t**2)
         if ntrend_sh > 0 and ntrend_sc > 0:
             # Sub-block number, alphaT*gammaT
             Hxx[
@@ -3855,8 +3841,22 @@ class NonStatGEV(BlueMathModel):
                 + nind_loc
                 + ntrend_sc
                 + nind_sc,
+                2 + nmu + ntrend_loc + nind_loc + npsi,
+            ] = np.sum(Dpsitepst * psit * self.t**2)
+        if ntrend_sh > 0 and ntrend_loc > 0:
+            # Sub-block number, betaT*gammaT
+            Hxx[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
                 1 + nmu,
-            ] = np.sum(Dpsitepst * self.t**2 * psit)
+            ] = np.sum(Dmutepst * self.t**2)
         # Sub-block number 13, beta0*beta_cov_i
         if nind_loc > 0:
             for i in range(nind_loc):
@@ -6949,14 +6949,14 @@ class NonStatGEV(BlueMathModel):
             )
 
             month_positions_aux = [i/12 for i in range(13)]
-            ax1.plot(
-                month_positions_aux, rt_10, linestyle="-", linewidth=1, label="10 years", color="tab:red"
+            ax1.step(
+                month_positions_aux, rt_10, where="post", linestyle="-", linewidth=1, label="10 years", color="tab:red"
             )
-            ax1.plot(
-                month_positions_aux, rt_50, linestyle="-", linewidth=1, label="50 years", color="tab:purple"
+            ax1.step(
+                month_positions_aux, rt_50, where="post", linestyle="-", linewidth=1, label="50 years", color="tab:purple"
             )
-            ax1.plot(
-                month_positions_aux, rt_100, linestyle="-", linewidth=1, label="100 years", color="tab:green"
+            ax1.step(
+                month_positions_aux, rt_100, where="post", linestyle="-", linewidth=1, label="100 years", color="tab:green"
             )
 
             ax1.set_title(f"Parameters Evolution ({self.var_name})")
@@ -7047,18 +7047,18 @@ class NonStatGEV(BlueMathModel):
                 for year in range(n_years):
                     rt_100[year] = self._aggquantile(1-1/100, year, year+1) # 100-year return level at each year
 
-                ax1.plot(
-                    np.arange(init_year,init_year+n_years), rt_10, linestyle="-", linewidth=1, label="10 years", color="tab:red"
+                ax1.step(
+                    np.arange(init_year,init_year+n_years), rt_10, where="post", linestyle="-", linewidth=1, label="10 years", color="tab:red"
                 )
-                ax1.plot(
-                    np.arange(init_year,init_year+n_years), rt_50, linestyle="-", linewidth=1, label="50 years", color="tab:purple"
+                ax1.step(
+                    np.arange(init_year,init_year+n_years), rt_50, where="post", linestyle="-", linewidth=1, label="50 years", color="tab:purple"
                 )
-                ax1.plot(
-                    np.arange(init_year, init_year+n_years), rt_100, linestyle="-", linewidth=1, label="100 years", color="tab:green"
+                ax1.step(
+                    np.arange(init_year, init_year+n_years), rt_100, where="post", linestyle="-", linewidth=1, label="100 years", color="tab:green"
                 )
 
         ax1.set_xlabel("Time (years)")
-        ax1.set_ylabel(rf"$\mu_t(m)$, {self.var_name}")
+        ax1.set_ylabel(f"{self.var_name}")
         # ax1.set_title(f"Evolution of location and scale parameters ({self.var_name})")
         ax1.set_title(f"Evolution of parameters ({self.var_name})")
         ax1.grid(True)
@@ -8704,7 +8704,7 @@ class NonStatGEV(BlueMathModel):
         )
 
         a = media - 10
-        b = media + 10
+        b = media + 20
 
         for il in range(m):
             # function of z whose root we want
