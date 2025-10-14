@@ -427,7 +427,7 @@ class OptimalThreshold(BlueMathModel):
                     rN,
                     w_values,
                     plot,
-                    f"{filename}_thresholdlocation{it}",
+                    filename,
                 )
                 if display_flag:
                     print(f"New threshold found: {threshold}")
@@ -496,7 +496,8 @@ def mrlp(
             )
 
     if ax is None:
-        _, ax = plt.subplots(figsize=figsize, dpi=100)
+        fig = plt.figure(figsize=figsize)
+        ax = fig.add_subplot()
         ax.grid(False)
 
     # Plotting central estimates of mean re sidual life
@@ -526,5 +527,5 @@ def mrlp(
 
     ax.set_xlabel("Threshold")
     ax.set_ylabel("Mean excess")
-
+    
     return ax

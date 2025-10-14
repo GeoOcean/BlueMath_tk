@@ -38,8 +38,6 @@ def threshold_search(
 
     if W_data is None:
         W_data = np.ones(u_data.size)
-    if filename is None:
-        filename = ""
 
     orden = np.argsort(u_data)
     u_data = u_data[orden]
@@ -121,7 +119,7 @@ def threshold_search(
         plt.yticks(fontsize=14)
         plt.tight_layout()
         if filename is not None:
-            plt.savefig(f"{filename}.png", dpi=300)
+            plt.savefig(f"{filename}_thresholdlocation.png", dpi=300)
         plt.show()
         plt.close()
 
