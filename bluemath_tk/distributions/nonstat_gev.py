@@ -7138,18 +7138,18 @@ class NonStatGEV(BlueMathModel):
 
         ###### 1st Year PLOT
         month_initials = [
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
             "Jan",
             "Feb",
             "Mar",
             "Apr",
             "May",
             "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
         ]
         month_positions = [i / 12 for i in range(12)]
 
