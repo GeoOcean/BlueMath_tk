@@ -4,8 +4,8 @@ import pandas as pd
 from scipy.signal import find_peaks
 from scipy.stats import chi2, norm, pearsonr
 
-from .utils.pot_utils import RWLSfit, threshold_search
 from ..core.io import BlueMathModel
+from .utils.pot_utils import RWLSfit, threshold_search
 
 
 def block_maxima(
@@ -151,7 +151,7 @@ def pot(
     adjusted_data = np.maximum(data - threshold, 0)
 
     # Usamos la librería detecta que tiene el mismo funcionamiento que la función de matlab findpeaks
-    locs, _ = find_peaks(adjusted_data, distance=min_peak_distance+1)
+    locs, _ = find_peaks(adjusted_data, distance=min_peak_distance + 1)
     # Con scipy
     # locs, _ = find_peaks(adjusted_data, distance=min_peak_distance)
 
@@ -314,10 +314,10 @@ class OptimalThreshold(BlueMathModel):
 
         # TODO: Añadir más metodos
 
-        _, _, _, pks, pks_idx, _ = pot(
+        _, _, _, self.pks, self.pks_idx, _ = pot(
             self.data, self.threshold, self.n0, self.min_peak_distance
         )
-        return self.threshold, pks, pks_idx
+        return self.threshold, self.pks, self.pks_idx
 
     def studentized_residuals(
         self,
@@ -436,11 +436,68 @@ class OptimalThreshold(BlueMathModel):
 
         return threshold, beta, fobj, r
 
+    def potplot(
+        self,
+        time: np.ndarray = None,
+        ax: plt.Axes = None,
+        figsize: tuple = (8, 5),
+    ):
+        fig, ax = potplot(
+            self.data,
+            self.threshold,
+            time,
+            self.n0,
+            self.min_peak_distance,
+            self.conf_level,
+            ax,
+            figsize,
+        )
+
+        return fig, ax
+
+
+def potplot(
+    data: np.ndarray,
+    threshold: float = 0.0,
+    time: np.ndarray = None,
+    n0: int = 10,
+    min_peak_distance: int = 2,
+    conf_level: float = 0.95,
+    ax: plt.Axes = None,
+    figsize: tuple = (8, 5),
+):
+    _, _, _, _, pks_idx, _ = pot(data, threshold, n0, min_peak_distance, conf_level)
+
+    if time is None:
+        time = np.arange(data.size)
+
+    if ax is None:
+        fig = plt.figure(figsize=figsize)
+        ax = fig.add_subplot()
+
+    # Plot complete series
+    ax.plot(time, data, ls="-", color="#5199FF", lw=0.25, zorder=10)
+
+    # Plot extremes
+    ax.scatter(
+        time[pks_idx],
+        data[pks_idx],
+        s=20,
+        lw=0.5,
+        edgecolor="w",
+        facecolor="#F85C50",
+        zorder=20,
+    )
+
+    ax.axhline(threshold, ls="--", lw=1, color="#FF756B", zorder=15)
+    ax.set_xlabel("Time")
+
+    return fig, ax
 
 
 def mrlp(
     data: np.ndarray,
-    threshold: float=None,
+    threshold: float = None,
     conf_level: float = 0.95,
     ax: plt.Axes = None,
     figsize: tuple = (8, 5),
@@ -450,7 +507,7 @@ def mrlp(
 
     The mean residual life plot should be approximately linear above a threshold
     for which the Generalized Pareto Distribution model is valid.
-    The strategy is to select the smallest threshold value immediately above 
+    The strategy is to select the smallest threshold value immediately above
     which the plot is approximately linear.
 
     Parameters
@@ -492,8 +549,8 @@ def mrlp(
         interlow, interup = norm.interval(
             0.95,
             loc=excedencias_mean_valid,
-            scale=np.sqrt(1/excedencias_weight_valid),
-            )
+            scale=np.sqrt(1 / excedencias_weight_valid),
+        )
 
     if ax is None:
         fig = plt.figure(figsize=figsize)
@@ -510,7 +567,6 @@ def mrlp(
         zorder=15,
     )
 
-    
     if conf_level is not None:
         ax.plot(pks_unicos_valid, interlow, color="#5199FF", lw=1, ls="--", zorder=10)
         ax.plot(pks_unicos_valid, interup, color="#5199FF", lw=1, ls="--", zorder=10)
@@ -527,5 +583,5 @@ def mrlp(
 
     ax.set_xlabel("Threshold")
     ax.set_ylabel("Mean excess")
-    
+
     return ax
