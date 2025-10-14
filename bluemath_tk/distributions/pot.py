@@ -112,7 +112,7 @@ def pot(
     threshold: float = 0.0,
     n0: int = 10,
     min_peak_distance: int = 2,
-    conf_level: float = 0.05,
+    sig_level: float = 0.05,
 ):
     """
     Function to identiy POT
@@ -131,6 +131,8 @@ def pot(
         Minimum number of exceedances required for valid computation
     min_peak_distance : int, default = 2
         Minimum distance between two peaks (in data points)
+    sig_level : float, default=0.05
+        Significance level for Chi-squared test
 
     Returns
     -------
@@ -168,7 +170,7 @@ def pot(
             autocorrelations[i, 1] = r
             autocorrelations[i, 2] = p_value
 
-            if p_value < conf_level:
+            if p_value < sig_level:
                 Warning(
                     f"Lag {int(lag)} significant, consider increase the number of min_peak_distance"
                 )
@@ -262,7 +264,7 @@ class OptimalThreshold(BlueMathModel):
         threshold: float = 0.0,
         n0: int = 10,
         min_peak_distance: int = 2,
-        conf_level: float = 0.05,
+        sig_level: float = 0.05,
         method: str = "studentized",
         plot: bool = False,
         filename: str = None,
@@ -281,7 +283,7 @@ class OptimalThreshold(BlueMathModel):
             self.autocorrelations,
         ) = pot(self.data, threshold, n0, min_peak_distance)
         self.method = method
-        self.conf_level = conf_level
+        self.sig_level = sig_level
         self.plot = plot
         self.filename = filename
         self.display_flag = display_flag
@@ -306,7 +308,7 @@ class OptimalThreshold(BlueMathModel):
                 self.pks_unicos_valid,
                 self.excedencias_mean_valid,
                 self.excedencias_weight_valid,
-                self.conf_level,
+                self.sig_level,
                 self.plot,
                 self.filename,
                 self.display_flag,
@@ -324,7 +326,7 @@ class OptimalThreshold(BlueMathModel):
         pks_unicos_valid: np.ndarray,
         exceedances_mean_valid: np.ndarray,
         exceedances_weight_valid: np.ndarray,
-        conf_level: float = 0.05,
+        sig_level: float = 0.05,
         plot: bool = False,
         filename: str = None,
         display_flag: bool = False,
@@ -342,8 +344,8 @@ class OptimalThreshold(BlueMathModel):
             Vector of exceedance means
         exceedances_weight_valid : np.ndarray(n,)
             Vector of exceedance weights
-        conf_level : bool, default=0.05
-            Significance level for Chi-squared test (default 0.05)
+        sig_level : bool, default=0.05
+            Significance level for Chi-squared test
         plot_flag : bool, default=False
             Boolean flag, true to plot the graphs, false otherwise
         filename : str, default=None
@@ -399,13 +401,13 @@ class OptimalThreshold(BlueMathModel):
                 plt.show()
                 plt.close()
 
-            if fobj > chi2.ppf(1 - conf_level, df=u_values.size - 2) or np.abs(
+            if fobj > chi2.ppf(1 - sig_level, df=u_values.size - 2) or np.abs(
                 rN[0]
-            ) > norm.ppf(1 - conf_level / 2, 0, 1):
+            ) > norm.ppf(1 - sig_level / 2, 0, 1):
                 if display_flag:
-                    if fobj > chi2.ppf(1 - conf_level, df=u_values.size - 2):
+                    if fobj > chi2.ppf(1 - sig_level, df=u_values.size - 2):
                         print("Chi-squared test detects anomalies")
-                    if np.abs(rN[0]) > norm.ppf(1 - conf_level / 2, 0, 1):
+                    if np.abs(rN[0]) > norm.ppf(1 - sig_level / 2, 0, 1):
                         print(
                             "The maximum studentized residual of the first record detects anomalies"
                         )
@@ -442,13 +444,32 @@ class OptimalThreshold(BlueMathModel):
         ax: plt.Axes = None,
         figsize: tuple = (8, 5),
     ):
+        """
+        Auxiliar function which call generic potplot to plot the POT usign the optimal threshold obtained 
+
+        Parameters
+        ----------
+        time : np.ndarray, default=None
+            Time of data
+        ax : plt.Axes, default=None
+            Axes
+        figsize : tuple, default=(8,5)
+            Figure size, by default (8, 5)
+
+        Returns
+        -------
+        fig : plt.Figure
+            Figure
+        ax : plt.Axes
+            Axes
+        """
         fig, ax = potplot(
             self.data,
             self.threshold,
             time,
             self.n0,
             self.min_peak_distance,
-            self.conf_level,
+            self.sig_level,
             ax,
             figsize,
         )
@@ -462,11 +483,40 @@ def potplot(
     time: np.ndarray = None,
     n0: int = 10,
     min_peak_distance: int = 2,
-    conf_level: float = 0.95,
+    sig_level: float = 0.05,
     ax: plt.Axes = None,
     figsize: tuple = (8, 5),
 ):
-    _, _, _, _, pks_idx, _ = pot(data, threshold, n0, min_peak_distance, conf_level)
+    """
+    Plot the POT for data given a threshold.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        Data
+    threshold : float, default=0.0
+        Threshold used to plot the peaks
+    time : np.ndarray, default=None
+        Time of data
+    n0 : int, default=10
+        Minimum number of data to compute the POT given a threshold
+    min_peak_distance : int, default=2
+        Minimum peak distance between POT (in index size)
+    sig_level : float, default=0.05
+        Significance level for Chi-squared test
+    ax : plt.Axes, default=None
+        Axes
+    figsize : tuple, default=(8,5)
+        Figure figsize
+
+    Returns
+    -------
+    fig : plt.Figure
+        Figure
+    ax : plt.Axes
+        Axes
+    """
+    _, _, _, _, pks_idx, _ = pot(data, threshold, n0, min_peak_distance, sig_level)
 
     if time is None:
         time = np.arange(data.size)
