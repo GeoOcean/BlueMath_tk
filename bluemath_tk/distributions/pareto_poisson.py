@@ -135,3 +135,15 @@ class GPDPoiss(BaseDistribution):
             q = threshold - (1-(-np.log(p)/poisson)**(-shape))*scale/shape
 
         return q
+    
+    def cdf(
+        x: np.ndarray, threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0, poisson: float = 1.0
+    ) -> np.ndarray:
+        
+        if shape == 0.0:
+            expr = (np.maximum(x-threshold, 0))/scale
+            return np.exp(-poisson*np.exp(-expr))
+        
+        else:
+            expr = 1+shape*(np.maximum(x-threshold, 0)/scale)
+            return np.exp(-poisson*expr**(-1/shape))
