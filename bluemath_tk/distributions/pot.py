@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from scipy.signal import find_peaks
 from scipy.stats import chi2, norm, pearsonr
 
@@ -267,7 +266,7 @@ class OptimalThreshold(BlueMathModel):
         sig_level: float = 0.05,
         method: str = "studentized",
         plot: bool = False,
-        filename: str = None,
+        folder: str = None,
         display_flag: bool = False,
     ):
         self.data = data
@@ -285,7 +284,7 @@ class OptimalThreshold(BlueMathModel):
         self.method = method
         self.sig_level = sig_level
         self.plot = plot
-        self.filename = filename
+        self.folder = folder
         self.display_flag = display_flag
 
     def fit(
@@ -310,7 +309,7 @@ class OptimalThreshold(BlueMathModel):
                 self.excedencias_weight_valid,
                 self.sig_level,
                 self.plot,
-                self.filename,
+                self.folder,
                 self.display_flag,
             )
 
@@ -328,7 +327,7 @@ class OptimalThreshold(BlueMathModel):
         exceedances_weight_valid: np.ndarray,
         sig_level: float = 0.05,
         plot: bool = False,
-        filename: str = None,
+        folder: str = None,
         display_flag: bool = False,
     ):
         """
@@ -348,7 +347,7 @@ class OptimalThreshold(BlueMathModel):
             Significance level for Chi-squared test
         plot_flag : bool, default=False
             Boolean flag, true to plot the graphs, false otherwise
-        filename : str, default=None
+        folder : str, default=None
             Path and name for making graphs
         display_flag : bool, default=False
             Boolean flag, true to display messages, false otherwise
@@ -396,8 +395,8 @@ class OptimalThreshold(BlueMathModel):
                 # ax.text(threshold + 0.5, min(rN) + 0.1 * (max(rN) - min(rN)), f'Min threshold = {threshold}')
                 ax.grid()
                 ax.legend(loc="upper right")
-                if filename is not None:
-                    plt.savefig(f"{filename}_StudenRes{it}.png", dpi=300)
+                if folder is not None:
+                    plt.savefig(f"{folder}/StudenRes{it}.png", dpi=300)
                 plt.show()
                 plt.close()
 
@@ -429,7 +428,7 @@ class OptimalThreshold(BlueMathModel):
                     rN,
                     w_values,
                     plot,
-                    filename,
+                    folder,
                 )
                 if display_flag:
                     print(f"New threshold found: {threshold}")

@@ -10,7 +10,7 @@ def threshold_search(
     e_data: np.ndarray,
     W_data: np.ndarray,
     plot: bool = False,
-    filename: str = None,
+    folder: str = None,
 ):
     """
     Auxiliar function used in the studentidez_residuals method.
@@ -25,7 +25,7 @@ def threshold_search(
         Weights vector
     plot : bool, default=False
         Flag for plotting
-    filename : str, default=None
+    folder : str, default=None
         File name to save plots
 
     Returns
@@ -118,8 +118,8 @@ def threshold_search(
         plt.xticks(fontsize=14)
         plt.yticks(fontsize=14)
         plt.tight_layout()
-        if filename is not None:
-            plt.savefig(f"{filename}_thresholdlocation.png", dpi=300)
+        if folder is not None:
+            plt.savefig(f"{folder}/thresholdlocation.png", dpi=300)
         plt.show()
         plt.close()
 
