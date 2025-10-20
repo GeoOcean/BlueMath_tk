@@ -1,14 +1,14 @@
-import numpy as np
-import xarray as xr
 import os
-import pandas as pd
+
+import numpy as np
 import scipy.stats as stats
+import xarray as xr
 
 from ..core.io import BlueMathModel
 from ..distributions.gev import GEV
 from ..distributions.gpd import GPD
-from ..distributions.pot import OptimalThreshold, pot, block_maxima
 from ..distributions.pareto_poisson import GPDPoiss
+from ..distributions.pot import OptimalThreshold
 
 
 class ExtremeCorrection(BlueMathModel):
@@ -205,9 +205,7 @@ class ExtremeCorrection(BlueMathModel):
                 data=self.pit_data,
                 threshold=self.pot_config.get("init_threshold", 0.0),
                 n0=self.pot_config.get("n0", 10),
-                min_peak_distance=self.pot_config.get(
-                    "min_peak_distance", 2
-                ),
+                min_peak_distance=self.pot_config.get("min_peak_distance", 2),
                 sig_level=self.pot_config.get("sig_level", 0.05),
                 method=self.pot_config.get("method", "studentized"),
                 plot=self.pot_config.get("plot", False),
@@ -379,7 +377,7 @@ class ExtremeCorrection(BlueMathModel):
         data: xr.Dataset,
         var: list[str],
         bmus: list[bool, str] = [False, ""],
-        sim: bool=True,
+        sim: bool = True,
         join_sims: bool = True,
     ) -> tuple[np.ndarray, np.ndarray]:
         """
