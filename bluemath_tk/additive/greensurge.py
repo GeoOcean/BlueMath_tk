@@ -2,7 +2,7 @@ import warnings
 from datetime import datetime
 from functools import partial
 from multiprocessing import Pool, cpu_count
-from typing import Tuple
+from typing import List, Tuple
 
 import cartopy.crs as ccrs
 import matplotlib.gridspec as gridspec
@@ -12,73 +12,335 @@ import xarray as xr
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.path import Path
+from netCDF4 import Dataset
 from tqdm import tqdm
 
+from ..core.operations import get_degrees_from_uv
 from ..core.plotting.colors import hex_colors_land, hex_colors_water
 from ..core.plotting.utils import join_colormaps
-from ..topo_bathy.mesh_utils import read_adcirc_grd
+
+# from ..topo_bathy.mesh_utils import read_adcirc_grd
 
 
-def get_regular_grid(
-    node_computation_longitude: np.ndarray,
-    node_computation_latitude: np.ndarray,
-    node_computation_elements: np.ndarray,
-    factor: float = 10.0,
-    margin_deg: float = 0,
-) -> Tuple[np.ndarray, np.ndarray]:
+def read_adcirc_grd(grd_file: str) -> Tuple[np.ndarray, np.ndarray, List[str]]:
     """
-    Generate a regular lon/lat grid slightly larger than the bounds of the node coordinates.
-    Grid resolution is derived from the smallest element size scaled by a factor.
+    Reads the ADCIRC grid file and returns the node and element data.
 
     Parameters
     ----------
-    node_computation_longitude : np.ndarray
-        1D array of longitudes for the nodes.
-    node_computation_latitude : np.ndarray
-        1D array of latitudes for the nodes.
-    node_computation_elements : np.ndarray
-        2D array of indices defining the triangular elements.
-    factor : float, optional
-        Resolution scaling factor: higher means coarser grid.
-    margin_deg : float, optional
-        Margin to add (in degrees) to each side of the bounding box.
+    grd_file : str
+        Path to the ADCIRC grid file.
 
     Returns
     -------
-    lon_grid : np.ndarray
-        1D array of longitudes defining the grid.
-    lat_grid : np.ndarray
-        1D array of latitudes defining the grid.
+    Tuple[np.ndarray, np.ndarray, List[str]]
+        A tuple containing:
+        - Nodes (np.ndarray): An array of shape (nnodes, 3) containing the coordinates of each node.
+        - Elmts (np.ndarray): An array of shape (nelmts, 3) containing the element connectivity,
+            with node indices adjusted (decremented by 1).
+        - lines (List[str]): The remaining lines in the file after reading the nodes and elements.
+
+    Examples
+    --------
+    >>> nodes, elmts, lines = read_adcirc_grd("path/to/grid.grd")
+    >>> print(nodes.shape, elmts.shape, len(lines))
+    (1000, 3) (500, 3) 10
     """
 
-    # Bounding box with margin
-    lon_min = node_computation_longitude.min() - margin_deg
-    lon_max = node_computation_longitude.max() + margin_deg
-    lat_min = node_computation_latitude.min() - margin_deg
-    lat_max = node_computation_latitude.max() + margin_deg
+    with open(grd_file, "r") as f:
+        _header0 = f.readline()
+        header1 = f.readline()
+        header_nums = list(map(float, header1.split()))
+        nelmts = int(header_nums[0])
+        nnodes = int(header_nums[1])
 
-    # Get triangle node coordinates
-    lon_tri = node_computation_longitude[node_computation_elements]
-    lat_tri = node_computation_latitude[node_computation_elements]
+        Nodes = np.loadtxt(f, max_rows=nnodes)
+        Elmts = np.loadtxt(f, max_rows=nelmts) - 1
+        lines = f.readlines()
 
-    # Estimate resolution from max side of each triangle
-    dlon01 = np.abs(lon_tri[:, 0] - lon_tri[:, 1])
-    dlon12 = np.abs(lon_tri[:, 1] - lon_tri[:, 2])
-    dlon20 = np.abs(lon_tri[:, 2] - lon_tri[:, 0])
-    max_dlon = np.stack([dlon01, dlon12, dlon20], axis=1).max(axis=1)
-    min_dx = np.min(max_dlon) * factor
+    return Nodes, Elmts, lines
 
-    dlat01 = np.abs(lat_tri[:, 0] - lat_tri[:, 1])
-    dlat12 = np.abs(lat_tri[:, 1] - lat_tri[:, 2])
-    dlat20 = np.abs(lat_tri[:, 2] - lat_tri[:, 0])
-    max_dlat = np.stack([dlat01, dlat12, dlat20], axis=1).max(axis=1)
-    min_dy = np.min(max_dlat) * factor
 
-    # Create regular grid
-    lon_grid = np.arange(lon_min, lon_max + min_dx, min_dx)
-    lat_grid = np.arange(lat_min, lat_max + min_dy, min_dy)
+def calculate_edges(Elmts: np.ndarray) -> np.ndarray:
+    """
+    Calculates the unique edges from the given triangle elements.
 
-    return lon_grid, lat_grid
+    Parameters
+    ----------
+    Elmts : np.ndarray
+        A 2D array of shape (nelmts, 3) containing the node indices for each triangle element.
+
+    Returns
+    -------
+    np.ndarray
+        A 2D array of shape (n_edges, 2) containing the unique edges,
+        each represented by a pair of node indices.
+    """
+
+    perc = 0
+    Links = np.zeros((len(Elmts) * 3, 2), dtype=int)
+    tel = 0
+    for ii, elmt in enumerate(Elmts):
+        if round(100 * (ii / len(Elmts))) != perc:
+            perc = round(100 * (ii / len(Elmts)))
+        Links[tel] = [elmt[0], elmt[1]]
+        tel += 1
+        Links[tel] = [elmt[1], elmt[2]]
+        tel += 1
+        Links[tel] = [elmt[2], elmt[0]]
+        tel += 1
+
+    Links_sorted = np.sort(Links, axis=1)
+    Links_unique = np.unique(Links_sorted, axis=0)
+
+    return Links_unique
+
+
+def adcirc2DFlowFM(Path_grd: str, netcdf_path: str) -> None:
+    """
+    Converts ADCIRC grid data to a NetCDF Delft3DFM format.
+
+    Parameters
+    ----------
+    Path_grd : str
+        Path to the ADCIRC grid file.
+    netcdf_path : str
+        Path where the resulting NetCDF file will be saved.
+
+    Examples
+    --------
+    >>> adcirc2DFlowFM("path/to/grid.grd", "path/to/output.nc")
+    >>> print("NetCDF file created successfully.")
+    """
+
+    Nodes_full, Elmts_full, lines = read_adcirc_grd(Path_grd)
+    NODE = Nodes_full[:, [1, 2, 3]]
+    EDGE = Elmts_full[:, [2, 3, 4]]
+    edges = calculate_edges(EDGE) + 1
+    EDGE_S = np.sort(EDGE, axis=1)
+    EDGE_S = EDGE_S[EDGE_S[:, 2].argsort()]
+    EDGE_S = EDGE_S[EDGE_S[:, 1].argsort()]
+    face_node = np.array(EDGE_S[EDGE_S[:, 0].argsort()], dtype=np.int32)
+    edge_node = np.zeros([len(edges), 2], dtype="i4")
+    edge_face = np.zeros([len(edges), 2], dtype=np.double)
+    edge_x = np.zeros(len(edges))
+    edge_y = np.zeros(len(edges))
+
+    edge_node = np.array(
+        edge_node,
+        dtype=np.int32,
+    )
+
+    face_x = (
+        NODE[EDGE[:, 0].astype(int), 0]
+        + NODE[EDGE[:, 1].astype(int), 0]
+        + NODE[EDGE[:, 2].astype(int), 0]
+    ) / 3
+    face_y = (
+        NODE[EDGE[:, 0].astype(int), 1]
+        + NODE[EDGE[:, 1].astype(int), 1]
+        + NODE[EDGE[:, 2].astype(int), 1]
+    ) / 3
+
+    edge_x = (NODE[edges[:, 0] - 1, 0] + NODE[edges[:, 1] - 1, 0]) / 2
+    edge_y = (NODE[edges[:, 0] - 1, 1] + NODE[edges[:, 1] - 1, 1]) / 2
+
+    face_node_dict = {}
+
+    for idx, face in enumerate(face_node):
+        for node in face:
+            if node not in face_node_dict:
+                face_node_dict[node] = []
+            face_node_dict[node].append(idx)
+
+    for i, edge in enumerate(edges):
+        node1, node2 = map(int, edge)
+
+        edge_node[i, 0] = node1
+        edge_node[i, 1] = node2
+
+        faces_node1 = face_node_dict.get(node1 - 1, [])
+        faces_node2 = face_node_dict.get(node2 - 1, [])
+
+        faces = list(set(faces_node1) & set(faces_node2))
+
+        if len(faces) < 2:
+            edge_face[i, 0] = faces[0] + 1 if faces else 0
+            edge_face[i, 1] = 0
+        else:
+            edge_face[i, 0] = faces[0] + 1
+            edge_face[i, 1] = faces[1] + 1
+
+    face_x = np.array(face_x, dtype=np.double)
+    face_y = np.array(face_y, dtype=np.double)
+
+    node_x = np.array(NODE[:, 0], dtype=np.double)
+    node_y = np.array(NODE[:, 1], dtype=np.double)
+    node_z = np.array(NODE[:, 2], dtype=np.double)
+
+    face_x_bnd = np.array(node_x[face_node], dtype=np.double)
+    face_y_bnd = np.array(node_y[face_node], dtype=np.double)
+
+    num_nodes = NODE.shape[0]
+    num_faces = EDGE.shape[0]
+    num_edges = edges.shape[0]
+
+    with Dataset(netcdf_path, "w", format="NETCDF4") as dataset:
+        _mesh2d_nNodes = dataset.createDimension("mesh2d_nNodes", num_nodes)
+        _mesh2d_nEdges = dataset.createDimension("mesh2d_nEdges", num_edges)
+        _mesh2d_nFaces = dataset.createDimension("mesh2d_nFaces", num_faces)
+        _mesh2d_nMax_face_nodes = dataset.createDimension("mesh2d_nMax_face_nodes", 3)
+        _two_dim = dataset.createDimension("Two", 2)
+
+        mesh2d_node_x = dataset.createVariable(
+            "mesh2d_node_x", "f8", ("mesh2d_nNodes",)
+        )
+        mesh2d_node_x.standard_name = "projection_x_coordinate"
+        mesh2d_node_x.long_name = "x-coordinate of mesh nodes"
+
+        mesh2d_node_y = dataset.createVariable(
+            "mesh2d_node_y", "f8", ("mesh2d_nNodes",)
+        )
+        mesh2d_node_y.standard_name = "projection_y_coordinate"
+        mesh2d_node_y.long_name = "y-coordinate of mesh nodes"
+
+        mesh2d_node_z = dataset.createVariable(
+            "mesh2d_node_z", "f8", ("mesh2d_nNodes",)
+        )
+        mesh2d_node_z.units = "m"
+        mesh2d_node_z.standard_name = "altitude"
+        mesh2d_node_z.long_name = "z-coordinate of mesh nodes"
+
+        mesh2d_edge_x = dataset.createVariable(
+            "mesh2d_edge_x", "f8", ("mesh2d_nEdges",)
+        )
+        mesh2d_edge_x.standard_name = "projection_x_coordinate"
+        mesh2d_edge_x.long_name = (
+            "Characteristic x-coordinate of the mesh edge (e.g., midpoint)"
+        )
+
+        mesh2d_edge_y = dataset.createVariable(
+            "mesh2d_edge_y", "f8", ("mesh2d_nEdges",)
+        )
+        mesh2d_edge_y.standard_name = "projection_y_coordinate"
+        mesh2d_edge_y.long_name = (
+            "Characteristic y-coordinate of the mesh edge (e.g., midpoint)"
+        )
+
+        mesh2d_edge_nodes = dataset.createVariable(
+            "mesh2d_edge_nodes", "i4", ("mesh2d_nEdges", "Two")
+        )
+        mesh2d_edge_nodes.cf_role = "edge_node_connectivity"
+        mesh2d_edge_nodes.long_name = "Start and end nodes of mesh edges"
+        mesh2d_edge_nodes.start_index = 1
+
+        mesh2d_edge_faces = dataset.createVariable(
+            "mesh2d_edge_faces", "f8", ("mesh2d_nEdges", "Two")
+        )
+        mesh2d_edge_faces.cf_role = "edge_face_connectivity"
+        mesh2d_edge_faces.long_name = "Start and end nodes of mesh edges"
+        mesh2d_edge_faces.start_index = 1
+
+        mesh2d_face_nodes = dataset.createVariable(
+            "mesh2d_face_nodes", "i4", ("mesh2d_nFaces", "mesh2d_nMax_face_nodes")
+        )
+        mesh2d_face_nodes.long_name = "Vertex node of mesh face (counterclockwise)"
+        mesh2d_face_nodes.start_index = 1
+
+        mesh2d_face_x = dataset.createVariable(
+            "mesh2d_face_x", "f8", ("mesh2d_nFaces",)
+        )
+        mesh2d_face_x.standard_name = "projection_x_coordinate"
+        mesh2d_face_x.long_name = "characteristic x-coordinate of the mesh face"
+        mesh2d_face_x.start_index = 1
+
+        mesh2d_face_y = dataset.createVariable(
+            "mesh2d_face_y", "f8", ("mesh2d_nFaces",)
+        )
+        mesh2d_face_y.standard_name = "projection_y_coordinate"
+        mesh2d_face_y.long_name = "characteristic y-coordinate of the mesh face"
+        mesh2d_face_y.start_index = 1
+
+        mesh2d_face_x_bnd = dataset.createVariable(
+            "mesh2d_face_x_bnd", "f8", ("mesh2d_nFaces", "mesh2d_nMax_face_nodes")
+        )
+        mesh2d_face_x_bnd.long_name = (
+            "x-coordinate bounds of mesh faces (i.e. corner coordinates)"
+        )
+
+        mesh2d_face_y_bnd = dataset.createVariable(
+            "mesh2d_face_y_bnd", "f8", ("mesh2d_nFaces", "mesh2d_nMax_face_nodes")
+        )
+        mesh2d_face_y_bnd.long_name = (
+            "y-coordinate bounds of mesh faces (i.e. corner coordinates)"
+        )
+
+        mesh2d_node_x.units = "longitude"
+        mesh2d_node_y.units = "latitude"
+        mesh2d_edge_x.units = "longitude"
+        mesh2d_edge_y.units = "latitude"
+        mesh2d_face_x.units = "longitude"
+        mesh2d_face_y.units = "latitude"
+        mesh2d_face_x_bnd.units = "grados"
+        mesh2d_face_y_bnd.units = "grados"
+        mesh2d_face_x_bnd.standard_name = "longitude"
+        mesh2d_face_y_bnd.standard_name = "latitude"
+        mesh2d_face_nodes.coordinates = "mesh2d_node_x mesh2d_node_y"
+
+        wgs84 = dataset.createVariable("wgs84", "int32")
+        wgs84.setncatts(
+            {
+                "name": "WGS 84",
+                "epsg": np.int32(4326),
+                "grid_mapping_name": "latitude_longitude",
+                "longitude_of_prime_meridian": 0.0,
+                "semi_major_axis": 6378137.0,
+                "semi_minor_axis": 6356752.314245,
+                "inverse_flattening": 298.257223563,
+                "EPSG_code": "value is equal to EPSG code",
+                "proj4_params": "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs",
+                "projection_name": "unknown",
+                "wkt": 'GEOGCS["WGS 84",\n    DATUM["WGS_1984",\n        SPHEROID["WGS 84",6378137,298.257223563,\n            AUTHORITY["EPSG","7030"]],\n        AUTHORITY["EPSG","6326"]],\n    PRIMEM["Greenwich",0,\n        AUTHORITY["EPSG","8901"]],\n    UNIT["degree",0.0174532925199433,\n        AUTHORITY["EPSG","9122"]],\n    AXIS["Latitude",NORTH],\n    AXIS["Longitude",EAST],\n    AUTHORITY["EPSG","4326"]]',
+            }
+        )
+
+        mesh2d_node_x[:] = node_x
+        mesh2d_node_y[:] = node_y
+        mesh2d_node_z[:] = -node_z
+
+        mesh2d_edge_x[:] = edge_x
+        mesh2d_edge_y[:] = edge_y
+        mesh2d_edge_nodes[:, :] = edge_node
+
+        mesh2d_edge_faces[:] = edge_face
+        mesh2d_face_nodes[:] = face_node + 1
+        mesh2d_face_x[:] = face_x
+        mesh2d_face_y[:] = face_y
+
+        mesh2d_face_x_bnd[:] = face_x_bnd
+        mesh2d_face_y_bnd[:] = face_y_bnd
+
+        dataset.institution = "GeoOcean"
+        dataset.references = "https://github.com/GeoOcean/BlueMath_tk"
+        dataset.source = f"BlueMath tk {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        dataset.history = "Created with OCSmesh"
+        dataset.Conventions = "CF-1.8 UGRID-1.0 Deltares-0.10"
+
+        dataset.createDimension("str_dim", 1)
+        mesh2d = dataset.createVariable("mesh2d", "i4", ("str_dim",))
+        mesh2d.cf_role = "mesh_topology"
+        mesh2d.long_name = "Topology data of 2D mesh"
+        mesh2d.topology_dimension = 2
+        mesh2d.node_coordinates = "mesh2d_node_x mesh2d_node_y"
+        mesh2d.node_dimension = "mesh2d_nNodes"
+        mesh2d.edge_node_connectivity = "mesh2d_edge_nodes"
+        mesh2d.edge_dimension = "mesh2d_nEdges"
+        mesh2d.edge_coordinates = "mesh2d_edge_x mesh2d_edge_y"
+        mesh2d.face_node_connectivity = "mesh2d_face_nodes"
+        mesh2d.face_dimension = "mesh2d_nFaces"
+        mesh2d.face_coordinates = "mesh2d_face_x mesh2d_face_y"
+        mesh2d.max_face_nodes_dimension = "mesh2d_nMax_face_nodes"
+        mesh2d.edge_face_connectivity = "mesh2d_edge_faces"
 
 
 def generate_structured_points(
@@ -157,7 +419,7 @@ def plot_GS_input_wind_partition(
         Figure size. Default is (10, 8).
     """
 
-    simple_quiver = 20
+    simple_quiver = 5
     scale = 30
     width = 0.003
 
@@ -340,9 +602,9 @@ def plot_greensurge_setup(
             + node_forcing_latitude[int(node1)]
             + node_forcing_latitude[int(node2)]
         ) / 3
-        # plt.text(
-        #     x, y, f"T{t}", fontsize=10, ha="center", va="center", fontweight="bold"
-        # )
+        plt.text(
+            _x, _y, f"T{t}", fontsize=10, ha="center", va="center", fontweight="bold"
+        )
 
     bnd = [
         min(node_computation_longitude.min(), node_forcing_longitude.min()),
@@ -358,6 +620,38 @@ def plot_greensurge_setup(
     gl.right_labels = False
 
     return fig, ax
+
+
+def create_triangle_mask(
+    lon_grid: np.ndarray, lat_grid: np.ndarray, triangle: np.ndarray
+) -> np.ndarray:
+    """
+    Create a mask for a triangle defined by its vertices.
+
+    Parameters
+    ----------
+    lon_grid : np.ndarray
+        The longitude grid.
+    lat_grid : np.ndarray
+        The latitude grid.
+    triangle : np.ndarray
+        The triangle vertices.
+
+    Returns
+    -------
+    np.ndarray
+        The mask for the triangle.
+    """
+
+    triangle_path = Path(triangle)
+    # if lon_grid.ndim == 1:
+    #     lon_grid, lat_grid = np.meshgrid(lon_grid, lat_grid)
+    lon_grid, lat_grid = np.meshgrid(lon_grid, lat_grid)
+    points = np.vstack([lon_grid.flatten(), lat_grid.flatten()]).T
+    inside_mask = triangle_path.contains_points(points)
+    mask = inside_mask.reshape(lon_grid.shape)
+
+    return mask
 
 
 def create_triangle_mask_from_points(
@@ -1845,3 +2139,118 @@ def plot_GS_validation_timeseries(
 
     plt.tight_layout()
     plt.show()
+
+
+def get_regular_grid(
+    node_computation_longitude: np.ndarray,
+    node_computation_latitude: np.ndarray,
+    node_computation_elements: np.ndarray,
+    factor: float = 10,
+) -> tuple:
+    """
+    Generate a regular grid based on the node computation longitude and latitude.
+    The grid is defined by the minimum and maximum longitude and latitude values,
+    and the minimum distance between nodes in both dimensions.
+    The grid is generated with a specified factor to adjust the resolution.
+    Parameters:
+    - node_computation_longitude: 1D array of longitudes for the nodes.
+    - node_computation_latitude: 1D array of latitudes for the nodes.
+    - node_computation_elements: 2D array of indices defining the elements (triangles).
+    - factor: A scaling factor to adjust the resolution of the grid.
+    Returns:
+    - lon_grid: 1D array of longitudes defining the grid.
+    - lat_grid: 1D array of latitudes defining the grid.
+    """
+
+    lon_min, lon_max = (
+        node_computation_longitude.min(),
+        node_computation_longitude.max(),
+    )
+    lat_min, lat_max = node_computation_latitude.min(), node_computation_latitude.max()
+
+    lon_tri = node_computation_longitude[node_computation_elements]
+    lat_tri = node_computation_latitude[node_computation_elements]
+
+    dlon01 = np.abs(lon_tri[:, 0] - lon_tri[:, 1])
+    dlon12 = np.abs(lon_tri[:, 1] - lon_tri[:, 2])
+    dlon20 = np.abs(lon_tri[:, 2] - lon_tri[:, 0])
+    min_dx = np.min(np.stack([dlon01, dlon12, dlon20], axis=1).max(axis=1)) * factor
+
+    dlat01 = np.abs(lat_tri[:, 0] - lat_tri[:, 1])
+    dlat12 = np.abs(lat_tri[:, 1] - lat_tri[:, 2])
+    dlat20 = np.abs(lat_tri[:, 2] - lat_tri[:, 0])
+    min_dy = np.min(np.stack([dlat01, dlat12, dlat20], axis=1).max(axis=1)) * factor
+
+    lon_grid = np.arange(lon_min, lon_max + min_dx, min_dx)
+    lat_grid = np.arange(lat_min, lat_max + min_dy, min_dy)
+    return lon_grid, lat_grid
+
+
+def GS_wind_partition_tri(ds_GFD_info, xds_vortex):
+    element_forcing_index = ds_GFD_info.element_forcing_index.values
+    num_element = len(element_forcing_index)
+    triangle_forcing_connectivity = ds_GFD_info.triangle_forcing_connectivity.values
+    node_forcing_longitude = ds_GFD_info.node_forcing_longitude.values
+    node_forcing_latitude = ds_GFD_info.node_forcing_latitude.values
+    longitude_forcing_cells = node_forcing_longitude[triangle_forcing_connectivity]
+    latitude_forcing_cells = node_forcing_latitude[triangle_forcing_connectivity]
+
+    # if np.abs(np.mean(lon_grid)-np.mean(lon_teselas))>180:
+    #     lon_teselas = lon_teselas+360
+
+    # TC_info
+    time = xds_vortex.time.values
+    lon_grid = xds_vortex.lon.values
+    lat_grid = xds_vortex.lat.values
+    Ntime = len(time)
+
+    # storage
+    U_tes = np.zeros((num_element, Ntime))
+    V_tes = np.zeros((num_element, Ntime))
+    p_tes = np.zeros((num_element, Ntime))
+    Dir_tes = np.zeros((num_element, Ntime))
+    Wspeed_tes = np.zeros((num_element, Ntime))
+
+    for i in range(Ntime):
+        W_grid = xds_vortex.W.values[:, :, i]
+        p_grid = xds_vortex.p.values[:, :, i]
+        Dir_grid = (270 - xds_vortex.Dir.values[:, :, i]) * np.pi / 180
+
+        u_sel_t = W_grid * np.cos(Dir_grid)
+        v_sel_t = W_grid * np.sin(Dir_grid)
+
+        for element in element_forcing_index:
+            X0, X1, X2 = longitude_forcing_cells[element, :]
+            Y0, Y1, Y2 = latitude_forcing_cells[element, :]
+
+            triangle = [(X0, Y0), (X1, Y1), (X2, Y2)]
+
+            mask = create_triangle_mask(lon_grid, lat_grid, triangle)
+
+            u_sel = u_sel_t[mask]
+            v_sel = v_sel_t[mask]
+            p_sel = p_grid[mask]
+
+            p_mean = np.nanmean(p_sel)
+            u_mean = np.nanmean(u_sel)
+            v_mean = np.nanmean(v_sel)
+
+            U_tes[element, i] = u_mean
+            V_tes[element, i] = v_mean
+            p_tes[element, i] = p_mean
+
+            Dir_tes[element, i] = get_degrees_from_uv(-u_mean, -v_mean)
+            Wspeed_tes[element, i] = np.sqrt(u_mean**2 + v_mean**2)
+
+    xds_vortex_interp = xr.Dataset(
+        data_vars={
+            "Dir": (("element", "time"), Dir_tes),
+            "W": (("element", "time"), Wspeed_tes),
+            "p": (("element", "time"), p_tes),
+        },
+        coords={
+            "element": element_forcing_index,
+            "time": time,
+        },
+    )
+    return xds_vortex_interp
