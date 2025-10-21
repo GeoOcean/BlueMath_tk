@@ -3,8 +3,6 @@ from scipy.optimize import fminbound
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score
 from csaps import csaps
-from bluemath_tk.distributions.gpd import GPD
-from bluemath_tk.distributions.pareto_poisson import GPDPoiss
 
 
 def threshold_search(
@@ -257,38 +255,9 @@ def RWLSfit(u, e, w):
     # Hat or projection matrix
     P = X @ np.linalg.inv(X.T @ W @ X) @ X.T
     # Sensitivity matrix S = I - P * W
-    S = np.eye(n) - P @ W
+    # S = np.eye(n) - P @ W
 
     # Internally studentized residual
     rN = (np.sqrt(np.diag(W)) * r) / (sigres * np.sqrt(1 - np.diag(W) * np.diag(P)))
 
     return beta, fobj, r, rN
-
-
-def gpdpoiss_ci_rp_bootstrap(pot_data: np.ndarray, years: np.ndarray, threshold:float, poisson:float, B: int=1000, conf_level:float=0.95):
-    """
-    Compute the Confidence intervals for return periods of GPD-Poisson based on Bootstrap method.
-
-    Parameters
-    ----------
-    B : int, default=1000
-        Number of bootstrap samples.
-    """
-    probs_ci = 1 - 1 / years # Convert to exceedance probabilities
-
-    # Generate all bootstrap samples at once
-    boot_samples = np.random.choice(pot_data, size=(B, pot_data.size), replace=True)
-    
-    # Vectorized parameter fitting
-    boot_params = np.zeros((B, 3))
-    for i in range(B):
-        fit_result = GPD.fit(boot_samples[i], f0=threshold)
-        boot_params[i,:] = fit_result.params
-
-    # Vectorized return period computation
-    return_periods = np.array([GPDPoiss.qf(probs_ci, threshold, params[1], params[2], poisson) for params in boot_params])
-
-    lower_ci_rp = np.quantile(return_periods, (1 - conf_level) / 2, axis=0)
-    upper_ci_rp = np.quantile(return_periods, 1 - (1 - conf_level) / 2, axis=0)
-
-    return lower_ci_rp, upper_ci_rp

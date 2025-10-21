@@ -10,7 +10,7 @@ from ..distributions.gev import GEV
 from ..distributions.gpd import GPD
 from ..distributions.pareto_poisson import GPDPoiss
 from ..distributions.pot import OptimalThreshold
-from ..distributions.utils.pot_utils import gpdpoiss_ci_rp_bootstrap
+from ..distributions.utils.extr_corr_utils import gpdpoiss_ci_rp_bootstrap, gev_ci_rp_bootstrap
 
 
 class ExtremeCorrection(BlueMathModel):
@@ -371,7 +371,7 @@ class ExtremeCorrection(BlueMathModel):
         sim_pit_data_corrected : xr.Dataset
             Point-in-time corrected data
         """
-        self.fit(data_hist=data_hist, bmus=bmus, plot_diagnostic=plot_diagnostic)
+        self.fit(data_hist=data_hist, plot_diagnostic=plot_diagnostic)
 
         return self.transform(data_sim=data_sim, prob=prob, random_state=random_state)
 
@@ -483,9 +483,19 @@ class ExtremeCorrection(BlueMathModel):
         TODO: Plots a añadir:
         - Añadir Return Period Plot de la serie simulada
         """
+        figs = []
+        axes = []
+        
         fig1, ax1 = self.hist_retper_plot()
+        figs.append(fig1)
+        axes.append(ax1)
 
-        return fig1, ax1
+        fig2, ax2 = self.sim_retper_plot()
+
+        figs.append(fig2)
+        axes.append(ax2)
+
+        return figs, axes
 
     def hist_retper_plot(self):
         """
@@ -503,29 +513,36 @@ class ExtremeCorrection(BlueMathModel):
         self.T_annmax = 1 / (1 - ecdf_annmax_probs_hist)
 
         # Fitted Return Periods
-        self.T_years = np.array([1.001, 1.01, 1.1, 1.2, 1.4, 1.6, 2, 2.5, 3, 3.5, 4, 4.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 150, 200, 500, 1000])
+        self.T_years = np.array([1.001, 1.01, 1.1, 1.2, 1.4, 1.6, 2, 2.5, 3, 3.5, 4, 4.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 150, 200, 500, 1000, 5000, 10000])
         if self.method == "pot":
-            ret_levels = GPDPoiss.qf(1 - 1 / self.T_years, self.parameters[0], self.parameters[1], self.parameters[2], self.poiss_parameter)
-            lower_ci_rp, upper_ci_rp = gpdpoiss_ci_rp_bootstrap(
+            self.ret_levels = GPDPoiss.qf(1 - 1 / self.T_years, self.parameters[0], self.parameters[1], self.parameters[2], self.poiss_parameter)
+            self.lower_ci_rp, self.upper_ci_rp = gpdpoiss_ci_rp_bootstrap(
                 pot_data=self.pot_data,
                 years=self.T_years,
                 threshold=self.threshold,
                 poisson=self.poiss_parameter,
                 B=1000,
                 conf_level=0.95)
+            
+            self.dist = "GPD-Poisson"
         else:
-            ret_levels = GEV.qf(1 - 1 / self.T_years, self.parameters[0], self.parameters[1], self.parameters[2], self.poiss_parameter)
-            upper_ci_rp = 1
-            lower_ci_rp = 1
+            self.ret_levels = GEV.qf(1 - 1 / self.T_years, self.parameters[0], self.parameters[1], self.parameters[2])
+            self.lower_ci_rp, self.upper_ci_rp = gev_ci_rp_bootstrap(
+                am_data=self.am_data,
+                years=self.T_years,
+                B=1000,
+                conf_level=0.95)
+            
+            self.dist = "GEV"
 
         fig = plt.figure(figsize=(8,5))
         ax = fig.add_subplot(111)
 
         # Fitted distribution
-        ax.semilogx(self.T_years, ret_levels, color = 'red',linestyle='dashed', linewidth=2.5, label='Fitted GPD-Poisson')
+        ax.semilogx(self.T_years, self.ret_levels, color = 'red',linestyle='dashed', linewidth=2.5, label=f'Fitted {self.dist}')
         # Confidence interval for fitted Distribution
-        ax.semilogx(self.T_years, upper_ci_rp, color = "tab:gray",linestyle='dotted', label=f'{self.conf} Conf. Band')
-        ax.semilogx(self.T_years, lower_ci_rp, color = "tab:gray",linestyle='dotted')
+        ax.semilogx(self.T_years, self.upper_ci_rp, color = "tab:gray",linestyle='dotted', label=f'{self.conf} Conf. Band')
+        ax.semilogx(self.T_years, self.lower_ci_rp, color = "tab:gray",linestyle='dotted')
 
         # Historical AM values
         ax.semilogx(self.T_annmax, np.sort(self.am_data), color="tab:blue", linewidth=0, marker='o',markersize=5, label='Historical Annual Maxima')
@@ -536,6 +553,40 @@ class ExtremeCorrection(BlueMathModel):
         ax.set_xticks([1, 2, 5, 10, 20, 50, 100, 250, 1000, 10000])
         ax.get_xaxis().set_major_formatter(plt.ScalarFormatter())
         ax.set_xlim(left=0.9, right=self.n_year + 100)
+        ax.set_ylim(bottom=0)
+        ax.legend(loc='best')
+        ax.grid()
+
+        return fig, ax
+    
+    def sim_retper_plot(self):
+
+        ecdf_annmax_probs_sim = np.arange(1, self.n_year_sim + 1) / (self.n_year_sim + 1)
+        self.T_annmax_sim = 1 / (1 - ecdf_annmax_probs_sim)
+
+        fig = plt.figure(figsize=(8,5))
+        ax = fig.add_subplot(111)
+
+        # Fitted distribution
+        ax.semilogx(self.T_years, self.ret_levels, color = 'red',linestyle='dashed', linewidth=2.5, label=f'Fitted {self.dist}')
+        # Confidence interval for fitted Distribution
+        ax.semilogx(self.T_years, self.upper_ci_rp, color = "tab:gray",linestyle='dotted', label=f'{self.conf} Conf. Band')
+        ax.semilogx(self.T_years, self.lower_ci_rp, color = "tab:gray",linestyle='dotted')
+
+        # Corrected Sampled AM values
+        ax.semilogx(self.T_annmax_sim, np.sort(self.sim_am_data_corr), color="tab:red", linewidth=0, marker='D',markersize=5, alpha=0.8, label='Corrected Sampled Annual Maxima')
+        # Corrected Sampled AM values
+        ax.semilogx(self.T_annmax_sim, np.sort(self.sim_am_data), color="tab:red", linewidth=0, marker='o',markersize=5, alpha=0.8, label='Sampled Annual Maxima')
+        
+        # Historical AM values
+        ax.semilogx(self.T_annmax, np.sort(self.am_data), color="tab:blue", linewidth=0, marker='o',markersize=5, alpha=0.8, label='Historical Annual Maxima')
+
+        ax.set_xlabel("Return Periods (Years)")
+        ax.set_ylabel(f"{self.var}")
+        ax.set_xscale('log')
+        ax.set_xticks([1, 2, 5, 10, 20, 50, 100, 250, 1000, 10000])
+        ax.get_xaxis().set_major_formatter(plt.ScalarFormatter())
+        ax.set_xlim(left=0.9, right=self.n_year_sim + 100)
         ax.set_ylim(bottom=0)
         ax.legend(loc='best')
         ax.grid()
