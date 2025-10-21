@@ -2,13 +2,14 @@ import numpy as np
 
 from ._base_distributions import BaseDistribution
 
+
 class GPDPoiss(BaseDistribution):
     def __init__(self) -> None:
         """
         Initialize the GPD-Poisson mode
         """
         super().__init__()
-    
+
     @property
     def name() -> str:
         return "GPD-Poisson model"
@@ -19,17 +20,21 @@ class GPDPoiss(BaseDistribution):
         Number of parameters of GPD-Poisson model
         """
         return int(4)
-    
+
     @property
     def param_names() -> list[str]:
         """
         Name of parameters of GPD-Poisson
         """
         return ["threshold", "scale", "shape", "poisson"]
-    
+
     @staticmethod
     def pdf(
-        x: np.ndarray, threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0, poisson: float = 1.0
+        x: np.ndarray,
+        threshold: float = 0.0,
+        scale: float = 1.0,
+        shape: float = 0.0,
+        poisson: float = 1.0,
     ) -> np.ndarray:
         """
         Probability density function
@@ -62,10 +67,9 @@ class GPDPoiss(BaseDistribution):
 
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
-        
+
         if poisson <= 0:
             raise ValueError("Poisson parameter must be > 0")
-
 
         y = np.maximum(x - threshold, 0) / scale
 
@@ -86,7 +90,11 @@ class GPDPoiss(BaseDistribution):
 
     @staticmethod
     def qf(
-        p: np.ndarray, threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0, poisson: float = 1.0
+        p: np.ndarray,
+        threshold: float = 0.0,
+        scale: float = 1.0,
+        shape: float = 0.0,
+        poisson: float = 1.0,
     ) -> np.ndarray:
         """
         Quantile function (Inverse of Cumulative Distribution Function)
@@ -122,28 +130,31 @@ class GPDPoiss(BaseDistribution):
 
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
-        
+
         if poisson <= 0:
             raise ValueError("Poisson parameter must be > 0")
 
         # Gumbel case (shape = 0)
         if shape == 0.0:
-            q = threshold - scale * np.log(-np.log(p)/poisson)
+            q = threshold - scale * np.log(-np.log(p) / poisson)
 
         # General case (Weibull and Frechet, shape != 0)
         else:
-            q = threshold - (1-(-np.log(p)/poisson)**(-shape))*scale/shape
+            q = threshold - (1 - (-np.log(p) / poisson) ** (-shape)) * scale / shape
 
         return q
-    
+
     def cdf(
-        x: np.ndarray, threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0, poisson: float = 1.0
+        x: np.ndarray,
+        threshold: float = 0.0,
+        scale: float = 1.0,
+        shape: float = 0.0,
+        poisson: float = 1.0,
     ) -> np.ndarray:
-        
         if shape == 0.0:
-            expr = (np.maximum(x-threshold, 0))/scale
-            return np.exp(-poisson*np.exp(-expr))
-        
+            expr = (np.maximum(x - threshold, 0)) / scale
+            return np.exp(-poisson * np.exp(-expr))
+
         else:
-            expr = 1+shape*(np.maximum(x-threshold, 0)/scale)
-            return np.exp(-poisson*expr**(-1/shape))
+            expr = 1 + shape * (np.maximum(x - threshold, 0) / scale)
+            return np.exp(-poisson * expr ** (-1 / shape))

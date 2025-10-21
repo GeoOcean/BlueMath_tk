@@ -444,7 +444,7 @@ class OptimalThreshold(BlueMathModel):
         figsize: tuple = (8, 5),
     ):
         """
-        Auxiliar function which call generic potplot to plot the POT usign the optimal threshold obtained 
+        Auxiliar function which call generic potplot to plot the POT usign the optimal threshold obtained
 
         Parameters
         ----------
