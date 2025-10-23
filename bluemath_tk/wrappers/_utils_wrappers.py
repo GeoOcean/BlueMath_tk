@@ -47,6 +47,7 @@ def copy_files(src: str, dst: str) -> None:
             with open(os.path.join(dst, file), "wb") as f:
                 f.write(content)
     else:
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
         with open(src, "rb") as f:
             content = f.read()
         with open(dst, "wb") as f:

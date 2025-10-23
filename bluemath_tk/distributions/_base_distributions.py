@@ -555,13 +555,15 @@ class FitResult(BlueMathModel):
         else:
             fig = None
 
+        return_years = np.asarray([1.001, 1.1, 1.2, 1.3, 1.4, 1.5, 1.75, 2, 3, 4, 5, 7.5, 10, 15, 20, 25, 50, 100, 250, 500, 1000])
+        ecdf_fitted = 1 - 1/return_years
         sorted_data = np.sort(self.data)
         exceedance_prob = 1 - self.ecdf
         return_period = 1 / exceedance_prob
 
         ax.plot(
-            return_period,
-            self.dist.qf(self.ecdf, *self.params),
+            return_years,
+            self.dist.qf(ecdf_fitted, *self.params),
             color="tab:red",
             label="Fitted Distribution",
         )
@@ -577,7 +579,7 @@ class FitResult(BlueMathModel):
         ax.set_xscale("log")
         ax.set_xticks([1, 2, 5, 10, 25, 50, 100, 250, 1000, 10000])
         ax.set_xticklabels([1, 2, 5, 10, 25, 50, 100, 500, 1000, 10000])
-        ax.set_xlim(right=np.max(return_period) * 1.2)
+        # ax.set_xlim(right=np.max(return_period) * 1.2)
         ax.set_xlabel("Return Period")
         ax.set_ylabel("Data Values")
         ax.set_title("Return Period Plot")
@@ -671,8 +673,11 @@ def fit_dist(dist: BaseDistribution, data: np.ndarray, **kwargs) -> FitResult:
     # but with the full parameter vector
     # TODO: Add hess info or hess_inv info to compute confidence intervals in FitResult
     modified_result = OptimizeResult(
-        x=full_params, success=result.success, fun=result.fun, message=result.message,
-        hess_inv=result.hess_inv if hasattr(result, 'hess_inv') else None
+        x=full_params,
+        success=result.success,
+        fun=result.fun,
+        message=result.message,
+        hess_inv=result.hess_inv if hasattr(result, "hess_inv") else None,
     )
 
     # Return the fitting result as a FitResult object

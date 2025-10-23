@@ -208,6 +208,7 @@ def plot_usgs_raster_map(
         If True, adds borders, coastlines, and states to the map.
     display_width_px : int, optional
         Width of the display in pixels (default is 1024).
+
     Returns
     -------
     fig : plt.Figure
@@ -278,9 +279,11 @@ def plot_usgs_raster_map(
                 "- Attribution required: '© OpenStreetMap contributors'\n"
                 "- Max zoom ~19"
             )
-    
+
     elif source == "amazon":
-        tile_url = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
+        tile_url = (
+            "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
+        )
         z_max = 15
         if verbose:
             print(
@@ -302,11 +305,13 @@ def plot_usgs_raster_map(
             )
 
     elif source == "geoportail_fr":
-        tile_url = ("https://data.geopf.fr/wmts?"
-                    "REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0"
-                    "&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg"
-                    "&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&TILEMATRIX={z}"
-                    "&TILEROW={y}&TILECOL={x}")
+        tile_url = (
+            "https://data.geopf.fr/wmts?"
+            "REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0"
+            "&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg"
+            "&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&TILEMATRIX={z}"
+            "&TILEROW={y}&TILECOL={x}"
+        )
         z_max = 19
         if verbose:
             print(
@@ -317,7 +322,7 @@ def plot_usgs_raster_map(
                 "- Max zoom ~19"
             )
     elif source == "ign_spain_pnoa":
-        tile_url = ("https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{y_inv}.jpeg")
+        tile_url = "https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{y_inv}.jpeg"
         z_max = 19
         if verbose:
             print(
@@ -328,7 +333,7 @@ def plot_usgs_raster_map(
                 "- Attribution required: 'Ortofotografía PNOA – © IGN / CNIG (Gobierno de España) – CC BY 4.0'\n"
                 "- Max zoom ~19"
             )
-    
+
     if zoom > z_max:
         zoom = z_max
 
@@ -355,7 +360,10 @@ def plot_usgs_raster_map(
     ax = plt.axes(projection=crs_tiles)
     ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=crs_tiles)
     ax.imshow(
-        map_img, origin="upper", extent=[xmin, xmax, ymin, ymax], transform=ccrs.Mercator.GOOGLE
+        map_img,
+        origin="upper",
+        extent=[xmin, xmax, ymin, ymax],
+        transform=ccrs.Mercator.GOOGLE,
     )
     scale = get_cartopy_scale(zoom)
     if verbose:
@@ -386,4 +394,3 @@ if __name__ == "__main__":
         mask_ocean=True,
     )
     fig.show()
-
