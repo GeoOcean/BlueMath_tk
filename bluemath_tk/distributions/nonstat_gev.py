@@ -4,14 +4,13 @@ from typing import Optional, Tuple, Union
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from numba import njit, prange
 from scipy.integrate import quad
 from scipy.optimize import minimize, root_scalar
-from scipy.stats import norm, genextreme
+from scipy.stats import genextreme, norm
 
 from ..core.models import BlueMathModel
 from ..core.plotting.colors import default_colors
-from numba import njit, prange
-
 
 # @njit(fastmath=True)
 # def search(times: np.ndarray, values: np.ndarray, xs) -> np.ndarray:
@@ -106,7 +105,7 @@ class NonStatGEV(BlueMathModel):
         """
         super().__init__()
 
-        debug=1
+        debug = 1
         self.set_logger_name(
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
         )
@@ -1491,7 +1490,7 @@ class NonStatGEV(BlueMathModel):
                 + nind_loc
                 + ntrend_sc
                 + nind_sc
-                + ngamma 
+                + ngamma
                 + ntrend_sh : 2
                 + self.ngamma0
                 + nmu
@@ -1540,7 +1539,7 @@ class NonStatGEV(BlueMathModel):
         )
 
         fit_result["x"] = result.x  # Optimal parameters vector
-        fit_result["negloglikelihood"] = result.fun  # Optimal loglikelihood 
+        fit_result["negloglikelihood"] = result.fun  # Optimal loglikelihood
         fit_result["AIC"] = self._AIC(-fit_result["negloglikelihood"], n_params)
         fit_result["n_params"] = n_params
         fit_result["success"] = result.success
@@ -1549,62 +1548,64 @@ class NonStatGEV(BlueMathModel):
         fit_result["jac"] = result.jac if hasattr(result, 'jac') else None
         fit_result["hess_inv"] = result.hess_inv if hasattr(result, 'hess_inv') else None
 
-        # # Check if any of the bounds related to shape parameters become active, if active increase or decrease the bound and call the optimization routine again
-        # lambdas = result.v
-        # auxlb = []
-        # auxub = []
-        # for i, v in enumerate(lambdas[0]):
-        #     if np.abs(fit_result["x"][i] - lb[i]) <= 1e-6 or v < -1e-6:
-        #         lb[i] -= 0.05
-        #         auxlb.append(i)
-        #     if np.abs(fit_result["x"][i] - ub[i]) <= 1e-6 or v > 1e-6:
-        #         ub[i] += 0.05
-        #         auxub.append(i)
+        # Check if any of the bounds related to shape parameters become active, if active increase or decrease the bound and call the optimization routine again
+        auxlb = []
+        auxub = []
+        for i, x in enumerate(fit_result["x"]):
+            if np.abs(x - lb[i]) <= 1e-6:
+                lb[i] -= 0.05
+                auxlb.append(i)
+            if np.abs(x - ub[i]) <= 1e-6:
+                ub[i] += 0.05
+                auxub.append(i)
 
-        # it = 0
-        # while (len(auxlb) > 0 or len(auxub) > 0) and it < 10:
-        #     it += 1
-        #     result = minimize(
-        #         fun=self._auxmin_loglikelihood,
-        #         jac=self._auxmin_loglikelihood_grad,  # Gradient information
-        #         hess=self._auxmin_loglikelihood_hess,  # Hessian information, if applicable
-        #         x0=fit_result["x"],
-        #         bounds=bounds,
-        #         args=(
-        #             nmu,
-        #             npsi,
-        #             ngamma,
-        #             ntrend_loc,
-        #             list_loc,
-        #             ntrend_sc,
-        #             list_sc,
-        #             ntrend_sh,
-        #             list_sh,
-        #         ),
-        #         options=options,  # Options
-        #         method="trust-constr",
-        #     )
+        it = 0
+        while (len(auxlb) > 0 or len(auxub) > 0) and it < 10:
+            it += 1
+            result = minimize(
+                fun=self._auxmin_loglikelihood,
+                x0=x_ini,
+                bounds=bounds,
+                args=(
+                    nmu,
+                    npsi,
+                    ngamma, 
+                    ntrend_loc,
+                    list_loc,
+                    ntrend_sc, 
+                    list_sc,
+                    ntrend_sh,
+                    list_sh,
+                ),
+                method='L-BFGS-B',
+                jac=self._auxmin_loglikelihood_grad,
+                options={
+                    'maxiter': options.get('maxiter', 1000),
+                    'ftol': options.get('ftol', 1e-6),
+                    'gtol': options.get('gtol', 1e-6),
+                }
+            )
 
-        #     fit_result["x"] = result.x  # Optimal parameters vector
-        #     fit_result["negloglikelihood"] = result.fun  # Optimal loglikelihood
-        #     fit_result["AIC"] = self._AIC(-fit_result["negloglikelihood"], n_params)
-        #     fit_result["n_params"] = n_params
-        #     fit_result["success"] = result.success
-        #     fit_result["message"] = result.message
-        #     fit_result["grad"] = result.grad
-        #     fit_result["hess_inv"] = (
-        #         result.hess_inv if "hess_inv" in result else None
-        #     )  # 'hess_inv' is only available if 'hess' is provided
-        #     fit_result["lambdas"] = result.v
-        #     auxlb = []
-        #     auxub = []
-        #     for i, v in enumerate(lambdas[0]):
-        #         if np.abs(fit_result["x"][i] - lb[i]) <= 1e-6 or v < -1e-6:
-        #             lb[i] -= 0.05
-        #             auxlb.append(i)
-        #         if np.abs(fit_result["x"][i] - ub[i]) <= 1e-6 or v > 1e-6:
-        #             ub[i] += 0.05
-        #             auxub.append(i)
+            fit_result["x"] = result.x  # Optimal parameters vector
+            fit_result["negloglikelihood"] = result.fun  # Optimal loglikelihood
+            fit_result["AIC"] = self._AIC(-fit_result["negloglikelihood"], n_params)
+            fit_result["n_params"] = n_params
+            fit_result["success"] = result.success
+            fit_result["message"] = result.message
+            fit_result["grad"] = result.grad
+            fit_result["hess_inv"] = (
+                result.hess_inv if "hess_inv" in result else None
+            )  # 'hess_inv' is only available if 'hess' is provided
+
+            auxlb = []
+            auxub = []
+            for i, x in enumerate(fit_result["x"]):
+                if np.abs(x - lb[i]) <= 1e-6:
+                    lb[i] -= 0.05
+                    auxlb.append(i)
+                if np.abs(x - ub[i]) <= 1e-6:
+                    ub[i] += 0.05
+                    auxub.append(i)
 
         # Location parameter
         fit_result["beta0"] = fit_result["x"][0]
@@ -2895,6 +2896,7 @@ class NonStatGEV(BlueMathModel):
         Jx = -Jx
 
         return Jx
+
     def _auxmin_loglikelihood_hess(
         self,
         x,
@@ -3397,17 +3399,17 @@ class NonStatGEV(BlueMathModel):
         zn = z ** (-1 / epst)
 
         # Evaluate the loglikelihood function, not that the general and Gumbel expressions are used
-        f = -np.sum(
-            -np.log(self.kt[pos])
-            + np.log(psit[pos])
-            + (1 + 1 / epst[pos]) * np.log(z[pos])
-            + self.kt[pos] * zn[pos]
-        ) - np.sum(
-            -np.log(self.kt[posG])
-            + np.log(psit[posG])
-            + xn[posG]
-            + self.kt[posG] * np.exp(-xn[posG])
-        )
+        # f = -np.sum(
+        #     -np.log(self.kt[pos])
+        #     + np.log(psit[pos])
+        #     + (1 + 1 / epst[pos]) * np.log(z[pos])
+        #     + self.kt[pos] * zn[pos]
+        # ) - np.sum(
+        #     -np.log(self.kt[posG])
+        #     + np.log(psit[posG])
+        #     + xn[posG]
+        #     + self.kt[posG] * np.exp(-xn[posG])
+        # )
 
         ### Gradient of the loglikelihood
         # Derivatives given by equations (A.1)-(A.3) in the paper
@@ -3578,22 +3580,19 @@ class NonStatGEV(BlueMathModel):
                     + 2
                     + (-2 - epst * (3 + epst) * xn) * z ** (1 / epst)
                 )
-                + (z / (epst ** 2))
+                + (z / (epst**2))
                 * np.log(z)
                 * (
                     2 * epst * (-xn * (1 + epst) - 1 + z ** (1 + 1 / epst))
                     + z * np.log(z)
                 )
             )
-            / ((epst * z)**2)
+            / ((epst * z) ** 2)
         )
         Dmutpsit = -(1 + epst - (1 - xn) * zn) / ((z * psit) ** 2)
         Dmutepst = (
             -zn
-            * (
-                epst * (-(1 + epst) * xn - epst * (1 - xn) / zn)
-                + z * np.log(z)
-            )
+            * (epst * (-(1 + epst) * xn - epst * (1 - xn) / zn) + z * np.log(z))
             / (psit * epst**2 * z**2)
         )
         Dpsitepst = xn * Dmutepst
@@ -3836,20 +3835,6 @@ class NonStatGEV(BlueMathModel):
                 + nind_sc,
                 2 + nmu + npsi + ntrend_loc + nind_loc + ntrend_sc + nind_sc,
             ] = np.sum(D2epst * self.t)
-        if ntrend_sh > 0 and ntrend_loc > 0:
-            # Sub-block number, betaT*gammaT
-            Hxx[
-                2
-                + self.ngamma0
-                + nmu
-                + npsi
-                + ngamma
-                + ntrend_loc
-                + nind_loc
-                + ntrend_sc
-                + nind_sc,
-                2 + nmu + ntrend_loc + nind_loc + npsi,
-            ] = np.sum(Dmutepst * self.t**2)
         if ntrend_sh > 0 and ntrend_sc > 0:
             # Sub-block number, alphaT*gammaT
             Hxx[
@@ -3862,8 +3847,22 @@ class NonStatGEV(BlueMathModel):
                 + nind_loc
                 + ntrend_sc
                 + nind_sc,
+                2 + nmu + ntrend_loc + nind_loc + npsi,
+            ] = np.sum(Dpsitepst * psit * self.t**2)
+        if ntrend_sh > 0 and ntrend_loc > 0:
+            # Sub-block number, betaT*gammaT
+            Hxx[
+                2
+                + self.ngamma0
+                + nmu
+                + npsi
+                + ngamma
+                + ntrend_loc
+                + nind_loc
+                + ntrend_sc
+                + nind_sc,
                 1 + nmu,
-            ] = np.sum(Dpsitepst * self.t**2 * psit)
+            ] = np.sum(Dmutepst * self.t**2)
         # Sub-block number 13, beta0*beta_cov_i
         if nind_loc > 0:
             for i in range(nind_loc):
@@ -4848,10 +4847,9 @@ class NonStatGEV(BlueMathModel):
         self.invI0 = np.linalg.inv(-Hxx)
         fit_result["invI0"] = self.invI0
 
-
         std_params = np.sqrt(np.diag(self.invI0))
         self.std_params = std_params
-        fit_result["std_param"] = std_params
+        fit_result["std_params"] = std_params
 
         if plot:
             self.plot()
@@ -5246,22 +5244,19 @@ class NonStatGEV(BlueMathModel):
                     + 2
                     + (-2 - epst * (3 + epst) * xn) * z ** (1 / epst)
                 )
-                + (z / (epst ** 2))
+                + (z / (epst**2))
                 * np.log(z)
                 * (
                     2 * epst * (-xn * (1 + epst) - 1 + z ** (1 + 1 / epst))
                     + z * np.log(z)
                 )
             )
-            / ((epst * z)**2)
+            / ((epst * z) ** 2)
         )
         Dmutpsit = -(1 + epst - (1 - xn) * zn) / ((z * psit) ** 2)
         Dmutepst = (
             -zn
-            * (
-                epst * (-(1 + epst) * xn - epst * (1 - xn) / zn)
-                + z * np.log(z)
-            )
+            * (epst * (-(1 + epst) * xn - epst * (1 - xn) / zn) + z * np.log(z))
             / (psit * epst**2 * z**2)
         )
         Dpsitepst = xn * Dmutepst
@@ -6411,7 +6406,7 @@ class NonStatGEV(BlueMathModel):
         self.gamma_cov = kwargs.get("gamma_cov", np.empty(0))
 
         self.xopt = kwargs.get("x", None)
-    
+
     def _parametro(
         self,
         beta0: Optional[float] = None,
@@ -6422,8 +6417,7 @@ class NonStatGEV(BlueMathModel):
         indicesint: Optional[np.ndarray] = None,
         times: Optional[np.ndarray] = None,
         x: Optional[np.ndarray] = None,
-        ) -> np.ndarray:
-
+    ) -> np.ndarray:
         if beta is None:
             beta = np.empty(0)
         if betaT is None or betaT.size == 0:
@@ -6444,7 +6438,9 @@ class NonStatGEV(BlueMathModel):
         else:
             x = self.t
 
-        return self.parametro(beta0, beta, betaT, beta_cov, covariates, indicesint, times,x,ntend)
+        return self.parametro(
+            beta0, beta, betaT, beta_cov, covariates, indicesint, times, x, ntend
+        )
 
     @staticmethod
     @njit(fastmath=True)
@@ -6459,7 +6455,7 @@ class NonStatGEV(BlueMathModel):
         x: Optional[np.ndarray] = None,
         ntend: Optional[int] = None,
     ) -> np.ndarray:
-        """        This function computes the location, scale and shape parameters for given parameters. Expressions by (2)-(3) in the paper
+        """This function computes the location, scale and shape parameters for given parameters. Expressions by (2)-(3) in the paper
 
         Parameters
         ----------
@@ -6485,7 +6481,7 @@ class NonStatGEV(BlueMathModel):
         y : np.ndarray
             Values of the parameter
         """
-  
+
         m = len(x)
 
         na, nind = covariates.shape
@@ -6526,14 +6522,14 @@ class NonStatGEV(BlueMathModel):
                     #         times, covariates[:, i], x.flatten()
                     #     )
                     #     y = y + beta_cov[i] * indicesintaux
-                    idx = np.searchsorted(times, x, side='right')
+                    idx = np.searchsorted(times, x, side="right")
                     valid = idx < times.size
 
                     y_add = np.zeros_like(x, dtype=np.float64)
                     if np.any(valid):
                         # pick rows from covariates and do one matvec
-                        A = covariates[idx[valid], :]            # (k, nind)
-                        y_add[valid] = A @ beta_cov              # (k,)
+                        A = covariates[idx[valid], :]  # (k, nind)
+                        y_add[valid] = A @ beta_cov  # (k,)
 
                     y = y + y_add
             else:
@@ -6541,9 +6537,8 @@ class NonStatGEV(BlueMathModel):
                 #     y = y + beta_cov[i] * covariates[:, i]
                 y = y + covariates @ beta_cov
 
-
         return y
-    
+
     def _evaluate_params(
         self,
         beta0: Optional[float] = None,
@@ -6881,19 +6876,38 @@ class NonStatGEV(BlueMathModel):
             fig, ax1 = plt.subplots(figsize=(10, 6))
 
             #############
-            month_initials = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"]
+            month_initials = [
+                "Jul",
+                "Aug",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dec",
+                "Jan",
+                "Feb",
+                "Mar",
+                "Apr",
+                "May",
+                "Jun",
+            ]
             month_positions = [i / 12 for i in range(12)]
 
             # Reorder the return periods to start from July
-            rt_10 = np.zeros(13) 
-            rt_50 = np.zeros(13) 
+            rt_10 = np.zeros(13)
+            rt_50 = np.zeros(13)
             rt_100 = np.zeros(13)
             for i in range(12):
                 # Map i to the correct month index (July = 0, June = 11)
                 month_idx = (i + 6) % 12
-                rt_10[i] = self._aggquantile(1-1/10, month_idx/12, (month_idx+1)/12)
-                rt_50[i] = self._aggquantile(1-1/50, month_idx/12, (month_idx+1)/12)
-                rt_100[i] = self._aggquantile(1-1/100, month_idx/12, (month_idx+1)/12)
+                rt_10[i] = self._aggquantile(
+                    1 - 1 / 10, month_idx / 12, (month_idx + 1) / 12
+                )
+                rt_50[i] = self._aggquantile(
+                    1 - 1 / 50, month_idx / 12, (month_idx + 1) / 12
+                )
+                rt_100[i] = self._aggquantile(
+                    1 - 1 / 100, month_idx / 12, (month_idx + 1) / 12
+                )
 
             rt_10[12] = rt_10[0]
             rt_50[12] = rt_50[0]
@@ -6901,32 +6915,44 @@ class NonStatGEV(BlueMathModel):
 
             # For the data points, shift the time values by 0.5 years
             t_shifted = t_anual.copy()
-            t_shifted[t_anual < 0.5] += 0.5 
+            t_shifted[t_anual < 0.5] += 0.5
             t_shifted[t_anual >= 0.5] -= 0.5
             t_ord = np.argsort(t_shifted)
-            
+
             ### Added by Tomas Carlotto
             # Creating variables to store the evolution of pdf and sf over time
-            var_grid_resolution = 50 
+            var_grid_resolution = 50
             # t_anual_ord = t_anual[t_ord]
-            mu_t =  mut[t_ord]
+            mu_t = mut[t_ord]
             psi_t = psit[t_ord]
-            xi_t =  epst[t_ord]
+            xi_t = epst[t_ord]
             # Definition of the Hs value grid
-            lim_max = np.max(self.xt)+1
+            lim_max = np.max(self.xt) + 1
             lim_min = np.min(self.xt)
-            hvar = np.linspace(lim_min, lim_max, var_grid_resolution)       
+            hvar = np.linspace(lim_min, lim_max, var_grid_resolution)
             t_grid, x_grid = np.meshgrid(t_shifted[t_ord], hvar)
 
             # Calculating the 1-CDF for each grid point (Exceedance Probabilities)
-            sf = np.array([genextreme.sf(x_grid[:, i], c=-xi_t[i], loc=mu_t[i], scale=psi_t[i]) for i in range(len(t_shifted[t_ord]))]).T
+            sf = np.array(
+                [
+                    genextreme.sf(x_grid[:, i], c=-xi_t[i], loc=mu_t[i], scale=psi_t[i])
+                    for i in range(len(t_shifted[t_ord]))
+                ]
+            ).T
             # Calculating the Probability Density Function (pdf) for each grid point
-            pdf = np.array([genextreme.pdf(x_grid[:, i], c=-xi_t[i], loc=mu_t[i], scale=psi_t[i]) for i in range(len(t_shifted[t_ord]))]).T 
+            pdf = np.array(
+                [
+                    genextreme.pdf(
+                        x_grid[:, i], c=-xi_t[i], loc=mu_t[i], scale=psi_t[i]
+                    )
+                    for i in range(len(t_shifted[t_ord]))
+                ]
+            ).T
 
-            cf = ax1.contourf(t_shifted[t_ord], hvar, sf, levels=50, cmap="viridis_r")            
-            cbar = fig.colorbar(cf, ax=ax1)            
+            cf = ax1.contourf(t_shifted[t_ord], hvar, sf, levels=50, cmap="viridis_r")
+            cbar = fig.colorbar(cf, ax=ax1)
             cbar.set_label("Exceedance probability", fontsize=12)
-            #===============
+            # ===============
 
             # Use t_shifted for plotting data points
             ax1.plot(
@@ -6937,7 +6963,7 @@ class NonStatGEV(BlueMathModel):
                 color="black",
                 markersize=5,
                 label="Data",
-                alpha=0.9
+                alpha=0.9,
             )
 
             # Use t_shifted for other lines as well
@@ -6959,15 +6985,33 @@ class NonStatGEV(BlueMathModel):
                 alpha=0.3,
             )
 
-            month_positions_aux = [i/12 for i in range(13)]
-            ax1.plot(
-                month_positions_aux, rt_10, linestyle="-", linewidth=1, label="10 years", color="tab:red"
+            month_positions_aux = [i / 12 for i in range(13)]
+            ax1.step(
+                month_positions_aux,
+                rt_10,
+                where="post",
+                linestyle="-",
+                linewidth=1,
+                label="10 years",
+                color="tab:red",
             )
-            ax1.plot(
-                month_positions_aux, rt_50, linestyle="-", linewidth=1, label="50 years", color="tab:purple"
+            ax1.step(
+                month_positions_aux,
+                rt_50,
+                where="post",
+                linestyle="-",
+                linewidth=1,
+                label="50 years",
+                color="tab:purple",
             )
-            ax1.plot(
-                month_positions_aux, rt_100, linestyle="-", linewidth=1, label="100 years", color="tab:green"
+            ax1.step(
+                month_positions_aux,
+                rt_100,
+                where="post",
+                linestyle="-",
+                linewidth=1,
+                label="100 years",
+                color="tab:green",
             )
 
             ax1.set_title(f"Parameters Evolution ({self.var_name})")
@@ -6975,7 +7019,7 @@ class NonStatGEV(BlueMathModel):
             ax1.set_ylabel(f"{self.var_name}")
             ax1.grid(True)
             ax1.legend(loc="best")
-            ax1.set_xlim(0,1)
+            ax1.set_xlim(0, 1)
             ax1.set_xticks(month_positions, month_initials, rotation=45)
             if save:
                 plt.savefig(
@@ -6983,9 +7027,6 @@ class NonStatGEV(BlueMathModel):
                     dpi=300,
                 )
             plt.show()
-
-            
-
 
         else:
             fig, ax1 = plt.subplots(figsize=(20, 6))
@@ -7050,26 +7091,50 @@ class NonStatGEV(BlueMathModel):
                 n_years = int(np.ceil(self.t[-1]))
                 rt_10 = np.zeros(n_years)
                 for year in range(n_years):
-                    rt_10[year] = self._aggquantile(1-1/10, year, year+1)  # 10-year return level at each year
+                    rt_10[year] = self._aggquantile(
+                        1 - 1 / 10, year, year + 1
+                    )  # 10-year return level at each year
                 rt_50 = np.zeros(n_years)
                 for year in range(n_years):
-                    rt_50[year] = self._aggquantile(1-1/50, year, year+1)  # 50-year return level at each year
+                    rt_50[year] = self._aggquantile(
+                        1 - 1 / 50, year, year + 1
+                    )  # 50-year return level at each year
                 rt_100 = np.zeros(n_years)
                 for year in range(n_years):
-                    rt_100[year] = self._aggquantile(1-1/100, year, year+1) # 100-year return level at each year
+                    rt_100[year] = self._aggquantile(
+                        1 - 1 / 100, year, year + 1
+                    )  # 100-year return level at each year
 
-                ax1.plot(
-                    np.arange(init_year,init_year+n_years), rt_10, linestyle="-", linewidth=1, label="10 years", color="tab:red"
+                ax1.step(
+                    np.arange(init_year, init_year + n_years),
+                    rt_10,
+                    where="post",
+                    linestyle="-",
+                    linewidth=1,
+                    label="10 years",
+                    color="tab:red",
                 )
-                ax1.plot(
-                    np.arange(init_year,init_year+n_years), rt_50, linestyle="-", linewidth=1, label="50 years", color="tab:purple"
+                ax1.step(
+                    np.arange(init_year, init_year + n_years),
+                    rt_50,
+                    where="post",
+                    linestyle="-",
+                    linewidth=1,
+                    label="50 years",
+                    color="tab:purple",
                 )
-                ax1.plot(
-                    np.arange(init_year, init_year+n_years), rt_100, linestyle="-", linewidth=1, label="100 years", color="tab:green"
+                ax1.step(
+                    np.arange(init_year, init_year + n_years),
+                    rt_100,
+                    where="post",
+                    linestyle="-",
+                    linewidth=1,
+                    label="100 years",
+                    color="tab:green",
                 )
 
         ax1.set_xlabel("Time (years)")
-        ax1.set_ylabel(rf"$\mu_t(m)$, {self.var_name}")
+        ax1.set_ylabel(f"{self.var_name}")
         # ax1.set_title(f"Evolution of location and scale parameters ({self.var_name})")
         ax1.set_title(f"Evolution of parameters ({self.var_name})")
         ax1.grid(True)
@@ -7084,9 +7149,21 @@ class NonStatGEV(BlueMathModel):
             plt.savefig(f"Figures/Adjustment_Evolution_{self.var_name}.png", dpi=300)
         plt.show()
 
-
         ###### 1st Year PLOT
-        month_initials = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"]
+        month_initials = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+        ]
         month_positions = [i / 12 for i in range(12)]
 
         #### Creating the first year plot
@@ -7175,7 +7252,7 @@ class NonStatGEV(BlueMathModel):
         #         alpha=0.3,
         #         label="Location +- scale",
         #     )
-            
+
         #     # ax1.plot(
         #     #     self.t[mask_month],
         #     #     rt_10[mask_month],
@@ -7408,19 +7485,40 @@ class NonStatGEV(BlueMathModel):
             and self.nind_sc == 0
             and self.nind_sh == 0
         ):
-            mu_t =  mut[t_ord]
+            month_initials = [
+                "Jul",
+                "Aug",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dec",
+                "Jan",
+                "Feb",
+                "Mar",
+                "Apr",
+                "May",
+                "Jun",
+            ]
+            mu_t = mut[t_ord]
             psi_t = psit[t_ord]
-            xi_t =  epst[t_ord]
+            xi_t = epst[t_ord]
             # Definition of the Hs value grid
-            lim_max = np.max(self.xt)+1
+            lim_max = np.max(self.xt) + 1
             lim_min = np.min(self.xt)
-            hvar = np.linspace(lim_min, lim_max, var_grid_resolution)       
+            hvar = np.linspace(lim_min, lim_max, var_grid_resolution)
             t_grid, x_grid = np.meshgrid(t_shifted[t_ord], hvar)
             # Calculating the Probability Density Function (pdf) for each grid point
-            pdf = np.array([genextreme.pdf(x_grid[:, i], c=-xi_t[i], loc=mu_t[i], scale=psi_t[i]) for i in range(len(t_shifted[t_ord]))]).T 
+            pdf = np.array(
+                [
+                    genextreme.pdf(
+                        x_grid[:, i], c=-xi_t[i], loc=mu_t[i], scale=psi_t[i]
+                    )
+                    for i in range(len(t_shifted[t_ord]))
+                ]
+            ).T
 
             fig = plt.figure(figsize=(15, 6))
-            ax = fig.add_subplot(projection='3d')
+            ax = fig.add_subplot(projection="3d")
             ax.plot_surface(t_grid, x_grid, pdf, cmap="viridis_r")
             ax.set_zlim(0, 1)
             ax.set_xlabel("Time (Months)")
@@ -8445,7 +8543,9 @@ class NonStatGEV(BlueMathModel):
             self.logger.debug("ReturnPeriodPlot: Annual return period.")
             for j in range(nts):
                 quanaggrA[j] = self._aggquantile(1 - 1 / Ts[j], 0, 1)[0]
-                self.logger.debug(f"ReturnPeriodPlot: Annual return period {j} finished.")
+                self.logger.debug(
+                    f"ReturnPeriodPlot: Annual return period {j} finished."
+                )
             # Confidence intervals
             if conf_int:
                 stdup = np.zeros(nts)
@@ -8518,10 +8618,15 @@ class NonStatGEV(BlueMathModel):
             # Create mask for each year's data
             year_masks = [(self.t >= j) & (self.t < j + 1) for j in range(ny)]
             # Calculate max values using masks and broadcasting
-            hmax1 = np.array([np.max(self.xt[mask]) if np.any(mask) else np.nan for mask in year_masks])
+            hmax1 = np.array(
+                [
+                    np.max(self.xt[mask]) if np.any(mask) else np.nan
+                    for mask in year_masks
+                ]
+            )
             # Remove any NaN values if present
             hmax1 = hmax1[~np.isnan(hmax1)]
-            
+
             hmaxsort = np.sort(hmax1)
             ProHsmaxsort = np.arange(1, len(hmaxsort) + 1) / (len(hmaxsort) + 1)
             Tapprox = 1 / (1 - ProHsmaxsort)
@@ -8715,7 +8820,7 @@ class NonStatGEV(BlueMathModel):
         )
 
         a = media - 10
-        b = media + 10
+        b = media + 20
 
         for il in range(m):
             # function of z whose root we want
@@ -8746,11 +8851,12 @@ class NonStatGEV(BlueMathModel):
                     ),
                     float(t0[il]),
                     float(t1[il]),
-                    epsabs=1e-5, epsrel=1e-5
+                    epsabs=1e-5,
+                    epsrel=1e-5,
                 )
                 self.logger.debug("Fin quad()")
                 return integ + np.log(q[il]) / 12.0
-    
+
             try:
                 # sol = root_scalar(
                 #     F,
@@ -8761,14 +8867,14 @@ class NonStatGEV(BlueMathModel):
                 #     rtol=1e-6,
                 #     maxiter=200,
                 # )
-                
+
                 sol = root_scalar(
                     F,
                     bracket=(a, b),
-                    method="toms748", 
-                    xtol=1e-6, 
-                    rtol=1e-6, 
-                    maxiter=100
+                    method="toms748",
+                    xtol=1e-6,
+                    rtol=1e-6,
+                    maxiter=100,
                 )
                 if sol.converged:
                     if abs(F(sol.root)) < 1e-2:
@@ -9240,7 +9346,11 @@ class NonStatGEV(BlueMathModel):
 
         for i in range(self.nind_loc):
             print(
-                format_line(f"{self.covariates.columns[self.list_loc[i]]}", self.beta_cov[i], std_params[param_idx])
+                format_line(
+                    f"{self.covariates.columns[self.list_loc[i]]}",
+                    self.beta_cov[i],
+                    std_params[param_idx],
+                )
             )
             param_idx += 1
 
@@ -9273,7 +9383,9 @@ class NonStatGEV(BlueMathModel):
         for i in range(self.nind_sc):
             print(
                 format_line(
-                    f"{self.covariates.columns[self.list_sc[i]]}", self.alpha_cov[i], std_params[param_idx]
+                    f"{self.covariates.columns[self.list_sc[i]]}",
+                    self.alpha_cov[i],
+                    std_params[param_idx],
                 )
             )
             param_idx += 1
@@ -9308,7 +9420,9 @@ class NonStatGEV(BlueMathModel):
         for i in range(self.nind_sh):
             print(
                 format_line(
-                    f"{self.covariates.columns[self.list_sh[i]]}", self.gamma_cov[i], std_params[param_idx]
+                    f"{self.covariates.columns[self.list_sh[i]]}",
+                    self.gamma_cov[i],
+                    std_params[param_idx],
                 )
             )
             param_idx += 1
