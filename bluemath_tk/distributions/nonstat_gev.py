@@ -4838,7 +4838,7 @@ class NonStatGEV(BlueMathModel):
 
         std_params = np.sqrt(np.diag(self.invI0))
         self.std_params = std_params
-        fit_result["std_param"] = std_params
+        fit_result["std_params"] = std_params
 
         if plot:
             self.plot()
