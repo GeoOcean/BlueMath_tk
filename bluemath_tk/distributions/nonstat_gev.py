@@ -1534,6 +1534,8 @@ class NonStatGEV(BlueMathModel):
 
         fit_result["x"] = result.x  # Optimal parameters vector
         fit_result["negloglikelihood"] = result.fun  # Optimal loglikelihood
+        fit_result["AIC"] = self._AIC(-fit_result["negloglikelihood"], n_params)
+        fit_result["n_params"] = n_params
         fit_result["success"] = result.success
         fit_result["message"] = result.message
         fit_result["grad"] = result.grad
