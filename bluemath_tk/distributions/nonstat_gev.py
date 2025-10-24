@@ -1285,9 +1285,9 @@ class NonStatGEV(BlueMathModel):
             options = dict(
                 maxiter=20000,
                 # Aim for first-order optimality:
-                gtol=1e-8,          # or 1e-9 if your scaling is good
+                gtol=1e-6,          # or 1e-9 if your scaling is good
                 # Make f-decrease test essentially inactive:
-                ftol=1e-20,         # very small so it won’t trigger early
+                ftol=1e-8,         # very small so it won’t trigger early
                 maxcor=20,          # more curvature memory
                 maxls=100           # more line-search steps
             )
@@ -1592,10 +1592,9 @@ class NonStatGEV(BlueMathModel):
             fit_result["n_params"] = n_params
             fit_result["success"] = result.success
             fit_result["message"] = result.message
-            fit_result["grad"] = result.grad
-            fit_result["hess_inv"] = (
-                result.hess_inv if "hess_inv" in result else None
-            )  # 'hess_inv' is only available if 'hess' is provided
+            fit_result["grad"] = result.grad if hasattr(result, 'grad') else None
+            fit_result["jac"] = result.jac if hasattr(result, 'jac') else None
+            fit_result["hess_inv"] = result.hess_inv if hasattr(result, 'hess_inv') else None  # 'hess_inv' is only available if 'hess' is provided
 
             auxlb = []
             auxub = []
@@ -6949,7 +6948,7 @@ class NonStatGEV(BlueMathModel):
                 ]
             ).T
 
-            cf = ax1.contourf(t_shifted[t_ord], hvar, sf, levels=50, cmap="viridis_r")
+            cf = ax1.contourf(t_shifted[t_ord], hvar, sf, levels=50, cmap="Wistia")
             cbar = fig.colorbar(cf, ax=ax1)
             cbar.set_label("Exceedance probability", fontsize=12)
             # ===============
