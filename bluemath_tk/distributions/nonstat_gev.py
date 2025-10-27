@@ -164,7 +164,7 @@ class NonStatGEV(BlueMathModel):
         # Color palette
         self.colors = default_colors
 
-    def auto_adjust(self, max_iter: int = 1000, plot: bool = False) -> dict:
+    def auto_adjust(self, max_iter: int = 1000, plot: bool = False, stationary_shape: bool=False) -> dict:
         """
         This method automatically select and calculate the parameters which minimize the AIC related to
         Non-Stationary GEV distribution using the Maximum Likelihood method within an iterative scheme,
@@ -177,6 +177,8 @@ class NonStatGEV(BlueMathModel):
             Number of iteration in optimization process.
         plot : bool, default=False
             If plot the adjusted distribution
+        stationary_shape : bool, default=False
+            If True, the shape parameter remain stationary
 
         Return
         ----------
@@ -344,98 +346,99 @@ class NonStatGEV(BlueMathModel):
                     max_val = auxmax
                     pos = 2
 
-                # Perturbation for shape
-                auxmax = abs(
-                    auxJx[
-                        2
-                        + self.ngamma0
-                        + 2 * nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + ntrend_sc
-                        + nind_sc
-                        + 2 * npsi
-                        + 2 * ngamma
-                        + 4 : 2
-                        + self.ngamma0
-                        + 2 * nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + ntrend_sc
-                        + nind_sc
-                        + 2 * npsi
-                        + 2 * ngamma
-                        + 4
-                        + 2
-                    ].T
-                    @ auxI0[
-                        2
-                        + self.ngamma0
-                        + 2 * nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + ntrend_sc
-                        + nind_sc
-                        + 2 * npsi
-                        + 2 * ngamma
-                        + 4 : 2
-                        + self.ngamma0
-                        + 2 * nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + ntrend_sc
-                        + nind_sc
-                        + 2 * npsi
-                        + 2 * ngamma
-                        + 4
-                        + 2,
-                        2
-                        + self.ngamma0
-                        + 2 * nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + ntrend_sc
-                        + nind_sc
-                        + 2 * npsi
-                        + 2 * ngamma
-                        + 4 : 2
-                        + self.ngamma0
-                        + 2 * nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + ntrend_sc
-                        + nind_sc
-                        + 2 * npsi
-                        + 2 * ngamma
-                        + 4
-                        + 2,
-                    ]
-                    @ auxJx[
-                        2
-                        + self.ngamma0
-                        + 2 * nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + ntrend_sc
-                        + nind_sc
-                        + 2 * npsi
-                        + 2 * ngamma
-                        + 4 : 2
-                        + self.ngamma0
-                        + 2 * nmu
-                        + ntrend_loc
-                        + nind_loc
-                        + ntrend_sc
-                        + nind_sc
-                        + 2 * npsi
-                        + 2 * ngamma
-                        + 4
-                        + 2
-                    ]
-                )
-                if auxmax > max_val:
-                    max_val = auxmax
-                    pos = 3
+                if not stationary_shape:
+                    # Perturbation for shape
+                    auxmax = abs(
+                        auxJx[
+                            2
+                            + self.ngamma0
+                            + 2 * nmu
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + 2 * npsi
+                            + 2 * ngamma
+                            + 4 : 2
+                            + self.ngamma0
+                            + 2 * nmu
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + 2 * npsi
+                            + 2 * ngamma
+                            + 4
+                            + 2
+                        ].T
+                        @ auxI0[
+                            2
+                            + self.ngamma0
+                            + 2 * nmu
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + 2 * npsi
+                            + 2 * ngamma
+                            + 4 : 2
+                            + self.ngamma0
+                            + 2 * nmu
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + 2 * npsi
+                            + 2 * ngamma
+                            + 4
+                            + 2,
+                            2
+                            + self.ngamma0
+                            + 2 * nmu
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + 2 * npsi
+                            + 2 * ngamma
+                            + 4 : 2
+                            + self.ngamma0
+                            + 2 * nmu
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + 2 * npsi
+                            + 2 * ngamma
+                            + 4
+                            + 2,
+                        ]
+                        @ auxJx[
+                            2
+                            + self.ngamma0
+                            + 2 * nmu
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + 2 * npsi
+                            + 2 * ngamma
+                            + 4 : 2
+                            + self.ngamma0
+                            + 2 * nmu
+                            + ntrend_loc
+                            + nind_loc
+                            + ntrend_sc
+                            + nind_sc
+                            + 2 * npsi
+                            + 2 * ngamma
+                            + 4
+                            + 2
+                        ]
+                    )
+                    if auxmax > max_val:
+                        max_val = auxmax
+                        pos = 3
 
                 # If maximum perturbation corresponds to location, include a new harmonic
                 if pos == 1:
@@ -537,6 +540,7 @@ class NonStatGEV(BlueMathModel):
             self.AIC_iter[iter] = self._AIC(-fit_result["negloglikelihood"], n_params)
 
         ######### COVARIATES Iterative process #########
+        final_fit_result = fit_result
         nrows, nind_cov = self.covariates.shape  # Number of covariates
 
         # Auxiliar variables related to location parameter
@@ -650,33 +654,11 @@ class NonStatGEV(BlueMathModel):
                     )
                 )
                 maximo_sc, pos_sc = np.max(values2), np.argmax(values2)
-                # Perturbation of shape
-                values3 = np.abs(
-                    auxJx[
-                        2
-                        + self.ngamma0
-                        + 2 * nmu
-                        + ntrend_loc
-                        + nind_cov
-                        + 2 * npsi
-                        + ntrend_sc
-                        + nind_cov
-                        + 2 * ngamma
-                        + ntrend_sh : 2
-                        + self.ngamma0
-                        + 2 * nmu
-                        + ntrend_loc
-                        + nind_cov
-                        + 2 * npsi
-                        + ntrend_sc
-                        + nind_cov
-                        + 2 * ngamma
-                        + ntrend_sh
-                        + nind_cov
-                    ]
-                    ** 2
-                    / np.diag(
-                        auxI0[
+                
+                if not stationary_shape:
+                    # Perturbation of shape
+                    values3 = np.abs(
+                        auxJx[
                             2
                             + self.ngamma0
                             + 2 * nmu
@@ -685,7 +667,8 @@ class NonStatGEV(BlueMathModel):
                             + 2 * npsi
                             + ntrend_sc
                             + nind_cov
-                            + 2 * ngamma : 2
+                            + 2 * ngamma
+                            + ntrend_sh : 2
                             + self.ngamma0
                             + 2 * nmu
                             + ntrend_loc
@@ -695,33 +678,59 @@ class NonStatGEV(BlueMathModel):
                             + nind_cov
                             + 2 * ngamma
                             + ntrend_sh
-                            + nind_cov,
-                            2
-                            + self.ngamma0
-                            + 2 * nmu
-                            + ntrend_loc
                             + nind_cov
-                            + 2 * npsi
-                            + ntrend_sc
-                            + nind_cov
-                            + 2 * ngamma : 2
-                            + self.ngamma0
-                            + 2 * nmu
-                            + ntrend_loc
-                            + nind_cov
-                            + 2 * npsi
-                            + ntrend_sc
-                            + nind_cov
-                            + 2 * ngamma
-                            + ntrend_sh
-                            + nind_cov,
                         ]
+                        ** 2
+                        / np.diag(
+                            auxI0[
+                                2
+                                + self.ngamma0
+                                + 2 * nmu
+                                + ntrend_loc
+                                + nind_cov
+                                + 2 * npsi
+                                + ntrend_sc
+                                + nind_cov
+                                + 2 * ngamma : 2
+                                + self.ngamma0
+                                + 2 * nmu
+                                + ntrend_loc
+                                + nind_cov
+                                + 2 * npsi
+                                + ntrend_sc
+                                + nind_cov
+                                + 2 * ngamma
+                                + ntrend_sh
+                                + nind_cov,
+                                2
+                                + self.ngamma0
+                                + 2 * nmu
+                                + ntrend_loc
+                                + nind_cov
+                                + 2 * npsi
+                                + ntrend_sc
+                                + nind_cov
+                                + 2 * ngamma : 2
+                                + self.ngamma0
+                                + 2 * nmu
+                                + ntrend_loc
+                                + nind_cov
+                                + 2 * npsi
+                                + ntrend_sc
+                                + nind_cov
+                                + 2 * ngamma
+                                + ntrend_sh
+                                + nind_cov,
+                            ]
+                        )
                     )
-                )
-                maximo_sh, pos_sh = np.max(values3), np.argmax(values3)
+                    maximo_sh, pos_sh = np.max(values3), np.argmax(values3)
 
-                # Select the maximum perturbation
-                posmaxparam = np.argmax([maximo_loc, maximo_sc, maximo_sh])
+
+                    # Select the maximum perturbation
+                    posmaxparam = np.argmax([maximo_loc, maximo_sc, maximo_sh])
+                else:
+                    posmaxparam = np.argmax([maximo_loc, maximo_sc])
 
                 # Initialize auxiliar covariates variables
                 if beta_cov.size > 0:
@@ -1024,102 +1033,103 @@ class NonStatGEV(BlueMathModel):
                 self.ntrend_sc = 0
 
             # Shape trends
-            ntrend_sh = 1
+            if not stationary_shape:
+                ntrend_sh = 1
 
-            concatvalues = [
-                fit_result["x"][0 : 1 + 2 * nmu],
-                np.zeros(self.ntrend_loc),
-                fit_result["x"][
-                    1 + 2 * nmu : 1 + 2 * nmu + nind_loc
-                ],  # Location initial parameter beta0, beta, betaT, beta_cov
-                fit_result["x"][
-                    1 + 2 * nmu + nind_loc : 2 + 2 * nmu + nind_loc + 2 * npsi
-                ],
-                np.zeros(self.ntrend_sc),
-                fit_result["x"][
-                    2 + 2 * nmu + nind_loc + 2 * npsi : 2
-                    + 2 * nmu
-                    + nind_loc
-                    + 2 * npsi
-                    + nind_sc
-                ],  # Scale initial parameter alpha0, alpha, alphaT, alpha_cov
-                fit_result["x"][2 + 2 * nmu + nind_loc + 2 * npsi + nind_sc]
-                * np.ones(self.ngamma0),
-                fit_result["x"][
-                    2 + 2 * nmu + nind_loc + 2 * npsi + nind_sc + self.ngamma0 : 2
-                    + 2 * nmu
-                    + nind_loc
-                    + 2 * npsi
-                    + nind_sc
-                    + self.ngamma0
-                    + 2 * ngamma
+                concatvalues = [
+                    fit_result["x"][0 : 1 + 2 * nmu],
+                    np.zeros(self.ntrend_loc),
+                    fit_result["x"][
+                        1 + 2 * nmu : 1 + 2 * nmu + nind_loc
+                    ],  # Location initial parameter beta0, beta, betaT, beta_cov
+                    fit_result["x"][
+                        1 + 2 * nmu + nind_loc : 2 + 2 * nmu + nind_loc + 2 * npsi
+                    ],
+                    np.zeros(self.ntrend_sc),
+                    fit_result["x"][
+                        2 + 2 * nmu + nind_loc + 2 * npsi : 2
+                        + 2 * nmu
+                        + nind_loc
+                        + 2 * npsi
+                        + nind_sc
+                    ],  # Scale initial parameter alpha0, alpha, alphaT, alpha_cov
+                    fit_result["x"][2 + 2 * nmu + nind_loc + 2 * npsi + nind_sc]
+                    * np.ones(self.ngamma0),
+                    fit_result["x"][
+                        2 + 2 * nmu + nind_loc + 2 * npsi + nind_sc + self.ngamma0 : 2
+                        + 2 * nmu
+                        + nind_loc
+                        + 2 * npsi
+                        + nind_sc
+                        + self.ngamma0
+                        + 2 * ngamma
+                    ]
+                    * np.ones(2 * ngamma),
+                    0.01 * np.ones(ntrend_sh),
+                    fit_result["x"][
+                        2
+                        + 2 * nmu
+                        + nind_loc
+                        + 2 * npsi
+                        + nind_sc
+                        + self.ngamma0
+                        + 2 * ngamma : 2
+                        + 2 * nmu
+                        + nind_loc
+                        + 2 * npsi
+                        + nind_sc
+                        + self.ngamma0
+                        + 2 * ngamma
+                        + nind_sh
+                    ]
+                    * np.ones(
+                        nind_sh
+                    ),  # Shape initial parameter gamma0, gamma, gammaT, gamma_cov
                 ]
-                * np.ones(2 * ngamma),
-                0.01 * np.ones(ntrend_sh),
-                fit_result["x"][
+                xini = np.concatenate(
+                    [np.asarray(v) for v in concatvalues if v is not None]
+                )
+                fit_result = self._fit(
+                    self.nmu,
+                    self.npsi,
+                    self.ngamma,
+                    self.list_loc,
+                    self.ntrend_loc,
+                    self.list_sc,
+                    self.ntrend_sc,
+                    self.list_sh,
+                    ntrend_sh,
+                    xini,
+                )
+
+                n_params = (
                     2
-                    + 2 * nmu
-                    + nind_loc
-                    + 2 * npsi
-                    + nind_sc
                     + self.ngamma0
-                    + 2 * ngamma : 2
-                    + 2 * nmu
-                    + nind_loc
-                    + 2 * npsi
-                    + nind_sc
-                    + self.ngamma0
-                    + 2 * ngamma
-                    + nind_sh
-                ]
-                * np.ones(
-                    nind_sh
-                ),  # Shape initial parameter gamma0, gamma, gammaT, gamma_cov
-            ]
-            xini = np.concatenate(
-                [np.asarray(v) for v in concatvalues if v is not None]
-            )
-            fit_result = self._fit(
-                self.nmu,
-                self.npsi,
-                self.ngamma,
-                self.list_loc,
-                self.ntrend_loc,
-                self.list_sc,
-                self.ntrend_sc,
-                self.list_sh,
-                ntrend_sh,
-                xini,
-            )
+                    + 2 * self.nmu
+                    + 2 * self.npsi
+                    + 2 * self.ngamma
+                    + self.ntrend_loc
+                    + self.nind_loc
+                    + ntrend_sc
+                    + self.nind_sc
+                    + ntrend_sh
+                    + self.nind_sh
+                )
+                self.AIC_iter[self.nit + 3] = self._AIC(
+                    -fit_result["negloglikelihood"], n_params
+                )
+                self.loglike_iter[self.nit + 3] = -fit_result["negloglikelihood"]
 
-            n_params = (
-                2
-                + self.ngamma0
-                + 2 * self.nmu
-                + 2 * self.npsi
-                + 2 * self.ngamma
-                + self.ntrend_loc
-                + self.nind_loc
-                + ntrend_sc
-                + self.nind_sc
-                + ntrend_sh
-                + self.nind_sh
-            )
-            self.AIC_iter[self.nit + 3] = self._AIC(
-                -fit_result["negloglikelihood"], n_params
-            )
-            self.loglike_iter[self.nit + 3] = -fit_result["negloglikelihood"]
-
-            if self.AIC_iter[self.nit + 3] < self.AIC_iter[self.nit]:
-                self.AICini = self.AIC_iter[self.nit + 3]
-                print("Shape trend is significative")
-                print("Shape trend AIC: ", self.AICini)
-                # Update the parameters
-                self._update_params(**fit_result)
-                self.ntrend_sh = ntrend_sh
-            else:
-                print("Shape trend is NOT significative")
-                self.ntrend_sh = 0
+                if self.AIC_iter[self.nit + 3] < self.AIC_iter[self.nit]:
+                    self.AICini = self.AIC_iter[self.nit + 3]
+                    print("Shape trend is significative")
+                    print("Shape trend AIC: ", self.AICini)
+                    # Update the parameters
+                    self._update_params(**fit_result)
+                    self.ntrend_sh = ntrend_sh
+                else:
+                    print("Shape trend is NOT significative")
+                    self.ntrend_sh = 0
 
         # Final parameters values
         concatvalues = [
