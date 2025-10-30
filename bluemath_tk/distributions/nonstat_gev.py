@@ -1131,6 +1131,7 @@ class NonStatGEV(BlueMathModel):
                     print("Shape trend is NOT significative")
                     self.ntrend_sh = 0
 
+        aux_gamma0 = fit_result["x"][2 + 2 * nmu + nind_loc + 2 * npsi + nind_sc] if self.ngamma0 == 1 else np.empty(1)
         # Final parameters values
         concatvalues = [
             fit_result["x"][0 : 1 + 2 * nmu],
@@ -1147,8 +1148,7 @@ class NonStatGEV(BlueMathModel):
                 + 2 * npsi
                 + nind_sc
             ],  # Scale initial parameter alpha0, alpha, alphaT, alpha_cov
-            fit_result["x"][2 + 2 * nmu + nind_loc + 2 * npsi + nind_sc]
-            * np.ones(self.ngamma0),
+            aux_gamma0 * np.ones(self.ngamma0),
             fit_result["x"][
                 2 + 2 * nmu + nind_loc + 2 * npsi + nind_sc + self.ngamma0 : 2
                 + 2 * nmu
