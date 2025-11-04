@@ -1,6 +1,7 @@
 from typing import Dict, List
 
 import numpy as np
+from scipy.stats import genpareto
 
 from ._base_distributions import BaseDistribution, FitResult, fit_dist
 
@@ -22,29 +23,29 @@ class GPD(BaseDistribution):
 
     Methods
     -------
-    pdf(x, loc, scale, shape)
+    pdf(x, threshold, scale, shape)
         Probability density function.
-    cdf(x, loc, scale, shape)
+    cdf(x, threshold, scale, shape)
         Cumulative distribution function
-    qf(p, loc, scale, shape)
+    qf(p, threshold, scale, shape)
         Quantile function
-    sf(x, loc, scale, shape)
+    sf(x, threshold, scale, shape)
         Survival function
-    nll(data, loc, scale, shape)
+    nll(data, threshold, scale, shape)
         Negative Log-Likelihood function
     fit(data)
         Fit distribution to data (NOT IMPLEMENTED).
-    random(size, loc, scale, shape)
+    random(size, threshold, scale, shape)
         Generates random values from GPD distribution.
-    mean(loc, scale, shape)
+    mean(threshold, scale, shape)
         Mean of GPD distribution.
-    median(loc, scale, shape)
+    median(threshold, scale, shape)
         Median of GPD distribution.
-    variance(loc, scale, shape)
+    variance(threshold, scale, shape)
         Variance of GPD distribution.
-    std(loc, scale, shape)
+    std(threshold, scale, shape)
         Standard deviation of GPD distribution.
-    stats(loc, scale, shape)
+    stats(threshold, scale, shape)
         Summary statistics of GPD distribution.
 
     Notes
@@ -54,9 +55,9 @@ class GPD(BaseDistribution):
     Examples
     --------
     >>> from bluemath_tk.distributions.gpd import GPD
-    >>> gpd_pdf = GPD.pdf(x, loc=0, scale=1, shape=0.1)
-    >>> gpd_cdf = GPD.cdf(x, loc=0, scale=1, shape=0.1)
-    >>> gpd_qf = GPD.qf(p, loc=0, scale=1, shape=0.1)
+    >>> gpd_pdf = GPD.pdf(x, threshold=0, scale=1, shape=0.1)
+    >>> gpd_cdf = GPD.cdf(x, threshold=0, scale=1, shape=0.1)
+    >>> gpd_qf = GPD.qf(p, threshold=0, scale=1, shape=0.1)
     """
 
     def __init__(self) -> None:
@@ -81,11 +82,11 @@ class GPD(BaseDistribution):
         """
         Name of parameters of GPD
         """
-        return ["loc", "scale", "shape"]
+        return ["threshold", "scale", "shape"]
 
     @staticmethod
     def pdf(
-        x: np.ndarray, loc: float = 0.0, scale: float = 1.0, shape: float = 0.0
+        x: np.ndarray, threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0
     ) -> np.ndarray:
         """
         Probability density function
@@ -94,8 +95,8 @@ class GPD(BaseDistribution):
         ----------
         x : np.ndarray
             Values to compute the probability density value
-        loc : float, default=0.0
-            Location parameter
+        threshold : float, default=0.0
+            Threshold parameter
         scale : float, default = 1.0
             Scale parameter.
             Must be greater than 0.
@@ -115,25 +116,12 @@ class GPD(BaseDistribution):
 
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
-
-        y = np.maximum(x - loc, 0) / scale
-
-        # Gumbel case (shape = 0)
-        if shape == 0.0:
-            pdf = (1 / scale) * (np.exp(-y))
-
-        # General case (Weibull and Frechet, shape != 0)
-        else:
-            pdf = np.full_like(x, 0, dtype=float)
-            yy = 1 + shape * y
-            yymask = yy > 0
-            pdf[yymask] = (1 / scale) * (yy[yymask] ** (-1 - (1 / shape)))
-
-        return pdf
+        
+        return genpareto.pdf(x, c=shape, loc=threshold, scale=scale)
 
     @staticmethod
     def cdf(
-        x: np.ndarray, loc: float = 0.0, scale: float = 1.0, shape: float = 0.0
+        x: np.ndarray, threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0
     ) -> np.ndarray:
         """
         Cumulative distribution function
@@ -142,8 +130,8 @@ class GPD(BaseDistribution):
         ----------
         x : np.ndarray
             Values to compute their probability
-        loc : float, default=0.0
-            Location parameter
+        threshold : float, default=0.0
+            Threshold parameter
         scale : float, default = 1.0
             Scale parameter.
             Must be greater than 0.
@@ -164,21 +152,11 @@ class GPD(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        y = np.maximum(x - loc, 0) / scale
-
-        # Gumbel case (shape = 0)
-        if shape == 0.0:
-            p = 1 - np.exp(-y)
-
-        # General case (Weibull and Frechet, shape != 0)
-        else:
-            p = 1 - np.maximum(1 + shape * y, 0) ** (-1 / shape)
-
-        return p
+        return genpareto.cdf(x, c=shape, loc=threshold, scale=scale)
 
     @staticmethod
     def sf(
-        x: np.ndarray, loc: float = 0.0, scale: float = 1.0, shape: float = 0.0
+        x: np.ndarray, threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0
     ) -> np.ndarray:
         """
         Survival function (1-Cumulative Distribution Function)
@@ -187,8 +165,8 @@ class GPD(BaseDistribution):
         ----------
         x : np.ndarray
             Values to compute their survival function value
-        loc : float, default=0.0
-            Location parameter
+        threshold : float, default=0.0
+            Threshold parameter
         scale : float, default = 1.0
             Scale parameter.
             Must be greater than 0.
@@ -209,13 +187,11 @@ class GPD(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        sp = 1 - GPD.cdf(x, loc=loc, scale=scale, shape=shape)
-
-        return sp
+        return genpareto.sf(x, c=shape, loc=threshold, scale=scale)
 
     @staticmethod
     def qf(
-        p: np.ndarray, loc: float = 0.0, scale: float = 1.0, shape: float = 0.0
+        p: np.ndarray, threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0
     ) -> np.ndarray:
         """
         Quantile function (Inverse of Cumulative Distribution Function)
@@ -224,8 +200,8 @@ class GPD(BaseDistribution):
         ----------
         p : np.ndarray
             Probabilities to compute their quantile
-        loc : float, default=0.0
-            Location parameter
+        threshold : float, default=0.0
+            Threshold parameter
         scale : float, default = 1.0
             Scale parameter.
             Must be greater than 0.
@@ -246,25 +222,17 @@ class GPD(BaseDistribution):
             If scale is not greater than 0.
         """
 
-        if np.min(p) <= 0 or np.max(p) >= 1:
+        if np.min(p) < 0 or np.max(p) > 1:
             raise ValueError("Probabilities must be in the range (0, 1)")
 
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        # Gumbel case (shape = 0)
-        if shape == 0.0:
-            q = loc - scale * np.log(1 - p)
-
-        # General case (Weibull and Frechet, shape != 0)
-        else:
-            q = loc + scale * ((1 - p) ** (-shape) - 1) / shape
-
-        return q
+        return genpareto.ppf(p, c=shape, loc=threshold, scale=scale)
 
     @staticmethod
     def nll(
-        data: np.ndarray, loc: float = 0.0, scale: float = 1.0, shape: float = 0.0
+        data: np.ndarray, threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0
     ) -> float:
         """
         Negative Log-Likelihood function
@@ -273,8 +241,8 @@ class GPD(BaseDistribution):
         ----------
         data : np.ndarray
             Data to compute the Negative Log-Likelihood value
-        loc : float, default=0.0
-            Location parameter
+        threshold : float, default=0.0
+            Threshold parameter
         scale : float, default = 1.0
             Scale parameter.
             Must be greater than 0.
@@ -286,34 +254,15 @@ class GPD(BaseDistribution):
         nll : float
             Negative Log-Likelihood value
         """
-
         if scale <= 0:
-            nll = np.inf  # Return a large value for invalid scale
+            return np.inf
+        if np.any(data < threshold):
+            return np.inf
 
-        else:
-            y = (data - loc) / scale
-
-            # # Gumbel case (shape = 0)
-            # if shape == 0.0:
-            #     nll = data.shape[0] * np.log(scale) + np.sum(y)
-
-            # General case (Weibull and Frechet, shape != 0)
-            # else:
-            shape = (
-                np.maximum(shape, 1e-8) if shape > 0 else np.minimum(shape, -1e-8)
-            )  # Avoid division by zero
-            y = 1 + shape * y
-            if np.min(y <= 0):
-                nll = np.inf  # Return a large value for invalid y
-            else:
-                nll = data.shape[0] * np.log(scale) + (1 / shape + 1) * np.sum(
-                    np.log(y)
-                )
-
-        return nll
+        return -np.sum(genpareto.logpdf(data, c=shape, loc=threshold, scale=scale), axis=0)
 
     @staticmethod
-    def fit(data: np.ndarray, **kwargs) -> FitResult:
+    def fit(data: np.ndarray, threshold: float, **kwargs) -> FitResult:
         """
         Fit GEV distribution
 
@@ -321,6 +270,8 @@ class GPD(BaseDistribution):
         ----------
         data : np.ndarray
             Data to fit the GEV distribution
+        threshold : float, default=0.0
+            Threshold parameter
         **kwargs : dict, optional
             Additional keyword arguments for the fitting function.
             These can include options like method, bounds, etc.
@@ -333,13 +284,53 @@ class GPD(BaseDistribution):
             Result of the fit containing the parameters loc, scale, shape,
             success status, and negative log-likelihood value.
         """
-        # Fit the GEV distribution to the data using the fit_dist function
-        return fit_dist(GPD, data, **kwargs)
+        exceedances = data[data > threshold]
 
+        if len(exceedances) == 0:
+            raise ValueError("No exceedances above threshold")
+
+        # Adjust exceedances relative to threshold
+        exceedances_adjusted = exceedances - threshold
+
+        # Default optimization settings
+        default_x0 = [np.std(exceedances_adjusted), 0.1]
+        x0 = kwargs.get("x0", default_x0)
+        method = kwargs.get("method", "Nelder-Mead")
+        default_bounds = [(1e-6, None), (None, None)]
+        bounds = kwargs.get("bounds", default_bounds)
+        options = kwargs.get("options", {"disp": False})
+
+        # Objective function that includes threshold
+        def obj(params):
+            scale, shape = params
+            return GPD.nll(exceedances, threshold=threshold, scale=scale, shape=shape)
+
+        # Perform optimization
+        from scipy.optimize import minimize, OptimizeResult
+        result = minimize(
+            fun=obj, 
+            x0=x0, 
+            method=method, 
+            bounds=bounds, 
+            options=options
+        )
+
+        # Create modified result
+        modified_result = OptimizeResult(
+            x=[threshold, result.x[0], result.x[1]],
+            success=result.success,
+            fun=result.fun,
+            message=result.message,
+            hess_inv=result.hess_inv if hasattr(result, "hess_inv") else None,
+        )
+
+        # Return the fitting result
+        return FitResult(GPD, exceedances, modified_result)
+    
     @staticmethod
     def random(
         size: int,
-        loc: float = 0.0,
+        threshold: float = 0.0,
         scale: float = 1.0,
         shape: float = 0.0,
         random_state: int = None,
@@ -351,8 +342,8 @@ class GPD(BaseDistribution):
         ----------
         size : int
             Number of random values to generate
-        loc : float, default=0.0
-            Location parameter
+        threshold : float, default=0.0
+            Threshold parameter
         scale : float, default = 1.0
             Scale parameter.
             Must be greater than 0.
@@ -376,32 +367,17 @@ class GPD(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        # Set random state if provided
-        if random_state is not None:
-            np.random.seed(random_state)
-
-        # Generate uniform random numbers
-        u = np.random.uniform(0, 1, size)
-
-        # Gumbel case (shape = 0)
-        if shape == 0.0:
-            x = loc - scale * np.log(u)
-
-        # General case (Weibull and Frechet, shape != 0)
-        else:
-            x = loc + scale * (u ** (-shape) - 1) / shape
-
-        return x
+        return genpareto.rvs(c=shape, loc=threshold, scale=scale, size=size, random_state=random_state)
 
     @staticmethod
-    def mean(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
+    def mean(threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
         """
         Mean
 
         Parameters
         ----------
-        loc : float, default=0.0
-            Location parameter
+        threshold : float, default=0.0
+            Threshold parameter
         scale : float, default = 1.0
             Scale parameter.
             Must be greater than 0.
@@ -426,25 +402,17 @@ class GPD(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        if shape >= 1:
-            Warning("Shape parameter must be < 1 for mean to be defined")
-            mean = np.inf
-
-        # Shape < 1 case
-        else:
-            mean = scale / (1 - shape)
-
-        return mean
+        return genpareto.mean(c=shape, loc=threshold, scale=scale)
 
     @staticmethod
-    def median(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
+    def median(threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
         """
         Median
 
         Parameters
         ----------
-        loc : float, default=0.0
-            Location parameter
+        threshold : float, default=0.0
+            Threshold parameter
         scale : float, default = 1.0
             Scale parameter.
             Must be greater than 0.
@@ -465,22 +433,17 @@ class GPD(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        if shape == 0:
-            median = np.inf
-        else:
-            median = loc + scale * (2**shape - 1) / shape
-
-        return median
+        return genpareto.median(c=shape, loc=threshold, scale=scale)
 
     @staticmethod
-    def variance(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
+    def variance(threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
         """
         Variance
 
         Parameters
         ----------
-        loc : float, default=0.0
-            Location parameter
+        threshold : float, default=0.0
+            Threshold parameter
         scale : float, default = 1.0
             Scale parameter.
             Must be greater than 0.
@@ -504,25 +467,17 @@ class GPD(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        # Gumbel case (shape = 0)
-        if shape >= 1 / 2:
-            Warning("Shape parameter must be < 1/2 for variance to be defined")
-            var = np.inf
-
-        else:
-            var = scale**2 / ((1 - shape) ** 2 * (1 - 2 * shape))
-
-        return var
+        return genpareto.var(c=shape, loc=threshold, scale=scale)
 
     @staticmethod
-    def std(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
+    def std(threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
         """
         Standard deviation
 
         Parameters
         ----------
-        loc : float, default=0.0
-            Location parameter
+        threshold : float, default=0.0
+            Threshold parameter
         scale : float, default = 1.0
             Scale parameter.
             Must be greater than 0.
@@ -544,13 +499,12 @@ class GPD(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        std = np.sqrt(GPD.variance(loc, scale, shape))
+        return genpareto.std(c=shape, loc=threshold, scale=scale)
 
-        return std
 
     @staticmethod
     def stats(
-        loc: float = 0.0, scale: float = 1.0, shape: float = 0.0
+        threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0
     ) -> Dict[str, float]:
         """
         Summary statistics
@@ -559,8 +513,8 @@ class GPD(BaseDistribution):
 
         Parameters
         ----------
-        loc : float, default=0.0
-            Location parameter
+        threshold : float, default=0.0
+            Threshold parameter
         scale : float, default = 1.0
             Scale parameter.
             Must be greater than 0.
@@ -583,10 +537,10 @@ class GPD(BaseDistribution):
             raise ValueError("Scale parameter must be > 0")
 
         stats = {
-            "mean": float(GPD.mean(loc, scale, shape)),
-            "median": float(GPD.median(loc, scale, shape)),
-            "variance": float(GPD.variance(loc, scale, shape)),
-            "std": float(GPD.std(loc, scale, shape)),
+            "mean": float(GPD.mean(threshold, scale, shape)),
+            "median": float(GPD.median(threshold, scale, shape)),
+            "variance": float(GPD.variance(threshold, scale, shape)),
+            "std": float(GPD.std(threshold, scale, shape)),
         }
 
         return stats
