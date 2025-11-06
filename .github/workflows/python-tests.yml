@@ -11,11 +11,11 @@ on:
 jobs:
   python-tests:
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
 
     steps:
@@ -26,7 +26,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           auto-update-conda: true
-      
+
       - name: Create conda environment
         run: conda create -n bluemath-tk python=${{ matrix.python-version }}
 
@@ -34,7 +34,7 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate bluemath-tk
-          pip install bluemath-tk
+          pip install bluemath-tk[stats]
           pip install ruff
 
       - name: Run Ruff
