@@ -1,7 +1,15 @@
 from abc import ABC, abstractmethod
+from typing import Tuple
 
+import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+import xarray as xr
+
+from ...config.paths import PATHS
+from .colors import hex_colors_land, hex_colors_water
+from .satellite import get_satellite_image
+from .utils import join_colormaps
 
 
 class BasePlotting(ABC):
@@ -30,15 +38,6 @@ class BasePlotting(ABC):
 
         pass
 
-    @abstractmethod
-    def plot_map(self, markers=None):
-        """
-        Abstract method for plotting a map.
-        Should be implemented by subclasses.
-        """
-
-        pass
-
 
 class DefaultStaticPlotting(BasePlotting):
     """
@@ -56,6 +55,10 @@ class DefaultStaticPlotting(BasePlotting):
                 "color": "red",
                 "size": 10,
                 "marker": "o",
+            },
+            "bathymetry": {
+                "transform": ccrs.PlateCarree(),
+                "cmap": "albita_ocean",
             },
         }
     }
@@ -90,11 +93,9 @@ class DefaultStaticPlotting(BasePlotting):
         ax = fig.add_subplot(**kwargs)
         return fig, ax
 
-    def plot_line(self, ax, **kwargs):
-        c = kwargs.get("c", self.line_defaults.get("color"))
-        kwargs.pop("c", None)
-        ls = kwargs.get("ls", self.line_defaults.get("line_style"))
-        kwargs.pop("ls", None)
+    def plot_line(self, ax: plt.Axes, **kwargs):
+        c = kwargs.pop("c", self.line_defaults.get("color"))
+        ls = kwargs.pop("ls", self.line_defaults.get("line_style"))
         ax.plot(
             c=c,
             ls=ls,
@@ -102,13 +103,10 @@ class DefaultStaticPlotting(BasePlotting):
         )
         self.set_grid(ax)
 
-    def plot_scatter(self, ax, **kwargs):
-        c = kwargs.get("c", self.scatter_defaults.get("color"))
-        kwargs.pop("c", None)
-        s = kwargs.get("s", self.scatter_defaults.get("size"))
-        kwargs.pop("s", None)
-        marker = kwargs.get("marker", self.scatter_defaults.get("marker"))
-        kwargs.pop("marker", None)
+    def plot_scatter(self, ax: plt.Axes, **kwargs):
+        c = kwargs.pop("c", self.scatter_defaults.get("color"))
+        s = kwargs.pop("s", self.scatter_defaults.get("size"))
+        marker = kwargs.pop("marker", self.scatter_defaults.get("marker"))
         ax.scatter(
             c=c,
             s=s,
@@ -117,12 +115,91 @@ class DefaultStaticPlotting(BasePlotting):
         )
         self.set_grid(ax)
 
-    def plot_pie(self, ax, **kwargs):
+    def plot_pie(self, ax: plt.Axes, **kwargs):
         ax.pie(**kwargs)
 
-    def plot_map(self, ax, **kwargs):
-        ax.set_global()
-        ax.coastlines()
+    def plot_bathymetry(
+        self,
+        ax: plt.Axes,
+        source: str,
+        area: Tuple[float, float, float, float],
+        **kwargs,
+    ) -> None:
+        """
+        Plot a bathymetry map from either a raster file or a NetCDF dataset.
+
+        Parameters
+        ----------
+        ax: plt.Axes
+            The axes on which to plot the data.
+        source: str
+            The source of the bathymetry data.
+        area: Tuple[float, float, float, float]
+            The area of the bathymetry data.
+        **kwargs
+            Additional keyword arguments passed to the plotting function.
+        """
+
+        if source not in PATHS:
+            raise ValueError(f"Source {source} not found in PATHS")
+        else:
+            bathymetry_ds = (
+                xr.open_dataset(PATHS[source])
+                .sel(lon=slice(area[0], area[1]), lat=slice(area[2], area[3]))
+                .elevation
+            )
+
+        transform = kwargs.pop("transform", self.bathymetry_defaults.get("transform"))
+        cmap = kwargs.pop("cmap", self.bathymetry_defaults.get("cmap"))
+        if cmap == "albita_ocean":
+            cmap, norm = join_colormaps(
+                cmap1=hex_colors_water,
+                cmap2=hex_colors_land,
+                value_range1=(bathymetry_ds.min(), 0.0),
+                value_range2=(0.0, bathymetry_ds.max()),
+            )
+            bathymetry_ds.plot(
+                ax=ax, transform=transform, cmap=cmap, norm=norm, **kwargs
+            )
+            # cbar_obj = plt.colorbar(im, ax=ax, orientation="vertical", label="Elevation (m)")
+            # cbar_obj.minorticks_off()
+        else:
+            bathymetry_ds.plot(ax=ax, transform=transform, cmap=cmap, **kwargs)
+
+    def plot_satellite(
+        self,
+        ax: plt.Axes,
+        source: str,
+        area: Tuple[float, float, float, float],
+        **kwargs,
+    ) -> None:
+        """
+        Downloads and displays a satellite/raster map for the given bounding box.
+
+        Parameters
+        ----------
+        ax: plt.Axes
+            The axes on which to plot the data.
+        source: str
+            The source of the satellite data.
+        area: Tuple[float, float, float, float]
+            The area of the satellite data.
+        **kwargs
+            Additional keyword arguments passed to the plotting function.
+        """
+
+        map_img, _extent = get_satellite_image(
+            lat_min=area[2],
+            lat_max=area[3],
+            lon_min=area[0],
+            lon_max=area[1],
+            source=source,
+            **kwargs,
+        )
+        ax.imshow(
+            map_img,
+            extent=area,
+        )
 
     def set_title(self, ax, title="Plot Title"):
         """
@@ -159,12 +236,6 @@ class DefaultStaticPlotting(BasePlotting):
         Sets the grid for a given axis.
         """
         ax.grid(grid)
-
-
-if __name__ == "__main__":
-    static = DefaultStaticPlotting()
-    fig, ax = static.get_subplots()
-    static.plot_line(ax, x=[1, 2, 3], y=[4, 5, 6])
 
 
 class DefaultInteractivePlotting(BasePlotting):
