@@ -57,7 +57,6 @@ class DefaultStaticPlotting(BasePlotting):
                 "marker": "o",
             },
             "bathymetry": {
-                "transform": ccrs.PlateCarree(),
                 "cmap": "albita_ocean",
             },
         }
@@ -115,9 +114,6 @@ class DefaultStaticPlotting(BasePlotting):
         )
         self.set_grid(ax)
 
-    def plot_pie(self, ax: plt.Axes, **kwargs):
-        ax.pie(**kwargs)
-
     def plot_bathymetry(
         self,
         ax: plt.Axes,
@@ -126,18 +122,18 @@ class DefaultStaticPlotting(BasePlotting):
         **kwargs,
     ) -> None:
         """
-        Plot a bathymetry map from either a raster file or a NetCDF dataset.
+        Plot a bathymetry map from a bathymetry dataset stored in the PATHS dictionary.
 
         Parameters
         ----------
         ax: plt.Axes
             The axes on which to plot the data.
         source: str
-            The source of the bathymetry data.
+            The source of the bathymetry data. Must be a key in the PATHS dictionary.
         area: Tuple[float, float, float, float]
-            The area of the bathymetry data.
+            The area of the bathymetry data in the format (lon_min, lon_max, lat_min, lat_max).
         **kwargs
-            Additional keyword arguments passed to the plotting function.
+            Additional keyword arguments passed to the xr.Dataset.plot() function.
         """
 
         if source not in PATHS:
@@ -149,7 +145,6 @@ class DefaultStaticPlotting(BasePlotting):
                 .elevation
             )
 
-        transform = kwargs.pop("transform", self.bathymetry_defaults.get("transform"))
         cmap = kwargs.pop("cmap", self.bathymetry_defaults.get("cmap"))
         if cmap == "albita_ocean":
             cmap, norm = join_colormaps(
@@ -158,19 +153,18 @@ class DefaultStaticPlotting(BasePlotting):
                 value_range1=(bathymetry_ds.min(), 0.0),
                 value_range2=(0.0, bathymetry_ds.max()),
             )
-            bathymetry_ds.plot(
-                ax=ax, transform=transform, cmap=cmap, norm=norm, **kwargs
-            )
-            # cbar_obj = plt.colorbar(im, ax=ax, orientation="vertical", label="Elevation (m)")
-            # cbar_obj.minorticks_off()
+            p = bathymetry_ds.plot(ax=ax, cmap=cmap, norm=norm, **kwargs)
+            # Hide minor ticks on colorbar
+            if hasattr(p, "colorbar") and p.colorbar is not None:
+                p.colorbar.minorticks_off()
         else:
-            bathymetry_ds.plot(ax=ax, transform=transform, cmap=cmap, **kwargs)
+            bathymetry_ds.plot(ax=ax, cmap=cmap, **kwargs)
 
     def plot_satellite(
         self,
         ax: plt.Axes,
-        source: str,
         area: Tuple[float, float, float, float],
+        source: str = "arcgis",
         **kwargs,
     ) -> None:
         """
@@ -188,54 +182,16 @@ class DefaultStaticPlotting(BasePlotting):
             Additional keyword arguments passed to the plotting function.
         """
 
-        map_img, _extent = get_satellite_image(
-            lat_min=area[2],
-            lat_max=area[3],
-            lon_min=area[0],
-            lon_max=area[1],
+        map_img, extent = get_satellite_image(
             source=source,
-            **kwargs,
+            area=area,
         )
+        ax.set_extent(area)
         ax.imshow(
             map_img,
-            extent=area,
+            extent=extent,
+            transform=ccrs.Mercator.GOOGLE,
         )
-
-    def set_title(self, ax, title="Plot Title"):
-        """
-        Sets the title for a given axis.
-        """
-        ax.set_title(title)
-
-    def set_xlim(self, ax, xmin, xmax):
-        """
-        Sets the x-axis limits for a given axis.
-        """
-        ax.set_xlim(xmin, xmax)
-
-    def set_ylim(self, ax, ymin, ymax):
-        """
-        Sets the y-axis limits for a given axis.
-        """
-        ax.set_ylim(ymin, ymax)
-
-    def set_xlabel(self, ax, xlabel="X-axis"):
-        """
-        Sets the x-axis label for a given axis.
-        """
-        ax.set_xlabel(xlabel)
-
-    def set_ylabel(self, ax, ylabel="Y-axis"):
-        """
-        Sets the y-axis label for a given axis.
-        """
-        ax.set_ylabel(ylabel)
-
-    def set_grid(self, ax, grid=True):
-        """
-        Sets the grid for a given axis.
-        """
-        ax.grid(grid)
 
 
 class DefaultInteractivePlotting(BasePlotting):

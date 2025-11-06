@@ -101,6 +101,19 @@ def tile_bounds_meters(
     """
     Computes the bounding box of the tile region in Web Mercator meters.
 
+    Parameters
+    ----------
+    x_start: int
+        The starting x-coordinate of the tile.
+    y_start: int
+        The starting y-coordinate of the tile.
+    x_end: int
+        The ending x-coordinate of the tile.
+    y_end: int
+        The ending y-coordinate of the tile.
+    zoom: int
+        The zoom level of the tile.
+
     Returns
     -------
     xmin, ymin, xmax, ymax : float
@@ -120,6 +133,17 @@ def calculate_zoom(
 ) -> int:
     """
     Automatically estimates an appropriate zoom level for the bounding box.
+
+    Parameters
+    ----------
+    lon_min: float
+        The minimum longitude of the bounding box.
+    lon_max: float
+        The maximum longitude of the bounding box.
+    display_width_px: int
+        The width of the display in pixels. Default is 1024.
+    tile_size: int
+        The size of the tile in pixels. Default is 256.
 
     Returns
     -------
@@ -161,54 +185,37 @@ def get_cartopy_scale(zoom: int) -> str:
 
 
 def get_satellite_image(
-    lat_min: float,
-    lat_max: float,
-    lon_min: float,
-    lon_max: float,
-    source: str = "arcgis",
+    source: str,
+    area: Tuple[float, float, float, float],
     zoom: int = None,
     display_width_px: int = 1024,
 ) -> Tuple[Image.Image, Tuple[float, float, float, float]]:
     """
-    Downloads a satellite/raster image for the given bounding box.
+    Downloads a satellite map for the given bounding box.
 
     Parameters
     ----------
-    lat_min : float
-        Minimum latitude of the bounding box.
-    lat_max : float
-        Maximum latitude of the bounding box.
-    lon_min : float
-        Minimum longitude of the bounding box.
-    lon_max : float
-        Maximum longitude of the bounding box.
-    source : str, optional
-        Source of the map tiles (default is "arcgis"). Options include:
-        - "arcgis" (Esri World Imagery)
-        - "google" (Google Maps Satellite)
-        - "eox" (EOX Sentinel-2 Cloudless)
-        - "osm" (OpenStreetMap Standard Tiles)
-        - "amazon" (Amazon Terrarium Elevation Tiles)
-        - "esri_world" (Esri World Imagery)
-        - "geoportail_fr" (Geoportail France Orthophotos)
-        - "ign_spain_pnoa" (IGN Spain PNOA Orthophotos)
-    zoom : int, optional
-        Zoom level (default is None, which auto-calculates based on bounding box).
-    display_width_px : int, optional
-        Width of the display in pixels (default is 1024).
+    source: str
+        The source of the satellite data.
+    area: Tuple[float, float, float, float]
+        The area of the satellite data.
+    zoom: int
+        The zoom level of the satellite data.
+    display_width_px: int
+        The width of the display in pixels.
 
     Returns
     -------
     map_img : Image.Image
-        The satellite/raster image.
+        The satellite map image.
     extent : Tuple[float, float, float, float]
-        The extent of the image in the form [xmin, xmax, ymin, ymax].
+        The extent of the satellite map (Web Mercator projection).
     """
 
     tile_size = 256
+    lon_min, lon_max, lat_min, lat_max = area
     if zoom is None:
         zoom = calculate_zoom(lon_min, lon_max, display_width_px, tile_size)
-        print(f"Auto-selected zoom level: {zoom}")
 
     x_start, y_start = deg2num(lat_max, lon_min, zoom)
     x_end, y_end = deg2num(lat_min, lon_max, zoom)
@@ -301,6 +308,7 @@ def get_satellite_image(
             "- Attribution: Geoportail France / IGN\n"
             "- Max zoom ~19"
         )
+
     elif source == "ign_spain_pnoa":
         tile_url = "https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{y_inv}.jpeg"
         z_max = 19
@@ -332,6 +340,6 @@ def get_satellite_image(
             except Exception as e:
                 print(f"Error fetching tile {x},{y}: {e}")
 
-    extent = tile_bounds_meters(x_start, y_start, x_end, y_end, zoom)
+    xmin, ymin, xmax, ymax = tile_bounds_meters(x_start, y_start, x_end, y_end, zoom)
 
-    return map_img, extent
+    return map_img, [xmin, xmax, ymin, ymax]
