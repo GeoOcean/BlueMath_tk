@@ -24,6 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install bluemath-tk[docs]
+          pip install bluemath-tk[stats]
 
       - name: Sphinx build
         run: |

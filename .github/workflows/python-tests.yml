@@ -34,7 +34,7 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate bluemath-tk
-          pip install bluemath-tk
+          pip install bluemath-tk[stats]
           pip install ruff
 
       - name: Run Ruff
