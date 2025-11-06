@@ -24,6 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
     "requests",
@@ -37,7 +38,6 @@ dependencies = [
     "scipy",
     "scikit-learn",
     "matplotlib",
-    "plotly",
     "cartopy",
     "jinja2",
     "aiohttp",
@@ -58,6 +58,7 @@ docs = ["sphinx", "sphinx-rtd-theme", "jupyter-sphinx", "myst-parser"]
 waves = ["wavespectra", "olas"]
 num-models = ["hydromt-sfincs"]
 deep = ["tensorflow", "keras"]
+stats = ["numba"]
 
 [project.urls]
 
