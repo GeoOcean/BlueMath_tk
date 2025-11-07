@@ -36,6 +36,10 @@ jobs:
           conda activate bluemath-tk
           pip install bluemath-tk[stats]
           pip install ruff
+          pip install plotly
+          pip install h5py
+          pip install prettytable
+          pip install csaps
 
       - name: Run Ruff
         run: |
