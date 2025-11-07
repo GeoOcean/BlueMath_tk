@@ -37,6 +37,8 @@ jobs:
           pip install bluemath-tk[stats]
           pip install ruff
           pip install plotly
+          pip install h5py
+          pip install prettytable
 
       - name: Run Ruff
         run: |
