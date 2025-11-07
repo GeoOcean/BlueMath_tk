@@ -100,7 +100,6 @@ class DefaultStaticPlotting(BasePlotting):
             ls=ls,
             **kwargs,
         )
-        self.set_grid(ax)
 
     def plot_scatter(self, ax: plt.Axes, **kwargs):
         c = kwargs.pop("c", self.scatter_defaults.get("color"))
@@ -112,7 +111,6 @@ class DefaultStaticPlotting(BasePlotting):
             marker=marker,
             **kwargs,
         )
-        self.set_grid(ax)
 
     def plot_bathymetry(
         self,
@@ -191,6 +189,7 @@ class DefaultStaticPlotting(BasePlotting):
             map_img,
             extent=extent,
             transform=ccrs.Mercator.GOOGLE,
+            **kwargs,
         )
 
 
