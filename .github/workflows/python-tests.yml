@@ -36,6 +36,7 @@ jobs:
           conda activate bluemath-tk
           pip install bluemath-tk[stats]
           pip install ruff
+          pip install plotly
 
       - name: Run Ruff
         run: |
