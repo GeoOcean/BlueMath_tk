@@ -39,6 +39,7 @@ jobs:
           pip install plotly
           pip install h5py
           pip install prettytable
+          pip install csaps
 
       - name: Run Ruff
         run: |
