@@ -44,8 +44,6 @@ dependencies = [
     "minisom",
     "statsmodels",
     "regionmask",
-    "cdsapi",
-    "ecmwf-opendata",
     "ipykernel",
     "ipywidgets",
     "cmocean",
@@ -53,16 +51,25 @@ dependencies = [
     "plotly",
     "h5py",
     "prettytable",
-    "csaps",
     "numba",
+    "csaps",
 ]
 
 [project.optional-dependencies]
 
 docs = ["sphinx", "sphinx-rtd-theme", "jupyter-sphinx", "myst-parser"]
+downloaders = ["cdsapi", "ecmwf-opendata"]
 waves = ["wavespectra", "olas"]
-num-models = ["hydromt-sfincs"]
-deep = ["tensorflow", "keras"]
+numerical-models = ["hydromt-sfincs"]
+deeplearning = ["torch"]
+all = [
+    "cdsapi",
+    "ecmwf-opendata",
+    "wavespectra",
+    "olas",
+    "hydromt-sfincs",
+    "torch",
+]
 
 [project.urls]
 
