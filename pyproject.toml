@@ -50,6 +50,11 @@ dependencies = [
     "ipywidgets",
     "cmocean",
     "siphon",
+    "plotly",
+    "h5py",
+    "prettytable",
+    "csaps",
+    "numba",
 ]
 
 [project.optional-dependencies]
@@ -58,7 +63,6 @@ docs = ["sphinx", "sphinx-rtd-theme", "jupyter-sphinx", "myst-parser"]
 waves = ["wavespectra", "olas"]
 num-models = ["hydromt-sfincs"]
 deep = ["tensorflow", "keras"]
-stats = ["numba"]
 
 [project.urls]
 
