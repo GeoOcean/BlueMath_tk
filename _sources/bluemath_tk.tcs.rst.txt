@@ -1,0 +1,61 @@
+bluemath\_tk.tcs package
+========================
+
+Submodules
+----------
+
+bluemath\_tk.tcs.graffitiwaves module
+-------------------------------------
+
+.. automodule:: bluemath_tk.tcs.graffitiwaves
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.tcs.parameterization module
+----------------------------------------
+
+.. automodule:: bluemath_tk.tcs.parameterization
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.tcs.qtcrain module
+-------------------------------
+
+.. automodule:: bluemath_tk.tcs.qtcrain
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.tcs.shytcwaves module
+----------------------------------
+
+.. automodule:: bluemath_tk.tcs.shytcwaves
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.tcs.tracks module
+------------------------------
+
+.. automodule:: bluemath_tk.tcs.tracks
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.tcs.vortex module
+------------------------------
+
+.. automodule:: bluemath_tk.tcs.vortex
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.tcs
+   :members:
+   :show-inheritance:
+   :undoc-members:

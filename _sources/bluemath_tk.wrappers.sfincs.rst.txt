@@ -1,0 +1,29 @@
+bluemath\_tk.wrappers.sfincs package
+====================================
+
+Submodules
+----------
+
+bluemath\_tk.wrappers.sfincs.sfincs\_example module
+---------------------------------------------------
+
+.. automodule:: bluemath_tk.wrappers.sfincs.sfincs_example
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.wrappers.sfincs.sfincs\_wrapper module
+---------------------------------------------------
+
+.. automodule:: bluemath_tk.wrappers.sfincs.sfincs_wrapper
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.wrappers.sfincs
+   :members:
+   :show-inheritance:
+   :undoc-members:

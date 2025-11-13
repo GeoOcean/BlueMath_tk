@@ -1,0 +1,93 @@
+bluemath\_tk.waves package
+==========================
+
+Submodules
+----------
+
+bluemath\_tk.waves.binwaves module
+----------------------------------
+
+.. automodule:: bluemath_tk.waves.binwaves
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.waves.calibration module
+-------------------------------------
+
+.. automodule:: bluemath_tk.waves.calibration
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.waves.climate module
+---------------------------------
+
+.. automodule:: bluemath_tk.waves.climate
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.waves.greenswell module
+------------------------------------
+
+.. automodule:: bluemath_tk.waves.greenswell
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.waves.partitioning module
+--------------------------------------
+
+.. automodule:: bluemath_tk.waves.partitioning
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.waves.series module
+--------------------------------
+
+.. automodule:: bluemath_tk.waves.series
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.waves.snakes module
+--------------------------------
+
+.. automodule:: bluemath_tk.waves.snakes
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.waves.spectra module
+---------------------------------
+
+.. automodule:: bluemath_tk.waves.spectra
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.waves.statistics module
+------------------------------------
+
+.. automodule:: bluemath_tk.waves.statistics
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.waves.superpoint module
+------------------------------------
+
+.. automodule:: bluemath_tk.waves.superpoint
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.waves
+   :members:
+   :show-inheritance:
+   :undoc-members:

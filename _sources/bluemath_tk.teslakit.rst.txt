@@ -1,0 +1,152 @@
+bluemath\_tk.teslakit package
+=============================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   bluemath_tk.teslakit.io
+   bluemath_tk.teslakit.numerical_models
+   bluemath_tk.teslakit.test
+   bluemath_tk.teslakit.util
+
+Submodules
+----------
+
+bluemath\_tk.teslakit.alr module
+--------------------------------
+
+.. automodule:: bluemath_tk.teslakit.alr
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.alr\_AIC module
+-------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.alr_AIC
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.climate\_emulator module
+----------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.climate_emulator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.database module
+-------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.database
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.estela module
+-----------------------------------
+
+.. automodule:: bluemath_tk.teslakit.estela
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.extremes module
+-------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.extremes
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.intradaily module
+---------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.intradaily
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.kma module
+--------------------------------
+
+.. automodule:: bluemath_tk.teslakit.kma
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.mda module
+--------------------------------
+
+.. automodule:: bluemath_tk.teslakit.mda
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.mjo module
+--------------------------------
+
+.. automodule:: bluemath_tk.teslakit.mjo
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.pca module
+--------------------------------
+
+.. automodule:: bluemath_tk.teslakit.pca
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.rbf module
+--------------------------------
+
+.. automodule:: bluemath_tk.teslakit.rbf
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.statistical module
+----------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.statistical
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.storms module
+-----------------------------------
+
+.. automodule:: bluemath_tk.teslakit.storms
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.tides module
+----------------------------------
+
+.. automodule:: bluemath_tk.teslakit.tides
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.waves module
+----------------------------------
+
+.. automodule:: bluemath_tk.teslakit.waves
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.teslakit
+   :members:
+   :show-inheritance:
+   :undoc-members:

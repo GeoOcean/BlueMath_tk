@@ -1,0 +1,21 @@
+bluemath\_tk.predictor package
+==============================
+
+Submodules
+----------
+
+bluemath\_tk.predictor.xwt module
+---------------------------------
+
+.. automodule:: bluemath_tk.predictor.xwt
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.predictor
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,465 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.core.pipeline &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.core.pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.core.pipeline</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+
+<div class="viewcode-block" id="BlueMathPipeline">
+<a class="viewcode-back" href="../../../bluemath_tk.core.html#bluemath_tk.core.pipeline.BlueMathPipeline">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BlueMathPipeline</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A flexible, modular pipeline for chaining together BlueMath models and data processing steps.</span>
+
+<span class="sd">    This class allows you to define a sequence of steps, where each step must be a BlueMathModel.</span>
+<span class="sd">    Each step is defined by a dictionary specifying:</span>
+<span class="sd">        - &#39;name&#39;: str, a unique identifier for the step.</span>
+<span class="sd">        - &#39;model&#39;: the model instance to use (or will be created via &#39;model_init&#39; and &#39;model_init_params&#39;).</span>
+<span class="sd">        - &#39;model_init&#39;: (optional) a callable/class to instantiate the model.</span>
+<span class="sd">        - &#39;model_init_params&#39;: (optional) dict of parameters for model initialization.</span>
+<span class="sd">        - &#39;fit_method&#39;: (optional) str, the method name to call for fitting (default is based on model type).</span>
+<span class="sd">        - &#39;fit_params&#39;: (optional) dict, parameters for the fit method.</span>
+<span class="sd">        - &#39;pipeline_attributes_to_store&#39;: (optional) list of attribute names to store for later use.</span>
+
+<span class="sd">    The pipeline supports advanced parameter passing, including referencing outputs from previous steps</span>
+<span class="sd">    and using callables for dynamic parameter computation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Map model class names to their default fit method</span>
+    <span class="n">_default_fit_methods</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;LHS&quot;</span><span class="p">:</span> <span class="s2">&quot;generate&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;MDA&quot;</span><span class="p">:</span> <span class="s2">&quot;fit_predict&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;KMA&quot;</span><span class="p">:</span> <span class="s2">&quot;fit_predict&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;SOM&quot;</span><span class="p">:</span> <span class="s2">&quot;fit_predict&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;PCA&quot;</span><span class="p">:</span> <span class="s2">&quot;fit_transform&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;RBF&quot;</span><span class="p">:</span> <span class="s2">&quot;fit_predict&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">steps</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the BlueMathPipeline with a sequence of steps.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        steps : List[Dict[str, Any]]</span>
+<span class="sd">            A list of dictionaries, each specifying at least &#39;name&#39; and &#39;model&#39;,</span>
+<span class="sd">            and optionally &#39;model_init&#39;, &#39;model_init_params&#39;, &#39;fit_method&#39;, &#39;fit_params&#39;,</span>
+<span class="sd">            and &#39;pipeline_attributes_to_store&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="n">steps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline_attributes</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Stores attributes from previous models for later reference</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pipeline_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the stored model attributes from each pipeline step.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Dict[str, Dict[str, Any]]</span>
+<span class="sd">            A dictionary mapping step names to dictionaries of stored attributes.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the pipeline has not been fit yet and no attributes are stored.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pipeline_attributes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;No model attributes found. Please fit the pipeline first.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline_attributes</span>
+
+<div class="viewcode-block" id="BlueMathPipeline.fit">
+<a class="viewcode-back" href="../../../bluemath_tk.core.html#bluemath_tk.core.pipeline.BlueMathPipeline.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit all models in the pipeline sequentially, passing the output of each step as input to the next.</span>
+
+<span class="sd">        For each step, the model is (optionally) initialized, then fit using the specified method and parameters.</span>
+<span class="sd">        Parameters and model initialization arguments can be dynamically computed using callables or references</span>
+<span class="sd">        to previous pipeline attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : Union[np.ndarray, pd.DataFrame, xr.Dataset], optional</span>
+<span class="sd">            The input data to fit the models. If None, the pipeline expects each step to handle its own data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        The output of the final step in the pipeline (could be transformed data, predictions, etc.).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>  <span class="c1"># Avoid modifying the original input data</span>
+
+        <span class="c1"># Iterate over each step in the pipeline</span>
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">:</span>
+            <span class="c1"># If model needs to be initialized (using model_init and model_init_params)</span>
+            <span class="k">if</span> <span class="s2">&quot;model_init&quot;</span> <span class="ow">in</span> <span class="n">step</span> <span class="ow">and</span> <span class="s2">&quot;model_init_params&quot;</span> <span class="ow">in</span> <span class="n">step</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">init_param_name</span><span class="p">,</span> <span class="n">init_param_value</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span>
+                    <span class="s2">&quot;model_init_params&quot;</span>
+                <span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="c1"># If the parameter is a callable, call it with (pipeline, step, data)</span>
+                    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">init_param_value</span><span class="p">):</span>
+                        <span class="n">step</span><span class="p">[</span><span class="s2">&quot;model_init_params&quot;</span><span class="p">][</span><span class="n">init_param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">init_param_value</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">data</span>
+                        <span class="p">)</span>
+                    <span class="c1"># If the parameter is a dict with &#39;data&#39; and &#39;function&#39;, call the function</span>
+                    <span class="k">elif</span> <span class="p">(</span>
+                        <span class="nb">isinstance</span><span class="p">(</span><span class="n">init_param_value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+                        <span class="ow">and</span> <span class="s2">&quot;data&quot;</span> <span class="ow">in</span> <span class="n">init_param_value</span>
+                        <span class="ow">and</span> <span class="s2">&quot;function&quot;</span> <span class="ow">in</span> <span class="n">init_param_value</span>
+                        <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="n">init_param_value</span><span class="p">[</span><span class="s2">&quot;function&quot;</span><span class="p">])</span>
+                    <span class="p">):</span>
+                        <span class="c1"># Call the function with (pipeline, step, data)</span>
+                        <span class="n">step</span><span class="p">[</span><span class="s2">&quot;model_init_params&quot;</span><span class="p">][</span><span class="n">init_param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">init_param_value</span><span class="p">[</span>
+                            <span class="s2">&quot;function&quot;</span>
+                        <span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">init_param_value</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">])</span>
+                    <span class="c1"># If the parameter is the string &#39;data&#39;, replace with the current data</span>
+                    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">init_param_value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">init_param_value</span> <span class="o">==</span> <span class="s2">&quot;data&quot;</span><span class="p">:</span>
+                            <span class="n">step</span><span class="p">[</span><span class="s2">&quot;model_init_params&quot;</span><span class="p">][</span><span class="n">init_param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+
+                <span class="c1"># Actually instantiate the model with the resolved parameters</span>
+                <span class="n">step</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">step</span><span class="p">[</span><span class="s2">&quot;model_init&quot;</span><span class="p">](</span><span class="o">**</span><span class="n">step</span><span class="p">[</span><span class="s2">&quot;model_init_params&quot;</span><span class="p">])</span>
+
+            <span class="c1"># Retrieve the model instance for this step</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">step</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span>
+            <span class="n">default_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_fit_methods</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+            <span class="n">method_name</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">&quot;fit_method&quot;</span><span class="p">,</span> <span class="n">default_method</span>
+            <span class="p">)</span>  <span class="c1"># Use step&#39;s method or default</span>
+            <span class="k">if</span> <span class="n">method_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;No fit method found for model </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">. Please specify a fit_method in the step.&quot;</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Prepare parameters for the fit method, resolving any callables or references</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fit_params&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">param_value</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">param_value</span><span class="p">):</span>
+                    <span class="n">params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="p">(</span>
+                    <span class="nb">isinstance</span><span class="p">(</span><span class="n">param_value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="s2">&quot;data&quot;</span> <span class="ow">in</span> <span class="n">param_value</span>
+                    <span class="ow">and</span> <span class="s2">&quot;function&quot;</span> <span class="ow">in</span> <span class="n">param_value</span>
+                    <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="n">param_value</span><span class="p">[</span><span class="s2">&quot;function&quot;</span><span class="p">])</span>
+                <span class="p">):</span>
+                    <span class="c1"># Call the function with (data, pipeline, step)</span>
+                    <span class="n">params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param_value</span><span class="p">[</span><span class="s2">&quot;function&quot;</span><span class="p">](</span>
+                        <span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">param_value</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param_value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">param_value</span> <span class="o">==</span> <span class="s2">&quot;data&quot;</span><span class="p">:</span>
+                        <span class="n">params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+
+            <span class="c1"># Call the fit method on the model with the resolved parameters</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">method_name</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Some methods expect &#39;data&#39; as a named argument</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">_e</span><span class="p">:</span>
+                <span class="c1"># If that fails, try calling without &#39;data&#39; as a named argument</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+            <span class="c1"># Store specified model attributes for later use, if requested</span>
+            <span class="k">if</span> <span class="s2">&quot;pipeline_attributes_to_store&quot;</span> <span class="ow">in</span> <span class="n">step</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline_attributes</span><span class="p">[</span><span class="n">step</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">attr_name</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">attr_name</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span><span class="s2">&quot;pipeline_attributes_to_store&quot;</span><span class="p">]</span>
+                <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">data</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_param_combinations</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">param_grid</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate all possible combinations of parameters from a parameter grid for a single pipeline step.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        param_grid : Dict[str, List[Any]]</span>
+<span class="sd">            Dictionary mapping parameter names to lists of values to try for each parameter.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        List[Dict[str, Any]]</span>
+<span class="sd">            List of dictionaries, each representing a unique combination of parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">param_grid</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">param_grid</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="n">combinations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">combo</span><span class="p">))</span> <span class="k">for</span> <span class="n">combo</span> <span class="ow">in</span> <span class="n">combinations</span><span class="p">]</span>
+
+<div class="viewcode-block" id="BlueMathPipeline.grid_search">
+<a class="viewcode-back" href="../../../bluemath_tk.core.html#bluemath_tk.core.pipeline.BlueMathPipeline.grid_search">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">grid_search</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span>
+        <span class="n">param_grid</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+        <span class="n">metric</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">target_data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform a grid search over all possible parameter combinations for all steps in the pipeline.</span>
+
+<span class="sd">        This method evaluates every possible combination of parameters (from the provided grids) for each step,</span>
+<span class="sd">        fits the pipeline, and scores the result using the provided metric or the last model&#39;s score method.</span>
+<span class="sd">        The best parameter set (lowest score) is selected and the pipeline is updated accordingly.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : Union[np.ndarray, pd.DataFrame]</span>
+<span class="sd">            The input data to fit the models.</span>
+<span class="sd">        param_grid : List[Dict[str, Any]]</span>
+<span class="sd">            List of parameter grids for each step in the pipeline. Each grid is a dict mapping parameter names</span>
+<span class="sd">            to lists of values to try. Parameters can be for either model_init_params or fit_params.</span>
+<span class="sd">        metric : Callable, optional</span>
+<span class="sd">            Function to evaluate the final output. Should take (y_true, y_pred) as arguments.</span>
+<span class="sd">            If None, will use the last model&#39;s built-in score method if available.</span>
+<span class="sd">        target_data : Union[np.ndarray, pd.DataFrame], optional</span>
+<span class="sd">            Target data to evaluate against if using a custom metric. Required if metric is provided.</span>
+<span class="sd">        plot : bool, optional</span>
+<span class="sd">            If True, plot the score for each parameter combination after grid search. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Dict[str, Any]</span>
+<span class="sd">            Dictionary containing:</span>
+<span class="sd">                - &#39;best_params&#39;: the best parameter set for each step</span>
+<span class="sd">                - &#39;best_score&#39;: the best score achieved</span>
+<span class="sd">                - &#39;best_output&#39;: the output of the pipeline for the best parameters</span>
+<span class="sd">                - &#39;all_results&#39;: a list of all parameter sets and their scores/outputs</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the number of parameter grids does not match the number of pipeline steps,</span>
+<span class="sd">            or if a metric is provided but no target_data is given.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_grid</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Number of parameter grids must match number of pipeline steps&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">metric</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">target_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;target_data must be provided when using a custom metric&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Generate all possible parameter combinations for each step</span>
+        <span class="n">all_param_combinations</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">step_params</span> <span class="ow">in</span> <span class="n">param_grid</span><span class="p">:</span>
+            <span class="n">step_combinations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_param_combinations</span><span class="p">(</span><span class="n">step_params</span><span class="p">)</span>
+            <span class="n">all_param_combinations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">step_combinations</span><span class="p">)</span>
+
+        <span class="c1"># Cartesian product: all possible combinations across all steps</span>
+        <span class="n">param_combinations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">all_param_combinations</span><span class="p">))</span>
+
+        <span class="n">best_score</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>  <span class="c1"># Initialize best score as infinity (lower is better)</span>
+        <span class="n">best_params</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">best_output</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">all_results</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Iterate over every possible parameter combination</span>
+        <span class="k">for</span> <span class="n">step_params</span> <span class="ow">in</span> <span class="n">param_combinations</span><span class="p">:</span>
+            <span class="n">pipeline_copy</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>  <span class="c1"># Work on a copy to avoid side effects</span>
+
+            <span class="c1"># Update each step in the pipeline with the current parameter set</span>
+            <span class="k">for</span> <span class="n">step_idx</span><span class="p">,</span> <span class="n">params</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">step_params</span><span class="p">):</span>
+                <span class="n">step</span> <span class="o">=</span> <span class="n">pipeline_copy</span><span class="o">.</span><span class="n">steps</span><span class="p">[</span><span class="n">step_idx</span><span class="p">]</span>
+                <span class="c1"># Assign parameters to model_init_params or fit_params as appropriate</span>
+                <span class="k">if</span> <span class="s2">&quot;model_init_params&quot;</span> <span class="ow">in</span> <span class="n">step</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">param_value</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span><span class="s2">&quot;model_init_params&quot;</span><span class="p">]:</span>
+                            <span class="n">step</span><span class="p">[</span><span class="s2">&quot;model_init_params&quot;</span><span class="p">][</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param_value</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">step</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;fit_params&quot;</span><span class="p">,</span> <span class="p">{})[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param_value</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">step</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;fit_params&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+                <span class="c1"># Re-initialize the model if model_init_params were updated</span>
+                <span class="k">if</span> <span class="s2">&quot;model_init_params&quot;</span> <span class="ow">in</span> <span class="n">step</span> <span class="ow">and</span> <span class="s2">&quot;model_init&quot;</span> <span class="ow">in</span> <span class="n">step</span><span class="p">:</span>
+                    <span class="n">step</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">step</span><span class="p">[</span><span class="s2">&quot;model_init&quot;</span><span class="p">](</span><span class="o">**</span><span class="n">step</span><span class="p">[</span><span class="s2">&quot;model_init_params&quot;</span><span class="p">])</span>
+
+            <span class="c1"># Fit the pipeline and get the output for this parameter set</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">pipeline_copy</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+            <span class="c1"># Score the output using the provided metric or the model&#39;s score method</span>
+            <span class="k">if</span> <span class="n">metric</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">score</span> <span class="o">=</span> <span class="n">metric</span><span class="p">(</span><span class="n">target_data</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">score</span> <span class="o">=</span> <span class="n">pipeline_copy</span><span class="o">.</span><span class="n">steps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;model&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">target_data</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;Either provide a metric function and target_data, &quot;</span>
+                        <span class="s2">&quot;or ensure the last model has a score method&quot;</span>
+                    <span class="p">)</span>
+
+            <span class="c1"># Store the result for this parameter set</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">step_params</span><span class="p">,</span> <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="n">score</span><span class="p">,</span> <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="n">output</span><span class="p">}</span>
+            <span class="n">all_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+            <span class="c1"># Update the best score/params/output if this is the best so far</span>
+            <span class="k">if</span> <span class="n">score</span> <span class="o">&lt;</span> <span class="n">best_score</span><span class="p">:</span>
+                <span class="n">best_score</span> <span class="o">=</span> <span class="n">score</span>
+                <span class="n">best_params</span> <span class="o">=</span> <span class="n">step_params</span>
+                <span class="n">best_output</span> <span class="o">=</span> <span class="n">output</span>
+
+        <span class="c1"># After search, update the pipeline with the best parameters found</span>
+        <span class="k">for</span> <span class="n">step_idx</span><span class="p">,</span> <span class="n">params</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">best_params</span><span class="p">):</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">[</span><span class="n">step_idx</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">&quot;model_init_params&quot;</span> <span class="ow">in</span> <span class="n">step</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">param_value</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span><span class="s2">&quot;model_init_params&quot;</span><span class="p">]:</span>
+                        <span class="n">step</span><span class="p">[</span><span class="s2">&quot;model_init_params&quot;</span><span class="p">][</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param_value</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">step</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;fit_params&quot;</span><span class="p">,</span> <span class="p">{})[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param_value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">step</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;fit_params&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;model_init_params&quot;</span> <span class="ow">in</span> <span class="n">step</span> <span class="ow">and</span> <span class="s2">&quot;model_init&quot;</span> <span class="ow">in</span> <span class="n">step</span><span class="p">:</span>
+                <span class="n">step</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">step</span><span class="p">[</span><span class="s2">&quot;model_init&quot;</span><span class="p">](</span><span class="o">**</span><span class="n">step</span><span class="p">[</span><span class="s2">&quot;model_init_params&quot;</span><span class="p">])</span>
+
+        <span class="c1"># Plotting if requested</span>
+        <span class="k">if</span> <span class="n">plot</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+                <span class="n">scores</span> <span class="o">=</span> <span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">all_results</span><span class="p">]</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">)),</span> <span class="n">scores</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Parameter Combination Index&quot;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Score&quot;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Grid Search Scores for Parameter Combinations&quot;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;matplotlib is not installed. Cannot plot grid search results.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;best_params&quot;</span><span class="p">:</span> <span class="n">best_params</span><span class="p">,</span>
+            <span class="s2">&quot;best_score&quot;</span><span class="p">:</span> <span class="n">best_score</span><span class="p">,</span>
+            <span class="s2">&quot;best_output&quot;</span><span class="p">:</span> <span class="n">best_output</span><span class="p">,</span>
+            <span class="s2">&quot;all_results&quot;</span><span class="p">:</span> <span class="n">all_results</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

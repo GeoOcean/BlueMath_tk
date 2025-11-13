@@ -1,0 +1,37 @@
+bluemath\_tk.risk package
+=========================
+
+Submodules
+----------
+
+bluemath\_tk.risk.damage module
+-------------------------------
+
+.. automodule:: bluemath_tk.risk.damage
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.risk.pcrafi module
+-------------------------------
+
+.. automodule:: bluemath_tk.risk.pcrafi
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.risk.riskscapetools module
+---------------------------------------
+
+.. automodule:: bluemath_tk.risk.riskscapetools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.risk
+   :members:
+   :show-inheritance:
+   :undoc-members:

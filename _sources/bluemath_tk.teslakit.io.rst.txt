@@ -1,0 +1,45 @@
+bluemath\_tk.teslakit.io package
+================================
+
+Submodules
+----------
+
+bluemath\_tk.teslakit.io.aux\_nc module
+---------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.io.aux_nc
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.io.cfs module
+-----------------------------------
+
+.. automodule:: bluemath_tk.teslakit.io.cfs
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.io.getinfo module
+---------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.io.getinfo
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.io.matlab module
+--------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.io.matlab
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.teslakit.io
+   :members:
+   :show-inheritance:
+   :undoc-members:

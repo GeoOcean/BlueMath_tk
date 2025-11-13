@@ -1,0 +1,29 @@
+bluemath\_tk.wrappers.swash package
+===================================
+
+Submodules
+----------
+
+bluemath\_tk.wrappers.swash.swash\_example module
+-------------------------------------------------
+
+.. automodule:: bluemath_tk.wrappers.swash.swash_example
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.wrappers.swash.swash\_wrapper module
+-------------------------------------------------
+
+.. automodule:: bluemath_tk.wrappers.swash.swash_wrapper
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.wrappers.swash
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,569 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.additive package" href="bluemath_tk.additive.html" />
+    <link rel="prev" title="bluemath_tk" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">bluemath_tk package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.additive.html">bluemath_tk.additive package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.deeplearning.html">bluemath_tk.deeplearning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tcs.html">bluemath_tk.tcs package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+      <li class="breadcrumb-item active">bluemath_tk package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-package">
+<h1>bluemath_tk package<a class="headerlink" href="#bluemath-tk-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.additive.html">bluemath_tk.additive package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.additive.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.additive.html#module-bluemath_tk.additive.greensurge">bluemath_tk.additive.greensurge module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.GS_LinearWindDragCoef"><code class="docutils literal notranslate"><span class="pre">GS_LinearWindDragCoef()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.GS_LinearWindDragCoef_mat"><code class="docutils literal notranslate"><span class="pre">GS_LinearWindDragCoef_mat()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.GS_wind_partition_tri"><code class="docutils literal notranslate"><span class="pre">GS_wind_partition_tri()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.GS_windsetup_reconstruction_with_postprocess"><code class="docutils literal notranslate"><span class="pre">GS_windsetup_reconstruction_with_postprocess()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.GS_windsetup_reconstruction_with_postprocess_parallel"><code class="docutils literal notranslate"><span class="pre">GS_windsetup_reconstruction_with_postprocess_parallel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.adcirc2DFlowFM"><code class="docutils literal notranslate"><span class="pre">adcirc2DFlowFM()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.build_greensurge_infos_dataset"><code class="docutils literal notranslate"><span class="pre">build_greensurge_infos_dataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.calculate_edges"><code class="docutils literal notranslate"><span class="pre">calculate_edges()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.compute_water_level_for_time"><code class="docutils literal notranslate"><span class="pre">compute_water_level_for_time()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.create_triangle_mask"><code class="docutils literal notranslate"><span class="pre">create_triangle_mask()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.create_triangle_mask_from_points"><code class="docutils literal notranslate"><span class="pre">create_triangle_mask_from_points()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.extract_pos_nearest_points"><code class="docutils literal notranslate"><span class="pre">extract_pos_nearest_points()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.extract_pos_nearest_points_tri"><code class="docutils literal notranslate"><span class="pre">extract_pos_nearest_points_tri()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.generate_structured_points"><code class="docutils literal notranslate"><span class="pre">generate_structured_points()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.get_regular_grid"><code class="docutils literal notranslate"><span class="pre">get_regular_grid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.interp_vortex_to_triangles"><code class="docutils literal notranslate"><span class="pre">interp_vortex_to_triangles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.load_GS_database"><code class="docutils literal notranslate"><span class="pre">load_GS_database()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.plot_GS_TG_validation_timeseries"><code class="docutils literal notranslate"><span class="pre">plot_GS_TG_validation_timeseries()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.plot_GS_input_wind_partition"><code class="docutils literal notranslate"><span class="pre">plot_GS_input_wind_partition()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.plot_GS_validation_timeseries"><code class="docutils literal notranslate"><span class="pre">plot_GS_validation_timeseries()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.plot_GS_vs_dynamic_windsetup"><code class="docutils literal notranslate"><span class="pre">plot_GS_vs_dynamic_windsetup()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.plot_GS_vs_dynamic_windsetup_swath"><code class="docutils literal notranslate"><span class="pre">plot_GS_vs_dynamic_windsetup_swath()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.plot_greensurge_setup"><code class="docutils literal notranslate"><span class="pre">plot_greensurge_setup()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.plot_greensurge_setup_with_raster"><code class="docutils literal notranslate"><span class="pre">plot_greensurge_setup_with_raster()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.plot_triangle_points"><code class="docutils literal notranslate"><span class="pre">plot_triangle_points()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.pressure_to_IB"><code class="docutils literal notranslate"><span class="pre">pressure_to_IB()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.additive.html#bluemath_tk.additive.greensurge.read_adcirc_grd"><code class="docutils literal notranslate"><span class="pre">read_adcirc_grd()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.additive.html#module-bluemath_tk.additive">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.config.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.config.html#module-bluemath_tk.config.paths">bluemath_tk.config.paths module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.config.html#bluemath_tk.config.paths.get_catalog_folders"><code class="docutils literal notranslate"><span class="pre">get_catalog_folders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.config.html#bluemath_tk.config.paths.get_paths"><code class="docutils literal notranslate"><span class="pre">get_paths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.config.html#bluemath_tk.config.paths.get_thredds_catalog"><code class="docutils literal notranslate"><span class="pre">get_thredds_catalog()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.config.html#bluemath_tk.config.paths.print_catalog_table"><code class="docutils literal notranslate"><span class="pre">print_catalog_table()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.config.html#bluemath_tk.config.paths.update_paths"><code class="docutils literal notranslate"><span class="pre">update_paths()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.config.html#module-bluemath_tk.config">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.core.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.data.html">bluemath_tk.core.data package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.data.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.data.html#module-bluemath_tk.core.data.sample_data">bluemath_tk.core.data.sample_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.data.html#module-bluemath_tk.core.data">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.plotting.html">bluemath_tk.core.plotting package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.plotting.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.plotting.html#bluemath-tk-core-plotting-base-plotting-module">bluemath_tk.core.plotting.base_plotting module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.plotting.html#module-bluemath_tk.core.plotting.colors">bluemath_tk.core.plotting.colors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.plotting.html#bluemath-tk-core-plotting-satellite-module">bluemath_tk.core.plotting.satellite module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.plotting.html#bluemath-tk-core-plotting-scatter-module">bluemath_tk.core.plotting.scatter module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.plotting.html#module-bluemath_tk.core.plotting.utils">bluemath_tk.core.plotting.utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.plotting.html#module-bluemath_tk.core.plotting">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.core.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.core.html#module-bluemath_tk.core.constants">bluemath_tk.core.constants module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.core.html#module-bluemath_tk.core.dask">bluemath_tk.core.dask module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.dask.get_available_ram"><code class="docutils literal notranslate"><span class="pre">get_available_ram()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.dask.get_total_ram"><code class="docutils literal notranslate"><span class="pre">get_total_ram()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.dask.setup_dask_client"><code class="docutils literal notranslate"><span class="pre">setup_dask_client()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.core.html#module-bluemath_tk.core.decorators">bluemath_tk.core.decorators module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.decorators.validate_data_calval"><code class="docutils literal notranslate"><span class="pre">validate_data_calval()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.decorators.validate_data_kma"><code class="docutils literal notranslate"><span class="pre">validate_data_kma()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.decorators.validate_data_lhs"><code class="docutils literal notranslate"><span class="pre">validate_data_lhs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.decorators.validate_data_mda"><code class="docutils literal notranslate"><span class="pre">validate_data_mda()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.decorators.validate_data_pca"><code class="docutils literal notranslate"><span class="pre">validate_data_pca()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.decorators.validate_data_rbf"><code class="docutils literal notranslate"><span class="pre">validate_data_rbf()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.decorators.validate_data_som"><code class="docutils literal notranslate"><span class="pre">validate_data_som()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.decorators.validate_data_xwt"><code class="docutils literal notranslate"><span class="pre">validate_data_xwt()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.core.html#module-bluemath_tk.core.geo">bluemath_tk.core.geo module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.geo.buffer_area_for_polygon"><code class="docutils literal notranslate"><span class="pre">buffer_area_for_polygon()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.geo.convert_to_radians"><code class="docutils literal notranslate"><span class="pre">convert_to_radians()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.geo.create_polygon"><code class="docutils literal notranslate"><span class="pre">create_polygon()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.geo.filter_points_in_polygon"><code class="docutils literal notranslate"><span class="pre">filter_points_in_polygon()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.geo.geo_distance_cartesian"><code class="docutils literal notranslate"><span class="pre">geo_distance_cartesian()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.geo.geodesic_azimuth"><code class="docutils literal notranslate"><span class="pre">geodesic_azimuth()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.geo.geodesic_distance"><code class="docutils literal notranslate"><span class="pre">geodesic_distance()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.geo.geodesic_distance_azimuth"><code class="docutils literal notranslate"><span class="pre">geodesic_distance_azimuth()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.geo.mask_points_outside_polygon"><code class="docutils literal notranslate"><span class="pre">mask_points_outside_polygon()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.geo.points_in_polygon"><code class="docutils literal notranslate"><span class="pre">points_in_polygon()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.geo.shoot"><code class="docutils literal notranslate"><span class="pre">shoot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.core.html#module-bluemath_tk.core.io">bluemath_tk.core.io module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.io.load_model"><code class="docutils literal notranslate"><span class="pre">load_model()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.core.html#module-bluemath_tk.core.logging">bluemath_tk.core.logging module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.logging.get_file_logger"><code class="docutils literal notranslate"><span class="pre">get_file_logger()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.core.html#module-bluemath_tk.core.models">bluemath_tk.core.models module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel"><code class="docutils literal notranslate"><span class="pre">BlueMathModel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.gravity"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.gravity</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.earth_radius"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.earth_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.num_workers"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.num_workers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.logger"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.logger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.check_nans"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.check_nans()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.denormalize"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.denormalize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.destandarize"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.destandarize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#id0"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.earth_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.get_degrees_from_uv"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.get_degrees_from_uv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.get_metrics"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.get_metrics()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.get_num_processors_available"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.get_num_processors_available()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.get_uv_components"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.get_uv_components()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#id1"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.gravity</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.list_class_attributes"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.list_class_attributes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.list_class_methods"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.list_class_methods()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.load_model"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.load_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#id2"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.logger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.normalize"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.normalize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.parallel_execute"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.parallel_execute()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.save_model"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.save_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.set_logger_name"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.set_logger_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.set_num_processors_to_use"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.set_num_processors_to_use()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.set_omp_num_threads"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.set_omp_num_threads()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel.standarize"><code class="docutils literal notranslate"><span class="pre">BlueMathModel.standarize()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.core.html#module-bluemath_tk.core.operations">bluemath_tk.core.operations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.operations.convert_lonlat_to_utm"><code class="docutils literal notranslate"><span class="pre">convert_lonlat_to_utm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.operations.convert_utm_to_lonlat"><code class="docutils literal notranslate"><span class="pre">convert_utm_to_lonlat()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.operations.denormalize"><code class="docutils literal notranslate"><span class="pre">denormalize()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.operations.destandarize"><code class="docutils literal notranslate"><span class="pre">destandarize()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.operations.get_degrees_from_uv"><code class="docutils literal notranslate"><span class="pre">get_degrees_from_uv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.operations.get_uv_components"><code class="docutils literal notranslate"><span class="pre">get_uv_components()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.operations.mathematical_to_nautical"><code class="docutils literal notranslate"><span class="pre">mathematical_to_nautical()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.operations.nautical_to_mathematical"><code class="docutils literal notranslate"><span class="pre">nautical_to_mathematical()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.operations.normalize"><code class="docutils literal notranslate"><span class="pre">normalize()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.operations.spatial_gradient"><code class="docutils literal notranslate"><span class="pre">spatial_gradient()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.operations.standarize"><code class="docutils literal notranslate"><span class="pre">standarize()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.core.html#module-bluemath_tk.core.pipeline">bluemath_tk.core.pipeline module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.pipeline.BlueMathPipeline"><code class="docutils literal notranslate"><span class="pre">BlueMathPipeline</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.pipeline.BlueMathPipeline.fit"><code class="docutils literal notranslate"><span class="pre">BlueMathPipeline.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.pipeline.BlueMathPipeline.grid_search"><code class="docutils literal notranslate"><span class="pre">BlueMathPipeline.grid_search()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.pipeline.BlueMathPipeline.pipeline_attributes"><code class="docutils literal notranslate"><span class="pre">BlueMathPipeline.pipeline_attributes</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.core.html#module-bluemath_tk.core">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.datamining.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.datamining.html#bluemath-tk-datamining-kma-module">bluemath_tk.datamining.kma module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.datamining.html#bluemath-tk-datamining-lhs-module">bluemath_tk.datamining.lhs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.datamining.html#bluemath-tk-datamining-mda-module">bluemath_tk.datamining.mda module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.datamining.html#bluemath-tk-datamining-pca-module">bluemath_tk.datamining.pca module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.datamining.html#bluemath-tk-datamining-som-module">bluemath_tk.datamining.som module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.datamining.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.deeplearning.html">bluemath_tk.deeplearning package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.deeplearning.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.deeplearning.html#bluemath-tk-deeplearning-autoencoders-module">bluemath_tk.deeplearning.autoencoders module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.deeplearning.html#bluemath-tk-deeplearning-layers-module">bluemath_tk.deeplearning.layers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.deeplearning.html#bluemath-tk-deeplearning-metrics-module">bluemath_tk.deeplearning.metrics module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.deeplearning.html#bluemath-tk-deeplearning-regularizers-module">bluemath_tk.deeplearning.regularizers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.deeplearning.html#bluemath-tk-deeplearning-unet-module">bluemath_tk.deeplearning.unet module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.deeplearning.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.distributions.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.distributions.html#bluemath-tk-distributions-copula-module">bluemath_tk.distributions.copula module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.distributions.html#bluemath-tk-distributions-extreme-correction-module">bluemath_tk.distributions.extreme_correction module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.distributions.html#bluemath-tk-distributions-gev-module">bluemath_tk.distributions.gev module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.distributions.html#bluemath-tk-distributions-gpd-module">bluemath_tk.distributions.gpd module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.distributions.html#bluemath-tk-distributions-nonstat-gev-module">bluemath_tk.distributions.nonstat_gev module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.distributions.html#bluemath-tk-distributions-pareto-poisson-module">bluemath_tk.distributions.pareto_poisson module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.distributions.html#bluemath-tk-distributions-poisson-module">bluemath_tk.distributions.poisson module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.distributions.html#bluemath-tk-distributions-pot-module">bluemath_tk.distributions.pot module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.distributions.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.downloaders.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.downloaders.copernicus.html">bluemath_tk.downloaders.copernicus package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.copernicus.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.copernicus.html#bluemath-tk-downloaders-copernicus-copernicus-downloader-module">bluemath_tk.downloaders.copernicus.copernicus_downloader module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.copernicus.html#bluemath-tk-downloaders-copernicus-copernicus-marine-downloader-module">bluemath_tk.downloaders.copernicus.copernicus_marine_downloader module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.copernicus.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.downloaders.ecmwf.html">bluemath_tk.downloaders.ecmwf package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.ecmwf.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.ecmwf.html#bluemath-tk-downloaders-ecmwf-ecmwf-downloader-module">bluemath_tk.downloaders.ecmwf.ecmwf_downloader module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.ecmwf.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.downloaders.noaa.html">bluemath_tk.downloaders.noaa package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.noaa.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.noaa.html#bluemath-tk-downloaders-noaa-noaa-downloader-module">bluemath_tk.downloaders.noaa.noaa_downloader module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.noaa.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.downloaders.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.interpolation.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.interpolation.html#bluemath-tk-interpolation-analogs-module">bluemath_tk.interpolation.analogs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.interpolation.html#bluemath-tk-interpolation-gps-module">bluemath_tk.interpolation.gps module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.interpolation.html#bluemath-tk-interpolation-rbf-module">bluemath_tk.interpolation.rbf module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.interpolation.html#bluemath-tk-interpolation-rbf-scipy-module">bluemath_tk.interpolation.rbf_scipy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.interpolation.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.predictor.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.predictor.html#bluemath-tk-predictor-xwt-module">bluemath_tk.predictor.xwt module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.predictor.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.risk.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.risk.html#bluemath-tk-risk-damage-module">bluemath_tk.risk.damage module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.risk.html#bluemath-tk-risk-pcrafi-module">bluemath_tk.risk.pcrafi module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.risk.html#bluemath-tk-risk-riskscapetools-module">bluemath_tk.risk.riskscapetools module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.risk.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.tcs.html">bluemath_tk.tcs package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.tcs.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.tcs.html#bluemath-tk-tcs-graffitiwaves-module">bluemath_tk.tcs.graffitiwaves module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.tcs.html#bluemath-tk-tcs-parameterization-module">bluemath_tk.tcs.parameterization module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.tcs.html#bluemath-tk-tcs-qtcrain-module">bluemath_tk.tcs.qtcrain module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.tcs.html#bluemath-tk-tcs-shytcwaves-module">bluemath_tk.tcs.shytcwaves module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.tcs.html#bluemath-tk-tcs-tracks-module">bluemath_tk.tcs.tracks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.tcs.html#bluemath-tk-tcs-vortex-module">bluemath_tk.tcs.vortex module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.tcs.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.io.html">bluemath_tk.teslakit.io package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.io.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.io.html#bluemath-tk-teslakit-io-aux-nc-module">bluemath_tk.teslakit.io.aux_nc module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.io.html#bluemath-tk-teslakit-io-cfs-module">bluemath_tk.teslakit.io.cfs module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.io.html#bluemath-tk-teslakit-io-getinfo-module">bluemath_tk.teslakit.io.getinfo module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.io.html#bluemath-tk-teslakit-io-matlab-module">bluemath_tk.teslakit.io.matlab module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.io.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.html">bluemath_tk.teslakit.numerical_models package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.test.html">bluemath_tk.teslakit.test package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-slr-timeseries-module">bluemath_tk.teslakit.test.SLR_timeseries module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-roi-hy-sim-slr-storm-module">bluemath_tk.teslakit.test.roi_hy_sim_slr_storm module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-roi-hycreww-historical-module">bluemath_tk.teslakit.test.roi_hycreww_historical module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-roi-hycreww-sim-module">bluemath_tk.teslakit.test.roi_hycreww_sim module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-alr-module">bluemath_tk.teslakit.test.test_alr module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-climate-emulator-module">bluemath_tk.teslakit.test.test_climate_emulator module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-custom-dateutils-module">bluemath_tk.teslakit.test.test_custom_dateutils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-estela-module">bluemath_tk.teslakit.test.test_estela module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-extremes-module">bluemath_tk.teslakit.test.test_extremes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-hycreww-module">bluemath_tk.teslakit.test.test_hycreww module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-intradaily-module">bluemath_tk.teslakit.test.test_intradaily module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-kma-module">bluemath_tk.teslakit.test.test_kma module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-mda-module">bluemath_tk.teslakit.test.test_mda module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-mjo-module">bluemath_tk.teslakit.test.test_mjo module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-pca-module">bluemath_tk.teslakit.test.test_pca module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-project-site-module">bluemath_tk.teslakit.test.test_project_site module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-rbf-module">bluemath_tk.teslakit.test.test_rbf module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-statistical-module">bluemath_tk.teslakit.test.test_statistical module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-storms-module">bluemath_tk.teslakit.test.test_storms module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-tides-module">bluemath_tk.teslakit.test.test_tides module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#bluemath-tk-teslakit-test-test-waves-module">bluemath_tk.teslakit.test.test_waves module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.test.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.util.html">bluemath_tk.teslakit.util package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.util.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.util.html#bluemath-tk-teslakit-util-operations-module">bluemath_tk.teslakit.util.operations module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.util.html#bluemath-tk-teslakit-util-time-operations-module">bluemath_tk.teslakit.util.time_operations module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.util.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-alr-module">bluemath_tk.teslakit.alr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-alr-aic-module">bluemath_tk.teslakit.alr_AIC module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-climate-emulator-module">bluemath_tk.teslakit.climate_emulator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-database-module">bluemath_tk.teslakit.database module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-estela-module">bluemath_tk.teslakit.estela module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-extremes-module">bluemath_tk.teslakit.extremes module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-intradaily-module">bluemath_tk.teslakit.intradaily module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-kma-module">bluemath_tk.teslakit.kma module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-mda-module">bluemath_tk.teslakit.mda module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-mjo-module">bluemath_tk.teslakit.mjo module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-pca-module">bluemath_tk.teslakit.pca module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-rbf-module">bluemath_tk.teslakit.rbf module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-statistical-module">bluemath_tk.teslakit.statistical module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-storms-module">bluemath_tk.teslakit.storms module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-tides-module">bluemath_tk.teslakit.tides module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#bluemath-tk-teslakit-waves-module">bluemath_tk.teslakit.waves module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.tide.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.tide.html#bluemath-tk-tide-harmonic-module">bluemath_tk.tide.harmonic module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.tide.html#bluemath-tk-tide-ttide-module">bluemath_tk.tide.ttide module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.tide.html#bluemath-tk-tide-utide-module">bluemath_tk.tide.utide module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.tide.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.topo_bathy.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.topo_bathy.html#bluemath-tk-topo-bathy-ocsmod-module">bluemath_tk.topo_bathy.OCSMod module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.topo_bathy.html#bluemath-tk-topo-bathy-mesh-utils-module">bluemath_tk.topo_bathy.mesh_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.topo_bathy.html#bluemath-tk-topo-bathy-profiles-module">bluemath_tk.topo_bathy.profiles module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.topo_bathy.html#bluemath-tk-topo-bathy-swan-grid-module">bluemath_tk.topo_bathy.swan_grid module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.topo_bathy.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.waves.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.waves.html#bluemath-tk-waves-binwaves-module">bluemath_tk.waves.binwaves module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.waves.html#bluemath-tk-waves-calibration-module">bluemath_tk.waves.calibration module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.waves.html#bluemath-tk-waves-climate-module">bluemath_tk.waves.climate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.waves.html#bluemath-tk-waves-greenswell-module">bluemath_tk.waves.greenswell module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.waves.html#bluemath-tk-waves-partitioning-module">bluemath_tk.waves.partitioning module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.waves.html#bluemath-tk-waves-series-module">bluemath_tk.waves.series module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.waves.html#bluemath-tk-waves-snakes-module">bluemath_tk.waves.snakes module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.waves.html#bluemath-tk-waves-spectra-module">bluemath_tk.waves.spectra module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.waves.html#bluemath-tk-waves-statistics-module">bluemath_tk.waves.statistics module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.waves.html#bluemath-tk-waves-superpoint-module">bluemath_tk.waves.superpoint module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.waves.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html">bluemath_tk.wrappers.delft3d package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath-tk-wrappers-delft3d-delft3d-example-module">bluemath_tk.wrappers.delft3d.delft3d_example module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath-tk-wrappers-delft3d-delft3d-wrapper-module">bluemath_tk.wrappers.delft3d.delft3d_wrapper module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.lisflood.html">bluemath_tk.wrappers.lisflood package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.lisflood.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.lisflood.html#bluemath-tk-wrappers-lisflood-lisflood-wrapper-module">bluemath_tk.wrappers.lisflood.lisflood_wrapper module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.lisflood.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.schism.html">bluemath_tk.wrappers.schism package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath-tk-wrappers-schism-schism-example-module">bluemath_tk.wrappers.schism.schism_example module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath-tk-wrappers-schism-schism-wrapper-module">bluemath_tk.wrappers.schism.schism_wrapper module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html">bluemath_tk.wrappers.sfincs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#bluemath-tk-wrappers-sfincs-sfincs-example-module">bluemath_tk.wrappers.sfincs.sfincs_example module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#bluemath-tk-wrappers-sfincs-sfincs-wrapper-module">bluemath_tk.wrappers.sfincs.sfincs_wrapper module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.swan.html">bluemath_tk.wrappers.swan package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath-tk-wrappers-swan-swan-example-module">bluemath_tk.wrappers.swan.swan_example module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath-tk-wrappers-swan-swan-wrapper-module">bluemath_tk.wrappers.swan.swan_wrapper module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.swash.html">bluemath_tk.wrappers.swash package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath-tk-wrappers-swash-swash-example-module">bluemath_tk.wrappers.swash.swash_example module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath-tk-wrappers-swash-swash-wrapper-module">bluemath_tk.wrappers.swash.swash_wrapper module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html">bluemath_tk.wrappers.xbeach package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath-tk-wrappers-xbeach-xbeach-example-module">bluemath_tk.wrappers.xbeach.xbeach_example module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath-tk-wrappers-xbeach-xbeach-wrapper-module">bluemath_tk.wrappers.xbeach.xbeach_wrapper module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="bluemath_tk" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.additive.html" class="btn btn-neutral float-right" title="bluemath_tk.additive package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

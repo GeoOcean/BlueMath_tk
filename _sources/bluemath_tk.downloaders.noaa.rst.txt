@@ -1,0 +1,21 @@
+bluemath\_tk.downloaders.noaa package
+=====================================
+
+Submodules
+----------
+
+bluemath\_tk.downloaders.noaa.noaa\_downloader module
+-----------------------------------------------------
+
+.. automodule:: bluemath_tk.downloaders.noaa.noaa_downloader
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.downloaders.noaa
+   :members:
+   :show-inheritance:
+   :undoc-members:
