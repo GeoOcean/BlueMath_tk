@@ -1,3 +1,25 @@
+"""
+Autoencoders module.
+
+This module is a pytorch translation from a tensorflow implementation developed by Sergio López Dubón.
+
+This module contains the following autoencoders:
+- StandardAutoencoder
+- OrthogonalAutoencoder
+- LSTMAutoencoder
+- CNNAutoencoder
+- VisionTransformerAutoencoder
+- ConvLSTMAutoencoder
+- HybridConvLSTMTransformerAutoencoder
+
+Each autoencoder is a subclass of BaseDeepLearningModel and implements the following methods:
+- fit(X, y=None, epochs=10, batch_size=32, verbose=1)
+- predict(X)
+- encode(X)
+- decode(X)
+- evaluate(X)
+"""
+
 from typing import Optional, Tuple
 
 import torch
@@ -74,7 +96,7 @@ class StandardAutoencoder(BaseDeepLearningModel):
             # Take last dimension as features (handles (n_samples, n_features))
             n_features = input_shape[-1]
 
-        class Autoencoder(nn.Module):
+        class StandardAutoencoderModel(nn.Module):
             def __init__(self, n_features, hidden_dims, k):
                 super().__init__()
                 self.n_features = n_features
@@ -118,7 +140,7 @@ class StandardAutoencoder(BaseDeepLearningModel):
                     x = x.unsqueeze(0)
                 return self.encoder(x)
 
-        return Autoencoder(n_features, self.hidden_dims, self.k)
+        return StandardAutoencoderModel(n_features, self.hidden_dims, self.k)
 
 
 class OrthogonalAutoencoder(BaseDeepLearningModel):
