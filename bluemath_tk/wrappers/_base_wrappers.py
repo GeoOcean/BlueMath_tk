@@ -718,13 +718,23 @@ class BaseModelWrapper(BlueMathModel, ABC):
     ) -> None:
         """
         Run the cases based on the launcher specified.
+        This is thought to be used in a cluster environment, as it is a bulk execution of the cases.
+        By default, the command is executed in the output directory, where the cases are saved,
+        and where the example sbatch file is saved.
 
         Parameters
         ----------
         launcher : str
             The launcher to run the cases.
         path_to_execute : str, optional
-            The path to execute the cases. Default is None.
+            The path to execute the command. Default is None.
+
+        Examples
+        --------
+        # This will execute the specified launcher in the output directory.
+        >>> wrapper.run_cases_bulk(launcher="sbatch sbatch_example.sh")
+        # This will execute the specified launcher in the specified path.
+        >>> wrapper.run_cases_bulk(launcher="my_launcher.sh", path_to_execute="/my/path/to/execute")
         """
 
         if path_to_execute is None:
