@@ -359,10 +359,8 @@ class LatentDecorr(nn.Module):
         # Add loss to computation graph
         z = z + 0 * loss  # Trick to add loss to graph without changing z
 
-        # Store loss for later retrieval (if needed)
-        if not hasattr(self, "_loss"):
-            self._loss = []
-        self._loss.append(loss)
+        # Store current loss for retrieval during training
+        self._loss = loss
 
         return z
 
