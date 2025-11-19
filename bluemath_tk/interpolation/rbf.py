@@ -1141,17 +1141,17 @@ def KFold_cross_validation_RBF(
 
         # Store the results
         kfold_results[i_fold] = {
+            "subset_data_train": subset_data_train,
+            "subset_data_test": subset_data_test,
+            "target_data_train": target_data_train,
+            "target_data_test": target_data_test,
+            "train_index": train_index,
+            "test_index": test_index,
+            "predictions": predictions,
             "metric": metric(
                 target_data_test[rbf_model.target_processed_variables],
                 predictions[rbf_model.target_processed_variables],
             ),
-            "train_index": train_index,
-            "test_index": test_index,
-            "predictions": predictions,
-            "target_data_train": target_data_train,
-            "target_data_test": target_data_test,
-            "subset_data_train": subset_data_train,
-            "subset_data_test": subset_data_test,
         }
 
     return kfold_results
