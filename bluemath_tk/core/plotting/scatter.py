@@ -5,82 +5,10 @@ import pandas as pd
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from scipy.stats import gaussian_kde, probplot
-from sklearn.metrics import mean_squared_error
 
+from ..metrics import bias, r2, rmse, si
 from .base_plotting import DefaultStaticPlotting
 from .colors import default_colors
-
-
-def rmse(pred: np.ndarray, tar: np.ndarray) -> float:
-    """
-    Calculate the Root Mean Square Error between predicted and target values.
-
-    Parameters
-    ----------
-    pred : np.ndarray
-        Array of predicted values.
-    tar : np.ndarray
-        Array of target/actual values.
-
-    Returns
-    -------
-    float
-        The Root Mean Square Error value.
-    """
-
-    if len(pred) != len(tar):
-        raise ValueError("pred and tar must have the same length")
-
-    return np.sqrt(((pred - tar) ** 2).mean())
-
-
-def bias(pred: np.ndarray, tar: np.ndarray) -> float:
-    """
-    Calculate the bias between predicted and target values.
-
-    Parameters
-    ----------
-    pred : np.ndarray
-        Array of predicted values.
-    tar : np.ndarray
-        Array of target/actual values.
-
-    Returns
-    -------
-    float
-        The bias value (mean difference between predictions and targets).
-    """
-
-    if len(pred) != len(tar):
-        raise ValueError("pred and tar must have the same length")
-
-    return sum(pred - tar) / len(pred)
-
-
-def si(pred: np.ndarray, tar: np.ndarray) -> float:
-    """
-    Calculate the Scatter Index between predicted and target values.
-
-    Parameters
-    ----------
-    pred : np.ndarray
-        Array of predicted values.
-    tar : np.ndarray
-        Array of target/actual values.
-
-    Returns
-    -------
-    float
-        The Scatter Index value.
-    """
-
-    if len(pred) != len(tar):
-        raise ValueError("pred and tar must have the same length")
-
-    pred_mean = pred.mean()
-    tar_mean = tar.mean()
-
-    return np.sqrt(sum(((pred - pred_mean) - (tar - tar_mean)) ** 2) / (sum(tar**2)))
 
 
 def density_scatter(
@@ -174,16 +102,12 @@ def validation_scatter(
     props = dict(
         boxstyle="round", facecolor="w", edgecolor="grey", linewidth=0.8, alpha=0.5
     )
-    mse = mean_squared_error(x2, y2)
-    rmse_e = rmse(x2, y2)
-    BIAS = bias(x2, y2)
-    SI = si(x2, y2)
     label = "\n".join(
         (
-            r"RMSE = %.2f" % (rmse_e,),
-            r"MSE =  %.2f" % (mse,),
-            r"BIAS = %.2f" % (BIAS,),
-            R"SI = %.2f" % (SI,),
+            r"BIAS = %.2f" % (bias(x2, y2),),
+            r"SI = %.2f" % (si(x2, y2),),
+            r"RMSE = %.2f" % (rmse(x2, y2),),
+            r"R² =  %.2f" % (r2(x2, y2),),
         )
     )
     axs.text(
