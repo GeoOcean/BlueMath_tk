@@ -34,12 +34,8 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate bluemath-tk
-          pip install bluemath-tk[stats]
+          pip install bluemath-tk[all]
           pip install ruff
-          pip install plotly
-          pip install h5py
-          pip install prettytable
-          pip install csaps
 
       - name: Run Ruff
         run: |

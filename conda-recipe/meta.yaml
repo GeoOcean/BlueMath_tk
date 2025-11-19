@@ -1,81 +1,70 @@
+{% set name = "bluemath-tk" %}
+{% set version = "1.1.14" %}
+{% set sha256 = "09dc1f0ef2f55effb30b5bdeaa0581735cf831f48dde7ee94be39281c16e4f43" %}
+{% set python_min = 3.11 %}
+
 package:
-  name: "bluemath-tk"
-  version: "1.0.8"
+  name: {{ name|lower }}
+  version: {{ version }}
 
 source:
-  url: "https://files.pythonhosted.org/packages/14/24/cd088462d2ee4766f1c4aac0e94b702f6e663c228108aae1c3e71d50c24d/bluemath_tk-1.0.8.tar.gz"
-  sha256: 74f1cbe19b5103e3173f4722a4a2a8e41c612dadc161922432c07f9a2f443527
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/bluemath_tk-{{ version }}.tar.gz
+  sha256: {{ sha256 }}
 
 build:
   number: 0
-  script: "{{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation"
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
 
 requirements:
   host:
-    - aiohttp
-    - cartopy
-    - cdsapi
-    - dask
-    - jinja2
-    - matplotlib
-    - minisom
-    - netcdf4
-    - numpy
-    - pandas
+    - python {{ python_min }}
+    - setuptools >=60
+    - setuptools-scm >=8
     - pip
-    - plotly
-    - python
-    - requests
-    - scikit-learn
-    - scipy
-    - xarray
-    - zarr
   run:
-    - aiohttp
-    - cartopy
-    - cdsapi
-    - dask
-    - jinja2
-    - matplotlib
-    - minisom
-    - netcdf4
+    - python >={{ python_min }}
+    - requests
     - numpy
     - pandas
-    - plotly
-    - python
-    - requests
-    - scikit-learn
-    - scipy
     - xarray
+    - netcdf4
+    - dask
+    - distributed
     - zarr
+    - scipy
+    - scikit-learn
+    - matplotlib-base
+    - cartopy
+    - jinja2
+    - aiohttp
+    - minisom
+    - statsmodels
+    - regionmask
+    - ipykernel
+    - ipywidgets
+    - cmocean
+    - siphon
+    - plotly
+    - h5py
+    - prettytable
+    - numba
+    - csaps
 
 test:
   imports:
     - bluemath_tk
-    - bluemath_tk.core
-    - bluemath_tk.core.data
-    - bluemath_tk.core.plotting
-    - bluemath_tk.datamining
-    - bluemath_tk.deeplearning
-    - bluemath_tk.distributions
-    - bluemath_tk.downloaders
-    - bluemath_tk.downloaders.copernicus
-    - bluemath_tk.interpolation
-    - bluemath_tk.predictor
-    - bluemath_tk.risk
-    - bluemath_tk.tc
-    - bluemath_tk.tide
-    - bluemath_tk.topo_bathy
-    - bluemath_tk.waves
-    - bluemath_tk.wrappers
+  commands:
+    - pip check
+  requires:
+    - python {{ python_min }}
+    - pip
 
 about:
-  home: "https://github.com/GeoOcean/BlueMath_tk"
-  license_family: MIT
+  home: https://github.com/GeoOcean/BlueMath_tk
+  summary: Module collection for custom climate data analysis. The main objective of this Python package is to provide a set of statistical tools tailored for climate data analysis, with a focus on statistical classification and prediction.
+  license: GPL-3.0-only
   license_file: LICENSE
-  summary: "Module collection for custom climate data analysis. The main objective of this Python package is to provide a set of statistical tools tailored for climate data analysis, with a focus on statistical classification and prediction."
-  doc_url: https://geoocean.github.io/BlueMath_tk/
-  dev_url: https://github.com/GeoOcean/BlueMath_tk/tree/develop
 
 extra:
   recipe-maintainers:

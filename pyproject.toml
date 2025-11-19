@@ -19,7 +19,7 @@ dynamic = ["version"]
 requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3 :: Only",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -44,21 +44,32 @@ dependencies = [
     "minisom",
     "statsmodels",
     "regionmask",
-    "cdsapi",
-    "ecmwf-opendata",
     "ipykernel",
     "ipywidgets",
     "cmocean",
     "siphon",
+    "plotly",
+    "h5py",
+    "prettytable",
+    "numba",
+    "csaps",
 ]
 
 [project.optional-dependencies]
 
 docs = ["sphinx", "sphinx-rtd-theme", "jupyter-sphinx", "myst-parser"]
+downloaders = ["cdsapi", "ecmwf-opendata"]
 waves = ["wavespectra", "olas"]
-num-models = ["hydromt-sfincs"]
-deep = ["tensorflow", "keras"]
-stats = ["numba"]
+numerical-models = ["hydromt-sfincs"]
+deeplearning = ["torch"]
+all = [
+    "cdsapi",
+    "ecmwf-opendata",
+    "wavespectra",
+    "olas",
+    "hydromt-sfincs",
+    "torch",
+]
 
 [project.urls]
 

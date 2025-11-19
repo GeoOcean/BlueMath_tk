@@ -167,9 +167,6 @@ class Delft3dModelWrapper(BaseModelWrapper):
         )
 
 
-import matplotlib.pyplot as plt
-
-
 def format_matrix(mat):
     return "\n".join(
         " ".join(f"{x:.1f}" if abs(x) > 0.01 else "0" for x in line) for line in mat

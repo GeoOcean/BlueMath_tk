@@ -19,12 +19,11 @@ jobs:
       - name: Set Up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
           pip install bluemath-tk[docs]
-          pip install bluemath-tk[stats]
 
       - name: Sphinx build
         run: |
