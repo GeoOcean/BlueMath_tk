@@ -16,7 +16,6 @@ from matplotlib.collections import Collection
 from ..core.dask import setup_dask_client
 from ..core.decorators import validate_data_xwt
 from ..core.models import BlueMathModel
-from ..core.pipeline import BlueMathPipeline
 from ..core.plotting.colors import get_cluster_colors, get_config_variables
 from ..datamining.kma import KMA
 from ..datamining.pca import PCA
@@ -111,7 +110,7 @@ class XWTError(Exception):
         super().__init__(self.message)
 
 
-class XWT(BlueMathModel, BlueMathPipeline):
+class XWT(BlueMathModel):
     """
     Xly Weather Types (XWT) class.
 
