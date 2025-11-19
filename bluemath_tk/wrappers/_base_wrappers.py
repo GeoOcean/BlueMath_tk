@@ -838,15 +838,24 @@ class BaseModelWrapper(BlueMathModel, ABC):
             cases_dir_to_postprocess = [
                 self.cases_dirs[case] for case in cases_to_postprocess
             ]
+            cases_context_to_postprocess = [
+                self.cases_context[case] for case in cases_to_postprocess
+            ]
         else:
             cases_to_postprocess = list(range(len(self.cases_dirs)))
             cases_dir_to_postprocess = copy.deepcopy(self.cases_dirs)
+            cases_context_to_postprocess = copy.deepcopy(self.cases_context)
 
         postprocessed_files = []
-        for case_num, case_dir in zip(cases_to_postprocess, cases_dir_to_postprocess):
+        for case_num, case_dir, case_context in zip(
+            cases_to_postprocess, cases_dir_to_postprocess, cases_context_to_postprocess
+        ):
             try:
                 postprocessed_file = self.postprocess_case(
-                    case_num=case_num, case_dir=case_dir, **kwargs
+                    case_num=case_num,
+                    case_dir=case_dir,
+                    case_context=case_context,
+                    **kwargs,
                 )
                 postprocessed_files.append(postprocessed_file)
             except Exception as e:
