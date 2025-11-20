@@ -104,12 +104,12 @@ class TestGPD(unittest.TestCase):
 
     def test_fit(self):
         # Generate data using specific parameters
-        loc, scale, shape = 0.5, 1.5, 0.2
-        data = GPD.random(1000, loc, scale, shape, random_state=42)
+        threshold, scale, shape = 0.5, 1.5, 0.2
+        data = GPD.random(1000, threshold, scale, shape, random_state=42)
 
         # Fit the GPD distribution to the data
         # loc is fixed at 0.0
-        fit_result = GPD.fit(data - loc, f0=0.0)
+        fit_result = GPD.fit(data, threshold=threshold)
 
         # Check the fit result
         self.assertIsInstance(fit_result, FitResult)

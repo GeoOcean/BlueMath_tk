@@ -3,7 +3,7 @@ from typing import Dict, List
 import numpy as np
 from scipy.stats import genpareto
 
-from ._base_distributions import BaseDistribution, FitResult, fit_dist
+from ._base_distributions import BaseDistribution, FitResult
 
 
 class GPD(BaseDistribution):
@@ -116,7 +116,7 @@ class GPD(BaseDistribution):
 
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
-        
+
         return genpareto.pdf(x, c=shape, loc=threshold, scale=scale)
 
     @staticmethod
@@ -222,7 +222,7 @@ class GPD(BaseDistribution):
             If scale is not greater than 0.
         """
 
-        if np.min(p) < 0 or np.max(p) > 1:
+        if np.min(p) <= 0 or np.max(p) >= 1:
             raise ValueError("Probabilities must be in the range (0, 1)")
 
         if scale <= 0:
@@ -259,7 +259,9 @@ class GPD(BaseDistribution):
         if np.any(data < threshold):
             return np.inf
 
-        return -np.sum(genpareto.logpdf(data, c=shape, loc=threshold, scale=scale), axis=0)
+        return -np.sum(
+            genpareto.logpdf(data, c=shape, loc=threshold, scale=scale), axis=0
+        )
 
     @staticmethod
     def fit(data: np.ndarray, threshold: float, **kwargs) -> FitResult:
@@ -306,14 +308,9 @@ class GPD(BaseDistribution):
             return GPD.nll(exceedances, threshold=threshold, scale=scale, shape=shape)
 
         # Perform optimization
-        from scipy.optimize import minimize, OptimizeResult
-        result = minimize(
-            fun=obj, 
-            x0=x0, 
-            method=method, 
-            bounds=bounds, 
-            options=options
-        )
+        from scipy.optimize import OptimizeResult, minimize
+
+        result = minimize(fun=obj, x0=x0, method=method, bounds=bounds, options=options)
 
         # Create modified result
         modified_result = OptimizeResult(
@@ -326,7 +323,7 @@ class GPD(BaseDistribution):
 
         # Return the fitting result
         return FitResult(GPD, exceedances, modified_result)
-    
+
     @staticmethod
     def random(
         size: int,
@@ -367,7 +364,9 @@ class GPD(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        return genpareto.rvs(c=shape, loc=threshold, scale=scale, size=size, random_state=random_state)
+        return genpareto.rvs(
+            c=shape, loc=threshold, scale=scale, size=size, random_state=random_state
+        )
 
     @staticmethod
     def mean(threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
@@ -436,7 +435,9 @@ class GPD(BaseDistribution):
         return genpareto.median(c=shape, loc=threshold, scale=scale)
 
     @staticmethod
-    def variance(threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
+    def variance(
+        threshold: float = 0.0, scale: float = 1.0, shape: float = 0.0
+    ) -> float:
         """
         Variance
 
@@ -500,7 +501,6 @@ class GPD(BaseDistribution):
             raise ValueError("Scale parameter must be > 0")
 
         return genpareto.std(c=shape, loc=threshold, scale=scale)
-
 
     @staticmethod
     def stats(
