@@ -51,6 +51,7 @@ dependencies = [
 
 [project.optional-dependencies]
 docs = ["sphinx", "sphinx-rtd-theme", "jupyter-sphinx", "myst-parser"]
+tests = ["pytest", "ruff"]
 downloaders = ["cdsapi", "ecmwf-opendata"]
 waves = ["wavespectra", "olas"]
 numerical-models = ["hydromt-sfincs"]
