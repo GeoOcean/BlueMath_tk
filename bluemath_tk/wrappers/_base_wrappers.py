@@ -54,6 +54,8 @@ class BaseModelWrapper(BlueMathModel, ABC):
 
     sbatch_file_example = sbatch_file_example
 
+    available_launchers = {}
+
     def __new__(cls, *args, **kwargs):
         if cls is BaseModelWrapper:
             raise TypeError(
@@ -77,9 +79,8 @@ class BaseModelWrapper(BlueMathModel, ABC):
         Parameters
         ----------
         templates_dir : str
-            The directory where the templates are searched.
-            Both binary and text files are supported, for the case where the user
-            needs to have a fixed binary file in all cases directories.
+            The directory where the templates are searched. If None, no templates will be used.
+            Both binary and text files are supported as templates.
         metamodel_parameters : dict
             The parameters to be used for the different cases.
         fixed_parameters : dict
@@ -109,15 +110,24 @@ class BaseModelWrapper(BlueMathModel, ABC):
         self.metamodel_parameters = metamodel_parameters
         self.fixed_parameters = fixed_parameters
         self.output_dir = output_dir
-        self._env = Environment(loader=FileSystemLoader(self.templates_dir))
-        if templates_name == "all":
-            self.logger.info(
-                f"Templates name is 'all', so all templates in {self.templates_dir} will be used."
-            )
-            self.templates_name = self.env.list_templates()
-            self.logger.info(f"Templates names: {self.templates_name}")
+
+        if self.templates_dir is not None:
+            self._env = Environment(loader=FileSystemLoader(self.templates_dir))
+            if templates_name == "all":
+                self.logger.info(
+                    f"Templates name is 'all', so all templates in {self.templates_dir} will be used."
+                )
+                self.templates_name = self.env.list_templates()
+                self.logger.info(f"Templates names: {self.templates_name}")
+            else:
+                self.templates_name = templates_name
         else:
-            self.templates_name = templates_name
+            self.logger.warning(
+                "No templates directory provided, so no templates will be used."
+            )
+            self._env = None
+            self.templates_name = []
+
         self.cases_context: List[dict] = None
         self.cases_dirs: List[str] = None
         self.thread: threading.Thread = None
@@ -704,18 +714,34 @@ class BaseModelWrapper(BlueMathModel, ABC):
     def run_cases_bulk(
         self,
         launcher: str,
+        path_to_execute: str = None,
     ) -> None:
         """
         Run the cases based on the launcher specified.
+        This is thought to be used in a cluster environment, as it is a bulk execution of the cases.
+        By default, the command is executed in the output directory, where the cases are saved,
+        and where the example sbatch file is saved.
 
         Parameters
         ----------
         launcher : str
             The launcher to run the cases.
+        path_to_execute : str, optional
+            The path to execute the command. Default is None.
+
+        Examples
+        --------
+        # This will execute the specified launcher in the output directory.
+        >>> wrapper.run_cases_bulk(launcher="sbatch sbatch_example.sh")
+        # This will execute the specified launcher in the specified path.
+        >>> wrapper.run_cases_bulk(launcher="my_launcher.sh", path_to_execute="/my/path/to/execute")
         """
 
-        self.logger.info(f"Running cases with launcher={launcher}.")
-        self._exec_bash_commands(str_cmd=launcher, cwd=self.output_dir)
+        if path_to_execute is None:
+            path_to_execute = self.output_dir
+
+        self.logger.info(f"Running cases with launcher={launcher} in {path_to_execute}")
+        self._exec_bash_commands(str_cmd=launcher, cwd=path_to_execute)
 
     def monitor_cases(
         self, cases_status: dict, value_counts: str
