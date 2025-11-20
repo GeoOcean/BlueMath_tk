@@ -318,7 +318,7 @@ class OptimalThreshold(BlueMathModel):
         _, _, _, self.pks, self.pks_idx, _ = pot(
             self.data, self.threshold, self.n0, self.min_peak_distance
         )
-        return self.threshold, self.pks, self.pks_idx
+        return self.threshold.item(), self.pks, self.pks_idx
 
     def studentized_residuals(
         self,

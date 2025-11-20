@@ -30,7 +30,7 @@ def gpdpoiss_ci_rp_bootstrap(
     boot_params = np.zeros((B, 3))
     for i in range(B):
         fit_result = GPD.fit(boot_samples[i], threshold=threshold)
-        boot_params[i, :] = fit_result.params
+        boot_params[i, :] = np.asarray(fit_result.params)
 
     return_periods = np.array(
         [
