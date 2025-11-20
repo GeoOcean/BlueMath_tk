@@ -397,7 +397,7 @@ class OptimalThreshold(BlueMathModel):
                 ax.legend(loc="upper right")
                 if folder is not None:
                     plt.savefig(f"{folder}/StudenRes{it}.png", dpi=300)
-                plt.show()
+                # plt.show()
                 plt.close()
 
             if fobj > chi2.ppf(1 - sig_level, df=u_values.size - 2) or np.abs(
