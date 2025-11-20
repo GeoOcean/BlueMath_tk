@@ -399,7 +399,7 @@ class FitResult(BlueMathModel):
         print(f"Negative Log-Likelihood value: {self.nll:.4f}")
         print(f"{self.message}")
 
-    def plot(self, ax: plt.axes = None, plot_type="all") -> Tuple[plt.figure, plt.axes]:
+    def plot(self, ax: plt.axes = None, plot_type="all", npy=1) -> Tuple[plt.figure, plt.axes]:
         """
         Plots of fitting results: PP-plot, QQ-plot, histogram with fitted distribution, and return period plot.
         Parameters
@@ -410,6 +410,8 @@ class FitResult(BlueMathModel):
             Type of plot to create. Options are "hist" for histogram, "pp" for P-P plot,
             "qq" for Q-Q plot, "return_period" for return period plot, or "all" for all plots.
             Default is "all".
+        npy : int, optional
+            Number of observations per year. Default is 1.
 
         Returns
         -------
@@ -426,7 +428,7 @@ class FitResult(BlueMathModel):
             self.pp(ax=axs[0, 0])
             self.qq(ax=axs[0, 1])
             self.hist(ax=axs[1, 0])
-            self.return_period(ax=axs[1, 1])
+            self.return_period(ax=axs[1, 1], npy=npy)
             plt.tight_layout()
             return fig, axs
         elif plot_type == "hist":
@@ -436,7 +438,7 @@ class FitResult(BlueMathModel):
         elif plot_type == "qq":
             return self.qq()
         elif plot_type == "return_period":
-            return self.return_period()
+            return self.return_period(npy=npy)
         else:
             raise ValueError(
                 "Invalid plot type. Use 'hist', 'pp', 'qq', 'return_period', or 'all'."
@@ -541,7 +543,7 @@ class FitResult(BlueMathModel):
 
         return fig, ax
 
-    def return_period(self, ax: plt.axes = None) -> Tuple[plt.figure, plt.axes]:
+    def return_period(self, ax: plt.axes = None, npy=1) -> Tuple[plt.figure, plt.axes]:
         """
         Return period plot of the fitted distribution.
 
@@ -549,26 +551,28 @@ class FitResult(BlueMathModel):
         ----------
         ax : matplotlib.axes.Axes, optional
             Axes to plot on. If None, a new figure and axes will be created.
+        npy : int, optional
+            Number of observations per year. Default is 1.
         """
         if ax is None:
             fig, ax = plt.subplots(figsize=(8, 6))
         else:
             fig = None
 
-        return_years = np.asarray([1.001, 1.1, 1.2, 1.3, 1.4, 1.5, 1.75, 2, 3, 4, 5, 7.5, 10, 15, 20, 25, 50, 100, 250, 500, 1000])
-        ecdf_fitted = 1 - 1/return_years
+        return_years = np.asarray([1.001, 1.1, 1.2, 1.3, 1.4, 1.5, 1.75, 2, 3, 4, 5, 7.5, 10, 15, 20, 25, 50, 100, 250, 500, 1000, 10000])
+        ecdf_fitted = 1 - 1/(return_years)
         sorted_data = np.sort(self.data)
         exceedance_prob = 1 - self.ecdf
-        return_period = 1 / exceedance_prob
+        return_period = 1 / (exceedance_prob)
 
         ax.plot(
-            return_years,
+            return_years / npy,
             self.dist.qf(ecdf_fitted, *self.params),
             color="tab:red",
             label="Fitted Distribution",
         )
         ax.plot(
-            return_period,
+            return_period / npy,
             sorted_data,
             marker="o",
             linestyle="",
@@ -580,7 +584,7 @@ class FitResult(BlueMathModel):
         ax.set_xticks([1, 2, 5, 10, 25, 50, 100, 250, 1000, 10000])
         ax.set_xticklabels([1, 2, 5, 10, 25, 50, 100, 500, 1000, 10000])
         # ax.set_xlim(right=np.max(return_period) * 1.2)
-        ax.set_xlabel("Return Period")
+        ax.set_xlabel("Return Period (Years)")
         ax.set_ylabel("Data Values")
         ax.set_title("Return Period Plot")
         ax.legend()
