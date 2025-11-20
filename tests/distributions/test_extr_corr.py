@@ -362,7 +362,7 @@ class TestExtremeCorrection(unittest.TestCase):
             coords={"n_sim": [0], "time": time_sim},
         )
 
-        result = ec.transform(data_sim=data_sim_good, siglevel=0.05, random_state=42)
+        _ = ec.transform(data_sim=data_sim_good, siglevel=0.05, random_state=42)
 
         # If p-value > siglevel, data should not be corrected
         if ec.p_value > 0.05:
