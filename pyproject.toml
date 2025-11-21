@@ -55,7 +55,7 @@ tests = ["pytest", "ruff"]
 downloaders = ["cdsapi", "ecmwf-opendata"]
 waves = ["wavespectra", "olas"]
 numerical-models = ["hydromt-sfincs"]
-deeplearning = ["torch"]
+deeplearning = ["torch", "gpytorch", "optuna"]
 all = [
     "cdsapi",
     "ecmwf-opendata",
@@ -63,6 +63,8 @@ all = [
     "olas",
     "hydromt-sfincs",
     "torch",
+    "gpytorch",
+    "optuna",
 ]
 
 [project.urls]
@@ -73,7 +75,6 @@ Issues = "https://github.com/GeoOcean/BlueMath_tk/issues"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["bluemath_tk*"]
-exclude = ["logs*", "notebooks*", "test_cases*", "test_data*", "site*"]
 
 [tool.setuptools_scm]
 version_file = "bluemath_tk/_version.py"
