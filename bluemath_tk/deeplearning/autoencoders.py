@@ -20,11 +20,13 @@ Each autoencoder is a subclass of BaseDeepLearningModel and implements the follo
 - evaluate(X)
 """
 
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from tqdm import tqdm
 
 from ._base_model import BaseDeepLearningModel
 from .layers import (
@@ -257,7 +259,9 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
                 I_k = torch.eye(WT_W.size(0), device=WT_W.device, dtype=WT_W.dtype)
                 ortho_loss = self.lambda_W * torch.sum((WT_W - I_k) ** 2)
 
-                # Add to computation graph
+                # Store losses for retrieval during training
+                # Keep in computation graph by adding to z (doesn't change z value)
+                self._ortho_loss = ortho_loss
                 z = z + 0 * ortho_loss
 
                 x_recon = self.decoder(z)
@@ -276,9 +280,163 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
                 z = self.latent_decorr(z)
                 return z
 
+            def get_regularization_losses(self):
+                """Get current regularization losses."""
+                ortho_loss = getattr(self, "_ortho_loss", None)
+                decorr_loss = getattr(self.latent_decorr, "_loss", None)
+                return ortho_loss, decorr_loss
+
         return OrthogonalAutoencoderModel(
             n_features, self.hidden_dims, self.k, self.lambda_W, self.lambda_Z
         )
+
+    def fit(
+        self,
+        X: np.ndarray,
+        y: Optional[np.ndarray] = None,
+        validation_split: float = 0.2,
+        epochs: int = 500,
+        batch_size: int = 64,
+        learning_rate: float = 1e-3,
+        optimizer: Optional[torch.optim.Optimizer] = None,
+        criterion: Optional[nn.Module] = None,
+        patience: int = 20,
+        verbose: int = 1,
+        **kwargs,
+    ) -> Dict[str, list]:
+        """
+        Fit the orthogonal autoencoder with regularization losses.
+
+        This method overrides the base fit() to properly add orthogonality
+        and decorrelation regularization losses during training.
+        """
+        if self.model is None:
+            self.model = self._build_model(X.shape, **kwargs)
+            self.model = self.model.to(self.device)
+
+        if optimizer is None:
+            optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
+
+        if criterion is None:
+            criterion = nn.MSELoss()
+
+        # Train/validation split
+        n_samples = len(X)
+        idx = np.arange(n_samples)
+        np.random.shuffle(idx)
+        split = int((1 - validation_split) * n_samples)
+        train_idx, val_idx = idx[:split], idx[split:]
+        Xtr, Xval = X[train_idx], X[val_idx]
+
+        if y is None:
+            # Autoencoder case
+            ytr, yval = Xtr, Xval
+        else:
+            ytr, yval = y[train_idx], y[val_idx]
+
+        # Convert to tensors
+        Xtr_tensor = torch.FloatTensor(Xtr).to(self.device)
+        Xval_tensor = torch.FloatTensor(Xval).to(self.device)
+        ytr_tensor = torch.FloatTensor(ytr).to(self.device)
+        yval_tensor = torch.FloatTensor(yval).to(self.device)
+
+        history = {"train_loss": [], "val_loss": []}
+        best_val_loss = float("inf")
+        patience_counter = 0
+        best_model_state = None
+
+        # Create progress bar if verbose > 0
+        use_progress_bar = verbose > 0
+        epoch_range = range(epochs)
+        pbar = None
+        if use_progress_bar:
+            pbar = tqdm(epoch_range, desc="Training", unit="epoch")
+            epoch_range = pbar
+
+        for epoch in epoch_range:
+            # Training
+            self.model.train()
+            train_loss = 0.0
+            n_batches = (len(Xtr) + batch_size - 1) // batch_size
+
+            for i in range(0, len(Xtr), batch_size):
+                batch_X = Xtr_tensor[i : i + batch_size]
+                batch_y = ytr_tensor[i : i + batch_size]
+
+                optimizer.zero_grad()
+                output = self.model(batch_X)
+                loss = criterion(output, batch_y)
+
+                # Add regularization losses
+                ortho_loss, decorr_loss = self.model.get_regularization_losses()
+                if ortho_loss is not None:
+                    loss = loss + ortho_loss
+                if decorr_loss is not None:
+                    loss = loss + decorr_loss
+
+                loss.backward()
+                optimizer.step()
+
+                train_loss += loss.item()
+
+            train_loss /= n_batches
+            history["train_loss"].append(train_loss)
+
+            # Validation
+            self.model.eval()
+            val_loss = 0.0
+            with torch.no_grad():
+                n_val_batches = (len(Xval) + batch_size - 1) // batch_size
+                for i in range(0, len(Xval), batch_size):
+                    batch_X = Xval_tensor[i : i + batch_size]
+                    batch_y = yval_tensor[i : i + batch_size]
+
+                    output = self.model(batch_X)
+                    loss = criterion(output, batch_y)
+
+                    # Add regularization losses for validation
+                    ortho_loss, decorr_loss = self.model.get_regularization_losses()
+                    if ortho_loss is not None:
+                        loss = loss + ortho_loss
+                    if decorr_loss is not None:
+                        loss = loss + decorr_loss
+
+                    val_loss += loss.item()
+
+                val_loss /= n_val_batches
+                history["val_loss"].append(val_loss)
+
+            # Early stopping
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                patience_counter = 0
+                best_model_state = self.model.state_dict().copy()
+            else:
+                patience_counter += 1
+                if patience_counter >= patience:
+                    if verbose > 0:
+                        if pbar is not None:
+                            pbar.set_postfix_str(f"Early stopping at epoch {epoch + 1}")
+                        self.logger.info(f"Early stopping at epoch {epoch + 1}")
+                    break
+
+            # Update progress bar with current losses
+            if pbar is not None:
+                pbar.set_postfix_str(
+                    f"Train Loss: {train_loss:.6f}, Val Loss: {val_loss:.6f}, Patience: {patience_counter}/{patience}"
+                )
+            elif verbose > 0 and (epoch + 1) % max(1, epochs // 10) == 0:
+                self.logger.info(
+                    f"Epoch {epoch + 1}/{epochs} - Train Loss: {train_loss:.6f}, Val Loss: {val_loss:.6f}"
+                )
+
+        # Restore best model
+        if best_model_state is not None:
+            self.model.load_state_dict(best_model_state)
+
+        self.is_fitted = True
+
+        return history
 
 
 class LSTMAutoencoder(BaseDeepLearningModel):
@@ -543,6 +701,7 @@ class CNNAutoencoder(BaseDeepLearningModel):
 
             def encode_forward(self, x):
                 """Encode input to latent space."""
+
                 # Only accept (B, C, H, W) format - channels-first
                 if x.dim() != 4:
                     raise ValueError(
@@ -563,6 +722,7 @@ class CNNAutoencoder(BaseDeepLearningModel):
                 x = x.view(x.size(0), -1)
                 x = F.relu(self.fc1(x))
                 z = self.fc2(x)
+
                 return z
 
         return CNNAutoencoderModel(H, W, C, self.k, pad_h, pad_w)

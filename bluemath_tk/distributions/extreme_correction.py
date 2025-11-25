@@ -221,7 +221,7 @@ class ExtremeCorrection(BlueMathModel):
             self.threshold, self.pot_data, pot_idx = opt_threshold.fit()
             self.poiss_parameter = self.pot_data.size / self.am_data.size
 
-            fit_result = GPD.fit(self.pot_data, f0=self.threshold)
+            fit_result = GPD.fit(self.pot_data, threshold=self.threshold)
 
         # If Annual Maxima used in fitting step
         if self.method == "am":

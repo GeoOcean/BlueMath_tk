@@ -5,6 +5,7 @@ import dask.array as da
 import numpy as np
 import pandas as pd
 from scipy.optimize import fmin, fminbound
+from sklearn.model_selection import KFold
 
 from ..core.decorators import validate_data_rbf
 from ._base_interpolation import BaseInterpolation
@@ -412,7 +413,6 @@ class RBF(BaseInterpolation):
             subset_data[f"{directional_variable}_v"] = var_y_component
             # Drop the original directional variable in subset_data
             subset_data.drop(columns=[directional_variable], inplace=True)
-        self._subset_processed_variables = list(subset_data.columns)
 
         self.logger.info("Normalizing subset data")
         normalized_subset_data, subset_scale_factor = self.normalize(
@@ -426,8 +426,13 @@ class RBF(BaseInterpolation):
 
         if is_fit:
             self._subset_data = subset_data
+            self._subset_processed_variables = list(subset_data.columns)
             self._normalized_subset_data = normalized_subset_data
             self._subset_scale_factor = subset_scale_factor
+        else:
+            normalized_subset_data = normalized_subset_data[
+                self.subset_processed_variables
+            ]
 
         return normalized_subset_data.copy()
 
@@ -1049,3 +1054,108 @@ class RBF(BaseInterpolation):
         )
 
         return self.predict(dataset=dataset, num_workers=num_workers)
+
+
+def basic_rbf_metric(df_true: pd.DataFrame, df_pred: pd.DataFrame) -> float:
+    """
+    Calculate the basic RBF metric.
+
+    Parameters
+    ----------
+    df_true : pd.DataFrame
+        The true data.
+    df_pred : pd.DataFrame
+        The predicted data.
+
+    Returns
+    -------
+    float
+        The basic RBF metric.
+    """
+
+    return ((df_true - df_pred) ** 2).mean()
+
+
+def KFold_cross_validation_RBF(
+    subset_data: pd.DataFrame,
+    target_data: pd.DataFrame,
+    subset_directional_variables: List[str] = [],
+    target_directional_variables: List[str] = [],
+    subset_custom_scale_factor: dict = {},
+    normalize_target_data: bool = True,
+    target_custom_scale_factor: dict = {},
+    num_workers: int = None,
+    iteratively_update_sigma: bool = False,
+    rbf_model: RBF = None,
+    n_splits: int = 5,
+    metric: Callable = basic_rbf_metric,
+):
+    """
+    Perform K-Fold cross-validation for the RBF model.
+    """
+
+    if rbf_model is None:
+        rbf_model = RBF()
+
+    # Initialize the K-Fold cross-validation
+    kf = KFold(n_splits=n_splits)
+
+    # Loop through the folds
+    kfold_results = {}
+    for i_fold, (train_index, test_index) in enumerate(
+        kf.split(subset_data, target_data)
+    ):
+        # Get the train and test data
+        subset_data_train, subset_data_test = (
+            subset_data.iloc[train_index],
+            subset_data.iloc[test_index],
+        )
+        target_data_train, target_data_test = (
+            target_data.iloc[train_index],
+            target_data.iloc[test_index],
+        )
+
+        # Fit the RBF model
+        rbf_model.fit(
+            subset_data=subset_data_train,
+            target_data=target_data_train,
+            subset_directional_variables=subset_directional_variables,
+            target_directional_variables=target_directional_variables,
+            subset_custom_scale_factor=subset_custom_scale_factor,
+            normalize_target_data=normalize_target_data,
+            target_custom_scale_factor=target_custom_scale_factor,
+            num_workers=num_workers,
+            iteratively_update_sigma=iteratively_update_sigma,
+        )
+
+        # Predict the data
+        predictions = rbf_model.predict(
+            dataset=subset_data_test, num_workers=num_workers
+        )
+        predictions.index = target_data_test.index.copy()
+
+        # Calculate directional variables for target data test
+        for directional_variable in target_directional_variables:
+            (
+                target_data_test[f"{directional_variable}_u"],
+                target_data_test[f"{directional_variable}_v"],
+            ) = rbf_model.get_uv_components(
+                x_deg=target_data_test[directional_variable]
+            )
+
+        # Store the results
+        kfold_results[i_fold] = {
+            "subset_data_train": subset_data_train,
+            "subset_data_test": subset_data_test,
+            "target_data_train": target_data_train,
+            "target_data_test": target_data_test,
+            "train_index": train_index,
+            "test_index": test_index,
+            "predictions": predictions,
+            "metric": metric(
+                target_data_test[rbf_model.target_processed_variables],
+                predictions[rbf_model.target_processed_variables],
+            ),
+        }
+
+    return kfold_results

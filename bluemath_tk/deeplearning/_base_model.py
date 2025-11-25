@@ -7,7 +7,6 @@ import torch.nn as nn
 from tqdm import tqdm
 
 from ..core.models import BlueMathModel
-from .metrics import compute_all_metrics
 
 
 class BaseDeepLearningModel(BlueMathModel):
@@ -335,48 +334,6 @@ class BaseDeepLearningModel(BlueMathModel):
                 encodings.append(encoding.cpu().numpy())
 
         return np.concatenate(encodings, axis=0)
-
-    def evaluate(
-        self,
-        X: np.ndarray,
-        y: Optional[np.ndarray] = None,
-        spatial: bool = False,
-        verbose: int = 1,
-    ) -> Dict[str, float]:
-        """
-        Evaluate the model on data.
-
-        Parameters
-        ----------
-        X : np.ndarray
-            Input data.
-        y : np.ndarray, optional
-            Target data. If None, assumes autoencoder (X is target). Default is None.
-        spatial : bool, optional
-            Whether to compute spatial metrics. If True, computes spatial metrics. Default is False.
-        verbose : int, optional
-            Verbosity level. If > 0, shows progress bar during prediction. Default is 1.
-
-        Returns
-        -------
-        Dict[str, float]
-            Dictionary of evaluation metrics.
-
-        Raises
-        ------
-        ValueError
-            If model is not fitted.
-        """
-
-        if not self.is_fitted:
-            raise ValueError("Model must be fitted before evaluation.")
-
-        X_pred = self.predict(X, verbose=verbose)
-
-        if y is None:
-            y = X  # Autoencoder case
-
-        return compute_all_metrics(y, X_pred, spatial=spatial)
 
     def save_pytorch_model(self, model_path: str, **kwargs):
         """
