@@ -413,7 +413,6 @@ class RBF(BaseInterpolation):
             subset_data[f"{directional_variable}_v"] = var_y_component
             # Drop the original directional variable in subset_data
             subset_data.drop(columns=[directional_variable], inplace=True)
-        self._subset_processed_variables = list(subset_data.columns)
 
         self.logger.info("Normalizing subset data")
         normalized_subset_data, subset_scale_factor = self.normalize(
@@ -427,8 +426,13 @@ class RBF(BaseInterpolation):
 
         if is_fit:
             self._subset_data = subset_data
+            self._subset_processed_variables = list(subset_data.columns)
             self._normalized_subset_data = normalized_subset_data
             self._subset_scale_factor = subset_scale_factor
+        else:
+            normalized_subset_data = normalized_subset_data[
+                self.subset_processed_variables
+            ]
 
         return normalized_subset_data.copy()
 
