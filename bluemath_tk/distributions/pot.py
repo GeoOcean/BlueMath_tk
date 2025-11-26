@@ -318,7 +318,7 @@ class OptimalThreshold(BlueMathModel):
         _, _, _, self.pks, self.pks_idx, _ = pot(
             self.data, self.threshold, self.n0, self.min_peak_distance
         )
-        return self.threshold, self.pks, self.pks_idx
+        return self.threshold.item(), self.pks, self.pks_idx
 
     def studentized_residuals(
         self,
@@ -397,7 +397,7 @@ class OptimalThreshold(BlueMathModel):
                 ax.legend(loc="upper right")
                 if folder is not None:
                     plt.savefig(f"{folder}/StudenRes{it}.png", dpi=300)
-                plt.show()
+                # plt.show()
                 plt.close()
 
             if fobj > chi2.ppf(1 - sig_level, df=u_values.size - 2) or np.abs(

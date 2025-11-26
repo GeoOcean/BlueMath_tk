@@ -1,8 +1,6 @@
 import tempfile
 import unittest
 
-import xarray as xr
-
 from bluemath_tk.downloaders.ecmwf.ecmwf_downloader import ECMWFDownloader
 
 
@@ -11,8 +9,8 @@ class TestECMWFDownloader(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.downloader = ECMWFDownloader(
             product="OpenData",
-            base_path_to_download="OpenDataJavixu",  # self.temp_dir,
-            check=False,  # Just check paths to download, do not actually download
+            base_path_to_download=self.temp_dir,
+            check=True,  # Just check paths to download, do not actually download
         )
 
     def test_list_datasets(self):
@@ -29,7 +27,7 @@ class TestECMWFDownloader(unittest.TestCase):
             type="fc",
             force=False,
         )
-        self.assertIsInstance(dataset, xr.Dataset)
+        self.assertIsInstance(dataset, str)
         print(dataset)
 
 

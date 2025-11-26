@@ -1,11 +1,8 @@
 """
-Project: BlueMath_tk
-Sub-Module: deeplearning.unet
-Author: GeoOcean Research Group, Universidad de Cantabria
-Repository: https://github.com/GeoOcean/BlueMath_tk.git
-Status: Under development (Working)
+Unet module.
 
-U-Net model implementations for 2D and 3D data.
+This module is will try to generalize models like the ones in:
+https://github.com/oaeen/wind2iwp
 """
 
 import torch.nn as nn
