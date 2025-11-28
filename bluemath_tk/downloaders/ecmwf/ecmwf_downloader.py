@@ -30,10 +30,17 @@ class ECMWFDownloader(BaseDownloader):
         ecmwf_downloader = ECMWFDownloader(
             product="OpenData",
             base_path_to_download="/path/to/ECMWF/",  # Will be created if not available
-            check=True,
         )
         dataset = ecmwf_downloader.download_data(
             load_data=False,
+            param=["msl"],
+            step=[0, 240],
+            type="fc",
+        )
+        
+        # Or use dry_run to check what would be downloaded
+        result = ecmwf_downloader.download_data(
+            dry_run=True,
             param=["msl"],
             step=[0, 240],
             type="fc",
@@ -58,7 +65,6 @@ class ECMWFDownloader(BaseDownloader):
         model: str = "ifs",
         resolution: str = "0p25",
         debug: bool = True,
-        check: bool = True,
     ) -> None:
         """
         This is the constructor for the ECMWFDownloader class.
@@ -75,8 +81,6 @@ class ECMWFDownloader(BaseDownloader):
             The resolution to download data from. Default is "0p25".
         debug : bool, optional
             Whether to run in debug mode. Default is True.
-        check : bool, optional
-            Whether to just check the data. Default is True.
 
         Raises
         ------
@@ -85,7 +89,7 @@ class ECMWFDownloader(BaseDownloader):
         """
 
         super().__init__(
-            base_path_to_download=base_path_to_download, debug=debug, check=check
+            base_path_to_download=base_path_to_download, debug=debug
         )
         self._product = product
         self._product_config = self.products_configs.get(product)
@@ -94,26 +98,27 @@ class ECMWFDownloader(BaseDownloader):
         self.set_logger_name(
             f"ECMWFDownloader-{product}", level="DEBUG" if debug else "INFO"
         )
-        if not self.check:
-            if model not in self.product_config["datasets"]["forecast_data"]["models"]:
-                raise ValueError(f"Model {model} not supported for {self.product}")
-            if (
-                resolution
-                not in self.product_config["datasets"]["forecast_data"]["resolutions"]
-            ):
-                raise ValueError(
-                    f"Resolution {resolution} not supported for {self.product}"
-                )
-            self._client = Client(
-                source="ecmwf",
-                model=model,
-                resol=resolution,
-                preserve_request_order=False,
-                infer_stream_keyword=True,
+        
+        # Validate model and resolution
+        if model not in self.product_config["datasets"]["forecast_data"]["models"]:
+            raise ValueError(f"Model {model} not supported for {self.product}")
+        if (
+            resolution
+            not in self.product_config["datasets"]["forecast_data"]["resolutions"]
+        ):
+            raise ValueError(
+                f"Resolution {resolution} not supported for {self.product}"
             )
-            self.logger.info("---- DOWNLOADING DATA ----")
-        else:
-            self.logger.info("---- CHECKING DATA ----")
+        
+        # Always initialize client (will skip API calls in dry_run mode)
+        self._client = Client(
+            source="ecmwf",
+            model=model,
+            resol=resolution,
+            preserve_request_order=False,
+            infer_stream_keyword=True,
+        )
+        self.logger.info("---- ECMWF DOWNLOADER INITIALIZED ----")
 
         # Set the model and resolution parameters
         self.model = model
@@ -144,7 +149,7 @@ class ECMWFDownloader(BaseDownloader):
         return list(self.product_config["datasets"].keys())
 
     def download_data(
-        self, load_data: bool = False, *args, **kwargs
+        self, load_data: bool = False, dry_run: bool = False, *args, **kwargs
     ) -> Union[str, xr.Dataset]:
         """
         Downloads the data for the product.
@@ -153,6 +158,9 @@ class ECMWFDownloader(BaseDownloader):
         ----------
         load_data : bool, optional
             Whether to load the data into an xarray.Dataset. Default is False.
+        dry_run : bool, optional
+            If True, only check what would be downloaded without actually downloading.
+            Default is False.
         *args
             The arguments to pass to the download function.
         **kwargs
@@ -170,7 +178,9 @@ class ECMWFDownloader(BaseDownloader):
         """
 
         if self.product == "OpenData":
-            downloaded_file_path = self.download_data_open_data(*args, **kwargs)
+            downloaded_file_path = self.download_data_open_data(dry_run=dry_run, *args, **kwargs)
+            if dry_run:
+                return downloaded_file_path  # Just return the path in dry_run mode
             if load_data:
                 return xr.open_dataset(downloaded_file_path, engine="cfgrib")
             else:
@@ -181,6 +191,7 @@ class ECMWFDownloader(BaseDownloader):
     def download_data_open_data(
         self,
         force: bool = False,
+        dry_run: bool = False,
         **kwargs,
     ) -> str:
         """
@@ -190,13 +201,16 @@ class ECMWFDownloader(BaseDownloader):
         ----------
         force : bool, optional
             Whether to force the download. Default is False.
+        dry_run : bool, optional
+            If True, only check what would be downloaded without actually downloading.
+            Default is False.
         **kwargs
             The keyword arguments to pass to the download function.
 
         Returns
         -------
         str
-            The path to the downloaded file.
+            The path to the downloaded file (or would-be file in dry_run mode).
         """
 
         if "param" in kwargs:
@@ -221,21 +235,26 @@ class ECMWFDownloader(BaseDownloader):
             self.resolution,
             f"{'_'.join(variables)}_{'_'.join(str(step) for step in steps)}_{type}.grib2",
         )
-        if not self.check:
+        
+        if dry_run:
+            if os.path.exists(output_grib_file):
+                self.logger.info(f"DRY RUN: File already exists: {output_grib_file}")
+            else:
+                self.logger.info(f"DRY RUN: Would download: {output_grib_file}")
+            return output_grib_file
+
+        if not dry_run:
             os.makedirs(os.path.dirname(output_grib_file), exist_ok=True)
 
-        if self.check or not force:
+        if not force:
             if os.path.exists(output_grib_file):
                 self.logger.debug(f"{output_grib_file} already downloaded")
             else:
-                if self.check:
-                    self.logger.debug(f"{output_grib_file} not downloaded")
-                else:
-                    self.logger.debug(f"Downloading: {output_grib_file}")
-                    self.client.retrieve(
-                        target=output_grib_file,
-                        **kwargs,
-                    )
+                self.logger.debug(f"Downloading: {output_grib_file}")
+                self.client.retrieve(
+                    target=output_grib_file,
+                    **kwargs,
+                )
         else:
             self.logger.debug(f"Downloading: {output_grib_file}")
             self.client.retrieve(
