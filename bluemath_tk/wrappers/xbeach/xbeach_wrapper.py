@@ -6,6 +6,9 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from wavespectra.construct.frequency import jonswap
+from wavespectra.construct.direction import cartwright
+
 from .._base_wrappers import BaseModelWrapper
 
 
@@ -37,6 +40,7 @@ class XBeachModelWrapper(BaseModelWrapper):
 
     available_launchers = {
         "geoocean-cluster": "launchXbeach.sh",
+        "docker_serial": "docker run --rm -v .:/case_dir -w /case_dir geoocean/rocky8 xbeach",
     }
 
     def __init__(
@@ -63,7 +67,31 @@ class XBeachModelWrapper(BaseModelWrapper):
         self.set_logger_name(
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
         )
+    
+    def create_vardens(self, ds):
+        t = ""
 
+        # Frequencies
+        t += "{0} \n".format(len(ds.freq))
+        for freq in ds.freq.values:
+            t += "{0}\n".format(freq)
+
+        # Directions
+        t += "{0} \n".format(len(ds.dir))
+        for dirt in sorted(ds.dir.values):
+            t += "{0}\n".format(dirt)
+
+        # Sea_surface_wave_directional_variance_spectral_density
+        for _, freq in enumerate(ds.freq.values):
+            for _, dirt in enumerate(sorted(ds.dir.values)):
+                var = ds.sel(freq=freq, dir=dirt).efth.values
+                if np.isnan(var):
+                    var = 0.0
+                t += "{0}\t".format(var)
+            t += "\n"
+        
+        return t
+    
     def build_case(
         self,
         case_context: dict,
@@ -81,11 +109,48 @@ class XBeachModelWrapper(BaseModelWrapper):
         """
 
         if case_context["wbctype"] == "jonstable":
+            # Conversion needed by XBeach's jonswap forcing (https://xbeach.readthedocs.io/en/latest/xbeach_manual.html)
+            spr_rad = np.radians(np.array(case_context["SPR"]))
+            s = (2 / (spr_rad**2)) - 1
+
             with open(f"{case_dir}/jonswap.txt", "w") as f:
-                for _i in range(math.ceil(case_context["comptime"] / 3600)):
+                for _i in range(math.ceil(case_context["tstop"] / 3600)):
                     f.write(
-                        f"{case_context['Hs']} {case_context['Tp']} {case_context['Dir']} 3.300000 30.000000 3600.000000 1.000000 \n"
+                        f"{case_context['Hs']} {case_context['Tp']} {case_context['Dir']} 3.300000 {s} 3600.000000 1.000000 \n"
                     )
+
+        if case_context["wbctype"] == "vardens":
+            ef = jonswap(
+                freq=case_context["freqs"],
+                fp=1 / case_context["Tp"],
+                gamma=case_context["gamma"],
+                hs=case_context["Hs"],
+            )
+            gth = cartwright(
+                dir=case_context["dirs"],
+                dm=case_context["Dir"],
+                dspr=case_context["SPR"],
+            )
+            efth = ef * gth  
+
+            spectrum = xr.Dataset(
+                {
+                    "efth": (
+                        ["freq", "dir"],
+                        efth.data,
+                    )
+                },
+                coords={
+                    "dir": case_context["dirs"],
+                    "freq": case_context["freqs"],
+                },
+            ).sortby(["freq", "dir"])
+
+            spectrum['dir'] = (270 - (spectrum['dir'])) % 360
+            spec = self.create_vardens(spectrum)
+            with open(f"{case_dir}/vardens.txt", "w") as f:
+                f.write(spec)
+
 
     def _get_average_var(self, case_nc: xr.Dataset, var: str) -> np.ndarray:
         """
