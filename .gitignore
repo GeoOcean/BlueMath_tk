@@ -106,3 +106,6 @@ test_cases/
 test_data/
 TODO.md
 newsletter.py
+
+# Tests
+tests/downloaders/

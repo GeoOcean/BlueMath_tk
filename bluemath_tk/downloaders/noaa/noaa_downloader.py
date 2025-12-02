@@ -383,6 +383,17 @@ class NOAADownloader(BaseDownloader):
         """
         return self.product_config["data_types"]
 
+    def list_data_types(self) -> List[str]:
+        """
+        List all available data types for the product.
+
+        Returns
+        -------
+        List[str]
+            List of available data type names.
+        """
+        return list(self.data_types.keys())
+
     def _check_file_exists(
         self, file_path: str, result: DownloadResult, force: bool, dry_run: bool
     ) -> bool:
