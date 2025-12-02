@@ -1,0 +1,86 @@
+{
+  "datasets": {
+    "swot-l3-expert": {
+      "description": "SWOT L3 LR SSH Expert Product",
+      "url": "https://tds-odatis.aviso.altimetry.fr/thredds/catalog/dataset-l3-swot-karin-nadir-validated/l3_lr_ssh/catalog.html",
+      "level": "L3",
+      "variant": "Expert",
+      "ftp_base_path": "/swot_products/l3_karin_nadir/l3_lr_ssh/v2_0_1/Expert/",
+      "ftp_server": "ftp-access.aviso.altimetry.fr",
+      "types": ["oceanography", "altimetry"],
+      "mandatory_fields": ["variables", "lon_range", "lat_range"],
+      "optional_fields": ["force", "dry_run"],
+      "template": {
+        "variables": ["ssha_filtered", "time"],
+        "lon_range": [-15.0, 40.0],
+        "lat_range": [25.0, 50.0]
+      }
+    }
+  },
+  "variables": {
+    "ssha_filtered": {
+      "nc_name": "ssha_filtered",
+      "long_name": "Filtered Sea Surface Height Anomaly",
+      "description": "Filtered sea surface height anomaly from SWOT L3 product",
+      "units": "m",
+      "type": "oceanography",
+      "dataset": "swot-l3-expert"
+    },
+    "time": {
+      "nc_name": "time",
+      "long_name": "Time",
+      "description": "Time coordinate",
+      "units": "seconds since 2000-01-01 00:00:00",
+      "type": "coordinate",
+      "dataset": "swot-l3-expert"
+    },
+    "longitude": {
+      "nc_name": "longitude",
+      "long_name": "Longitude",
+      "description": "Longitude coordinate",
+      "units": "degrees_east",
+      "type": "coordinate",
+      "dataset": "swot-l3-expert"
+    },
+    "latitude": {
+      "nc_name": "latitude",
+      "long_name": "Latitude",
+      "description": "Latitude coordinate",
+      "units": "degrees_north",
+      "type": "coordinate",
+      "dataset": "swot-l3-expert"
+    },
+    "ssha": {
+      "nc_name": "ssha",
+      "long_name": "Sea Surface Height Anomaly",
+      "description": "Sea surface height anomaly (unfiltered)",
+      "units": "m",
+      "type": "oceanography",
+      "dataset": "swot-l3-expert"
+    },
+    "ssh": {
+      "nc_name": "ssh",
+      "long_name": "Sea Surface Height",
+      "description": "Sea surface height",
+      "units": "m",
+      "type": "oceanography",
+      "dataset": "swot-l3-expert"
+    },
+    "cross_track_distance": {
+      "nc_name": "cross_track_distance",
+      "long_name": "Cross Track Distance",
+      "description": "Distance from nadir track",
+      "units": "km",
+      "type": "geometry",
+      "dataset": "swot-l3-expert"
+    },
+    "quality_flag": {
+      "nc_name": "quality_flag",
+      "long_name": "Quality Flag",
+      "description": "Data quality flag",
+      "units": "dimensionless",
+      "type": "metadata",
+      "dataset": "swot-l3-expert"
+    }
+  }
+}

@@ -6,7 +6,7 @@ Repository: https://github.com/GeoOcean/BlueMath_tk.git
 Status: Under development (Working)
 """
 
-from ._download_result import DownloadResult
 from ._base_downloaders import BaseDownloader
+from ._download_result import DownloadResult
 
 __all__ = ["DownloadResult", "BaseDownloader"]
