@@ -1,0 +1,37 @@
+{
+  "datasets": {
+    "swot-l3-expert": {
+      "description": "SWOT L3 Expert Product",
+      "url": "https://tds-odatis.aviso.altimetry.fr/thredds/catalog/dataset-l3-swot-karin-nadir-validated/l3_lr_ssh/v1_0/Expert/catalog.html",
+      "ftp_base_path": "/swot_products/l3_karin_nadir/l3_lr_ssh/v1_0/Expert/",
+      "cycles": [
+        "cycle_001",
+        "cycle_002",
+        "cycle_003",
+        "cycle_004",
+        "cycle_005",
+        "cycle_006",
+        "cycle_007",
+        "cycle_008",
+        "cycle_009"
+      ]
+    },
+    "swot-l2-expert": {
+      "description": "SWOT L2 Expert Product",
+      "url": "https://tds-odatis.aviso.altimetry.fr/thredds/catalog/dataset-l2-swot-karin-lr-ssh-validated/PGC0/Expert/catalog.html",
+      "ftp_base_path": "/swot_products/l2_karin/l2_lr_ssh/PGC0/Expert/",
+      "cycles": [
+        "cycle_001",
+        "cycle_002",
+        "cycle_003",
+        "cycle_004",
+        "cycle_005",
+        "cycle_006",
+        "cycle_007",
+        "cycle_008",
+        "cycle_009"
+      ]
+    }
+  },
+  "ftp_server": "ftp-access.aviso.altimetry.fr"
+}
