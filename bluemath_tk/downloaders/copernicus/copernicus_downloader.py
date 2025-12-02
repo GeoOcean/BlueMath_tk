@@ -129,7 +129,10 @@ class CopernicusDownloader(BaseDownloader):
         self._product = product
         self._product_config = self.products_configs.get(product)
         if self._product_config is None:
-            raise ValueError(f"{product} configuration not found")
+            available_products = list(self.products_configs.keys())
+            raise ValueError(
+                f"Product '{product}' not found. Available products: {available_products}"
+            )
         self.set_logger_name(
             f"CopernicusDownloader-{product}", level="DEBUG" if debug else "INFO"
         )
@@ -137,7 +140,7 @@ class CopernicusDownloader(BaseDownloader):
         self._client = cdsapi.Client(
             url=config["url"], key=token or config["key"], debug=self.debug
         )
-        self.logger.info("---- COPERNICUS DOWNLOADER INITIALIZED ----")
+        self.logger.info(f"---- COPERNICUS DOWNLOADER INITIALIZED ({product}) ----")
 
     @property
     def product(self) -> str:
@@ -150,6 +153,18 @@ class CopernicusDownloader(BaseDownloader):
     @property
     def client(self) -> cdsapi.Client:
         return self._client
+
+    def list_datasets(self) -> List[str]:
+        """
+        Lists the datasets available for the product.
+
+        Returns
+        -------
+        List[str]
+            The list of datasets available for the product.
+        """
+
+        return list(self.product_config["datasets"].keys())
 
     def list_variables(self, type: str = None) -> List[str]:
         """
@@ -175,18 +190,6 @@ class CopernicusDownloader(BaseDownloader):
             ]
 
         return list(self.product_config["variables"].keys())
-
-    def list_datasets(self) -> List[str]:
-        """
-        Lists the datasets available for the product.
-
-        Returns
-        -------
-        List[str]
-            The list of datasets available for the product.
-        """
-
-        return list(self.product_config["datasets"].keys())
 
     def show_markdown_table(self) -> None:
         """
