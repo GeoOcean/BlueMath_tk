@@ -45,6 +45,7 @@
             }
         }
     },
+    "url": "https://cds.climate.copernicus.eu/api",
     "variables": {
         "10m_wind_direction": {
             "cds_name": "10m_wind_direction",
