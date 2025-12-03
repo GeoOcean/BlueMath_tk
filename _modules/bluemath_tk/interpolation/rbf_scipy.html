@@ -1,0 +1,914 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.interpolation.rbf_scipy &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.interpolation.rbf_scipy</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.interpolation.rbf_scipy</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">RBFInterpolator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">fmin</span><span class="p">,</span> <span class="n">fminbound</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mean_squared_error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">KFold</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_data_rbf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._base_interpolation</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseInterpolation</span>
+
+
+<div class="viewcode-block" id="RBFError">
+<a class="viewcode-back" href="../../../bluemath_tk.interpolation.html#bluemath_tk.interpolation.rbf_scipy.RBFError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RBFError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Custom exception for RBF class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;RBF error occurred.&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="RBF">
+<a class="viewcode-back" href="../../../bluemath_tk.interpolation.html#bluemath_tk.interpolation.rbf_scipy.RBF">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RBF</span><span class="p">(</span><span class="n">BaseInterpolation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Radial Basis Function (RBF) interpolation model.</span>
+
+<span class="sd">    Here, scipy&#39;s RBFInterpolator is used to interpolate the data.</span>
+<span class="sd">    https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.RBFInterpolator.html</span>
+
+<span class="sd">    Warnings</span>
+<span class="sd">    --------</span>
+<span class="sd">    - This class is a Beta, results may not be accurate.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    bluemath_tk.interpolation.RBF :</span>
+<span class="sd">        The stable version for this model.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sigma_min : float</span>
+<span class="sd">        The minimum value for the sigma parameter.</span>
+<span class="sd">        This value might change in the optimization process.</span>
+<span class="sd">    sigma_max : float</span>
+<span class="sd">        The maximum value for the sigma parameter.</span>
+<span class="sd">        This value might change in the optimization process.</span>
+<span class="sd">    sigma_opt : float</span>
+<span class="sd">        The optimal value for the sigma parameter.</span>
+<span class="sd">    kernel : str</span>
+<span class="sd">        Type of RBF. This should be one of</span>
+
+<span class="sd">            - &#39;linear&#39;               : ``-r``</span>
+<span class="sd">            - &#39;thin_plate_spline&#39;    : ``r**2 * log(r)``</span>
+<span class="sd">            - &#39;cubic&#39;                : ``r**3``</span>
+<span class="sd">            - &#39;quintic&#39;              : ``-r**5``</span>
+<span class="sd">            - &#39;multiquadric&#39;         : ``-sqrt(1 + r**2)``</span>
+<span class="sd">            - &#39;inverse_multiquadric&#39; : ``1/sqrt(1 + r**2)``</span>
+<span class="sd">            - &#39;inverse_quadratic&#39;    : ``1/(1 + r**2)``</span>
+<span class="sd">            - &#39;gaussian&#39;             : ``exp(-r**2)``</span>
+
+<span class="sd">    smoothing : float or (npoints, ) array_like</span>
+<span class="sd">        Smoothing parameter. The interpolant perfectly fits the data when this</span>
+<span class="sd">        is set to 0. For large values, the interpolant approaches a least</span>
+<span class="sd">        squares fit of a polynomial with the specified degree.</span>
+<span class="sd">    degree : int</span>
+<span class="sd">        Degree of the added polynomial. For some RBFs the interpolant may not</span>
+<span class="sd">        be well-posed if the polynomial degree is too small. Those RBFs and</span>
+<span class="sd">        their corresponding minimum degrees are</span>
+
+<span class="sd">            - &#39;multiquadric&#39;      : 0</span>
+<span class="sd">            - &#39;linear&#39;            : 0</span>
+<span class="sd">            - &#39;thin_plate_spline&#39; : 1</span>
+<span class="sd">            - &#39;cubic&#39;             : 1</span>
+<span class="sd">            - &#39;quintic&#39;           : 2</span>
+
+<span class="sd">        The default value is the minimum degree for `kernel` or 0 if there is</span>
+<span class="sd">        no minimum degree. Set this to -1 for no added polynomial.</span>
+<span class="sd">    neighbors : int</span>
+<span class="sd">        If specified, the value of the interpolant at each evaluation point</span>
+<span class="sd">        will be computed using only this many nearest data points. All the data</span>
+<span class="sd">        points are used by default.</span>
+<span class="sd">    rbfs : dict</span>
+<span class="sd">        Dict with RBFInterpolator instances.</span>
+<span class="sd">    subset_data : pd.DataFrame</span>
+<span class="sd">        The subset data used to fit the model.</span>
+<span class="sd">    normalized_subset_data : pd.DataFrame</span>
+<span class="sd">        The normalized subset data used to fit the model.</span>
+<span class="sd">    target_data : pd.DataFrame</span>
+<span class="sd">        The target data used to fit the model.</span>
+<span class="sd">    normalized_target_data : pd.DataFrame</span>
+<span class="sd">        The normalized target data used to fit the model.</span>
+<span class="sd">        This attribute is only set if normalize_target_data is True in the fit method.</span>
+<span class="sd">    subset_directional_variables : List[str]</span>
+<span class="sd">        The subset directional variables.</span>
+<span class="sd">    target_directional_variables : List[str]</span>
+<span class="sd">        The target directional variables.</span>
+<span class="sd">    subset_processed_variables : List[str]</span>
+<span class="sd">        The subset processed variables.</span>
+<span class="sd">    target_processed_variables : List[str]</span>
+<span class="sd">        The target processed variables.</span>
+<span class="sd">    subset_custom_scale_factor : dict</span>
+<span class="sd">        The custom scale factor for the subset data.</span>
+<span class="sd">    target_custom_scale_factor : dict</span>
+<span class="sd">        The custom scale factor for the target data.</span>
+<span class="sd">    subset_scale_factor : dict</span>
+<span class="sd">        The scale factor for the subset data.</span>
+<span class="sd">    target_scale_factor : dict</span>
+<span class="sd">        The scale factor for the target data.</span>
+<span class="sd">    rbf_coeffs : pd.DataFrame</span>
+<span class="sd">        The RBF coefficients for the target variables.</span>
+<span class="sd">    opt_sigmas : dict</span>
+<span class="sd">        The optimal sigmas for the target variables.</span>
+
+<span class="sd">    Methods</span>
+<span class="sd">    -------</span>
+<span class="sd">    fit(...) :</span>
+<span class="sd">        Fits the model to the data.</span>
+<span class="sd">    predict(...) :</span>
+<span class="sd">        Predicts the data for the provided dataset.</span>
+<span class="sd">    fit_predict(...) :</span>
+<span class="sd">        Fits the model to the subset and predicts the interpolated dataset.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. [1] Fasshauer, G., 2007. Meshfree Approximation Methods with Matlab.</span>
+<span class="sd">        World Scientific Publishing Co.</span>
+
+<span class="sd">    .. [2] http://amadeus.math.iit.edu/~fass/603_ch3.pdf</span>
+
+<span class="sd">    .. [3] Wahba, G., 1990. Spline Models for Observational Data. SIAM.</span>
+
+<span class="sd">    .. [4] http://pages.stat.wisc.edu/~wahba/stat860public/lect/lect8/lect8.pdf</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    .. versionadded:: 1.0.3</span>
+<span class="sd">    TODO: For the moment, this class only supports optimization for one parameter kernels.</span>
+<span class="sd">          For this reason, we only have sigma as the parameter to optimize.</span>
+<span class="sd">          This sigma refers to the sigma parameter in the Gaussian kernel (but is used for all kernels).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sigma_min</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+        <span class="n">sigma_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">sigma_opt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">kernel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;thin_plate_spline&quot;</span><span class="p">,</span>
+        <span class="n">smoothing</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">neighbors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the RBF model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sigma_min : float, optional</span>
+<span class="sd">            The minimum value for the sigma parameter. Default is 0.001.</span>
+<span class="sd">        sigma_max : float, optional</span>
+<span class="sd">            The maximum value for the sigma parameter. Default is 1.0.</span>
+<span class="sd">        sigma_opt : float, optional</span>
+<span class="sd">            The optimal value for the sigma parameter. Default is None.</span>
+<span class="sd">        kernel : str, optional</span>
+<span class="sd">            Type of RBF. Default is &#39;thin_plate_spline&#39;.</span>
+<span class="sd">        smoothing : float, optional</span>
+<span class="sd">            Smoothing parameter. Default is 0.0.</span>
+<span class="sd">        degree : int, optional</span>
+<span class="sd">            Degree of the added polynomial. Default is None.</span>
+<span class="sd">        neighbors : int, optional</span>
+<span class="sd">            If specified, the value of the interpolant at each evaluation point will be</span>
+<span class="sd">            computed using only this many nearest data points. Default is None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_logger_name</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sigma_min</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">or</span> <span class="n">sigma_min</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sigma_min must be a positive float.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sigma_min</span> <span class="o">=</span> <span class="n">sigma_min</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sigma_max</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">or</span> <span class="n">sigma_max</span> <span class="o">&lt;</span> <span class="n">sigma_min</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;sigma_max must be a positive float greater than sigma_min.&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sigma_max</span> <span class="o">=</span> <span class="n">sigma_max</span>
+        <span class="k">if</span> <span class="n">sigma_opt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sigma_opt</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">or</span> <span class="n">sigma_opt</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sigma_opt must be a positive float.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sigma_opt</span> <span class="o">=</span> <span class="n">sigma_opt</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;kernel must be a string.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kernel</span> <span class="o">=</span> <span class="n">kernel</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">smoothing</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;smoothing must be a float.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_smoothing</span> <span class="o">=</span> <span class="n">smoothing</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">degree</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">degree</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;degree must be an integer.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_degree</span> <span class="o">=</span> <span class="n">degree</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">neighbors</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">neighbors</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;neighbors must be an integer.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span> <span class="o">=</span> <span class="n">neighbors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rbfs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Dict with RBFInterpolator instances</span>
+        <span class="c1"># Below, we initialize the attributes that will be set in the fit method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_target_normalized</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subset_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_normalized_subset_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_normalized_target_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subset_directional_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_directional_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subset_processed_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_processed_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subset_custom_scale_factor</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_custom_scale_factor</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subset_scale_factor</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_scale_factor</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rbf_coeffs</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_opt_sigmas</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sigma_min</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sigma_min</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sigma_max</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sigma_max</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sigma_opt</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sigma_opt</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kernel</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">smoothing</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_smoothing</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">degree</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_degree</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">neighbors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rbfs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rbfs</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subset_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subset_data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">normalized_subset_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalized_subset_data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">target_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">normalized_target_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalized_target_data</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Target data is not normalized.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalized_target_data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subset_directional_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subset_directional_variables</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">target_directional_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_directional_variables</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subset_processed_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subset_processed_variables</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">target_processed_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_processed_variables</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subset_custom_scale_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subset_custom_scale_factor</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">target_custom_scale_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_custom_scale_factor</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subset_scale_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subset_scale_factor</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">target_scale_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_scale_factor</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rbf_coeffs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rbf_coeffs</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">opt_sigmas</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_opt_sigmas</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Specified kernel does not require optimization.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_opt_sigmas</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_preprocess_subset_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">subset_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">is_fit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function preprocesses the subset data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        subset_data : pd.DataFrame</span>
+<span class="sd">            The subset data to preprocess (could be a dataset to predict).</span>
+<span class="sd">        is_fit : bool, optional</span>
+<span class="sd">            Whether the data is to fit or not. Default is True.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            The preprocessed subset data.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the subset contains NaNs.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - This function preprocesses the subset data by:</span>
+<span class="sd">            - Checking for NaNs.</span>
+<span class="sd">            - Preprocessing directional variables.</span>
+<span class="sd">            - Normalizing the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Make copies to avoid modifying the original data</span>
+        <span class="n">subset_data</span> <span class="o">=</span> <span class="n">subset_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Checking for NaNs in subset data&quot;</span><span class="p">)</span>
+        <span class="n">subset_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_nans</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">subset_data</span><span class="p">,</span> <span class="n">raise_error</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Preprocessing subset data&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">directional_variable</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_directional_variables</span><span class="p">:</span>
+            <span class="n">var_u_component</span><span class="p">,</span> <span class="n">var_y_component</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_uv_components</span><span class="p">(</span>
+                <span class="n">x_deg</span><span class="o">=</span><span class="n">subset_data</span><span class="p">[</span><span class="n">directional_variable</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="p">)</span>
+            <span class="n">subset_data</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">directional_variable</span><span class="si">}</span><span class="s2">_u&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">var_u_component</span>
+            <span class="n">subset_data</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">directional_variable</span><span class="si">}</span><span class="s2">_v&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">var_y_component</span>
+            <span class="c1"># Drop the original directional variable in subset_data</span>
+            <span class="n">subset_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">directional_variable</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subset_processed_variables</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">subset_data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Normalizing subset data&quot;</span><span class="p">)</span>
+        <span class="n">normalized_subset_data</span><span class="p">,</span> <span class="n">subset_scale_factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">subset_data</span><span class="p">,</span>
+            <span class="n">custom_scale_factor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">subset_custom_scale_factor</span>
+            <span class="k">if</span> <span class="n">is_fit</span>
+            <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_scale_factor</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Subset data preprocessed successfully&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">is_fit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_subset_data</span> <span class="o">=</span> <span class="n">subset_data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_normalized_subset_data</span> <span class="o">=</span> <span class="n">normalized_subset_data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_subset_scale_factor</span> <span class="o">=</span> <span class="n">subset_scale_factor</span>
+
+        <span class="k">return</span> <span class="n">normalized_subset_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_preprocess_target_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">target_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">normalize_target_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function preprocesses the target data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        target_data : pd.DataFrame</span>
+<span class="sd">            The target data to preprocess.</span>
+<span class="sd">        normalize_target_data : bool, optional</span>
+<span class="sd">            Whether to normalize the target data. Default is True.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            The preprocessed target data.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the target contains NaNs.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - This function preprocesses the target data by:</span>
+<span class="sd">            - Checking for NaNs.</span>
+<span class="sd">            - Preprocessing directional variables.</span>
+<span class="sd">            - Normalizing the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Make copies to avoid modifying the original data</span>
+        <span class="n">target_data</span> <span class="o">=</span> <span class="n">target_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Checking for NaNs in target data&quot;</span><span class="p">)</span>
+        <span class="n">target_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_nans</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">target_data</span><span class="p">,</span> <span class="n">raise_error</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Preprocessing target data&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">directional_variable</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_directional_variables</span><span class="p">:</span>
+            <span class="n">var_u_component</span><span class="p">,</span> <span class="n">var_y_component</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_uv_components</span><span class="p">(</span>
+                <span class="n">x_deg</span><span class="o">=</span><span class="n">target_data</span><span class="p">[</span><span class="n">directional_variable</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="p">)</span>
+            <span class="n">target_data</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">directional_variable</span><span class="si">}</span><span class="s2">_u&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">var_u_component</span>
+            <span class="n">target_data</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">directional_variable</span><span class="si">}</span><span class="s2">_v&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">var_y_component</span>
+            <span class="c1"># Drop the original directional variable in target_data</span>
+            <span class="n">target_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">directional_variable</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_processed_variables</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">target_data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">normalize_target_data</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Normalizing target data&quot;</span><span class="p">)</span>
+            <span class="n">normalized_target_data</span><span class="p">,</span> <span class="n">target_scale_factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">target_data</span><span class="p">,</span>
+                <span class="n">custom_scale_factor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_custom_scale_factor</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_target_normalized</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_target_data</span> <span class="o">=</span> <span class="n">target_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_normalized_target_data</span> <span class="o">=</span> <span class="n">normalized_target_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_target_scale_factor</span> <span class="o">=</span> <span class="n">target_scale_factor</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Target data preprocessed successfully&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">normalized_target_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_target_normalized</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_target_data</span> <span class="o">=</span> <span class="n">target_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_normalized_target_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_target_scale_factor</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Target data preprocessed successfully&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">target_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cost_sigma</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the cost for a given sigma using K-Fold cross-validation.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sigma : float</span>
+<span class="sd">            The sigma parameter for the kernel.</span>
+<span class="sd">        x : np.ndarray</span>
+<span class="sd">            The input data.</span>
+<span class="sd">        y : np.ndarray</span>
+<span class="sd">            The target data.</span>
+<span class="sd">        k : int, optional</span>
+<span class="sd">            The number of folds for cross-validation. Default is 5.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            The total cost for the RBF interpolation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">kf</span> <span class="o">=</span> <span class="n">KFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
+        <span class="n">total_cost</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">for</span> <span class="n">train_index</span><span class="p">,</span> <span class="n">val_index</span> <span class="ow">in</span> <span class="n">kf</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="n">x_train</span><span class="p">,</span> <span class="n">x_val</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">train_index</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="n">val_index</span><span class="p">]</span>
+            <span class="n">y_train</span><span class="p">,</span> <span class="n">y_val</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">train_index</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">val_index</span><span class="p">]</span>
+
+            <span class="c1"># Instantiate the RBFInterpolator</span>
+            <span class="n">rbf</span> <span class="o">=</span> <span class="n">RBFInterpolator</span><span class="p">(</span>
+                <span class="n">y</span><span class="o">=</span><span class="n">x_train</span><span class="p">,</span>
+                <span class="n">d</span><span class="o">=</span><span class="n">y_train</span><span class="p">,</span>
+                <span class="n">neighbors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">neighbors</span><span class="p">,</span>
+                <span class="n">smoothing</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">smoothing</span><span class="p">,</span>
+                <span class="n">kernel</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="p">,</span>
+                <span class="n">epsilon</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span>
+                <span class="n">degree</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">degree</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Predict on the validation set</span>
+            <span class="n">predicted_y</span> <span class="o">=</span> <span class="n">rbf</span><span class="p">(</span><span class="n">x_val</span><span class="p">)</span>
+
+            <span class="c1"># Calculate the cost (mean squared error)</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y_val</span><span class="p">,</span> <span class="n">predicted_y</span><span class="p">)</span>
+            <span class="n">total_cost</span> <span class="o">+=</span> <span class="n">cost</span>
+
+        <span class="k">return</span> <span class="n">total_cost</span> <span class="o">/</span> <span class="n">k</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calc_opt_sigma</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">target_variable</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">subset_variables</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">iteratively_update_sigma</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RBFInterpolator</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function calculates the optimal sigma for the given target variable.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        target_variable : np.ndarray</span>
+<span class="sd">            The target variable to interpolate.</span>
+<span class="sd">        subset_variables : np.ndarray</span>
+<span class="sd">            The subset variables used to interpolate.</span>
+<span class="sd">        iteratively_update_sigma : bool, optional</span>
+<span class="sd">            Whether to iteratively update the sigma parameter. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            The optimal sigma.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="c1"># Optimize sigma using fminbound or fmin</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma_opt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opt_sigma</span> <span class="o">=</span> <span class="n">fmin</span><span class="p">(</span>
+                <span class="n">func</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_cost_sigma</span><span class="p">,</span>
+                <span class="n">x0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma_opt</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">subset_variables</span><span class="p">,</span> <span class="n">target_variable</span><span class="p">),</span>
+                <span class="n">disp</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">iteratively_update_sigma</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sigma_opt</span> <span class="o">=</span> <span class="n">opt_sigma</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">opt_sigma</span> <span class="o">=</span> <span class="n">fminbound</span><span class="p">(</span>
+                <span class="n">func</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_cost_sigma</span><span class="p">,</span>
+                <span class="n">x1</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma_min</span><span class="p">,</span>
+                <span class="n">x2</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma_max</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">subset_variables</span><span class="p">,</span> <span class="n">target_variable</span><span class="p">),</span>
+                <span class="n">disp</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Save the fitted RBF for the optimal sigma</span>
+        <span class="n">rbf</span> <span class="o">=</span> <span class="n">RBFInterpolator</span><span class="p">(</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">subset_variables</span><span class="p">,</span>
+            <span class="n">d</span><span class="o">=</span><span class="n">target_variable</span><span class="p">,</span>
+            <span class="n">neighbors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">neighbors</span><span class="p">,</span>
+            <span class="n">smoothing</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">smoothing</span><span class="p">,</span>
+            <span class="n">kernel</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="p">,</span>
+            <span class="n">epsilon</span><span class="o">=</span><span class="n">opt_sigma</span><span class="p">,</span>
+            <span class="n">degree</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">degree</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Calculate the time taken to optimize sigma</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Optimal sigma: </span><span class="si">{</span><span class="n">opt_sigma</span><span class="si">}</span><span class="s2"> - Time: </span><span class="si">{</span><span class="n">t1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">rbf</span><span class="p">,</span> <span class="n">opt_sigma</span>
+
+<div class="viewcode-block" id="RBF.fit">
+<a class="viewcode-back" href="../../../bluemath_tk.interpolation.html#bluemath_tk.interpolation.rbf_scipy.RBF.fit">[docs]</a>
+    <span class="nd">@validate_data_rbf</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">subset_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">target_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">subset_directional_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">target_directional_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">subset_custom_scale_factor</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span>
+        <span class="n">normalize_target_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">target_custom_scale_factor</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span>
+        <span class="n">num_threads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">iteratively_update_sigma</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fits the model to the data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        subset_data : pd.DataFrame</span>
+<span class="sd">            The subset data used to fit the model.</span>
+<span class="sd">        target_data : pd.DataFrame</span>
+<span class="sd">            The target data used to fit the model.</span>
+<span class="sd">        subset_directional_variables : List[str], optional</span>
+<span class="sd">            The subset directional variables. Default is [].</span>
+<span class="sd">        target_directional_variables : List[str], optional</span>
+<span class="sd">            The target directional variables. Default is [].</span>
+<span class="sd">        subset_custom_scale_factor : dict, optional</span>
+<span class="sd">            The custom scale factor for the subset data. Default is {}.</span>
+<span class="sd">        normalize_target_data : bool, optional</span>
+<span class="sd">            Whether to normalize the target data. Default is True.</span>
+<span class="sd">        target_custom_scale_factor : dict, optional</span>
+<span class="sd">            The custom scale factor for the target data. Default is {}.</span>
+<span class="sd">        num_threads : int, optional</span>
+<span class="sd">            The number of threads to use for the optimization. Default is None.</span>
+<span class="sd">        iteratively_update_sigma : bool, optional</span>
+<span class="sd">            Whether to iteratively update the sigma parameter. Default is False.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - This function fits the RBF model to the data by:</span>
+<span class="sd">            1. Preprocessing the subset and target data.</span>
+<span class="sd">            2. Calculating the optimal sigma for the target variables.</span>
+<span class="sd">            3. Storing the RBF coefficients and optimal sigmas.</span>
+<span class="sd">        - The number of threads to use for the optimization can be specified.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">num_threads</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_num_processors_to_use</span><span class="p">(</span><span class="n">num_processors</span><span class="o">=</span><span class="n">num_threads</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using </span><span class="si">{</span><span class="n">num_threads</span><span class="si">}</span><span class="s2"> threads for optimization.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subset_directional_variables</span> <span class="o">=</span> <span class="n">subset_directional_variables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_directional_variables</span> <span class="o">=</span> <span class="n">target_directional_variables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subset_custom_scale_factor</span> <span class="o">=</span> <span class="n">subset_custom_scale_factor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_custom_scale_factor</span> <span class="o">=</span> <span class="n">target_custom_scale_factor</span>
+        <span class="n">subset_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preprocess_subset_data</span><span class="p">(</span><span class="n">subset_data</span><span class="o">=</span><span class="n">subset_data</span><span class="p">)</span>
+        <span class="n">target_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preprocess_target_data</span><span class="p">(</span>
+            <span class="n">target_data</span><span class="o">=</span><span class="n">target_data</span><span class="p">,</span>
+            <span class="n">normalize_target_data</span><span class="o">=</span><span class="n">normalize_target_data</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Fitting RBF model to the data&quot;</span><span class="p">)</span>
+        <span class="c1"># RBF fitting for all variables</span>
+        <span class="n">rbf_coeffs</span><span class="p">,</span> <span class="n">opt_sigmas</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{}</span>
+
+        <span class="c1"># Optimize sigma for each target variable</span>
+        <span class="k">for</span> <span class="n">target_var</span> <span class="ow">in</span> <span class="n">target_data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fitting RBF for variable </span><span class="si">{</span><span class="n">target_var</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">target_var_values</span> <span class="o">=</span> <span class="n">target_data</span><span class="p">[</span><span class="n">target_var</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span> <span class="o">==</span> <span class="s2">&quot;linear&quot;</span>
+                <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span> <span class="o">==</span> <span class="s2">&quot;cubic&quot;</span>
+                <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span> <span class="o">==</span> <span class="s2">&quot;quintic&quot;</span>
+                <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span> <span class="o">==</span> <span class="s2">&quot;thin_plate_spline&quot;</span>
+            <span class="p">):</span>
+                <span class="n">rbf</span> <span class="o">=</span> <span class="n">RBFInterpolator</span><span class="p">(</span>
+                    <span class="n">y</span><span class="o">=</span><span class="n">subset_data</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                    <span class="n">d</span><span class="o">=</span><span class="n">target_var_values</span><span class="p">,</span>
+                    <span class="n">neighbors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">neighbors</span><span class="p">,</span>
+                    <span class="n">smoothing</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">smoothing</span><span class="p">,</span>
+                    <span class="n">kernel</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="p">,</span>
+                    <span class="n">degree</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">degree</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">opt_sigma</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rbf</span><span class="p">,</span> <span class="n">opt_sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_opt_sigma</span><span class="p">(</span>
+                    <span class="n">target_variable</span><span class="o">=</span><span class="n">target_var_values</span><span class="p">,</span>
+                    <span class="n">subset_variables</span><span class="o">=</span><span class="n">subset_data</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                    <span class="n">iteratively_update_sigma</span><span class="o">=</span><span class="n">iteratively_update_sigma</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rbfs</span><span class="p">[</span><span class="n">target_var</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">rbf</span><span class="p">)</span>
+            <span class="n">rbf_coeffs</span><span class="p">[</span><span class="n">target_var</span><span class="p">]</span> <span class="o">=</span> <span class="n">rbf</span><span class="o">.</span><span class="n">_coeffs</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">opt_sigmas</span><span class="p">[</span><span class="n">target_var</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt_sigma</span>
+
+        <span class="c1"># Store the RBF coefficients and optimal sigmas</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rbf_coeffs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rbf_coeffs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_opt_sigmas</span> <span class="o">=</span> <span class="n">opt_sigmas</span>
+
+        <span class="c1"># Set the is_fitted attribute to True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="RBF.predict">
+<a class="viewcode-back" href="../../../bluemath_tk.interpolation.html#bluemath_tk.interpolation.rbf_scipy.RBF.predict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Predicts the data for the provided dataset.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dataset : pd.DataFrame</span>
+<span class="sd">            The dataset to predict (must have same variables than subset).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            The interpolated dataset.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the model is not fitted.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - This function predicts the data by:</span>
+<span class="sd">            1. Reconstructing the data using the fitted coefficients.</span>
+<span class="sd">            2. Denormalizing the target data if normalize_target_data is True.</span>
+<span class="sd">            3. Calculating the degrees for the target directional variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">RBFError</span><span class="p">(</span><span class="s2">&quot;RBF model must be fitted before predicting.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reconstructing data using fitted coefficients.&quot;</span><span class="p">)</span>
+        <span class="n">normalized_dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preprocess_subset_data</span><span class="p">(</span>
+            <span class="n">subset_data</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">is_fit</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create an empty array to store the interpolated target data</span>
+        <span class="n">interpolated_target_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">normalized_dataset</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_processed_variables</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">target_var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_processed_variables</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Predicting target variable </span><span class="si">{</span><span class="n">target_var</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">rbf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rbfs</span><span class="p">[</span><span class="n">target_var</span><span class="p">]</span>
+            <span class="n">interpolated_target_array</span><span class="p">[</span>
+                <span class="p">:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_processed_variables</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">target_var</span><span class="p">)</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="n">rbf</span><span class="p">(</span><span class="n">normalized_dataset</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">interpolated_target</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">interpolated_target_array</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_processed_variables</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Denormalize the target data if normalize_target_data is True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_target_normalized</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Denormalizing target data&quot;</span><span class="p">)</span>
+            <span class="n">interpolated_target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">denormalize</span><span class="p">(</span>
+                <span class="n">normalized_data</span><span class="o">=</span><span class="n">interpolated_target</span><span class="p">,</span>
+                <span class="n">scale_factor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_scale_factor</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Calculate the degrees for the target directional variables</span>
+        <span class="k">for</span> <span class="n">directional_variable</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_directional_variables</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Calculating target degrees for </span><span class="si">{</span><span class="n">directional_variable</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">interpolated_target</span><span class="p">[</span><span class="n">directional_variable</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_degrees_from_uv</span><span class="p">(</span>
+                <span class="n">xu</span><span class="o">=</span><span class="n">interpolated_target</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">directional_variable</span><span class="si">}</span><span class="s2">_u&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                <span class="n">xv</span><span class="o">=</span><span class="n">interpolated_target</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">directional_variable</span><span class="si">}</span><span class="s2">_v&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">interpolated_target</span></div>
+
+
+<div class="viewcode-block" id="RBF.fit_predict">
+<a class="viewcode-back" href="../../../bluemath_tk.interpolation.html#bluemath_tk.interpolation.rbf_scipy.RBF.fit_predict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit_predict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">subset_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">target_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">subset_directional_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">target_directional_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">subset_custom_scale_factor</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span>
+        <span class="n">normalize_target_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">target_custom_scale_factor</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span>
+        <span class="n">num_threads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">iteratively_update_sigma</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fits the model to the subset and predicts the interpolated dataset.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        subset_data : pd.DataFrame</span>
+<span class="sd">            The subset data used to fit the model.</span>
+<span class="sd">        target_data : pd.DataFrame</span>
+<span class="sd">            The target data used to fit the model.</span>
+<span class="sd">        dataset : pd.DataFrame</span>
+<span class="sd">            The dataset to predict (must have same variables than subset).</span>
+<span class="sd">        subset_directional_variables : List[str], optional</span>
+<span class="sd">            The subset directional variables. Default is [].</span>
+<span class="sd">        target_directional_variables : List[str], optional</span>
+<span class="sd">            The target directional variables. Default is [].</span>
+<span class="sd">        subset_custom_scale_factor : dict, optional</span>
+<span class="sd">            The custom scale factor for the subset data. Default is {}.</span>
+<span class="sd">        normalize_target_data : bool, optional</span>
+<span class="sd">            Whether to normalize the target data. Default is True.</span>
+<span class="sd">        target_custom_scale_factor : dict, optional</span>
+<span class="sd">            The custom scale factor for the target data. Default is {}.</span>
+<span class="sd">        num_threads : int, optional</span>
+<span class="sd">            The number of threads to use for the optimization. Default is None.</span>
+<span class="sd">        iteratively_update_sigma : bool, optional</span>
+<span class="sd">            Whether to iteratively update the sigma parameter. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            The interpolated dataset.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - This function fits the model to the subset and predicts the interpolated dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+            <span class="n">subset_data</span><span class="o">=</span><span class="n">subset_data</span><span class="p">,</span>
+            <span class="n">target_data</span><span class="o">=</span><span class="n">target_data</span><span class="p">,</span>
+            <span class="n">subset_directional_variables</span><span class="o">=</span><span class="n">subset_directional_variables</span><span class="p">,</span>
+            <span class="n">target_directional_variables</span><span class="o">=</span><span class="n">target_directional_variables</span><span class="p">,</span>
+            <span class="n">subset_custom_scale_factor</span><span class="o">=</span><span class="n">subset_custom_scale_factor</span><span class="p">,</span>
+            <span class="n">normalize_target_data</span><span class="o">=</span><span class="n">normalize_target_data</span><span class="p">,</span>
+            <span class="n">target_custom_scale_factor</span><span class="o">=</span><span class="n">target_custom_scale_factor</span><span class="p">,</span>
+            <span class="n">num_threads</span><span class="o">=</span><span class="n">num_threads</span><span class="p">,</span>
+            <span class="n">iteratively_update_sigma</span><span class="o">=</span><span class="n">iteratively_update_sigma</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

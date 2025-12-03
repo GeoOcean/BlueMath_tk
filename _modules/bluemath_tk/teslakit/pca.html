@@ -1,0 +1,359 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.teslakit.pca &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.teslakit.pca</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.teslakit.pca</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1"># common</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="c1"># pip</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.decomposition</span><span class="w"> </span><span class="kn">import</span> <span class="n">PCA</span>
+
+
+<div class="viewcode-block" id="running_mean">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.pca.running_mean">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">running_mean</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">mode_str</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    computes a running mean (also known as moving average)</span>
+<span class="sd">    on the elements of the vector X. It uses a window of 2*M+1 datapoints</span>
+
+<span class="sd">    As always with filtering, the values of Y can be inaccurate at the</span>
+<span class="sd">    edges. RUNMEAN(..., MODESTR) determines how the edges are treated. MODESTR can be</span>
+<span class="sd">    one of the following strings:</span>
+<span class="sd">      &#39;edge&#39;    : X is padded with first and last values along dimension</span>
+<span class="sd">                  DIM (default)</span>
+<span class="sd">      &#39;zeros&#39;   : X is padded with zeros</span>
+<span class="sd">      &#39;ones&#39;    : X is padded with ones</span>
+<span class="sd">      &#39;mean&#39;    : X is padded with the mean along dimension DIM</span>
+
+<span class="sd">    X should not contains NaNs, yielding an all NaN result.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># if nan in data, return nan array</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+    <span class="n">nn</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">N</span><span class="o">+</span><span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">mode_str</span> <span class="o">==</span> <span class="s1">&#39;zeros&#39;</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">))</span>
+
+    <span class="k">elif</span> <span class="n">mode_str</span> <span class="o">==</span> <span class="s1">&#39;ones&#39;</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">N</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">N</span><span class="p">))</span>
+
+    <span class="k">elif</span> <span class="n">mode_str</span> <span class="o">==</span> <span class="s1">&#39;edge&#39;</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">N</span><span class="p">)</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">N</span><span class="p">)</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">elif</span> <span class="n">mode_str</span> <span class="o">==</span> <span class="s1">&#39;mean&#39;</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">N</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">N</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+
+    <span class="n">cumsum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">cumsum</span><span class="p">[</span><span class="n">nn</span><span class="p">:]</span> <span class="o">-</span> <span class="n">cumsum</span><span class="p">[:</span><span class="o">-</span><span class="n">nn</span><span class="p">])</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">nn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RunnningMean_Monthly">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.pca.RunnningMean_Monthly">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">RunnningMean_Monthly</span><span class="p">(</span><span class="n">xds</span><span class="p">,</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Calculate running average grouped by months</span>
+
+<span class="sd">    xds:</span>
+<span class="sd">        (longitude, latitude, time) variables: var_name</span>
+
+<span class="sd">    returns xds with new variable &quot;var_name_runavg&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">tempdata_runavg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">xds</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">lon</span> <span class="ow">in</span> <span class="n">xds</span><span class="o">.</span><span class="n">longitude</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+       <span class="k">for</span> <span class="n">lat</span> <span class="ow">in</span> <span class="n">xds</span><span class="o">.</span><span class="n">latitude</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+          <span class="k">for</span> <span class="n">mn</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">13</span><span class="p">):</span>
+
+             <span class="c1"># indexes</span>
+             <span class="n">ix_lon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">xds</span><span class="o">.</span><span class="n">longitude</span> <span class="o">==</span> <span class="n">lon</span><span class="p">)</span>
+             <span class="n">ix_lat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">xds</span><span class="o">.</span><span class="n">latitude</span> <span class="o">==</span> <span class="n">lat</span><span class="p">)</span>
+             <span class="n">ix_mnt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">xds</span><span class="p">[</span><span class="s1">&#39;time.month&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">mn</span><span class="p">)</span>
+
+             <span class="c1"># point running average</span>
+             <span class="n">time_mnt</span> <span class="o">=</span> <span class="n">xds</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="n">ix_mnt</span><span class="p">]</span>
+             <span class="n">data_pnt</span> <span class="o">=</span> <span class="n">xds</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">time_mnt</span><span class="p">]</span>
+
+             <span class="n">tempdata_runavg</span><span class="p">[</span><span class="n">ix_lon</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ix_lat</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ix_mnt</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">running_mean</span><span class="p">(</span>
+                 <span class="n">data_pnt</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+
+    <span class="c1"># store running average</span>
+    <span class="n">xds</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_runavg&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var_name</span><span class="p">)]</span><span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;time&#39;</span><span class="p">),</span>
+        <span class="n">tempdata_runavg</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">xds</span></div>
+
+
+<div class="viewcode-block" id="PCA_LatitudeAverage">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.pca.PCA_LatitudeAverage">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">PCA_LatitudeAverage</span><span class="p">(</span><span class="n">xds</span><span class="p">,</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Principal component analysis</span>
+<span class="sd">    method: remove monthly running mean and latitude average</span>
+
+<span class="sd">    xds:</span>
+<span class="sd">        (longitude, latitude, time), pred_name | pred_name_runavg</span>
+
+<span class="sd">    returns a xarray.Dataset containing PCA data: PCs, EOFs, variance</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># calculate monthly running mean</span>
+    <span class="n">xds</span> <span class="o">=</span> <span class="n">RunnningMean_Monthly</span><span class="p">(</span><span class="n">xds</span><span class="p">,</span> <span class="n">var_name</span><span class="p">)</span>
+
+    <span class="c1"># predictor variable and variable_runnavg from dataset</span>
+    <span class="n">var_val</span> <span class="o">=</span> <span class="n">xds</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span>
+    <span class="n">var_val_ra</span> <span class="o">=</span> <span class="n">xds</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_runavg&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var_name</span><span class="p">)]</span>
+
+    <span class="c1"># use datetime for indexing</span>
+    <span class="n">dt1</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">dt2</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="n">y2</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="mi">28</span><span class="p">)</span>
+    <span class="n">time_PCA</span> <span class="o">=</span> <span class="p">[</span><span class="n">datetime</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span>
+
+    <span class="c1"># use data inside timeframe</span>
+    <span class="n">data_ss</span> <span class="o">=</span> <span class="n">var_val</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,:,</span><span class="n">dt1</span><span class="p">:</span><span class="n">dt2</span><span class="p">]</span>
+    <span class="n">data_ss_ra</span> <span class="o">=</span> <span class="n">var_val_ra</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,:,</span><span class="n">dt1</span><span class="p">:</span><span class="n">dt2</span><span class="p">]</span>
+
+    <span class="c1"># anomalies: remove the monthly running mean</span>
+    <span class="n">data_anom</span> <span class="o">=</span> <span class="n">data_ss</span> <span class="o">-</span> <span class="n">data_ss_ra</span>
+
+    <span class="c1"># average across all latitudes</span>
+    <span class="n">data_avg_lat</span> <span class="o">=</span> <span class="n">data_anom</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;latitude&#39;</span><span class="p">)</span>
+
+    <span class="c1"># collapse 12 months of data to a single vector</span>
+    <span class="n">nlon</span> <span class="o">=</span> <span class="n">data_avg_lat</span><span class="o">.</span><span class="n">longitude</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">ntime</span> <span class="o">=</span> <span class="n">data_avg_lat</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">hovmoller</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">data_avg_lat</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="p">(</span><span class="mi">12</span><span class="o">*</span><span class="n">nlon</span><span class="p">,</span> <span class="n">ntime</span><span class="o">//</span><span class="mi">12</span><span class="p">),</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;F&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">hovmoller</span> <span class="o">=</span> <span class="n">hovmoller</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+    <span class="c1"># mean and standard deviation</span>
+    <span class="n">var_anom_mean</span> <span class="o">=</span> <span class="n">hovmoller</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">var_anom_std</span> <span class="o">=</span> <span class="n">hovmoller</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># remove means and normalize by the standard deviation at anomaly</span>
+    <span class="c1"># rows = time, columns = longitude</span>
+    <span class="n">nk_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">y2</span><span class="o">-</span><span class="n">y1</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span> <span class="n">var_anom_mean</span><span class="p">)</span>
+    <span class="n">nk_s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">y2</span><span class="o">-</span><span class="n">y1</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span> <span class="n">var_anom_std</span><span class="p">)</span>
+    <span class="n">var_anom_demean</span> <span class="o">=</span> <span class="p">(</span><span class="n">hovmoller</span> <span class="o">-</span> <span class="n">nk_m</span><span class="p">)</span> <span class="o">/</span> <span class="n">nk_s</span>
+
+    <span class="c1"># sklearn principal components analysis</span>
+    <span class="n">ipca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="n">var_anom_demean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">PCs</span> <span class="o">=</span> <span class="n">ipca</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">var_anom_demean</span><span class="p">)</span>
+
+    <span class="n">pred_lon</span> <span class="o">=</span> <span class="n">xds</span><span class="o">.</span><span class="n">longitude</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+    <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;PCs&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_components&#39;</span><span class="p">,</span> <span class="s1">&#39;n_components&#39;</span><span class="p">),</span> <span class="n">PCs</span><span class="p">),</span>
+            <span class="s1">&#39;EOFs&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_components&#39;</span><span class="p">,</span><span class="s1">&#39;n_features&#39;</span><span class="p">),</span> <span class="n">ipca</span><span class="o">.</span><span class="n">components_</span><span class="p">),</span>
+            <span class="s1">&#39;variance&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_components&#39;</span><span class="p">,),</span> <span class="n">ipca</span><span class="o">.</span><span class="n">explained_variance_</span><span class="p">),</span>
+
+            <span class="s1">&#39;var_anom_std&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_features&#39;</span><span class="p">,),</span> <span class="n">var_anom_std</span><span class="p">),</span>
+            <span class="s1">&#39;var_anom_mean&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_features&#39;</span><span class="p">,),</span> <span class="n">var_anom_mean</span><span class="p">),</span>
+
+            <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_components&#39;</span><span class="p">),</span> <span class="n">time_PCA</span><span class="p">),</span>
+            <span class="s1">&#39;pred_lon&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_lon&#39;</span><span class="p">,),</span> <span class="n">pred_lon</span><span class="p">),</span>
+        <span class="p">},</span>
+
+        <span class="c1"># store PCA algorithm metadata</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="s1">&#39;anomalies, latitude averaged&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PCA_EstelaPred">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.pca.PCA_EstelaPred">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">PCA_EstelaPred</span><span class="p">(</span><span class="n">xds</span><span class="p">,</span> <span class="n">pred_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Principal component analysis</span>
+<span class="sd">    method: custom for estela predictor</span>
+
+<span class="sd">    xds:</span>
+<span class="sd">        (time, latitude, longitude), pred_name_comp | pred_name_gradient_comp</span>
+
+<span class="sd">    returns a xarray.Dataset containing PCA data: PCs, EOFs, variance</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># estela predictor and estela gradient predictor</span>
+    <span class="n">pred_est_var</span> <span class="o">=</span> <span class="n">xds</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_comp&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pred_name</span><span class="p">)]</span>
+    <span class="n">pred_est_grad</span> <span class="o">=</span> <span class="n">xds</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_gradient_comp&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pred_name</span><span class="p">)]</span>
+
+    <span class="c1"># use data inside timeframe</span>
+    <span class="n">dp_var</span> <span class="o">=</span> <span class="n">pred_est_var</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">dp_grd</span> <span class="o">=</span> <span class="n">pred_est_grad</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">shape_grid</span> <span class="o">=</span> <span class="n">dp_var</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>  <span class="c1"># needed to handle data after PCs</span>
+
+    <span class="c1"># unravel and join var and grad data </span>
+    <span class="n">dp_ur</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">dp_var</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">2</span><span class="o">*</span><span class="n">dp_var</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">dp_var</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="p">)</span>
+
+    <span class="c1"># we use .T to equal matlab</span>
+    <span class="k">for</span> <span class="n">ti</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dp_ur</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">dp_ur</span><span class="p">[</span><span class="n">ti</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">dp_var</span><span class="p">[</span><span class="n">ti</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">dp_grd</span><span class="p">[</span><span class="n">ti</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+    <span class="c1"># remove nans from predictor    </span>
+    <span class="n">data_pos</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">dp_ur</span><span class="p">[</span><span class="mi">0</span><span class="p">,:])</span>
+    <span class="n">clean_row</span> <span class="o">=</span> <span class="n">dp_ur</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">data_pos</span><span class="p">]</span>
+    <span class="n">dp_ur_nonan</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">dp_ur</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">clean_row</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">ti</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dp_ur</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">dp_ur_nonan</span><span class="p">[</span><span class="n">ti</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">dp_ur</span><span class="p">[</span><span class="n">ti</span><span class="p">,</span> <span class="n">data_pos</span><span class="p">]</span>
+
+    <span class="c1"># standarize predictor</span>
+    <span class="n">pred_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dp_ur_nonan</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">pred_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dp_ur_nonan</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">pred_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">dp_ur_nonan</span><span class="p">[:,:]</span> <span class="o">-</span> <span class="n">pred_mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">pred_std</span>
+    <span class="n">pred_norm</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">pred_norm</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># principal components analysis</span>
+    <span class="n">ipca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">pred_norm</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pred_norm</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">PCs</span> <span class="o">=</span> <span class="n">ipca</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">pred_norm</span><span class="p">)</span>
+
+    <span class="c1"># return dataset</span>
+    <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;PCs&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;n_components&#39;</span><span class="p">),</span> <span class="n">PCs</span><span class="p">),</span>
+            <span class="s1">&#39;EOFs&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_components&#39;</span><span class="p">,</span><span class="s1">&#39;n_features&#39;</span><span class="p">),</span> <span class="n">ipca</span><span class="o">.</span><span class="n">components_</span><span class="p">),</span>
+            <span class="s1">&#39;variance&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_components&#39;</span><span class="p">,),</span> <span class="n">ipca</span><span class="o">.</span><span class="n">explained_variance_</span><span class="p">),</span>
+
+            <span class="s1">&#39;pred_mean&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_features&#39;</span><span class="p">,),</span> <span class="n">pred_mean</span><span class="p">),</span>
+            <span class="s1">&#39;pred_std&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_features&#39;</span><span class="p">,),</span> <span class="n">pred_std</span><span class="p">),</span>
+
+            <span class="s1">&#39;pred_lon&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_lon&#39;</span><span class="p">,),</span> <span class="n">xds</span><span class="o">.</span><span class="n">longitude</span><span class="o">.</span><span class="n">values</span><span class="p">[:]),</span>
+            <span class="s1">&#39;pred_lat&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_lat&#39;</span><span class="p">,),</span> <span class="n">xds</span><span class="o">.</span><span class="n">latitude</span><span class="o">.</span><span class="n">values</span><span class="p">[:]),</span>
+            <span class="s1">&#39;pred_time&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,),</span> <span class="n">xds</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="p">[:]),</span>
+            <span class="s1">&#39;pred_data_pos&#39;</span><span class="p">:((</span><span class="s1">&#39;n_points&#39;</span><span class="p">,),</span> <span class="n">data_pos</span><span class="p">)</span>
+        <span class="p">},</span>
+
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="s1">&#39;gradient + estela&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;pred_name&#39;</span><span class="p">:</span> <span class="n">pred_name</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

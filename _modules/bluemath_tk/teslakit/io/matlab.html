@@ -1,0 +1,464 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.teslakit.io.matlab &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/thebelab.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.teslakit.io.matlab</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.teslakit.io.matlab</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1"># common</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">op</span>
+
+<span class="c1"># pip</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.io</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.io.matlab.mio5_params</span><span class="w"> </span><span class="kn">import</span> <span class="n">mat_struct</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">griddata</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># tk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..util.time_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">DateConverter_Mat2Py</span>
+
+<div class="viewcode-block" id="ReadMatfile">
+<a class="viewcode-back" href="../../../../bluemath_tk.teslakit.io.html#bluemath_tk.teslakit.io.matlab.ReadMatfile">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ReadMatfile</span><span class="p">(</span><span class="n">p_mfile</span><span class="p">):</span>
+    <span class="s1">&#39;Parse .mat file to nested python dictionaries&#39;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">RecursiveMatExplorer</span><span class="p">(</span><span class="n">mstruct_data</span><span class="p">):</span>
+        <span class="c1"># Recursive function to extrat mat_struct nested contents</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mstruct_data</span><span class="p">,</span> <span class="n">mat_struct</span><span class="p">):</span>
+            <span class="c1"># mstruct_data is a matlab structure object, go deeper</span>
+            <span class="n">d_rc</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">mstruct_data</span><span class="o">.</span><span class="n">_fieldnames</span><span class="p">:</span>
+                <span class="n">d_rc</span><span class="p">[</span><span class="n">fn</span><span class="p">]</span> <span class="o">=</span> <span class="n">RecursiveMatExplorer</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">mstruct_data</span><span class="p">,</span> <span class="n">fn</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">d_rc</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># mstruct_data is a numpy.ndarray, return value</span>
+            <span class="k">return</span> <span class="n">mstruct_data</span>
+
+    <span class="c1"># base matlab data will be in a dict</span>
+    <span class="n">mdata</span> <span class="o">=</span> <span class="n">sio</span><span class="o">.</span><span class="n">loadmat</span><span class="p">(</span><span class="n">p_mfile</span><span class="p">,</span> <span class="n">squeeze_me</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">struct_as_record</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">mdata_keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">mdata</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span>
+                  <span class="p">[</span><span class="s1">&#39;__header__&#39;</span><span class="p">,</span><span class="s1">&#39;__version__&#39;</span><span class="p">,</span><span class="s1">&#39;__globals__&#39;</span><span class="p">]]</span>
+
+    <span class="c1"># use recursive function</span>
+    <span class="n">dout</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">mdata_keys</span><span class="p">:</span>
+        <span class="n">dout</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">RecursiveMatExplorer</span><span class="p">(</span><span class="n">mdata</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">dout</span></div>
+
+
+<div class="viewcode-block" id="ReadGowMat">
+<a class="viewcode-back" href="../../../../bluemath_tk.teslakit.io.html#bluemath_tk.teslakit.io.matlab.ReadGowMat">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ReadGowMat</span><span class="p">(</span><span class="n">p_mfile</span><span class="p">):</span>
+    <span class="s1">&#39;Read data from gow.mat file. Return xarray.Dataset&#39;</span>
+
+    <span class="n">d_matf</span> <span class="o">=</span> <span class="n">ReadMatfile</span><span class="p">(</span><span class="n">p_mfile</span><span class="p">)</span>
+
+    <span class="c1"># parse matlab datenum to datetime</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">DateConverter_Mat2Py</span><span class="p">(</span><span class="n">d_matf</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">])</span>
+
+    <span class="c1"># separate keys</span>
+    <span class="n">ks_coords</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span>
+    <span class="n">ks_attrs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="s1">&#39;bat&#39;</span><span class="p">,</span><span class="s1">&#39;forcing&#39;</span><span class="p">,</span><span class="s1">&#39;mesh&#39;</span><span class="p">]</span>
+
+    <span class="c1"># generate dataset</span>
+    <span class="n">xds_out</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+        <span class="p">},</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">time</span>
+        <span class="p">},</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="c1"># fill dataset</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d_matf</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ks_attrs</span><span class="p">:</span>
+            <span class="n">xds_out</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">d_matf</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]:</span>
+            <span class="n">xds_out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span><span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,),</span> <span class="n">d_matf</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">xds_out</span></div>
+
+
+<div class="viewcode-block" id="ReadMareografoMat">
+<a class="viewcode-back" href="../../../../bluemath_tk.teslakit.io.html#bluemath_tk.teslakit.io.matlab.ReadMareografoMat">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ReadMareografoMat</span><span class="p">(</span><span class="n">p_mfile</span><span class="p">):</span>
+    <span class="s1">&#39;Read data from Mareografo_KWA.mat file. Return xarray.Dataset&#39;</span>
+
+    <span class="n">d_matf</span> <span class="o">=</span> <span class="n">ReadMatfile</span><span class="p">(</span><span class="n">p_mfile</span><span class="p">)</span>
+
+    <span class="c1"># parse matlab datenum to datetime</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">DateConverter_Mat2Py</span><span class="p">(</span><span class="n">d_matf</span><span class="p">[</span><span class="s1">&#39;DATES&#39;</span><span class="p">])</span>
+
+    <span class="c1"># separate keys</span>
+    <span class="n">ks_coords</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span>
+    <span class="n">ks_attrs</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># generate dataset</span>
+    <span class="n">xds_out</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+        <span class="p">},</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">time</span>
+        <span class="p">},</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="c1"># fill dataset</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d_matf</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ks_attrs</span><span class="p">:</span>
+            <span class="n">xds_out</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">d_matf</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;DATES&#39;</span><span class="p">]:</span>
+            <span class="n">xds_out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span><span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,),</span> <span class="n">d_matf</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">xds_out</span></div>
+
+
+<div class="viewcode-block" id="ReadCoastMat">
+<a class="viewcode-back" href="../../../../bluemath_tk.teslakit.io.html#bluemath_tk.teslakit.io.matlab.ReadCoastMat">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ReadCoastMat</span><span class="p">(</span><span class="n">p_mfile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Read coast polygons from Costa.mat file.</span>
+<span class="sd">    Return list of NX2 np.array [x,y]</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">d_matf</span> <span class="o">=</span> <span class="n">ReadMatfile</span><span class="p">(</span><span class="n">p_mfile</span><span class="p">)</span>
+    <span class="n">l_pol</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ms</span> <span class="ow">in</span> <span class="n">d_matf</span><span class="p">[</span><span class="s1">&#39;costa&#39;</span><span class="p">]:</span>
+        <span class="n">l_pol</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ms</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">ms</span><span class="o">.</span><span class="n">y</span><span class="p">])</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">l_pol</span></div>
+
+
+<div class="viewcode-block" id="ReadEstelaMat">
+<a class="viewcode-back" href="../../../../bluemath_tk.teslakit.io.html#bluemath_tk.teslakit.io.matlab.ReadEstelaMat">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ReadEstelaMat</span><span class="p">(</span><span class="n">p_mfile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Read estela data from .mat file.</span>
+<span class="sd">    Return xarray.Dataset</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">threshold</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">p_mfile</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">mf</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;obj&#39;</span> <span class="ow">in</span> <span class="n">mf</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">mf</span> <span class="o">=</span> <span class="n">mf</span><span class="p">[</span><span class="s1">&#39;obj&#39;</span><span class="p">]</span>
+
+        <span class="c1"># mesh</span>
+        <span class="n">mesh_lon</span> <span class="o">=</span> <span class="n">mf</span><span class="p">[</span><span class="s1">&#39;TP&#39;</span><span class="p">][</span><span class="s1">&#39;fullX_centred&#39;</span><span class="p">][:]</span>
+        <span class="n">mesh_lat</span> <span class="o">=</span> <span class="n">mf</span><span class="p">[</span><span class="s1">&#39;full&#39;</span><span class="p">][</span><span class="s1">&#39;Y&#39;</span><span class="p">][:]</span>
+        <span class="n">coast</span> <span class="o">=</span> <span class="n">mf</span><span class="p">[</span><span class="s1">&#39;coastcntr&#39;</span><span class="p">]</span>
+
+        <span class="n">mesh_lon</span><span class="p">[</span><span class="n">mesh_lon</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span><span class="n">mesh_lon</span><span class="p">[</span><span class="n">mesh_lon</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">360</span>
+        <span class="n">longitude</span> <span class="o">=</span> <span class="n">mesh_lon</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]</span>
+        <span class="n">latitude</span> <span class="o">=</span> <span class="n">mesh_lat</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># estela point</span>
+        <span class="n">lon_pnt</span> <span class="o">=</span> <span class="n">mf</span><span class="p">[</span><span class="s1">&#39;TP&#39;</span><span class="p">][</span><span class="s1">&#39;lonp&#39;</span><span class="p">][:]</span>
+        <span class="n">lat_pnt</span> <span class="o">=</span> <span class="n">mf</span><span class="p">[</span><span class="s1">&#39;TP&#39;</span><span class="p">][</span><span class="s1">&#39;latp&#39;</span><span class="p">][:]</span>
+
+        <span class="c1"># simple estela land mask</span>
+        <span class="n">est_D</span> <span class="o">=</span> <span class="n">mf</span><span class="p">[</span><span class="s1">&#39;C&#39;</span><span class="p">][</span><span class="s1">&#39;traveldays_interp&#39;</span><span class="p">][</span><span class="s1">&#39;y1993to2012&#39;</span><span class="p">][:]</span>
+        <span class="n">mask_land</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">est_D</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">mask_land</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">est_D</span><span class="o">&lt;</span><span class="mi">1000000000</span><span class="p">)]</span><span class="o">=</span><span class="mi">1</span>
+
+        <span class="c1"># mask_shadow (islands), from polar data</span>
+        <span class="n">pol_X</span> <span class="o">=</span> <span class="n">mf</span><span class="p">[</span><span class="s1">&#39;Polar&#39;</span><span class="p">][</span><span class="s1">&#39;Xcntr&#39;</span><span class="p">][:]</span>
+        <span class="n">pol_Y</span> <span class="o">=</span> <span class="n">mf</span><span class="p">[</span><span class="s1">&#39;Polar&#39;</span><span class="p">][</span><span class="s1">&#39;Y&#39;</span><span class="p">][:]</span>
+        <span class="n">pol_Fe</span> <span class="o">=</span> <span class="n">mf</span><span class="p">[</span><span class="s1">&#39;C&#39;</span><span class="p">][</span><span class="s1">&#39;Polar_FEmedia&#39;</span><span class="p">][</span><span class="s1">&#39;y1993to2012&#39;</span><span class="p">][:]</span>
+
+        <span class="c1"># interpolate polar to 2D grid to generate mask_shadow</span>
+        <span class="n">interp_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">pol_X</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span><span class="n">pol_Y</span><span class="o">.</span><span class="n">ravel</span><span class="p">()))</span>
+        <span class="n">interp_out</span> <span class="o">=</span> <span class="n">pol_Fe</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">grid_x</span><span class="p">,</span> <span class="n">grid_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">longitude</span><span class="p">,</span> <span class="n">latitude</span><span class="p">)</span>
+        <span class="n">mask_shadow</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">(</span><span class="n">interp_in</span><span class="p">,</span> <span class="n">interp_out</span><span class="p">,</span> <span class="p">(</span><span class="n">grid_x</span><span class="p">,</span> <span class="n">grid_y</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+        <span class="n">mask_shadow</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">mask_shadow</span><span class="p">)]</span><span class="o">=</span><span class="mi">1</span>
+
+        <span class="c1"># generate mask for 0.95 energy</span>
+        <span class="n">pol_Fe_95</span> <span class="o">=</span> <span class="n">pol_Fe</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">pol_Fe_cs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nancumsum</span><span class="p">(</span><span class="n">pol_Fe</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">val95</span> <span class="o">=</span> <span class="n">pol_Fe_cs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mf">0.95</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pol_Fe_cs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">ix_del</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pol_Fe_cs</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span><span class="o">&gt;=</span><span class="n">val95</span><span class="p">[</span><span class="n">c</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">pol_Fe_95</span><span class="p">[</span><span class="n">ix_del</span><span class="p">:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="n">interp_out</span> <span class="o">=</span> <span class="n">pol_Fe_95</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">grid_x</span><span class="p">,</span> <span class="n">grid_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">longitude</span><span class="p">,</span> <span class="n">latitude</span><span class="p">)</span>
+        <span class="n">mask_e95</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">(</span><span class="n">interp_in</span><span class="p">,</span> <span class="n">interp_out</span><span class="p">,</span> <span class="p">(</span><span class="n">grid_x</span><span class="p">,</span> <span class="n">grid_y</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+        <span class="n">mask_e95</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">mask_e95</span><span class="p">)]</span><span class="o">=</span><span class="mi">1</span>
+
+        <span class="c1"># fields</span>
+        <span class="n">d_D</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">d_F</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">d_Fthreas</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">fds</span> <span class="o">=</span> <span class="n">mf</span><span class="p">[</span><span class="s1">&#39;C&#39;</span><span class="p">][</span><span class="s1">&#39;traveldays_interp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">fd</span> <span class="ow">in</span> <span class="n">fds</span><span class="p">:</span>
+            <span class="n">d_D</span><span class="p">[</span><span class="n">fd</span><span class="p">]</span> <span class="o">=</span> <span class="n">mf</span><span class="p">[</span><span class="s1">&#39;C&#39;</span><span class="p">][</span><span class="s1">&#39;traveldays_interp&#39;</span><span class="p">][</span><span class="n">fd</span><span class="p">][:]</span>
+            <span class="n">d_F</span><span class="p">[</span><span class="n">fd</span><span class="p">]</span> <span class="o">=</span> <span class="n">mf</span><span class="p">[</span><span class="s1">&#39;C&#39;</span><span class="p">][</span><span class="s1">&#39;FEmedia_interp&#39;</span><span class="p">][</span><span class="n">fd</span><span class="p">][:]</span>
+            <span class="n">d_Fthreas</span><span class="p">[</span><span class="n">fd</span><span class="p">]</span> <span class="o">=</span> <span class="n">d_F</span><span class="p">[</span><span class="n">fd</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">d_F</span><span class="p">[</span><span class="n">fd</span><span class="p">])</span>
+
+            <span class="c1"># use threshold</span>
+            <span class="n">d_D</span><span class="p">[</span><span class="n">fd</span><span class="p">][</span><span class="n">d_Fthreas</span><span class="p">[</span><span class="n">fd</span><span class="p">]</span><span class="o">&lt;</span><span class="n">threshold</span><span class="o">/</span><span class="mi">100</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">d_F</span><span class="p">[</span><span class="n">fd</span><span class="p">][</span><span class="n">d_Fthreas</span><span class="p">[</span><span class="n">fd</span><span class="p">]</span><span class="o">&lt;</span><span class="n">threshold</span><span class="o">/</span><span class="mi">100</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">d_Fthreas</span><span class="p">[</span><span class="n">fd</span><span class="p">][</span><span class="n">d_Fthreas</span><span class="p">[</span><span class="n">fd</span><span class="p">]</span><span class="o">&lt;</span><span class="n">threshold</span><span class="o">/</span><span class="mi">100</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># return xarray.Dataset</span>
+    <span class="n">xdset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;mask_land&#39;</span><span class="p">:((</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span><span class="s1">&#39;longitude&#39;</span><span class="p">),</span> <span class="n">mask_land</span><span class="p">),</span>
+            <span class="s1">&#39;mask_shadow&#39;</span><span class="p">:((</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span><span class="s1">&#39;longitude&#39;</span><span class="p">),</span> <span class="n">mask_shadow</span><span class="p">),</span>
+            <span class="s1">&#39;mask_e95&#39;</span><span class="p">:((</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span><span class="s1">&#39;longitude&#39;</span><span class="p">),</span> <span class="n">mask_e95</span><span class="p">),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;longitude&#39;</span><span class="p">:</span> <span class="n">longitude</span><span class="p">,</span>
+            <span class="s1">&#39;latitude&#39;</span><span class="p">:</span> <span class="n">latitude</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;pnt_longitude&#39;</span><span class="p">:</span> <span class="n">lon_pnt</span><span class="p">,</span>
+            <span class="s1">&#39;pnt_latitude&#39;</span><span class="p">:</span> <span class="n">lat_pnt</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d_D</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">xdset</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="s1">&#39;D_</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">):((</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span><span class="s1">&#39;longitude&#39;</span><span class="p">),</span> <span class="n">d_D</span><span class="p">[</span><span class="n">fd</span><span class="p">]),</span>
+            <span class="s1">&#39;F_</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">):((</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span><span class="s1">&#39;longitude&#39;</span><span class="p">),</span> <span class="n">d_F</span><span class="p">[</span><span class="n">fd</span><span class="p">]),</span>
+            <span class="s1">&#39;Fthreas_</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">):((</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span><span class="s1">&#39;longitude&#39;</span><span class="p">),</span> <span class="n">d_Fthreas</span><span class="p">[</span><span class="n">fd</span><span class="p">])</span>
+        <span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">xdset</span></div>
+
+
+<div class="viewcode-block" id="ReadNakajoMats">
+<a class="viewcode-back" href="../../../../bluemath_tk.teslakit.io.html#bluemath_tk.teslakit.io.matlab.ReadNakajoMats">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ReadNakajoMats</span><span class="p">(</span><span class="n">p_mfiles</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Read Nakajo simulated hurricanes data from .mat files folder.</span>
+<span class="sd">    Return xarray.Dataset</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">n_sim</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">max_ts_end</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n_storms</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">var_names</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;yts&#39;</span><span class="p">,</span> <span class="s1">&#39;ylon_TC&#39;</span> <span class="p">,</span> <span class="s1">&#39;ylat_TC&#39;</span><span class="p">,</span> <span class="s1">&#39;yDIR&#39;</span><span class="p">,</span> <span class="s1">&#39;ySPEED&#39;</span><span class="p">,</span><span class="s1">&#39;yCPRES&#39;</span><span class="p">,</span><span class="s1">&#39;del_reason&#39;</span>
+    <span class="p">]</span>
+
+    <span class="c1"># generate var holder dict</span>
+    <span class="n">d_vars</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">vn</span> <span class="ow">in</span> <span class="n">var_names</span><span class="p">:</span>
+        <span class="n">d_vars</span><span class="p">[</span><span class="n">vn</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+
+    <span class="c1"># find number and time length of synthetic storms</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_sim</span><span class="p">):</span>
+
+        <span class="c1"># read sim file</span>
+        <span class="n">p_matf</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_mfiles</span><span class="p">,</span> <span class="s1">&#39;YCAL</span><span class="si">{0}</span><span class="s1">.mat&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">d_matf</span> <span class="o">=</span> <span class="n">ReadMatfile</span><span class="p">(</span><span class="n">p_matf</span><span class="p">)</span>
+
+        <span class="c1"># count storms</span>
+        <span class="n">n_storms</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">d_matf</span><span class="p">[</span><span class="n">var_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+
+        <span class="c1"># append data to var holder</span>
+        <span class="k">for</span> <span class="n">vn</span> <span class="ow">in</span> <span class="n">var_names</span><span class="p">:</span>
+            <span class="n">d_vars</span><span class="p">[</span><span class="n">vn</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">d_vars</span><span class="p">[</span><span class="n">vn</span><span class="p">],</span> <span class="n">d_matf</span><span class="p">[</span><span class="n">vn</span><span class="p">]))</span>
+
+    <span class="c1"># add to xarray dataset</span>
+    <span class="n">xds_out</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;yts&#39;</span><span class="p">:((</span><span class="s1">&#39;storm&#39;</span><span class="p">,),</span> <span class="n">d_vars</span><span class="p">[</span><span class="s1">&#39;yts&#39;</span><span class="p">]),</span>
+            <span class="s1">&#39;ylon_TC&#39;</span><span class="p">:((</span><span class="s1">&#39;storm&#39;</span><span class="p">,),</span> <span class="n">d_vars</span><span class="p">[</span><span class="s1">&#39;ylon_TC&#39;</span><span class="p">]),</span>
+            <span class="s1">&#39;ylat_TC&#39;</span><span class="p">:((</span><span class="s1">&#39;storm&#39;</span><span class="p">,),</span> <span class="n">d_vars</span><span class="p">[</span><span class="s1">&#39;ylat_TC&#39;</span><span class="p">]),</span>
+            <span class="s1">&#39;yDIR&#39;</span><span class="p">:((</span><span class="s1">&#39;storm&#39;</span><span class="p">,),</span> <span class="n">d_vars</span><span class="p">[</span><span class="s1">&#39;yDIR&#39;</span><span class="p">]),</span>
+            <span class="s1">&#39;ySPEED&#39;</span><span class="p">:((</span><span class="s1">&#39;storm&#39;</span><span class="p">,),</span> <span class="n">d_vars</span><span class="p">[</span><span class="s1">&#39;ySPEED&#39;</span><span class="p">]),</span>
+            <span class="s1">&#39;yCPRES&#39;</span><span class="p">:((</span><span class="s1">&#39;storm&#39;</span><span class="p">,),</span> <span class="n">d_vars</span><span class="p">[</span><span class="s1">&#39;yCPRES&#39;</span><span class="p">]),</span>
+            <span class="s1">&#39;del_reason&#39;</span><span class="p">:((</span><span class="s1">&#39;storm&#39;</span><span class="p">,),</span> <span class="n">d_vars</span><span class="p">[</span><span class="s1">&#39;del_reason&#39;</span><span class="p">]),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;storm&#39;</span><span class="p">:</span><span class="nb">range</span><span class="p">(</span><span class="n">n_storms</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">xds_out</span></div>
+
+
+<div class="viewcode-block" id="ReadTCsSimulations">
+<a class="viewcode-back" href="../../../../bluemath_tk.teslakit.io.html#bluemath_tk.teslakit.io.matlab.ReadTCsSimulations">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ReadTCsSimulations</span><span class="p">(</span><span class="n">p_sims</span><span class="p">,</span> <span class="n">point_file</span><span class="o">=</span><span class="s1">&#39;Punto1.mat&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Read data from solved TCs simulations. Return xarray.Dataset</span>
+
+<span class="sd">    TCs simulations are stored at folders named &quot;CYC_numbercode&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># get all folders at TCs simulations folder</span>
+    <span class="n">f_sims</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">p_sims</span><span class="p">)</span> <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_sims</span><span class="p">,</span> <span class="n">x</span><span class="p">))])</span>
+
+    <span class="c1"># ensure number order</span>
+    <span class="n">ens_order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">f_sims</span><span class="p">])</span>
+    <span class="n">f_sims_e</span> <span class="o">=</span> <span class="p">[</span><span class="n">f_sims</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ens_order</span><span class="p">]</span>
+
+    <span class="c1"># now make full path to CYC folders</span>
+    <span class="n">sims</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_sims</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">f_sims_e</span><span class="p">]</span>
+
+    <span class="c1"># storm parameters</span>
+    <span class="n">n_sims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sims</span><span class="p">)</span>
+    <span class="n">xds_storms_sims</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;hs&#39;</span><span class="p">:((</span><span class="s1">&#39;storm&#39;</span><span class="p">,),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_sims</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+            <span class="s1">&#39;tp&#39;</span><span class="p">:((</span><span class="s1">&#39;storm&#39;</span><span class="p">,),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_sims</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+            <span class="s1">&#39;dir&#39;</span><span class="p">:((</span><span class="s1">&#39;storm&#39;</span><span class="p">,),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_sims</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+            <span class="s1">&#39;ss&#39;</span><span class="p">:((</span><span class="s1">&#39;storm&#39;</span><span class="p">,),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_sims</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+            <span class="s1">&#39;twl&#39;</span><span class="p">:((</span><span class="s1">&#39;storm&#39;</span><span class="p">,),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_sims</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+            <span class="s1">&#39;mu&#39;</span><span class="p">:((</span><span class="s1">&#39;storm&#39;</span><span class="p">,),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_sims</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;storm&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_sims</span><span class="p">)}</span>
+    <span class="p">)</span>
+
+    <span class="c1"># read file by file</span>
+    <span class="k">for</span> <span class="n">i_s</span><span class="p">,</span> <span class="n">p_s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sims</span><span class="p">):</span>
+        <span class="n">p_mat</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_s</span><span class="p">,</span> <span class="n">point_file</span><span class="p">)</span>
+
+        <span class="n">d_mat</span> <span class="o">=</span> <span class="n">ReadMatfile</span><span class="p">(</span><span class="n">p_mat</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">d_mat</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+        <span class="n">hs</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;hs&#39;</span><span class="p">]</span>
+        <span class="n">tp</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;tp&#39;</span><span class="p">]</span>
+        <span class="n">dr</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;dir&#39;</span><span class="p">]</span>
+        <span class="n">ss</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;ss&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mf">100.0</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span>
+
+        <span class="c1"># calculate TWL</span>
+        <span class="n">twl</span> <span class="o">=</span> <span class="mf">0.053</span> <span class="o">*</span> <span class="n">hs</span><span class="o">**</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">tp</span> <span class="o">+</span> <span class="n">ss</span>
+
+        <span class="c1"># calculate max TWL position</span>
+        <span class="n">i_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanargmax</span><span class="p">(</span><span class="n">twl</span><span class="p">)</span>
+        <span class="n">twl_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">twl</span><span class="p">)</span>
+
+        <span class="c1"># calculate MU (12 - 12 hours window)</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ss</span><span class="p">))</span>
+        <span class="n">ix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">pos</span><span class="o">&gt;=</span><span class="n">i_max</span><span class="o">-</span><span class="mi">12</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pos</span><span class="o">&lt;=</span><span class="n">i_max</span><span class="o">+</span><span class="mi">12</span><span class="p">))</span>
+        <span class="n">twl_w</span> <span class="o">=</span> <span class="n">twl</span><span class="p">[</span><span class="n">ix</span><span class="p">]</span>
+
+        <span class="n">dt</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">twl_w</span><span class="p">)</span>
+        <span class="n">time_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span><span class="mi">1</span><span class="o">+</span><span class="n">dt</span><span class="p">,</span><span class="n">dt</span><span class="p">)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">twl_w</span><span class="p">,</span> <span class="n">time_norm</span><span class="p">)</span> <span class="o">/</span> <span class="n">twl_max</span>
+
+        <span class="c1"># store storm parameters</span>
+        <span class="n">xds_storms_sims</span><span class="o">.</span><span class="n">hs</span><span class="p">[</span><span class="n">i_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">hs</span><span class="p">[</span><span class="n">i_max</span><span class="p">]</span>
+        <span class="n">xds_storms_sims</span><span class="o">.</span><span class="n">tp</span><span class="p">[</span><span class="n">i_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">tp</span><span class="p">[</span><span class="n">i_max</span><span class="p">]</span>
+        <span class="n">xds_storms_sims</span><span class="o">.</span><span class="n">dir</span><span class="p">[</span><span class="n">i_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">dr</span><span class="p">[</span><span class="n">i_max</span><span class="p">]</span>
+        <span class="n">xds_storms_sims</span><span class="o">.</span><span class="n">ss</span><span class="p">[</span><span class="n">i_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">ss</span><span class="p">[</span><span class="n">i_max</span><span class="p">]</span>
+        <span class="n">xds_storms_sims</span><span class="o">.</span><span class="n">twl</span><span class="p">[</span><span class="n">i_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">twl</span><span class="p">[</span><span class="n">i_max</span><span class="p">]</span>
+        <span class="n">xds_storms_sims</span><span class="o">.</span><span class="n">mu</span><span class="p">[</span><span class="n">i_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">mu</span>
+
+    <span class="k">return</span> <span class="n">xds_storms_sims</span></div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

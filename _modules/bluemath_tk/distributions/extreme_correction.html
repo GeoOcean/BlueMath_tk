@@ -1,0 +1,909 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.distributions.extreme_correction &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.distributions.extreme_correction</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.distributions.extreme_correction</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">stats</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">BlueMathModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..distributions.gev</span><span class="w"> </span><span class="kn">import</span> <span class="n">GEV</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..distributions.gpd</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPD</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..distributions.pareto_poisson</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPDPoiss</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..distributions.pot</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimalThreshold</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..distributions.utils.extr_corr_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">gev_ci_rp_bootstrap</span><span class="p">,</span>
+    <span class="n">gpdpoiss_ci_rp_bootstrap</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="ExtremeCorrection">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.extreme_correction.ExtremeCorrection">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExtremeCorrection</span><span class="p">(</span><span class="n">BlueMathModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extreme Correction class</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">corr_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">pot_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pot&quot;</span><span class="p">,</span>
+        <span class="n">conf_level</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.95</span><span class="p">,</span>
+        <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extreme value correction for sampled datasets using</span>
+<span class="sd">        Generalized Extreme Value (GEV) or Peaks Over Threshold (POT) approaches.</span>
+
+<span class="sd">        This class applies upper-tail corrections to sampled datasets</span>
+<span class="sd">        by fitting extreme value distributions to historical observations</span>
+<span class="sd">        and adjusting the sampled extremes accordingly. See V. Collado (2025) [1].</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config : dict</span>
+<span class="sd">            Dictionary containing the main configuration of the model.</span>
+<span class="sd">            Required keys:</span>
+<span class="sd">                - var : str</span>
+<span class="sd">                    Variable to apply the correction.</span>
+<span class="sd">                - time_var : str</span>
+<span class="sd">                    Name of the time variable (datetime or timestamp).</span>
+<span class="sd">                - yyyy_var : str</span>
+<span class="sd">                    Name of the year variable.</span>
+<span class="sd">                - freq : float or int</span>
+<span class="sd">                    Frequency of observations per year</span>
+<span class="sd">                    (e.g., 365.25 for daily data).</span>
+<span class="sd">            Optional keys:</span>
+<span class="sd">                - mm_var : str, default &quot;mm&quot;</span>
+<span class="sd">                    Name of the month variable.</span>
+<span class="sd">                - dd_var : str, default &quot;dd&quot;</span>
+<span class="sd">                    Name of the day variable.</span>
+<span class="sd">                - folder : str, default None</span>
+<span class="sd">                    Path to a folder where diagnostic plots will be saved.</span>
+<span class="sd">        pot_config : dict</span>
+<span class="sd">            Dictionary containing the POT configuration.</span>
+<span class="sd">            Keys:</span>
+<span class="sd">                - n0 : int, default 10</span>
+<span class="sd">                    Minimum number of exceedances required.</span>
+<span class="sd">                - min_peak_distance : int, default 2</span>
+<span class="sd">                    Minimum distance (in data points) between two peaks.</span>
+<span class="sd">                - init_threshold : float, default 0.0</span>
+<span class="sd">                    Initial threshold for peak extraction.</span>
+<span class="sd">                - siglevel : float, default 0.05</span>
+<span class="sd">                    Significance level for the Chi-squared test in</span>
+<span class="sd">                    threshold optimization.</span>
+<span class="sd">                - plot_flag : bool, default True</span>
+<span class="sd">                    Whether to generate threshold selection plots.</span>
+<span class="sd">        method : {&quot;am&quot;, &quot;pot&quot;}, default &quot;pot&quot;</span>
+<span class="sd">            Method for correction.</span>
+<span class="sd">            - &quot;am&quot; : Annual Maxima using GEV distribution.</span>
+<span class="sd">            - &quot;pot&quot; : Peaks Over Threshold using GPD distribution.</span>
+<span class="sd">        conf_level : float, default=0.95</span>
+<span class="sd">            Confidence level for return period confidence intervals.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_logger_name</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;DEBUG&quot;</span> <span class="k">if</span> <span class="n">debug</span> <span class="k">else</span> <span class="s2">&quot;INFO&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initializing Extreme Correction Procedure&quot;</span><span class="p">)</span>
+
+        <span class="c1"># TODO: CAMBIAR EL CONFIG</span>
+        <span class="c1"># Validate config input</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">corr_config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_config</span><span class="p">()</span>
+
+        <span class="c1"># Method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;pot&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span> <span class="o">=</span> <span class="n">pot_config</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_pot_config</span><span class="p">()</span>
+
+        <span class="c1"># Initialize fitted parameters</span>
+        <span class="c1"># If GEV (loc, scale, shape)</span>
+        <span class="c1"># If GPD (threshold, scale, shape)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+        <span class="c1"># Confidence level</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conf</span> <span class="o">=</span> <span class="n">conf_level</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validate the configuration dictionary for extreme correction</span>
+
+<span class="sd">        Raise</span>
+<span class="sd">        -----</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            If any required key is missing</span>
+<span class="sd">        TypeError</span>
+<span class="sd">            If type of any required key is wrong</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Required fields</span>
+        <span class="n">required_fields</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;var&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="c1"># &quot;time_var&quot;: str,</span>
+            <span class="c1"># &quot;yyyy_var&quot;: str,</span>
+            <span class="c1"># &quot;freq&quot;: float | int,</span>
+        <span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">exp_type</span> <span class="ow">in</span> <span class="n">required_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Configuration error: Key &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; is missing in the config dictionary.&quot;</span>
+                    <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">exp_type</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Configuration error: Key &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; must be of type </span><span class="si">{</span><span class="n">exp_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Optional fields with defaults</span>
+        <span class="n">optional_fields</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;mm_var&quot;</span><span class="p">:</span> <span class="s2">&quot;mm&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dd_var&quot;</span><span class="p">:</span> <span class="s2">&quot;dd&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;bmus_var&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;folder&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">default_value</span> <span class="ow">in</span> <span class="n">optional_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default_value</span><span class="p">)</span>
+
+        <span class="c1"># Define the configuration in the class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;var&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;time_var&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">year_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;yyyy_var&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">month_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mm_var&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">day_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dd_var&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;freq&quot;</span><span class="p">)</span>
+        <span class="c1"># Weather Type variable in case we apply the correction by WT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bmus_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;bmus_var&quot;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;folder&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">folder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;folder&quot;</span><span class="p">]</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">folder</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># TODO: Corrección por WT</span>
+        <span class="c1"># if self.config.get(self.bmus_var) is not None:</span>
+        <span class="c1">#     self.n_wt = np.unique(self.data_hist[self.bmus_var])</span>
+        <span class="c1"># else:</span>
+        <span class="c1">#     self.n_wt = 1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_pot_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validate POT configuration dictionary for peaks extraction.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="p">[</span><span class="s2">&quot;n0&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n0&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="p">[</span><span class="s2">&quot;min_peak_distance&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;min_peak_distance&quot;</span><span class="p">,</span> <span class="mi">2</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="p">[</span><span class="s2">&quot;init_threshold&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;init_threshold&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="p">[</span><span class="s2">&quot;sig_level&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;siglevel&quot;</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="p">[</span><span class="s2">&quot;plot&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ExtremeCorrection.fit">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.extreme_correction.ExtremeCorrection.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_hist</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+        <span class="n">plot_diagnostic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit the historical data into GEV or GPD</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data_hist : xr.Dataset</span>
+<span class="sd">            Dataset with historical data</span>
+<span class="sd">        bmus : list[bool, str], default=[False, &quot;&quot;]</span>
+<span class="sd">            Whether to apply the correction by BMUS, if given the name of bmus variable should be given</span>
+<span class="sd">        plot_diagnostic : bool, default=False</span>
+<span class="sd">            Whether to plot the diagnostics plot of the fitted distribution</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pit_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">am_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preprocess_data</span><span class="p">(</span>
+            <span class="n">data_hist</span><span class="p">,</span>
+            <span class="n">var</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;var&quot;</span><span class="p">),</span>
+            <span class="n">bmus</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bmus&quot;</span><span class="p">,</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]),</span>
+            <span class="n">sim</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">join_sims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;join_sims&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_year</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">am_data</span><span class="o">.</span><span class="n">size</span>
+
+        <span class="c1"># If POT used in fitting step</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;pot&quot;</span><span class="p">:</span>
+            <span class="n">opt_threshold</span> <span class="o">=</span> <span class="n">OptimalThreshold</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pit_data</span><span class="p">,</span>
+                <span class="n">threshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;init_threshold&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                <span class="n">n0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n0&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+                <span class="n">min_peak_distance</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;min_peak_distance&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                <span class="n">sig_level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sig_level&quot;</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+                <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;method&quot;</span><span class="p">,</span> <span class="s2">&quot;studentized&quot;</span><span class="p">),</span>
+                <span class="n">plot</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plot&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+                <span class="n">folder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;folder&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+                <span class="n">display_flag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pot_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;display_flag&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pot_data</span><span class="p">,</span> <span class="n">pot_idx</span> <span class="o">=</span> <span class="n">opt_threshold</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">poiss_parameter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pot_data</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">am_data</span><span class="o">.</span><span class="n">size</span>
+
+            <span class="n">fit_result</span> <span class="o">=</span> <span class="n">GPD</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pot_data</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">)</span>
+
+        <span class="c1"># If Annual Maxima used in fitting step</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;am&quot;</span><span class="p">:</span>
+            <span class="n">fit_result</span> <span class="o">=</span> <span class="n">GEV</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">am_data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">poiss_parameter</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># If GEV only 1 exceedance per year (AM)</span>
+
+        <span class="c1"># [loc, scale, shape] if GEV or [threshold, scale, shape] if GPD</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">fit_result</span><span class="o">.</span><span class="n">params</span>
+
+        <span class="c1"># TODO: Ver que diagnostic devolver alomejor no hace falta todo</span>
+        <span class="k">if</span> <span class="n">plot_diagnostic</span><span class="p">:</span>
+            <span class="n">fit_result</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ExtremeCorrection.transform">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.extreme_correction.ExtremeCorrection.transform">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_sim</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+        <span class="n">prob</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;unif&quot;</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">siglevel</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply the correction in the synthetic dataset</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data_sim : xr.Dataset</span>
+<span class="sd">            Dataset with synthetic data</span>
+<span class="sd">        prob : str, default=&quot;unif&quot;</span>
+<span class="sd">            Type of probabilities consider to random correct the AM</span>
+<span class="sd">            If &quot;unif&quot;, a sorted random uniform is considered</span>
+<span class="sd">            If &quot;ecdf&quot;, the ECDF is considered</span>
+<span class="sd">        random_state : int, default=0</span>
+<span class="sd">            Random state to generate the probabilities</span>
+<span class="sd">        siglevel : float, default=0.05</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        sim_pit_data_corrected : xr.Dataset</span>
+<span class="sd">            Point-in-time corrected data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sim_pit_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preprocess_data</span><span class="p">(</span>
+            <span class="n">data_sim</span><span class="p">,</span>
+            <span class="n">var</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;var&quot;</span><span class="p">),</span>
+            <span class="n">bmus</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bmus&quot;</span><span class="p">,</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]),</span>
+            <span class="n">sim</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">join_sims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;join_sims&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data_sorted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_year_sim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Avoid correct when AM is 0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">am_idx_0</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">am_data</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">am_index_0</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+
+        <span class="c1"># Test if the correction has to be applied</span>
+        <span class="n">test_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_value</span> <span class="o">=</span> <span class="n">test_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;P-value&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_value</span> <span class="o">&gt;</span> <span class="n">siglevel</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Synthetic data comes from fitted distribution (P-value: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">p_value</span><span class="si">:</span><span class="s2">.4%</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data_corr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim_pit_data_corrected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_pit_data</span>
+
+            <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data_corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_year_sim</span><span class="p">)</span>
+
+            <span class="c1"># Define probs</span>
+            <span class="k">if</span> <span class="n">prob</span> <span class="o">==</span> <span class="s2">&quot;unif&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rprob_sim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_year_sim</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rprob_sim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_year_sim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">n_year_sim</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="p">)</span>  <span class="c1"># ECDF</span>
+
+            <span class="c1"># Apply correction on AM</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;pot&quot;</span><span class="p">:</span>
+                <span class="c1"># TODO: Añadir funciones de POT</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data_corr</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">am_idx_0</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">GPDPoiss</span><span class="o">.</span><span class="n">qf</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">rprob_sim</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">am_idx_0</span> <span class="p">:],</span>
+                    <span class="n">threshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                    <span class="n">poisson</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">poiss_parameter</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;am&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data_corr</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">am_idx_0</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">GEV</span><span class="o">.</span><span class="n">qf</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">rprob_sim</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">am_idx_0</span> <span class="p">:],</span>
+                    <span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Apply correction in pit data</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_year_sim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sim_pit_data_corrected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sim_pit_data</span><span class="p">,</span>  <span class="c1"># x-coords to interpolate</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_pit_data</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data_sorted</span>
+                    <span class="p">),</span>  <span class="c1"># x-coords of data points</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_pit_data</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data_corr</span>
+                    <span class="p">),</span>  <span class="c1"># y-coords of data points</span>
+                <span class="p">)</span>
+
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preprocess_output</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data_sim</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">output</span></div>
+
+
+<div class="viewcode-block" id="ExtremeCorrection.fit_transform">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.extreme_correction.ExtremeCorrection.fit_transform">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit_transform</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_hist</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+        <span class="n">data_sim</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+        <span class="n">bmus</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">],</span>
+        <span class="n">prob</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;unif&quot;</span><span class="p">,</span>
+        <span class="n">plot_diagnostic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit and apply the correction procedure</span>
+
+<span class="sd">        See fit and transform for more information</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data_hist : xr.Dataset</span>
+<span class="sd">            Dataset with historical data</span>
+<span class="sd">        data_sim : xr.Dataset</span>
+<span class="sd">            Dataset with synthetic data</span>
+<span class="sd">        bmus : list[bool, str], default=[False, &quot;&quot;]</span>
+<span class="sd">            Whether to apply the correction by BMUS, if given the name of bmus variable should be given</span>
+<span class="sd">        prob : str, default=&quot;unif&quot;</span>
+<span class="sd">            Type of probabilities consider to random correct the AM</span>
+<span class="sd">            If &quot;unif&quot;, a sorted random uniform is considered</span>
+<span class="sd">            If &quot;ecdf&quot;, the ECDF is considered</span>
+<span class="sd">        plot_diagnostic : bool, default=False</span>
+<span class="sd">            Whether to plot the diagnostics plot of the fitted distribution</span>
+<span class="sd">        random_state : int, default=0</span>
+<span class="sd">            Random state to generate the probabilities</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        sim_pit_data_corrected : xr.Dataset</span>
+<span class="sd">            Point-in-time corrected data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_hist</span><span class="o">=</span><span class="n">data_hist</span><span class="p">,</span> <span class="n">plot_diagnostic</span><span class="o">=</span><span class="n">plot_diagnostic</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data_sim</span><span class="o">=</span><span class="n">data_sim</span><span class="p">,</span> <span class="n">prob</span><span class="o">=</span><span class="n">prob</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_preprocess_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+        <span class="n">var</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">bmus</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">],</span>
+        <span class="n">sim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">join_sims</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Preprocess the data</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : xr.Dataset</span>
+<span class="sd">            Data to apply correction</span>
+<span class="sd">        var : list[str]</span>
+<span class="sd">            List of variables to apply the correction technique. FUTURE WORK: INCLUDE MORE THAN ONE</span>
+<span class="sd">        bmus : list[bool, str], default=[False, &quot;&quot;]</span>
+<span class="sd">            List to decide if the correction must be applied by WT and if so name of the variable</span>
+<span class="sd">        join_sims : bool, default=True</span>
+<span class="sd">            Whether to joint all the simulations in one array</span>
+
+<span class="sd">        Return</span>
+<span class="sd">        ------</span>
+<span class="sd">        pit_data : np.ndarray</span>
+<span class="sd">            Point-in-time data</span>
+<span class="sd">        am_data : np.ndarray</span>
+<span class="sd">            Annual Maxima values</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># dict_allowed_freq = {&quot;D&quot;: 1, &quot;h&quot;: 24, &quot;m&quot;: 1440}</span>
+
+        <span class="c1"># self.freqstr = data.indexes[&quot;time&quot;].freqstr</span>
+        <span class="c1"># self.freq = dict_allowed_freq.get(self.freqstr)</span>
+
+        <span class="k">if</span> <span class="n">join_sims</span> <span class="ow">and</span> <span class="n">sim</span><span class="p">:</span>
+            <span class="n">n_sims</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_sim&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">pit_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+            <span class="n">am_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+            <span class="k">for</span> <span class="n">sim</span> <span class="ow">in</span> <span class="n">n_sims</span><span class="p">:</span>
+                <span class="n">pit_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pit_data</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">n_sim</span><span class="o">=</span><span class="n">sim</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+                <span class="n">am_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">am_data</span><span class="p">,</span>
+                    <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">n_sim</span><span class="o">=</span><span class="n">sim</span><span class="p">)</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;time.year&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pit_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">am_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;time.year&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="k">return</span> <span class="n">pit_data</span><span class="p">,</span> <span class="n">am_data</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_preprocess_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Preprocess the output dataset</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : xr.Dataset</span>
+<span class="sd">            Data to add the corrected variable</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        data : xr.Dataset</span>
+<span class="sd">            Data with added the corrected variable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_sim</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_sim&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">n_time</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">sim_pit_data_corrected_reshaped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_pit_data_corrected</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n_sim</span><span class="p">,</span> <span class="n">n_time</span><span class="p">)</span>
+
+        <span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="si">}</span><span class="s2">_corr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">sim_pit_data_corrected_reshaped</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">data</span>
+
+
+<div class="viewcode-block" id="ExtremeCorrection.test">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.extreme_correction.ExtremeCorrection.test">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Cramer Von-Mises test to check the GOF of fitted distribution</span>
+
+<span class="sd">        Test to check the Goodness-of-Fit of the historical fitted distribution with the synthetic data.</span>
+<span class="sd">        Null Hypothesis: sampled AM comes from the fitted extreme distribution.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Statistic and p-value of the Cramer Von-Mises test</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The test is applied in the AM since the correction procedure is applied in the AM</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;pot&quot;</span><span class="p">:</span>
+            <span class="n">gev_location</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="o">+</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">poiss_parameter</span> <span class="o">**</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="p">)</span>
+                <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">gev_scale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">poiss_parameter</span> <span class="o">**</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+            <span class="c1"># POT test</span>
+            <span class="c1"># res_test = stats.cramervonmises(self.sim_pot_data,</span>
+            <span class="c1">#                                 cdf=stats.genpareto.cdf,</span>
+            <span class="c1">#                                 args=(self.parameters[2], self.parameters[0], self.parameters[1])</span>
+            <span class="c1">#                                 )</span>
+
+            <span class="c1"># AM test to derived GEV from GPD-Poisson</span>
+            <span class="n">res_test</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">cramervonmises</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data</span><span class="p">,</span>
+                <span class="n">cdf</span><span class="o">=</span><span class="n">stats</span><span class="o">.</span><span class="n">genextreme</span><span class="o">.</span><span class="n">cdf</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">gev_location</span><span class="p">,</span> <span class="n">gev_scale</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;Statistic&quot;</span><span class="p">:</span> <span class="n">res_test</span><span class="o">.</span><span class="n">statistic</span><span class="p">,</span> <span class="s2">&quot;P-value&quot;</span><span class="p">:</span> <span class="n">res_test</span><span class="o">.</span><span class="n">pvalue</span><span class="p">}</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;am&quot;</span><span class="p">:</span>
+            <span class="n">res_test</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">cramervonmises</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data</span><span class="p">,</span>
+                <span class="n">cdf</span><span class="o">=</span><span class="n">stats</span><span class="o">.</span><span class="n">genextreme</span><span class="o">.</span><span class="n">cdf</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;Statistic&quot;</span><span class="p">:</span> <span class="n">res_test</span><span class="o">.</span><span class="n">statistic</span><span class="p">,</span> <span class="s2">&quot;P-value&quot;</span><span class="p">:</span> <span class="n">res_test</span><span class="o">.</span><span class="n">pvalue</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="ExtremeCorrection.plot">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.extreme_correction.ExtremeCorrection.plot">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">Figure</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot return periods</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">figs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">axes</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">fig1</span><span class="p">,</span> <span class="n">ax1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hist_retper_plot</span><span class="p">()</span>
+        <span class="n">figs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fig1</span><span class="p">)</span>
+        <span class="n">axes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ax1</span><span class="p">)</span>
+
+        <span class="n">fig2</span><span class="p">,</span> <span class="n">ax2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_retper_plot</span><span class="p">()</span>
+
+        <span class="n">figs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fig2</span><span class="p">)</span>
+        <span class="n">axes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ax2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">figs</span><span class="p">,</span> <span class="n">axes</span></div>
+
+
+<div class="viewcode-block" id="ExtremeCorrection.hist_retper_plot">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.extreme_correction.ExtremeCorrection.hist_retper_plot">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hist_retper_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">Figure</span><span class="p">,</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Historical Return Period plot</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        fig</span>
+<span class="sd">            plt.Figure</span>
+<span class="sd">        ax</span>
+<span class="sd">            plt.Axes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">ecdf_annmax_probs_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_year</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_year</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T_annmax</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">ecdf_annmax_probs_hist</span><span class="p">)</span>
+
+        <span class="c1"># Fitted Return Periods</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T_years</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="mf">1.001</span><span class="p">,</span>
+                <span class="mf">1.01</span><span class="p">,</span>
+                <span class="mf">1.1</span><span class="p">,</span>
+                <span class="mf">1.2</span><span class="p">,</span>
+                <span class="mf">1.4</span><span class="p">,</span>
+                <span class="mf">1.6</span><span class="p">,</span>
+                <span class="mi">2</span><span class="p">,</span>
+                <span class="mf">2.5</span><span class="p">,</span>
+                <span class="mi">3</span><span class="p">,</span>
+                <span class="mf">3.5</span><span class="p">,</span>
+                <span class="mi">4</span><span class="p">,</span>
+                <span class="mf">4.5</span><span class="p">,</span>
+                <span class="mi">5</span><span class="p">,</span>
+                <span class="mf">7.5</span><span class="p">,</span>
+                <span class="mi">10</span><span class="p">,</span>
+                <span class="mf">12.5</span><span class="p">,</span>
+                <span class="mi">15</span><span class="p">,</span>
+                <span class="mf">17.5</span><span class="p">,</span>
+                <span class="mi">20</span><span class="p">,</span>
+                <span class="mi">25</span><span class="p">,</span>
+                <span class="mi">30</span><span class="p">,</span>
+                <span class="mi">35</span><span class="p">,</span>
+                <span class="mi">40</span><span class="p">,</span>
+                <span class="mi">45</span><span class="p">,</span>
+                <span class="mi">50</span><span class="p">,</span>
+                <span class="mi">60</span><span class="p">,</span>
+                <span class="mi">70</span><span class="p">,</span>
+                <span class="mi">80</span><span class="p">,</span>
+                <span class="mi">90</span><span class="p">,</span>
+                <span class="mi">100</span><span class="p">,</span>
+                <span class="mi">150</span><span class="p">,</span>
+                <span class="mi">200</span><span class="p">,</span>
+                <span class="mi">500</span><span class="p">,</span>
+                <span class="mi">1000</span><span class="p">,</span>
+                <span class="mi">5000</span><span class="p">,</span>
+                <span class="mi">10000</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;pot&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ret_levels</span> <span class="o">=</span> <span class="n">GPDPoiss</span><span class="o">.</span><span class="n">qf</span><span class="p">(</span>
+                <span class="mi">1</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">T_years</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">poiss_parameter</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lower_ci_rp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_ci_rp</span> <span class="o">=</span> <span class="n">gpdpoiss_ci_rp_bootstrap</span><span class="p">(</span>
+                <span class="n">pot_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pot_data</span><span class="p">,</span>
+                <span class="n">years</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">T_years</span><span class="p">,</span>
+                <span class="n">threshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span>
+                <span class="n">poisson</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">poiss_parameter</span><span class="p">,</span>
+                <span class="n">B</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+                <span class="n">conf_level</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">dist</span> <span class="o">=</span> <span class="s2">&quot;GPD-Poisson&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ret_levels</span> <span class="o">=</span> <span class="n">GEV</span><span class="o">.</span><span class="n">qf</span><span class="p">(</span>
+                <span class="mi">1</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">T_years</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lower_ci_rp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_ci_rp</span> <span class="o">=</span> <span class="n">gev_ci_rp_bootstrap</span><span class="p">(</span>
+                <span class="n">am_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">am_data</span><span class="p">,</span> <span class="n">years</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">T_years</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">conf_level</span><span class="o">=</span><span class="mf">0.95</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">dist</span> <span class="o">=</span> <span class="s2">&quot;GEV&quot;</span>
+
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+
+        <span class="c1"># Fitted distribution</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">T_years</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ret_levels</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span>
+            <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dashed&quot;</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Fitted </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dist</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Confidence interval for fitted Distribution</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">T_years</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">upper_ci_rp</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:gray&quot;</span><span class="p">,</span>
+            <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dotted&quot;</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conf</span><span class="si">}</span><span class="s2"> Conf. Band&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">T_years</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_ci_rp</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:gray&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dotted&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Historical AM values</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">T_annmax</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">am_data</span><span class="p">),</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:blue&quot;</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span>
+            <span class="n">markersize</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Historical Annual Maxima&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Return Periods (Years)&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">250</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">get_xaxis</span><span class="p">()</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">ScalarFormatter</span><span class="p">())</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_year</span> <span class="o">+</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">bottom</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span></div>
+
+
+<div class="viewcode-block" id="ExtremeCorrection.sim_retper_plot">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.extreme_correction.ExtremeCorrection.sim_retper_plot">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sim_retper_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">Figure</span><span class="p">,</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Corrected Sampled and Sampled Return Period plot</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        fig</span>
+<span class="sd">            plt.Figure</span>
+<span class="sd">        ax</span>
+<span class="sd">            plt.Axes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">ecdf_annmax_probs_sim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_year_sim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_year_sim</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T_annmax_sim</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">ecdf_annmax_probs_sim</span><span class="p">)</span>
+
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+
+        <span class="c1"># Fitted distribution</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">T_years</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ret_levels</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span>
+            <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dashed&quot;</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Fitted </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dist</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Confidence interval for fitted Distribution</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">T_years</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">upper_ci_rp</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:gray&quot;</span><span class="p">,</span>
+            <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dotted&quot;</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">conf</span><span class="si">}</span><span class="s2"> Conf. Band&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">T_years</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_ci_rp</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:gray&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;dotted&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Corrected Sampled AM values</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">T_annmax_sim</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data_corr</span><span class="p">),</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:red&quot;</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;D&quot;</span><span class="p">,</span>
+            <span class="n">markersize</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Corrected Sampled Annual Maxima&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Corrected Sampled AM values</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">T_annmax_sim</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_am_data</span><span class="p">),</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:red&quot;</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span>
+            <span class="n">markersize</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Sampled Annual Maxima&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Historical AM values</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">T_annmax</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">am_data</span><span class="p">),</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:blue&quot;</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span>
+            <span class="n">markersize</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Historical Annual Maxima&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Return Periods (Years)&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">250</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">get_xaxis</span><span class="p">()</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">ScalarFormatter</span><span class="p">())</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_year_sim</span> <span class="o">+</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">bottom</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;best&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span></div>
+
+
+<div class="viewcode-block" id="ExtremeCorrection.correlations">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.extreme_correction.ExtremeCorrection.correlations">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">correlations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Rank based correlations between sampled and corrected sampled data</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict :</span>
+<span class="sd">            Dictionary with Spearman, Kendall and Pearson correlation coefficients.</span>
+<span class="sd">            Keys :</span>
+<span class="sd">            - &quot;Spearman&quot; : Spearman correlation coefficient</span>
+<span class="sd">            - &quot;Kendall&quot; : Kendall correlation coefficient</span>
+<span class="sd">            - &quot;Pearson&quot; : Pearson correlation coefficient</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">spearman_corr</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">spearmanr</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim_pit_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_pit_data_corrected</span>
+        <span class="p">)</span>
+        <span class="n">kendall_corr</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">kendalltau</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim_pit_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_pit_data_corrected</span>
+        <span class="p">)</span>
+        <span class="n">pearson_corr</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">pearsonr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_pit_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_pit_data_corrected</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;Spearman&quot;</span><span class="p">:</span> <span class="n">spearman_corr</span><span class="p">,</span>
+            <span class="s2">&quot;Kendall&quot;</span><span class="p">:</span> <span class="n">kendall_corr</span><span class="p">,</span>
+            <span class="s2">&quot;Pearson&quot;</span><span class="p">:</span> <span class="n">pearson_corr</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,1573 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.tcs.shytcwaves &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.tcs.shytcwaves</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.tcs.shytcwaves</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">op</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">EARTH_RADIUS</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.geo</span><span class="w"> </span><span class="kn">import</span> <span class="n">geodesic_azimuth</span><span class="p">,</span> <span class="n">geodesic_distance_azimuth</span><span class="p">,</span> <span class="n">shoot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..datamining.mda</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_nearest_indices</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..waves.superpoint</span><span class="w"> </span><span class="kn">import</span> <span class="n">superpoint_calculation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.tracks</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PATHS</span><span class="p">,</span>
+    <span class="n">get_vmean</span><span class="p">,</span>
+    <span class="n">historic_track_interpolation</span><span class="p">,</span>
+    <span class="n">historic_track_preprocessing</span><span class="p">,</span>
+    <span class="n">track_triming</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">###############################################################################</span>
+<span class="c1"># STOPMOTION functions</span>
+<span class="c1"># functions to preprocess and interpolate coordinates at swan computational</span>
+<span class="c1"># timesteps for any storm track according to the SHyTCWaves methodology units:</span>
+<span class="c1"># 6-hour target segment preceded by 24-hour warmup segments</span>
+
+<span class="c1"># storm2stopmotion --&gt; parameterization of a storm track into segments</span>
+<span class="c1"># stopmotion_interpolation --&gt; generate stop-motion events</span>
+<span class="c1">###############################################################################</span>
+
+
+<div class="viewcode-block" id="storm2stopmotion">
+<a class="viewcode-back" href="../../../bluemath_tk.tcs.html#bluemath_tk.tcs.shytcwaves.storm2stopmotion">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">storm2stopmotion</span><span class="p">(</span><span class="n">df_storm</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate stopmotion segments from storm track.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df_storm : pd.DataFrame</span>
+<span class="sd">        Storm track DataFrame containing:</span>
+<span class="sd">        - lon : Longitude coordinates</span>
+<span class="sd">        - lat : Latitude coordinates</span>
+<span class="sd">        - p0 : Minimum central pressure (mbar)</span>
+<span class="sd">        - vmax : Maximum sustained winds (kt)</span>
+<span class="sd">        - rmw : Radius of maximum winds (nmile)</span>
+<span class="sd">        - vmaxfill : Boolean indicating if winds were filled with estimates</span>
+<span class="sd">        - rmwfill : Boolean indicating if RMW was filled with estimates</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pd.DataFrame</span>
+<span class="sd">        Stopmotion segments with columns:</span>
+<span class="sd">        - vseg : Mean translational speed (kt)</span>
+<span class="sd">        - dvseg : Speed variation (kt)</span>
+<span class="sd">        - pseg : Segment pressure (mbar)</span>
+<span class="sd">        - dpseg : Pressure variation (mbar)</span>
+<span class="sd">        - wseg : Segment maximum winds (kt)</span>
+<span class="sd">        - dwseg : Wind variation (kt)</span>
+<span class="sd">        - rseg : Segment RMW (nmile)</span>
+<span class="sd">        - drseg : RMW variation (nmile)</span>
+<span class="sd">        - aseg : Azimuth from geographic North (degrees)</span>
+<span class="sd">        - daseg : Azimuth variation (degrees)</span>
+<span class="sd">        - lseg : Latitude (degrees)</span>
+<span class="sd">        - laseg : Absolute latitude (degrees)</span>
+<span class="sd">        - dlaseg : Latitude variation (degrees)</span>
+<span class="sd">        - lon_w : Warmup origin longitude</span>
+<span class="sd">        - lat_w : Warmup origin latitude</span>
+<span class="sd">        - lon_i : Target origin longitude</span>
+<span class="sd">        - lat_i : Target origin latitude</span>
+<span class="sd">        - lon_t : Target endpoint longitude</span>
+<span class="sd">        - lat_t : Target endpoint latitude</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function generates stopmotion segments methodology from 6-hour storm track segments:</span>
+
+<span class="sd">    A. Warmup segment (24h):</span>
+<span class="sd">        - 4 segments to define start/end coordinates</span>
+<span class="sd">        - Defines {Vmean, relative angle}</span>
+<span class="sd">        - Last 4th segment defines mean {Pmin, Wmax, Rmw}</span>
+<span class="sd">        - Endpoint defines {lat}</span>
+
+<span class="sd">    B. Target segment (6h):</span>
+<span class="sd">        Defines variations {dP, dV, dW, dR, dAng}</span>
+
+<span class="sd">    The absolute value of latitude is stored (start of target segment).</span>
+<span class="sd">    Relative angle is referenced to geographic north (southern hemisphere</span>
+<span class="sd">    is multiplied by -1).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># remove NaNs</span>
+    <span class="n">df_</span> <span class="o">=</span> <span class="n">df_storm</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="c1"># constant segments variables</span>
+    <span class="n">lon</span> <span class="o">=</span> <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;lon&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="n">lat</span> <span class="o">=</span> <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;lat&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="n">pres</span> <span class="o">=</span> <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;p0&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>  <span class="c1"># [mbar]</span>
+    <span class="n">wind</span> <span class="o">=</span> <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;vmax&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>  <span class="c1"># [kt]</span>
+    <span class="n">rmw</span> <span class="o">=</span> <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;rmw&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>  <span class="c1"># [nmile]</span>
+
+    <span class="c1"># generate stopmotion segments: 24h warmup + 6h target segments</span>
+
+    <span class="c1"># timestep [hours]</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;h&quot;</span><span class="p">)</span>
+
+    <span class="c1"># warmup 4-segments (24h) variables</span>
+    <span class="n">lo0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># warmup x-coordinate</span>
+    <span class="n">la0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># warmup y-coordinate</span>
+    <span class="n">vseg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># mean translational speed</span>
+    <span class="n">vxseg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># (dirx)</span>
+    <span class="n">vyseg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># (diry)</span>
+    <span class="n">aseg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># azimuth, geographic North</span>
+
+    <span class="c1"># warmup last-segment (6h) variables</span>
+    <span class="n">pseg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># segment pressure</span>
+    <span class="n">wseg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># segment maxwinds</span>
+    <span class="n">rseg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># segment radii rmw</span>
+    <span class="n">lseg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># latitude (north hemisphere)</span>
+    <span class="n">laseg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># (absolute)</span>
+
+    <span class="c1"># target segment (6h) variables</span>
+    <span class="n">lo1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># target origin x-coordinate</span>
+    <span class="n">la1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># idem y-coordinate</span>
+    <span class="n">dv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># translational speed variation</span>
+    <span class="n">dvx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># (dirx)</span>
+    <span class="n">dvy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># (diry)</span>
+    <span class="n">da</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># azimuth variation</span>
+    <span class="n">dp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># pressure variation</span>
+    <span class="n">dw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># maxwinds variation</span>
+    <span class="n">dr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># radii rmw variation</span>
+    <span class="n">dl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># latitude variation</span>
+    <span class="n">dla</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># (absolute)</span>
+    <span class="n">lo2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># target endpoint x-coordinate</span>
+    <span class="n">la2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">df_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># idem y-coordinate</span>
+
+    <span class="c1"># loop</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+        <span class="c1"># get stopmotion endpoints coordinates (24h+6h)</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>  <span class="c1"># &lt; four preceding segments</span>
+            <span class="c1"># number of &quot;missing&quot; preceding segments to last 24h</span>
+            <span class="n">n_missing</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">-</span> <span class="n">i</span>
+
+            <span class="c1"># last available preceding segment</span>
+            <span class="n">lon1</span><span class="p">,</span> <span class="n">lon2</span> <span class="o">=</span> <span class="n">lon</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">lon</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">lat1</span><span class="p">,</span> <span class="n">lat2</span> <span class="o">=</span> <span class="n">lat</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">lat</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># distance of last available preceding segment</span>
+            <span class="n">arcl_h</span><span class="p">,</span> <span class="n">gamma_h</span> <span class="o">=</span> <span class="n">geodesic_distance_azimuth</span><span class="p">(</span><span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">)</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">arcl_h</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span> <span class="o">*</span> <span class="n">EARTH_RADIUS</span>  <span class="c1"># distance [km]</span>
+
+            <span class="c1"># shoot backwards to calculate (lo0,la0) of 24h preceding warmup</span>
+            <span class="n">dist</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">n_missing</span>
+            <span class="n">glon</span><span class="p">,</span> <span class="n">glat</span><span class="p">,</span> <span class="n">baz</span> <span class="o">=</span> <span class="n">shoot</span><span class="p">(</span><span class="n">lon2</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">gamma_h</span> <span class="o">+</span> <span class="mi">180</span><span class="p">,</span> <span class="n">dist</span><span class="p">)</span>
+
+            <span class="c1"># endpoint coordinates (-24h, 0h, 6h)</span>
+            <span class="n">lon_0</span><span class="p">,</span> <span class="n">lon_i</span><span class="p">,</span> <span class="n">lon_i1</span> <span class="o">=</span> <span class="n">glon</span><span class="p">,</span> <span class="n">lon</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lon</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">lat_0</span><span class="p">,</span> <span class="n">lat_i</span><span class="p">,</span> <span class="n">lat_i1</span> <span class="o">=</span> <span class="n">glat</span><span class="p">,</span> <span class="n">lat</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lat</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">4</span><span class="p">:</span>  <span class="c1"># &gt;= four preceding segments</span>
+            <span class="c1"># endpoint coordinates (-24h, 0h, 6h)</span>
+            <span class="n">lon_0</span><span class="p">,</span> <span class="n">lon_i</span><span class="p">,</span> <span class="n">lon_i1</span> <span class="o">=</span> <span class="n">lon</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">4</span><span class="p">],</span> <span class="n">lon</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lon</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">lat_0</span><span class="p">,</span> <span class="n">lat_i</span><span class="p">,</span> <span class="n">lat_i1</span> <span class="o">=</span> <span class="n">lat</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">4</span><span class="p">],</span> <span class="n">lat</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lat</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># segment endpoints</span>
+        <span class="n">lo0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lo1</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lo2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">lon_0</span><span class="p">,</span> <span class="n">lon_i</span><span class="p">,</span> <span class="n">lon_i1</span>
+        <span class="n">la0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">la1</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">la2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">lat_0</span><span class="p">,</span> <span class="n">lat_i</span><span class="p">,</span> <span class="n">lat_i1</span>
+
+        <span class="c1"># warmup 4-segments (24h) variables</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">vseg</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">vxseg</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">vyseg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_vmean</span><span class="p">(</span><span class="n">lat_0</span><span class="p">,</span> <span class="n">lon_0</span><span class="p">,</span> <span class="n">lat_i</span><span class="p">,</span> <span class="n">lon_i</span><span class="p">,</span> <span class="mi">24</span><span class="p">)</span>
+        <span class="n">aseg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">geodesic_azimuth</span><span class="p">(</span><span class="n">lat_0</span><span class="p">,</span> <span class="n">lon_0</span><span class="p">,</span> <span class="n">lat_i</span><span class="p">,</span> <span class="n">lon_i</span><span class="p">)</span>
+        <span class="c1">#        aseg[i] = calculate_azimut(lon_0, lat_0, lon_i, lat_i)</span>
+
+        <span class="c1"># warmup last-segment (6h) variables</span>
+        <span class="n">pseg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">pres</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">wseg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">wind</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">rseg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rmw</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">lseg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">lat_i</span>
+        <span class="n">laseg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">lat_i</span><span class="p">)</span>
+
+        <span class="c1"># target segment (6h) variables</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">vx</span><span class="p">,</span> <span class="n">vy</span> <span class="o">=</span> <span class="n">get_vmean</span><span class="p">(</span><span class="n">lat_i</span><span class="p">,</span> <span class="n">lon_i</span><span class="p">,</span> <span class="n">lat_i1</span><span class="p">,</span> <span class="n">lon_i1</span><span class="p">,</span> <span class="n">dt</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="n">dv</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span> <span class="o">-</span> <span class="n">vseg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># [km/h]</span>
+        <span class="n">dvx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">vx</span> <span class="o">-</span> <span class="n">vxseg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">dvy</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">vy</span> <span class="o">-</span> <span class="n">vyseg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">dp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">pres</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">pres</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># [mbar]</span>
+        <span class="n">dw</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">wind</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">wind</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># [kt]</span>
+        <span class="n">dr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rmw</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">rmw</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># [nmile]</span>
+        <span class="n">dl</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">lat_i1</span> <span class="o">-</span> <span class="n">lat_i</span>  <span class="c1"># [º]</span>
+        <span class="n">dla</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dl</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="c1"># angle variation</span>
+        <span class="n">ang1</span> <span class="o">=</span> <span class="n">aseg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">ang2</span> <span class="o">=</span> <span class="n">geodesic_azimuth</span><span class="p">(</span><span class="n">lat_i</span><span class="p">,</span> <span class="n">lon_i</span><span class="p">,</span> <span class="n">lat_i1</span><span class="p">,</span> <span class="n">lon_i1</span><span class="p">)</span>
+        <span class="c1">#        ang2 = calculate_azimut(lon_i, lat_i, lon_i1, lat_i1)</span>
+        <span class="n">dt_ang</span> <span class="o">=</span> <span class="n">ang2</span> <span class="o">-</span> <span class="n">ang1</span>  <span class="c1"># [º]</span>
+        <span class="n">sign</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">lseg</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>  <span class="c1"># hemisphere: north (+), south (-)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">ang2</span> <span class="o">&gt;</span> <span class="n">ang1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dt_ang</span> <span class="o">&lt;</span> <span class="mi">180</span><span class="p">):</span>
+            <span class="n">da</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">sign</span> <span class="o">*</span> <span class="p">(</span><span class="n">dt_ang</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">ang2</span> <span class="o">&gt;</span> <span class="n">ang1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dt_ang</span> <span class="o">&gt;</span> <span class="mi">180</span><span class="p">):</span>
+            <span class="n">da</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">sign</span> <span class="o">*</span> <span class="p">(</span><span class="n">dt_ang</span> <span class="o">-</span> <span class="mi">360</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">ang2</span> <span class="o">&lt;</span> <span class="n">ang1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dt_ang</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">180</span><span class="p">):</span>
+            <span class="n">da</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">sign</span> <span class="o">*</span> <span class="p">(</span><span class="n">dt_ang</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">ang2</span> <span class="o">&lt;</span> <span class="n">ang1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dt_ang</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">180</span><span class="p">):</span>
+            <span class="n">da</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">sign</span> <span class="o">*</span> <span class="p">(</span><span class="n">dt_ang</span> <span class="o">+</span> <span class="mi">360</span><span class="p">)</span>
+
+    <span class="c1"># add to dataframe</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;vseg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vseg</span> <span class="o">/</span> <span class="mf">1.852</span>  <span class="c1"># [kt]</span>
+    <span class="c1">#    df_[&#39;vxseg&#39;] = vxseg / 1.852</span>
+    <span class="c1">#    df_[&#39;vyseg&#39;] = vyseg / 1.852</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;dvseg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dv</span> <span class="o">/</span> <span class="mf">1.852</span>
+    <span class="c1">#    df_[&#39;dvxseg&#39;] = dvx / 1.852</span>
+    <span class="c1">#    df_[&#39;dvyseg&#39;] = dvy / 1.852</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;pseg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pseg</span>  <span class="c1"># [mbar]</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;dpseg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dp</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;wseg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">wseg</span>  <span class="c1"># [kt, 1-min avg]</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;dwseg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dw</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;rseg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rseg</span>  <span class="c1"># [nmile]</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;drseg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dr</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;aseg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aseg</span>  <span class="c1"># [º]</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;daseg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">da</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;lseg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lseg</span>  <span class="c1"># [º]</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;laseg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">laseg</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;dlaseg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dla</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;lon_w&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lo0</span>  <span class="c1"># warmup origin</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;lat_w&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">la0</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;lon_i&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lo1</span>  <span class="c1"># target origin</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;lat_i&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">la1</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;lon_t&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lo2</span>  <span class="c1"># target endpoint</span>
+    <span class="n">df_</span><span class="p">[</span><span class="s2">&quot;lat_t&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">la2</span>
+
+    <span class="k">return</span> <span class="n">df_</span></div>
+
+
+
+<div class="viewcode-block" id="stopmotion_interpolation">
+<a class="viewcode-back" href="../../../bluemath_tk.tcs.html#bluemath_tk.tcs.shytcwaves.stopmotion_interpolation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">stopmotion_interpolation</span><span class="p">(</span>
+    <span class="n">df_seg</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">st</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">t_warm</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span><span class="p">,</span>
+    <span class="n">t_seg</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="n">t_prop</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate SWAN cases in cartesian coordinates from stopmotion parameterized segments.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df_seg : pd.DataFrame</span>
+<span class="sd">        Stopmotion segments containing:</span>
+<span class="sd">        - vseg : Mean translational speed (kt)</span>
+<span class="sd">        - pseg : Segment pressure (mbar)</span>
+<span class="sd">        - wseg : Maximum winds (kt)</span>
+<span class="sd">        - rseg : RMW (nmile)</span>
+<span class="sd">        - laseg : Absolute latitude (degrees)</span>
+<span class="sd">        - dvseg : Speed variation (kt)</span>
+<span class="sd">        - dpseg : Pressure variation (mbar)</span>
+<span class="sd">        - dwseg : Wind variation (kt)</span>
+<span class="sd">        - drseg : RMW variation (nmile)</span>
+<span class="sd">        - daseg : Azimuth variation (degrees)</span>
+
+<span class="sd">    st : pd.DataFrame, optional</span>
+<span class="sd">        Real storm track data. If None, MDA segments are used (unrelated to historic tracks).</span>
+<span class="sd">    t_warm : int, optional</span>
+<span class="sd">        Warmup period in hours. Default is 24.</span>
+<span class="sd">    t_seg : int, optional</span>
+<span class="sd">        Target period in hours. Default is 6.</span>
+<span class="sd">    t_prop : int, optional</span>
+<span class="sd">        Propagation period in hours. Default is 42.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[List[pd.DataFrame], List[pd.DataFrame]]</span>
+<span class="sd">        Two lists containing:</span>
+
+<span class="sd">        1. List of storm track DataFrames with columns:</span>
+<span class="sd">           - x, y : Cartesian coordinates (m)</span>
+<span class="sd">           - lon, lat : Geographic coordinates (degrees)</span>
+<span class="sd">           - vf : Translation speed (kt)</span>
+<span class="sd">           - vfx, vfy : Velocity components (kt)</span>
+<span class="sd">           - pn : Surface pressure (1013 mbar)</span>
+<span class="sd">           - p0 : Minimum central pressure (mbar)</span>
+<span class="sd">           - vmax : Maximum winds (kt)</span>
+<span class="sd">           - rmw : RMW (nmile)</span>
+<span class="sd">           - latitude : Latitude with hemisphere sign</span>
+
+<span class="sd">        2. List of empty wave event DataFrames with columns:</span>
+<span class="sd">           - hs, t02, dir, spr : Wave parameters</span>
+<span class="sd">           - U10, V10 : Wind components</span>
+<span class="sd">           - level, tide : Water level parameters</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function generates SWAN cases in cartesian coordinates following SHyTCWaves configuration:</span>
+
+<span class="sd">    A. Warmup period (24h):</span>
+<span class="sd">       Over the negative x-axis ending at (x,y)=(0,0)</span>
+
+<span class="sd">    B. Target period (6h):</span>
+<span class="sd">       Starting at (x,y)=(0,0)</span>
+
+<span class="sd">    C. Propagation period (42h):</span>
+<span class="sd">       No track coordinates (no wind forcing)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># sign hemisphere (+north, -south)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>  <span class="c1"># historic track</span>
+        <span class="n">sign</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="s2">&quot;lat&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;method&quot;</span><span class="p">]</span>
+        <span class="n">center</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;center&quot;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># mda cases</span>
+        <span class="n">sign</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;mda&quot;</span>
+        <span class="n">center</span> <span class="o">=</span> <span class="s2">&quot;mda&quot;</span>
+
+    <span class="c1"># remove NaNs</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df_seg</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+
+    <span class="c1"># number of stopmotion events</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># list of SWAN cases (paramterized events)</span>
+    <span class="n">st_list</span><span class="p">,</span> <span class="n">we_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="n">seg_i</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># stopmotion unit parameters</span>
+        <span class="n">vseg</span> <span class="o">=</span> <span class="n">seg_i</span><span class="p">[</span><span class="s2">&quot;vseg&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.852</span>  <span class="c1"># [km/h]</span>
+        <span class="n">dvseg</span> <span class="o">=</span> <span class="n">seg_i</span><span class="p">[</span><span class="s2">&quot;dvseg&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.852</span>
+        <span class="n">pseg</span> <span class="o">=</span> <span class="n">seg_i</span><span class="p">[</span><span class="s2">&quot;pseg&quot;</span><span class="p">]</span>  <span class="c1"># [mbar]</span>
+        <span class="n">dpseg</span> <span class="o">=</span> <span class="n">seg_i</span><span class="p">[</span><span class="s2">&quot;dpseg&quot;</span><span class="p">]</span>
+        <span class="n">wseg</span> <span class="o">=</span> <span class="n">seg_i</span><span class="p">[</span><span class="s2">&quot;wseg&quot;</span><span class="p">]</span>  <span class="c1"># [kt, 1-min avg]</span>
+        <span class="n">dwseg</span> <span class="o">=</span> <span class="n">seg_i</span><span class="p">[</span><span class="s2">&quot;dwseg&quot;</span><span class="p">]</span>
+        <span class="n">rseg</span> <span class="o">=</span> <span class="n">seg_i</span><span class="p">[</span><span class="s2">&quot;rseg&quot;</span><span class="p">]</span>  <span class="c1"># [nmile]</span>
+        <span class="n">drseg</span> <span class="o">=</span> <span class="n">seg_i</span><span class="p">[</span><span class="s2">&quot;drseg&quot;</span><span class="p">]</span>
+        <span class="n">daseg</span> <span class="o">=</span> <span class="n">seg_i</span><span class="p">[</span><span class="s2">&quot;daseg&quot;</span><span class="p">]</span>  <span class="c1"># [º]</span>
+        <span class="n">laseg</span> <span class="o">=</span> <span class="n">seg_i</span><span class="p">[</span><span class="s2">&quot;laseg&quot;</span><span class="p">]</span>  <span class="c1"># [º]</span>
+
+        <span class="c1"># vmean criteria for SWAN computational timestep [minutes]</span>
+        <span class="n">seg_vmean</span> <span class="o">=</span> <span class="n">vseg</span> <span class="o">+</span> <span class="n">dvseg</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">vseg</span> <span class="o">&gt;</span> <span class="mi">20</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">seg_vmean</span> <span class="o">&gt;</span> <span class="mi">20</span><span class="p">):</span>
+            <span class="n">dt_comp</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dt_comp</span> <span class="o">=</span> <span class="mi">20</span>
+
+        <span class="c1"># time array for SWAN input</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">t_warm</span> <span class="o">+</span> <span class="n">t_seg</span> <span class="o">+</span> <span class="n">t_prop</span>  <span class="c1"># [h] simulation duration</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">/</span> <span class="n">dt_comp</span>  <span class="c1"># [] intervals of computation</span>
+
+        <span class="n">ts_warmup</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">t_warm</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">/</span> <span class="n">dt_comp</span><span class="p">)</span>
+        <span class="n">ts_segment</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">t_seg</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">/</span> <span class="n">dt_comp</span><span class="p">)</span>
+
+        <span class="c1"># random initial date</span>
+        <span class="n">date_ini</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="mi">1999</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">31</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">time_input</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span>
+            <span class="n">date_ini</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">ts</span><span class="p">),</span> <span class="n">freq</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">MIN&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dt_comp</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">time_input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">time_input</span><span class="p">)</span>
+
+        <span class="c1"># vortex input variables</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">ts</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># [m]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">ts</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># [m]</span>
+        <span class="n">vmean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">ts</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># [km/h]</span>
+        <span class="n">ut</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">ts</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="n">vt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">ts</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="n">p0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">ts</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># [mbar]</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">ts</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># [kt, 1-min avg]</span>
+        <span class="n">rmw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">ts</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># [nmile]</span>
+        <span class="n">lat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">ts</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>  <span class="c1"># [º]</span>
+
+        <span class="c1"># (A) preceding 24h segment: over negative x-axis ending at (x,y)=(0,0)</span>
+
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ts_warmup</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">vseg</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="mi">3</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">vseg</span> <span class="o">*</span> <span class="p">(</span><span class="n">dt_comp</span> <span class="o">/</span> <span class="mi">60</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="mi">3</span>
+            <span class="n">y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">vmean</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">vseg</span>
+            <span class="n">ut</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">vseg</span>
+            <span class="n">vt</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">p0</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">pseg</span>
+            <span class="n">vmax</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">wseg</span>
+            <span class="n">rmw</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">rseg</span>
+            <span class="n">lat</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">laseg</span>
+
+        <span class="c1"># (B) target 6h segment: starting at (x,y)=(0,0)</span>
+
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ts_warmup</span><span class="p">,</span> <span class="n">ts_warmup</span> <span class="o">+</span> <span class="n">ts_segment</span><span class="p">):</span>
+            <span class="n">vel</span> <span class="o">=</span> <span class="n">vseg</span> <span class="o">+</span> <span class="n">dvseg</span>  <span class="c1"># [km/h]</span>
+            <span class="n">velx</span> <span class="o">=</span> <span class="n">vel</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">((</span><span class="n">daseg</span> <span class="o">*</span> <span class="n">sign</span> <span class="o">+</span> <span class="mi">90</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span><span class="p">)</span>
+            <span class="n">vely</span> <span class="o">=</span> <span class="n">vel</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">((</span><span class="n">daseg</span> <span class="o">*</span> <span class="n">sign</span> <span class="o">+</span> <span class="mi">90</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span><span class="p">)</span>
+
+            <span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">velx</span> <span class="o">*</span> <span class="p">(</span><span class="n">dt_comp</span> <span class="o">/</span> <span class="mi">60</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="mi">3</span>
+            <span class="n">y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">vely</span> <span class="o">*</span> <span class="p">(</span><span class="n">dt_comp</span> <span class="o">/</span> <span class="mi">60</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="mi">3</span>
+            <span class="n">vmean</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">vel</span>
+            <span class="n">ut</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">velx</span>
+            <span class="n">vt</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">vely</span>
+            <span class="n">p0</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">pseg</span> <span class="o">+</span> <span class="n">dpseg</span>
+            <span class="n">vmax</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">wseg</span> <span class="o">+</span> <span class="n">dwseg</span>
+            <span class="n">rmw</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">rseg</span> <span class="o">+</span> <span class="n">drseg</span>
+            <span class="n">lat</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">laseg</span>
+
+        <span class="c1"># (C) propagation 42h segment: remaining values of data arrays</span>
+
+        <span class="c1"># store dataframe</span>
+        <span class="n">st_seg</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">time_input</span><span class="p">,</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;vf&quot;</span><span class="p">,</span> <span class="s2">&quot;vfx&quot;</span><span class="p">,</span> <span class="s2">&quot;vfy&quot;</span><span class="p">,</span> <span class="s2">&quot;pn&quot;</span><span class="p">,</span> <span class="s2">&quot;p0&quot;</span><span class="p">,</span> <span class="s2">&quot;vmax&quot;</span><span class="p">,</span> <span class="s2">&quot;rmw&quot;</span><span class="p">,</span> <span class="s2">&quot;lat&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="n">st_seg</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>  <span class="c1"># [m]</span>
+        <span class="n">st_seg</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="n">st_seg</span><span class="p">[</span><span class="s2">&quot;lon&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>  <span class="c1"># (idem for plots)</span>
+        <span class="n">st_seg</span><span class="p">[</span><span class="s2">&quot;lat&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="n">st_seg</span><span class="p">[</span><span class="s2">&quot;vf&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vmean</span> <span class="o">/</span> <span class="mf">1.852</span>  <span class="c1"># [kt]</span>
+        <span class="n">st_seg</span><span class="p">[</span><span class="s2">&quot;vfx&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ut</span> <span class="o">/</span> <span class="mf">1.852</span>
+        <span class="n">st_seg</span><span class="p">[</span><span class="s2">&quot;vfy&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vt</span> <span class="o">/</span> <span class="mf">1.852</span>
+        <span class="n">st_seg</span><span class="p">[</span><span class="s2">&quot;pn&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1013</span>  <span class="c1"># [mbar]</span>
+        <span class="n">st_seg</span><span class="p">[</span><span class="s2">&quot;p0&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p0</span>
+        <span class="n">st_seg</span><span class="p">[</span><span class="s2">&quot;vmax&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vmax</span>  <span class="c1"># [kt]</span>
+        <span class="n">st_seg</span><span class="p">[</span><span class="s2">&quot;rmw&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rmw</span>  <span class="c1"># [nmile]</span>
+        <span class="n">st_seg</span><span class="p">[</span><span class="s2">&quot;latitude&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lat</span> <span class="o">*</span> <span class="n">sign</span>  <span class="c1"># [º]</span>
+
+        <span class="c1"># add metadata</span>
+        <span class="n">st_seg</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="n">method</span><span class="p">,</span>
+            <span class="s2">&quot;center&quot;</span><span class="p">:</span> <span class="n">center</span><span class="p">,</span>
+            <span class="s2">&quot;override_dtcomp&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> MIN&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dt_comp</span><span class="p">),</span>
+            <span class="s2">&quot;x0&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;y0&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;p0&quot;</span><span class="p">:</span> <span class="s2">&quot;mbar&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;vf&quot;</span><span class="p">:</span> <span class="s2">&quot;kt&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;vmax&quot;</span><span class="p">:</span> <span class="s2">&quot;kt, 1-min avg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;rmw&quot;</span><span class="p">:</span> <span class="s2">&quot;nmile&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># append to stopmotion event list</span>
+        <span class="n">st_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">st_seg</span><span class="p">)</span>
+
+        <span class="c1"># generate wave event (empty)</span>
+        <span class="n">we</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">time_input</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;hs&quot;</span><span class="p">,</span> <span class="s2">&quot;t02&quot;</span><span class="p">,</span> <span class="s2">&quot;dir&quot;</span><span class="p">,</span> <span class="s2">&quot;spr&quot;</span><span class="p">,</span> <span class="s2">&quot;U10&quot;</span><span class="p">,</span> <span class="s2">&quot;V10&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">we</span><span class="p">[</span><span class="s2">&quot;level&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">we</span><span class="p">[</span><span class="s2">&quot;tide&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">we_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">we</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">st_list</span><span class="p">,</span> <span class="n">we_list</span></div>
+
+
+
+<span class="c1">###############################################################################</span>
+<span class="c1"># STOPMOTION ensemble</span>
+<span class="c1"># functions that collect 6h-segments from library cases to obtain the hybrid</span>
+<span class="c1"># storm track (analogue or closest to the real track); those segments are</span>
+<span class="c1"># rotated and assigned time-geographical coordinates. The ensemble and the</span>
+<span class="c1"># envelope is calculate at each control point</span>
+<span class="c1">###############################################################################</span>
+
+
+<div class="viewcode-block" id="find_analogue">
+<a class="viewcode-back" href="../../../bluemath_tk.tcs.html#bluemath_tk.tcs.shytcwaves.find_analogue">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_analogue</span><span class="p">(</span>
+    <span class="n">df_library</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">df_case</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">ix_weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find the minimum distance in a 10-dimensional normalized space.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df_library : pd.DataFrame</span>
+<span class="sd">        Library parameters DataFrame containing the 10 SHyTCWaves parameters:</span>
+<span class="sd">        {pseg, vseg, wseg, rseg, dp, dv, dw, dr, dA, lat}</span>
+<span class="sd">    df_case : pd.DataFrame</span>
+<span class="sd">        Target case parameters DataFrame with same structure as df_library.</span>
+<span class="sd">    ix_weights : List[float]</span>
+<span class="sd">        Weight factors for each parameter dimension.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Indices of nearest points in the library for each case point.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function finds the minimum distance in a normalized space corresponding</span>
+<span class="sd">    to the SHyTCWaves 10 parameters:</span>
+<span class="sd">    - pseg : Segment pressure</span>
+<span class="sd">    - vseg : Mean translational speed</span>
+<span class="sd">    - wseg : Maximum winds</span>
+<span class="sd">    - rseg : RMW</span>
+<span class="sd">    - dp : Pressure variation</span>
+<span class="sd">    - dv : Speed variation</span>
+<span class="sd">    - dw : Wind variation</span>
+<span class="sd">    - dr : RMW variation</span>
+<span class="sd">    - dA : Azimuth variation</span>
+<span class="sd">    - lat : Latitude</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># remove NaNs from storm segments</span>
+    <span class="n">df_case</span> <span class="o">=</span> <span class="n">df_case</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+    <span class="n">data_case</span> <span class="o">=</span> <span class="n">df_case</span><span class="p">[</span>
+        <span class="p">[</span>
+            <span class="s2">&quot;daseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dpseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dwseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;wseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dvseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;vseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;drseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;rseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;laseg&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="c1"># library segments parameter</span>
+    <span class="n">data_lib</span> <span class="o">=</span> <span class="n">df_library</span><span class="p">[</span>
+        <span class="p">[</span>
+            <span class="s2">&quot;daseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dpseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dwseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;wseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dvseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;vseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;drseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;rseg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;laseg&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">ix_directional</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># get indices of nearest n-dimensional point</span>
+    <span class="n">ix_near</span> <span class="o">=</span> <span class="n">find_nearest_indices</span><span class="p">(</span>
+        <span class="n">query_points</span><span class="o">=</span><span class="n">data_case</span><span class="p">,</span>
+        <span class="n">reference_points</span><span class="o">=</span><span class="n">data_lib</span><span class="p">,</span>
+        <span class="n">directional_indices</span><span class="o">=</span><span class="n">ix_directional</span><span class="p">,</span>
+        <span class="n">weights</span><span class="o">=</span><span class="n">ix_weights</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ix_near</span></div>
+
+
+
+<div class="viewcode-block" id="analogue_endpoints">
+<a class="viewcode-back" href="../../../bluemath_tk.tcs.html#bluemath_tk.tcs.shytcwaves.analogue_endpoints">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">analogue_endpoints</span><span class="p">(</span><span class="n">df_seg</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">df_analogue</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add segment endpoint coordinates by looking up the real target segment.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df_seg : pd.DataFrame</span>
+<span class="sd">        Parameterized historical storm track DataFrame containing:</span>
+<span class="sd">        - lon, lat : Target origin coordinates</span>
+<span class="sd">        - aseg : Warmup azimuth</span>
+<span class="sd">        - daseg : Target azimuth variation</span>
+<span class="sd">    df_analogue : pd.DataFrame</span>
+<span class="sd">        Analogue segments from library containing:</span>
+<span class="sd">        - vseg : Mean translational speed (kt)</span>
+<span class="sd">        - dvseg : Speed variation (kt)</span>
+<span class="sd">        - daseg : Target azimuth variation</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pd.DataFrame</span>
+<span class="sd">        Updated analogue segments DataFrame with added columns:</span>
+<span class="sd">        - aseg : Warmup azimuth</span>
+<span class="sd">        - lon_w, lat_w : Warmup origin coordinates</span>
+<span class="sd">        - lon_i, lat_i : Target origin coordinates (from df_seg)</span>
+<span class="sd">        - lon_t, lat_t : Target endpoint coordinates</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function:</span>
+<span class="sd">    1. Calculates warmup origin by shooting backwards 24h from target origin</span>
+<span class="sd">    2. Uses target origin from historical track</span>
+<span class="sd">    3. Calculates target endpoint by shooting forwards 6h from target origin</span>
+<span class="sd">    4. Accounts for hemisphere when calculating angles</span>
+<span class="sd">    5. Converts longitudes to [0-360°] convention</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># remove NaNs</span>
+    <span class="n">df_seg</span> <span class="o">=</span> <span class="n">df_seg</span><span class="p">[</span><span class="o">~</span><span class="n">df_seg</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+    <span class="c1"># df_analogue = df_analogue[~df_analogue.isna().any(axis=1)]</span>
+
+    <span class="c1"># get hemisphere</span>
+    <span class="c1"># relative angles are multiplied by &quot;sign&quot; to account for hemisphere</span>
+    <span class="n">sign</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">df_seg</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># get historic variables</span>
+    <span class="n">lon0</span> <span class="o">=</span> <span class="n">df_seg</span><span class="o">.</span><span class="n">lon</span><span class="o">.</span><span class="n">values</span>  <span class="c1"># target origin coords</span>
+    <span class="n">lat0</span> <span class="o">=</span> <span class="n">df_seg</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">aseg</span> <span class="o">=</span> <span class="n">df_seg</span><span class="o">.</span><span class="n">aseg</span><span class="o">.</span><span class="n">values</span>  <span class="c1"># warmup azimuth</span>
+    <span class="n">daseg</span> <span class="o">=</span> <span class="n">df_seg</span><span class="o">.</span><span class="n">daseg</span><span class="o">.</span><span class="n">values</span> <span class="o">*</span> <span class="n">sign</span>  <span class="c1"># target azimuth variation</span>
+
+    <span class="c1"># get analogue variables</span>
+    <span class="n">vseg1_an</span> <span class="o">=</span> <span class="n">df_analogue</span><span class="o">.</span><span class="n">vseg</span><span class="o">.</span><span class="n">values</span>  <span class="c1"># warmup velocity [kt]</span>
+    <span class="n">dvseg_an</span> <span class="o">=</span> <span class="n">df_analogue</span><span class="o">.</span><span class="n">dvseg</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">vseg2_an</span> <span class="o">=</span> <span class="n">vseg1_an</span> <span class="o">+</span> <span class="n">dvseg_an</span>  <span class="c1"># target velocity</span>
+    <span class="n">daseg_an</span> <span class="o">=</span> <span class="n">df_analogue</span><span class="o">.</span><span class="n">daseg</span><span class="o">.</span><span class="n">values</span> <span class="o">*</span> <span class="n">sign</span>  <span class="c1"># target azimuth variation</span>
+
+    <span class="c1"># new variables</span>
+    <span class="n">az1_an</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">lon0</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">glon1_an</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">lon0</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">glon2_an</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">lon0</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">glat1_an</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">lon0</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">glat2_an</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">lon0</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">df_seg</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="c1"># azimuth angles for ensemble</span>
+        <span class="n">az2</span> <span class="o">=</span> <span class="n">aseg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">daseg</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># target azimuth (historic-fixed)</span>
+        <span class="n">az1</span> <span class="o">=</span> <span class="n">az2</span> <span class="o">-</span> <span class="n">daseg_an</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># warmup azimuth (stopmotion analogue)</span>
+
+        <span class="c1"># shoot backwards to warmup origin</span>
+        <span class="n">dist1</span> <span class="o">=</span> <span class="n">vseg1_an</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.852</span> <span class="o">*</span> <span class="mi">24</span>  <span class="c1"># [km]</span>
+        <span class="n">glon1</span><span class="p">,</span> <span class="n">glat1</span><span class="p">,</span> <span class="n">baz</span> <span class="o">=</span> <span class="n">shoot</span><span class="p">(</span><span class="n">lon0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lat0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">az1</span> <span class="o">+</span> <span class="mi">180</span><span class="p">,</span> <span class="n">dist1</span><span class="p">)</span>
+
+        <span class="c1"># shoot forwards to target endpoint</span>
+        <span class="n">dist2</span> <span class="o">=</span> <span class="n">vseg2_an</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.852</span> <span class="o">*</span> <span class="mi">6</span>  <span class="c1"># [km]</span>
+        <span class="n">glon2</span><span class="p">,</span> <span class="n">glat2</span><span class="p">,</span> <span class="n">baz</span> <span class="o">=</span> <span class="n">shoot</span><span class="p">(</span><span class="n">lon0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lat0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">az2</span> <span class="o">+</span> <span class="mi">180</span> <span class="o">-</span> <span class="mi">180</span><span class="p">,</span> <span class="n">dist2</span><span class="p">)</span>
+
+        <span class="c1"># store</span>
+        <span class="n">az1_an</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">az1</span>
+        <span class="n">glon1_an</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">glon1</span>
+        <span class="n">glon2_an</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">glon2</span>
+        <span class="n">glat1_an</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">glat1</span>
+        <span class="n">glat2_an</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">glat2</span>
+
+    <span class="c1"># longitude convention</span>
+    <span class="n">glon1_an</span><span class="p">[</span><span class="n">glon1_an</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">360</span>
+    <span class="n">glon2_an</span><span class="p">[</span><span class="n">glon2_an</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">360</span>
+
+    <span class="c1"># add to dataframe</span>
+    <span class="n">df_analogue</span><span class="p">[</span><span class="s2">&quot;aseg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">az1_an</span>
+    <span class="n">df_analogue</span><span class="p">[</span><span class="s2">&quot;lon_w&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">glon1_an</span>  <span class="c1"># warmup origin</span>
+    <span class="n">df_analogue</span><span class="p">[</span><span class="s2">&quot;lat_w&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">glat1_an</span>
+    <span class="n">df_analogue</span><span class="p">[</span><span class="s2">&quot;lon_i&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_seg</span><span class="o">.</span><span class="n">lon</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">df_analogue</span><span class="p">[</span><span class="s2">&quot;lat_i&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_seg</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">df_analogue</span><span class="p">[</span><span class="s2">&quot;lon_t&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">glon2_an</span>
+    <span class="n">df_analogue</span><span class="p">[</span><span class="s2">&quot;lat_t&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">glat2_an</span>
+
+    <span class="k">return</span> <span class="n">df_analogue</span></div>
+
+
+
+<div class="viewcode-block" id="stopmotion_st_bmu">
+<a class="viewcode-back" href="../../../bluemath_tk.tcs.html#bluemath_tk.tcs.shytcwaves.stopmotion_st_bmu">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">stopmotion_st_bmu</span><span class="p">(</span>
+    <span class="n">df_analogue</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">df_seg</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">st</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">cp_lon_ls</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">cp_lat_ls</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">max_dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span>
+    <span class="n">list_out</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">tqdm_out</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">text_out</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract bulk wave parameters from library analogue cases.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df_analogue : pd.DataFrame</span>
+<span class="sd">        Analogue prerun segments from library.</span>
+<span class="sd">    df_seg : pd.DataFrame</span>
+<span class="sd">        Storm 6h-segments parameters.</span>
+<span class="sd">    st : pd.DataFrame</span>
+<span class="sd">        Storm track interpolated every 6h.</span>
+<span class="sd">    cp_lon_ls : List[float]</span>
+<span class="sd">        Control point longitude coordinates.</span>
+<span class="sd">    cp_lat_ls : List[float]</span>
+<span class="sd">        Control point latitude coordinates.</span>
+<span class="sd">    max_dist : float, optional</span>
+<span class="sd">        Maximum distance (km) to extract closest node. Default is 60.</span>
+<span class="sd">    list_out : bool, optional</span>
+<span class="sd">        Whether to return list of datasets instead of merged dataset. Default is False.</span>
+<span class="sd">    tqdm_out : bool, optional</span>
+<span class="sd">        Whether to show progress bar. Default is False.</span>
+<span class="sd">    text_out : bool, optional</span>
+<span class="sd">        Whether to show text output. Default is True.</span>
+<span class="sd">    mode : str, optional</span>
+<span class="sd">        High or low resolution library indices. Default is &quot;&quot;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    xr.Dataset</span>
+<span class="sd">        Wave directional spectra with dimensions:</span>
+<span class="sd">        - case : Storm segments</span>
+<span class="sd">        - point : Control points</span>
+<span class="sd">        - time : Time steps</span>
+
+<span class="sd">        Contains variables:</span>
+<span class="sd">        - hs : Significant wave height</span>
+<span class="sd">        - tp : Peak period</span>
+<span class="sd">        - lon, lat : Control point coordinates</span>
+<span class="sd">        - ix_near : Nearest point indices</span>
+<span class="sd">        - pos_nonan : Valid point mask</span>
+<span class="sd">        - bmu : Best matching unit indices</span>
+<span class="sd">        - hsbmu : Maximum Hs per point and time</span>
+<span class="sd">        - tpbmu : Tp at maximum Hs</span>
+<span class="sd">        - hswath : Maximum Hs per point</span>
+<span class="sd">        - tswath : Tp at maximum Hs per point</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function:</span>
+<span class="sd">    1. Accesses library analogue cases for a given storm track</span>
+<span class="sd">    2. Calculates distance and angle from target segment origin to control points</span>
+<span class="sd">    3. Extracts wave parameters at closest nodes for each analogue segment</span>
+<span class="sd">    4. Computes bulk parameter envelope and swath</span>
+<span class="sd">    5. Handles both high and low resolution libraries</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># remove NaN</span>
+    <span class="n">df_seg</span> <span class="o">=</span> <span class="n">df_seg</span><span class="p">[</span><span class="o">~</span><span class="n">df_seg</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+    <span class="n">df_analogue</span> <span class="o">=</span> <span class="n">df_analogue</span><span class="p">[</span><span class="o">~</span><span class="n">df_analogue</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+
+    <span class="c1"># assign time</span>
+    <span class="n">df_seg</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_seg</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="c1"># get hemisphere</span>
+    <span class="n">sign</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">df_seg</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">xds_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">tqdm_out</span><span class="p">:</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">df_seg</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">df_seg</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">iseg</span> <span class="ow">in</span> <span class="n">array</span><span class="p">:</span>  <span class="c1"># each segment</span>
+        <span class="c1"># get storm segment &#39;i&#39;</span>
+        <span class="n">df_icase</span> <span class="o">=</span> <span class="n">df_seg</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">iseg</span><span class="p">]</span>
+        <span class="n">df_ianalogue</span> <span class="o">=</span> <span class="n">df_analogue</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">iseg</span><span class="p">]</span>
+        <span class="n">iseg_analogue</span> <span class="o">=</span> <span class="n">df_ianalogue</span><span class="o">.</span><span class="n">name</span>  <span class="c1"># analogue id</span>
+        <span class="n">aseg</span> <span class="o">=</span> <span class="n">df_ianalogue</span><span class="o">.</span><span class="n">aseg</span>  <span class="c1"># analogue warmseg azimuth (N)</span>
+
+        <span class="c1"># ---------------------------------------------------------------------</span>
+        <span class="c1"># get storm coordinates at &quot;seg_time&quot;</span>
+        <span class="n">seg_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="n">df_icase</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>  <span class="c1"># timestamp to datetime64</span>
+        <span class="n">ind_time_st</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span> <span class="o">==</span> <span class="n">seg_time</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># storm coordinates (real storm eye)</span>
+        <span class="n">st_lon</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">ind_time_st</span><span class="p">]</span><span class="o">.</span><span class="n">lon</span>  <span class="c1"># target origin longitude</span>
+        <span class="n">st_lat</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">ind_time_st</span><span class="p">]</span><span class="o">.</span><span class="n">lat</span>  <span class="c1"># target origin latitude</span>
+        <span class="n">st_time</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">ind_time_st</span><span class="p">]</span>  <span class="c1"># time coordinates</span>
+
+        <span class="c1"># ---------------------------------------------------------------------</span>
+        <span class="c1"># get cp coordinates in relative system (radii, angle)</span>
+        <span class="n">cp_dist_ls</span><span class="p">,</span> <span class="n">cp_ang_ls</span> <span class="o">=</span> <span class="n">get_cp_radii_angle</span><span class="p">(</span>
+            <span class="n">st_lat</span><span class="p">,</span> <span class="n">st_lon</span><span class="p">,</span> <span class="n">cp_lat_ls</span><span class="p">,</span> <span class="n">cp_lon_ls</span><span class="p">,</span> <span class="n">sign</span><span class="p">,</span> <span class="n">aseg</span>
+        <span class="p">)</span>
+
+        <span class="c1"># get SWAN output mask indices (rad, ang)</span>
+        <span class="n">mask_rad</span><span class="p">,</span> <span class="n">mask_ang</span> <span class="o">=</span> <span class="n">get_mask_radii_angle</span><span class="p">(</span><span class="n">iseg_analogue</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+
+        <span class="c1"># find closest index</span>
+        <span class="n">ix_near</span> <span class="o">=</span> <span class="n">find_nearest</span><span class="p">(</span><span class="n">cp_dist_ls</span><span class="p">,</span> <span class="n">cp_ang_ls</span><span class="p">,</span> <span class="n">mask_rad</span><span class="p">,</span> <span class="n">mask_ang</span><span class="p">)</span>
+        <span class="n">pos_nonan</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">mask_rad</span><span class="p">[</span><span class="n">ix_near</span><span class="p">]</span> <span class="o">-</span> <span class="n">cp_dist_ls</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">max_dist</span>
+
+        <span class="c1"># ---------------------------------------------------------------------</span>
+        <span class="c1"># load library Hs reconstructed</span>
+        <span class="n">xds_rec</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">PATHS</span><span class="p">[</span><span class="s2">&quot;SHYTCWAVES_BULK&quot;</span><span class="p">])</span>
+        <span class="n">xds_rec</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s2">&quot;2000-01-01&quot;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s2">&quot;1H&quot;</span><span class="p">)</span>
+
+        <span class="c1"># extract HS,TP at closest points (case,point,time)</span>
+        <span class="n">hs_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">ix_near</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">xds_rec</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="n">hs_arr</span><span class="p">[</span><span class="n">pos_nonan</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">xds_rec</span><span class="o">.</span><span class="n">hs</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">case</span><span class="o">=</span><span class="n">iseg_analogue</span><span class="p">,</span> <span class="n">point</span><span class="o">=</span><span class="n">ix_near</span><span class="p">[</span><span class="n">pos_nonan</span><span class="p">])</span><span class="o">.</span><span class="n">load</span><span class="p">()</span><span class="o">.</span><span class="n">values</span>
+        <span class="p">)</span>
+
+        <span class="n">tp_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">ix_near</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">xds_rec</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="n">tp_arr</span><span class="p">[</span><span class="n">pos_nonan</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">xds_rec</span><span class="o">.</span><span class="n">tp</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">case</span><span class="o">=</span><span class="n">iseg_analogue</span><span class="p">,</span> <span class="n">point</span><span class="o">=</span><span class="n">ix_near</span><span class="p">[</span><span class="n">pos_nonan</span><span class="p">])</span><span class="o">.</span><span class="n">load</span><span class="p">()</span><span class="o">.</span><span class="n">values</span>
+        <span class="p">)</span>
+
+        <span class="c1"># time array</span>
+        <span class="n">hour_intervals</span> <span class="o">=</span> <span class="n">xds_rec</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="p">[</span><span class="n">st_time</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;h&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">hour_intervals</span><span class="p">)]</span>
+        <span class="n">time_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+
+        <span class="c1"># store dataset</span>
+        <span class="n">xds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;hs&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;case&quot;</span><span class="p">,</span> <span class="s2">&quot;point&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">hs_arr</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)),</span>
+                <span class="s2">&quot;tp&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;case&quot;</span><span class="p">,</span> <span class="s2">&quot;point&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">tp_arr</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)),</span>
+                <span class="s2">&quot;lon&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;point&quot;</span><span class="p">),</span> <span class="n">cp_lon_ls</span><span class="p">),</span>
+                <span class="s2">&quot;lat&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;point&quot;</span><span class="p">),</span> <span class="n">cp_lat_ls</span><span class="p">),</span>
+                <span class="s2">&quot;ix_near&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;case&quot;</span><span class="p">,</span> <span class="s2">&quot;point&quot;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">ix_near</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)),</span>
+                <span class="s2">&quot;pos_nonan&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;case&quot;</span><span class="p">,</span> <span class="s2">&quot;point&quot;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">pos_nonan</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)),</span>
+            <span class="p">},</span>
+            <span class="n">coords</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;case&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">iseg</span><span class="p">],</span>
+                <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">time_array</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">xds_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xds</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">list_out</span><span class="p">:</span>
+        <span class="n">xds_out</span> <span class="o">=</span> <span class="n">xds_list</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># merge</span>
+        <span class="n">xds_out</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">xds_list</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">text_out</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Merging bulk envelope...&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+
+        <span class="c1"># add envelope variables</span>
+        <span class="n">xds_bmu</span> <span class="o">=</span> <span class="n">xds_out</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">hsval</span> <span class="o">=</span> <span class="n">xds_bmu</span><span class="o">.</span><span class="n">hs</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">hsval</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">hsval</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># remove nan</span>
+        <span class="n">bmu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">hsval</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>  <span class="c1"># bmu indices</span>
+        <span class="n">hsmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">hsval</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>  <span class="c1"># max over &#39;case&#39;</span>
+
+        <span class="c1"># bmu, hs</span>
+        <span class="n">bmu</span><span class="p">[</span><span class="n">hsmax</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>  <span class="c1"># restitute nans</span>
+        <span class="n">hsmax</span><span class="p">[</span><span class="n">hsmax</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="n">xds_out</span><span class="p">[</span><span class="s2">&quot;bmu&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;point&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">bmu</span><span class="p">)</span>
+        <span class="n">xds_out</span><span class="p">[</span><span class="s2">&quot;hsbmu&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;point&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">hsmax</span><span class="p">)</span>
+
+        <span class="c1"># tp</span>
+        <span class="n">tpmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">xds_out</span><span class="o">.</span><span class="n">hsbmu</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="n">nanmask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">bmu</span><span class="p">)</span>
+        <span class="n">mesht</span><span class="p">,</span> <span class="n">meshp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">xds_out</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">xds_out</span><span class="o">.</span><span class="n">point</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">tpmax</span><span class="p">[</span><span class="n">nanmask</span><span class="p">]</span> <span class="o">=</span> <span class="n">xds_out</span><span class="o">.</span><span class="n">tp</span><span class="o">.</span><span class="n">values</span><span class="p">[</span>
+            <span class="n">bmu</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="n">nanmask</span><span class="o">.</span><span class="n">ravel</span><span class="p">()]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
+            <span class="n">meshp</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="n">nanmask</span><span class="o">.</span><span class="n">ravel</span><span class="p">()],</span>
+            <span class="n">mesht</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="n">nanmask</span><span class="o">.</span><span class="n">ravel</span><span class="p">()],</span>
+        <span class="p">]</span>
+        <span class="n">xds_out</span><span class="p">[</span><span class="s2">&quot;tpbmu&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;point&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">tpmax</span><span class="p">)</span>
+
+        <span class="c1"># add swath variables</span>
+        <span class="n">hh</span> <span class="o">=</span> <span class="n">hsmax</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">hh</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">hh</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">posw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">hh</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">xds_out</span><span class="p">[</span><span class="s2">&quot;hswath&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;point&quot;</span><span class="p">),</span> <span class="n">hsmax</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">xds_out</span><span class="o">.</span><span class="n">point</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="n">posw</span><span class="p">])</span>
+        <span class="n">xds_out</span><span class="p">[</span><span class="s2">&quot;tswath&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;point&quot;</span><span class="p">),</span> <span class="n">tpmax</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">xds_out</span><span class="o">.</span><span class="n">point</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="n">posw</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">xds_out</span></div>
+
+
+
+<div class="viewcode-block" id="stopmotion_st_spectra">
+<a class="viewcode-back" href="../../../bluemath_tk.tcs.html#bluemath_tk.tcs.shytcwaves.stopmotion_st_spectra">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">stopmotion_st_spectra</span><span class="p">(</span>
+    <span class="n">df_analogue</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">df_seg</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">st</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">cp_lon_ls</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">cp_lat_ls</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">cp_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+    <span class="n">max_dist</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span>
+    <span class="n">list_out</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">tqdm_out</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">text_out</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function to access the library analogue cases for a given storm track,</span>
+<span class="sd">    calculate distance and angle from the target segment origin to the control</span>
+<span class="sd">    point (relative coordinate system), and extract the directional wave</span>
+<span class="sd">    spectra at the closest node (for every analogue segment)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df_analogue : pd.DataFrame</span>
+<span class="sd">        Analogue prerun segments from library.</span>
+<span class="sd">    df_seg : pd.DataFrame</span>
+<span class="sd">        Storm 6h-segments parameters.</span>
+<span class="sd">    st : pd.DataFrame</span>
+<span class="sd">        Storm track interpolated every 6h.</span>
+<span class="sd">    cp_lon_ls : List[float]</span>
+<span class="sd">        Control point geographical coordinates.</span>
+<span class="sd">    cp_lat_ls : List[float]</span>
+<span class="sd">        Control point geographical coordinates.</span>
+<span class="sd">    cp_names : List[str], optional</span>
+<span class="sd">        Control point names. Default is [].</span>
+<span class="sd">    max_dist : float, optional</span>
+<span class="sd">        Maximum distance [km] to extract closest node. Default is 60.</span>
+<span class="sd">    list_out : bool, optional</span>
+<span class="sd">        Whether to list output. Default is False.</span>
+<span class="sd">    tqdm_out : bool, optional</span>
+<span class="sd">        Whether to use tqdm. Default is False.</span>
+<span class="sd">    text_out : bool, optional</span>
+<span class="sd">        Whether to print text. Default is True.</span>
+<span class="sd">    mode : str, optional</span>
+<span class="sd">        Mode. Default is &quot;&quot;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[xr.Dataset, xr.Dataset]</span>
+<span class="sd">        - xds_spec : Wave directional spectra (dim &#39;case&#39;)</span>
+<span class="sd">        - xds_bmu : BMU indices</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function:</span>
+<span class="sd">    1. Removes NaN values from df_seg and df_analogue</span>
+<span class="sd">    2. Assigns time to df_seg</span>
+<span class="sd">    3. Gets hemisphere sign</span>
+<span class="sd">    4. Gets bmu (wavespectra reconstructed)</span>
+<span class="sd">    5. Opens seg_sim dataset</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># remove NaN</span>
+    <span class="n">df_seg</span> <span class="o">=</span> <span class="n">df_seg</span><span class="p">[</span><span class="o">~</span><span class="n">df_seg</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+    <span class="n">df_analogue</span> <span class="o">=</span> <span class="n">df_analogue</span><span class="p">[</span><span class="o">~</span><span class="n">df_analogue</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+
+    <span class="c1"># assign time</span>
+    <span class="n">df_seg</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_seg</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="c1"># get hemisphere</span>
+    <span class="n">sign</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">df_seg</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># get bmu (wavespectra reconstructed)</span>
+    <span class="c1"># it provides &#39;time,bmu,ix_near,pos_nonan&#39; (point,time)</span>
+    <span class="n">xds_bmu</span> <span class="o">=</span> <span class="n">stopmotion_st_bmu</span><span class="p">(</span>
+        <span class="n">df_analogue</span><span class="o">=</span><span class="n">df_analogue</span><span class="p">,</span>
+        <span class="n">df_seg</span><span class="o">=</span><span class="n">df_seg</span><span class="p">,</span>
+        <span class="n">st</span><span class="o">=</span><span class="n">st</span><span class="p">,</span>
+        <span class="n">cp_lon_ls</span><span class="o">=</span><span class="n">cp_lon_ls</span><span class="p">,</span>
+        <span class="n">cp_lat_ls</span><span class="o">=</span><span class="n">cp_lat_ls</span><span class="p">,</span>
+        <span class="n">max_dist</span><span class="o">=</span><span class="n">max_dist</span><span class="p">,</span>
+        <span class="n">list_out</span><span class="o">=</span><span class="n">list_out</span><span class="p">,</span>
+        <span class="n">tqdm_out</span><span class="o">=</span><span class="n">tqdm_out</span><span class="p">,</span>
+        <span class="n">text_out</span><span class="o">=</span><span class="n">text_out</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># spectral energy</span>
+    <span class="n">seg_sim</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span>
+        <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">PATHS</span><span class="p">[</span><span class="s2">&quot;SHYTCWAVES_SPECTRA&quot;</span><span class="p">],</span> <span class="s2">&quot;0000/spec_outpts_main.nc&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">efth_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">seg_sim</span><span class="o">.</span><span class="n">frequency</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+            <span class="n">seg_sim</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+            <span class="n">xds_bmu</span><span class="o">.</span><span class="n">point</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+            <span class="n">xds_bmu</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+    <span class="p">)</span>  <span class="c1"># 38,72,cp,t</span>
+
+    <span class="k">if</span> <span class="n">tqdm_out</span><span class="p">:</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">xds_bmu</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">xds_bmu</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">iseg</span> <span class="ow">in</span> <span class="n">array</span><span class="p">:</span>
+        <span class="c1"># get storm segment &#39;i&#39;</span>
+        <span class="n">df_icase</span> <span class="o">=</span> <span class="n">df_seg</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">iseg</span><span class="p">]</span>
+        <span class="n">df_ianalogue</span> <span class="o">=</span> <span class="n">df_analogue</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">iseg</span><span class="p">]</span>
+        <span class="n">iseg_analogue</span> <span class="o">=</span> <span class="n">df_ianalogue</span><span class="o">.</span><span class="n">name</span>  <span class="c1"># analogue id</span>
+
+        <span class="c1"># ---------------------------------------------------------------------</span>
+        <span class="c1"># get storm coordinates at &quot;seg_time&quot;</span>
+        <span class="n">seg_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="n">df_icase</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>  <span class="c1"># timestamp to datetime64</span>
+        <span class="n">st_time</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">st</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span> <span class="o">==</span> <span class="n">seg_time</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># ---------------------------------------------------------------------</span>
+        <span class="c1"># get analogue segment from library</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;spec_outpts_main.nc&quot;</span>
+        <span class="n">p_analogue</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">PATHS</span><span class="p">[</span><span class="s2">&quot;SHYTCWAVES_SPECTRA&quot;</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">iseg_analogue</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">filename</span>
+        <span class="p">)</span>
+        <span class="c1"># load file</span>
+        <span class="n">seg_sim</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">p_analogue</span><span class="p">)</span>  <span class="c1"># freq,dir,2088,48</span>
+
+        <span class="c1"># time array</span>
+        <span class="n">hour_intervals</span> <span class="o">=</span> <span class="n">seg_sim</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="p">[</span><span class="n">st_time</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;h&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">hour_intervals</span><span class="p">)]</span>
+        <span class="n">time_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+
+        <span class="c1"># get intersect time iseg vs xds_bmu</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">ix_time_st</span><span class="p">,</span> <span class="n">ix_time_shy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span>
+            <span class="n">time_array</span><span class="p">,</span> <span class="n">xds_bmu</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">return_indices</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="c1"># find all closest grid points</span>
+        <span class="n">shy_inear</span> <span class="o">=</span> <span class="n">xds_bmu</span><span class="o">.</span><span class="n">ix_near</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">iseg</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>  <span class="c1"># case,point</span>
+
+        <span class="c1"># find bmu indices for iseg</span>
+        <span class="n">in_pt</span><span class="p">,</span> <span class="n">in_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">xds_bmu</span><span class="o">.</span><span class="n">bmu</span><span class="o">.</span><span class="n">values</span> <span class="o">==</span> <span class="n">iseg</span><span class="p">)</span>
+
+        <span class="c1"># get indices of casei</span>
+        <span class="n">in_t_</span> <span class="o">=</span> <span class="n">in_t</span> <span class="o">-</span> <span class="n">ix_time_shy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># reorder spectral directions</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;_lowres&quot;</span><span class="p">:</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># depends on the library dirs delta</span>
+        <span class="n">efth_case</span> <span class="o">=</span> <span class="n">seg_sim</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">point</span><span class="o">=</span><span class="n">shy_inear</span><span class="p">)</span>  <span class="c1"># .isel(point=in_pt, time=in_t_)</span>
+        <span class="k">if</span> <span class="n">sign</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">efth_case</span><span class="p">[</span><span class="s2">&quot;direction&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">360</span> <span class="o">-</span> <span class="n">seg_sim</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">new_dirs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span>
+                <span class="n">efth_case</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="n">base</span> <span class="o">*</span> <span class="nb">round</span><span class="p">(</span><span class="n">df_icase</span><span class="o">.</span><span class="n">aseg</span> <span class="o">/</span> <span class="n">base</span><span class="p">)</span> <span class="o">+</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">1</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_dirs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span>
+                <span class="n">efth_case</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="n">base</span> <span class="o">*</span> <span class="nb">round</span><span class="p">(</span><span class="n">df_icase</span><span class="o">.</span><span class="n">aseg</span> <span class="o">/</span> <span class="n">base</span><span class="p">)</span> <span class="o">-</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">1</span>
+            <span class="p">)</span>
+        <span class="n">new_dirs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">new_dirs</span><span class="p">,</span> <span class="mi">360</span><span class="p">)</span>
+        <span class="n">new_dirs</span><span class="p">[</span><span class="n">new_dirs</span> <span class="o">&gt;</span> <span class="mi">270</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">360</span>
+        <span class="n">efth_case</span><span class="p">[</span><span class="s2">&quot;direction&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_dirs</span>
+        <span class="n">efth_case</span> <span class="o">=</span> <span class="n">efth_case</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="n">seg_sim</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+        <span class="c1"># insert spectral values for bmu=iseg</span>
+        <span class="n">efth_arr</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">in_pt</span><span class="p">,</span> <span class="n">in_t</span><span class="p">]</span> <span class="o">=</span> <span class="n">efth_case</span><span class="o">.</span><span class="n">efth</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">in_pt</span><span class="p">,</span> <span class="n">in_t_</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">text_out</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Inserting envelope spectra...&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+
+    <span class="c1"># store dataset</span>
+    <span class="n">xds_spec</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;efth&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;freq&quot;</span><span class="p">,</span> <span class="s2">&quot;dir&quot;</span><span class="p">,</span> <span class="s2">&quot;point&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">efth_arr</span><span class="p">),</span>
+            <span class="s2">&quot;lon&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;point&quot;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cp_lon_ls</span><span class="p">)),</span>
+            <span class="s2">&quot;lat&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;point&quot;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cp_lat_ls</span><span class="p">)),</span>
+            <span class="s2">&quot;station&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;point&quot;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cp_names</span><span class="p">)),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;freq&quot;</span><span class="p">:</span> <span class="n">seg_sim</span><span class="o">.</span><span class="n">frequency</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="s2">&quot;dir&quot;</span><span class="p">:</span> <span class="n">seg_sim</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="s2">&quot;point&quot;</span><span class="p">:</span> <span class="n">xds_bmu</span><span class="o">.</span><span class="n">point</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">xds_bmu</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">xds_spec</span><span class="p">,</span> <span class="n">xds_bmu</span></div>
+
+
+
+<div class="viewcode-block" id="get_cp_radii_angle">
+<a class="viewcode-back" href="../../../bluemath_tk.tcs.html#bluemath_tk.tcs.shytcwaves.get_cp_radii_angle">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_cp_radii_angle</span><span class="p">(</span>
+    <span class="n">st_lat</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">st_lon</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">cp_lat_ls</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">cp_lon_ls</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">sign</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">aseg</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract control point distances and angles in the relative coordinate system.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    st_lat : float</span>
+<span class="sd">        Storm center latitude.</span>
+<span class="sd">    st_lon : float</span>
+<span class="sd">        Storm center longitude.</span>
+<span class="sd">    cp_lat_ls : List[float]</span>
+<span class="sd">        Control point latitudes.</span>
+<span class="sd">    cp_lon_ls : List[float]</span>
+<span class="sd">        Control point longitudes.</span>
+<span class="sd">    sign : int</span>
+<span class="sd">        Hemisphere indicator: 1 for north, -1 for south.</span>
+<span class="sd">    aseg : float</span>
+<span class="sd">        Azimuth of the analogue warm segment (from geographic north).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[List[float], List[float]]</span>
+<span class="sd">        Two lists containing:</span>
+<span class="sd">        - cp_dist_ls : Distances from storm center to control points (km)</span>
+<span class="sd">        - cp_ang_ls : Angles from storm center to control points (degrees)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function:</span>
+<span class="sd">    1. Calculates great circle distances between storm center and control points</span>
+<span class="sd">    2. Converts distances from degrees to kilometers</span>
+<span class="sd">    3. Calculates angles relative to geographic north</span>
+<span class="sd">    4. Transforms angles to relative coordinate system</span>
+<span class="sd">    5. Adjusts angles for southern hemisphere</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">cp_dist_ls</span><span class="p">,</span> <span class="n">cp_ang_ls</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cp_lat_ls</span><span class="p">)):</span>
+        <span class="n">cp_lat</span><span class="p">,</span> <span class="n">cp_lon</span> <span class="o">=</span> <span class="n">cp_lat_ls</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">cp_lon_ls</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># get point polar reference</span>
+        <span class="c1"># azimut is refered to geographical north (absolute system)</span>
+        <span class="n">arcl_h</span><span class="p">,</span> <span class="n">ang_abs</span> <span class="o">=</span> <span class="n">geodesic_distance_azimuth</span><span class="p">(</span><span class="n">st_lat</span><span class="p">,</span> <span class="n">st_lon</span><span class="p">,</span> <span class="n">cp_lat</span><span class="p">,</span> <span class="n">cp_lon</span><span class="p">)</span>
+        <span class="n">cp_dist_ls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arcl_h</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span> <span class="o">*</span> <span class="n">EARTH_RADIUS</span><span class="p">)</span>  <span class="c1"># [km]</span>
+
+        <span class="c1"># change of coordinate system (absolute to relative)</span>
+        <span class="n">ang_rel</span> <span class="o">=</span> <span class="n">ang_abs</span> <span class="o">-</span> <span class="p">(</span><span class="n">aseg</span> <span class="o">-</span> <span class="mi">90</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ang_rel</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">ang_rel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">ang_rel</span><span class="p">,</span> <span class="mi">360</span><span class="p">)</span>
+
+        <span class="c1"># south hemisphere effect</span>
+        <span class="k">if</span> <span class="n">sign</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">ang_rel</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">ang_rel</span> <span class="o">&lt;=</span> <span class="mi">180</span><span class="p">):</span>
+                <span class="n">ang_rel</span> <span class="o">=</span> <span class="mi">180</span> <span class="o">-</span> <span class="n">ang_rel</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">ang_rel</span> <span class="o">&gt;=</span> <span class="mi">180</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">ang_rel</span> <span class="o">&lt;=</span> <span class="mi">360</span><span class="p">):</span>
+                <span class="n">ang_rel</span> <span class="o">=</span> <span class="mi">360</span> <span class="o">-</span> <span class="p">(</span><span class="n">ang_rel</span> <span class="o">-</span> <span class="mi">180</span><span class="p">)</span>
+
+        <span class="n">cp_ang_ls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ang_rel</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cp_dist_ls</span><span class="p">,</span> <span class="n">cp_ang_ls</span>  <span class="c1"># [km], [º]</span></div>
+
+
+
+<div class="viewcode-block" id="get_mask_radii_angle">
+<a class="viewcode-back" href="../../../bluemath_tk.tcs.html#bluemath_tk.tcs.shytcwaves.get_mask_radii_angle">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_mask_radii_angle</span><span class="p">(</span><span class="n">icase</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract radii and angle indices for output points.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    icase : int</span>
+<span class="sd">        Analogue case ID.</span>
+<span class="sd">    mode : str, optional</span>
+<span class="sd">        Option to select SHyTCWaves library resolution (&#39;&#39;, &#39;_lowres&#39;). Default is &quot;&quot;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[np.ndarray, np.ndarray]</span>
+<span class="sd">        Two arrays containing:</span>
+<span class="sd">        - rad : Radial distances from storm center (km)</span>
+<span class="sd">        - ang : Angles from storm center (degrees)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function:</span>
+<span class="sd">    1. Loads output indices associated with distances/angles to target origin</span>
+<span class="sd">    2. Determines grid size (small/medium/large) based on case ID</span>
+<span class="sd">    3. Extracts appropriate radii and angle arrays for the grid size</span>
+<span class="sd">    4. For low resolution mode, uses half the number of radial points</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># load output indices associated with distances/angles to target origin</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;_lowres&quot;</span><span class="p">:</span>
+        <span class="n">xds_mask_ind</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">PATHS</span><span class="p">[</span><span class="s2">&quot;SHYTCWAVES_MDA_MASK_INDICES_LOWRES&quot;</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">xds_mask_ind</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">PATHS</span><span class="p">[</span><span class="s2">&quot;SHYTCWAVES_MDA_MASK_INDICES&quot;</span><span class="p">])</span>
+
+    <span class="c1"># load MDA indices (grid sizes)</span>
+    <span class="n">xds_ind_mda</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">PATHS</span><span class="p">[</span><span class="s2">&quot;SHYTCWAVES_MDA_INDICES&quot;</span><span class="p">])</span>
+
+    <span class="c1"># get grid code</span>
+    <span class="n">pos_small</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">icase</span> <span class="o">==</span> <span class="n">xds_ind_mda</span><span class="o">.</span><span class="n">indices_small</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">pos_medium</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">icase</span> <span class="o">==</span> <span class="n">xds_ind_mda</span><span class="o">.</span><span class="n">indices_medium</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">pos_large</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">icase</span> <span class="o">==</span> <span class="n">xds_ind_mda</span><span class="o">.</span><span class="n">indices_large</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos_small</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">rad</span> <span class="o">=</span> <span class="n">xds_mask_ind</span><span class="o">.</span><span class="n">radii_sma</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">/</span> <span class="mi">1000</span>
+        <span class="n">ang</span> <span class="o">=</span> <span class="n">xds_mask_ind</span><span class="o">.</span><span class="n">angle_sma</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos_medium</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">rad</span> <span class="o">=</span> <span class="n">xds_mask_ind</span><span class="o">.</span><span class="n">radii_med</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">/</span> <span class="mi">1000</span>
+        <span class="n">ang</span> <span class="o">=</span> <span class="n">xds_mask_ind</span><span class="o">.</span><span class="n">angle_med</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos_large</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">rad</span> <span class="o">=</span> <span class="n">xds_mask_ind</span><span class="o">.</span><span class="n">radii_lar</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">/</span> <span class="mi">1000</span>
+        <span class="n">ang</span> <span class="o">=</span> <span class="n">xds_mask_ind</span><span class="o">.</span><span class="n">angle_lar</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+    <span class="k">return</span> <span class="n">rad</span><span class="p">,</span> <span class="n">ang</span>  <span class="c1"># [km], [º]</span></div>
+
+
+
+<div class="viewcode-block" id="find_nearest">
+<a class="viewcode-back" href="../../../bluemath_tk.tcs.html#bluemath_tk.tcs.shytcwaves.find_nearest">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_nearest</span><span class="p">(</span>
+    <span class="n">cp_rad_ls</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">cp_ang_ls</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">mask_rad</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">mask_ang</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find nearest points in normalized space of radii and angles.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cp_rad_ls : List[float]</span>
+<span class="sd">        Control point radial distances.</span>
+<span class="sd">    cp_ang_ls : List[float]</span>
+<span class="sd">        Control point angles.</span>
+<span class="sd">    mask_rad : np.ndarray</span>
+<span class="sd">        SWAN output point radial distances.</span>
+<span class="sd">    mask_ang : np.ndarray</span>
+<span class="sd">        SWAN output point angles.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Indices of nearest points in SWAN output grid for each control point.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function:</span>
+<span class="sd">    1. Creates dataframes from control points and SWAN grid points</span>
+<span class="sd">    2. Treats radial distances as scalar values</span>
+<span class="sd">    3. Treats angles as directional values (circular)</span>
+<span class="sd">    4. Uses nearest neighbor search in normalized space</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># create dataframes</span>
+    <span class="n">df_cp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;radii&quot;</span><span class="p">:</span> <span class="n">cp_rad_ls</span><span class="p">,</span> <span class="s2">&quot;angle&quot;</span><span class="p">:</span> <span class="n">cp_ang_ls</span><span class="p">})</span>
+
+    <span class="n">df_mask</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;radii&quot;</span><span class="p">:</span> <span class="n">mask_rad</span><span class="p">,</span> <span class="s2">&quot;angle&quot;</span><span class="p">:</span> <span class="n">mask_ang</span><span class="p">})</span>
+
+    <span class="c1"># indices</span>
+    <span class="n">ix_directional</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># get indices of nearest n-dimensional point</span>
+    <span class="n">ix_near</span> <span class="o">=</span> <span class="n">find_nearest_indices</span><span class="p">(</span>
+        <span class="n">query_points</span><span class="o">=</span><span class="n">df_cp</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+        <span class="n">reference_points</span><span class="o">=</span><span class="n">df_mask</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+        <span class="n">directional_indices</span><span class="o">=</span><span class="n">ix_directional</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ix_near</span></div>
+
+
+
+<span class="c1">###############################################################################</span>
+<span class="c1"># SHyTCWaves APPLICATION</span>
+
+<span class="c1"># Functions that calculate the ensemble/reconstruction for a storm track</span>
+<span class="c1"># from either historical or forecast/predicted tracks</span>
+<span class="c1">###############################################################################</span>
+
+
+<div class="viewcode-block" id="get_coef_calibration">
+<a class="viewcode-back" href="../../../bluemath_tk.tcs.html#bluemath_tk.tcs.shytcwaves.get_coef_calibration">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_coef_calibration</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get calibration coefficients for SHyTCWaves model pressure bias correction.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Linear fit coefficients for pressure bias correction.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function:</span>
+<span class="sd">    1. Uses Saffir-Simpson category center pressures as reference points</span>
+<span class="sd">    2. Applies calibrated pressure deltas based on validation against satellite data</span>
+<span class="sd">    3. Performs linear fit to get correction coefficients</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">p</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1015</span><span class="p">,</span> <span class="mi">990</span><span class="p">,</span> <span class="mi">972</span><span class="p">,</span> <span class="mi">954</span><span class="p">,</span> <span class="mi">932</span><span class="p">,</span> <span class="mi">880</span><span class="p">]</span>  <span class="c1"># Saffir-Simpson center categories</span>
+    <span class="n">dp</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">17</span><span class="p">,</span> <span class="o">-</span><span class="mi">15</span><span class="p">,</span> <span class="o">-</span><span class="mf">12.5</span><span class="p">,</span> <span class="o">-</span><span class="mi">7</span><span class="p">,</span> <span class="o">+</span><span class="mf">2.5</span><span class="p">,</span> <span class="o">+</span><span class="mi">10</span><span class="p">]</span>  <span class="c1"># calibrated &quot;dP&quot; for shytcwaves</span>
+
+    <span class="n">coef</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">dp</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># order 1 fitting</span>
+
+    <span class="k">return</span> <span class="n">coef</span></div>
+
+
+
+<span class="c1">##########################################</span>
+<span class="c1"># SHYTCWAVES - historical track</span>
+
+
+<div class="viewcode-block" id="historic2shytcwaves_cluster">
+<a class="viewcode-back" href="../../../bluemath_tk.tcs.html#bluemath_tk.tcs.shytcwaves.historic2shytcwaves_cluster">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">historic2shytcwaves_cluster</span><span class="p">(</span>
+    <span class="n">path_save</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">tc_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">storm</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+    <span class="n">center</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">lon</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">lat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">dict_site</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">calibration</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">database_on</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">st_param</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">extract_bulk</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">max_segments</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">300</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Process historical storm track data using SHyTCWaves methodology.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path_save : str</span>
+<span class="sd">        Base path to store results, without the file name.</span>
+<span class="sd">    tc_name : str</span>
+<span class="sd">        Storm name.</span>
+<span class="sd">    storm : xr.Dataset</span>
+<span class="sd">        Storm track dataset with standard IBTrACS variables:</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        - longitude, latitude : Storm coordinates</span>
+<span class="sd">        - pressure : Central pressure (mbar)</span>
+<span class="sd">        - maxwinds : Maximum sustained winds (kt)</span>
+
+<span class="sd">        Optional:</span>
+<span class="sd">        - rmw : Radius of maximum winds (nmile)</span>
+<span class="sd">        - dist2land : Distance to land</span>
+<span class="sd">        - basin : Basin identifier</span>
+
+<span class="sd">    center : str</span>
+<span class="sd">        IBTrACS center code.</span>
+<span class="sd">    lon : np.ndarray</span>
+<span class="sd">        Longitude coordinates for swath calculation.</span>
+<span class="sd">    lat : np.ndarray</span>
+<span class="sd">        Latitude coordinates for swath calculation.</span>
+<span class="sd">    dict_site : dict, optional</span>
+<span class="sd">        Site data for superpoint building. Default is None.</span>
+<span class="sd">        Must contain:</span>
+<span class="sd">        - lonpts : Longitude coordinates</span>
+<span class="sd">        - latpts : Latitude coordinates</span>
+<span class="sd">        - namepts : Site names</span>
+<span class="sd">        - site : Site identifier</span>
+<span class="sd">        - sectors : Sectors</span>
+<span class="sd">        - deg_superposition : Superposition degree</span>
+
+<span class="sd">    calibration : bool, optional</span>
+<span class="sd">        Whether to apply SHyTCWaves calibration. Default is True.</span>
+<span class="sd">    mode : str, optional</span>
+<span class="sd">        High or low resolution library indices. Default is &quot;&quot;.</span>
+<span class="sd">    database_on : bool, optional</span>
+<span class="sd">        Whether to keep data only at 0,6,12,18 hours. Default is False.</span>
+<span class="sd">    st_param : bool, optional</span>
+<span class="sd">        Whether to keep data as original. Default is False.</span>
+<span class="sd">    extract_bulk : bool, optional</span>
+<span class="sd">        Whether to extract bulk wave parameters. Default is True.</span>
+<span class="sd">    max_segments : int, optional</span>
+<span class="sd">        Maximum number of segments to process. Default is 300.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function processes historical storm tracks in several steps:</span>
+<span class="sd">    1. Performs stopmotion segmentation at 6h intervals</span>
+<span class="sd">    2. Optionally applies SHyTCWaves calibration to track parameters</span>
+<span class="sd">    3. Trims track to target domain</span>
+<span class="sd">    4. Finds analogue segments from library</span>
+<span class="sd">    5. Extracts bulk wave parameters and/or spectral data</span>
+<span class="sd">    6. Saves results to specified directory</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># stopmotion segmentation, 6h interval</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">historic_track_preprocessing</span><span class="p">(</span>
+        <span class="n">xds</span><span class="o">=</span><span class="n">storm</span><span class="p">,</span>
+        <span class="n">center</span><span class="o">=</span><span class="n">center</span><span class="p">,</span>
+        <span class="n">forecast_on</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">database_on</span><span class="o">=</span><span class="n">database_on</span><span class="p">,</span>
+        <span class="n">st_param</span><span class="o">=</span><span class="n">st_param</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">dt_int_minutes</span> <span class="o">=</span> <span class="mi">6</span> <span class="o">*</span> <span class="mi">60</span>  <span class="c1"># [minutes] constant segments</span>
+
+    <span class="c1"># optional: shytcwaves calibration of track parameters</span>
+    <span class="k">if</span> <span class="n">calibration</span><span class="p">:</span>
+        <span class="n">coef</span> <span class="o">=</span> <span class="n">get_coef_calibration</span><span class="p">()</span>  <span class="c1"># linear fitting</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;pressure&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;pressure&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">coef</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">coef</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;maxwinds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="n">st</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">historic_track_interpolation</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">,</span>
+            <span class="n">dt_int_minutes</span><span class="p">,</span>
+            <span class="n">interpolation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>
+            <span class="n">fit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">radi_estimate_on</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">st</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">historic_track_interpolation</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">,</span> <span class="n">dt_int_minutes</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># skip when only NaN or 0</span>
+    <span class="n">lons</span><span class="p">,</span> <span class="n">lats</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">lon</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">st</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">lons</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">lons</span><span class="p">)])</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">lats</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">lats</span><span class="p">)])</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No track coordinates&quot;</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">st_trim</span> <span class="o">=</span> <span class="n">track_triming</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">lat</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lon</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lat</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">lon</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># store tracks for shytcwaves</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">to_pickle</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_save</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tc_name</span><span class="si">}</span><span class="s2">_track.pkl&quot;</span><span class="p">))</span>
+        <span class="n">st_trim</span><span class="o">.</span><span class="n">to_pickle</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_save</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tc_name</span><span class="si">}</span><span class="s2">_track_trim.pkl&quot;</span><span class="p">))</span>
+
+        <span class="c1"># parameterized segts (24h warmup + 6htarget)</span>
+        <span class="n">df_seg</span> <span class="o">=</span> <span class="n">storm2stopmotion</span><span class="p">(</span><span class="n">st_trim</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">df_seg</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;st: </span><span class="si">{</span><span class="n">st</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, df_seg: </span><span class="si">{</span><span class="n">df_seg</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">st_list</span><span class="p">,</span> <span class="n">we_list</span> <span class="o">=</span> <span class="n">stopmotion_interpolation</span><span class="p">(</span><span class="n">df_seg</span><span class="p">,</span> <span class="n">st</span><span class="o">=</span><span class="n">st_trim</span><span class="p">)</span>
+
+            <span class="c1"># analogue segments from library</span>
+            <span class="n">df_mda</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">PATHS</span><span class="p">[</span><span class="s2">&quot;SHYTCWAVES_MDA&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span>
+            <span class="n">ix_weights</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">10</span>  <span class="c1"># equal weights</span>
+            <span class="n">ix</span> <span class="o">=</span> <span class="n">find_analogue</span><span class="p">(</span><span class="n">df_mda</span><span class="p">,</span> <span class="n">df_seg</span><span class="p">,</span> <span class="n">ix_weights</span><span class="p">)</span>
+
+            <span class="n">df_analogue</span> <span class="o">=</span> <span class="n">df_mda</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">ix</span><span class="p">]</span>
+            <span class="n">df_analogue</span> <span class="o">=</span> <span class="n">analogue_endpoints</span><span class="p">(</span><span class="n">df_seg</span><span class="p">,</span> <span class="n">df_analogue</span><span class="p">)</span>
+
+            <span class="c1"># extract bulk envelope (to plot swaths)</span>
+            <span class="k">if</span> <span class="n">extract_bulk</span><span class="p">:</span>
+                <span class="n">mesh_lo</span><span class="p">,</span> <span class="n">mesh_la</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Number of segments: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">st_list</span><span class="p">)</span><span class="si">}</span><span class="s2">, number of swath nodes: </span><span class="si">{</span><span class="n">mesh_lo</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">st_list</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">max_segments</span><span class="p">:</span>
+                    <span class="n">xds_shy_bulk</span> <span class="o">=</span> <span class="n">stopmotion_st_bmu</span><span class="p">(</span>
+                        <span class="n">df_analogue</span><span class="p">,</span>
+                        <span class="n">df_seg</span><span class="p">,</span>
+                        <span class="n">st_trim</span><span class="p">,</span>
+                        <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">mesh_lo</span><span class="p">)),</span>
+                        <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">mesh_la</span><span class="p">)),</span>
+                        <span class="n">max_dist</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+                        <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="c1"># store</span>
+                    <span class="n">xds_shy_bulk</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span>
+                        <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_save</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tc_name</span><span class="si">}</span><span class="s2">_xds_shy_bulk.nc&quot;</span><span class="p">)</span>
+                    <span class="p">)</span>
+
+            <span class="c1"># extract spectra envelope</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dict_site</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">xds_shy_spec</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stopmotion_st_spectra</span><span class="p">(</span>
+                    <span class="n">df_analogue</span><span class="p">,</span>
+                    <span class="n">df_seg</span><span class="p">,</span>
+                    <span class="n">st_trim</span><span class="p">,</span>
+                    <span class="n">cp_lon_ls</span><span class="o">=</span><span class="n">dict_site</span><span class="p">[</span><span class="s2">&quot;lonpts&quot;</span><span class="p">],</span>
+                    <span class="n">cp_lat_ls</span><span class="o">=</span><span class="n">dict_site</span><span class="p">[</span><span class="s2">&quot;latpts&quot;</span><span class="p">],</span>
+                    <span class="n">cp_names</span><span class="o">=</span><span class="n">dict_site</span><span class="p">[</span><span class="s2">&quot;namepts&quot;</span><span class="p">],</span>
+                    <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="c1"># store</span>
+                <span class="n">xds_shy_spec</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span>
+                    <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                        <span class="n">path_save</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tc_name</span><span class="si">}</span><span class="s2">_xds_shy_spec_</span><span class="si">{</span><span class="n">dict_site</span><span class="p">[</span><span class="s1">&#39;site&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">.nc&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+                <span class="c1"># build superpoint</span>
+                <span class="n">xds_shy_sp</span> <span class="o">=</span> <span class="n">superpoint_calculation</span><span class="p">(</span>
+                    <span class="n">xds_shy_spec</span><span class="o">.</span><span class="n">efth</span><span class="p">,</span>
+                    <span class="s2">&quot;point&quot;</span><span class="p">,</span>
+                    <span class="n">dict_site</span><span class="p">[</span><span class="s2">&quot;sectors&quot;</span><span class="p">],</span>
+                <span class="p">)</span>
+                <span class="c1"># store</span>
+                <span class="n">xds_shy_sp</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span>
+                    <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                        <span class="n">path_save</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tc_name</span><span class="si">}</span><span class="s2">_xds_shy_sp_</span><span class="si">{</span><span class="n">dict_site</span><span class="p">[</span><span class="s1">&#39;site&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">.nc&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Files stored.&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

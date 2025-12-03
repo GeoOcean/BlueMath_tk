@@ -1,0 +1,690 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.core.geo &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.core.geo</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.core.geo</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">pi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">shapely.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">Point</span><span class="p">,</span> <span class="n">Polygon</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">shapely.vectorized</span><span class="w"> </span><span class="kn">import</span> <span class="n">contains</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">EARTH_RADIUS_NM</span>
+
+<span class="c1"># Constants</span>
+<span class="n">FLATTENING</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="mf">298.257223563</span>
+<span class="n">EPS</span> <span class="o">=</span> <span class="mf">0.00000000005</span>
+<span class="n">DEG2RAD</span> <span class="o">=</span> <span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span>
+<span class="n">RAD2DEG</span> <span class="o">=</span> <span class="mf">180.0</span> <span class="o">/</span> <span class="n">pi</span>
+
+
+<span class="c1"># TODO: Check which functions are implemented in Pyproj library!</span>
+
+
+<div class="viewcode-block" id="convert_to_radians">
+<a class="viewcode-back" href="../../../bluemath_tk.core.html#bluemath_tk.core.geo.convert_to_radians">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_to_radians</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert degree inputs to radians.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    *args : Union[float, np.ndarray]</span>
+<span class="sd">        Variable number of inputs in degrees to convert to radians.</span>
+<span class="sd">        Can be either scalar floats or numpy arrays.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple</span>
+<span class="sd">        Tuple of input values converted to radians, preserving input types.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; convert_to_radians(90.0)</span>
+<span class="sd">    (1.5707963267948966,)</span>
+<span class="sd">    &gt;&gt;&gt; convert_to_radians(90.0, 180.0)</span>
+<span class="sd">    (1.5707963267948966, 3.141592653589793)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="geodesic_distance">
+<a class="viewcode-back" href="../../../bluemath_tk.core.html#bluemath_tk.core.geo.geodesic_distance">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">geodesic_distance</span><span class="p">(</span>
+    <span class="n">lat1</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">lon1</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">lat2</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">lon2</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate great circle distance between two points on Earth.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lat1 : Union[float, np.ndarray]</span>
+<span class="sd">        Latitude of first point(s) in degrees</span>
+<span class="sd">    lon1 : Union[float, np.ndarray]</span>
+<span class="sd">        Longitude of first point(s) in degrees</span>
+<span class="sd">    lat2 : Union[float, np.ndarray]</span>
+<span class="sd">        Latitude of second point(s) in degrees</span>
+<span class="sd">    lon2 : Union[float, np.ndarray]</span>
+<span class="sd">        Longitude of second point(s) in degrees</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Union[float, np.ndarray]</span>
+<span class="sd">        Great circle distance(s) in degrees</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Uses the haversine formula to calculate great circle distance.</span>
+<span class="sd">    The result is in degrees of arc on a sphere.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; geodesic_distance(0, 0, 0, 90)</span>
+<span class="sd">    90.0</span>
+<span class="sd">    &gt;&gt;&gt; geodesic_distance([0, 45], [0, -90], [0, -45], [90, 90])</span>
+<span class="sd">    array([90., 180.])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">lon1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon2</span><span class="p">,</span> <span class="n">lat2</span> <span class="o">=</span> <span class="n">convert_to_radians</span><span class="p">(</span><span class="n">lon1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon2</span><span class="p">,</span> <span class="n">lat2</span><span class="p">)</span>
+
+    <span class="n">a</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">((</span><span class="n">lat2</span> <span class="o">-</span> <span class="n">lat1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">((</span><span class="n">lon2</span> <span class="o">-</span> <span class="n">lon1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">rng</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">a</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">rng</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="geo_distance_cartesian">
+<a class="viewcode-back" href="../../../bluemath_tk.core.html#bluemath_tk.core.geo.geo_distance_cartesian">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">geo_distance_cartesian</span><span class="p">(</span>
+    <span class="n">y_matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">x_matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">y_point</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">x_point</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns cartesian distance between y,x matrix and y,x point.</span>
+<span class="sd">    Optimized using vectorized operations.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    y_matrix : Union[float, np.ndarray]</span>
+<span class="sd">        2D array of y-coordinates (latitude or y in Cartesian).</span>
+<span class="sd">    x_matrix : Union[float, np.ndarray]</span>
+<span class="sd">        2D array of x-coordinates (longitude or x in Cartesian).</span>
+<span class="sd">    y_point : Union[float, np.ndarray]</span>
+<span class="sd">        y-coordinate of the point (latitude or y in Cartesian).</span>
+<span class="sd">    x_point : Union[float, np.ndarray]</span>
+<span class="sd">        x-coordinate of the point (longitude or x in Cartesian).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Array of distances in the same units as x_matrix and y_matrix.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">y_point</span> <span class="o">-</span> <span class="n">y_matrix</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">x_point</span> <span class="o">-</span> <span class="n">x_matrix</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">dist</span></div>
+
+
+
+<div class="viewcode-block" id="geodesic_azimuth">
+<a class="viewcode-back" href="../../../bluemath_tk.core.html#bluemath_tk.core.geo.geodesic_azimuth">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">geodesic_azimuth</span><span class="p">(</span>
+    <span class="n">lat1</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">lon1</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">lat2</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">lon2</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate azimuth between two points on Earth.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lat1 : Union[float, np.ndarray]</span>
+<span class="sd">        Latitude of first point(s) in degrees</span>
+<span class="sd">    lon1 : Union[float, np.ndarray]</span>
+<span class="sd">        Longitude of first point(s) in degrees</span>
+<span class="sd">    lat2 : Union[float, np.ndarray]</span>
+<span class="sd">        Latitude of second point(s) in degrees</span>
+<span class="sd">    lon2 : Union[float, np.ndarray]</span>
+<span class="sd">        Longitude of second point(s) in degrees</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Union[float, np.ndarray]</span>
+<span class="sd">        Azimuth(s) in degrees from North</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The azimuth is the angle between true north and the direction to the second point,</span>
+<span class="sd">    measured clockwise from north. Special cases are handled for points at the poles.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; geodesic_azimuth(0, 0, 0, 90)</span>
+<span class="sd">    90.0</span>
+<span class="sd">    &gt;&gt;&gt; geodesic_azimuth([0, 45], [0, -90], [0, -45], [90, 90])</span>
+<span class="sd">    array([90., 90.])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">lon1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon2</span><span class="p">,</span> <span class="n">lat2</span> <span class="o">=</span> <span class="n">convert_to_radians</span><span class="p">(</span><span class="n">lon1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon2</span><span class="p">,</span> <span class="n">lat2</span><span class="p">)</span>
+
+    <span class="n">az</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">lon2</span> <span class="o">-</span> <span class="n">lon1</span><span class="p">),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lon2</span> <span class="o">-</span> <span class="n">lon1</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Handle special cases at poles</span>
+    <span class="n">az</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lat1</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">az</span><span class="p">)</span>
+    <span class="n">az</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lat2</span> <span class="o">&gt;=</span> <span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">az</span><span class="p">)</span>
+    <span class="n">az</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lat2</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">az</span><span class="p">)</span>
+    <span class="n">az</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lat1</span> <span class="o">&gt;=</span> <span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">az</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">az</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="geodesic_distance_azimuth">
+<a class="viewcode-back" href="../../../bluemath_tk.core.html#bluemath_tk.core.geo.geodesic_distance_azimuth">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">geodesic_distance_azimuth</span><span class="p">(</span>
+    <span class="n">lat1</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">lon1</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">lat2</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">lon2</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate both great circle distance and azimuth between two points.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lat1 : Union[float, np.ndarray]</span>
+<span class="sd">        Latitude of first point(s) in degrees</span>
+<span class="sd">    lon1 : Union[float, np.ndarray]</span>
+<span class="sd">        Longitude of first point(s) in degrees</span>
+<span class="sd">    lat2 : Union[float, np.ndarray]</span>
+<span class="sd">        Latitude of second point(s) in degrees</span>
+<span class="sd">    lon2 : Union[float, np.ndarray]</span>
+<span class="sd">        Longitude of second point(s) in degrees</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]</span>
+<span class="sd">        Tuple containing:</span>
+<span class="sd">        - distance(s) : Great circle distance(s) in degrees</span>
+<span class="sd">        - azimuth(s) : Azimuth(s) in degrees from North</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    geodesic_distance : Calculate only the great circle distance</span>
+<span class="sd">    geodesic_azimuth : Calculate only the azimuth</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; dist, az = geodesic_distance_azimuth(0, 0, 0, 90)</span>
+<span class="sd">    &gt;&gt;&gt; dist</span>
+<span class="sd">    90.0</span>
+<span class="sd">    &gt;&gt;&gt; az</span>
+<span class="sd">    90.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">geodesic_distance</span><span class="p">(</span><span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span><span class="p">),</span> <span class="n">geodesic_azimuth</span><span class="p">(</span>
+        <span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="shoot">
+<a class="viewcode-back" href="../../../bluemath_tk.core.html#bluemath_tk.core.geo.shoot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">shoot</span><span class="p">(</span>
+    <span class="n">lon</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">lat</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">azimuth</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">maxdist</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+    <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+<span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate endpoint given starting point, azimuth and distance.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lon : Union[float, np.ndarray]</span>
+<span class="sd">        Starting longitude(s) in degrees</span>
+<span class="sd">    lat : Union[float, np.ndarray]</span>
+<span class="sd">        Starting latitude(s) in degrees</span>
+<span class="sd">    azimuth : Union[float, np.ndarray]</span>
+<span class="sd">        Initial azimuth(s) in degrees</span>
+<span class="sd">    maxdist : Union[float, np.ndarray]</span>
+<span class="sd">        Distance(s) to travel in kilometers</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]</span>
+<span class="sd">        Tuple containing:</span>
+<span class="sd">        - final_lon : Final longitude(s) in degrees</span>
+<span class="sd">        - final_lat : Final latitude(s) in degrees</span>
+<span class="sd">        - back_azimuth : Back azimuth(s) in degrees</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This function implements a geodesic shooting algorithm based on</span>
+<span class="sd">    T. Vincenty&#39;s method. It accounts for the Earth&#39;s ellipsoidal shape.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If attempting to shoot from a pole in a direction not along a meridian.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; lon_f, lat_f, baz = shoot(0, 0, 90, 111.195)  # ~1 degree at equator</span>
+<span class="sd">    &gt;&gt;&gt; round(lon_f, 6)</span>
+<span class="sd">    1.0</span>
+<span class="sd">    &gt;&gt;&gt; round(lat_f, 6)</span>
+<span class="sd">    0.0</span>
+<span class="sd">    &gt;&gt;&gt; round(baz, 6)</span>
+<span class="sd">    270.0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Convert inputs to arrays</span>
+    <span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">azimuth</span><span class="p">,</span> <span class="n">maxdist</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">,</span> <span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">azimuth</span><span class="p">,</span> <span class="n">maxdist</span><span class="p">))</span>
+
+    <span class="n">glat1</span> <span class="o">=</span> <span class="n">lat</span> <span class="o">*</span> <span class="n">DEG2RAD</span>
+    <span class="n">glon1</span> <span class="o">=</span> <span class="n">lon</span> <span class="o">*</span> <span class="n">DEG2RAD</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">maxdist</span> <span class="o">/</span> <span class="mf">1.852</span>  <span class="c1"># Convert km to nautical miles</span>
+    <span class="n">faz</span> <span class="o">=</span> <span class="n">azimuth</span> <span class="o">*</span> <span class="n">DEG2RAD</span>
+
+    <span class="c1"># Check for pole condition</span>
+    <span class="n">pole_condition</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">glat1</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">EPS</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">faz</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">EPS</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pole_condition</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Only N-S courses are meaningful, starting at a pole!&quot;</span><span class="p">)</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">FLATTENING</span>
+    <span class="n">tu</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">glat1</span><span class="p">)</span>
+    <span class="n">sf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">faz</span><span class="p">)</span>
+    <span class="n">cf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">faz</span><span class="p">)</span>
+
+    <span class="c1"># Handle cf == 0 case</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">cf</span><span class="p">)</span>
+    <span class="n">nonzero_cf</span> <span class="o">=</span> <span class="n">cf</span> <span class="o">!=</span> <span class="mi">0</span>
+    <span class="n">b</span><span class="p">[</span><span class="n">nonzero_cf</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">tu</span><span class="p">[</span><span class="n">nonzero_cf</span><span class="p">],</span> <span class="n">cf</span><span class="p">[</span><span class="n">nonzero_cf</span><span class="p">])</span>
+
+    <span class="n">cu</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">tu</span> <span class="o">*</span> <span class="n">tu</span><span class="p">)</span>
+    <span class="n">su</span> <span class="o">=</span> <span class="n">tu</span> <span class="o">*</span> <span class="n">cu</span>
+    <span class="n">sa</span> <span class="o">=</span> <span class="n">cu</span> <span class="o">*</span> <span class="n">sf</span>
+    <span class="n">c2a</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">sa</span> <span class="o">*</span> <span class="n">sa</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">c2a</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">x</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">/</span> <span class="mf">4.0</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">c</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.375</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span>
+    <span class="n">tu</span> <span class="o">=</span> <span class="n">s</span> <span class="o">/</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">EARTH_RADIUS_NM</span> <span class="o">*</span> <span class="n">c</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">tu</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="c1"># Iterative solution</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">sy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">cy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">cz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">cz</span> <span class="o">*</span> <span class="n">cz</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">e</span> <span class="o">*</span> <span class="n">cy</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">e</span> <span class="o">+</span> <span class="n">e</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">((</span><span class="n">sy</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">*</span> <span class="mf">4.0</span> <span class="o">-</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">y</span> <span class="o">*</span> <span class="n">cz</span> <span class="o">*</span> <span class="n">d</span> <span class="o">/</span> <span class="mf">6.0</span> <span class="o">+</span> <span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">d</span> <span class="o">/</span> <span class="mf">4.0</span> <span class="o">-</span> <span class="n">cz</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">*</span> <span class="n">d</span> <span class="o">+</span> <span class="n">tu</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">EPS</span><span class="p">):</span>
+            <span class="k">break</span>
+
+    <span class="n">b</span> <span class="o">=</span> <span class="n">cu</span> <span class="o">*</span> <span class="n">cy</span> <span class="o">*</span> <span class="n">cf</span> <span class="o">-</span> <span class="n">su</span> <span class="o">*</span> <span class="n">sy</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sa</span> <span class="o">*</span> <span class="n">sa</span> <span class="o">+</span> <span class="n">b</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">su</span> <span class="o">*</span> <span class="n">cy</span> <span class="o">+</span> <span class="n">cu</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">*</span> <span class="n">cf</span>
+    <span class="n">glat2</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="n">pi</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">)</span> <span class="o">-</span> <span class="n">pi</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">cu</span> <span class="o">*</span> <span class="n">cy</span> <span class="o">-</span> <span class="n">su</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">*</span> <span class="n">cf</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">sy</span> <span class="o">*</span> <span class="n">sf</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="p">((</span><span class="o">-</span><span class="mf">3.0</span> <span class="o">*</span> <span class="n">c2a</span> <span class="o">+</span> <span class="mf">4.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">FLATTENING</span> <span class="o">+</span> <span class="mf">4.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">c2a</span> <span class="o">*</span> <span class="n">FLATTENING</span> <span class="o">/</span> <span class="mf">16.0</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">((</span><span class="n">e</span> <span class="o">*</span> <span class="n">cy</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">cz</span><span class="p">)</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span> <span class="o">*</span> <span class="n">sa</span>
+    <span class="n">glon2</span> <span class="o">=</span> <span class="p">((</span><span class="n">glon1</span> <span class="o">+</span> <span class="n">x</span> <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">FLATTENING</span> <span class="o">+</span> <span class="n">pi</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">))</span> <span class="o">-</span> <span class="n">pi</span>
+    <span class="n">baz</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">sa</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="n">pi</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">glon2</span> <span class="o">*</span> <span class="n">RAD2DEG</span><span class="p">,</span> <span class="n">glat2</span> <span class="o">*</span> <span class="n">RAD2DEG</span><span class="p">,</span> <span class="n">baz</span> <span class="o">*</span> <span class="n">RAD2DEG</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_polygon">
+<a class="viewcode-back" href="../../../bluemath_tk.core.html#bluemath_tk.core.geo.create_polygon">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_polygon</span><span class="p">(</span><span class="n">coordinates</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Polygon</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a polygon from a list of (longitude, latitude) coordinates.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    coordinates : List[Tuple[float, float]]</span>
+<span class="sd">        List of (longitude, latitude) coordinate pairs that define the polygon vertices.</span>
+<span class="sd">        The first and last points should be the same to close the polygon.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Polygon</span>
+<span class="sd">        A shapely Polygon object.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; coords = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]  # Square</span>
+<span class="sd">    &gt;&gt;&gt; poly = create_polygon(coords)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">Polygon</span><span class="p">(</span><span class="n">coordinates</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="points_in_polygon">
+<a class="viewcode-back" href="../../../bluemath_tk.core.html#bluemath_tk.core.geo.points_in_polygon">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">points_in_polygon</span><span class="p">(</span>
+    <span class="n">lon</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">lat</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">polygon</span><span class="p">:</span> <span class="n">Polygon</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check which points are inside a polygon.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lon : Union[List[float], np.ndarray]</span>
+<span class="sd">        Array or list of longitude values.</span>
+<span class="sd">    lat : Union[List[float], np.ndarray]</span>
+<span class="sd">        Array or list of latitude values.</span>
+<span class="sd">        Must have the same shape as lon.</span>
+<span class="sd">    polygon : Polygon</span>
+<span class="sd">        A shapely Polygon object.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Boolean array indicating which points are inside the polygon.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If lon and lat arrays have different shapes.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; coords = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]  # Square</span>
+<span class="sd">    &gt;&gt;&gt; poly = create_polygon(coords)</span>
+<span class="sd">    &gt;&gt;&gt; lon = [0.5, 2.0]</span>
+<span class="sd">    &gt;&gt;&gt; lat = [0.5, 2.0]</span>
+<span class="sd">    &gt;&gt;&gt; mask = points_in_polygon(lon, lat, poly)</span>
+<span class="sd">    &gt;&gt;&gt; print(mask)  # [True, False]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">lon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lon</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">lat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lat</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">lon</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">lat</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;lon and lat arrays must have the same shape&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Create Point objects for each coordinate pair</span>
+    <span class="n">points_geom</span> <span class="o">=</span> <span class="p">[</span><span class="n">Point</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">)]</span>
+
+    <span class="c1"># Check which points are inside the polygon</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">polygon</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">points_geom</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="filter_points_in_polygon">
+<a class="viewcode-back" href="../../../bluemath_tk.core.html#bluemath_tk.core.geo.filter_points_in_polygon">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_points_in_polygon</span><span class="p">(</span>
+    <span class="n">lon</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">lat</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">polygon</span><span class="p">:</span> <span class="n">Polygon</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter points to keep only those inside a polygon.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lon : Union[List[float], np.ndarray]</span>
+<span class="sd">        Array or list of longitude values.</span>
+<span class="sd">    lat : Union[List[float], np.ndarray]</span>
+<span class="sd">        Array or list of latitude values.</span>
+<span class="sd">        Must have the same shape as lon.</span>
+<span class="sd">    polygon : Polygon</span>
+<span class="sd">        A shapely Polygon object.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[np.ndarray, np.ndarray]</span>
+<span class="sd">        Tuple containing:</span>
+<span class="sd">        - filtered_lon : Array of longitudes inside the polygon</span>
+<span class="sd">        - filtered_lat : Array of latitudes inside the polygon</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If lon and lat arrays have different shapes.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; coords = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]  # Square</span>
+<span class="sd">    &gt;&gt;&gt; poly = create_polygon(coords)</span>
+<span class="sd">    &gt;&gt;&gt; lon = [0.5, 2.0]</span>
+<span class="sd">    &gt;&gt;&gt; lat = [0.5, 2.0]</span>
+<span class="sd">    &gt;&gt;&gt; filtered_lon, filtered_lat = filter_points_in_polygon(lon, lat, poly)</span>
+<span class="sd">    &gt;&gt;&gt; print(filtered_lon)  # [0.5]</span>
+<span class="sd">    &gt;&gt;&gt; print(filtered_lat)  # [0.5]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">lon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lon</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">lat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lat</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">lon</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">lat</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;lon and lat arrays must have the same shape&quot;</span><span class="p">)</span>
+
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">points_in_polygon</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">polygon</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lon</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">lat</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="buffer_area_for_polygon">
+<a class="viewcode-back" href="../../../bluemath_tk.core.html#bluemath_tk.core.geo.buffer_area_for_polygon">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">buffer_area_for_polygon</span><span class="p">(</span><span class="n">polygon</span><span class="p">:</span> <span class="n">Polygon</span><span class="p">,</span> <span class="n">area_factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Polygon</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Buffer the polygon by a factor of its area divided by its length.</span>
+<span class="sd">    This is a heuristic to ensure that the buffer is proportional to the size of the polygon.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    polygon : Polygon</span>
+<span class="sd">        The polygon to be buffered.</span>
+<span class="sd">    mas : float</span>
+<span class="sd">        The buffer factor.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Polygon</span>
+<span class="sd">        The buffered polygon.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+<span class="sd">    &gt;&gt;&gt; from shapely.geometry import Polygon</span>
+<span class="sd">    &gt;&gt;&gt; polygon = Polygon([(0, 0), (1, 0), (1, 1), (0, 1)])</span>
+<span class="sd">    &gt;&gt;&gt; mas = 0.1</span>
+<span class="sd">    &gt;&gt;&gt; buffered_polygon = buffer_area_for_polygon(polygon, mas)</span>
+<span class="sd">    &gt;&gt;&gt; print(buffered_polygon)</span>
+<span class="sd">    POLYGON ((-0.1 -0.1, 1.1 -0.1, 1.1 1.1, -0.1 1.1, -0.1 -0.1))</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">polygon</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">area_factor</span> <span class="o">*</span> <span class="n">polygon</span><span class="o">.</span><span class="n">area</span> <span class="o">/</span> <span class="n">polygon</span><span class="o">.</span><span class="n">length</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="mask_points_outside_polygon">
+<a class="viewcode-back" href="../../../bluemath_tk.core.html#bluemath_tk.core.geo.mask_points_outside_polygon">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">mask_points_outside_polygon</span><span class="p">(</span>
+    <span class="n">elements</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">node_coords</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">poly</span><span class="p">:</span> <span class="n">Polygon</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a boolean mask indicating which triangle elements have at least two vertices outside the polygon.</span>
+
+<span class="sd">    This version uses matplotlib.path.Path for high-performance point-in-polygon testing.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    elements : (n_elements, 3) np.ndarray</span>
+<span class="sd">        Array containing indices of triangle vertices.</span>
+<span class="sd">    node_coords : (n_nodes, 2) np.ndarray</span>
+<span class="sd">        Array of node coordinates as (x, y) pairs.</span>
+<span class="sd">    poly : shapely.geometry.Polygon</span>
+<span class="sd">        Polygon used for containment checks.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    mask : (n_elements,) np.ndarray</span>
+<span class="sd">        Boolean array where True means at least two vertices of the triangle lie outside the polygon.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; from shapely.geometry import Polygon</span>
+<span class="sd">    &gt;&gt;&gt; elements = np.array([[0, 1, 2], [1, 2, 3]])</span>
+<span class="sd">    &gt;&gt;&gt; node_coords = np.array([[0, 0], [1, 0], [0, 1], [1, 1]])</span>
+<span class="sd">    &gt;&gt;&gt; poly = Polygon([(0, 0), (1, 0), (1, 1), (0, 1)])</span>
+<span class="sd">    &gt;&gt;&gt; mask = mask_points_outside_polygon(elements, node_coords, poly)</span>
+<span class="sd">    &gt;&gt;&gt; print(mask)</span>
+<span class="sd">    [False False]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">tri_coords</span> <span class="o">=</span> <span class="n">node_coords</span><span class="p">[</span><span class="n">elements</span><span class="p">]</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">tri_coords</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">tri_coords</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">inside</span> <span class="o">=</span> <span class="n">contains</span><span class="p">(</span><span class="n">poly</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+    <span class="n">num_inside</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">inside</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">num_inside</span> <span class="o">&lt;</span> <span class="mi">3</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

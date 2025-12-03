@@ -1,0 +1,371 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.teslakit.statistical &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.teslakit.statistical</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.teslakit.statistical</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+
+<span class="c1"># pip</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">statsmodels.api</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">statsmodels.distributions.empirical_distribution</span><span class="w"> </span><span class="kn">import</span> <span class="n">ECDF</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">interp1d</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">norm</span><span class="p">,</span> <span class="n">genpareto</span><span class="p">,</span> <span class="n">t</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndtri</span>  <span class="c1"># norm inv</span>
+
+
+<div class="viewcode-block" id="ksdensity_CDF">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.statistical.ksdensity_CDF">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ksdensity_CDF</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Kernel smoothing function estimate.</span>
+<span class="sd">    Returns cumulative probability function at x.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># fit a univariate KDE</span>
+    <span class="n">kde</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">nonparametric</span><span class="o">.</span><span class="n">KDEUnivariate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">kde</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+    <span class="c1"># interpolate KDE CDF at x position (kde.support = x) </span>
+    <span class="n">fint</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">kde</span><span class="o">.</span><span class="n">support</span><span class="p">,</span> <span class="n">kde</span><span class="o">.</span><span class="n">cdf</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fint</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ksdensity_ICDF">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.statistical.ksdensity_ICDF">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ksdensity_ICDF</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns Inverse Kernel smoothing function at p points</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># fit a univariate KDE</span>
+    <span class="n">kde</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">nonparametric</span><span class="o">.</span><span class="n">KDEUnivariate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">kde</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+    <span class="c1"># interpolate KDE CDF to get support values </span>
+    <span class="n">fint</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">kde</span><span class="o">.</span><span class="n">cdf</span><span class="p">,</span> <span class="n">kde</span><span class="o">.</span><span class="n">support</span><span class="p">)</span>
+
+    <span class="c1"># ensure p inside kde.cdf</span>
+    <span class="n">p</span><span class="p">[</span><span class="n">p</span><span class="o">&lt;</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">kde</span><span class="o">.</span><span class="n">cdf</span><span class="p">)]</span> <span class="o">=</span> <span class="n">kde</span><span class="o">.</span><span class="n">cdf</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">p</span><span class="p">[</span><span class="n">p</span><span class="o">&gt;</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">kde</span><span class="o">.</span><span class="n">cdf</span><span class="p">)]</span> <span class="o">=</span> <span class="n">kde</span><span class="o">.</span><span class="n">cdf</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">fint</span><span class="p">(</span><span class="n">p</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedPareto_CDF">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.statistical.GeneralizedPareto_CDF">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">GeneralizedPareto_CDF</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Generalized Pareto fit</span>
+<span class="sd">    Returns cumulative probability function at x.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># fit a generalized pareto and get params </span>
+    <span class="n">shape</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">scale</span> <span class="o">=</span> <span class="n">genpareto</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># get generalized pareto CDF</span>
+    <span class="n">cdf</span> <span class="o">=</span> <span class="n">genpareto</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cdf</span></div>
+
+
+<div class="viewcode-block" id="GeneralizedPareto_ICDF">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.statistical.GeneralizedPareto_ICDF">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">GeneralizedPareto_ICDF</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Generalized Pareto fit</span>
+<span class="sd">    Returns inverse cumulative probability function at p points</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># fit a generalized pareto and get params </span>
+    <span class="n">shape</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">scale</span> <span class="o">=</span> <span class="n">genpareto</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># get percent points (inverse of CDF) </span>
+    <span class="n">icdf</span> <span class="o">=</span> <span class="n">genpareto</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">icdf</span></div>
+
+
+<div class="viewcode-block" id="Empirical_CDF">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.statistical.Empirical_CDF">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">Empirical_CDF</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns empirical cumulative probability function at x.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># fit ECDF</span>
+    <span class="n">ecdf</span> <span class="o">=</span> <span class="n">ECDF</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">cdf</span> <span class="o">=</span> <span class="n">ecdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cdf</span></div>
+
+
+<div class="viewcode-block" id="Empirical_ICDF">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.statistical.Empirical_ICDF">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">Empirical_ICDF</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns inverse empirical cumulative probability function at p points</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># TODO: revisar que el fill_value funcione correctamente</span>
+
+    <span class="c1"># fit ECDF</span>
+    <span class="n">ecdf</span> <span class="o">=</span> <span class="n">ECDF</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">cdf</span> <span class="o">=</span> <span class="n">ecdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># interpolate KDE CDF to get support values </span>
+    <span class="n">fint</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span>
+        <span class="n">cdf</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span>
+        <span class="n">fill_value</span><span class="o">=</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span>
+        <span class="c1">#fill_value=(np.min(x), np.max(x)),</span>
+        <span class="n">bounds_error</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">fint</span><span class="p">(</span><span class="n">p</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="copulafit">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.statistical.copulafit">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">copulafit</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Fit copula to data.</span>
+<span class="sd">    Returns correlation matrix and degrees of freedom for t student</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">rhohat</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># correlation matrix</span>
+    <span class="n">nuhat</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># degrees of freedom (for t student) </span>
+
+    <span class="k">if</span> <span class="n">family</span><span class="o">==</span><span class="s1">&#39;gaussian&#39;</span><span class="p">:</span>
+        <span class="n">u</span><span class="p">[</span><span class="n">u</span><span class="o">&gt;=</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.999999</span>
+        <span class="n">inv_n</span> <span class="o">=</span> <span class="n">ndtri</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+        <span class="n">rhohat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">inv_n</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">family</span><span class="o">==</span><span class="s1">&#39;t&#39;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Not implemented&quot;</span><span class="p">)</span>
+
+        <span class="c1"># TODO: no encaja con los datos. no funciona </span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">u</span><span class="p">),</span><span class="mi">100</span><span class="p">)</span>
+        <span class="n">inv_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">u</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">param</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">u</span><span class="p">[:,</span><span class="n">j</span><span class="p">])</span>
+            <span class="n">t_pdf</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">loc</span><span class="o">=</span><span class="n">param</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">scale</span><span class="o">=</span><span class="n">param</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">df</span><span class="o">=</span><span class="n">param</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">inv_t</span><span class="p">[:,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">t_pdf</span>
+
+        <span class="c1"># TODO CORRELACION? NUHAT?</span>
+        <span class="n">rhohat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">inv_n</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">nuhat</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Wrong family parameter. Use &#39;gaussian&#39; or &#39;t&#39;&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">rhohat</span><span class="p">,</span> <span class="n">nuhat</span></div>
+
+
+<div class="viewcode-block" id="copularnd">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.statistical.copularnd">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">copularnd</span><span class="p">(</span><span class="n">family</span><span class="p">,</span> <span class="n">rhohat</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Random vectors from a copula</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">family</span><span class="o">==</span><span class="s1">&#39;gaussian&#39;</span><span class="p">:</span>
+        <span class="n">mn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">rhohat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">np_rmn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">mn</span><span class="p">,</span> <span class="n">rhohat</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">np_rmn</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">family</span><span class="o">==</span><span class="s1">&#39;t&#39;</span><span class="p">:</span>
+        <span class="c1"># TODO</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Not implemented&quot;</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Wrong family parameter. Use &#39;gaussian&#39; or &#39;t&#39;&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">u</span></div>
+
+
+<div class="viewcode-block" id="CopulaSimulation">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.statistical.CopulaSimulation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">CopulaSimulation</span><span class="p">(</span><span class="n">U_data</span><span class="p">,</span> <span class="n">kernels</span><span class="p">,</span> <span class="n">num_sim</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Fill statistical space using copula simulation</span>
+
+<span class="sd">    U_data: 2D nump.array, each variable in a column</span>
+<span class="sd">    kernels: list of kernels for each column at U_data (KDE | GPareto)</span>
+<span class="sd">    num_sim: number of simulations</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># kernel CDF dictionary</span>
+    <span class="n">d_kf</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;KDE&#39;</span> <span class="p">:</span> <span class="p">(</span><span class="n">ksdensity_CDF</span><span class="p">,</span> <span class="n">ksdensity_ICDF</span><span class="p">),</span>
+        <span class="s1">&#39;GPareto&#39;</span> <span class="p">:</span> <span class="p">(</span><span class="n">GeneralizedPareto_CDF</span><span class="p">,</span> <span class="n">GeneralizedPareto_ICDF</span><span class="p">),</span>
+        <span class="s1">&#39;ECDF&#39;</span> <span class="p">:</span> <span class="p">(</span><span class="n">Empirical_CDF</span><span class="p">,</span> <span class="n">Empirical_ICDF</span><span class="p">),</span>
+    <span class="p">}</span>
+
+    <span class="c1"># check kernel input</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">d_kf</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">kernels</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;wrong kernel: </span><span class="si">{0}</span><span class="s1">, use: </span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">kernel</span><span class="p">,</span> <span class="s1">&#39; | &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d_kf</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="c1"># normalize: calculate data CDF using kernels</span>
+    <span class="n">U_cdf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">U_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">ic</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">U_data</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">kernels</span><span class="p">):</span>
+        <span class="n">cdf</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">d_kf</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>  <span class="c1"># get kernel cdf</span>
+        <span class="n">U_cdf</span><span class="p">[:,</span> <span class="n">ic</span><span class="p">]</span> <span class="o">=</span> <span class="n">cdf</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">ic</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># fit data CDFs to a gaussian copula </span>
+    <span class="n">rhohat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">copulafit</span><span class="p">(</span><span class="n">U_cdf</span><span class="p">,</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">)</span>
+
+    <span class="c1"># simulate data to fill probabilistic space</span>
+    <span class="n">U_cop</span> <span class="o">=</span> <span class="n">copularnd</span><span class="p">(</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span> <span class="n">rhohat</span><span class="p">,</span> <span class="n">num_sim</span><span class="p">)</span>
+
+    <span class="c1"># de-normalize: calculate data ICDF</span>
+    <span class="n">U_sim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">U_cop</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">ic</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">U_data</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">U_cop</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">kernels</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">icdf</span> <span class="o">=</span> <span class="n">d_kf</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>  <span class="c1"># get kernel icdf</span>
+        <span class="n">U_sim</span><span class="p">[:,</span> <span class="n">ic</span><span class="p">]</span> <span class="o">=</span> <span class="n">icdf</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+        <span class="n">ic</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">U_sim</span></div>
+
+
+<div class="viewcode-block" id="runmean">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.statistical.runmean">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">runmean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">modestr</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    parsed runmean function from original matlab codes.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">mm</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">m</span><span class="o">+</span><span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">modestr</span> <span class="o">==</span> <span class="s1">&#39;edge&#39;</span><span class="p">:</span>
+        <span class="n">xfirst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">m</span><span class="p">)</span>
+        <span class="n">xlast</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">m</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">modestr</span> <span class="o">==</span> <span class="s1">&#39;zero&#39;</span><span class="p">:</span>
+        <span class="n">xfirst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="n">xlast</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">modestr</span> <span class="o">==</span> <span class="s1">&#39;mean&#39;</span><span class="p">:</span>
+        <span class="n">xfirst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">m</span><span class="p">)</span>
+        <span class="n">xlast</span> <span class="o">=</span> <span class="n">xfirst</span>
+
+    <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">xfirst</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">xlast</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nancumsum</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+    <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">Y</span><span class="p">[</span><span class="n">mm</span><span class="p">:,]</span><span class="o">-</span><span class="n">Y</span><span class="p">[:</span><span class="o">-</span><span class="n">mm</span><span class="p">],</span> <span class="n">mm</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Y</span></div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

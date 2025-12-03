@@ -1,0 +1,549 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.datamining.kma &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.datamining.kma</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.datamining.kma</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.cluster</span><span class="w"> </span><span class="kn">import</span> <span class="n">KMeans</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearRegression</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_data_kma</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._base_datamining</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseClustering</span>
+
+
+<div class="viewcode-block" id="KMAError">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.kma.KMAError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KMAError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Custom exception for KMA class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;KMA error occurred.&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="KMA">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.kma.KMA">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KMA</span><span class="p">(</span><span class="n">BaseClustering</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    K-Means Algorithm (KMA) class.</span>
+
+<span class="sd">    This class performs the K-Means algorithm on a given dataframe.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    num_clusters : int</span>
+<span class="sd">        The number of clusters to use in the K-Means algorithm.</span>
+<span class="sd">    seed : int</span>
+<span class="sd">        The random seed to use as initial datapoint.</span>
+<span class="sd">    data_variables : List[str]</span>
+<span class="sd">        A list with all data variables.</span>
+<span class="sd">    directional_variables : List[str]</span>
+<span class="sd">        A list with directional variables.</span>
+<span class="sd">    fitting_variables : List[str]</span>
+<span class="sd">        A list with fitting variables.</span>
+<span class="sd">    custom_scale_factor : dict</span>
+<span class="sd">        A dictionary of custom scale factors.</span>
+<span class="sd">    scale_factor : dict</span>
+<span class="sd">        A dictionary of scale factors (after normalizing the data).</span>
+<span class="sd">    centroids : pd.DataFrame</span>
+<span class="sd">        The selected centroids.</span>
+<span class="sd">    normalized_centroids : pd.DataFrame</span>
+<span class="sd">        The selected normalized centroids.</span>
+<span class="sd">    centroid_real_indices : np.array</span>
+<span class="sd">        The real indices of the selected centroids.</span>
+<span class="sd">    is_fitted : bool</span>
+<span class="sd">        A flag indicating whether the model is fitted or not.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    .. jupyter-execute::</span>
+
+<span class="sd">        import numpy as np</span>
+<span class="sd">        import pandas as pd</span>
+<span class="sd">        from bluemath_tk.datamining.kma import KMA</span>
+
+<span class="sd">        data = pd.DataFrame(</span>
+<span class="sd">            {</span>
+<span class="sd">                &quot;Hs&quot;: np.random.rand(1000) * 7,</span>
+<span class="sd">                &quot;Tp&quot;: np.random.rand(1000) * 20,</span>
+<span class="sd">                &quot;Dir&quot;: np.random.rand(1000) * 360</span>
+<span class="sd">            }</span>
+<span class="sd">        )</span>
+<span class="sd">        kma = KMA(num_clusters=5)</span>
+<span class="sd">        nearest_centroids_idxs, nearest_centroids_df = kma.fit_predict(</span>
+<span class="sd">            data=data,</span>
+<span class="sd">            directional_variables=[&quot;Dir&quot;],</span>
+<span class="sd">        )</span>
+
+<span class="sd">        kma.plot_selected_centroids(plot_text=True)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">num_clusters</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the KMA class.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        num_clusters : int</span>
+<span class="sd">            The number of clusters to use in the K-Means algorithm.</span>
+<span class="sd">            Must be greater than 0.</span>
+<span class="sd">        seed : int, optional</span>
+<span class="sd">            The random seed to use as initial datapoint.</span>
+<span class="sd">            Must be greater or equal to 0 and less than number of datapoints.</span>
+<span class="sd">            Default is 0.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If num_clusters is not greater than 0.</span>
+<span class="sd">            Or if seed is not greater or equal to 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_logger_name</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">num_clusters</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_clusters</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_clusters</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Variable num_clusters must be &gt; 0&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="n">seed</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Variable seed must be &gt;= 0&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kma</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span>
+            <span class="n">n_clusters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_clusters</span><span class="p">,</span>
+            <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;KMA object created with </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_clusters</span><span class="si">}</span><span class="s2"> clusters and seed </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="s2">&quot;To customize kma, do self.kma = dict(n_clusters=..., random_state=..., etc)&quot;</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_normalized_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_fit</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">directional_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fitting_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">custom_scale_factor</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalized_centroids</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">centroid_real_indices</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">regression_guided</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">kma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KMeans</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kma</span>
+
+    <span class="nd">@kma</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">kma</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kma_params_dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Setter for the KMeans object.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        kma_params_dict : dict</span>
+<span class="sd">            A dictionary with KMeans parameters.</span>
+<span class="sd">            The keys should be the same as the KMeans parameters.</span>
+<span class="sd">            Example: {&quot;n_clusters&quot;: 5, &quot;random_state&quot;: 42}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kma</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="o">**</span><span class="n">kma_params_dict</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the original data used for clustering.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">normalized_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the normalized data used for clustering.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalized_data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">data_to_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the data used for fitting the K-Means algorithm.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_fit</span>
+
+<div class="viewcode-block" id="KMA.add_regression_guided">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.kma.KMA.add_regression_guided">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_regression_guided</span><span class="p">(</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">vars</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">alpha</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate regression-guided variables.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : pd.DataFrame</span>
+<span class="sd">            The data to fit the K-Means algorithm.</span>
+<span class="sd">        vars : List[str]</span>
+<span class="sd">            The variables to use for regression-guided clustering.</span>
+<span class="sd">        alpha : List[float]</span>
+<span class="sd">            The alpha values to use for regression-guided clustering.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            The data with the regression-guided variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Stack guiding variables into (time, n_vars) array</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="nb">vars</span><span class="p">)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">data</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Normalize input features</span>
+        <span class="n">X_std</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">X_norm</span> <span class="o">=</span> <span class="n">X</span> <span class="o">/</span> <span class="n">X_std</span>
+
+        <span class="c1"># Add intercept column to input</span>
+        <span class="n">X_design</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)),</span> <span class="n">X_norm</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+
+        <span class="c1"># Normalize guiding targets</span>
+        <span class="n">Y_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">Y_std</span><span class="p">[</span><span class="n">Y_std</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+        <span class="c1"># Fit regression model to predict guiding vars from input</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">(</span><span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_design</span><span class="p">,</span> <span class="n">Y</span> <span class="o">/</span> <span class="n">Y_std</span><span class="p">)</span>
+        <span class="n">Y_pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_design</span><span class="p">)</span> <span class="o">*</span> <span class="n">Y_std</span>  <span class="c1"># De-normalize predictions</span>
+
+        <span class="c1"># Weight columns by input alpha</span>
+        <span class="n">X_weight</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
+        <span class="n">X_scaled</span> <span class="o">=</span> <span class="n">X_weight</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">Y_scaled</span> <span class="o">=</span> <span class="n">Y_pred</span> <span class="o">*</span> <span class="n">alpha</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">X_scaled</span><span class="p">,</span> <span class="n">Y_scaled</span><span class="p">]),</span> <span class="n">index</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">+</span> <span class="nb">vars</span>
+
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="KMA.fit">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.kma.KMA.fit">[docs]</a>
+    <span class="nd">@validate_data_kma</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">directional_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">custom_scale_factor</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span>
+        <span class="n">min_number_of_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_number_of_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">normalize_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">regression_guided</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit the K-Means algorithm to the provided data.</span>
+
+<span class="sd">        TODO: Add option to force KMA initialization with MDA centroids.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : pd.DataFrame</span>
+<span class="sd">            The input data to be used for the KMA algorithm.</span>
+<span class="sd">        directional_variables : List[str], optional</span>
+<span class="sd">            A list of directional variables that will be transformed to u and v components.</span>
+<span class="sd">            Then, to use custom_scale_factor, you must specify the variables names with the u and v suffixes.</span>
+<span class="sd">            Example: directional_variables=[&quot;Dir&quot;], custom_scale_factor={&quot;Dir_u&quot;: [0, 1], &quot;Dir_v&quot;: [0, 1]}.</span>
+<span class="sd">            Default is [].</span>
+<span class="sd">        custom_scale_factor : dict, optional</span>
+<span class="sd">            A dictionary specifying custom scale factors for normalization.</span>
+<span class="sd">            If normalize_data is True, this will be used to normalize the data.</span>
+<span class="sd">            Example: {&quot;Hs&quot;: [0, 10], &quot;Tp&quot;: [0, 10]}.</span>
+<span class="sd">            Default is {}.</span>
+<span class="sd">        min_number_of_points : int, optional</span>
+<span class="sd">            The minimum number of points to consider a cluster.</span>
+<span class="sd">            Default is None.</span>
+<span class="sd">        max_number_of_iterations : int, optional</span>
+<span class="sd">            The maximum number of iterations for the K-Means algorithm.</span>
+<span class="sd">            This is used when min_number_of_points is not None.</span>
+<span class="sd">            Default is 10.</span>
+<span class="sd">        normalize_data : bool, optional</span>
+<span class="sd">            A flag to normalize the data.</span>
+<span class="sd">            If True, the data will be normalized using the custom_scale_factor.</span>
+<span class="sd">            Default is False.</span>
+<span class="sd">        regression_guided: dict, optional</span>
+<span class="sd">            A dictionary specifying regression-guided clustering variables and relative weights.</span>
+<span class="sd">            Example: {&quot;vars&quot;: [&quot;Fe&quot;], &quot;alpha&quot;: [0.6]}.</span>
+<span class="sd">            Default is {}.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">regression_guided</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_regression_guided</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+                <span class="nb">vars</span><span class="o">=</span><span class="n">regression_guided</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;vars&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="n">alpha</span><span class="o">=</span><span class="n">regression_guided</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;alpha&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">directional_variables</span><span class="o">=</span><span class="n">directional_variables</span><span class="p">,</span>
+            <span class="n">custom_scale_factor</span><span class="o">=</span><span class="n">custom_scale_factor</span><span class="p">,</span>
+            <span class="n">normalize_data</span><span class="o">=</span><span class="n">normalize_data</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Fit K-Means algorithm</span>
+        <span class="k">if</span> <span class="n">min_number_of_points</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stable_kma_child</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">number_of_tries</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="n">stable_kma_child</span><span class="p">:</span>
+                <span class="n">kma_child</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_clusters</span><span class="p">)</span>
+                <span class="n">predicted_labels</span> <span class="o">=</span> <span class="n">kma_child</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">normalized_data</span><span class="p">)</span>
+                <span class="n">_unique_labels</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">predicted_labels</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">counts</span> <span class="o">&gt;=</span> <span class="n">min_number_of_points</span><span class="p">):</span>
+                    <span class="n">stable_kma_child</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">number_of_tries</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">number_of_tries</span> <span class="o">&gt;</span> <span class="n">max_number_of_iterations</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Failed to find a stable K-Means configuration after </span><span class="si">{</span><span class="n">max_number_of_iterations</span><span class="si">}</span><span class="s2"> attempts.&quot;</span>
+                        <span class="s2">&quot;Change max_number_of_iterations or min_number_of_points.&quot;</span>
+                    <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Found a stable K-Means configuration after </span><span class="si">{</span><span class="n">number_of_tries</span><span class="si">}</span><span class="s2"> attempts.&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_kma</span> <span class="o">=</span> <span class="n">kma_child</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_kma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kma</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">normalized_data</span><span class="p">)</span>
+
+        <span class="c1"># Calculate the centroids</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">centroid_real_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kma</span><span class="o">.</span><span class="n">labels_</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalized_centroids</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kma</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fitting_variables</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">centroids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">denormalize</span><span class="p">(</span>
+            <span class="n">normalized_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">normalized_centroids</span><span class="p">,</span> <span class="n">scale_factor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">directional_variable</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">directional_variables</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="p">[</span><span class="n">directional_variable</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_degrees_from_uv</span><span class="p">(</span>
+                <span class="n">xu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">directional_variable</span><span class="si">}</span><span class="s2">_u&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                <span class="n">xv</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">directional_variable</span><span class="si">}</span><span class="s2">_v&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Set the fitted flag to True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="KMA.predict">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.kma.KMA.predict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Predict the nearest centroid for the provided data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : pd.DataFrame</span>
+<span class="sd">            The input data to be used for the prediction.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tuple[pd.DataFrame, pd.DataFrame]</span>
+<span class="sd">            A tuple containing the nearest centroid index for each data point,</span>
+<span class="sd">            and the nearest centroids.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">KMAError</span><span class="p">(</span><span class="s2">&quot;KMA model is not fitted.&quot;</span><span class="p">)</span>
+
+        <span class="n">normalized_data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kma</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">normalized_data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="n">y</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;kma_bmus&quot;</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">index</span>
+        <span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">y</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="KMA.fit_predict">
+<a class="viewcode-back" href="../../../bluemath_tk.datamining.html#bluemath_tk.datamining.kma.KMA.fit_predict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit_predict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">directional_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">custom_scale_factor</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span>
+        <span class="n">min_number_of_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_number_of_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">normalize_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">regression_guided</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit the K-Means algorithm to the provided data and predict the nearest centroid</span>
+<span class="sd">        for each data point.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : pd.DataFrame</span>
+<span class="sd">            The input data to be used for the KMA algorithm.</span>
+<span class="sd">        directional_variables : List[str], optional</span>
+<span class="sd">            A list of directional variables that will be transformed to u and v components.</span>
+<span class="sd">            Then, to use custom_scale_factor, you must specify the variables names with the u and v suffixes.</span>
+<span class="sd">            Example: directional_variables=[&quot;Dir&quot;], custom_scale_factor={&quot;Dir_u&quot;: [0, 1], &quot;Dir_v&quot;: [0, 1]}.</span>
+<span class="sd">            Default is [].</span>
+<span class="sd">        custom_scale_factor : dict, optional</span>
+<span class="sd">            A dictionary specifying custom scale factors for normalization.</span>
+<span class="sd">            If normalize_data is True, this will be used to normalize the data.</span>
+<span class="sd">            Example: {&quot;Hs&quot;: [0, 10], &quot;Tp&quot;: [0, 10]}.</span>
+<span class="sd">            Default is {}.</span>
+<span class="sd">        min_number_of_points : int, optional</span>
+<span class="sd">            The minimum number of points to consider a cluster.</span>
+<span class="sd">            Default is None.</span>
+<span class="sd">        max_number_of_iterations : int, optional</span>
+<span class="sd">            The maximum number of iterations for the K-Means algorithm.</span>
+<span class="sd">            This is used when min_number_of_points is not None.</span>
+<span class="sd">            Default is 10.</span>
+<span class="sd">        normalize_data : bool, optional</span>
+<span class="sd">            A flag to normalize the data.</span>
+<span class="sd">            If True, the data will be normalized using the custom_scale_factor.</span>
+<span class="sd">            Default is False.</span>
+<span class="sd">        regression_guided: dict, optional</span>
+<span class="sd">            A dictionary specifying regression-guided clustering variables and relative weights.</span>
+<span class="sd">            Example: {&quot;vars&quot;: [&quot;Fe&quot;], &quot;alpha&quot;: [0.6]}.</span>
+<span class="sd">            Default is {}.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tuple[pd.DataFrame, pd.DataFrame]</span>
+<span class="sd">            A tuple containing the nearest centroid index for each data point,</span>
+<span class="sd">            and the nearest centroids.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">directional_variables</span><span class="o">=</span><span class="n">directional_variables</span><span class="p">,</span>
+            <span class="n">custom_scale_factor</span><span class="o">=</span><span class="n">custom_scale_factor</span><span class="p">,</span>
+            <span class="n">min_number_of_points</span><span class="o">=</span><span class="n">min_number_of_points</span><span class="p">,</span>
+            <span class="n">max_number_of_iterations</span><span class="o">=</span><span class="n">max_number_of_iterations</span><span class="p">,</span>
+            <span class="n">normalize_data</span><span class="o">=</span><span class="n">normalize_data</span><span class="p">,</span>
+            <span class="n">regression_guided</span><span class="o">=</span><span class="n">regression_guided</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,1495 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.deeplearning package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.distributions package" href="bluemath_tk.distributions.html" />
+    <link rel="prev" title="bluemath_tk.datamining package" href="bluemath_tk.datamining.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.additive.html">bluemath_tk.additive package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">bluemath_tk.deeplearning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tcs.html">bluemath_tk.tcs package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.deeplearning package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.deeplearning.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-deeplearning-package">
+<h1>bluemath_tk.deeplearning package<a class="headerlink" href="#bluemath-tk-deeplearning-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.deeplearning.autoencoders">
+<span id="bluemath-tk-deeplearning-autoencoders-module"></span><h2>bluemath_tk.deeplearning.autoencoders module<a class="headerlink" href="#module-bluemath_tk.deeplearning.autoencoders" title="Link to this heading"></a></h2>
+<p>Autoencoders module.</p>
+<p>This module is a pytorch translation from a tensorflow implementation developed by Sergio López Dubón.</p>
+<p>This module contains the following autoencoders:
+- StandardAutoencoder
+- OrthogonalAutoencoder
+- LSTMAutoencoder
+- CNNAutoencoder
+- VisionTransformerAutoencoder
+- ConvLSTMAutoencoder
+- HybridConvLSTMTransformerAutoencoder</p>
+<p>Each autoencoder is a subclass of BaseDeepLearningModel and implements the following methods:
+- fit(X, y=None, epochs=10, batch_size=32, verbose=1)
+- predict(X)
+- encode(X)
+- decode(X)
+- evaluate(X)</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.autoencoders.CNNAutoencoder">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.autoencoders.</span></span><span class="sig-name descname"><span class="pre">CNNAutoencoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/autoencoders.html#CNNAutoencoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.autoencoders.CNNAutoencoder" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseDeepLearningModel</span></code></p>
+<p>Convolutional autoencoder for spatial grid data (images).</p>
+<p>Uses 2D convolutions for encoding and transposed convolutions for decoding.
+Designed for 2D spatial data like images or gridded data.</p>
+<section id="input-shape">
+<h3>Input Shape<a class="headerlink" href="#input-shape" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>X<span class="classifier">np.ndarray</span></dt><dd><p>Input data with shape (n_samples, C, H, W) - channels-first format.
+- n_samples: number of images
+- C: number of channels (e.g., 1 for grayscale, 3 for RGB)
+- H, W: height and width of the image
+Note: Only channels-first format is supported for consistency.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Single images (channels-first format required)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>  <span class="c1"># 100 images, 3 channels, 64x64</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ae</span> <span class="o">=</span> <span class="n">CNNAutoencoder</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">history</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_recon</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># Shape: (100, 3, 64, 64)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Z</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># Latent representations: (100, 20)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">param k<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of latent dimensions. Default is 20.</p>
+</dd>
+<dt class="field-even">type k<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param device<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Device to run the model on. Default is None.</p>
+</dd>
+<dt class="field-even">type device<span class="colon">:</span></dt>
+<dd class="field-even"><p>str or torch.device, optional</p>
+</dd>
+<dt class="field-odd">param **kwargs<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Additional keyword arguments passed to BaseDeepLearningModel.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.autoencoders.ConvLSTMAutoencoder">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.autoencoders.</span></span><span class="sig-name descname"><span class="pre">ConvLSTMAutoencoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/autoencoders.html#ConvLSTMAutoencoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.autoencoders.ConvLSTMAutoencoder" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseDeepLearningModel</span></code></p>
+<p>ConvLSTM autoencoder for spatiotemporal data (image sequences).</p>
+<p>Combines convolutional and LSTM layers for spatiotemporal sequences.
+Designed for video-like data or time series of images.</p>
+<section id="id1">
+<h3>Input Shape<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>X<span class="classifier">np.ndarray</span></dt><dd><p>Input data with shape (n_samples, seq_len, C, H, W).
+- n_samples: number of sequences
+- seq_len: number of frames in each sequence (automatically inferred from X.shape[1])
+- C: number of channels (e.g., 1 for grayscale, 3 for RGB)
+- H, W: height and width of each frame</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Video-like data (time series of images)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>  <span class="c1"># 100 sequences, 10 frames, 3 channels, 64x64</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ae</span> <span class="o">=</span> <span class="n">ConvLSTMAutoencoder</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">history</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_recon</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># Shape: (100, 3, 64, 64) - single frame reconstruction</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Z</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># Latent representations: (100, 20)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">param k<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of latent dimensions, by default 20.</p>
+</dd>
+<dt class="field-even">type k<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param device<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Device to run the model on.</p>
+</dd>
+<dt class="field-even">type device<span class="colon">:</span></dt>
+<dd class="field-even"><p>str or torch.device, optional</p>
+</dd>
+<dt class="field-odd">param **kwargs<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Additional keyword arguments passed to BaseDeepLearningModel.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.autoencoders.HybridConvLSTMTransformerAutoencoder">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.autoencoders.</span></span><span class="sig-name descname"><span class="pre">HybridConvLSTMTransformerAutoencoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_heads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">efficient_attention</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'linear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/autoencoders.html#HybridConvLSTMTransformerAutoencoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.autoencoders.HybridConvLSTMTransformerAutoencoder" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseDeepLearningModel</span></code></p>
+<p>Hybrid ConvLSTM + Transformer autoencoder for spatiotemporal data.</p>
+<p>Combines ConvLSTM for spatiotemporal encoding with Transformer attention
+for temporal modeling.
+Designed for complex spatiotemporal patterns (video-like data or time series of images).</p>
+<section id="id2">
+<h3>Input Shape<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>X<span class="classifier">np.ndarray</span></dt><dd><p>Input data with shape (n_samples, seq_len, C, H, W).
+- n_samples: number of sequences
+- seq_len: number of frames in each sequence (automatically inferred from X.shape[1])
+- C: number of channels (e.g., 1 for grayscale, 3 for RGB)
+- H, W: height and width of each frame</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Complex spatiotemporal data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>  <span class="c1"># 100 sequences, 10 frames, 3 channels, 64x64</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ae</span> <span class="o">=</span> <span class="n">HybridConvLSTMTransformerAutoencoder</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">d_model</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">history</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_recon</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># Shape: (100, 3, 64, 64) - single frame reconstruction</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Z</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># Latent representations: (100, 20)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">param k<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of latent dimensions, by default 20.</p>
+</dd>
+<dt class="field-even">type k<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param d_model<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Model dimension, by default 256.</p>
+</dd>
+<dt class="field-even">type d_model<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param n_heads<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of attention heads, by default 4.</p>
+</dd>
+<dt class="field-even">type n_heads<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param n_layers<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of transformer layers, by default 2.</p>
+</dd>
+<dt class="field-even">type n_layers<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param efficient_attention<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Use ‘linear’ for efficient linear attention, None for standard MHA,
+by default ‘linear’.</p>
+</dd>
+<dt class="field-even">type efficient_attention<span class="colon">:</span></dt>
+<dd class="field-even"><p>str, optional</p>
+</dd>
+<dt class="field-odd">param device<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Device to run the model on.</p>
+</dd>
+<dt class="field-even">type device<span class="colon">:</span></dt>
+<dd class="field-even"><p>str or torch.device, optional</p>
+</dd>
+<dt class="field-odd">param **kwargs<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Additional keyword arguments passed to BaseDeepLearningModel.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.autoencoders.LSTMAutoencoder">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.autoencoders.</span></span><span class="sig-name descname"><span class="pre">LSTMAutoencoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(256,</span> <span class="pre">128)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/autoencoders.html#LSTMAutoencoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.autoencoders.LSTMAutoencoder" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseDeepLearningModel</span></code></p>
+<p>LSTM-based autoencoder for sequential/temporal data.</p>
+<p>Uses LSTM cells for encoding and decoding temporal sequences.
+Designed for time series data (not images or tabular data).</p>
+<section id="id3">
+<h3>Input Shape<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>X<span class="classifier">np.ndarray</span></dt><dd><p>Input data with shape (n_samples, seq_len, n_features).
+- n_samples: number of sequences
+- seq_len: length of each sequence (automatically inferred from X.shape[1])
+- n_features: number of features per timestep</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Time series data (e.g., sensor readings over time)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>  <span class="c1"># 100 sequences, 10 timesteps, 5 features</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ae</span> <span class="o">=</span> <span class="n">LSTMAutoencoder</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">hidden</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">128</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">history</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_recon</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># Shape: (100, 10, 5)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Z</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># Latent representations: (100, 20)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">param k<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of latent dimensions, by default 20.</p>
+</dd>
+<dt class="field-even">type k<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param hidden<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Hidden layer dimensions for LSTM, by default (256, 128).</p>
+</dd>
+<dt class="field-even">type hidden<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple, optional</p>
+</dd>
+<dt class="field-odd">param device<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Device to run the model on.</p>
+</dd>
+<dt class="field-even">type device<span class="colon">:</span></dt>
+<dd class="field-even"><p>str or torch.device, optional</p>
+</dd>
+<dt class="field-odd">param **kwargs<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Additional keyword arguments passed to BaseDeepLearningModel.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.autoencoders.OrthogonalAutoencoder">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.autoencoders.</span></span><span class="sig-name descname"><span class="pre">OrthogonalAutoencoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_W</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_Z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/autoencoders.html#OrthogonalAutoencoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.autoencoders.OrthogonalAutoencoder" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseDeepLearningModel</span></code></p>
+<p>Orthogonal autoencoder with orthogonal regularization.</p>
+<p>Adds orthogonality constraints on encoder weights and latent decorrelation
+to encourage more interpretable latent representations.
+Designed for tabular/flattened data (not images or sequences).</p>
+<section id="id4">
+<h3>Input Shape<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>X<span class="classifier">np.ndarray</span></dt><dd><p>Input data with shape (n_samples, n_features) or (n_samples,).
+- For 2D arrays: (n_samples, n_features) - each row is a sample
+- For 1D arrays: (n_features,) - single sample (will be reshaped)
+The model automatically flattens multi-dimensional inputs.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Tabular data with orthogonal constraints</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">784</span><span class="p">)</span>  <span class="c1"># 1000 samples, 784 features</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ae</span> <span class="o">=</span> <span class="n">OrthogonalAutoencoder</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">lambda_W</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">lambda_Z</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">history</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Z</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># Decorrelated latent representations</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">param k<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of latent dimensions. Default is 20.</p>
+</dd>
+<dt class="field-even">type k<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param hidden_dims<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of hidden layer dimensions. Default is [512, 256, 128, 64].</p>
+</dd>
+<dt class="field-even">type hidden_dims<span class="colon">:</span></dt>
+<dd class="field-even"><p>list, optional</p>
+</dd>
+<dt class="field-odd">param lambda_W<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Weight orthogonality penalty strength. Default is 1e-3.</p>
+</dd>
+<dt class="field-even">type lambda_W<span class="colon">:</span></dt>
+<dd class="field-even"><p>float, optional</p>
+</dd>
+<dt class="field-odd">param lambda_Z<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Latent decorrelation penalty strength. Default is 1e-2.</p>
+</dd>
+<dt class="field-even">type lambda_Z<span class="colon">:</span></dt>
+<dd class="field-even"><p>float, optional</p>
+</dd>
+<dt class="field-odd">param device<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Device to run the model on. Default is None.</p>
+</dd>
+<dt class="field-even">type device<span class="colon">:</span></dt>
+<dd class="field-even"><p>str or torch.device, optional</p>
+</dd>
+<dt class="field-odd">param **kwargs<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Additional keyword arguments passed to BaseDeepLearningModel.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.autoencoders.OrthogonalAutoencoder.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_split</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optimizer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Module</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patience</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/autoencoders.html#OrthogonalAutoencoder.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.autoencoders.OrthogonalAutoencoder.fit" title="Link to this definition"></a></dt>
+<dd><p>Fit the orthogonal autoencoder with regularization losses.</p>
+<p>This method overrides the base fit() to properly add orthogonality
+and decorrelation regularization losses during training.</p>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.autoencoders.StandardAutoencoder">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.autoencoders.</span></span><span class="sig-name descname"><span class="pre">StandardAutoencoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/autoencoders.html#StandardAutoencoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.autoencoders.StandardAutoencoder" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseDeepLearningModel</span></code></p>
+<p>Standard fully-connected autoencoder.</p>
+<p>A simple feedforward autoencoder with symmetric encoder-decoder architecture.
+Designed for tabular/flattened data (not images or sequences).</p>
+<section id="id5">
+<h3>Input Shape<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>X<span class="classifier">np.ndarray</span></dt><dd><p>Input data with shape (n_samples, n_features) or (n_samples,).
+- For 2D arrays: (n_samples, n_features) - each row is a sample
+- For 1D arrays: (n_features,) - single sample (will be reshaped)
+The model automatically flattens multi-dimensional inputs.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Tabular data (e.g., flattened features)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">784</span><span class="p">)</span>  <span class="c1"># 1000 samples, 784 features</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ae</span> <span class="o">=</span> <span class="n">StandardAutoencoder</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">hidden_dims</span><span class="o">=</span><span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">64</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">history</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_recon</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Z</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># Get latent representations (1000, 20)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">param k<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of latent dimensions. Default is 20.</p>
+</dd>
+<dt class="field-even">type k<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param hidden_dims<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of hidden layer dimensions for encoder (decoder is symmetric).
+Default is [512, 256, 128, 64].</p>
+</dd>
+<dt class="field-even">type hidden_dims<span class="colon">:</span></dt>
+<dd class="field-even"><p>list, optional</p>
+</dd>
+<dt class="field-odd">param device<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Device to run the model on. Default is None.</p>
+</dd>
+<dt class="field-even">type device<span class="colon">:</span></dt>
+<dd class="field-even"><p>str or torch.device, optional</p>
+</dd>
+<dt class="field-odd">param **kwargs<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Additional keyword arguments passed to BaseDeepLearningModel.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.autoencoders.VisionTransformerAutoencoder">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.autoencoders.</span></span><span class="sig-name descname"><span class="pre">VisionTransformerAutoencoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_enc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_dec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/autoencoders.html#VisionTransformerAutoencoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.autoencoders.VisionTransformerAutoencoder" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseDeepLearningModel</span></code></p>
+<p>Vision Transformer (ViT) autoencoder for spatial grid data (images).</p>
+<p>Uses patch-based processing with transformer architecture.
+Designed for 2D spatial data like images or gridded data.</p>
+<section id="id6">
+<h3>Input Shape<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>X<span class="classifier">np.ndarray</span></dt><dd><p>Input data with shape (n_samples, C, H, W) - channels-first format.
+- n_samples: number of images
+- C: number of channels (e.g., 1 for grayscale, 3 for RGB)
+- H, W: height and width of the image
+Note: Only channels-first format is supported.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Single images (channels-first format required)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>  <span class="c1"># 100 images, 3 channels, 64x64</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ae</span> <span class="o">=</span> <span class="n">VisionTransformerAutoencoder</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">patch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">d_model</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">history</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_recon</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># Shape: (100, 3, 64, 64)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Z</span> <span class="o">=</span> <span class="n">ae</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># Latent representations: (100, 20)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">param k<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of latent dimensions, by default 20.</p>
+</dd>
+<dt class="field-even">type k<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param patch_size<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Size of each patch, by default 8.</p>
+</dd>
+<dt class="field-even">type patch_size<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param d_model<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Model dimension, by default 256.</p>
+</dd>
+<dt class="field-even">type d_model<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param depth_enc<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of encoder transformer blocks, by default 4.</p>
+</dd>
+<dt class="field-even">type depth_enc<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param depth_dec<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of decoder transformer blocks, by default 2.</p>
+</dd>
+<dt class="field-even">type depth_dec<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param heads<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of attention heads, by default 4.</p>
+</dd>
+<dt class="field-even">type heads<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, optional</p>
+</dd>
+<dt class="field-odd">param device<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Device to run the model on.</p>
+</dd>
+<dt class="field-even">type device<span class="colon">:</span></dt>
+<dd class="field-even"><p>str or torch.device, optional</p>
+</dd>
+<dt class="field-odd">param **kwargs<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Additional keyword arguments passed to BaseDeepLearningModel.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.deeplearning.gp_models">
+<span id="bluemath-tk-deeplearning-gp-models-module"></span><h2>bluemath_tk.deeplearning.gp_models module<a class="headerlink" href="#module-bluemath_tk.deeplearning.gp_models" title="Link to this heading"></a></h2>
+<p>Gaussian Process models module.</p>
+<p>This module contains Gaussian Process Regression models using GPyTorch.</p>
+<p>Classes:
+- BaseGPRModel: Base class for all GP models
+- ExactGPModel: Exact Gaussian Process Regression model</p>
+<ol class="arabic simple">
+<li><p>Wang, Z., Leung, M., Mukhopadhyay, S., et al. (2024). “A hybrid statistical–dynamical framework for compound coastal flooding analysis.” <em>Environmental Research Letters</em>, 20(1), 014005.</p></li>
+<li><p>Wang, Z., Leung, M., Mukhopadhyay, S., et al. (2025). “Compound coastal flooding in San Francisco Bay under climate change.” <em>npj Natural Hazards</em>, 2(1), 3.</p></li>
+</ol>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.gp_models.BaseGPRModel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.gp_models.</span></span><span class="sig-name descname"><span class="pre">BaseGPRModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/gp_models.html#BaseGPRModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.gp_models.BaseGPRModel" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel" title="bluemath_tk.core.models.BlueMathModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">BlueMathModel</span></code></a></p>
+<p>Base class for Gaussian Process Regression models.</p>
+<p>This class provides common functionality for all GP models, including:
+- GP-specific training with marginal log likelihood
+- Prediction with uncertainty quantification
+- Model save/load with likelihood handling</p>
+<p>GP models differ from standard deep learning models in several ways:
+- Use marginal log likelihood (MLL) instead of standard loss functions
+- Require explicit training data setting via set_train_data()
+- Return distributions (mean + variance) rather than point estimates
+- Typically train on full dataset (no batching during training)</p>
+<p>GP models inherit directly from BlueMathModel (not BaseDeepLearningModel)
+because their training and prediction workflows are fundamentally different
+from standard neural networks.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.gp_models.BaseGPRModel.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#bluemath_tk.deeplearning.gp_models.BaseGPRModel.model" title="Link to this definition"></a></dt>
+<dd><p>The GPyTorch model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>gpytorch.models.GP</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.gp_models.BaseGPRModel.device">
+<span class="sig-name descname"><span class="pre">device</span></span><a class="headerlink" href="#bluemath_tk.deeplearning.gp_models.BaseGPRModel.device" title="Link to this definition"></a></dt>
+<dd><p>The device (CPU/GPU) the model is on.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.device</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.gp_models.BaseGPRModel.is_fitted">
+<span class="sig-name descname"><span class="pre">is_fitted</span></span><a class="headerlink" href="#bluemath_tk.deeplearning.gp_models.BaseGPRModel.is_fitted" title="Link to this definition"></a></dt>
+<dd><p>Whether the model has been fitted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.gp_models.BaseGPRModel.likelihood">
+<span class="sig-name descname"><span class="pre">likelihood</span></span><a class="headerlink" href="#bluemath_tk.deeplearning.gp_models.BaseGPRModel.likelihood" title="Link to this definition"></a></dt>
+<dd><p>The GP likelihood module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>gpytorch.likelihoods.Likelihood</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.gp_models.BaseGPRModel.mll">
+<span class="sig-name descname"><span class="pre">mll</span></span><a class="headerlink" href="#bluemath_tk.deeplearning.gp_models.BaseGPRModel.mll" title="Link to this definition"></a></dt>
+<dd><p>The marginal log likelihood objective.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>gpytorch.mlls.MarginalLogLikelihood</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.gp_models.BaseGPRModel.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optimizer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patience</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/gp_models.html#BaseGPRModel.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.gp_models.BaseGPRModel.fit" title="Link to this definition"></a></dt>
+<dd><p>Fit the Gaussian Process model.</p>
+<p>GP models use marginal log likelihood (MLL) optimization, which is
+fundamentally different from standard deep learning training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>np.ndarray</em>) – Training input data with shape (n_samples, n_features).</p></li>
+<li><p><strong>y</strong> (<em>np.ndarray</em>) – Training target data with shape (n_samples,) or (n_samples, 1).</p></li>
+<li><p><strong>epochs</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of training epochs. Default is 200.</p></li>
+<li><p><strong>learning_rate</strong> (<em>float</em><em>, </em><em>optional</em>) – Learning rate for optimizer. Default is 0.1.</p></li>
+<li><p><strong>optimizer</strong> (<em>torch.optim.Optimizer</em><em>, </em><em>optional</em>) – Optimizer to use. If None, uses Adam. Default is None.</p></li>
+<li><p><strong>patience</strong> (<em>int</em><em>, </em><em>optional</em>) – Early stopping patience. Default is 30.</p></li>
+<li><p><strong>verbose</strong> (<em>int</em><em>, </em><em>optional</em>) – Verbosity level. Default is 1.</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments passed to _build_model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Training history with ‘train_loss’ key (negative MLL).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[str, list]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.gp_models.BaseGPRModel.load_pytorch_model">
+<span class="sig-name descname"><span class="pre">load_pytorch_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/gp_models.html#BaseGPRModel.load_pytorch_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.gp_models.BaseGPRModel.load_pytorch_model" title="Link to this definition"></a></dt>
+<dd><p>Load a GP model from a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_path</strong> (<em>str</em>) – Path to the file where the model is saved.</p></li>
+<li><p><strong>**kwargs</strong> – Additional arguments for torch.load.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.gp_models.BaseGPRModel.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_std</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/gp_models.html#BaseGPRModel.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.gp_models.BaseGPRModel.predict" title="Link to this definition"></a></dt>
+<dd><p>Make predictions with the Gaussian Process model.</p>
+<p>GP models return distributions, so predictions include uncertainty
+estimates (standard deviation) by default.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>np.ndarray</em>) – Input data with shape (n_samples, n_features).</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Batch size for prediction. If None, processes all at once.
+Default is None.</p></li>
+<li><p><strong>return_std</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, returns both mean and standard deviation.
+Default is False.</p></li>
+<li><p><strong>verbose</strong> (<em>int</em><em>, </em><em>optional</em>) – Verbosity level. Default is 1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>If return_std=False: predictions (mean) with shape (n_samples,).
+If return_std=True: tuple of (mean, std) both with shape (n_samples,).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray or tuple</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If model is not fitted.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.gp_models.BaseGPRModel.save_pytorch_model">
+<span class="sig-name descname"><span class="pre">save_pytorch_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/gp_models.html#BaseGPRModel.save_pytorch_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.gp_models.BaseGPRModel.save_pytorch_model" title="Link to this definition"></a></dt>
+<dd><p>Save the GP model to a file.</p>
+<p>GP models require saving both the model and likelihood state dicts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_path</strong> (<em>str</em>) – Path to the file where the model will be saved.</p></li>
+<li><p><strong>**kwargs</strong> – Additional arguments for torch.save.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.gp_models.ExactGPModel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.gp_models.</span></span><span class="sig-name descname"><span class="pre">ExactGPModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'rbf+matern'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ard_num_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/gp_models.html#ExactGPModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.gp_models.ExactGPModel" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bluemath_tk.deeplearning.gp_models.BaseGPRModel" title="bluemath_tk.deeplearning.gp_models.BaseGPRModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseGPRModel</span></code></a></p>
+<p>Exact Gaussian Process Regression model using GPyTorch.</p>
+<p>This model implements exact GP inference, suitable for datasets up to
+several thousand samples. For larger datasets, consider using approximate
+GP methods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kernel</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of kernel to use. Options: ‘rbf’, ‘matern’, ‘rbf+matern’.
+Default is ‘rbf+matern’.</p></li>
+<li><p><strong>ard_num_dims</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of input dimensions for ARD (Automatic Relevance Determination).
+If None, will be inferred from data. Default is None.</p></li>
+<li><p><strong>device</strong> (<em>str</em><em> or </em><em>torch.device</em><em>, </em><em>optional</em>) – Device to run the model on. Default is None (auto-detect).</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments passed to BaseGPRModel.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">bluemath_tk.deeplearning</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactGPModel</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Generate sample data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create and fit model</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gp</span> <span class="o">=</span> <span class="n">ExactGPModel</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="s1">&#39;rbf+matern&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">history</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Make predictions</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_std</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">return_std</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.deeplearning.layers">
+<span id="bluemath-tk-deeplearning-layers-module"></span><h2>bluemath_tk.deeplearning.layers module<a class="headerlink" href="#module-bluemath_tk.deeplearning.layers" title="Link to this heading"></a></h2>
+<p>Project: BlueMath_tk
+Sub-Module: deeplearning.layers
+Author: GeoOcean Research Group, Universidad de Cantabria
+Repository: <a class="reference external" href="https://github.com/GeoOcean/BlueMath_tk.git">https://github.com/GeoOcean/BlueMath_tk.git</a>
+Status: Under development (Working)</p>
+<p>Custom PyTorch layers for deep learning models.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.ConvLSTM">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">ConvLSTM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_all_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#ConvLSTM"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.ConvLSTM" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>ConvLSTM module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_dim</strong> (<em>int</em>) – Number of channels of input tensor.</p></li>
+<li><p><strong>hidden_dim</strong> (<em>int</em><em> or </em><em>list</em>) – Number of channels of hidden state(s).</p></li>
+<li><p><strong>kernel_size</strong> (<em>int</em><em> or </em><em>tuple</em><em>, </em><em>optional</em>) – Size of the convolutional kernel. Default is 3.</p></li>
+<li><p><strong>num_layers</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of ConvLSTM layers. Default is 1.</p></li>
+<li><p><strong>batch_first</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, input and output tensors are provided as (batch, seq, channel, height, width).
+Default is False.</p></li>
+<li><p><strong>bias</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to add bias. Default is True.</p></li>
+<li><p><strong>return_all_layers</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, returns all layers’ outputs. Default is False.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.ConvLSTM.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#ConvLSTM.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.ConvLSTM.forward" title="Link to this definition"></a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.ConvLSTMCell">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">ConvLSTMCell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#ConvLSTMCell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.ConvLSTMCell" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>ConvLSTM Cell implementation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_dim</strong> (<em>int</em>) – Number of channels of input tensor.</p></li>
+<li><p><strong>hidden_dim</strong> (<em>int</em>) – Number of channels of hidden state.</p></li>
+<li><p><strong>kernel_size</strong> (<em>int</em><em> or </em><em>tuple</em><em>, </em><em>optional</em>) – Size of the convolutional kernel. Default is 3.</p></li>
+<li><p><strong>bias</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to add bias. Default is True.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.ConvLSTMCell.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cur_state</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#ConvLSTMCell.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.ConvLSTMCell.forward" title="Link to this definition"></a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.ConvLSTMCell.init_hidden">
+<span class="sig-name descname"><span class="pre">init_hidden</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#ConvLSTMCell.init_hidden"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.ConvLSTMCell.init_hidden" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.DoubleConv">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">DoubleConv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mid_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#DoubleConv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.DoubleConv" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Double convolution block: (convolution =&gt; [BN] =&gt; activation) * 2</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_channels</strong> (<em>int</em>) – Number of input channels.</p></li>
+<li><p><strong>out_channels</strong> (<em>int</em>) – Number of output channels.</p></li>
+<li><p><strong>mid_channels</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of intermediate channels. If None, uses out_channels.</p></li>
+<li><p><strong>activation</strong> (<em>nn.Module</em><em>, </em><em>optional</em>) – Activation function. Default is SiLU.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.DoubleConv.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#DoubleConv.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.DoubleConv.forward" title="Link to this definition"></a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.DoubleConv3D">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">DoubleConv3D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mid_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#DoubleConv3D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.DoubleConv3D" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Double 3D convolution block: (convolution =&gt; [BN] =&gt; activation) * 2</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_channels</strong> (<em>int</em>) – Number of input channels.</p></li>
+<li><p><strong>out_channels</strong> (<em>int</em>) – Number of output channels.</p></li>
+<li><p><strong>mid_channels</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of intermediate channels. If None, uses out_channels.</p></li>
+<li><p><strong>activation</strong> (<em>nn.Module</em><em>, </em><em>optional</em>) – Activation function. Default is SiLU.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.DoubleConv3D.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#DoubleConv3D.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.DoubleConv3D.forward" title="Link to this definition"></a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.Down">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">Down</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#Down"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.Down" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Downscaling with maxpool then double conv.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_channels</strong> (<em>int</em>) – Number of input channels.</p></li>
+<li><p><strong>out_channels</strong> (<em>int</em>) – Number of output channels.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.Down.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#Down.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.Down.forward" title="Link to this definition"></a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.Down3D">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">Down3D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#Down3D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.Down3D" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Downscaling with maxpool then double 3D conv.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_channels</strong> (<em>int</em>) – Number of input channels.</p></li>
+<li><p><strong>out_channels</strong> (<em>int</em>) – Number of output channels.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.Down3D.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#Down3D.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.Down3D.forward" title="Link to this definition"></a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.LatentDecorr">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">LatentDecorr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strength</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#LatentDecorr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.LatentDecorr" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Latent pass-through layer that adds covariance decorrelation loss.</p>
+<p>This layer encourages the latent representations to be decorrelated
+by penalizing off-diagonal elements of the covariance matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>strength</strong> (<em>float</em><em>, </em><em>optional</em>) – Strength of the decorrelation penalty, by default 1e-2.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.LatentDecorr.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#LatentDecorr.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.LatentDecorr.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass with decorrelation loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>z</strong> (<em>torch.Tensor</em>) – Latent representations, shape (batch, k).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Unchanged latent representations.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.LinearSelfAttention">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">LinearSelfAttention</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_heads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#LinearSelfAttention"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.LinearSelfAttention" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Softmax-free, Performer-style linear attention on the time axis.</p>
+<p>Provides O(B * L * D * H) scaling, good for large sequence lengths.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>d_model</strong> (<em>int</em>) – Model dimension.</p></li>
+<li><p><strong>num_heads</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of attention heads, by default 4.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.LinearSelfAttention.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#LinearSelfAttention.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.LinearSelfAttention.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – Input sequences, shape (B, L, D).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Output sequences, shape (B, L, D).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.OutConv">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">OutConv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#OutConv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.OutConv" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Output convolution layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_channels</strong> (<em>int</em>) – Number of input channels.</p></li>
+<li><p><strong>out_channels</strong> (<em>int</em>) – Number of output channels.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.OutConv.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#OutConv.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.OutConv.forward" title="Link to this definition"></a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.OutConv3D">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">OutConv3D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#OutConv3D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.OutConv3D" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Output 3D convolution layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_channels</strong> (<em>int</em>) – Number of input channels.</p></li>
+<li><p><strong>out_channels</strong> (<em>int</em>) – Number of output channels.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.OutConv3D.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#OutConv3D.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.OutConv3D.forward" title="Link to this definition"></a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.Patchify">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">Patchify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#Patchify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.Patchify" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Patchify layer that splits images into patches.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>patch_size</strong> (<em>int</em>) – Size of each patch (patch_size x patch_size).</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.Patchify.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#Patchify.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.Patchify.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – Input images, shape (B, C, H, W), where H and W are multiples of p.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Patches, shape (B, N, p*p*C).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.PositionalEmbedding">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">PositionalEmbedding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#PositionalEmbedding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.PositionalEmbedding" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Learnable positional embedding layer for transformer models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_tokens</strong> (<em>int</em>) – Number of tokens/patches.</p></li>
+<li><p><strong>d_model</strong> (<em>int</em>) – Model dimension.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.PositionalEmbedding.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#PositionalEmbedding.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.PositionalEmbedding.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – Input tokens, shape (B, N, D).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tokens with positional embeddings added.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.TimePositionalEncoding">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">TimePositionalEncoding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#TimePositionalEncoding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.TimePositionalEncoding" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Sinusoidal positional encoding for temporal sequences.</p>
+<p>Adds 1D sinusoidal time positions to per-timestep embeddings.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.TimePositionalEncoding.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#TimePositionalEncoding.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.TimePositionalEncoding.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – Input sequences, shape (B, L, D).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sequences with positional encodings added.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.TripleConv">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">TripleConv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mid_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#TripleConv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.TripleConv" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Triple convolution with separable spatial convolutions.
+Uses (1, kernel_size) and (kernel_size, 1) convolutions then combines.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_channels</strong> (<em>int</em>) – Number of input channels.</p></li>
+<li><p><strong>out_channels</strong> (<em>int</em>) – Number of output channels.</p></li>
+<li><p><strong>mid_channels</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of intermediate channels. If None, uses out_channels.</p></li>
+<li><p><strong>kernel_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Kernel size for separable convolutions. Must be 3, 5, or 7. Default is 7.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.TripleConv.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#TripleConv.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.TripleConv.forward" title="Link to this definition"></a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.Unpatchify">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">Unpatchify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Hp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Wp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">C</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#Unpatchify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.Unpatchify" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Unpatchify layer that reconstructs images from patches.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>patch_size</strong> (<em>int</em>) – Size of each patch.</p></li>
+<li><p><strong>Hp</strong> (<em>int</em>) – Number of patches in height dimension.</p></li>
+<li><p><strong>Wp</strong> (<em>int</em>) – Number of patches in width dimension.</p></li>
+<li><p><strong>C</strong> (<em>int</em>) – Number of channels.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.Unpatchify.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tokens</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#Unpatchify.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.Unpatchify.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tokens</strong> (<em>torch.Tensor</em>) – Patches, shape (B, N=Hp*Wp, p*p*C).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Reconstructed images, shape (B, C, H, W).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.Up">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">Up</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bilinear</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#Up"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.Up" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Upscaling then double conv.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_channels</strong> (<em>int</em>) – Number of input channels.</p></li>
+<li><p><strong>out_channels</strong> (<em>int</em>) – Number of output channels.</p></li>
+<li><p><strong>bilinear</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use bilinear upsampling. Default is True.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.Up.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#Up.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.Up.forward" title="Link to this definition"></a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.Up3D">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.layers.</span></span><span class="sig-name descname"><span class="pre">Up3D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trilinear</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#Up3D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.Up3D" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Upscaling then double 3D conv.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_channels</strong> (<em>int</em>) – Number of input channels.</p></li>
+<li><p><strong>out_channels</strong> (<em>int</em>) – Number of output channels.</p></li>
+<li><p><strong>trilinear</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use trilinear upsampling. Default is True.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.layers.Up3D.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/layers.html#Up3D.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.layers.Up3D.forward" title="Link to this definition"></a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.deeplearning.regularizers">
+<span id="bluemath-tk-deeplearning-regularizers-module"></span><h2>bluemath_tk.deeplearning.regularizers module<a class="headerlink" href="#module-bluemath_tk.deeplearning.regularizers" title="Link to this heading"></a></h2>
+<p>Project: BlueMath_tk
+Sub-Module: deeplearning.regularizers
+Author: GeoOcean Research Group, Universidad de Cantabria
+Repository: <a class="reference external" href="https://github.com/GeoOcean/BlueMath_tk.git">https://github.com/GeoOcean/BlueMath_tk.git</a>
+Status: Under development (Working)</p>
+<p>Regularization functions for PyTorch models.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.regularizers.l1_regularizer">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.regularizers.</span></span><span class="sig-name descname"><span class="pre">l1_regularizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strength</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/regularizers.html#l1_regularizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.regularizers.l1_regularizer" title="Link to this definition"></a></dt>
+<dd><p>L1 regularization (sparsity).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameters</strong> (<em>iterable</em><em> of </em><em>torch.Tensor</em>) – Model parameters to regularize.</p></li>
+<li><p><strong>strength</strong> (<em>float</em><em>, </em><em>optional</em>) – Strength of the L1 penalty, by default 1e-4.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Scalar penalty value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">bluemath_tk.deeplearning.regularizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">l1_regularizer</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">penalty</span> <span class="o">=</span> <span class="n">l1_regularizer</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">strength</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.regularizers.l2_regularizer">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.regularizers.</span></span><span class="sig-name descname"><span class="pre">l2_regularizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strength</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/regularizers.html#l2_regularizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.regularizers.l2_regularizer" title="Link to this definition"></a></dt>
+<dd><p>L2 regularization (weight decay).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameters</strong> (<em>iterable</em><em> of </em><em>torch.Tensor</em>) – Model parameters to regularize.</p></li>
+<li><p><strong>strength</strong> (<em>float</em><em>, </em><em>optional</em>) – Strength of the L2 penalty, by default 1e-4.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Scalar penalty value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">bluemath_tk.deeplearning.regularizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">l2_regularizer</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">penalty</span> <span class="o">=</span> <span class="n">l2_regularizer</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">strength</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.regularizers.orthogonal_regularizer">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.regularizers.</span></span><span class="sig-name descname"><span class="pre">orthogonal_regularizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">W</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strength</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/regularizers.html#orthogonal_regularizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.regularizers.orthogonal_regularizer" title="Link to this definition"></a></dt>
+<dd><p>Weight orthogonality regularizer.</p>
+<p>Encourages the weight matrix W to be orthogonal by penalizing
+deviations of W^T W from the identity matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>W</strong> (<em>torch.Tensor</em>) – Weight matrix, shape (out_features, in_features).</p></li>
+<li><p><strong>strength</strong> (<em>float</em><em>, </em><em>optional</em>) – Strength of the orthogonality penalty, by default 1e-3.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Scalar penalty value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">bluemath_tk.deeplearning.regularizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">orthogonal_regularizer</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">W</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">128</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">penalty</span> <span class="o">=</span> <span class="n">orthogonal_regularizer</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">strength</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.deeplearning.unet">
+<span id="bluemath-tk-deeplearning-unet-module"></span><h2>bluemath_tk.deeplearning.unet module<a class="headerlink" href="#module-bluemath_tk.deeplearning.unet" title="Link to this heading"></a></h2>
+<p>Unet module.</p>
+<p>This module is will try to generalize models like the ones in:
+<a class="reference external" href="https://github.com/oaeen/wind2iwp">https://github.com/oaeen/wind2iwp</a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.unet.UNet">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.unet.</span></span><span class="sig-name descname"><span class="pre">UNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bilinear</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/unet.html#UNet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.unet.UNet" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>U-Net architecture for 2D image segmentation/regression.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_channels</strong> (<em>int</em>) – Number of input channels.</p></li>
+<li><p><strong>n_classes</strong> (<em>int</em>) – Number of output channels/classes.</p></li>
+<li><p><strong>base_channels</strong> (<em>int</em><em>, </em><em>optional</em>) – Base number of channels. Default is 64.</p></li>
+<li><p><strong>bilinear</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use bilinear upsampling. Default is True.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.unet.UNet.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/unet.html#UNet.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.unet.UNet.forward" title="Link to this definition"></a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.unet.UNet3D">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.deeplearning.unet.</span></span><span class="sig-name descname"><span class="pre">UNet3D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trilinear</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/unet.html#UNet3D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.unet.UNet3D" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>U-Net architecture for 3D volumetric data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_channels</strong> (<em>int</em>) – Number of input channels.</p></li>
+<li><p><strong>n_classes</strong> (<em>int</em>) – Number of output channels/classes.</p></li>
+<li><p><strong>base_channels</strong> (<em>int</em><em>, </em><em>optional</em>) – Base number of channels. Default is 16.</p></li>
+<li><p><strong>trilinear</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use trilinear upsampling. Default is True.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.deeplearning.unet.UNet3D.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/deeplearning/unet.html#UNet3D.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.deeplearning.unet.UNet3D.forward" title="Link to this definition"></a></dt>
+<dd><p>Define the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.deeplearning">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bluemath_tk.deeplearning" title="Link to this heading"></a></h2>
+<p>Project: BlueMath_tk
+Sub-Module: deeplearning
+Author: GeoOcean Research Group, Universidad de Cantabria
+Repository: <a class="reference external" href="https://github.com/GeoOcean/BlueMath_tk.git">https://github.com/GeoOcean/BlueMath_tk.git</a>
+Status: Under development (Working)</p>
+<p>PyTorch-based deep learning module for BlueMath_tk.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.datamining.html" class="btn btn-neutral float-left" title="bluemath_tk.datamining package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.distributions.html" class="btn btn-neutral float-right" title="bluemath_tk.distributions package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

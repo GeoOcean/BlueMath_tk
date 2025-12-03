@@ -1,0 +1,254 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.teslakit.numerical_models package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.teslakit.numerical_models.swan package" href="bluemath_tk.teslakit.numerical_models.swan.html" />
+    <link rel="prev" title="bluemath_tk.teslakit.io package" href="bluemath_tk.teslakit.io.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.additive.html">bluemath_tk.additive package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.deeplearning.html">bluemath_tk.deeplearning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tcs.html">bluemath_tk.tcs package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.teslakit.numerical_models package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.teslakit.numerical_models.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-teslakit-numerical-models-package">
+<h1>bluemath_tk.teslakit.numerical_models package<a class="headerlink" href="#bluemath-tk-teslakit-numerical-models-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html">bluemath_tk.teslakit.numerical_models.swan package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html">bluemath_tk.teslakit.numerical_models.swan.plots package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#module-bluemath_tk.teslakit.numerical_models.swan.plots.common">bluemath_tk.teslakit.numerical_models.swan.plots.common module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#module-bluemath_tk.teslakit.numerical_models.swan.plots.config">bluemath_tk.teslakit.numerical_models.swan.plots.config module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#module-bluemath_tk.teslakit.numerical_models.swan.plots.stat">bluemath_tk.teslakit.numerical_models.swan.plots.stat module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#module-bluemath_tk.teslakit.numerical_models.swan.plots">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.test.html">bluemath_tk.teslakit.numerical_models.swan.test package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.test.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.test.html#module-bluemath_tk.teslakit.numerical_models.swan.test.test_io">bluemath_tk.teslakit.numerical_models.swan.test.test_io module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.test.html#module-bluemath_tk.teslakit.numerical_models.swan.test.test_wrap">bluemath_tk.teslakit.numerical_models.swan.test.test_wrap module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.test.html#module-bluemath_tk.teslakit.numerical_models.swan.test">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#module-bluemath_tk.teslakit.numerical_models.swan.geo">bluemath_tk.teslakit.numerical_models.swan.geo module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.geo.gc_distance"><code class="docutils literal notranslate"><span class="pre">gc_distance()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.geo.shoot"><code class="docutils literal notranslate"><span class="pre">shoot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#module-bluemath_tk.teslakit.numerical_models.swan.io">bluemath_tk.teslakit.numerical_models.swan.io module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO"><code class="docutils literal notranslate"><span class="pre">SwanIO</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO.make_project"><code class="docutils literal notranslate"><span class="pre">SwanIO.make_project()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT"><code class="docutils literal notranslate"><span class="pre">SwanIO_NONSTAT</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.build_case"><code class="docutils literal notranslate"><span class="pre">SwanIO_NONSTAT.build_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.get_t0_dt"><code class="docutils literal notranslate"><span class="pre">SwanIO_NONSTAT.get_t0_dt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_input"><code class="docutils literal notranslate"><span class="pre">SwanIO_NONSTAT.make_input()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_level_files"><code class="docutils literal notranslate"><span class="pre">SwanIO_NONSTAT.make_level_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_out_points"><code class="docutils literal notranslate"><span class="pre">SwanIO_NONSTAT.make_out_points()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_vortex_files"><code class="docutils literal notranslate"><span class="pre">SwanIO_NONSTAT.make_vortex_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_wave_files"><code class="docutils literal notranslate"><span class="pre">SwanIO_NONSTAT.make_wave_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_wind_files"><code class="docutils literal notranslate"><span class="pre">SwanIO_NONSTAT.make_wind_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.outmat2xr"><code class="docutils literal notranslate"><span class="pre">SwanIO_NONSTAT.outmat2xr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.output_case"><code class="docutils literal notranslate"><span class="pre">SwanIO_NONSTAT.output_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.output_points"><code class="docutils literal notranslate"><span class="pre">SwanIO_NONSTAT.output_points()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT"><code class="docutils literal notranslate"><span class="pre">SwanIO_STAT</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.build_case"><code class="docutils literal notranslate"><span class="pre">SwanIO_STAT.build_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.make_input"><code class="docutils literal notranslate"><span class="pre">SwanIO_STAT.make_input()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.make_input_nested"><code class="docutils literal notranslate"><span class="pre">SwanIO_STAT.make_input_nested()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.outmat2xr"><code class="docutils literal notranslate"><span class="pre">SwanIO_STAT.outmat2xr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.output_case"><code class="docutils literal notranslate"><span class="pre">SwanIO_STAT.output_case()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.io.geo_distance_azimuth"><code class="docutils literal notranslate"><span class="pre">geo_distance_azimuth()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#module-bluemath_tk.teslakit.numerical_models.swan.storms">bluemath_tk.teslakit.numerical_models.swan.storms module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.storms.track_from_parameters"><code class="docutils literal notranslate"><span class="pre">track_from_parameters()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#module-bluemath_tk.teslakit.numerical_models.swan.temp_plots">bluemath_tk.teslakit.numerical_models.swan.temp_plots module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.temp_plots.aux_quiver"><code class="docutils literal notranslate"><span class="pre">aux_quiver()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_output_nonstat"><code class="docutils literal notranslate"><span class="pre">plot_output_nonstat()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_output_points"><code class="docutils literal notranslate"><span class="pre">plot_output_points()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_points_times"><code class="docutils literal notranslate"><span class="pre">plot_points_times()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_storm_track"><code class="docutils literal notranslate"><span class="pre">plot_storm_track()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_var_times"><code class="docutils literal notranslate"><span class="pre">plot_var_times()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#module-bluemath_tk.teslakit.numerical_models.swan.wrap">bluemath_tk.teslakit.numerical_models.swan.wrap module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanMesh"><code class="docutils literal notranslate"><span class="pre">SwanMesh</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanMesh.export_dat"><code class="docutils literal notranslate"><span class="pre">SwanMesh.export_dat()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanMesh.get_XY"><code class="docutils literal notranslate"><span class="pre">SwanMesh.get_XY()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanProject"><code class="docutils literal notranslate"><span class="pre">SwanProject</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap"><code class="docutils literal notranslate"><span class="pre">SwanWrap</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.extract_output"><code class="docutils literal notranslate"><span class="pre">SwanWrap.extract_output()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.extract_output_points"><code class="docutils literal notranslate"><span class="pre">SwanWrap.extract_output_points()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.get_run_folders"><code class="docutils literal notranslate"><span class="pre">SwanWrap.get_run_folders()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.run"><code class="docutils literal notranslate"><span class="pre">SwanWrap.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.run_cases"><code class="docutils literal notranslate"><span class="pre">SwanWrap.run_cases()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_NONSTAT"><code class="docutils literal notranslate"><span class="pre">SwanWrap_NONSTAT</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_NONSTAT.build_cases"><code class="docutils literal notranslate"><span class="pre">SwanWrap_NONSTAT.build_cases()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_STAT"><code class="docutils literal notranslate"><span class="pre">SwanWrap_STAT</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_STAT.build_cases"><code class="docutils literal notranslate"><span class="pre">SwanWrap_STAT.build_cases()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#module-bluemath_tk.teslakit.numerical_models.swan">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.set_swan_binary_file"><code class="docutils literal notranslate"><span class="pre">set_swan_binary_file()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="module-bluemath_tk.teslakit.numerical_models">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bluemath_tk.teslakit.numerical_models" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.teslakit.io.html" class="btn btn-neutral float-left" title="bluemath_tk.teslakit.io package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.teslakit.numerical_models.swan.html" class="btn btn-neutral float-right" title="bluemath_tk.teslakit.numerical_models.swan package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,37 @@
+bluemath\_tk.tide package
+=========================
+
+Submodules
+----------
+
+bluemath\_tk.tide.harmonic module
+---------------------------------
+
+.. automodule:: bluemath_tk.tide.harmonic
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.tide.ttide module
+------------------------------
+
+.. automodule:: bluemath_tk.tide.ttide
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.tide.utide module
+------------------------------
+
+.. automodule:: bluemath_tk.tide.utide
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.tide
+   :members:
+   :show-inheritance:
+   :undoc-members:

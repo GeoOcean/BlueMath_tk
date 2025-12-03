@@ -1,0 +1,479 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.teslakit.numerical_models.swan.wrap &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/thebelab.css" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../swan.html">bluemath_tk.teslakit.numerical_models.swan</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.teslakit.numerical_models.swan.wrap</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.teslakit.numerical_models.swan.wrap</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">op</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sp</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+<span class="c1"># SWAN STAT LIBRARY</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">SwanIO_STAT</span><span class="p">,</span> <span class="n">SwanIO_NONSTAT</span>
+
+
+<span class="c1"># grid description template</span>
+<span class="n">d_grid_template</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;xpc&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>      <span class="c1"># x origin</span>
+    <span class="s1">&#39;ypc&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>      <span class="c1"># y origin</span>
+    <span class="s1">&#39;alpc&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>     <span class="c1"># x-axis direction </span>
+    <span class="s1">&#39;xlenc&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>    <span class="c1"># grid length in x</span>
+    <span class="s1">&#39;ylenc&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>    <span class="c1"># grid length in y</span>
+    <span class="s1">&#39;mxc&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>      <span class="c1"># number mesh x</span>
+    <span class="s1">&#39;myc&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>      <span class="c1"># number mesh y</span>
+    <span class="s1">&#39;dxinp&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>    <span class="c1"># size mesh x</span>
+    <span class="s1">&#39;dyinp&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>    <span class="c1"># size mesh y</span>
+<span class="p">}</span>
+
+<span class="c1"># swan input parameters template</span>
+<span class="n">d_params_template</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;sea_level&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s1">&#39;jonswap_gamma&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s1">&#39;coords_spherical&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># None, &#39;GCM&#39;, &#39;CCM&#39;</span>
+    <span class="s1">&#39;cdcap&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s1">&#39;maxerr&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>            <span class="c1"># None, 1, 2, 3</span>
+    <span class="s1">&#39;waves_period&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>      <span class="c1"># &#39;PEAK&#39;, &#39;MEAN&#39;</span>
+    <span class="s1">&#39;nested_bounds&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>     <span class="c1"># &#39;CLOSED&#39;, &#39;OPEN&#39;</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="SwanMesh">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanMesh">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SwanMesh</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="s1">&#39;SWAN numerical model mesh&#39;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># bathymetry depth value (2D numpy.array)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">depth_fn</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>  <span class="c1"># filename used in SWAN execution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_fn</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>  <span class="c1"># output .mat file for mesh comp. grid</span>
+
+        <span class="c1"># grid parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cg</span> <span class="o">=</span> <span class="n">d_grid_template</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># computational grid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dg</span> <span class="o">=</span> <span class="n">d_grid_template</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># depth grid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dg_idla</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># 1/3 input swan parameter, handles read order at readinp</span>
+
+<div class="viewcode-block" id="SwanMesh.export_dat">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanMesh.export_dat">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">export_dat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_case</span><span class="p">):</span>
+        <span class="s1">&#39;exports depth values to .dat file&#39;</span>
+
+        <span class="n">p_export</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_case</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_fn</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">p_export</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%.2f</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SwanMesh.get_XY">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanMesh.get_XY">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_XY</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s1">&#39;returns mesh X, Y arrays from computational grid&#39;</span>
+
+        <span class="c1"># computational grid</span>
+        <span class="n">cg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cg</span>
+
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">cg</span><span class="p">[</span><span class="s1">&#39;xpc&#39;</span><span class="p">]</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">cg</span><span class="p">[</span><span class="s1">&#39;xlenc&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">cg</span><span class="p">[</span><span class="s1">&#39;xpc&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">cg</span><span class="p">[</span><span class="s1">&#39;dxinp&#39;</span><span class="p">]</span>
+        <span class="n">xN</span> <span class="o">=</span> <span class="n">cg</span><span class="p">[</span><span class="s1">&#39;mxc&#39;</span><span class="p">]</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">xN</span><span class="p">)</span>
+
+        <span class="n">y0</span> <span class="o">=</span> <span class="n">cg</span><span class="p">[</span><span class="s1">&#39;ypc&#39;</span><span class="p">]</span>
+        <span class="n">y1</span> <span class="o">=</span> <span class="n">cg</span><span class="p">[</span><span class="s1">&#39;ylenc&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">cg</span><span class="p">[</span><span class="s1">&#39;ypc&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">cg</span><span class="p">[</span><span class="s1">&#39;dyinp&#39;</span><span class="p">]</span>
+        <span class="n">yN</span> <span class="o">=</span> <span class="n">cg</span><span class="p">[</span><span class="s1">&#39;myc&#39;</span><span class="p">]</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">y0</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">yN</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SwanProject">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanProject">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SwanProject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="s1">&#39;SWAN numerical model project parameters, grids and information&#39;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_proj</span><span class="p">,</span> <span class="n">n_proj</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        SWAN project information will be stored here</span>
+
+<span class="sd">        http://swanmodel.sourceforge.net/online_doc/swanuse/node25.html</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_main</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_proj</span><span class="p">,</span> <span class="n">n_proj</span><span class="p">)</span>    <span class="c1"># project path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">n_proj</span>                       <span class="c1"># project name</span>
+
+        <span class="c1"># sub folders </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_cases</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_main</span><span class="p">,</span> <span class="s1">&#39;cases&#39;</span><span class="p">)</span>  <span class="c1"># project cases</span>
+
+        <span class="c1"># SWAN mesh: main </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mesh_main</span> <span class="o">=</span> <span class="n">SwanMesh</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mesh_main</span><span class="o">.</span><span class="n">depth_fn</span> <span class="o">=</span> <span class="s1">&#39;depth_main.dat&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mesh_main</span><span class="o">.</span><span class="n">output_fn</span> <span class="o">=</span> <span class="s1">&#39;output_main.mat&#39;</span>
+
+        <span class="c1"># SWAN mesh: nest1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mesh_nest1</span> <span class="o">=</span> <span class="n">SwanMesh</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mesh_nest1</span><span class="o">.</span><span class="n">depth_fn</span> <span class="o">=</span> <span class="s1">&#39;depth_nest1.dat&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mesh_nest1</span><span class="o">.</span><span class="n">output_fn</span> <span class="o">=</span> <span class="s1">&#39;output_nest1.mat&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_nest1</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># SWAN mesh: nest2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mesh_nest2</span> <span class="o">=</span> <span class="n">SwanMesh</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mesh_nest2</span><span class="o">.</span><span class="n">depth_fn</span> <span class="o">=</span> <span class="s1">&#39;depth_nest2.dat&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mesh_nest2</span><span class="o">.</span><span class="n">output_fn</span> <span class="o">=</span> <span class="s1">&#39;output_nest2.mat&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_nest2</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># SWAN mesh: nest3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mesh_nest3</span> <span class="o">=</span> <span class="n">SwanMesh</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mesh_nest3</span><span class="o">.</span><span class="n">depth_fn</span> <span class="o">=</span> <span class="s1">&#39;depth_nest3.dat&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mesh_nest3</span><span class="o">.</span><span class="n">output_fn</span> <span class="o">=</span> <span class="s1">&#39;output_nest3.mat&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_nest3</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># swan execution parameteres</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">d_params_template</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># output points</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_out</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+
+<div class="viewcode-block" id="SwanWrap">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SwanWrap</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="s1">&#39;SWAN numerical model wrap for multi-case handling&#39;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">swan_proj</span><span class="p">,</span> <span class="n">swan_io</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        swan_proj - SwanProject() instance, contains project parameters</span>
+<span class="sd">        swan_io   - SwanIO_STAT / SwanIO_NONSTAT modules (auto from children)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># set project and IO module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proj</span> <span class="o">=</span> <span class="n">swan_proj</span>           <span class="c1"># swan project parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">io</span> <span class="o">=</span> <span class="n">swan_io</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proj</span><span class="p">)</span>     <span class="c1"># swan input/output </span>
+
+        <span class="c1"># swan bin executable</span>
+        <span class="n">p_res</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span> <span class="s1">&#39;resources&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bin</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_res</span><span class="p">,</span> <span class="s1">&#39;swan_bin&#39;</span><span class="p">,</span> <span class="s1">&#39;swan_ser.exe&#39;</span><span class="p">))</span>
+
+<div class="viewcode-block" id="SwanWrap.get_run_folders">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.get_run_folders">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_run_folders</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s1">&#39;return sorted list of project cases folders&#39;</span>
+
+        <span class="c1"># TODO: will find previously generated cases... fix it </span>
+
+        <span class="n">ldir</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proj</span><span class="o">.</span><span class="n">p_cases</span><span class="p">))</span>
+        <span class="n">fp_ldir</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proj</span><span class="o">.</span><span class="n">p_cases</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ldir</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">fp_ldir</span> <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="SwanWrap.run_cases">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.run_cases">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s1">&#39;run all cases inside project &quot;cases&quot; folder&#39;</span>
+
+        <span class="c1"># TODO: improve log / check execution ending status</span>
+
+        <span class="c1"># get sorted execution folders</span>
+        <span class="n">run_dirs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_run_folders</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">p_run</span> <span class="ow">in</span> <span class="n">run_dirs</span><span class="p">:</span>
+
+            <span class="c1"># run case main mesh</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">p_run</span><span class="p">)</span>
+
+            <span class="c1"># run case nested mesh (optional)</span>
+            <span class="n">r_ns</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">proj</span><span class="o">.</span><span class="n">run_nest1</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">proj</span><span class="o">.</span><span class="n">run_nest2</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">proj</span><span class="o">.</span><span class="n">run_nest3</span><span class="p">,</span>
+            <span class="p">]</span>
+            <span class="n">i_ns</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s1">&#39;input_nest1.swn&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;input_nest2.swn&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;input_nest3.swn&#39;</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">r_n</span><span class="p">,</span> <span class="n">i_n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">r_ns</span><span class="p">,</span> <span class="n">i_ns</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">r_n</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">p_run</span><span class="p">,</span> <span class="n">input_file</span><span class="o">=</span><span class="n">i_n</span><span class="p">)</span>
+
+            <span class="c1"># log</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">p_run</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SWAN CASE: </span><span class="si">{0}</span><span class="s1"> SOLVED&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="SwanWrap.run">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.run">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_run</span><span class="p">,</span> <span class="n">input_file</span><span class="o">=</span><span class="s1">&#39;input.swn&#39;</span><span class="p">):</span>
+        <span class="s1">&#39;Bash execution commands for launching SWAN&#39;</span>
+
+        <span class="c1"># aux. func. for launching bash command</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">bash_cmd</span><span class="p">(</span><span class="n">str_cmd</span><span class="p">,</span> <span class="n">out_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">err_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="s1">&#39;Launch bash command using subprocess library&#39;</span>
+
+            <span class="n">_stdout</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">_stderr</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="k">if</span> <span class="n">out_file</span><span class="p">:</span>
+                <span class="n">_stdout</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">err_file</span><span class="p">:</span>
+                <span class="n">_stderr</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">err_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+
+            <span class="n">s</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">str_cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">_stdout</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">_stderr</span><span class="p">)</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">out_file</span><span class="p">:</span>
+                <span class="n">_stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                <span class="n">_stdout</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">err_file</span><span class="p">:</span>
+                <span class="n">_stderr</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                <span class="n">_stderr</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="c1"># ln input file and run swan case</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="s1">&#39;cd </span><span class="si">{0}</span><span class="s1"> &amp;&amp; ln -sf </span><span class="si">{1}</span><span class="s1"> INPUT &amp;&amp; </span><span class="si">{2}</span><span class="s1"> INPUT&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">p_run</span><span class="p">,</span> <span class="n">input_file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bin</span><span class="p">)</span>
+        <span class="n">bash_cmd</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SwanWrap.extract_output">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.extract_output">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extract_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        exctract output from all cases</span>
+
+<span class="sd">        return xarray.Dataset (uses new dim &quot;case&quot; to join output)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># select main or nested mesh</span>
+        <span class="k">if</span> <span class="n">mesh</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> <span class="n">mesh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proj</span><span class="o">.</span><span class="n">mesh_main</span>
+
+        <span class="c1"># get sorted execution folders</span>
+        <span class="n">run_dirs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_run_folders</span><span class="p">()</span>
+
+        <span class="c1"># exctract output case by case and concat in list</span>
+        <span class="n">l_out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p_run</span> <span class="ow">in</span> <span class="n">run_dirs</span><span class="p">:</span>
+
+            <span class="c1"># read output file</span>
+            <span class="n">xds_case_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">output_case</span><span class="p">(</span><span class="n">p_run</span><span class="p">,</span> <span class="n">mesh</span><span class="p">)</span>
+            <span class="n">l_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xds_case_out</span><span class="p">)</span>
+
+        <span class="c1"># concatenate xarray datasets (new dim: case)</span>
+        <span class="n">xds_out</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">l_out</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;case&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span><span class="p">(</span><span class="n">xds_out</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SwanWrap.extract_output_points">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.extract_output_points">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extract_output_points</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        exctract output from points all cases table_outpts.dat</span>
+
+<span class="sd">        return xarray.Dataset (uses new dim &quot;case&quot; to join output)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># get sorted execution folders</span>
+        <span class="n">run_dirs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_run_folders</span><span class="p">()</span>
+
+        <span class="c1"># exctract output case by case and concat in list</span>
+        <span class="n">l_out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p_run</span> <span class="ow">in</span> <span class="n">run_dirs</span><span class="p">:</span>
+
+            <span class="c1"># read output file</span>
+            <span class="n">xds_case_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">output_points</span><span class="p">(</span><span class="n">p_run</span><span class="p">)</span>
+            <span class="n">l_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xds_case_out</span><span class="p">)</span>
+
+        <span class="c1"># concatenate xarray datasets (new dim: case)</span>
+        <span class="n">xds_out</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">l_out</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;case&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span><span class="p">(</span><span class="n">xds_out</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SwanWrap_STAT">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_STAT">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SwanWrap_STAT</span><span class="p">(</span><span class="n">SwanWrap</span><span class="p">):</span>
+    <span class="s1">&#39;SWAN numerical model wrap for STATIONARY multi-case handling&#39;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">swan_proj</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">swan_proj</span><span class="p">,</span> <span class="n">SwanIO_STAT</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SwanWrap_STAT.build_cases">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_STAT.build_cases">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waves_dataset</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        generates all files needed for swan stationary multi-case execution</span>
+
+<span class="sd">        waves_dataset - pandas.dataframe with &quot;n&quot; boundary conditions setup</span>
+<span class="sd">        [n x 4] (hs, per, dir, spr)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># make main project directory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">make_project</span><span class="p">()</span>
+
+        <span class="c1"># one stat case for each wave sea state</span>
+        <span class="k">for</span> <span class="n">ix</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">ws</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">waves_dataset</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()):</span>
+
+            <span class="c1"># build stat case </span>
+            <span class="n">case_id</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0:04d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ix</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">build_case</span><span class="p">(</span><span class="n">case_id</span><span class="p">,</span> <span class="n">ws</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SwanWrap_NONSTAT">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_NONSTAT">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SwanWrap_NONSTAT</span><span class="p">(</span><span class="n">SwanWrap</span><span class="p">):</span>
+    <span class="s1">&#39;SWAN numerical model wrap for NON STATIONARY multi-case handling&#39;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">swan_proj</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">swan_proj</span><span class="p">,</span> <span class="n">SwanIO_NONSTAT</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SwanWrap_NONSTAT.build_cases">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_NONSTAT.build_cases">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waves_event_list</span><span class="p">,</span> <span class="n">storm_track_list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">make_waves</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_winds</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        generates all files needed for swan non-stationary multi-case execution</span>
+
+<span class="sd">        waves_event_list - list waves events time series (pandas.DataFrame)</span>
+<span class="sd">        also contains level, tide and wind (not storm track) variables</span>
+<span class="sd">        [n x 8] (hs, per, dir, spr, U10, V10, level, tide)</span>
+
+<span class="sd">        storm_track_list - list of storm tracks time series (pandas.DataFrame)</span>
+<span class="sd">        storm_track generated winds have priority over waves_event winds</span>
+<span class="sd">        [n x 6] (move, vf, lon, lat, pn, p0)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># check user input: no storm tracks</span>
+        <span class="k">if</span> <span class="n">storm_track_list</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">storm_track_list</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">waves_event_list</span><span class="p">)</span>
+
+        <span class="c1"># make main project directory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">make_project</span><span class="p">()</span>
+
+        <span class="c1"># one non-stationary case for each wave time series</span>
+        <span class="k">for</span> <span class="n">ix</span><span class="p">,</span> <span class="p">(</span><span class="n">wds</span><span class="p">,</span> <span class="n">sds</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="n">waves_event_list</span><span class="p">,</span> <span class="n">storm_track_list</span><span class="p">)):</span>
+
+            <span class="c1"># build stat case </span>
+            <span class="n">case_id</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0:04d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ix</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">build_case</span><span class="p">(</span>
+                <span class="n">case_id</span><span class="p">,</span> <span class="n">wds</span><span class="p">,</span> <span class="n">storm_track</span><span class="o">=</span><span class="n">sds</span><span class="p">,</span>
+                <span class="n">make_waves</span><span class="o">=</span><span class="n">make_waves</span><span class="p">,</span> <span class="n">make_winds</span><span class="o">=</span><span class="n">make_winds</span>
+            <span class="p">)</span></div>
+</div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

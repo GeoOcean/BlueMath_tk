@@ -1,0 +1,1114 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.teslakit.alr &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.teslakit.alr</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.teslakit.alr</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1"># common</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">op</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">timedelta</span>
+
+<span class="c1"># pip</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn</span><span class="w"> </span><span class="kn">import</span> <span class="n">linear_model</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">statsmodels.discrete.discrete_model</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sm</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">stat</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+<span class="c1"># fix tqdm for notebook</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span> <span class="k">as</span> <span class="n">tqdm_base</span>
+
+
+<div class="viewcode-block" id="tqdm">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.tqdm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">tqdm</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tqdm_base</span><span class="p">,</span> <span class="s2">&quot;_instances&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">instance</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">tqdm_base</span><span class="o">.</span><span class="n">_instances</span><span class="p">):</span>
+            <span class="n">tqdm_base</span><span class="o">.</span><span class="n">_decr_instances</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tqdm_base</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># fix library</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
+
+<span class="n">stats</span><span class="o">.</span><span class="n">chisqprob</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">chisq</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">stats</span><span class="o">.</span><span class="n">chi2</span><span class="o">.</span><span class="n">sf</span><span class="p">(</span><span class="n">chisq</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span>
+
+<span class="c1"># tk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.io.aux_nc</span><span class="w"> </span><span class="kn">import</span> <span class="n">StoreBugXdset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.util.time_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">npdt64todatetime</span> <span class="k">as</span> <span class="n">npdt2dt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.kma</span><span class="w"> </span><span class="kn">import</span> <span class="n">Persistences</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.plotting.alr</span><span class="w"> </span><span class="kn">import</span> <span class="n">Plot_PValues</span><span class="p">,</span> <span class="n">Plot_Params</span><span class="p">,</span> <span class="n">Plot_Terms</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.plotting.wts</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Plot_Compare_PerpYear</span><span class="p">,</span>
+    <span class="n">Plot_Compare_Transitions</span><span class="p">,</span>
+    <span class="n">Plot_Compare_Persistences</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.plotting.alr</span><span class="w"> </span><span class="kn">import</span> <span class="n">Plot_Compare_Covariate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.plotting.alr</span><span class="w"> </span><span class="kn">import</span> <span class="n">Plot_Log_Sim</span>
+
+
+<div class="viewcode-block" id="ALR_WRP">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ALR_WRP</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="s2">&quot;AutoRegressive Logistic Model Wrapper&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_base</span><span class="p">):</span>
+        <span class="c1"># data needed for ALR fitting</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cluster_size</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># ALR terms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">d_terms_settings</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit_names</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># temporal data storage</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mk_order</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cov_names</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># ALR model core</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># config (only tested with statsmodels library)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_library</span> <span class="o">=</span> <span class="s2">&quot;statsmodels&quot;</span>  <span class="c1"># sklearn / statsmodels</span>
+
+        <span class="c1"># paths</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_base</span> <span class="o">=</span> <span class="n">p_base</span>
+
+        <span class="c1"># alr model and terms_fit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_save_model</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_base</span><span class="p">,</span> <span class="s2">&quot;model.sav&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_save_terms_fit</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_base</span><span class="p">,</span> <span class="s2">&quot;terms.sav&quot;</span><span class="p">)</span>
+
+        <span class="c1"># store fit and simulated bmus</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_save_fit_xds</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_base</span><span class="p">,</span> <span class="s2">&quot;xds_input.nc&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_save_sim_xds</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_base</span><span class="p">,</span> <span class="s2">&quot;xds_output.nc&quot;</span><span class="p">)</span>
+
+        <span class="c1"># export folders for figures</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_report_fit</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_base</span><span class="p">,</span> <span class="s2">&quot;report_fit&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_report_sim</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_base</span><span class="p">,</span> <span class="s2">&quot;report_sim&quot;</span><span class="p">)</span>
+
+        <span class="c1"># log sim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_log_sim_xds</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_base</span><span class="p">,</span> <span class="s2">&quot;xds_log_sim.nc&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ALR_WRP.SetFitData">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.SetFitData">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">SetFitData</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster_size</span><span class="p">,</span> <span class="n">xds_bmus_fit</span><span class="p">,</span> <span class="n">d_terms_settings</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets data needed for ALR fitting</span>
+
+<span class="sd">        cluster_size - number of clusters in classification</span>
+<span class="sd">        xds_bmus_fit - xarray.Dataset vars: bmus, dims: time</span>
+<span class="sd">        d_terms_settings - terms settings. See &quot;SetFittingTerms&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cluster_size</span> <span class="o">=</span> <span class="n">cluster_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span> <span class="o">=</span> <span class="n">xds_bmus_fit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SetFittingTerms</span><span class="p">(</span><span class="n">d_terms_settings</span><span class="p">)</span>
+
+        <span class="c1"># save bmus series used for fitting</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SaveBmus_Fit</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.SetFittingTerms">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.SetFittingTerms">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">SetFittingTerms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_terms_settings</span><span class="p">):</span>
+        <span class="s2">&quot;Set terms settings that will be used for fitting&quot;</span>
+
+        <span class="c1"># default settings used for ALR terms</span>
+        <span class="n">default_settings</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;mk_order&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;constant&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">&quot;long_term&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">&quot;seasonality&quot;</span><span class="p">:</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="p">[]),</span>
+            <span class="s2">&quot;covariates&quot;</span><span class="p">:</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="p">[]),</span>
+            <span class="s2">&quot;covariates_seasonality&quot;</span><span class="p">:</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="p">[]),</span>
+        <span class="p">}</span>
+
+        <span class="c1"># join user and default input</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">default_settings</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">d_terms_settings</span><span class="p">:</span>
+                <span class="n">d_terms_settings</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">default_settings</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+        <span class="c1"># generate ALR terms</span>
+        <span class="n">bmus_fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span><span class="o">.</span><span class="n">bmus</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">time_fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">cluster_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_size</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GenerateALRTerms</span><span class="p">(</span>
+            <span class="n">d_terms_settings</span><span class="p">,</span> <span class="n">bmus_fit</span><span class="p">,</span> <span class="n">time_fit</span><span class="p">,</span> <span class="n">cluster_size</span><span class="p">,</span> <span class="n">time2yfrac</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="c1"># store data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mk_order</span> <span class="o">=</span> <span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;mk_order&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">d_terms_settings</span> <span class="o">=</span> <span class="n">d_terms_settings</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.GenerateALRTerms">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.GenerateALRTerms">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">GenerateALRTerms</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">d_terms_settings</span><span class="p">,</span> <span class="n">bmus</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">cluster_size</span><span class="p">,</span> <span class="n">time2yfrac</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">):</span>
+        <span class="s2">&quot;Generate ALR terms from user terms settings&quot;</span>
+
+        <span class="c1"># terms stored at OrderedDict</span>
+        <span class="n">terms</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">terms_names</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># time options (time has to bee yearly fraction)</span>
+        <span class="k">if</span> <span class="n">time2yfrac</span><span class="p">:</span>
+            <span class="n">time_yfrac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetFracYears</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">time_yfrac</span> <span class="o">=</span> <span class="n">time</span>
+
+        <span class="c1"># constant term</span>
+        <span class="k">if</span> <span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;constant&quot;</span><span class="p">]:</span>
+            <span class="n">terms</span><span class="p">[</span><span class="s2">&quot;constant&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">bmus</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;intercept&quot;</span><span class="p">)</span>
+
+        <span class="c1"># time term (use custom time array with year decimals)</span>
+        <span class="k">if</span> <span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;long_term&quot;</span><span class="p">]:</span>
+            <span class="n">terms</span><span class="p">[</span><span class="s2">&quot;long_term&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">bmus</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">terms</span><span class="p">[</span><span class="s2">&quot;long_term&quot;</span><span class="p">][:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_yfrac</span>
+            <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;long_term&quot;</span><span class="p">)</span>
+
+        <span class="c1"># seasonality term</span>
+        <span class="k">if</span> <span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;seasonality&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">phases</span> <span class="o">=</span> <span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;seasonality&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">temp_seas</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time_yfrac</span><span class="p">),</span> <span class="mi">2</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">phases</span><span class="p">)))</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">phases</span><span class="p">:</span>
+                <span class="n">temp_seas</span><span class="p">[:,</span> <span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">time_yfrac</span><span class="p">)</span>
+                <span class="n">temp_seas</span><span class="p">[:,</span> <span class="n">c</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">time_yfrac</span><span class="p">)</span>
+                <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;ss_cos_</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+                <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;ss_sin_</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+                <span class="n">c</span> <span class="o">+=</span> <span class="mi">2</span>
+            <span class="n">terms</span><span class="p">[</span><span class="s2">&quot;seasonality&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_seas</span>
+
+        <span class="c1"># Covariates term</span>
+        <span class="k">if</span> <span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;covariates&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="c1"># covariates dataset (vars: cov_values, dims: time, cov_names)</span>
+            <span class="n">xds_cov</span> <span class="o">=</span> <span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;covariates&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">cov_names</span> <span class="o">=</span> <span class="n">xds_cov</span><span class="o">.</span><span class="n">cov_names</span><span class="o">.</span><span class="n">values</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cov_names</span> <span class="o">=</span> <span class="n">cov_names</span>  <span class="c1"># storage</span>
+
+            <span class="c1"># normalize covars</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;cov_norm&quot;</span> <span class="ow">in</span> <span class="n">xds_cov</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">cov_values</span> <span class="o">=</span> <span class="n">xds_cov</span><span class="o">.</span><span class="n">cov_values</span><span class="o">.</span><span class="n">values</span>
+                <span class="n">cov_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">cov_values</span> <span class="o">-</span> <span class="n">cov_values</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span> <span class="o">/</span> <span class="n">cov_values</span><span class="o">.</span><span class="n">std</span><span class="p">(</span>
+                    <span class="n">axis</span><span class="o">=</span><span class="mi">0</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># simulation covars are previously normalized</span>
+                <span class="n">cov_norm</span> <span class="o">=</span> <span class="n">xds_cov</span><span class="o">.</span><span class="n">cov_norm</span><span class="o">.</span><span class="n">values</span>
+
+            <span class="c1"># generate covar terms</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cov_norm</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">cn</span> <span class="o">=</span> <span class="n">cov_names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">terms</span><span class="p">[</span><span class="n">cn</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asmatrix</span><span class="p">(</span><span class="n">cov_norm</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]))</span>
+                <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cn</span><span class="p">)</span>
+
+                <span class="c1"># Covariates seasonality</span>
+                <span class="k">if</span> <span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;covariates_seasonality&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="n">cov_season</span> <span class="o">=</span> <span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;covariates_seasonality&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+                    <span class="k">if</span> <span class="n">cov_season</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                        <span class="n">terms</span><span class="p">[</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">_cos&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cn</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span>
+                            <span class="n">terms</span><span class="p">[</span><span class="n">cn</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">time_yfrac</span><span class="p">)</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">T</span>
+                        <span class="n">terms</span><span class="p">[</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">_sin&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cn</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span>
+                            <span class="n">terms</span><span class="p">[</span><span class="n">cn</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">time_yfrac</span><span class="p">)</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">T</span>
+                        <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">_cos&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cn</span><span class="p">))</span>
+                        <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">_sin&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cn</span><span class="p">))</span>
+
+        <span class="c1"># markov term</span>
+        <span class="k">if</span> <span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;mk_order&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># dummi for markov chain</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">dummi</span><span class="p">(</span><span class="n">csize</span><span class="p">):</span>
+                <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">csize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">csize</span><span class="p">))</span> <span class="o">*</span> <span class="o">-</span><span class="mi">1</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">csize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">csize</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">csize</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span>
+                    <span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">csize</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">i</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">return</span> <span class="n">D</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">dummi_norm</span><span class="p">(</span><span class="n">csize</span><span class="p">):</span>
+                <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">csize</span><span class="p">,</span> <span class="n">csize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">csize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">((</span><span class="n">csize</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">csize</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span>
+                    <span class="n">D</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">csize</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">D</span><span class="p">))</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">helmert_ints</span><span class="p">(</span><span class="n">csize</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+                <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">csize</span><span class="p">,</span> <span class="n">csize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">csize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">csize</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span>
+                    <span class="n">D</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+
+                <span class="k">if</span> <span class="n">reverse</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">fliplr</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">D</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">D</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">helmert_norm</span><span class="p">(</span><span class="n">csize</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+                <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">csize</span><span class="p">,</span> <span class="n">csize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">csize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">((</span><span class="n">csize</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">csize</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span>
+                    <span class="n">D</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">csize</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">reverse</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">fliplr</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">D</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">D</span>
+
+            <span class="c1">#  helmert</span>
+            <span class="n">dum</span> <span class="o">=</span> <span class="n">helmert_norm</span><span class="p">(</span><span class="n">cluster_size</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># solve markov order N</span>
+            <span class="n">mk_order</span> <span class="o">=</span> <span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;mk_order&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">mk_order</span><span class="p">):</span>
+                <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">bmus</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">cluster_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">indz</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bmus</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">Z</span><span class="p">[</span><span class="n">indz</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">dum</span><span class="p">[</span><span class="n">bmus</span><span class="p">[</span><span class="n">indz</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+
+                <span class="n">terms</span><span class="p">[</span><span class="s2">&quot;markov_</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">Z</span>
+
+                <span class="k">for</span> <span class="n">ics</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cluster_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;mk</span><span class="si">{0}</span><span class="s2">_</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ics</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">terms</span><span class="p">,</span> <span class="n">terms_names</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.GetFracYears">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.GetFracYears">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">GetFracYears</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+        <span class="s2">&quot;Returns time in custom year decimal format&quot;</span>
+
+        <span class="c1"># fix np.datetime64</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;year&quot;</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">time</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">time_0</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">time</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">time_1</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">time</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">time_d</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">time</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">time_0</span> <span class="o">=</span> <span class="n">time</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">time_1</span> <span class="o">=</span> <span class="n">time</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">time_d</span> <span class="o">=</span> <span class="n">time</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># resolution year</span>
+        <span class="k">if</span> <span class="n">time_d</span><span class="o">.</span><span class="n">year</span> <span class="o">-</span> <span class="n">time_0</span><span class="o">.</span><span class="n">year</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">range</span><span class="p">(</span><span class="n">time_1</span><span class="o">.</span><span class="n">year</span> <span class="o">-</span> <span class="n">time_0</span><span class="o">.</span><span class="n">year</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># resolution day: get start/end data</span>
+        <span class="n">y0</span> <span class="o">=</span> <span class="n">time_0</span><span class="o">.</span><span class="n">year</span>
+        <span class="n">m0</span> <span class="o">=</span> <span class="n">time_0</span><span class="o">.</span><span class="n">month</span>
+        <span class="n">d0</span> <span class="o">=</span> <span class="n">time_0</span><span class="o">.</span><span class="n">day</span>
+        <span class="n">y1</span> <span class="o">=</span> <span class="n">time_1</span><span class="o">.</span><span class="n">year</span>
+        <span class="n">m1</span> <span class="o">=</span> <span class="n">time_1</span><span class="o">.</span><span class="n">month</span>
+        <span class="n">d1</span> <span class="o">=</span> <span class="n">time_1</span><span class="o">.</span><span class="n">day</span>
+
+        <span class="c1"># start &quot;year cicle&quot; at 01/01</span>
+        <span class="n">d_y0</span> <span class="o">=</span> <span class="n">date</span><span class="p">(</span><span class="n">y0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># time array</span>
+        <span class="n">d_0</span> <span class="o">=</span> <span class="n">date</span><span class="p">(</span><span class="n">y0</span><span class="p">,</span> <span class="n">m0</span><span class="p">,</span> <span class="n">d0</span><span class="p">)</span>
+        <span class="n">d_1</span> <span class="o">=</span> <span class="n">date</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="n">d1</span><span class="p">)</span>
+
+        <span class="c1"># year_decimal from year start to d1</span>
+        <span class="n">delta_y0</span> <span class="o">=</span> <span class="n">d_1</span> <span class="o">-</span> <span class="n">d_y0</span>
+        <span class="n">y_fraq_y0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">delta_y0</span><span class="o">.</span><span class="n">days</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="mf">365.25</span>
+
+        <span class="c1"># cut year_decimal from d_0</span>
+        <span class="n">i0</span> <span class="o">=</span> <span class="p">(</span><span class="n">d_0</span> <span class="o">-</span> <span class="n">d_y0</span><span class="p">)</span><span class="o">.</span><span class="n">days</span>
+        <span class="n">y_fraq</span> <span class="o">=</span> <span class="n">y_fraq_y0</span><span class="p">[</span><span class="n">i0</span><span class="p">:]</span>
+
+        <span class="k">return</span> <span class="n">y_fraq</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.FitModel">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.FitModel">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">FitModel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+        <span class="s2">&quot;Fits ARL model using sklearn&quot;</span>
+
+        <span class="c1"># get fitting data</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">terms_fit</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span><span class="o">.</span><span class="n">bmus</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="c1"># fit model</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Fitting autoregressive logistic model ...&quot;</span><span class="p">)</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_library</span> <span class="o">==</span> <span class="s2">&quot;statsmodels&quot;</span><span class="p">:</span>
+            <span class="c1"># mount data with pandas</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terms_fit_names</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;bmus&quot;</span><span class="p">])</span>
+
+            <span class="c1"># TODO: CAPTURAR LA EVOLUCION DE L (maximun-likelihood)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">MNLogit</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+                <span class="n">method</span><span class="o">=</span><span class="s2">&quot;lbfgs&quot;</span><span class="p">,</span>
+                <span class="n">maxiter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span>
+                <span class="n">retall</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">disp</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">warn_convergence</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">missing</span><span class="o">=</span><span class="s2">&quot;raise&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_library</span> <span class="o">==</span> <span class="s2">&quot;sklearn&quot;</span><span class="p">:</span>
+            <span class="c1"># use sklearn logistig regression</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">linear_model</span><span class="o">.</span><span class="n">LogisticRegression</span><span class="p">(</span>
+                <span class="n">penalty</span><span class="o">=</span><span class="s2">&quot;l2&quot;</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="mf">1e5</span><span class="p">,</span> <span class="n">fit_intercept</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s2">&quot;lbfgs&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;wrong config: </span><span class="si">{0}</span><span class="s2"> not in model_library&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_library</span><span class="p">))</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+
+        <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Optimization done in </span><span class="si">{0:.2f}</span><span class="s2"> seconds</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">elapsed_time</span><span class="p">))</span>
+
+        <span class="c1"># save fitted model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SaveModel</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.SaveModel">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.SaveModel">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">SaveModel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s2">&quot;Saves fitted model (and fitting terms) for future use&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">op</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_base</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_base</span><span class="p">)</span>
+
+        <span class="c1"># save model</span>
+        <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_save_model</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">))</span>
+
+        <span class="c1"># save terms fit</span>
+        <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
+            <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">d_terms_settings</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit_names</span><span class="p">],</span>
+            <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_save_terms_fit</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.LoadModel">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.LoadModel">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">LoadModel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s2">&quot;Load fitted model (and fitting terms)&quot;</span>
+
+        <span class="c1"># load model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_save_model</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+
+        <span class="c1"># load terms fit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">d_terms_settings</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit_names</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+            <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_save_terms_fit</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># load aux data</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;covariates&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">cov_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;covariates&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cov_names</span><span class="o">.</span><span class="n">values</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cov_names</span> <span class="o">=</span> <span class="n">cov_names</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mk_order</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;mk_order&quot;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.SaveBmus_Fit">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.SaveBmus_Fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">SaveBmus_Fit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s2">&quot;Saves bmus - fit for future use&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">op</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_base</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_base</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;cluster_size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_save_fit_xds</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.LoadBmus_Fit">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.LoadBmus_Fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">LoadBmus_Fit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s2">&quot;Load bmus - fit&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_save_fit_xds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cluster_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;cluster_size&quot;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.SaveBmus_Sim">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.SaveBmus_Sim">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">SaveBmus_Sim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s2">&quot;Saves bmus - sim for future use&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">op</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_base</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_base</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_sim</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_save_sim_xds</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.LoadBmus_Sim">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.LoadBmus_Sim">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">LoadBmus_Sim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s2">&quot;Load bmus - sim&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_sim</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_save_sim_xds</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_sim</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.Report_Fit">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.Report_Fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Report_Fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">terms_fit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="s2">&quot;Report containing model fitting info&quot;</span>
+
+        <span class="c1"># load model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LoadModel</span><span class="p">()</span>
+
+        <span class="c1"># get data</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pval_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">pvalues</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+            <span class="n">params_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+            <span class="n">name_terms</span> <span class="o">=</span> <span class="n">pval_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="c1"># TODO: no converge?</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;warning - statsmodels MNLogit could not provide p-values&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># output figs</span>
+        <span class="n">l_figs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># plot p-values</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">Plot_PValues</span><span class="p">(</span><span class="n">pval_df</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">name_terms</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">)</span>
+        <span class="n">l_figs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="c1"># plot parameters</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">Plot_Params</span><span class="p">(</span><span class="n">params_df</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">name_terms</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">)</span>
+        <span class="n">l_figs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="c1"># plot terms used for fitting</span>
+        <span class="k">if</span> <span class="n">terms_fit</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Report_Terms_Fit</span><span class="p">(</span><span class="n">p_rep_trms</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">)</span>
+            <span class="n">l_figs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="c1"># write summary</span>
+        <span class="k">if</span> <span class="n">summary</span><span class="p">:</span>
+            <span class="n">summ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">summ</span><span class="o">.</span><span class="n">as_text</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.Report_Terms_Fit">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.Report_Terms_Fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Report_Terms_Fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="s2">&quot;Plot terms used for model fitting&quot;</span>
+
+        <span class="c1"># load bmus fit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LoadBmus_Fit</span><span class="p">()</span>
+
+        <span class="c1"># get data for plotting</span>
+        <span class="n">term_mx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">terms_fit</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">term_ds</span> <span class="o">=</span> <span class="p">[</span><span class="n">npdt2dt</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
+        <span class="n">term_ns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit_names</span>
+
+        <span class="c1"># Plot terms</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">Plot_Terms</span><span class="p">(</span><span class="n">term_mx</span><span class="p">,</span> <span class="n">term_ds</span><span class="p">,</span> <span class="n">term_ns</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">f</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.Simulate">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.Simulate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Simulate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">num_sims</span><span class="p">,</span>
+        <span class="n">time_sim</span><span class="p">,</span>
+        <span class="n">xds_covars_sim</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">log_sim</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">overfit_filter</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">of_probs</span><span class="o">=</span><span class="mf">0.98</span><span class="p">,</span>
+        <span class="n">of_pers</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Launch ARL model simulations</span>
+
+<span class="sd">        num_sims           - number of simulations to compute</span>
+<span class="sd">        time_sim           - time array to solve</span>
+
+<span class="sd">        xds_covars_sim     - xr.Dataset (time,), cov_values</span>
+<span class="sd">            Covariates used at simulation, compatible with &quot;n_sim&quot; dimension</span>
+<span class="sd">            (&quot;n_sim&quot; dimension (optional) will be iterated with each simulation)</span>
+
+<span class="sd">        log_sim            - Store a .nc file with all simulation detailed information.</span>
+
+<span class="sd">        filters for exceptional ALR overfit probabilities situation and patch:</span>
+
+<span class="sd">        overfit_filter     - overfit filter activation</span>
+<span class="sd">        of_probs           - overfit filter probabilities activation</span>
+<span class="sd">        of_pers            - overfit filter persistences activation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">class</span><span class="w"> </span><span class="nc">SimLog</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            simulatiom log - records and stores detail info for each time step and n_sim</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span> <span class="n">time_yfrac</span><span class="p">,</span> <span class="n">mk_order</span><span class="p">,</span> <span class="n">num_sims</span><span class="p">,</span> <span class="n">cluster_size</span><span class="p">,</span> <span class="n">terms_fit_names</span>
+            <span class="p">):</span>
+                <span class="c1"># initialize variables to record</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">terms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="nb">len</span><span class="p">(</span><span class="n">time_yfrac</span><span class="p">)</span> <span class="o">-</span> <span class="n">mk_order</span><span class="p">,</span>
+                        <span class="n">num_sims</span><span class="p">,</span>
+                        <span class="n">mk_order</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                        <span class="nb">len</span><span class="p">(</span><span class="n">terms_fit_names</span><span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                    <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">time_yfrac</span><span class="p">)</span> <span class="o">-</span> <span class="n">mk_order</span><span class="p">,</span> <span class="n">num_sims</span><span class="p">,</span> <span class="n">mk_order</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">cluster_size</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ptrns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                    <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">time_yfrac</span><span class="p">)</span> <span class="o">-</span> <span class="n">mk_order</span><span class="p">,</span> <span class="n">num_sims</span><span class="p">,</span> <span class="n">cluster_size</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nrnd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time_yfrac</span><span class="p">)</span> <span class="o">-</span> <span class="n">mk_order</span><span class="p">,</span> <span class="n">num_sims</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">evbmu_sims</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                    <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">time_yfrac</span><span class="p">)</span> <span class="o">-</span> <span class="n">mk_order</span><span class="p">,</span> <span class="n">num_sims</span><span class="p">)</span>
+                <span class="p">)</span>
+
+                <span class="c1"># overfit filter variables (filter states and filtered bmus)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">of_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                    <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">time_yfrac</span><span class="p">)</span> <span class="o">-</span> <span class="n">mk_order</span><span class="p">,</span> <span class="n">num_sims</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">of_bmus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time_yfrac</span><span class="p">)</span> <span class="o">-</span> <span class="n">mk_order</span><span class="p">,</span> <span class="n">num_sims</span><span class="p">))</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">Add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ix_t</span><span class="p">,</span> <span class="n">ix_s</span><span class="p">,</span> <span class="n">terms</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">probTrans</span><span class="p">,</span> <span class="n">nrnd</span><span class="p">,</span> <span class="n">of_state</span><span class="p">,</span> <span class="n">of_bmus</span><span class="p">):</span>
+                <span class="c1"># add iteration to log</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="p">[</span><span class="n">ix_t</span><span class="p">,</span> <span class="n">ix_s</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">terms</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="p">[</span><span class="n">ix_t</span><span class="p">,</span> <span class="n">ix_s</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">prob</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ptrns</span><span class="p">[</span><span class="n">ix_t</span><span class="p">,</span> <span class="n">ix_s</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">probTrans</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nrnd</span><span class="p">[</span><span class="n">ix_t</span><span class="p">,</span> <span class="n">ix_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">nrnd</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">evbmu_sims</span><span class="p">[</span><span class="n">ix_t</span><span class="p">,</span> <span class="n">ix_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">probTrans</span> <span class="o">&gt;</span> <span class="n">nrnd</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+                <span class="c1"># add overfit filter data to log</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">of_state</span><span class="p">[</span><span class="n">ix_t</span><span class="p">,</span> <span class="n">ix_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">of_state</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">of_bmus</span><span class="p">[</span><span class="n">ix_t</span><span class="p">,</span> <span class="n">ix_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">of_bmus</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">Save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_save</span><span class="p">,</span> <span class="n">terms_names</span><span class="p">):</span>
+                <span class="c1"># use xarray to store netcdf</span>
+                <span class="n">xds_log</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;alr_terms&quot;</span><span class="p">:</span> <span class="p">(</span>
+                            <span class="p">(</span>
+                                <span class="s2">&quot;time&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;n_sim&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;mk&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;terms&quot;</span><span class="p">,</span>
+                            <span class="p">),</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="p">,</span>
+                        <span class="p">),</span>
+                        <span class="s2">&quot;probs&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;n_sim&quot;</span><span class="p">,</span> <span class="s2">&quot;mk&quot;</span><span class="p">,</span> <span class="s2">&quot;n_clusters&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">probs</span><span class="p">),</span>
+                        <span class="s2">&quot;probTrans&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;n_sim&quot;</span><span class="p">,</span> <span class="s2">&quot;n_clusters&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">ptrns</span><span class="p">),</span>
+                        <span class="s2">&quot;nrnd&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;n_sim&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">nrnd</span><span class="p">),</span>
+                        <span class="s2">&quot;evbmus_sims&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;n_sim&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">evbmu_sims</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)),</span>
+                        <span class="s2">&quot;overfit_filter_state&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;n_sim&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">of_state</span><span class="p">),</span>
+                        <span class="s2">&quot;evbmus_sims_filtered&quot;</span><span class="p">:</span> <span class="p">(</span>
+                            <span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;n_sim&quot;</span><span class="p">),</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">of_bmus</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">},</span>
+                    <span class="n">coords</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">time_sim</span><span class="p">[</span><span class="n">mk_order</span><span class="p">:],</span>
+                        <span class="s2">&quot;terms&quot;</span><span class="p">:</span> <span class="n">terms_names</span><span class="p">,</span>
+                    <span class="p">},</span>
+                <span class="p">)</span>
+
+                <span class="n">StoreBugXdset</span><span class="p">(</span><span class="n">xds_log</span><span class="p">,</span> <span class="n">p_save</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;simulation data log stored at </span><span class="si">{0}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p_save</span><span class="p">))</span>
+
+        <span class="k">class</span><span class="w"> </span><span class="nc">OverfitFilter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            overfit filter for alr outlayer outputs.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probs_lim</span><span class="p">,</span> <span class="n">pers_lim</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">probs_lim</span> <span class="o">=</span> <span class="n">probs_lim</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pers_lim</span> <span class="o">=</span> <span class="n">pers_lim</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">CheckStatus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_sim</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">bmus</span><span class="p">):</span>
+                <span class="s2">&quot;check current iteration filter status&quot;</span>
+
+                <span class="c1"># active filter</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+                    <span class="c1"># continuation condition</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">probs_lim</span>
+
+                    <span class="c1"># log when deactivated</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">+=</span> <span class="p">(</span>
+                            <span class="s2">&quot;sim. </span><span class="si">{0:02d}</span><span class="s2"> - </span><span class="si">{1}</span><span class="s2"> - deactivated (max prob </span><span class="si">{2}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                <span class="n">n_sim</span><span class="p">,</span> <span class="n">time_sim</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+
+                <span class="c1"># inactive filter</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># re-activation condition</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">probs_lim</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span>
+                        <span class="n">evbmus</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pers_lim</span> <span class="p">:]</span> <span class="o">==</span> <span class="n">new_bmus</span>
+                    <span class="p">)</span>
+
+                    <span class="c1"># log when activated</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">+=</span> <span class="p">(</span>
+                            <span class="s2">&quot;sim. </span><span class="si">{0:02d}</span><span class="s2"> - </span><span class="si">{1}</span><span class="s2"> - activated (max prob </span><span class="si">{2}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                <span class="n">n_sim</span><span class="p">,</span> <span class="n">time_sim</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">PrintLog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <span class="s2">&quot;Print filter log&quot;</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;overfit filter log&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">)</span>
+
+        <span class="c1"># switch library probabilities predictor function</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_library</span> <span class="o">==</span> <span class="s2">&quot;statsmodels&quot;</span><span class="p">:</span>
+            <span class="n">pred_prob_fun</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_library</span> <span class="o">==</span> <span class="s2">&quot;sklearn&quot;</span><span class="p">:</span>
+            <span class="n">pred_prob_fun</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;wrong config: </span><span class="si">{0}</span><span class="s2"> not in model_library&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_library</span><span class="p">))</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+
+        <span class="c1"># get needed data</span>
+        <span class="n">evbmus_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span><span class="o">.</span><span class="n">bmus</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">time_fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">mk_order</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mk_order</span>
+
+        <span class="c1"># times at datetime</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">time_sim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">):</span>
+            <span class="n">time_sim</span> <span class="o">=</span> <span class="p">[</span><span class="n">npdt2dt</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">time_sim</span><span class="p">]</span>
+
+        <span class="c1"># print some info</span>
+        <span class="n">tf0</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">time_fit</span><span class="p">[</span><span class="mi">0</span><span class="p">])[:</span><span class="mi">10</span><span class="p">]</span>
+        <span class="n">tf1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">time_fit</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])[:</span><span class="mi">10</span><span class="p">]</span>
+        <span class="n">ts0</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">time_sim</span><span class="p">[</span><span class="mi">0</span><span class="p">])[:</span><span class="mi">10</span><span class="p">]</span>
+        <span class="n">ts1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">time_sim</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])[:</span><span class="mi">10</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ALR model fit   : </span><span class="si">{0}</span><span class="s2"> --- </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tf0</span><span class="p">,</span> <span class="n">tf1</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ALR model sim   : </span><span class="si">{0}</span><span class="s2"> --- </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ts0</span><span class="p">,</span> <span class="n">ts1</span><span class="p">))</span>
+
+        <span class="c1"># generate time yearly fractional array</span>
+        <span class="n">time_yfrac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GetFracYears</span><span class="p">(</span><span class="n">time_sim</span><span class="p">)</span>
+
+        <span class="c1"># use a d_terms_settigs copy</span>
+        <span class="n">d_terms_settings_sim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_terms_settings</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># initialize optional simulation log</span>
+        <span class="k">if</span> <span class="n">log_sim</span><span class="p">:</span>
+            <span class="n">SL</span> <span class="o">=</span> <span class="n">SimLog</span><span class="p">(</span>
+                <span class="n">time_yfrac</span><span class="p">,</span> <span class="n">mk_order</span><span class="p">,</span> <span class="n">num_sims</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit_names</span>
+            <span class="p">)</span>
+
+        <span class="c1"># initialize ALR overfit filter</span>
+        <span class="n">ofilt</span> <span class="o">=</span> <span class="n">OverfitFilter</span><span class="p">(</span><span class="n">of_probs</span><span class="p">,</span> <span class="n">of_pers</span><span class="p">)</span>
+
+        <span class="c1"># initialize ALR simulated bmus array, and overfit filter register array</span>
+        <span class="n">evbmus_sims</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time_yfrac</span><span class="p">),</span> <span class="n">num_sims</span><span class="p">))</span>
+        <span class="n">ofbmus_sims</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time_yfrac</span><span class="p">),</span> <span class="n">num_sims</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="c1"># start simulations</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Launching </span><span class="si">{0}</span><span class="s2"> simulations...</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_sims</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_sims</span><span class="p">):</span>
+            <span class="c1"># preload some data (simulation covariates)</span>
+            <span class="n">cvtxt</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">xds_covars_sim</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># check if n_sim dimension in xds_covars_sim</span>
+                <span class="k">if</span> <span class="s2">&quot;n_sim&quot;</span> <span class="ow">in</span> <span class="n">xds_covars_sim</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+                    <span class="n">sim_covars_T</span> <span class="o">=</span> <span class="n">xds_covars_sim</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">n_sim</span><span class="o">=</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">cov_values</span><span class="o">.</span><span class="n">values</span>
+                    <span class="n">cvtxt</span> <span class="o">=</span> <span class="s2">&quot; (Covs. </span><span class="si">{0:03d}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sim_covars_T</span> <span class="o">=</span> <span class="n">xds_covars_sim</span><span class="o">.</span><span class="n">cov_values</span><span class="o">.</span><span class="n">values</span>
+
+                <span class="n">sim_covars_T_mean</span> <span class="o">=</span> <span class="n">sim_covars_T</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">sim_covars_T_std</span> <span class="o">=</span> <span class="n">sim_covars_T</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="c1"># progress bar</span>
+            <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span>
+                <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">time_yfrac</span><span class="p">)</span> <span class="o">-</span> <span class="n">mk_order</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span>
+                <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Sim. Num. </span><span class="si">{0:03d}{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">cvtxt</span><span class="p">),</span>
+            <span class="p">)</span>
+
+            <span class="n">evbmus</span> <span class="o">=</span> <span class="n">evbmus_values</span><span class="p">[</span><span class="mi">1</span> <span class="p">:</span> <span class="n">mk_order</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">time_yfrac</span><span class="p">)</span> <span class="o">-</span> <span class="n">mk_order</span><span class="p">):</span>
+                <span class="c1"># handle simulation covars</span>
+                <span class="k">if</span> <span class="n">d_terms_settings_sim</span><span class="p">[</span><span class="s2">&quot;covariates&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="c1"># normalize step covars</span>
+                    <span class="n">sim_covars_evbmus</span> <span class="o">=</span> <span class="n">sim_covars_T</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">mk_order</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                    <span class="n">sim_cov_norm</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">sim_covars_evbmus</span> <span class="o">-</span> <span class="n">sim_covars_T_mean</span>
+                    <span class="p">)</span> <span class="o">/</span> <span class="n">sim_covars_T_std</span>
+
+                    <span class="c1"># mount step xr.dataset for sim covariates</span>
+                    <span class="n">xds_cov_sim_step</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">&quot;cov_norm&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;cov_names&quot;</span><span class="p">),</span> <span class="n">sim_cov_norm</span><span class="p">),</span>
+                        <span class="p">},</span>
+                        <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;cov_names&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov_names</span><span class="p">},</span>
+                    <span class="p">)</span>
+
+                    <span class="n">d_terms_settings_sim</span><span class="p">[</span><span class="s2">&quot;covariates&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">xds_cov_sim_step</span><span class="p">)</span>
+
+                <span class="c1"># generate time step ALR terms</span>
+                <span class="n">terms_i</span><span class="p">,</span> <span class="n">terms_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GenerateALRTerms</span><span class="p">(</span>
+                    <span class="n">d_terms_settings_sim</span><span class="p">,</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">evbmus</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">mk_order</span><span class="p">],</span> <span class="mi">0</span><span class="p">),</span>
+                    <span class="n">time_yfrac</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">mk_order</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cluster_size</span><span class="p">,</span>
+                    <span class="n">time2yfrac</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Event sequence simulation  (sklearn)</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">terms_i</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">prob</span> <span class="o">=</span> <span class="n">pred_prob_fun</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># statsmodels // sklearn functions</span>
+                <span class="n">probTrans</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">prob</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+
+                <span class="c1"># generate random cluster with ALR probs</span>
+                <span class="n">nrnd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span>
+                <span class="n">new_bmus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">probTrans</span> <span class="o">&gt;</span> <span class="n">nrnd</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+                <span class="c1"># overfit filter status swich (if active)</span>
+                <span class="k">if</span> <span class="n">overfit_filter</span><span class="p">:</span>
+                    <span class="n">ofilt</span><span class="o">.</span><span class="n">CheckStatus</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">evbmus</span><span class="p">,</span> <span class="n">new_bmus</span><span class="p">))</span>
+
+                <span class="c1"># override overfit bmus if filter active</span>
+                <span class="k">if</span> <span class="n">ofilt</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+                    <span class="c1"># criteria: random bmus from that date of the year at  historical</span>
+                    <span class="n">ix_of</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span><span class="p">[</span><span class="s2">&quot;time.dayofyear&quot;</span><span class="p">]</span>
+                            <span class="o">==</span> <span class="n">time_sim</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">timetuple</span><span class="p">()</span><span class="o">.</span><span class="n">tm_yday</span>
+                        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="n">new_bmus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xds_bmus_fit</span><span class="o">.</span><span class="n">bmus</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">ix_of</span><span class="p">]</span>
+
+                <span class="c1"># append_bmus</span>
+                <span class="n">evbmus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">evbmus</span><span class="p">,</span> <span class="n">new_bmus</span><span class="p">)</span>
+
+                <span class="c1"># store overfit filter status</span>
+                <span class="n">ofbmus_sims</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">mk_order</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">ofilt</span><span class="o">.</span><span class="n">active</span>
+
+                <span class="c1"># optional detail log</span>
+                <span class="k">if</span> <span class="n">log_sim</span><span class="p">:</span>
+                    <span class="n">SL</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">probTrans</span><span class="p">,</span> <span class="n">nrnd</span><span class="p">,</span> <span class="n">ofilt</span><span class="o">.</span><span class="n">active</span><span class="p">,</span> <span class="n">new_bmus</span><span class="p">)</span>
+
+                <span class="c1"># update progress bar</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="n">evbmus_sims</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">evbmus</span>
+
+            <span class="c1"># close progress bar</span>
+            <span class="n">pbar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">()</span>  <span class="c1"># white line after all progress bars</span>
+
+        <span class="c1"># return ALR simulation data in a xr.Dataset</span>
+        <span class="n">xds_out</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;evbmus_sims&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;n_sim&quot;</span><span class="p">),</span> <span class="n">evbmus_sims</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)),</span>
+                <span class="s2">&quot;ofbmus_sims&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;n_sim&quot;</span><span class="p">),</span> <span class="n">ofbmus_sims</span><span class="p">),</span>
+            <span class="p">},</span>
+            <span class="n">coords</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">time_sim</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+        <span class="c1"># save output</span>
+        <span class="n">StoreBugXdset</span><span class="p">(</span><span class="n">xds_out</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_save_sim_xds</span><span class="p">)</span>
+
+        <span class="c1"># save log file</span>
+        <span class="k">if</span> <span class="n">log_sim</span><span class="p">:</span>
+            <span class="n">SL</span><span class="o">.</span><span class="n">Save</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_log_sim_xds</span><span class="p">,</span> <span class="n">terms_names</span><span class="p">)</span>
+
+        <span class="c1"># overfit filter log</span>
+        <span class="n">ofilt</span><span class="o">.</span><span class="n">PrintLog</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">xds_out</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.Report_Sim">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.Report_Sim">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Report_Sim</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">py_month_ini</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">persistences_hists</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">persistences_table</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Report that Compare fitting to simulated bmus</span>
+
+<span class="sd">        py_month_ini  - start month for PerpetualYear bmus comparison</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO: add arg n_sim = None (for plotting only one sim output)</span>
+
+        <span class="c1"># load fit and sim bmus</span>
+        <span class="n">xds_ALR_fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">LoadBmus_Fit</span><span class="p">()</span>
+        <span class="n">xds_ALR_sim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">LoadBmus_Sim</span><span class="p">()</span>
+
+        <span class="c1"># report folder and files</span>
+        <span class="n">p_save</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_report_sim</span>
+
+        <span class="c1"># get data</span>
+        <span class="n">cluster_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_size</span>
+        <span class="n">bmus_values_sim</span> <span class="o">=</span> <span class="n">xds_ALR_sim</span><span class="o">.</span><span class="n">evbmus_sims</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">bmus_dates_sim</span> <span class="o">=</span> <span class="n">xds_ALR_sim</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">bmus_values_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">xds_ALR_fit</span><span class="o">.</span><span class="n">bmus</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">bmus_dates_hist</span> <span class="o">=</span> <span class="n">xds_ALR_fit</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">num_sims</span> <span class="o">=</span> <span class="n">bmus_values_sim</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># calculate bmus persistences</span>
+        <span class="n">pers_hist</span> <span class="o">=</span> <span class="n">Persistences</span><span class="p">(</span><span class="n">bmus_values_hist</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+        <span class="n">lsp</span> <span class="o">=</span> <span class="p">[</span><span class="n">Persistences</span><span class="p">(</span><span class="n">bs</span><span class="p">)</span> <span class="k">for</span> <span class="n">bs</span> <span class="ow">in</span> <span class="n">bmus_values_sim</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)]</span>
+        <span class="n">pers_sim</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="p">[])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lsp</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">lsp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="p">}</span>
+
+        <span class="c1"># fix datetime 64 dates</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bmus_dates_sim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">):</span>
+            <span class="n">bmus_dates_sim</span> <span class="o">=</span> <span class="p">[</span><span class="n">npdt2dt</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">bmus_dates_sim</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bmus_dates_hist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">):</span>
+            <span class="n">bmus_dates_hist</span> <span class="o">=</span> <span class="p">[</span><span class="n">npdt2dt</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">bmus_dates_hist</span><span class="p">]</span>
+
+        <span class="c1"># output figs</span>
+        <span class="n">l_figs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Plot Perpetual Year (daily) - bmus wt</span>
+        <span class="n">fig_PP</span> <span class="o">=</span> <span class="n">Plot_Compare_PerpYear</span><span class="p">(</span>
+            <span class="n">cluster_size</span><span class="p">,</span>
+            <span class="n">bmus_values_sim</span><span class="p">,</span>
+            <span class="n">bmus_dates_sim</span><span class="p">,</span>
+            <span class="n">bmus_values_hist</span><span class="p">,</span>
+            <span class="n">bmus_dates_hist</span><span class="p">,</span>
+            <span class="n">n_sim</span><span class="o">=</span><span class="n">num_sims</span><span class="p">,</span>
+            <span class="n">month_ini</span><span class="o">=</span><span class="n">py_month_ini</span><span class="p">,</span>
+            <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">l_figs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fig_PP</span><span class="p">)</span>
+
+        <span class="c1"># Plot WTs Transition (probability change / scatter Fit vs. ACCUMULATED Sim)</span>
+        <span class="n">sttl</span> <span class="o">=</span> <span class="s2">&quot;Cluster Probabilities Transitions: All Simulations&quot;</span>
+        <span class="n">fig_CT</span> <span class="o">=</span> <span class="n">Plot_Compare_Transitions</span><span class="p">(</span>
+            <span class="n">cluster_size</span><span class="p">,</span>
+            <span class="n">bmus_values_hist</span><span class="p">,</span>
+            <span class="n">bmus_values_sim</span><span class="p">,</span>
+            <span class="n">sttl</span><span class="o">=</span><span class="n">sttl</span><span class="p">,</span>
+            <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">l_figs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fig_CT</span><span class="p">)</span>
+
+        <span class="c1"># Plot Persistences comparison Fit vs Sim</span>
+        <span class="k">if</span> <span class="n">persistences_hists</span><span class="p">:</span>
+            <span class="n">fig_PS</span> <span class="o">=</span> <span class="n">Plot_Compare_Persistences</span><span class="p">(</span>
+                <span class="n">cluster_size</span><span class="p">,</span>
+                <span class="n">pers_hist</span><span class="p">,</span>
+                <span class="n">pers_sim</span><span class="p">,</span>
+                <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">l_figs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fig_PS</span><span class="p">)</span>
+
+        <span class="c1"># persistences set table</span>
+        <span class="k">if</span> <span class="n">persistences_table</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Persistences by WT (set)&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cluster_size</span><span class="p">):</span>
+                <span class="n">wt</span> <span class="o">=</span> <span class="n">c</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">p_h</span> <span class="o">=</span> <span class="n">pers_hist</span><span class="p">[</span><span class="n">wt</span><span class="p">]</span>
+                <span class="n">p_s</span> <span class="o">=</span> <span class="n">pers_sim</span><span class="p">[</span><span class="n">wt</span><span class="p">]</span>
+
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WT: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">wt</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  hist : </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">p_h</span><span class="p">)))))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  sim. : </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">p_s</span><span class="p">))))</span>
+
+        <span class="c1"># TODO export handling (if show=False)</span>
+        <span class="c1"># p_save = self.p_report_sim</span>
+        <span class="c1"># p_rep_PY = None</span>
+        <span class="c1"># p_rep_VL = None</span>
+        <span class="c1"># if export:</span>
+        <span class="c1">#    if not op.isdir(p_save): os.mkdir(p_save)</span>
+        <span class="c1">#    p_rep_PY = op.join(p_save, &#39;PerpetualYear.png&#39;)</span>
+        <span class="c1">#    p_rep_VL = op.join(p_save, &#39;Transitions.png&#39;)</span>
+
+        <span class="k">return</span> <span class="n">l_figs</span>
+
+        <span class="c1"># TODO: Plot Perpetual Year (monthly)</span>
+        <span class="c1"># TODO: load covariates if needed for ploting</span>
+        <span class="c1"># TODO: activate this</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;covariates&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="c1"># TODO eliminar tiempos duplicados</span>
+            <span class="n">time_hist_covars</span> <span class="o">=</span> <span class="n">bmus_dates_hist</span>
+            <span class="n">time_sim_covars</span> <span class="o">=</span> <span class="n">bmus_dates_sim</span>
+
+            <span class="c1"># covars fit</span>
+            <span class="n">xds_cov_fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_terms_settings</span><span class="p">[</span><span class="s2">&quot;covariates&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">cov_names</span> <span class="o">=</span> <span class="n">xds_cov_fit</span><span class="o">.</span><span class="n">cov_names</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">cov_fit_values</span> <span class="o">=</span> <span class="n">xds_cov_fit</span><span class="o">.</span><span class="n">cov_values</span><span class="o">.</span><span class="n">values</span>
+
+            <span class="c1"># covars sim</span>
+            <span class="n">cov_sim_values</span> <span class="o">=</span> <span class="n">xds_cov_sim</span><span class="o">.</span><span class="n">cov_values</span><span class="o">.</span><span class="n">values</span>
+
+            <span class="k">for</span> <span class="n">ic</span><span class="p">,</span> <span class="n">cn</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cov_names</span><span class="p">):</span>
+                <span class="c1"># get covariate data</span>
+                <span class="n">cf_val</span> <span class="o">=</span> <span class="n">cov_fit_values</span><span class="p">[:,</span> <span class="n">ic</span><span class="p">]</span>
+                <span class="n">cs_val</span> <span class="o">=</span> <span class="n">cov_sim_values</span><span class="p">[:,</span> <span class="n">ic</span><span class="p">]</span>
+
+                <span class="c1"># plot covariate - bmus wt</span>
+                <span class="n">p_rep_cn</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_save</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">_comp.png&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cn</span><span class="p">))</span>
+                <span class="n">Plot_Compare_Covariate</span><span class="p">(</span>
+                    <span class="n">cluster_size</span><span class="p">,</span>
+                    <span class="n">bmus_values_sim</span><span class="p">,</span>
+                    <span class="n">bmus_dates_sim</span><span class="p">,</span>
+                    <span class="n">bmus_values_hist</span><span class="p">,</span>
+                    <span class="n">bmus_dates_hist</span><span class="p">,</span>
+                    <span class="n">cs_val</span><span class="p">,</span>
+                    <span class="n">time_sim_covars</span><span class="p">,</span>
+                    <span class="n">cf_val</span><span class="p">,</span>
+                    <span class="n">time_hist_covars</span><span class="p">,</span>
+                    <span class="n">cn</span><span class="p">,</span>
+                    <span class="n">n_sim</span><span class="o">=</span><span class="n">num_sims</span><span class="p">,</span>
+                    <span class="n">p_export</span><span class="o">=</span><span class="n">p_rep_cn</span><span class="p">,</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ALR_WRP.Report_Sim_Log">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr.ALR_WRP.Report_Sim_Log">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Report_Sim_Log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_sim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">t_slice</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interactive plot for simulation log</span>
+
+<span class="sd">        n_sim  - simulation log to plot</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># load fit and sim bmus</span>
+        <span class="n">xds_log</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_log_sim_xds</span><span class="p">,</span> <span class="n">decode_times</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># get simulation</span>
+        <span class="n">log_sim</span> <span class="o">=</span> <span class="n">xds_log</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">n_sim</span><span class="o">=</span><span class="n">n_sim</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">t_slice</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">log_sim</span> <span class="o">=</span> <span class="n">log_sim</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">t_slice</span><span class="p">)</span>
+
+        <span class="c1"># plot interactive report</span>
+        <span class="n">Plot_Log_Sim</span><span class="p">(</span><span class="n">log_sim</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

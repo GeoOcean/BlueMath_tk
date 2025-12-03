@@ -1,0 +1,181 @@
+bluemath\_tk.teslakit.test package
+==================================
+
+Submodules
+----------
+
+bluemath\_tk.teslakit.test.SLR\_timeseries module
+-------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.SLR_timeseries
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.roi\_hy\_sim\_slr\_storm module
+----------------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.roi_hy_sim_slr_storm
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.roi\_hycreww\_historical module
+----------------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.roi_hycreww_historical
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.roi\_hycreww\_sim module
+---------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.roi_hycreww_sim
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_alr module
+-------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_alr
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_climate\_emulator module
+---------------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_climate_emulator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_custom\_dateutils module
+---------------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_custom_dateutils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_estela module
+----------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_estela
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_extremes module
+------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_extremes
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_hycreww module
+-----------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_hycreww
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_intradaily module
+--------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_intradaily
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_kma module
+-------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_kma
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_mda module
+-------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_mda
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_mjo module
+-------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_mjo
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_pca module
+-------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_pca
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_project\_site module
+-----------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_project_site
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_rbf module
+-------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_rbf
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_statistical module
+---------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_statistical
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_storms module
+----------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_storms
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_tides module
+---------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_tides
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.test.test\_waves module
+---------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.test.test_waves
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.teslakit.test
+   :members:
+   :show-inheritance:
+   :undoc-members:

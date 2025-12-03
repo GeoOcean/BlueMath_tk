@@ -1,0 +1,594 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.teslakit.kma &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.teslakit.kma</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.teslakit.kma</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1"># common</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="c1"># pip</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.spatial</span><span class="w"> </span><span class="kn">import</span> <span class="n">distance_matrix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.cluster</span><span class="w"> </span><span class="kn">import</span> <span class="n">KMeans</span><span class="p">,</span> <span class="n">MiniBatchKMeans</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn</span><span class="w"> </span><span class="kn">import</span> <span class="n">linear_model</span>
+
+
+<div class="viewcode-block" id="Persistences">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.kma.Persistences">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">Persistences</span><span class="p">(</span><span class="n">series</span><span class="p">):</span>
+    <span class="s1">&#39;Return series persistences for each element&#39;</span>
+
+    <span class="c1"># locate dates where series changes</span>
+    <span class="n">s_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">series</span><span class="p">)</span>
+    <span class="n">ix_ch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">s_diff</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span>
+    <span class="n">ix_ch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">ix_ch</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">wt_ch</span> <span class="o">=</span> <span class="n">series</span><span class="p">[</span><span class="n">ix_ch</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="c1"># bmus where WT changes</span>
+    <span class="n">wt_dr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">ix_ch</span><span class="p">)</span>
+
+    <span class="c1"># output dict</span>
+    <span class="n">d_pers</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">series</span><span class="p">):</span>
+        <span class="n">d_pers</span><span class="p">[</span><span class="n">e</span><span class="p">]</span> <span class="o">=</span> <span class="n">wt_dr</span><span class="p">[</span><span class="n">wt_ch</span><span class="o">==</span><span class="n">e</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">d_pers</span></div>
+
+
+<div class="viewcode-block" id="ClusterProbabilities">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.kma.ClusterProbabilities">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ClusterProbabilities</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">set_values</span><span class="p">):</span>
+    <span class="s1">&#39;return series probabilities for each item at set_values&#39;</span>
+
+    <span class="n">us</span><span class="p">,</span> <span class="n">cs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">d_count</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">us</span><span class="p">,</span><span class="n">cs</span><span class="p">))</span>
+
+    <span class="c1"># cluster probabilities</span>
+    <span class="n">cprobs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">set_values</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">set_values</span><span class="p">):</span>
+       <span class="n">cprobs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">*</span><span class="n">d_count</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">series</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">d_count</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="mf">0.0</span>
+
+    <span class="k">return</span> <span class="n">cprobs</span></div>
+
+
+<div class="viewcode-block" id="ChangeProbabilities">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.kma.ChangeProbabilities">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ChangeProbabilities</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">set_values</span><span class="p">):</span>
+    <span class="s1">&#39;return series transition count and probabilities&#39;</span>
+
+    <span class="c1"># count matrix</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">set_values</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">set_values</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">ix</span><span class="p">,</span> <span class="n">c1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">set_values</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">iy</span><span class="p">,</span> <span class="n">c2</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">set_values</span><span class="p">):</span>
+
+            <span class="c1"># count cluster-next_cluster ocurrences</span>
+            <span class="n">us</span><span class="p">,</span> <span class="n">cs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">((</span><span class="n">series</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="n">c1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">series</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">==</span><span class="n">c2</span><span class="p">),</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">d_count</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">us</span><span class="p">,</span><span class="n">cs</span><span class="p">))</span>
+            <span class="n">count</span><span class="p">[</span><span class="n">ix</span><span class="p">,</span> <span class="n">iy</span><span class="p">]</span> <span class="o">=</span> <span class="n">d_count</span><span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="k">if</span> <span class="kc">True</span> <span class="ow">in</span> <span class="n">d_count</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="mi">0</span>
+
+    <span class="c1"># probabilities</span>
+    <span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">set_values</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">set_values</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">ix</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">set_values</span><span class="p">):</span>
+
+        <span class="c1"># calculate each row probability</span>
+        <span class="n">probs</span><span class="p">[</span><span class="n">ix</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">count</span><span class="p">[</span><span class="n">ix</span><span class="p">,:]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">count</span><span class="p">[</span><span class="n">ix</span><span class="p">,</span> <span class="p">:])</span>
+
+    <span class="k">return</span> <span class="n">count</span><span class="p">,</span> <span class="n">probs</span></div>
+
+
+<div class="viewcode-block" id="sort_cluster_gen_corr_end">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.kma.sort_cluster_gen_corr_end">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sort_cluster_gen_corr_end</span><span class="p">(</span><span class="n">centers</span><span class="p">,</span> <span class="n">dimdim</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    SOMs alternative</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># TODO: DOCUMENTAR.</span>
+
+    <span class="c1"># get dimx, dimy</span>
+    <span class="n">dimy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dimdim</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">dimx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dimdim</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">dimx</span><span class="o">*</span><span class="n">dimy</span><span class="p">,</span> <span class="n">dimdim</span><span class="p">):</span>
+        <span class="c1"># TODO: RAISE ERROR</span>
+        <span class="k">pass</span>
+
+    <span class="n">dd</span> <span class="o">=</span> <span class="n">distance_matrix</span><span class="p">(</span><span class="n">centers</span><span class="p">,</span> <span class="n">centers</span><span class="p">)</span>
+    <span class="n">qx</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">sc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">dimdim</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dimy</span><span class="p">,</span> <span class="n">dimx</span><span class="p">)</span>
+
+    <span class="c1"># get qx</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dimy</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dimx</span><span class="p">):</span>
+
+            <span class="c1"># row F-1</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">qx</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="p">],</span> <span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]]</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">j</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="n">qx</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]]</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="o">==</span><span class="n">dimx</span><span class="p">:</span>
+                    <span class="n">qx</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]]</span>
+
+            <span class="c1"># row F</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">j</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">qx</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]]</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="o">==</span><span class="n">dimx</span><span class="p">:</span>
+                <span class="n">qx</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]]</span>
+
+            <span class="c1"># row F+1</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="o">==</span><span class="n">dimy</span><span class="p">:</span>
+                <span class="n">qx</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="p">],</span> <span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]]</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">j</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="n">qx</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]]</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="o">==</span><span class="n">dimx</span><span class="p">:</span>
+                    <span class="n">qx</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">sc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]]</span>
+
+    <span class="c1"># test permutations</span>
+    <span class="n">q</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="n">go_out</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dimdim</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">go_out</span><span class="p">:</span>
+            <span class="k">break</span>
+
+        <span class="n">go_out</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dimdim</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dimdim</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">([</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">]))</span><span class="o">==</span><span class="mi">3</span><span class="p">:</span>
+
+                    <span class="n">u</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">)</span>
+                    <span class="n">u</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">)[</span><span class="n">j</span><span class="p">]</span>
+                    <span class="n">u</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">)[</span><span class="n">k</span><span class="p">]</span>
+                    <span class="n">u</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">)[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">u</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dimy</span><span class="p">,</span> <span class="n">dimx</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;F&#39;</span><span class="p">)</span>
+
+                    <span class="n">f</span><span class="o">=</span><span class="mi">0</span>
+                    <span class="k">for</span> <span class="n">ix</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dimy</span><span class="p">):</span>
+                        <span class="k">for</span> <span class="n">jx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dimx</span><span class="p">):</span>
+
+                            <span class="c1"># row F-1</span>
+                            <span class="k">if</span> <span class="ow">not</span> <span class="n">ix</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                                <span class="n">f</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">jx</span><span class="p">],</span> <span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="p">,</span><span class="n">jx</span><span class="p">]]</span>
+
+                                <span class="k">if</span> <span class="ow">not</span> <span class="n">jx</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                                    <span class="n">f</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">jx</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="p">,</span><span class="n">jx</span><span class="p">]]</span>
+
+                                <span class="k">if</span> <span class="ow">not</span> <span class="n">jx</span><span class="o">+</span><span class="mi">1</span><span class="o">==</span><span class="n">dimx</span><span class="p">:</span>
+                                    <span class="n">f</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">jx</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="p">,</span><span class="n">jx</span><span class="p">]]</span>
+
+                            <span class="c1"># row F</span>
+                            <span class="k">if</span> <span class="ow">not</span> <span class="n">jx</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                                <span class="n">f</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="p">,</span><span class="n">jx</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="p">,</span><span class="n">jx</span><span class="p">]]</span>
+
+                            <span class="k">if</span> <span class="ow">not</span> <span class="n">jx</span><span class="o">+</span><span class="mi">1</span><span class="o">==</span><span class="n">dimx</span><span class="p">:</span>
+                                <span class="n">f</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="p">,</span><span class="n">jx</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="p">,</span><span class="n">jx</span><span class="p">]]</span>
+
+                            <span class="c1"># row F+1</span>
+                            <span class="k">if</span> <span class="ow">not</span> <span class="n">ix</span><span class="o">+</span><span class="mi">1</span><span class="o">==</span><span class="n">dimy</span><span class="p">:</span>
+                                <span class="n">f</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">jx</span><span class="p">],</span> <span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="p">,</span><span class="n">jx</span><span class="p">]]</span>
+
+                                <span class="k">if</span> <span class="ow">not</span> <span class="n">jx</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                                    <span class="n">f</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">jx</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="p">,</span><span class="n">jx</span><span class="p">]]</span>
+
+                                <span class="k">if</span> <span class="ow">not</span> <span class="n">jx</span><span class="o">+</span><span class="mi">1</span><span class="o">==</span><span class="n">dimx</span><span class="p">:</span>
+                                    <span class="n">f</span> <span class="o">+=</span> <span class="n">dd</span><span class="p">[</span><span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">jx</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">u</span><span class="p">[</span><span class="n">ix</span><span class="p">,</span><span class="n">jx</span><span class="p">]]</span>
+
+                    <span class="k">if</span> <span class="n">f</span><span class="o">&lt;=</span><span class="n">q</span><span class="p">:</span>
+                        <span class="n">q</span> <span class="o">=</span> <span class="n">f</span>
+                        <span class="n">sc</span> <span class="o">=</span> <span class="n">u</span>
+
+                        <span class="k">if</span> <span class="n">q</span><span class="o">&lt;=</span><span class="n">qx</span><span class="p">:</span>
+                            <span class="n">qx</span><span class="o">=</span><span class="n">q</span>
+                            <span class="n">go_out</span><span class="o">=</span><span class="kc">False</span>
+
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="KMA_simple">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.kma.KMA_simple">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">KMA_simple</span><span class="p">(</span><span class="n">xds_PCA</span><span class="p">,</span> <span class="n">num_clusters</span><span class="p">,</span> <span class="n">repres</span><span class="o">=</span><span class="mf">0.95</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    KMeans Classification for PCA data</span>
+
+<span class="sd">    xds_PCA:</span>
+<span class="sd">        (n_components, n_components) PCs</span>
+<span class="sd">        (n_components, n_features) EOFs</span>
+<span class="sd">        (n_components, ) variance</span>
+<span class="sd">    num_clusters</span>
+<span class="sd">    repres</span>
+
+<span class="sd">    returns a xarray.Dataset containing KMA data</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># PCA data</span>
+    <span class="n">variance</span> <span class="o">=</span> <span class="n">xds_PCA</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="n">EOFs</span> <span class="o">=</span> <span class="n">xds_PCA</span><span class="o">.</span><span class="n">EOFs</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="n">PCs</span> <span class="o">=</span> <span class="n">xds_PCA</span><span class="o">.</span><span class="n">PCs</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+    <span class="n">var_anom_std</span> <span class="o">=</span> <span class="n">xds_PCA</span><span class="o">.</span><span class="n">var_anom_std</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="n">var_anom_mean</span> <span class="o">=</span> <span class="n">xds_PCA</span><span class="o">.</span><span class="n">var_anom_mean</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">xds_PCA</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+    <span class="c1"># APEV: the cummulative proportion of explained variance by ith PC</span>
+    <span class="n">APEV</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">variance</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">variance</span><span class="p">)</span><span class="o">*</span><span class="mf">100.0</span>
+    <span class="n">nterm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">APEV</span> <span class="o">&lt;=</span> <span class="n">repres</span><span class="o">*</span><span class="mi">100</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">PCsub</span> <span class="o">=</span> <span class="n">PCs</span><span class="p">[:,</span> <span class="p">:</span><span class="n">nterm</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">EOFsub</span> <span class="o">=</span> <span class="n">EOFs</span><span class="p">[:</span><span class="n">nterm</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="c1"># KMEANS</span>
+    <span class="n">kma</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">num_clusters</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">PCsub</span><span class="p">)</span>
+
+    <span class="c1"># groupsize</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">group_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">kma</span><span class="o">.</span><span class="n">labels_</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># groups</span>
+    <span class="n">d_groups</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_clusters</span><span class="p">):</span>
+        <span class="n">d_groups</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">kma</span><span class="o">.</span><span class="n">labels_</span><span class="o">==</span><span class="n">k</span><span class="p">)</span>
+    <span class="c1"># TODO: STORE GROUPS WITHIN OUTPUT DATASET    </span>
+
+    <span class="c1"># centroids</span>
+    <span class="n">centroids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">kma</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">,</span> <span class="n">EOFsub</span><span class="p">)</span>
+
+    <span class="c1"># km, x and var_centers</span>
+    <span class="n">km</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span>
+        <span class="n">centroids</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">var_anom_std</span><span class="p">,</span> <span class="p">(</span><span class="n">num_clusters</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">var_anom_mean</span><span class="p">,</span> <span class="p">(</span><span class="n">num_clusters</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># sort kmeans</span>
+    <span class="n">kma_order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">-</span><span class="n">km</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># reorder clusters: bmus, km, cenEOFs, centroids, group_size</span>
+    <span class="n">sorted_bmus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">kma</span><span class="o">.</span><span class="n">labels_</span><span class="p">),),)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_clusters</span><span class="p">):</span>
+        <span class="n">posc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">kma</span><span class="o">.</span><span class="n">labels_</span> <span class="o">==</span> <span class="n">kma_order</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">sorted_bmus</span><span class="p">[</span><span class="n">posc</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+    <span class="n">sorted_km</span> <span class="o">=</span> <span class="n">km</span><span class="p">[</span><span class="n">kma_order</span><span class="p">]</span>
+    <span class="n">sorted_cenEOFs</span> <span class="o">=</span> <span class="n">kma</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">[</span><span class="n">kma_order</span><span class="p">]</span>
+    <span class="n">sorted_centroids</span> <span class="o">=</span> <span class="n">centroids</span><span class="p">[</span><span class="n">kma_order</span><span class="p">]</span>
+    <span class="n">sorted_group_size</span> <span class="o">=</span> <span class="n">group_size</span><span class="p">[</span><span class="n">kma_order</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;bmus&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_pcacomp&#39;</span><span class="p">),</span> <span class="n">sorted_bmus</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)),</span>
+            <span class="s1">&#39;cenEOFs&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_clusters&#39;</span><span class="p">,</span> <span class="s1">&#39;n_features&#39;</span><span class="p">),</span> <span class="n">sorted_cenEOFs</span><span class="p">),</span>
+            <span class="s1">&#39;centroids&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_clusters&#39;</span><span class="p">,</span><span class="s1">&#39;n_pcafeat&#39;</span><span class="p">),</span> <span class="n">sorted_centroids</span><span class="p">),</span>
+            <span class="s1">&#39;Km&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_clusters&#39;</span><span class="p">,</span><span class="s1">&#39;n_pcafeat&#39;</span><span class="p">),</span> <span class="n">sorted_km</span><span class="p">),</span>
+            <span class="s1">&#39;group_size&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_clusters&#39;</span><span class="p">),</span> <span class="n">sorted_group_size</span><span class="p">),</span>
+
+            <span class="c1"># PCA data</span>
+            <span class="s1">&#39;PCs&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_pcacomp&#39;</span><span class="p">,</span><span class="s1">&#39;n_features&#39;</span><span class="p">),</span> <span class="n">PCsub</span><span class="p">),</span>
+            <span class="s1">&#39;variance&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_pcacomp&#39;</span><span class="p">,),</span> <span class="n">variance</span><span class="p">),</span>
+            <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_pcacomp&#39;</span><span class="p">,),</span> <span class="n">time</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="KMA_regression_guided">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.kma.KMA_regression_guided">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">KMA_regression_guided</span><span class="p">(</span>
+    <span class="n">xds_PCA</span><span class="p">,</span> <span class="n">xds_Yregres</span><span class="p">,</span> <span class="n">num_clusters</span><span class="p">,</span>
+    <span class="n">repres</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">min_group_size</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    KMeans Classification for PCA data: regression guided</span>
+
+<span class="sd">    xds_PCA:</span>
+<span class="sd">        (n_components, n_components) PCs</span>
+<span class="sd">        (n_components, n_features) EOFs</span>
+<span class="sd">        (n_components, ) variance</span>
+<span class="sd">    xds_Yregres:</span>
+<span class="sd">        (time, vars) Ym</span>
+<span class="sd">    num_clusters</span>
+<span class="sd">    repres</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># PCA data</span>
+    <span class="n">variance</span> <span class="o">=</span> <span class="n">xds_PCA</span><span class="p">[</span><span class="s1">&#39;variance&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="n">EOFs</span> <span class="o">=</span> <span class="n">xds_PCA</span><span class="p">[</span><span class="s1">&#39;EOFs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="n">PCs</span> <span class="o">=</span> <span class="n">xds_PCA</span><span class="p">[</span><span class="s1">&#39;PCs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+    <span class="c1"># Yregres data</span>
+    <span class="n">Y</span> <span class="o">=</span> <span class="n">xds_Yregres</span><span class="p">[</span><span class="s1">&#39;Ym&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+    <span class="c1"># APEV: the cummulative proportion of explained variance by ith PC</span>
+    <span class="n">APEV</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">variance</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">variance</span><span class="p">)</span><span class="o">*</span><span class="mf">100.0</span>
+    <span class="n">nterm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">APEV</span> <span class="o">&lt;=</span> <span class="n">repres</span><span class="o">*</span><span class="mi">100</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">nterm</span> <span class="o">=</span> <span class="n">nterm</span><span class="o">+</span><span class="mi">1</span>
+    <span class="n">PCsub</span> <span class="o">=</span> <span class="n">PCs</span><span class="p">[:,</span> <span class="p">:</span><span class="n">nterm</span><span class="p">]</span>
+
+    <span class="c1"># append Yregres data to PCs</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">PCsub</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">data_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">data_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># normalize but keep PCs weigth</span>
+    <span class="n">data_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">PCsub</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">data_norm</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">data_mean</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">data_std</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">PCsub</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">data_norm</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">data_mean</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">data_std</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+    <span class="c1"># apply alpha (PCs - Yregress weight)</span>
+    <span class="n">data_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">alpha</span><span class="p">)</span><span class="o">*</span><span class="n">data_norm</span><span class="p">[:,:</span><span class="n">nterm</span><span class="p">],</span>
+         <span class="n">alpha</span><span class="o">*</span><span class="n">data_norm</span><span class="p">[:,</span><span class="n">nterm</span><span class="p">:]),</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+    <span class="p">)</span>
+
+    <span class="c1"># KMeans</span>
+    <span class="n">keep_iter</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">count_iter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">keep_iter</span><span class="p">:</span>
+        <span class="c1"># n_init: number of times KMeans runs with different centroids seeds</span>
+        <span class="c1">#kma = KMeans(</span>
+        <span class="c1">#    n_clusters = num_clusters,</span>
+        <span class="c1">#    init=&#39;random&#39;, n_init=30, max_iter=500,</span>
+        <span class="c1">#    n_jobs=-1</span>
+        <span class="c1">#).fit(data_a)</span>
+
+        <span class="c1"># much faster KMeans algorithm</span>
+        <span class="n">kma</span> <span class="o">=</span> <span class="n">MiniBatchKMeans</span><span class="p">(</span>
+            <span class="n">n_clusters</span><span class="o">=</span><span class="n">num_clusters</span><span class="p">,</span>
+            <span class="n">n_init</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">max_iter</span><span class="o">=</span><span class="mi">500</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_a</span><span class="p">)</span>
+
+        <span class="c1"># check minimun group_size</span>
+        <span class="n">group_keys</span><span class="p">,</span> <span class="n">group_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">kma</span><span class="o">.</span><span class="n">labels_</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># sort output</span>
+        <span class="n">group_k_s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">group_keys</span><span class="p">,</span> <span class="n">group_size</span><span class="p">])</span>
+        <span class="n">group_k_s</span> <span class="o">=</span> <span class="n">group_k_s</span><span class="p">[</span><span class="n">group_k_s</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">argsort</span><span class="p">()]</span>  <span class="c1"># sort by cluster num</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">min_group_size</span><span class="p">:</span>
+            <span class="n">keep_iter</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># keep iterating?</span>
+            <span class="n">keep_iter1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">group_k_s</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">min_group_size</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+            <span class="n">keep_iter2</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">group_keys</span><span class="p">)</span><span class="o">!=</span> <span class="n">num_clusters</span>
+            <span class="n">keep_iter</span> <span class="o">=</span> <span class="n">keep_iter1</span> <span class="ow">or</span> <span class="n">keep_iter2</span>
+            <span class="n">count_iter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># log kma iteration</span>
+            <span class="k">for</span> <span class="n">rr</span> <span class="ow">in</span> <span class="n">group_k_s</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">rr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">min_group_size</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  c: </span><span class="si">{0}</span><span class="s1"> - s: </span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">rr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">rr</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;total attemps: &#39;</span><span class="p">,</span> <span class="n">count_iter</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">()</span>
+
+    <span class="c1"># groups</span>
+    <span class="n">d_groups</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_clusters</span><span class="p">):</span>
+        <span class="n">d_groups</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">kma</span><span class="o">.</span><span class="n">labels_</span><span class="o">==</span><span class="n">k</span><span class="p">)</span>
+    <span class="c1"># TODO: STORE GROUPS WITHIN OUTPUT DATASET    </span>
+
+    <span class="c1"># centroids</span>
+    <span class="n">centroids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_clusters</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_clusters</span><span class="p">):</span>
+        <span class="n">centroids</span><span class="p">[</span><span class="n">k</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">d_groups</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">)],:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># sort kmeans</span>
+    <span class="n">kma_order</span> <span class="o">=</span> <span class="n">sort_cluster_gen_corr_end</span><span class="p">(</span><span class="n">kma</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">,</span> <span class="n">num_clusters</span><span class="p">)</span>
+
+    <span class="n">bmus_corrected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">kma</span><span class="o">.</span><span class="n">labels_</span><span class="p">),),)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_clusters</span><span class="p">):</span>
+        <span class="n">posc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">kma</span><span class="o">.</span><span class="n">labels_</span><span class="o">==</span><span class="n">kma_order</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">bmus_corrected</span><span class="p">[</span><span class="n">posc</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+
+    <span class="c1"># reorder centroids</span>
+    <span class="n">sorted_cenEOFs</span> <span class="o">=</span> <span class="n">kma</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">[</span><span class="n">kma_order</span><span class="p">,:]</span>
+    <span class="n">sorted_centroids</span> <span class="o">=</span> <span class="n">centroids</span><span class="p">[</span><span class="n">kma_order</span><span class="p">,:]</span>
+
+    <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="c1"># KMA data</span>
+            <span class="s1">&#39;bmus&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_components&#39;</span><span class="p">,),</span> <span class="n">kma</span><span class="o">.</span><span class="n">labels_</span><span class="p">),</span>
+            <span class="s1">&#39;cenEOFs&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_clusters&#39;</span><span class="p">,</span> <span class="s1">&#39;n_features&#39;</span><span class="p">),</span> <span class="n">kma</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">),</span>
+            <span class="s1">&#39;centroids&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_clusters&#39;</span><span class="p">,</span><span class="s1">&#39;n_features&#39;</span><span class="p">),</span> <span class="n">centroids</span><span class="p">),</span>
+            <span class="s1">&#39;group_size&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_clusters&#39;</span><span class="p">),</span> <span class="n">group_k_s</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]),</span>
+
+            <span class="c1"># sorted KMA data</span>
+            <span class="s1">&#39;sorted_order&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_clusters&#39;</span><span class="p">),</span> <span class="n">kma_order</span><span class="p">),</span>
+            <span class="s1">&#39;sorted_bmus&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_components&#39;</span><span class="p">),</span> <span class="n">bmus_corrected</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)),</span>
+            <span class="s1">&#39;sorted_cenEOFs&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_clusters&#39;</span><span class="p">,</span> <span class="s1">&#39;n_features&#39;</span><span class="p">),</span> <span class="n">sorted_cenEOFs</span><span class="p">),</span>
+            <span class="s1">&#39;sorted_centroids&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;n_clusters&#39;</span><span class="p">,</span><span class="s1">&#39;n_features&#39;</span><span class="p">),</span> <span class="n">sorted_centroids</span><span class="p">),</span>
+
+        <span class="p">},</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="s1">&#39;regression guided&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;alpha&#39;</span><span class="p">:</span> <span class="n">alpha</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SimpleMultivariateRegressionModel">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.kma.SimpleMultivariateRegressionModel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">SimpleMultivariateRegressionModel</span><span class="p">(</span><span class="n">xds_PCA</span><span class="p">,</span> <span class="n">xds_WAVES</span><span class="p">,</span> <span class="n">name_vars</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Regression model between daily predictor and predictand</span>
+
+<span class="sd">    xds_PCA: predictor: SLP GRD PCAS</span>
+<span class="sd">        (n_components, n_components) PCs</span>
+<span class="sd">        (n_components, n_features) EOFs</span>
+<span class="sd">        (n_components, ) variance</span>
+
+<span class="sd">    xds_WAVES: predictand waves data</span>
+<span class="sd">        name_vars will be used as predictand (ex: [&#39;hs&#39;,&#39;t02&#39;])</span>
+<span class="sd">        dim: time</span>
+
+<span class="sd">    returns a xarray.Dataset</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># 95% repres</span>
+    <span class="n">repres</span> <span class="o">=</span> <span class="mf">0.951</span>
+
+    <span class="c1"># PREDICTOR: PCA data</span>
+    <span class="n">variance</span> <span class="o">=</span> <span class="n">xds_PCA</span><span class="p">[</span><span class="s1">&#39;variance&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="n">EOFs</span> <span class="o">=</span> <span class="n">xds_PCA</span><span class="p">[</span><span class="s1">&#39;EOFs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="n">PCs</span> <span class="o">=</span> <span class="n">xds_PCA</span><span class="p">[</span><span class="s1">&#39;PCs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+    <span class="c1"># APEV: the cummulative proportion of explained variance by ith PC</span>
+    <span class="n">APEV</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">variance</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">variance</span><span class="p">)</span><span class="o">*</span><span class="mf">100.0</span>
+    <span class="n">nterm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">APEV</span> <span class="o">&lt;=</span> <span class="n">repres</span><span class="o">*</span><span class="mi">100</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">PCsub</span> <span class="o">=</span> <span class="n">PCs</span><span class="p">[:,</span> <span class="p">:</span><span class="n">nterm</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">EOFsub</span> <span class="o">=</span> <span class="n">EOFs</span><span class="p">[:</span><span class="n">nterm</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="n">PCsub_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">PCsub</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">PCsub_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">PCsub</span><span class="p">,</span> <span class="n">PCsub_std</span><span class="p">)</span>
+
+    <span class="n">X</span> <span class="o">=</span> <span class="n">PCsub_norm</span>  <span class="c1"># predictor</span>
+
+    <span class="c1"># PREDICTAND: WAVES data</span>
+    <span class="n">wd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">xds_WAVES</span><span class="p">[</span><span class="n">vn</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="k">for</span> <span class="n">vn</span> <span class="ow">in</span> <span class="n">name_vars</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">wd_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">wd</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">wd_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">wd</span><span class="p">,</span> <span class="n">wd_std</span><span class="p">)</span>
+
+    <span class="n">Y</span> <span class="o">=</span> <span class="n">wd_norm</span>  <span class="c1"># predictand</span>
+
+    <span class="c1"># Adjust</span>
+    <span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">n</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span> <span class="n">X</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">clf</span> <span class="o">=</span> <span class="n">linear_model</span><span class="o">.</span><span class="n">LinearRegression</span><span class="p">(</span><span class="n">fit_intercept</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">Ymod</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span><span class="n">d</span><span class="p">))</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+        <span class="n">clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">[:,</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">clf</span><span class="o">.</span><span class="n">coef_</span>
+        <span class="n">intercept</span> <span class="o">=</span> <span class="n">clf</span><span class="o">.</span><span class="n">intercept_</span>
+        <span class="n">Ymod</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">n</span><span class="p">,))</span><span class="o">*</span><span class="n">intercept</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">beta</span><span class="p">)):</span>
+            <span class="n">Ymod</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Ymod</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">beta</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">X</span><span class="p">[:,</span><span class="n">j</span><span class="p">]</span>
+
+    <span class="c1"># de-scale</span>
+    <span class="n">Ym</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">Ymod</span><span class="p">,</span> <span class="n">wd_std</span><span class="p">)</span>
+
+    <span class="c1"># TODO: calculate errors</span>
+
+    <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;Ym&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;vars&#39;</span><span class="p">),</span> <span class="n">Ym</span><span class="p">),</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">xds_WAVES</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+            <span class="s1">&#39;vars&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">vn</span> <span class="k">for</span> <span class="n">vn</span> <span class="ow">in</span> <span class="n">name_vars</span><span class="p">],</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

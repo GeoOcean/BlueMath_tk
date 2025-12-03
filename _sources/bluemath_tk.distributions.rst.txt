@@ -1,0 +1,77 @@
+bluemath\_tk.distributions package
+==================================
+
+Submodules
+----------
+
+bluemath\_tk.distributions.copula module
+----------------------------------------
+
+.. automodule:: bluemath_tk.distributions.copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.distributions.extreme\_correction module
+-----------------------------------------------------
+
+.. automodule:: bluemath_tk.distributions.extreme_correction
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.distributions.gev module
+-------------------------------------
+
+.. automodule:: bluemath_tk.distributions.gev
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.distributions.gpd module
+-------------------------------------
+
+.. automodule:: bluemath_tk.distributions.gpd
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.distributions.nonstat\_gev module
+----------------------------------------------
+
+.. automodule:: bluemath_tk.distributions.nonstat_gev
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.distributions.pareto\_poisson module
+-------------------------------------------------
+
+.. automodule:: bluemath_tk.distributions.pareto_poisson
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.distributions.poisson module
+-----------------------------------------
+
+.. automodule:: bluemath_tk.distributions.poisson
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.distributions.pot module
+-------------------------------------
+
+.. automodule:: bluemath_tk.distributions.pot
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.distributions
+   :members:
+   :show-inheritance:
+   :undoc-members:

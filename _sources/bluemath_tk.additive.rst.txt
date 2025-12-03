@@ -1,0 +1,21 @@
+bluemath\_tk.additive package
+=============================
+
+Submodules
+----------
+
+bluemath\_tk.additive.greensurge module
+---------------------------------------
+
+.. automodule:: bluemath_tk.additive.greensurge
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.additive
+   :members:
+   :show-inheritance:
+   :undoc-members:

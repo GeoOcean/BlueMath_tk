@@ -1,0 +1,21 @@
+bluemath\_tk.downloaders package
+================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   bluemath_tk.downloaders.aviso
+   bluemath_tk.downloaders.copernicus
+   bluemath_tk.downloaders.ecmwf
+   bluemath_tk.downloaders.noaa
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.downloaders
+   :members:
+   :show-inheritance:
+   :undoc-members:

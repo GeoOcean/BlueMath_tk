@@ -1,0 +1,1884 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.interpolation package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.predictor package" href="bluemath_tk.predictor.html" />
+    <link rel="prev" title="bluemath_tk.downloaders.noaa package" href="bluemath_tk.downloaders.noaa.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.additive.html">bluemath_tk.additive package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.deeplearning.html">bluemath_tk.deeplearning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tcs.html">bluemath_tk.tcs package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.interpolation package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.interpolation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-interpolation-package">
+<h1>bluemath_tk.interpolation package<a class="headerlink" href="#bluemath-tk-interpolation-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.interpolation.analogs">
+<span id="bluemath-tk-interpolation-analogs-module"></span><h2>bluemath_tk.interpolation.analogs module<a class="headerlink" href="#module-bluemath_tk.interpolation.analogs" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.interpolation.gps">
+<span id="bluemath-tk-interpolation-gps-module"></span><h2>bluemath_tk.interpolation.gps module<a class="headerlink" href="#module-bluemath_tk.interpolation.gps" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.interpolation.rbf">
+<span id="bluemath-tk-interpolation-rbf-module"></span><h2>bluemath_tk.interpolation.rbf module<a class="headerlink" href="#module-bluemath_tk.interpolation.rbf" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.KFold_cross_validation_RBF">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.interpolation.rbf.</span></span><span class="sig-name descname"><span class="pre">KFold_cross_validation_RBF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subset_data:</span> <span class="pre">~pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_data:</span> <span class="pre">~pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_directional_variables:</span> <span class="pre">~typing.List[str]</span> <span class="pre">=</span> <span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_directional_variables:</span> <span class="pre">~typing.List[str]</span> <span class="pre">=</span> <span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_custom_scale_factor:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_target_data:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_custom_scale_factor:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteratively_update_sigma:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rbf_model:</span> <span class="pre">~bluemath_tk.interpolation.rbf.RBF</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_splits:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric:</span> <span class="pre">~typing.Callable</span> <span class="pre">=</span> <span class="pre">&lt;function</span> <span class="pre">basic_rbf_metric&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#KFold_cross_validation_RBF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf.KFold_cross_validation_RBF" title="Link to this definition"></a></dt>
+<dd><p>Perform K-Fold cross-validation for the RBF model.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.interpolation.rbf.</span></span><span class="sig-name descname"><span class="pre">RBF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_diff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_opt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#RBF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseInterpolation</span></code></p>
+<p>Radial Basis Function (RBF) interpolation model.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.sigma_min">
+<span class="sig-name descname"><span class="pre">sigma_min</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.sigma_min" title="Link to this definition"></a></dt>
+<dd><p>The minimum value for the sigma parameter.
+This value might change in the optimization process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.sigma_max">
+<span class="sig-name descname"><span class="pre">sigma_max</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.sigma_max" title="Link to this definition"></a></dt>
+<dd><p>The maximum value for the sigma parameter.
+This value might change in the optimization process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.sigma_diff">
+<span class="sig-name descname"><span class="pre">sigma_diff</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.sigma_diff" title="Link to this definition"></a></dt>
+<dd><p>The difference between the optimal bounded sigma and the minimum and maximum sigma values.
+If the difference is less than this value, the optimization process continues.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.kernel" title="Link to this definition"></a></dt>
+<dd><p>The kernel to use for the RBF model.
+The available kernels are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>gaussian              : <code class="docutils literal notranslate"><span class="pre">exp(-1/2</span> <span class="pre">*</span> <span class="pre">(r</span> <span class="pre">/</span> <span class="pre">const)**2)</span></code></p></li>
+<li><p>multiquadratic        : <code class="docutils literal notranslate"><span class="pre">sqrt(1</span> <span class="pre">+</span> <span class="pre">(r</span> <span class="pre">/</span> <span class="pre">const)**2)</span></code></p></li>
+<li><p>inverse               : <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">sqrt(1</span> <span class="pre">+</span> <span class="pre">(r</span> <span class="pre">/</span> <span class="pre">const)**2)</span></code></p></li>
+<li><p>cubic                 : <code class="docutils literal notranslate"><span class="pre">r**3</span></code></p></li>
+<li><p>thin_plate            : <code class="docutils literal notranslate"><span class="pre">r**2</span> <span class="pre">*</span> <span class="pre">log(r</span> <span class="pre">/</span> <span class="pre">const)</span></code></p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.kernel_func">
+<span class="sig-name descname"><span class="pre">kernel_func</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.kernel_func" title="Link to this definition"></a></dt>
+<dd><p>The kernel function to use for the RBF model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>function</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.smooth">
+<span class="sig-name descname"><span class="pre">smooth</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.smooth" title="Link to this definition"></a></dt>
+<dd><p>The smoothness parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.subset_data">
+<span class="sig-name descname"><span class="pre">subset_data</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.subset_data" title="Link to this definition"></a></dt>
+<dd><p>The subset data used to fit the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.normalized_subset_data">
+<span class="sig-name descname"><span class="pre">normalized_subset_data</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.normalized_subset_data" title="Link to this definition"></a></dt>
+<dd><p>The normalized subset data used to fit the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.target_data">
+<span class="sig-name descname"><span class="pre">target_data</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.target_data" title="Link to this definition"></a></dt>
+<dd><p>The target data used to fit the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.normalized_target_data">
+<span class="sig-name descname"><span class="pre">normalized_target_data</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.normalized_target_data" title="Link to this definition"></a></dt>
+<dd><p>The normalized target data used to fit the model.
+This attribute is only set if normalize_target_data is True in the fit method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.subset_directional_variables">
+<span class="sig-name descname"><span class="pre">subset_directional_variables</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.subset_directional_variables" title="Link to this definition"></a></dt>
+<dd><p>The subset directional variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.target_directional_variables">
+<span class="sig-name descname"><span class="pre">target_directional_variables</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.target_directional_variables" title="Link to this definition"></a></dt>
+<dd><p>The target directional variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.subset_processed_variables">
+<span class="sig-name descname"><span class="pre">subset_processed_variables</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.subset_processed_variables" title="Link to this definition"></a></dt>
+<dd><p>The subset processed variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.target_processed_variables">
+<span class="sig-name descname"><span class="pre">target_processed_variables</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.target_processed_variables" title="Link to this definition"></a></dt>
+<dd><p>The target processed variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.subset_custom_scale_factor">
+<span class="sig-name descname"><span class="pre">subset_custom_scale_factor</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.subset_custom_scale_factor" title="Link to this definition"></a></dt>
+<dd><p>The custom scale factor for the subset data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.target_custom_scale_factor">
+<span class="sig-name descname"><span class="pre">target_custom_scale_factor</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.target_custom_scale_factor" title="Link to this definition"></a></dt>
+<dd><p>The custom scale factor for the target data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.subset_scale_factor">
+<span class="sig-name descname"><span class="pre">subset_scale_factor</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.subset_scale_factor" title="Link to this definition"></a></dt>
+<dd><p>The scale factor for the subset data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.target_scale_factor">
+<span class="sig-name descname"><span class="pre">target_scale_factor</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.target_scale_factor" title="Link to this definition"></a></dt>
+<dd><p>The scale factor for the target data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.rbf_coeffs">
+<span class="sig-name descname"><span class="pre">rbf_coeffs</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.rbf_coeffs" title="Link to this definition"></a></dt>
+<dd><p>The RBF coefficients for the target variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.opt_sigmas">
+<span class="sig-name descname"><span class="pre">opt_sigmas</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.opt_sigmas" title="Link to this definition"></a></dt>
+<dd><p>The optimal sigmas for the target variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">fit</span> <span class="pre">-&gt;</span> <span class="pre">None</span></span></dt>
+<dd><p>Fits the model to the data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">predict</span> <span class="pre">-&gt;</span> <span class="pre">pd.DataFrame</span></span></dt>
+<dd><p>Predicts the data for the provided dataset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">fit_predict</span> <span class="pre">-&gt;</span> <span class="pre">pd.DataFrame</span></span></dt>
+<dd><p>Fits the model to the subset and predicts the interpolated dataset.</p>
+</dd></dl>
+
+<p class="rubric">Notes</p>
+<dl class="simple">
+<dt>TODO: For the moment, this class only supports optimization for one parameter kernels.</dt><dd><p>For this reason, we only have sigma as the parameter to optimize.
+This sigma refers to the sigma parameter in the Gaussian kernel (but is used for all kernels).</p>
+</dd>
+</dl>
+<p>Main reference for sigma optimization: <a class="reference external" href="https://link.springer.com/article/10.1023/A:1018975909870">https://link.springer.com/article/10.1023/A:1018975909870</a></p>
+<p class="rubric">Examples</p>
+<div class="jupyter_cell jupyter_container docutils container">
+<div class="cell_input code_cell docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bluemath_tk.interpolation.rbf</span><span class="w"> </span><span class="kn">import</span> <span class="n">RBF</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;Hs&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">7</span><span class="p">,</span>
+        <span class="s2">&quot;Tp&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">20</span><span class="p">,</span>
+        <span class="s2">&quot;Dir&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">360</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">subset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">target</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;HsPred&quot;</span><span class="p">:</span> <span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Tp&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="s2">&quot;DirPred&quot;</span><span class="p">:</span> <span class="o">-</span> <span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Dir&quot;</span><span class="p">],</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">rbf</span> <span class="o">=</span> <span class="n">RBF</span><span class="p">()</span>
+
+<span class="n">predictions</span> <span class="o">=</span> <span class="n">rbf</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
+    <span class="n">subset_data</span><span class="o">=</span><span class="n">subset</span><span class="p">,</span>
+    <span class="n">subset_directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Dir&quot;</span><span class="p">],</span>
+    <span class="n">target_data</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+    <span class="n">target_directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;DirPred&quot;</span><span class="p">],</span>
+    <span class="n">normalize_target_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">iteratively_update_sigma</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">predictions</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-none notranslate"><div class="highlight"><pre><span></span>      HsPred  DirPred_u  DirPred_v     DirPred
+0  45.964223  -0.786910   0.617068  308.102331
+1  32.860454   0.847694  -0.530486  122.038274
+2  71.391993   0.992940  -0.118619   96.812382
+3  41.126106   0.305294  -0.952258  162.224171
+4  67.946215   0.867738   0.497021   60.196890
+</pre></div>
+</div>
+</div>
+</div>
+<p class="rubric">References</p>
+<p>[1] <a class="reference external" href="https://en.wikipedia.org/wiki/Radial_basis_function">https://en.wikipedia.org/wiki/Radial_basis_function</a>
+[2] <a class="reference external" href="https://en.wikipedia.org/wiki/Gaussian_function">https://en.wikipedia.org/wiki/Gaussian_function</a>
+[3] <a class="reference external" href="https://link.springer.com/article/10.1023/A:1018975909870">https://link.springer.com/article/10.1023/A:1018975909870</a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subset_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_directional_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_directional_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_custom_scale_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_custom_scale_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteratively_update_sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#RBF.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.fit" title="Link to this definition"></a></dt>
+<dd><p>Fits the model to the data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subset_data</strong> (<em>pd.DataFrame</em>) – The subset data used to fit the model.</p></li>
+<li><p><strong>target_data</strong> (<em>pd.DataFrame</em>) – The target data used to fit the model.</p></li>
+<li><p><strong>subset_directional_variables</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The subset directional variables. Default is [].</p></li>
+<li><p><strong>target_directional_variables</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The target directional variables. Default is [].</p></li>
+<li><p><strong>subset_custom_scale_factor</strong> (<em>dict</em><em>, </em><em>optional</em>) – The custom scale factor for the subset data. Default is {}.</p></li>
+<li><p><strong>normalize_target_data</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to normalize the target data. Default is True.</p></li>
+<li><p><strong>target_custom_scale_factor</strong> (<em>dict</em><em>, </em><em>optional</em>) – The custom scale factor for the target data. Default is {}.</p></li>
+<li><p><strong>num_workers</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of workers to use for the optimization. Default is None.</p></li>
+<li><p><strong>iteratively_update_sigma</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to iteratively update the sigma parameter. Default is False.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>This function fits the RBF model to the data by:</dt><dd><ol class="arabic simple">
+<li><p>Preprocessing the subset and target data.</p></li>
+<li><p>Calculating the optimal sigma for the target variables.</p></li>
+<li><p>Storing the RBF coefficients and optimal sigmas.</p></li>
+</ol>
+</dd>
+</dl>
+</li>
+<li><p>The number of threads to use for the optimization can be specified.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.fit_predict">
+<span class="sig-name descname"><span class="pre">fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subset_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_directional_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_directional_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_custom_scale_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_custom_scale_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteratively_update_sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#RBF.fit_predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.fit_predict" title="Link to this definition"></a></dt>
+<dd><p>Fits the model to the subset and predicts the interpolated dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subset_data</strong> (<em>pd.DataFrame</em>) – The subset data used to fit the model.</p></li>
+<li><p><strong>target_data</strong> (<em>pd.DataFrame</em>) – The target data used to fit the model.</p></li>
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – The dataset to predict (must have same variables than subset).</p></li>
+<li><p><strong>subset_directional_variables</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The subset directional variables. Default is [].</p></li>
+<li><p><strong>target_directional_variables</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The target directional variables. Default is [].</p></li>
+<li><p><strong>subset_custom_scale_factor</strong> (<em>dict</em><em>, </em><em>optional</em>) – The custom scale factor for the subset data. Default is {}.</p></li>
+<li><p><strong>normalize_target_data</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to normalize the target data. Default is True.</p></li>
+<li><p><strong>target_custom_scale_factor</strong> (<em>dict</em><em>, </em><em>optional</em>) – The custom scale factor for the target data. Default is {}.</p></li>
+<li><p><strong>num_workers</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of workers to use for the optimization. Default is None.</p></li>
+<li><p><strong>iteratively_update_sigma</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to iteratively update the sigma parameter. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The interpolated dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>This function fits the model to the subset and predicts the interpolated dataset.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id0">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">kernel</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id1">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">kernel_func</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></em><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id2">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">normalized_subset_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id3">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">normalized_target_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id3" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id4">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">opt_sigmas</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id4" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#RBF.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.predict" title="Link to this definition"></a></dt>
+<dd><p>Predicts the data for the provided dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – The dataset to predict (must have same variables than subset).</p></li>
+<li><p><strong>num_workers</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of workers to use for the interpolation. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The interpolated dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the model is not fitted.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>This function predicts the data by:</dt><dd><ol class="arabic simple">
+<li><p>Reconstructing the data using the fitted coefficients.</p></li>
+<li><p>Denormalizing the target data if normalize_target_data is True.</p></li>
+<li><p>Calculating the degrees for the target directional variables.</p></li>
+</ol>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id5">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rbf_coeffs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id5" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.rbf_kernels">
+<span class="sig-name descname"><span class="pre">rbf_kernels</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'cubic':</span> <span class="pre">&lt;function</span> <span class="pre">cubic_kernel&gt;,</span> <span class="pre">'gaussian':</span> <span class="pre">&lt;function</span> <span class="pre">gaussian_kernel&gt;,</span> <span class="pre">'inverse':</span> <span class="pre">&lt;function</span> <span class="pre">inverse_kernel&gt;,</span> <span class="pre">'multiquadratic':</span> <span class="pre">&lt;function</span> <span class="pre">multiquadratic_kernel&gt;,</span> <span class="pre">'thin_plate':</span> <span class="pre">&lt;function</span> <span class="pre">thin_plate_kernel&gt;}</span></em><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.rbf_kernels" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id6">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sigma_diff</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#id6" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id7">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sigma_max</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#id7" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id8">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sigma_min</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#id8" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBF.sigma_opt">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sigma_opt</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBF.sigma_opt" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id9">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">smooth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#id9" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id10">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_custom_scale_factor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id10" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id11">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id11" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id12">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_directional_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id12" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id13">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_processed_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id13" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id14">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_scale_factor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id14" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id15">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_custom_scale_factor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id15" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id16">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id16" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id17">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_directional_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id17" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id18">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_processed_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id18" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id19">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_scale_factor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id19" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.RBFError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.interpolation.rbf.</span></span><span class="sig-name descname"><span class="pre">RBFError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'RBF</span> <span class="pre">error</span> <span class="pre">occurred.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#RBFError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf.RBFError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Custom exception for RBF class.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.basic_rbf_metric">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.interpolation.rbf.</span></span><span class="sig-name descname"><span class="pre">basic_rbf_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_true</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_pred</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#basic_rbf_metric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf.basic_rbf_metric" title="Link to this definition"></a></dt>
+<dd><p>Calculate the basic RBF metric.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_true</strong> (<em>pd.DataFrame</em>) – The true data.</p></li>
+<li><p><strong>df_pred</strong> (<em>pd.DataFrame</em>) – The predicted data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The basic RBF metric.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.cubic_kernel">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.interpolation.rbf.</span></span><span class="sig-name descname"><span class="pre">cubic_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">const</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#cubic_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf.cubic_kernel" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.gaussian_kernel">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.interpolation.rbf.</span></span><span class="sig-name descname"><span class="pre">gaussian_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">const</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#gaussian_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf.gaussian_kernel" title="Link to this definition"></a></dt>
+<dd><p>This function calculates the Gaussian kernel for the given distance and constant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>float</em>) – The distance.</p></li>
+<li><p><strong>const</strong> (<em>float</em>) – The constant (default name is usually sigma for gaussian kernel).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Gaussian kernel value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The Gaussian kernel is defined as:
+K(r) = exp(r^2 / 2 * const^2) (<a class="reference external" href="https://en.wikipedia.org/wiki/Gaussian_function">https://en.wikipedia.org/wiki/Gaussian_function</a>)</p></li>
+<li><p>Here, we are assuming the mean is 0.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.inverse_kernel">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.interpolation.rbf.</span></span><span class="sig-name descname"><span class="pre">inverse_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">const</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#inverse_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf.inverse_kernel" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.multiquadratic_kernel">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.interpolation.rbf.</span></span><span class="sig-name descname"><span class="pre">multiquadratic_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">const</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#multiquadratic_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf.multiquadratic_kernel" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf.thin_plate_kernel">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.interpolation.rbf.</span></span><span class="sig-name descname"><span class="pre">thin_plate_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">const</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#thin_plate_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf.thin_plate_kernel" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-bluemath_tk.interpolation.rbf_scipy">
+<span id="bluemath-tk-interpolation-rbf-scipy-module"></span><h2>bluemath_tk.interpolation.rbf_scipy module<a class="headerlink" href="#module-bluemath_tk.interpolation.rbf_scipy" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.interpolation.rbf_scipy.</span></span><span class="sig-name descname"><span class="pre">RBF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_opt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'thin_plate_spline'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smoothing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighbors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf_scipy.html#RBF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseInterpolation</span></code></p>
+<p>Radial Basis Function (RBF) interpolation model.</p>
+<p>Here, scipy’s RBFInterpolator is used to interpolate the data.
+<a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.RBFInterpolator.html">https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.RBFInterpolator.html</a></p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<ul class="simple">
+<li><p>This class is a Beta, results may not be accurate.</p></li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#bluemath_tk.interpolation.RBF" title="bluemath_tk.interpolation.RBF"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bluemath_tk.interpolation.RBF</span></code></a></dt><dd><p>The stable version for this model.</p>
+</dd>
+</dl>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.sigma_min">
+<span class="sig-name descname"><span class="pre">sigma_min</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.sigma_min" title="Link to this definition"></a></dt>
+<dd><p>The minimum value for the sigma parameter.
+This value might change in the optimization process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.sigma_max">
+<span class="sig-name descname"><span class="pre">sigma_max</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.sigma_max" title="Link to this definition"></a></dt>
+<dd><p>The maximum value for the sigma parameter.
+This value might change in the optimization process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.sigma_opt">
+<span class="sig-name descname"><span class="pre">sigma_opt</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.sigma_opt" title="Link to this definition"></a></dt>
+<dd><p>The optimal value for the sigma parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.kernel" title="Link to this definition"></a></dt>
+<dd><p>Type of RBF. This should be one of</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>‘linear’               : <code class="docutils literal notranslate"><span class="pre">-r</span></code></p></li>
+<li><p>‘thin_plate_spline’    : <code class="docutils literal notranslate"><span class="pre">r**2</span> <span class="pre">*</span> <span class="pre">log(r)</span></code></p></li>
+<li><p>‘cubic’                : <code class="docutils literal notranslate"><span class="pre">r**3</span></code></p></li>
+<li><p>‘quintic’              : <code class="docutils literal notranslate"><span class="pre">-r**5</span></code></p></li>
+<li><p>‘multiquadric’         : <code class="docutils literal notranslate"><span class="pre">-sqrt(1</span> <span class="pre">+</span> <span class="pre">r**2)</span></code></p></li>
+<li><p>‘inverse_multiquadric’ : <code class="docutils literal notranslate"><span class="pre">1/sqrt(1</span> <span class="pre">+</span> <span class="pre">r**2)</span></code></p></li>
+<li><p>‘inverse_quadratic’    : <code class="docutils literal notranslate"><span class="pre">1/(1</span> <span class="pre">+</span> <span class="pre">r**2)</span></code></p></li>
+<li><p>‘gaussian’             : <code class="docutils literal notranslate"><span class="pre">exp(-r**2)</span></code></p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.smoothing">
+<span class="sig-name descname"><span class="pre">smoothing</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.smoothing" title="Link to this definition"></a></dt>
+<dd><p>Smoothing parameter. The interpolant perfectly fits the data when this
+is set to 0. For large values, the interpolant approaches a least
+squares fit of a polynomial with the specified degree.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float or (npoints, ) array_like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.degree">
+<span class="sig-name descname"><span class="pre">degree</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.degree" title="Link to this definition"></a></dt>
+<dd><p>Degree of the added polynomial. For some RBFs the interpolant may not
+be well-posed if the polynomial degree is too small. Those RBFs and
+their corresponding minimum degrees are</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>‘multiquadric’      : 0</p></li>
+<li><p>‘linear’            : 0</p></li>
+<li><p>‘thin_plate_spline’ : 1</p></li>
+<li><p>‘cubic’             : 1</p></li>
+<li><p>‘quintic’           : 2</p></li>
+</ul>
+</div></blockquote>
+<p>The default value is the minimum degree for <cite>kernel</cite> or 0 if there is
+no minimum degree. Set this to -1 for no added polynomial.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.neighbors">
+<span class="sig-name descname"><span class="pre">neighbors</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.neighbors" title="Link to this definition"></a></dt>
+<dd><p>If specified, the value of the interpolant at each evaluation point
+will be computed using only this many nearest data points. All the data
+points are used by default.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.rbfs">
+<span class="sig-name descname"><span class="pre">rbfs</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.rbfs" title="Link to this definition"></a></dt>
+<dd><p>Dict with RBFInterpolator instances.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.subset_data">
+<span class="sig-name descname"><span class="pre">subset_data</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.subset_data" title="Link to this definition"></a></dt>
+<dd><p>The subset data used to fit the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.normalized_subset_data">
+<span class="sig-name descname"><span class="pre">normalized_subset_data</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.normalized_subset_data" title="Link to this definition"></a></dt>
+<dd><p>The normalized subset data used to fit the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.target_data">
+<span class="sig-name descname"><span class="pre">target_data</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.target_data" title="Link to this definition"></a></dt>
+<dd><p>The target data used to fit the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.normalized_target_data">
+<span class="sig-name descname"><span class="pre">normalized_target_data</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.normalized_target_data" title="Link to this definition"></a></dt>
+<dd><p>The normalized target data used to fit the model.
+This attribute is only set if normalize_target_data is True in the fit method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.subset_directional_variables">
+<span class="sig-name descname"><span class="pre">subset_directional_variables</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.subset_directional_variables" title="Link to this definition"></a></dt>
+<dd><p>The subset directional variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.target_directional_variables">
+<span class="sig-name descname"><span class="pre">target_directional_variables</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.target_directional_variables" title="Link to this definition"></a></dt>
+<dd><p>The target directional variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.subset_processed_variables">
+<span class="sig-name descname"><span class="pre">subset_processed_variables</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.subset_processed_variables" title="Link to this definition"></a></dt>
+<dd><p>The subset processed variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.target_processed_variables">
+<span class="sig-name descname"><span class="pre">target_processed_variables</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.target_processed_variables" title="Link to this definition"></a></dt>
+<dd><p>The target processed variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.subset_custom_scale_factor">
+<span class="sig-name descname"><span class="pre">subset_custom_scale_factor</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.subset_custom_scale_factor" title="Link to this definition"></a></dt>
+<dd><p>The custom scale factor for the subset data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.target_custom_scale_factor">
+<span class="sig-name descname"><span class="pre">target_custom_scale_factor</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.target_custom_scale_factor" title="Link to this definition"></a></dt>
+<dd><p>The custom scale factor for the target data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.subset_scale_factor">
+<span class="sig-name descname"><span class="pre">subset_scale_factor</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.subset_scale_factor" title="Link to this definition"></a></dt>
+<dd><p>The scale factor for the subset data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.target_scale_factor">
+<span class="sig-name descname"><span class="pre">target_scale_factor</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.target_scale_factor" title="Link to this definition"></a></dt>
+<dd><p>The scale factor for the target data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.rbf_coeffs">
+<span class="sig-name descname"><span class="pre">rbf_coeffs</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.rbf_coeffs" title="Link to this definition"></a></dt>
+<dd><p>The RBF coefficients for the target variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.opt_sigmas">
+<span class="sig-name descname"><span class="pre">opt_sigmas</span></span><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.opt_sigmas" title="Link to this definition"></a></dt>
+<dd><p>The optimal sigmas for the target variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">fit(...)</span> <span class="pre">:</span></span></dt>
+<dd><p>Fits the model to the data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">predict(...)</span> <span class="pre">:</span></span></dt>
+<dd><p>Predicts the data for the provided dataset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">fit_predict(...)</span> <span class="pre">:</span></span></dt>
+<dd><p>Fits the model to the subset and predicts the interpolated dataset.</p>
+</dd></dl>
+
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id20" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<p>Fasshauer, G., 2007. Meshfree Approximation Methods with Matlab.
+World Scientific Publishing Co.</p>
+</aside>
+<aside class="footnote brackets" id="id21" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="http://amadeus.math.iit.edu/~fass/603_ch3.pdf">http://amadeus.math.iit.edu/~fass/603_ch3.pdf</a></p>
+</aside>
+<aside class="footnote brackets" id="id22" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></span>
+<p>Wahba, G., 1990. Spline Models for Observational Data. SIAM.</p>
+</aside>
+<aside class="footnote brackets" id="id23" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="http://pages.stat.wisc.edu/~wahba/stat860public/lect/lect8/lect8.pdf">http://pages.stat.wisc.edu/~wahba/stat860public/lect/lect8/lect8.pdf</a></p>
+</aside>
+</aside>
+<p class="rubric">Notes</p>
+<div class="versionadded">
+<p><span class="versionmodified added">Added in version 1.0.3.</span></p>
+</div>
+<dl class="simple">
+<dt>TODO: For the moment, this class only supports optimization for one parameter kernels.</dt><dd><p>For this reason, we only have sigma as the parameter to optimize.
+This sigma refers to the sigma parameter in the Gaussian kernel (but is used for all kernels).</p>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="id24">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">degree</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#id24" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subset_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_directional_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_directional_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_custom_scale_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_custom_scale_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_threads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteratively_update_sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf_scipy.html#RBF.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.fit" title="Link to this definition"></a></dt>
+<dd><p>Fits the model to the data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subset_data</strong> (<em>pd.DataFrame</em>) – The subset data used to fit the model.</p></li>
+<li><p><strong>target_data</strong> (<em>pd.DataFrame</em>) – The target data used to fit the model.</p></li>
+<li><p><strong>subset_directional_variables</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The subset directional variables. Default is [].</p></li>
+<li><p><strong>target_directional_variables</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The target directional variables. Default is [].</p></li>
+<li><p><strong>subset_custom_scale_factor</strong> (<em>dict</em><em>, </em><em>optional</em>) – The custom scale factor for the subset data. Default is {}.</p></li>
+<li><p><strong>normalize_target_data</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to normalize the target data. Default is True.</p></li>
+<li><p><strong>target_custom_scale_factor</strong> (<em>dict</em><em>, </em><em>optional</em>) – The custom scale factor for the target data. Default is {}.</p></li>
+<li><p><strong>num_threads</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of threads to use for the optimization. Default is None.</p></li>
+<li><p><strong>iteratively_update_sigma</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to iteratively update the sigma parameter. Default is False.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>This function fits the RBF model to the data by:</dt><dd><ol class="arabic simple">
+<li><p>Preprocessing the subset and target data.</p></li>
+<li><p>Calculating the optimal sigma for the target variables.</p></li>
+<li><p>Storing the RBF coefficients and optimal sigmas.</p></li>
+</ol>
+</dd>
+</dl>
+</li>
+<li><p>The number of threads to use for the optimization can be specified.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.fit_predict">
+<span class="sig-name descname"><span class="pre">fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subset_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_directional_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_directional_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_custom_scale_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_custom_scale_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_threads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteratively_update_sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf_scipy.html#RBF.fit_predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.fit_predict" title="Link to this definition"></a></dt>
+<dd><p>Fits the model to the subset and predicts the interpolated dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subset_data</strong> (<em>pd.DataFrame</em>) – The subset data used to fit the model.</p></li>
+<li><p><strong>target_data</strong> (<em>pd.DataFrame</em>) – The target data used to fit the model.</p></li>
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – The dataset to predict (must have same variables than subset).</p></li>
+<li><p><strong>subset_directional_variables</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The subset directional variables. Default is [].</p></li>
+<li><p><strong>target_directional_variables</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The target directional variables. Default is [].</p></li>
+<li><p><strong>subset_custom_scale_factor</strong> (<em>dict</em><em>, </em><em>optional</em>) – The custom scale factor for the subset data. Default is {}.</p></li>
+<li><p><strong>normalize_target_data</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to normalize the target data. Default is True.</p></li>
+<li><p><strong>target_custom_scale_factor</strong> (<em>dict</em><em>, </em><em>optional</em>) – The custom scale factor for the target data. Default is {}.</p></li>
+<li><p><strong>num_threads</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of threads to use for the optimization. Default is None.</p></li>
+<li><p><strong>iteratively_update_sigma</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to iteratively update the sigma parameter. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The interpolated dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>This function fits the model to the subset and predicts the interpolated dataset.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id25">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">kernel</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#id25" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id26">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">neighbors</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#id26" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id27">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">normalized_subset_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id27" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id28">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">normalized_target_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id28" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id29">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">opt_sigmas</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id29" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBF.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf_scipy.html#RBF.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBF.predict" title="Link to this definition"></a></dt>
+<dd><p>Predicts the data for the provided dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – The dataset to predict (must have same variables than subset).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The interpolated dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the model is not fitted.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>This function predicts the data by:</dt><dd><ol class="arabic simple">
+<li><p>Reconstructing the data using the fitted coefficients.</p></li>
+<li><p>Denormalizing the target data if normalize_target_data is True.</p></li>
+<li><p>Calculating the degrees for the target directional variables.</p></li>
+</ol>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id30">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rbf_coeffs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id30" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id31">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rbfs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id31" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id32">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sigma_max</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#id32" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id33">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sigma_min</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#id33" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id34">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sigma_opt</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#id34" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id35">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">smoothing</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#id35" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id36">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_custom_scale_factor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id36" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id37">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id37" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id38">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_directional_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id38" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id39">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_processed_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id39" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id40">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_scale_factor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id40" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id41">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_custom_scale_factor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id41" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id42">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id42" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id43">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_directional_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id43" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id44">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_processed_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id44" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id45">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_scale_factor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id45" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.rbf_scipy.RBFError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.interpolation.rbf_scipy.</span></span><span class="sig-name descname"><span class="pre">RBFError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'RBF</span> <span class="pre">error</span> <span class="pre">occurred.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf_scipy.html#RBFError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.rbf_scipy.RBFError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Custom exception for RBF class.</p>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.interpolation">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bluemath_tk.interpolation" title="Link to this heading"></a></h2>
+<p>Project: BlueMath_tk
+Sub-Module: interpolation
+Author: GeoOcean Research Group, Universidad de Cantabria
+Repository: <a class="reference external" href="https://github.com/GeoOcean/BlueMath_tk.git">https://github.com/GeoOcean/BlueMath_tk.git</a>
+Status: Under development (Working)</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.interpolation.</span></span><span class="sig-name descname"><span class="pre">RBF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_diff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_opt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#RBF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.RBF" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseInterpolation</span></code></p>
+<p>Radial Basis Function (RBF) interpolation model.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.sigma_min">
+<span class="sig-name descname"><span class="pre">sigma_min</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.sigma_min" title="Link to this definition"></a></dt>
+<dd><p>The minimum value for the sigma parameter.
+This value might change in the optimization process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.sigma_max">
+<span class="sig-name descname"><span class="pre">sigma_max</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.sigma_max" title="Link to this definition"></a></dt>
+<dd><p>The maximum value for the sigma parameter.
+This value might change in the optimization process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.sigma_diff">
+<span class="sig-name descname"><span class="pre">sigma_diff</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.sigma_diff" title="Link to this definition"></a></dt>
+<dd><p>The difference between the optimal bounded sigma and the minimum and maximum sigma values.
+If the difference is less than this value, the optimization process continues.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.kernel" title="Link to this definition"></a></dt>
+<dd><p>The kernel to use for the RBF model.
+The available kernels are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>gaussian              : <code class="docutils literal notranslate"><span class="pre">exp(-1/2</span> <span class="pre">*</span> <span class="pre">(r</span> <span class="pre">/</span> <span class="pre">const)**2)</span></code></p></li>
+<li><p>multiquadratic        : <code class="docutils literal notranslate"><span class="pre">sqrt(1</span> <span class="pre">+</span> <span class="pre">(r</span> <span class="pre">/</span> <span class="pre">const)**2)</span></code></p></li>
+<li><p>inverse               : <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">sqrt(1</span> <span class="pre">+</span> <span class="pre">(r</span> <span class="pre">/</span> <span class="pre">const)**2)</span></code></p></li>
+<li><p>cubic                 : <code class="docutils literal notranslate"><span class="pre">r**3</span></code></p></li>
+<li><p>thin_plate            : <code class="docutils literal notranslate"><span class="pre">r**2</span> <span class="pre">*</span> <span class="pre">log(r</span> <span class="pre">/</span> <span class="pre">const)</span></code></p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.kernel_func">
+<span class="sig-name descname"><span class="pre">kernel_func</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.kernel_func" title="Link to this definition"></a></dt>
+<dd><p>The kernel function to use for the RBF model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>function</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.smooth">
+<span class="sig-name descname"><span class="pre">smooth</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.smooth" title="Link to this definition"></a></dt>
+<dd><p>The smoothness parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.subset_data">
+<span class="sig-name descname"><span class="pre">subset_data</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.subset_data" title="Link to this definition"></a></dt>
+<dd><p>The subset data used to fit the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.normalized_subset_data">
+<span class="sig-name descname"><span class="pre">normalized_subset_data</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.normalized_subset_data" title="Link to this definition"></a></dt>
+<dd><p>The normalized subset data used to fit the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.target_data">
+<span class="sig-name descname"><span class="pre">target_data</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.target_data" title="Link to this definition"></a></dt>
+<dd><p>The target data used to fit the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.normalized_target_data">
+<span class="sig-name descname"><span class="pre">normalized_target_data</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.normalized_target_data" title="Link to this definition"></a></dt>
+<dd><p>The normalized target data used to fit the model.
+This attribute is only set if normalize_target_data is True in the fit method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.subset_directional_variables">
+<span class="sig-name descname"><span class="pre">subset_directional_variables</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.subset_directional_variables" title="Link to this definition"></a></dt>
+<dd><p>The subset directional variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.target_directional_variables">
+<span class="sig-name descname"><span class="pre">target_directional_variables</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.target_directional_variables" title="Link to this definition"></a></dt>
+<dd><p>The target directional variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.subset_processed_variables">
+<span class="sig-name descname"><span class="pre">subset_processed_variables</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.subset_processed_variables" title="Link to this definition"></a></dt>
+<dd><p>The subset processed variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.target_processed_variables">
+<span class="sig-name descname"><span class="pre">target_processed_variables</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.target_processed_variables" title="Link to this definition"></a></dt>
+<dd><p>The target processed variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.subset_custom_scale_factor">
+<span class="sig-name descname"><span class="pre">subset_custom_scale_factor</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.subset_custom_scale_factor" title="Link to this definition"></a></dt>
+<dd><p>The custom scale factor for the subset data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.target_custom_scale_factor">
+<span class="sig-name descname"><span class="pre">target_custom_scale_factor</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.target_custom_scale_factor" title="Link to this definition"></a></dt>
+<dd><p>The custom scale factor for the target data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.subset_scale_factor">
+<span class="sig-name descname"><span class="pre">subset_scale_factor</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.subset_scale_factor" title="Link to this definition"></a></dt>
+<dd><p>The scale factor for the subset data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.target_scale_factor">
+<span class="sig-name descname"><span class="pre">target_scale_factor</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.target_scale_factor" title="Link to this definition"></a></dt>
+<dd><p>The scale factor for the target data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.rbf_coeffs">
+<span class="sig-name descname"><span class="pre">rbf_coeffs</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.rbf_coeffs" title="Link to this definition"></a></dt>
+<dd><p>The RBF coefficients for the target variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.opt_sigmas">
+<span class="sig-name descname"><span class="pre">opt_sigmas</span></span><a class="headerlink" href="#bluemath_tk.interpolation.RBF.opt_sigmas" title="Link to this definition"></a></dt>
+<dd><p>The optimal sigmas for the target variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">fit</span> <span class="pre">-&gt;</span> <span class="pre">None</span></span></dt>
+<dd><p>Fits the model to the data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">predict</span> <span class="pre">-&gt;</span> <span class="pre">pd.DataFrame</span></span></dt>
+<dd><p>Predicts the data for the provided dataset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">fit_predict</span> <span class="pre">-&gt;</span> <span class="pre">pd.DataFrame</span></span></dt>
+<dd><p>Fits the model to the subset and predicts the interpolated dataset.</p>
+</dd></dl>
+
+<p class="rubric">Notes</p>
+<dl class="simple">
+<dt>TODO: For the moment, this class only supports optimization for one parameter kernels.</dt><dd><p>For this reason, we only have sigma as the parameter to optimize.
+This sigma refers to the sigma parameter in the Gaussian kernel (but is used for all kernels).</p>
+</dd>
+</dl>
+<p>Main reference for sigma optimization: <a class="reference external" href="https://link.springer.com/article/10.1023/A:1018975909870">https://link.springer.com/article/10.1023/A:1018975909870</a></p>
+<p class="rubric">Examples</p>
+<div class="jupyter_cell jupyter_container docutils container">
+<div class="cell_input code_cell docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bluemath_tk.interpolation.rbf</span><span class="w"> </span><span class="kn">import</span> <span class="n">RBF</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;Hs&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">7</span><span class="p">,</span>
+        <span class="s2">&quot;Tp&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">20</span><span class="p">,</span>
+        <span class="s2">&quot;Dir&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">360</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">subset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="n">target</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;HsPred&quot;</span><span class="p">:</span> <span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Tp&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="s2">&quot;DirPred&quot;</span><span class="p">:</span> <span class="o">-</span> <span class="n">subset</span><span class="p">[</span><span class="s2">&quot;Dir&quot;</span><span class="p">],</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">rbf</span> <span class="o">=</span> <span class="n">RBF</span><span class="p">()</span>
+
+<span class="n">predictions</span> <span class="o">=</span> <span class="n">rbf</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span>
+    <span class="n">subset_data</span><span class="o">=</span><span class="n">subset</span><span class="p">,</span>
+    <span class="n">subset_directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Dir&quot;</span><span class="p">],</span>
+    <span class="n">target_data</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+    <span class="n">target_directional_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;DirPred&quot;</span><span class="p">],</span>
+    <span class="n">normalize_target_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">iteratively_update_sigma</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">predictions</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-none notranslate"><div class="highlight"><pre><span></span>      HsPred  DirPred_u  DirPred_v     DirPred
+0   5.433740   0.297892  -0.954599  162.668947
+1  45.505140   0.204617  -0.978842  168.192922
+2  18.334461  -0.931404   0.363986  291.345190
+3  57.852624   0.965061   0.262025   74.809747
+4  42.738822   0.893771   0.448524   63.350960
+</pre></div>
+</div>
+</div>
+</div>
+<p class="rubric">References</p>
+<p>[1] <a class="reference external" href="https://en.wikipedia.org/wiki/Radial_basis_function">https://en.wikipedia.org/wiki/Radial_basis_function</a>
+[2] <a class="reference external" href="https://en.wikipedia.org/wiki/Gaussian_function">https://en.wikipedia.org/wiki/Gaussian_function</a>
+[3] <a class="reference external" href="https://link.springer.com/article/10.1023/A:1018975909870">https://link.springer.com/article/10.1023/A:1018975909870</a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subset_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_directional_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_directional_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_custom_scale_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_custom_scale_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteratively_update_sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#RBF.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.RBF.fit" title="Link to this definition"></a></dt>
+<dd><p>Fits the model to the data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subset_data</strong> (<em>pd.DataFrame</em>) – The subset data used to fit the model.</p></li>
+<li><p><strong>target_data</strong> (<em>pd.DataFrame</em>) – The target data used to fit the model.</p></li>
+<li><p><strong>subset_directional_variables</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The subset directional variables. Default is [].</p></li>
+<li><p><strong>target_directional_variables</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The target directional variables. Default is [].</p></li>
+<li><p><strong>subset_custom_scale_factor</strong> (<em>dict</em><em>, </em><em>optional</em>) – The custom scale factor for the subset data. Default is {}.</p></li>
+<li><p><strong>normalize_target_data</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to normalize the target data. Default is True.</p></li>
+<li><p><strong>target_custom_scale_factor</strong> (<em>dict</em><em>, </em><em>optional</em>) – The custom scale factor for the target data. Default is {}.</p></li>
+<li><p><strong>num_workers</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of workers to use for the optimization. Default is None.</p></li>
+<li><p><strong>iteratively_update_sigma</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to iteratively update the sigma parameter. Default is False.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>This function fits the RBF model to the data by:</dt><dd><ol class="arabic simple">
+<li><p>Preprocessing the subset and target data.</p></li>
+<li><p>Calculating the optimal sigma for the target variables.</p></li>
+<li><p>Storing the RBF coefficients and optimal sigmas.</p></li>
+</ol>
+</dd>
+</dl>
+</li>
+<li><p>The number of threads to use for the optimization can be specified.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.fit_predict">
+<span class="sig-name descname"><span class="pre">fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subset_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_directional_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_directional_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_custom_scale_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_custom_scale_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteratively_update_sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#RBF.fit_predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.RBF.fit_predict" title="Link to this definition"></a></dt>
+<dd><p>Fits the model to the subset and predicts the interpolated dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subset_data</strong> (<em>pd.DataFrame</em>) – The subset data used to fit the model.</p></li>
+<li><p><strong>target_data</strong> (<em>pd.DataFrame</em>) – The target data used to fit the model.</p></li>
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – The dataset to predict (must have same variables than subset).</p></li>
+<li><p><strong>subset_directional_variables</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The subset directional variables. Default is [].</p></li>
+<li><p><strong>target_directional_variables</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The target directional variables. Default is [].</p></li>
+<li><p><strong>subset_custom_scale_factor</strong> (<em>dict</em><em>, </em><em>optional</em>) – The custom scale factor for the subset data. Default is {}.</p></li>
+<li><p><strong>normalize_target_data</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to normalize the target data. Default is True.</p></li>
+<li><p><strong>target_custom_scale_factor</strong> (<em>dict</em><em>, </em><em>optional</em>) – The custom scale factor for the target data. Default is {}.</p></li>
+<li><p><strong>num_workers</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of workers to use for the optimization. Default is None.</p></li>
+<li><p><strong>iteratively_update_sigma</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to iteratively update the sigma parameter. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The interpolated dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>This function fits the model to the subset and predicts the interpolated dataset.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.is_fitted">
+<span class="sig-name descname"><span class="pre">is_fitted</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#bluemath_tk.interpolation.RBF.is_fitted" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.is_target_normalized">
+<span class="sig-name descname"><span class="pre">is_target_normalized</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#bluemath_tk.interpolation.RBF.is_target_normalized" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id46">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">kernel</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#id46" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id47">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">kernel_func</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></em><a class="headerlink" href="#id47" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id48">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">normalized_subset_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id48" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id49">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">normalized_target_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id49" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.num_workers">
+<span class="sig-name descname"><span class="pre">num_workers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#bluemath_tk.interpolation.RBF.num_workers" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id50">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">opt_sigmas</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id50" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/interpolation/rbf.html#RBF.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.interpolation.RBF.predict" title="Link to this definition"></a></dt>
+<dd><p>Predicts the data for the provided dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>pd.DataFrame</em>) – The dataset to predict (must have same variables than subset).</p></li>
+<li><p><strong>num_workers</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of workers to use for the interpolation. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The interpolated dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the model is not fitted.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>This function predicts the data by:</dt><dd><ol class="arabic simple">
+<li><p>Reconstructing the data using the fitted coefficients.</p></li>
+<li><p>Denormalizing the target data if normalize_target_data is True.</p></li>
+<li><p>Calculating the degrees for the target directional variables.</p></li>
+</ol>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id51">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rbf_coeffs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id51" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.rbf_kernels">
+<span class="sig-name descname"><span class="pre">rbf_kernels</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'cubic':</span> <span class="pre">&lt;function</span> <span class="pre">cubic_kernel&gt;,</span> <span class="pre">'gaussian':</span> <span class="pre">&lt;function</span> <span class="pre">gaussian_kernel&gt;,</span> <span class="pre">'inverse':</span> <span class="pre">&lt;function</span> <span class="pre">inverse_kernel&gt;,</span> <span class="pre">'multiquadratic':</span> <span class="pre">&lt;function</span> <span class="pre">multiquadratic_kernel&gt;,</span> <span class="pre">'thin_plate':</span> <span class="pre">&lt;function</span> <span class="pre">thin_plate_kernel&gt;}</span></em><a class="headerlink" href="#bluemath_tk.interpolation.RBF.rbf_kernels" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.row_chunks">
+<span class="sig-name descname"><span class="pre">row_chunks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#bluemath_tk.interpolation.RBF.row_chunks" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id52">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sigma_diff</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#id52" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id53">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sigma_max</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#id53" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id54">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sigma_min</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#id54" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.interpolation.RBF.sigma_opt">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sigma_opt</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#bluemath_tk.interpolation.RBF.sigma_opt" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id55">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">smooth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#id55" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id56">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_custom_scale_factor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id56" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id57">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id57" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id58">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_directional_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id58" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id59">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_processed_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id59" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id60">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">subset_scale_factor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id60" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id61">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_custom_scale_factor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id61" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id62">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id62" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id63">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_directional_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id63" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id64">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_processed_variables</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id64" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id65">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_scale_factor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#id65" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.downloaders.noaa.html" class="btn btn-neutral float-left" title="bluemath_tk.downloaders.noaa package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.predictor.html" class="btn btn-neutral float-right" title="bluemath_tk.predictor package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

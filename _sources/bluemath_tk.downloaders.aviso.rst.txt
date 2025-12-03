@@ -1,0 +1,21 @@
+bluemath\_tk.downloaders.aviso package
+======================================
+
+Submodules
+----------
+
+bluemath\_tk.downloaders.aviso.aviso\_downloader module
+-------------------------------------------------------
+
+.. automodule:: bluemath_tk.downloaders.aviso.aviso_downloader
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.downloaders.aviso
+   :members:
+   :show-inheritance:
+   :undoc-members:

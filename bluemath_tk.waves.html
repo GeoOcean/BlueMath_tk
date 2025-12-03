@@ -1,0 +1,968 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.waves package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.wrappers package" href="bluemath_tk.wrappers.html" />
+    <link rel="prev" title="bluemath_tk.topo_bathy package" href="bluemath_tk.topo_bathy.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.additive.html">bluemath_tk.additive package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.deeplearning.html">bluemath_tk.deeplearning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tcs.html">bluemath_tk.tcs package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">bluemath_tk.waves package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.waves package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.waves.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-waves-package">
+<h1>bluemath_tk.waves package<a class="headerlink" href="#bluemath-tk-waves-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.waves.binwaves">
+<span id="bluemath-tk-waves-binwaves-module"></span><h2>bluemath_tk.waves.binwaves module<a class="headerlink" href="#module-bluemath_tk.waves.binwaves" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.binwaves.generate_swan_cases">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.binwaves.</span></span><span class="sig-name descname"><span class="pre">generate_swan_cases</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frequencies_array</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">directions_array</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(0,</span> <span class="pre">360)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction_divisions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">24</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction_sector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(0.035,</span> <span class="pre">0.5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency_divisions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">29</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/binwaves.html#generate_swan_cases"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.binwaves.generate_swan_cases" title="Link to this definition"></a></dt>
+<dd><p>Generate the SWAN cases monocromatic wave parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frequencies_array</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – The frequencies array. If None, it is generated using frequency_range and frequency_divisions.</p></li>
+<li><p><strong>directions_array</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – The directions array. If None, it is generated using direction_range and direction_divisions.</p></li>
+<li><p><strong>direction_range</strong> (<em>tuple</em>) – (min, max) range for directions in degrees.</p></li>
+<li><p><strong>direction_divisions</strong> (<em>int</em>) – Number of directional divisions.</p></li>
+<li><p><strong>frequency_range</strong> (<em>tuple</em>) – (min, max) range for frequencies in Hz.</p></li>
+<li><p><strong>frequency_divisions</strong> (<em>int</em>) – Number of frequency divisions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The SWAN monocromatic cases Dataset with coordinates freq and dir.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.binwaves.plot_selected_cases_grid">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.binwaves.</span></span><span class="sig-name descname"><span class="pre">plot_selected_cases_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frequencies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">directions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(8,</span> <span class="pre">8)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/waves/binwaves.html#plot_selected_cases_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.binwaves.plot_selected_cases_grid" title="Link to this definition"></a></dt>
+<dd><p>Plot the selected subset parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frequencies</strong> (<em>np.ndarray</em>) – The frequencies array.</p></li>
+<li><p><strong>directions</strong> (<em>np.ndarray</em>) – The directions array.</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em><em>, </em><em>optional</em>) – The figure size. Default is (8, 8).</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Additional keyword arguments to be passed to the pcolormesh function.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.binwaves.plot_selected_subset_parameters">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.binwaves.</span></span><span class="sig-name descname"><span class="pre">plot_selected_subset_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">selected_subset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'blue'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">axes</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/binwaves.html#plot_selected_subset_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.binwaves.plot_selected_subset_parameters" title="Link to this definition"></a></dt>
+<dd><p>Plot the selected subset parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>selected_subset</strong> (<em>pd.DataFrame</em>) – The selected subset parameters.</p></li>
+<li><p><strong>color</strong> (<em>str</em><em>, </em><em>optional</em>) – The color to use in the plot. Default is “blue”.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Additional keyword arguments to be passed to the scatter plot function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>plt.figure</em> – The figure object containing the plot.</p></li>
+<li><p><em>plt.axes</em> – Array of axes objects for the subplots.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.binwaves.process_kp_coefficients">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.binwaves.</span></span><span class="sig-name descname"><span class="pre">process_kp_coefficients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_of_input_spectra</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_of_output_spectra</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/binwaves.html#process_kp_coefficients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.binwaves.process_kp_coefficients" title="Link to this definition"></a></dt>
+<dd><p>Process the kp coefficients from the output and input spectra.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>list_of_input_spectra</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – The list of input spectra files.</p></li>
+<li><p><strong>list_of_output_spectra</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – The list of output spectra files.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The kp coefficients Dataset in frequency and direction.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.binwaves.reconstruc_spectra">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.binwaves.</span></span><span class="sig-name descname"><span class="pre">reconstruc_spectra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">offshore_spectra</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kp_coeffs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memory_limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{'time':</span> <span class="pre">24}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/waves/binwaves.html#reconstruc_spectra"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.binwaves.reconstruc_spectra" title="Link to this definition"></a></dt>
+<dd><p>Reconstruct the onshore spectra using offshore spectra and kp coefficients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>offshore_spectra</strong> (<em>xr.Dataset</em>) – The offshore spectra dataset.</p></li>
+<li><p><strong>kp_coeffs</strong> (<em>xr.Dataset</em>) – The kp coefficients dataset.</p></li>
+<li><p><strong>num_workers</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of workers to use. Default is None.</p></li>
+<li><p><strong>memory_limit</strong> (<em>float</em><em>, </em><em>optional</em>) – The memory limit to use. Default is 0.5.</p></li>
+<li><p><strong>chunk_sizes</strong> (<em>dict</em><em>, </em><em>optional</em>) – The chunk sizes to use. Default is {“time”: 24}.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to print verbose output. Default is False.
+If False, Dask logs are suppressed.
+If True, Dask logs are shown.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The reconstructed onshore spectra dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.waves.calibration">
+<span id="bluemath-tk-waves-calibration-module"></span><h2>bluemath_tk.waves.calibration module<a class="headerlink" href="#module-bluemath_tk.waves.calibration" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.waves.calibration.CalVal">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.calibration.</span></span><span class="sig-name descname"><span class="pre">CalVal</span></span><a class="reference internal" href="_modules/bluemath_tk/waves/calibration.html#CalVal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.calibration.CalVal" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel" title="bluemath_tk.core.models.BlueMathModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">BlueMathModel</span></code></a></p>
+<p>Calibrates wave data using reference data.</p>
+<p>This class provides a framework for calibrating wave model outputs (e.g., hindcast or reanalysis)
+using reference data (e.g., satellite or buoy observations).
+It supports directionally-dependent calibration for both sea and swell components.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.waves.calibration.CalVal.direction_bin_size">
+<span class="sig-name descname"><span class="pre">direction_bin_size</span></span><a class="headerlink" href="#bluemath_tk.waves.calibration.CalVal.direction_bin_size" title="Link to this definition"></a></dt>
+<dd><p>Size of directional bins in degrees.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.waves.calibration.CalVal.direction_bins">
+<span class="sig-name descname"><span class="pre">direction_bins</span></span><a class="headerlink" href="#bluemath_tk.waves.calibration.CalVal.direction_bins" title="Link to this definition"></a></dt>
+<dd><p>Array of bin edges for directions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.waves.calibration.CalVal.calibration_model">
+<span class="sig-name descname"><span class="pre">calibration_model</span></span><a class="headerlink" href="#bluemath_tk.waves.calibration.CalVal.calibration_model" title="Link to this definition"></a></dt>
+<dd><p>The calibration model, more details in <cite>statsmodels.api.OLS</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>sm.OLS</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.waves.calibration.CalVal.calibrated_data">
+<span class="sig-name descname"><span class="pre">calibrated_data</span></span><a class="headerlink" href="#bluemath_tk.waves.calibration.CalVal.calibrated_data" title="Link to this definition"></a></dt>
+<dd><p>DataFrame with columns [‘Hs’, ‘Hs_CORR’, ‘Hs_CAL’] after calibration.
+The time domain is the same as the model data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.waves.calibration.CalVal.calibration_params">
+<span class="sig-name descname"><span class="pre">calibration_params</span></span><a class="headerlink" href="#bluemath_tk.waves.calibration.CalVal.calibration_params" title="Link to this definition"></a></dt>
+<dd><p>Dictionary with ‘sea_correction’ and ‘swell_correction’ correction coefficients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id0">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calibrated_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DataFrame</span></em><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
+<dd><p>Returns the calibrated data.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id1">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calibration_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">OLS</span></em><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
+<dd><p>Returns the calibration model.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id2">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calibration_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Series</span></em><a class="headerlink" href="#id2" title="Link to this definition"></a></dt>
+<dd><p>Returns the calibration parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.waves.calibration.CalVal.correct">
+<span class="sig-name descname"><span class="pre">correct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/calibration.html#CalVal.correct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.calibration.CalVal.correct" title="Link to this definition"></a></dt>
+<dd><p>Apply the calibration correction to new data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>pd.DataFrame</em><em> or </em><em>xr.Dataset</em>) – <dl class="simple">
+<dt>Data to correct. If DataFrame, must contain columns:</dt><dd><ul class="simple">
+<li><p>’Hs’, ‘Hsea’, ‘Dirsea’, ‘Hswell1’, ‘Dirswell1’, …</p></li>
+</ul>
+</dd>
+</dl>
+<p>If xarray.Dataset, must have variable ‘efth’ and dimension ‘part’.</p>
+</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Corrected data. For DataFrame, returns columns [‘Hs’, ‘Hs_CORR’] (original and corrected SWH).
+For Dataset, adds variables ‘corr_coeffs’ and ‘corr_efth’.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame or xr.Dataset</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The correction is directionally dependent and uses the coefficients obtained from <cite>fit</cite>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">direction_bin_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">22.5</span></em><a class="headerlink" href="#id3" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">direction_bins</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">array([</span> <span class="pre">22.5,</span>&#160; <span class="pre">45.</span> <span class="pre">,</span>&#160; <span class="pre">67.5,</span>&#160; <span class="pre">90.</span> <span class="pre">,</span> <span class="pre">112.5,</span> <span class="pre">135.</span> <span class="pre">,</span> <span class="pre">157.5,</span> <span class="pre">180.</span> <span class="pre">,</span> <span class="pre">202.5,</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">225.</span> <span class="pre">,</span> <span class="pre">247.5,</span> <span class="pre">270.</span> <span class="pre">,</span> <span class="pre">292.5,</span> <span class="pre">315.</span> <span class="pre">,</span> <span class="pre">337.5,</span> <span class="pre">360.</span> <span class="pre">])</span></em><a class="headerlink" href="#id4" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.waves.calibration.CalVal.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_longitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_latitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_to_calibrate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_time_diff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/calibration.html#CalVal.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.calibration.CalVal.fit" title="Link to this definition"></a></dt>
+<dd><p>Calibrate the model data using reference (calibration) data.</p>
+<p>This method matches the model data and calibration data in time,
+constructs directionally-binned sea and swell matrices,
+and fits a linear regression to obtain correction coefficients
+for each direction bin.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – <dl class="simple">
+<dt>Model data to calibrate. Must contain columns:</dt><dd><ul>
+<li><p>’Hs’ (float): Significant wave height</p></li>
+<li><p>’Hsea’ (float): Sea component significant wave height</p></li>
+<li><p>’Dirsea’ (float): Sea component mean direction (degrees)</p></li>
+<li><p>’Hswell1’, ‘Dirswell1’, … (float): Swell components (at least one required)</p></li>
+</ul>
+</dd>
+</dl>
+<p>The index must be datetime-like.</p>
+</p></li>
+<li><p><strong>data_longitude</strong> (<em>float</em>) – Longitude of the model location (used for plotting and filtering).</p></li>
+<li><p><strong>data_latitude</strong> (<em>float</em>) – Latitude of the model location (used for plotting and filtering).</p></li>
+<li><p><strong>data_to_calibrate</strong> (<em>pd.DataFrame</em>) – <dl class="simple">
+<dt>Reference data for calibration. Must contain column:</dt><dd><ul>
+<li><p>’Hs_CAL’ (float): Calibrated significant wave height (e.g., from satellite)</p></li>
+</ul>
+</dd>
+</dl>
+<p>The index must be datetime-like.</p>
+</p></li>
+<li><p><strong>max_time_diff</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum time difference (in hours) allowed when matching model and calibration data.
+Default is 2.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>After calling this method, the calibration parameters are stored in <cite>self.calibration_params</cite></p></li>
+</ul>
+<p>and the calibrated data is available in <cite>self.calibrated_data</cite>.
+- The calibration is directionally dependent, meaning it uses different correction coefficients
+for different wave directions.
+- The coefficients with p-values greater than 0.05 or negative values are set to 1.0,
+indicating no correction is applied for those directions.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.waves.calibration.CalVal.plot_calibration_results">
+<span class="sig-name descname"><span class="pre">plot_calibration_results</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/calibration.html#CalVal.plot_calibration_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.calibration.CalVal.plot_calibration_results" title="Link to this definition"></a></dt>
+<dd><p>Plot the calibration results, including:
+- Pie charts of correction coefficients for sea and swell
+- Scatter plots of model vs. reference (before and after correction)
+- Polar density plots of sea and swell wave climate</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The matplotlib Figure and a list of Axes objects for all subplots.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple[Figure, list]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.waves.calibration.CalVal.validate_calibration">
+<span class="sig-name descname"><span class="pre">validate_calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_to_validate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/calibration.html#CalVal.validate_calibration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.calibration.CalVal.validate_calibration" title="Link to this definition"></a></dt>
+<dd><p>Validate the calibration using independent validation data.</p>
+<p>This method compares the original and corrected model data to the validation data,
+both as time series and with scatter plots.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data_to_validate</strong> (<em>pd.DataFrame</em>) – <dl class="simple">
+<dt>Validation data. Must contain column:</dt><dd><ul class="simple">
+<li><p>’Hs_VAL’ (float): Validation significant wave height (e.g., from buoy)</p></li>
+</ul>
+</dd>
+</dl>
+<p>The index must be datetime-like.</p>
+</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The matplotlib Figure and a list of Axes objects:
+[time series axis, scatter (no correction), scatter (corrected)].</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[Figure, list]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.calibration.get_matching_times_between_arrays">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.calibration.</span></span><span class="sig-name descname"><span class="pre">get_matching_times_between_arrays</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">times1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_time_diff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/calibration.html#get_matching_times_between_arrays"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.calibration.get_matching_times_between_arrays" title="Link to this definition"></a></dt>
+<dd><p>Finds matching time indices between two arrays of timestamps.</p>
+<p>For each time in <cite>times1</cite>, finds the closest time in <cite>times2</cite> that is within <cite>max_time_diff</cite> hours.
+Returns the indices of matching times in both arrays.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>times1</strong> (<em>np.ndarray</em>) – First array of timestamps (reference times, e.g., from model data).</p></li>
+<li><p><strong>times2</strong> (<em>np.ndarray</em>) – Second array of timestamps (e.g., from satellite or validation data).</p></li>
+<li><p><strong>max_time_diff</strong> (<em>int</em>) – Maximum time difference in hours for considering times as matching.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Two arrays containing the indices of matching times:
+- First array: indices in times1 that have matches
+- Second array: corresponding indices in times2 that match</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[np.ndarray, np.ndarray]</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">idx1</span><span class="p">,</span> <span class="n">idx2</span> <span class="o">=</span> <span class="n">get_matching_times_between_arrays</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">model_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">sat_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">max_time_diff</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.calibration.process_imos_satellite_data">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.calibration.</span></span><span class="sig-name descname"><span class="pre">process_imos_satellite_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">satellite_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ini_lat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_lat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ini_lon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_lon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-200</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/calibration.html#process_imos_satellite_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.calibration.process_imos_satellite_data" title="Link to this definition"></a></dt>
+<dd><p>Processes IMOS satellite data for calibration.</p>
+<p>This function filters and processes IMOS satellite altimeter data to be used as
+reference data for calibration (e.g., as <cite>data_to_calibrate</cite> in CalVal.fit).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>satellite_df</strong> (<em>pd.DataFrame</em>) – <dl class="simple">
+<dt>IMOS satellite data. Must contain columns:</dt><dd><ul>
+<li><p>’LATITUDE’ (float): Latitude in decimal degrees</p></li>
+<li><p>’LONGITUDE’ (float): Longitude in decimal degrees</p></li>
+<li><p>’SWH_KU_quality_control’ (float): Quality control flag for Ku-band</p></li>
+<li><p>’SWH_KA_quality_control’ (float): Quality control flag for Ka-band</p></li>
+<li><p>’SWH_KU_CAL’ (float): Calibrated significant wave height (Ku-band)</p></li>
+<li><p>’SWH_KA_CAL’ (float): Calibrated significant wave height (Ka-band)</p></li>
+<li><p>’BOT_DEPTH’ (float): Bathymetry (negative values for ocean)</p></li>
+</ul>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>ini_lat</strong> (<em>float</em>) – Minimum latitude (southern boundary) for filtering.</p></li>
+<li><p><strong>end_lat</strong> (<em>float</em>) – Maximum latitude (northern boundary) for filtering.</p></li>
+<li><p><strong>ini_lon</strong> (<em>float</em>) – Minimum longitude (western boundary) for filtering.</p></li>
+<li><p><strong>end_lon</strong> (<em>float</em>) – Maximum longitude (eastern boundary) for filtering.</p></li>
+<li><p><strong>depth_threshold</strong> (<em>float</em><em>, </em><em>optional</em>) – Only include points with BOT_DEPTH &lt; depth_threshold. Default is -200.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered and processed satellite data, suitable for use as <cite>data_to_calibrate</cite> in CalVal.fit.
+Includes a new column ‘Hs_CAL’ (combination of Ku-band and Ka-band calibrated significant wave heights).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The returned DataFrame can be used directly as the <cite>data_to_calibrate</cite> argument in CalVal.fit.</p></li>
+</ul>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.waves.climate">
+<span id="bluemath-tk-waves-climate-module"></span><h2>bluemath_tk.waves.climate module<a class="headerlink" href="#module-bluemath_tk.waves.climate" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.waves.greenswell">
+<span id="bluemath-tk-waves-greenswell-module"></span><h2>bluemath_tk.waves.greenswell module<a class="headerlink" href="#module-bluemath_tk.waves.greenswell" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.waves.partitioning">
+<span id="bluemath-tk-waves-partitioning-module"></span><h2>bluemath_tk.waves.partitioning module<a class="headerlink" href="#module-bluemath_tk.waves.partitioning" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.waves.series">
+<span id="bluemath-tk-waves-series-module"></span><h2>bluemath_tk.waves.series module<a class="headerlink" href="#module-bluemath_tk.waves.series" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.energy_spectrum">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">energy_spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#energy_spectrum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.energy_spectrum" title="Link to this definition"></a></dt>
+<dd><p>Calculate JONSWAP energy spectrum for given wave parameters.</p>
+<p>This function computes the energy spectrum S(f) using the JONSWAP spectral model,
+which is commonly used for wind-generated waves in deep water.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hs</strong> (<em>float</em>) – Significant wave height in meters.</p></li>
+<li><p><strong>tp</strong> (<em>float</em>) – Peak period in seconds.</p></li>
+<li><p><strong>gamma</strong> (<em>float</em>) – JONSWAP peak enhancement factor (typically 1-7, default 3.3).</p></li>
+<li><p><strong>duration</strong> (<em>int</em>) – Number of frequency points for the spectrum.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Energy spectrum values S(f) for each frequency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[float]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The JONSWAP spectrum combines the Pierson-Moskowitz spectrum with a peak
+enhancement factor. The spectrum is defined as:</p>
+<p>S(f) = Beta * (Hs^2) * (Tp^-4) * (f^-5) * exp(-1.25 * (Tp*f)^-4) * gamma^exp(-((Tp*f-1)^2)/(2*sigma^2))</p>
+<p>where sigma varies based on frequency relative to peak frequency.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.series_Jonswap">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">series_Jonswap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waves</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#series_Jonswap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.series_Jonswap" title="Link to this definition"></a></dt>
+<dd><p>Generate surface elevation time series from JONSWAP spectrum.</p>
+<p>This function generates a time series of surface elevation using the JONSWAP
+spectral model. The elevation is computed by summing harmonic components
+with random phases.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>waves</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Dictionary containing wave parameters:
+- ‘H’: Significant wave height (m)
+- ‘T’: Peak period (s)
+- ‘gamma’: JONSWAP peak enhancement factor
+- ‘warmup’: Spin-up time (s)
+- ‘deltat’: Time step (s)
+- ‘tendc’: Simulation period (s)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D array with shape (n_time_steps, 2) containing:
+- Column 0: Time values (s)
+- Column 1: Surface elevation values (m)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The surface elevation is generated by:
+1. Computing the JONSWAP energy spectrum
+2. Converting spectrum to amplitude components
+3. Summing harmonic components with random phases</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.series_Jonswap_bimodal">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">series_Jonswap_bimodal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waves</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#series_Jonswap_bimodal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.series_Jonswap_bimodal" title="Link to this definition"></a></dt>
+<dd><p>Generate surface elevation time series from bimodal JONSWAP spectrum.</p>
+<p>This function generates a time series of surface elevation using a bimodal
+JONSWAP spectral model, combining two wave systems with different characteristics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>waves</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Dictionary containing wave parameters for two wave systems:
+- ‘Hs1’: Significant wave height of system 1 (m)
+- ‘Tp1’: Peak period of system 1 (s)
+- ‘gamma1’: JONSWAP peak enhancement factor for system 1
+- ‘Hs2’: Significant wave height of system 2 (m)
+- ‘Tp2’: Peak period of system 2 (s)
+- ‘gamma2’: JONSWAP peak enhancement factor for system 2
+- ‘warmup’: Spin-up time (s)
+- ‘deltat’: Time step (s)
+- ‘tendc’: Simulation period (s)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D array with shape (n_time_steps, 2) containing:
+- Column 0: Time values (s)
+- Column 1: Surface elevation values (m)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The bimodal spectrum is created by summing two JONSWAP spectra, each representing
+a different wave system (e.g., wind sea and swell).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.series_TMA">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">series_TMA</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waves</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#series_TMA"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.series_TMA" title="Link to this definition"></a></dt>
+<dd><p>Generate surface elevation time series from TMA spectrum.</p>
+<p>This function generates a time series of surface elevation using the TMA
+spectral model, which extends the JONSWAP spectrum to include depth effects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>waves</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Dictionary containing wave parameters:
+- ‘H’: Significant wave height (m)
+- ‘T’: Peak period (s)
+- ‘gamma’: JONSWAP peak enhancement factor
+- ‘warmup’: Spin-up time (s)
+- ‘deltat’: Time step (s)
+- ‘comptime’: Simulation period (s)</p></li>
+<li><p><strong>depth</strong> (<em>float</em>) – Water depth in meters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D array with shape (n_time_steps, 2) containing:
+- Column 0: Time values (s)
+- Column 1: Surface elevation values (m)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The TMA spectrum modifies the JONSWAP spectrum to account for depth effects
+using a depth function fi that depends on wave number and depth.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.series_TMA_bimodal">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">series_TMA_bimodal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waves</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#series_TMA_bimodal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.series_TMA_bimodal" title="Link to this definition"></a></dt>
+<dd><p>Generate surface elevation time series from bimodal TMA spectrum.</p>
+<p>This function generates a time series of surface elevation using a bimodal
+TMA spectral model, combining two wave systems with different characteristics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>waves</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Dictionary containing wave parameters for two wave systems:
+- ‘Hs1’: Significant wave height of system 1 (m)
+- ‘Tp1’: Peak period of system 1 (s)
+- ‘gamma1’: JONSWAP peak enhancement factor for system 1
+- ‘Hs2’: Significant wave height of system 2 (m)
+- ‘Tp2’: Peak period of system 2 (s)
+- ‘gamma2’: JONSWAP peak enhancement factor for system 2
+- ‘warmup’: Spin-up time (s)
+- ‘deltat’: Time step (s)
+- ‘tendc’: Simulation period (s)</p></li>
+<li><p><strong>depth</strong> (<em>float</em>) – Water depth in meters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D array with shape (n_time_steps, 2) containing:
+- Column 0: Time values (s)
+- Column 1: Surface elevation values (m)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The bimodal spectrum is created by summing two TMA spectra, each representing
+a different wave system (e.g., wind sea and swell).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.series_regular_bichromatic">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">series_regular_bichromatic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waves</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#series_regular_bichromatic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.series_regular_bichromatic" title="Link to this definition"></a></dt>
+<dd><p>Generate bichromatic regular wave time series.</p>
+<p>This function generates a time series of surface elevation for bichromatic
+regular waves, combining two monochromatic components.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>waves</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Dictionary containing wave parameters:
+- ‘T1’: Period of component 1 (s)
+- ‘T2’: Period of component 2 (s)
+- ‘H’: Wave height (m)
+- ‘WL’: Water level (m)
+- ‘warmup’: Spin-up time (s)
+- ‘deltat’: Time step (s)
+- ‘tendc’: Simulation period (s)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D array with shape (n_time_steps, 2) containing:
+- Column 0: Time values (s)
+- Column 1: Surface elevation values (m)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The surface elevation is the sum of two cosine components:
+η(t) = (H/2) * cos(2πt/T1) + (H/2) * cos(2πt/T2)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.series_regular_monochromatic">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">series_regular_monochromatic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waves</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#series_regular_monochromatic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.series_regular_monochromatic" title="Link to this definition"></a></dt>
+<dd><p>Generate monochromatic regular wave time series.</p>
+<p>This function generates a time series of surface elevation for monochromatic
+regular waves with constant amplitude and frequency.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>waves</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Dictionary containing wave parameters:
+- ‘T’: Wave period (s)
+- ‘H’: Wave height (m)
+- ‘warmup’: Spin-up time (s)
+- ‘deltat’: Time step (s)
+- ‘comptime’: Simulation period (s)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D array with shape (n_time_steps, 2) containing:
+- Column 0: Time values (s)
+- Column 1: Surface elevation values (m)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The surface elevation follows a simple cosine function:
+η(t) = (H/2) * cos(2πt/T)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.series.waves_dispersion">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.series.</span></span><span class="sig-name descname"><span class="pre">waves_dispersion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/series.html#waves_dispersion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.series.waves_dispersion" title="Link to this definition"></a></dt>
+<dd><p>Solve the wave dispersion relation to calculate wavelength, wave number, and phase speed.</p>
+<p>This function solves the linear wave dispersion relation to determine wave
+properties in water of finite depth.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>T</strong> (<em>float</em>) – Wave period in seconds.</p></li>
+<li><p><strong>h</strong> (<em>float</em>) – Water depth in meters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing:
+- L: Wavelength in meters
+- k: Wave number in radians per meter
+- c: Phase speed in meters per second</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[float, float, float]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The dispersion relation is solved iteratively using:
+L = (g*T²)/(2π) * tanh(2πh/L)</p>
+<p>where g is gravitational acceleration (9.81 m/s²).</p>
+<p>The wave number k = 2π/L and phase speed c = √(g*tanh(kh)/k).</p>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.waves.snakes">
+<span id="bluemath-tk-waves-snakes-module"></span><h2>bluemath_tk.waves.snakes module<a class="headerlink" href="#module-bluemath_tk.waves.snakes" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.waves.spectra">
+<span id="bluemath-tk-waves-spectra-module"></span><h2>bluemath_tk.waves.spectra module<a class="headerlink" href="#module-bluemath_tk.waves.spectra" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.spectra.spectral_analysis">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.spectra.</span></span><span class="sig-name descname"><span class="pre">spectral_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">water_level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/spectra.html#spectral_analysis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.spectra.spectral_analysis" title="Link to this definition"></a></dt>
+<dd><p>Performs spectral analysis of water level variable to separate wave components.</p>
+<p>This function uses Welch’s method to estimate the power spectral density of the
+water level time series and then separates the energy into different frequency
+bands: incident waves (IC), infragravity waves (IG), and very low frequency
+waves (VLF). The significant wave heights are calculated for each component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>water_level</strong> (<em>np.ndarray</em>) – Water level time series in meters. Should be a 1D array of measurements.</p></li>
+<li><p><strong>delta_time</strong> (<em>float</em>) – Time interval between consecutive samples in seconds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the significant wave heights in meters:
+- Hsi: Total significant wave height
+- HIC: Incident wave significant height (f &gt; 0.04 Hz)
+- HIG: Infragravity wave significant height (0.004 Hz &lt; f &lt; 0.04 Hz)
+- HVLF: Very low frequency wave significant height (0.001 Hz &lt; f &lt; 0.004 Hz)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[float, float, float, float]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function uses the following frequency bands for wave component separation:
+- Incident waves (IC): f &gt; 0.04 Hz
+- Infragravity waves (IG): 0.004 Hz &lt; f &lt; 0.04 Hz
+- Very low frequency waves (VLF): 0.001 Hz &lt; f &lt; 0.004 Hz</p>
+<p>The significant wave height is calculated as H_s = 4 * sqrt(m0), where m0 is
+the zeroth moment of the spectrum.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">water_level</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>  <span class="c1"># 1000 samples</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">delta_time</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># 1 second intervals</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Hsi</span><span class="p">,</span> <span class="n">HIC</span><span class="p">,</span> <span class="n">HIG</span><span class="p">,</span> <span class="n">HVLF</span> <span class="o">=</span> <span class="n">spectral_analysis</span><span class="p">(</span><span class="n">water_level</span><span class="p">,</span> <span class="n">delta_time</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.waves.statistics">
+<span id="bluemath-tk-waves-statistics-module"></span><h2>bluemath_tk.waves.statistics module<a class="headerlink" href="#module-bluemath_tk.waves.statistics" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.statistics.upcrossing">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.statistics.</span></span><span class="sig-name descname"><span class="pre">upcrossing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/statistics.html#upcrossing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.statistics.upcrossing" title="Link to this definition"></a></dt>
+<dd><p>Calculate wave heights and periods using the zero-crossing method.</p>
+<p>This function performs wave analysis by detecting zero-crossings in a surface
+elevation time series. It removes the mean from the series and identifies
+upcrossings (where the signal crosses zero from negative to positive).
+For each wave cycle between upcrossings, it calculates the wave height
+(difference between maximum and minimum) and wave period (time between crossings).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>series</strong> (<em>np.ndarray</em>) – A 2D array with shape (n_samples, 2) where:
+- series[:, 0] contains the time values
+- series[:, 1] contains the surface elevation values</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing:
+- Hi : List of wave heights (amplitudes) for each wave cycle
+- Ti : Array of wave periods (time intervals between zero crossings)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[List[float], np.ndarray]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The function removes the mean from the surface elevation series before analysis</p></li>
+<li><p>Wave heights are calculated as the difference between maximum and minimum
+values within each wave cycle</p></li>
+<li><p>Wave periods are the time intervals between consecutive zero upcrossings</p></li>
+<li><p>This method is commonly used in oceanography for wave analysis</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">elevation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">time</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">series</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">time</span><span class="p">,</span> <span class="n">elevation</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">heights</span><span class="p">,</span> <span class="n">periods</span> <span class="o">=</span> <span class="n">upcrossing</span><span class="p">(</span><span class="n">series</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.waves.superpoint">
+<span id="bluemath-tk-waves-superpoint-module"></span><h2>bluemath_tk.waves.superpoint module<a class="headerlink" href="#module-bluemath_tk.waves.superpoint" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.waves.superpoint.superpoint_calculation">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.waves.superpoint.</span></span><span class="sig-name descname"><span class="pre">superpoint_calculation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stations_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stations_dimension_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sectors_for_each_station</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap_angle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/waves/superpoint.html#superpoint_calculation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.waves.superpoint.superpoint_calculation" title="Link to this definition"></a></dt>
+<dd><p>Join multiple station spectral data for each directional sector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stations_data</strong> (<em>xr.DataArray</em>) – DataArray containing spectral data for multiple stations.</p></li>
+<li><p><strong>stations_dimension_name</strong> (<em>str</em>) – Name of the dimension representing different stations in the DataArray.</p></li>
+<li><p><strong>sectors_for_each_station</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Dictionary mapping each station ID to a tuple of (min_direction, max_direction)
+representing the directional sector for that station.</p></li>
+<li><p><strong>overlap_angle</strong> (<em>float</em>) – Angle in degrees that defines the overlap between two sectors.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new DataArray where each point is the sum of spectral data from all stations
+for the specified directional sector.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.DataArray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>If your stations_data is saved in different files, you can load them all and then
+concatenate them using xr.open_mfdataset function. Example below:</p>
+<p><a href="#id5"><span class="problematic" id="id6">``</span></a><a href="#id7"><span class="problematic" id="id8">`</span></a>python
+files = [</p>
+<blockquote>
+<div><p>“path/to/station1.nc”,
+“path/to/station2.nc”,
+“path/to/station3.nc”</p>
+</div></blockquote>
+<p>]</p>
+<dl class="simple">
+<dt>def load_station_data(ds: xr.Dataset) -&gt; xr.DataArray:</dt><dd><p>return ds.efth.expand_dims(“station”)</p>
+</dd>
+<dt>stations_data = xr.open_mfdataset(</dt><dd><p>files,
+concat_dim=”station”,
+preprocess=load_station_data,</p>
+</dd>
+</dl>
+<section id="id9">
+<h3>)<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+</section>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.waves">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bluemath_tk.waves" title="Link to this heading"></a></h2>
+<p>Project: BlueMath_tk
+Sub-Module: waves
+Author: GeoOcean Research Group, Universidad de Cantabria
+Repository: <a class="reference external" href="https://github.com/GeoOcean/BlueMath_tk.git">https://github.com/GeoOcean/BlueMath_tk.git</a>
+Status: Under development (Working)</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.topo_bathy.html" class="btn btn-neutral float-left" title="bluemath_tk.topo_bathy package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.wrappers.html" class="btn btn-neutral float-right" title="bluemath_tk.wrappers package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

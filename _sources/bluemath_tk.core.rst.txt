@@ -1,0 +1,94 @@
+bluemath\_tk.core package
+=========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   bluemath_tk.core.data
+   bluemath_tk.core.plotting
+
+Submodules
+----------
+
+bluemath\_tk.core.constants module
+----------------------------------
+
+.. automodule:: bluemath_tk.core.constants
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.core.dask module
+-----------------------------
+
+.. automodule:: bluemath_tk.core.dask
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.core.decorators module
+-----------------------------------
+
+.. automodule:: bluemath_tk.core.decorators
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.core.geo module
+----------------------------
+
+.. automodule:: bluemath_tk.core.geo
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.core.io module
+---------------------------
+
+.. automodule:: bluemath_tk.core.io
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.core.logging module
+--------------------------------
+
+.. automodule:: bluemath_tk.core.logging
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.core.metrics module
+--------------------------------
+
+.. automodule:: bluemath_tk.core.metrics
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.core.models module
+-------------------------------
+
+.. automodule:: bluemath_tk.core.models
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.core.operations module
+-----------------------------------
+
+.. automodule:: bluemath_tk.core.operations
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.core
+   :members:
+   :show-inheritance:
+   :undoc-members:

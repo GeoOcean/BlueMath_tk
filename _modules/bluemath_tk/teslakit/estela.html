@@ -1,0 +1,545 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.teslakit.estela &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.teslakit.estela</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.teslakit.estela</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1"># common </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">op</span>
+
+<span class="c1"># pip</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">path</span>
+
+<span class="c1"># tk </span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.pca</span><span class="w"> </span><span class="kn">import</span> <span class="n">PCA_EstelaPred</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.kma</span><span class="w"> </span><span class="kn">import</span> <span class="n">KMA_regression_guided</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.kma</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleMultivariateRegressionModel</span> <span class="k">as</span> <span class="n">SMRM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.intradaily</span><span class="w"> </span><span class="kn">import</span> <span class="n">Calculate_Hydrographs</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.plotting.estela</span><span class="w"> </span><span class="kn">import</span> <span class="n">Plot_EOFs_EstelaPred</span><span class="p">,</span> <span class="n">Plot_DWTs_Mean_Anom</span><span class="p">,</span> \
+<span class="n">Plot_DWTs_Probs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.plotting.pcs</span><span class="w"> </span><span class="kn">import</span> <span class="n">Plot_PCs_WT</span><span class="p">,</span> <span class="n">Plot_WT_PCs_3D</span>
+
+
+<div class="viewcode-block" id="spatial_gradient">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.spatial_gradient">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">spatial_gradient</span><span class="p">(</span><span class="n">xdset</span><span class="p">,</span> <span class="n">var_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Calculate spatial gradient</span>
+
+<span class="sd">    xdset:</span>
+<span class="sd">        (longitude, latitude, time), var_name</span>
+
+<span class="sd">    returns xdset with new variable &quot;var_name_gradient&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># TODO:check/ ADD ONE ROW/COL EACH SIDE</span>
+    <span class="n">var_grad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">xdset</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="n">Mx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xdset</span><span class="o">.</span><span class="n">longitude</span><span class="p">)</span>
+    <span class="n">My</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xdset</span><span class="o">.</span><span class="n">latitude</span><span class="p">)</span>
+    <span class="n">lat</span> <span class="o">=</span> <span class="n">xdset</span><span class="o">.</span><span class="n">latitude</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xdset</span><span class="o">.</span><span class="n">time</span><span class="p">)):</span>
+        <span class="n">var_val</span> <span class="o">=</span> <span class="n">xdset</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">it</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="c1"># calculate gradient (matrix)</span>
+        <span class="n">m_c</span> <span class="o">=</span> <span class="n">var_val</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">m_l</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">var_val</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">m_r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">var_val</span><span class="p">,</span> <span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">m_u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">var_val</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">m_d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">var_val</span><span class="p">,</span> <span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">m_phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">lat</span><span class="p">)</span><span class="o">/</span><span class="mf">180.0</span>
+        <span class="n">m_phi</span> <span class="o">=</span> <span class="n">m_phi</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">dpx1</span> <span class="o">=</span> <span class="p">(</span><span class="n">m_c</span> <span class="o">-</span> <span class="n">m_l</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">m_phi</span><span class="p">[:,</span><span class="kc">None</span><span class="p">])</span>
+        <span class="n">dpx2</span> <span class="o">=</span> <span class="p">(</span><span class="n">m_r</span> <span class="o">-</span> <span class="n">m_c</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">m_phi</span><span class="p">[:,</span><span class="kc">None</span><span class="p">])</span>
+        <span class="n">dpy1</span> <span class="o">=</span> <span class="n">m_c</span> <span class="o">-</span> <span class="n">m_d</span>
+        <span class="n">dpy2</span> <span class="o">=</span> <span class="n">m_u</span> <span class="o">-</span> <span class="n">m_c</span>
+
+        <span class="n">vg</span> <span class="o">=</span> <span class="p">(</span><span class="n">dpx1</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">dpx2</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">dpy1</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">dpy2</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">var_grad</span><span class="p">[</span><span class="n">it</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">vg</span>
+
+        <span class="c1"># calculate gradient (for). old code</span>
+        <span class="c1">#for i in range(1, Mx-1):</span>
+        <span class="c1">#    for j in range(1, My-1):</span>
+        <span class="c1">#        phi = np.pi*np.abs(lat[j])/180.0</span>
+        <span class="c1">#        dpx1 = (var_val[j,i]   - var_val[j,i-1]) / np.cos(phi)</span>
+        <span class="c1">#        dpx2 = (var_val[j,i+1] - var_val[j,i])   / np.cos(phi)</span>
+        <span class="c1">#        dpy1 = (var_val[j,i]   - var_val[j-1,i])</span>
+        <span class="c1">#        dpy2 = (var_val[j+1,i] - var_val[j,i])</span>
+        <span class="c1">#        var_grad[it, j, i] = (dpx1**2+dpx2**2)/2 + (dpy1**2+dpy2**2)/2</span>
+
+    <span class="c1"># store gradient</span>
+    <span class="n">xdset</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_gradient&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var_name</span><span class="p">)]</span><span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">),</span> <span class="n">var_grad</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">xdset</span></div>
+
+
+<div class="viewcode-block" id="mask_from_poly">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.mask_from_poly">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">mask_from_poly</span><span class="p">(</span><span class="n">xdset</span><span class="p">,</span> <span class="n">ls_poly</span><span class="p">,</span> <span class="n">name_mask</span><span class="o">=</span><span class="s1">&#39;mask&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Generate mask from list of tuples (lon, lat)</span>
+
+<span class="sd">    xdset dimensions:</span>
+<span class="sd">        (longitude, latitude, )</span>
+
+<span class="sd">    returns xdset with new variable &quot;mask&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">lon</span> <span class="o">=</span> <span class="n">xdset</span><span class="o">.</span><span class="n">longitude</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">lat</span> <span class="o">=</span> <span class="n">xdset</span><span class="o">.</span><span class="n">latitude</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">mesh_lat</span><span class="p">,</span> <span class="n">mesh_lon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">mesh_lat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="n">mesh_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">mesh_lon</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">mesh_lat</span><span class="o">.</span><span class="n">flatten</span><span class="p">()]</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="k">for</span> <span class="n">pol</span> <span class="ow">in</span> <span class="n">ls_poly</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">pol</span><span class="p">)</span>
+        <span class="n">inside</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">contains_points</span><span class="p">(</span><span class="n">mesh_points</span><span class="p">))</span>
+        <span class="n">inmesh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">inside</span><span class="p">,</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">mask</span><span class="p">[</span><span class="n">inmesh</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="n">xdset</span><span class="p">[</span><span class="n">name_mask</span><span class="p">]</span><span class="o">=</span><span class="p">((</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span><span class="s1">&#39;longitude&#39;</span><span class="p">),</span> <span class="n">mask</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">xdset</span></div>
+
+
+<div class="viewcode-block" id="dynamic_estela_predictor">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.dynamic_estela_predictor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dynamic_estela_predictor</span><span class="p">(</span><span class="n">xdset</span><span class="p">,</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">estela_D</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Generate dynamic predictor using estela</span>
+
+<span class="sd">    xdset:</span>
+<span class="sd">        (time, latitude, longitude), var_name, mask</span>
+
+<span class="sd">    returns similar xarray.Dataset with variables:</span>
+<span class="sd">        (time, latitude, longitude), var_name_comp</span>
+<span class="sd">        (time, latitude, longitude), var_name_gradient_comp</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># first day is estela max</span>
+    <span class="n">first_day</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">estela_D</span><span class="p">)))</span><span class="o">+</span><span class="mi">1</span>
+
+    <span class="c1"># output will start at time=first_day</span>
+    <span class="n">shp</span> <span class="o">=</span> <span class="n">xdset</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">comp_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">shp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">first_day</span><span class="p">,</span> <span class="n">shp</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">shp</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">var_comp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">comp_shape</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">var_grd_comp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">comp_shape</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># get data using estela for each cell</span>
+    <span class="k">for</span> <span class="n">i_lat</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xdset</span><span class="o">.</span><span class="n">latitude</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">i_lon</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xdset</span><span class="o">.</span><span class="n">longitude</span><span class="p">)):</span>
+            <span class="n">ed</span> <span class="o">=</span> <span class="n">estela_D</span><span class="p">[</span><span class="n">i_lat</span><span class="p">,</span> <span class="n">i_lon</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">ed</span><span class="p">):</span>
+
+                <span class="c1"># mount estela displaced time array </span>
+                <span class="n">i_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+                    <span class="n">first_day</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">xdset</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+                <span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">(</span><span class="n">ed</span><span class="p">)</span>
+
+                <span class="c1"># select data from displaced time array positions</span>
+                <span class="n">xdselec</span> <span class="o">=</span> <span class="n">xdset</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span>
+                    <span class="n">time</span> <span class="o">=</span> <span class="n">i_times</span><span class="p">,</span>
+                    <span class="n">latitude</span> <span class="o">=</span> <span class="n">i_lat</span><span class="p">,</span>
+                    <span class="n">longitude</span> <span class="o">=</span> <span class="n">i_lon</span><span class="p">)</span>
+
+                <span class="c1"># get estela predictor values</span>
+                <span class="n">var_comp</span><span class="p">[:,</span> <span class="n">i_lat</span><span class="p">,</span> <span class="n">i_lon</span><span class="p">]</span> <span class="o">=</span> <span class="n">xdselec</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+                <span class="n">var_grd_comp</span><span class="p">[:,</span> <span class="n">i_lat</span><span class="p">,</span> <span class="n">i_lon</span><span class="p">]</span> <span class="o">=</span> <span class="n">xdselec</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_gradient&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var_name</span><span class="p">)]</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="c1"># return generated estela predictor</span>
+    <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_comp&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var_name</span><span class="p">):(</span>
+                <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span><span class="s1">&#39;longitude&#39;</span><span class="p">),</span> <span class="n">var_comp</span><span class="p">),</span>
+            <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_gradient_comp&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var_name</span><span class="p">):(</span>
+                <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span><span class="s1">&#39;longitude&#39;</span><span class="p">),</span> <span class="n">var_grd_comp</span><span class="p">),</span>
+
+        <span class="p">},</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;time&#39;</span><span class="p">:</span><span class="n">xdset</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">first_day</span><span class="p">:],</span>
+            <span class="s1">&#39;latitude&#39;</span><span class="p">:</span><span class="n">xdset</span><span class="o">.</span><span class="n">latitude</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="s1">&#39;longitude&#39;</span><span class="p">:</span><span class="n">xdset</span><span class="o">.</span><span class="n">longitude</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Predictor">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.Predictor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Predictor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    tesla-kit custom dataset handler</span>
+
+<span class="sd">    used for 3D dataset (lon,lat,time) and related</span>
+<span class="sd">    statistical classification calculations and figures.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_store</span><span class="p">):</span>
+
+        <span class="c1"># file paths</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_store</span> <span class="o">=</span> <span class="n">p_store</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_data</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_store</span><span class="p">,</span> <span class="s1">&#39;data.nc&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_pca</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_store</span><span class="p">,</span> <span class="s1">&#39;pca.nc&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_kma</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_store</span><span class="p">,</span> <span class="s1">&#39;kma.nc&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_plots</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p_store</span><span class="p">,</span> <span class="s1">&#39;figs&#39;</span><span class="p">)</span>
+
+        <span class="c1"># data (xarray.Dataset)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PCA</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Predictor.Load">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.Predictor.Load">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Load</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_data</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_pca</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PCA</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_pca</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_kma</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_kma</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Predictor.Save">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.Predictor.Save">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Save</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_store</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_data</span><span class="p">):</span> <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_data</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_pca</span><span class="p">):</span> <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_pca</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PCA</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_pca</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_kma</span><span class="p">):</span> <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_kma</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_kma</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Predictor.Calc_PCA_EstelaPred">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.Predictor.Calc_PCA_EstelaPred">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Calc_PCA_EstelaPred</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">xds_estela</span><span class="p">):</span>
+        <span class="s1">&#39;Principal components analysis using estela predictor&#39;</span>
+
+        <span class="c1"># generate estela predictor</span>
+        <span class="c1"># TODO STORE DYNAMIC ESTELA PREDICTOR (too big..)</span>
+        <span class="n">xds_estela_pred</span> <span class="o">=</span> <span class="n">dynamic_estela_predictor</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">xds_estela</span><span class="p">)</span>
+
+        <span class="c1"># Calculate PCA</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PCA</span> <span class="o">=</span> <span class="n">PCA_EstelaPred</span><span class="p">(</span>
+            <span class="n">xds_estela_pred</span><span class="p">,</span> <span class="n">var_name</span><span class="p">)</span>
+
+        <span class="c1"># save data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Save</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Predictor.Calc_KMA_regressionguided">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.Predictor.Calc_KMA_regressionguided">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Calc_KMA_regressionguided</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">num_clusters</span><span class="p">,</span> <span class="n">xds_waves</span><span class="p">,</span> <span class="n">waves_vars</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">min_group_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">repres</span> <span class="o">=</span> <span class="mf">0.95</span><span class="p">):</span>
+        <span class="s1">&#39;KMA regression guided with waves data&#39;</span>
+
+        <span class="c1"># we have to miss some days of data due to ESTELA</span>
+        <span class="n">tcut</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA</span><span class="o">.</span><span class="n">pred_time</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+        <span class="c1"># calculate regresion model between predictand and predictor</span>
+        <span class="n">xds_waves</span> <span class="o">=</span> <span class="n">xds_waves</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">time</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">tcut</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tcut</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">xds_Yregres</span> <span class="o">=</span> <span class="n">SMRM</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PCA</span><span class="p">,</span> <span class="n">xds_waves</span><span class="p">,</span> <span class="n">waves_vars</span><span class="p">)</span>
+
+        <span class="c1"># classification: KMA regresion guided</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span> <span class="o">=</span> <span class="n">KMA_regression_guided</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PCA</span><span class="p">,</span> <span class="n">xds_Yregres</span><span class="p">,</span>
+            <span class="n">num_clusters</span><span class="p">,</span> <span class="n">repres</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">min_group_size</span>
+        <span class="p">)</span>
+
+        <span class="c1"># store time array with KMA</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="s1">&#39;n_components&#39;</span><span class="p">,),</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA</span><span class="o">.</span><span class="n">pred_time</span><span class="o">.</span><span class="n">values</span><span class="p">[:])</span>
+
+        <span class="c1"># save data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Save</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Predictor.Calc_MU_TAU_Hydrographs">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.Predictor.Calc_MU_TAU_Hydrographs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Calc_MU_TAU_Hydrographs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xds_WAVES</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculates TWL hydrographs</span>
+
+<span class="sd">        returns list of xarray.Dataset with TWL hydrographs MU,TAU arrays for each WT</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># TODO: SACAR DE AQUI, replantear hydrographs</span>
+
+        <span class="c1"># get sorted bmus from kma</span>
+        <span class="n">xds_BMUS</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+            <span class="p">{</span><span class="s1">&#39;bmus&#39;</span><span class="p">:((</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="o">.</span><span class="n">sorted_bmus</span><span class="o">.</span><span class="n">values</span><span class="p">[:]))},</span>
+            <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="p">[:]}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Calculate hydrographs for each WT</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">l_xds_MUTAU</span> <span class="o">=</span> <span class="n">Calculate_Hydrographs</span><span class="p">(</span><span class="n">xds_BMUS</span><span class="p">,</span> <span class="n">xds_WAVES</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">l_xds_MUTAU</span></div>
+
+
+<div class="viewcode-block" id="Predictor.Mod_KMA_AddStorms">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.Predictor.Mod_KMA_AddStorms">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Mod_KMA_AddStorms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">storm_dates</span><span class="p">,</span> <span class="n">storm_categories</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Modify KMA bmus series adding storm category (6 new groups)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">n_clusters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="o">.</span><span class="n">n_clusters</span><span class="o">.</span><span class="n">values</span><span class="p">[:])</span>
+        <span class="n">kma_dates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">bmus_storms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="o">.</span><span class="n">sorted_bmus</span><span class="o">.</span><span class="n">values</span><span class="p">[:])</span>  <span class="c1"># copy numpy.array</span>
+
+        <span class="k">for</span> <span class="n">sd</span><span class="p">,</span> <span class="n">sc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">storm_dates</span><span class="p">,</span> <span class="n">storm_categories</span><span class="p">):</span>
+            <span class="n">sdr</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sd</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;datetime64[D]&#39;</span><span class="p">)</span>  <span class="c1"># round to day</span>
+            <span class="n">pos_date</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">kma_dates</span><span class="o">==</span><span class="n">sdr</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">pos_date</span><span class="p">:</span>
+                <span class="n">bmus_storms</span><span class="p">[</span><span class="n">pos_date</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">n_clusters</span> <span class="o">+</span> <span class="n">sc</span>
+
+        <span class="c1"># copy kma and add bmus_storms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="p">[</span><span class="s1">&#39;sorted_bmus_storms&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="s1">&#39;n_components&#39;</span><span class="p">,),</span> <span class="n">bmus_storms</span><span class="p">)</span>
+
+        <span class="c1"># store changes</span>
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_kma</span><span class="p">):</span> <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_kma</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p_kma</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Predictor.Plot_EOFs_EstelaPred">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.Predictor.Plot_EOFs_EstelaPred">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Plot_EOFs_EstelaPred</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_plot</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="s1">&#39;Plot EOFs generated in PCA_EstelaPred&#39;</span>
+
+        <span class="c1"># optional land mask</span>
+        <span class="n">mask_land</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s1">&#39;mask_land&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">mask_land</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;mask_land&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+        <span class="n">l_fs</span> <span class="o">=</span> <span class="n">Plot_EOFs_EstelaPred</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PCA</span><span class="p">,</span> <span class="n">n_plot</span><span class="p">,</span> <span class="n">mask_land</span><span class="o">=</span><span class="n">mask_land</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">l_fs</span></div>
+
+
+<div class="viewcode-block" id="Predictor.Plot_DWTs">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.Predictor.Plot_DWTs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Plot_DWTs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Plot KMA clusters generated in PCA_EstelaPred (DWTs)</span>
+
+<span class="sd">        kind = mean / anom</span>
+
+<span class="sd">        uses database means/anomalies at cluster location (bmus corrected)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># data to plot</span>
+        <span class="n">xds_DWTs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span>
+        <span class="n">var_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span>
+
+        <span class="c1"># optional land mask</span>
+        <span class="n">mask_land</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s1">&#39;mask_land&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">mask_land</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;mask_land&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+        <span class="c1"># Plot DWTs mean using var_data</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">Plot_DWTs_Mean_Anom</span><span class="p">(</span>
+            <span class="n">xds_DWTs</span><span class="p">,</span> <span class="n">var_data</span><span class="p">,</span>
+            <span class="n">kind</span> <span class="o">=</span> <span class="n">kind</span><span class="p">,</span>
+            <span class="n">mask_land</span> <span class="o">=</span> <span class="n">mask_land</span><span class="p">,</span>
+            <span class="n">show</span> <span class="o">=</span> <span class="n">show</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fig</span></div>
+
+
+<div class="viewcode-block" id="Predictor.Plot_DWTs_Probs">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.Predictor.Plot_DWTs_Probs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Plot_DWTs_Probs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s1">&#39;sorted_bmus&#39;</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Plot DWTs bmus probabilities</span>
+<span class="sd">            - histogram for ocurrences</span>
+<span class="sd">            - probs. all series</span>
+<span class="sd">            - probs by month</span>
+<span class="sd">            - probs by 3month</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># Plot DWTs mean using var_data</span>
+        <span class="n">bmus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="o">+</span> <span class="mi">1</span> <span class="c1"># index to DWT id</span>
+        <span class="n">bmus_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">n_clusters</span><span class="p">:</span>
+            <span class="n">n_clusters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="o">.</span><span class="n">n_clusters</span><span class="o">.</span><span class="n">values</span><span class="p">[:])</span>
+
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">Plot_DWTs_Probs</span><span class="p">(</span><span class="n">bmus</span><span class="p">,</span> <span class="n">bmus_time</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fig</span></div>
+
+
+<div class="viewcode-block" id="Predictor.Plot_DWT_PCs">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.Predictor.Plot_DWT_PCs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Plot_DWT_PCs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Plot Daily Weather Types PCs using 2D axis</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># get estela data</span>
+        <span class="n">PCs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA</span><span class="o">.</span><span class="n">PCs</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">variance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">bmus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="o">.</span><span class="n">sorted_bmus</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>  <span class="c1"># sorted_bmus</span>
+        <span class="n">n_clusters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="o">.</span><span class="n">n_clusters</span><span class="o">.</span><span class="n">values</span><span class="p">[:])</span>
+
+        <span class="c1"># Plot DWTs PCs</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">Plot_PCs_WT</span><span class="p">(</span><span class="n">PCs</span><span class="p">,</span> <span class="n">variance</span><span class="p">,</span> <span class="n">bmus</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fig</span></div>
+
+
+<div class="viewcode-block" id="Predictor.Plot_PCs_3D">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.estela.Predictor.Plot_PCs_3D">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Plot_PCs_3D</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="s1">&#39;Plots Predictor first 3 PCs&#39;</span>
+
+        <span class="c1"># first 3 PCs</span>
+        <span class="n">bmus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="p">[</span><span class="s1">&#39;sorted_bmus&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">PCs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA</span><span class="o">.</span><span class="n">PCs</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">variance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+        <span class="n">n_clusters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">KMA</span><span class="o">.</span><span class="n">n_clusters</span><span class="o">.</span><span class="n">values</span><span class="p">[:])</span>
+
+        <span class="n">PC1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">PCs</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">variance</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">PC2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">PCs</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">variance</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">PC3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">PCs</span><span class="p">[:,</span><span class="mi">2</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">variance</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+
+        <span class="c1"># dictionary of DWT PCs 123 </span>
+        <span class="n">d_PCs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">ic</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">):</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">bmus</span> <span class="o">==</span> <span class="n">ic</span><span class="p">)[:]</span>
+
+            <span class="n">PC123</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">PC1</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">PC2</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">PC3</span><span class="p">[</span><span class="n">ind</span><span class="p">]))</span>
+            <span class="n">d_PCs</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ic</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">PC123</span>
+
+        <span class="c1"># Plot DWTs PCs 3D </span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">Plot_WT_PCs_3D</span><span class="p">(</span><span class="n">d_PCs</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fig</span></div>
+</div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,390 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.wrappers.xbeach.xbeach_wrapper &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/thebelab.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.wrappers.xbeach.xbeach_wrapper</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.wrappers.xbeach.xbeach_wrapper</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.._base_wrappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModelWrapper</span>
+
+
+<div class="viewcode-block" id="XBeachModelWrapper">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_wrapper.XBeachModelWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">XBeachModelWrapper</span><span class="p">(</span><span class="n">BaseModelWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper for the XBeach model.</span>
+<span class="sd">    https://xbeach.readthedocs.io/en/latest/</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    default_parameters : dict</span>
+<span class="sd">        The default parameters type for the wrapper.</span>
+<span class="sd">    available_launchers : dict</span>
+<span class="sd">        The available launchers for the wrapper.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_parameters</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;comptime&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">3600</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;The computational time.&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;wbctype&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;off&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;The time step for the simulation.&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+
+    <span class="n">available_launchers</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;geoocean-cluster&quot;</span><span class="p">:</span> <span class="s2">&quot;launchXbeach.sh&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">templates_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">metamodel_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">fixed_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">templates_name</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+        <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the XBeach model wrapper.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">templates_dir</span><span class="o">=</span><span class="n">templates_dir</span><span class="p">,</span>
+            <span class="n">metamodel_parameters</span><span class="o">=</span><span class="n">metamodel_parameters</span><span class="p">,</span>
+            <span class="n">fixed_parameters</span><span class="o">=</span><span class="n">fixed_parameters</span><span class="p">,</span>
+            <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+            <span class="n">templates_name</span><span class="o">=</span><span class="n">templates_name</span><span class="p">,</span>
+            <span class="n">default_parameters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">default_parameters</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_logger_name</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;DEBUG&quot;</span> <span class="k">if</span> <span class="n">debug</span> <span class="k">else</span> <span class="s2">&quot;INFO&quot;</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="XBeachModelWrapper.build_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_wrapper.XBeachModelWrapper.build_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_case</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the input files for a case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;wbctype&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;jonstable&quot;</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">case_dir</span><span class="si">}</span><span class="s2">/jonswap.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;comptime&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">3600</span><span class="p">)):</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">case_context</span><span class="p">[</span><span class="s1">&#39;Hs&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">case_context</span><span class="p">[</span><span class="s1">&#39;Tp&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">case_context</span><span class="p">[</span><span class="s1">&#39;Dir&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> 3.300000 30.000000 3600.000000 1.000000 </span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_average_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_nc</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the average value of a variable except for the first hour of the simulation</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_nc : xr.Dataset</span>
+<span class="sd">            Simulation .nc file.</span>
+<span class="sd">        var : str</span>
+<span class="sd">            Variable of interest.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            The average value of the variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">case_nc</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+                <span class="n">case_nc</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+                <span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">meantime</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">case_nc</span><span class="o">.</span><span class="n">meantime</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])))</span>
+                <span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_max_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_nc</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the Max value of a variable except for the first hour of the simulation</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_nc : xr.Dataset</span>
+<span class="sd">            Simulation .nc file.</span>
+<span class="sd">        var : str</span>
+<span class="sd">            Variable of interest.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            The max value of the variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">case_nc</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span>
+                <span class="n">case_nc</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+                <span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">meantime</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">case_nc</span><span class="o">.</span><span class="n">meantime</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])))</span>
+                <span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="XBeachModelWrapper.monitor_cases">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_wrapper.XBeachModelWrapper.monitor_cases">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">monitor_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_counts</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Monitor the cases based on different model log files.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">cases_status</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">case_dir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">:</span>
+            <span class="n">case_dir_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;XBlog.txt&quot;</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;XBerror.txt&quot;</span><span class="p">))</span>
+                    <span class="o">&amp;</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;XBerror.txt&quot;</span><span class="p">))</span>
+                    <span class="o">!=</span> <span class="mi">0</span>
+                <span class="p">):</span>
+                    <span class="n">cases_status</span><span class="p">[</span><span class="n">case_dir_name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;XBerror.txt&quot;</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;XBlog.txt&quot;</span><span class="p">),</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                        <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+
+                    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="s2">&quot;End of program xbeach&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">):</span>
+                        <span class="n">cases_status</span><span class="p">[</span><span class="n">case_dir_name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;End of run&quot;</span>
+                        <span class="k">continue</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">cases_status</span><span class="p">[</span><span class="n">case_dir_name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Running&quot;</span>
+                        <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cases_status</span><span class="p">[</span><span class="n">case_dir_name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;No run&quot;</span>
+                <span class="k">continue</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">monitor_cases</span><span class="p">(</span>
+            <span class="n">cases_status</span><span class="o">=</span><span class="n">cases_status</span><span class="p">,</span> <span class="n">value_counts</span><span class="o">=</span><span class="n">value_counts</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="XBeachModelWrapper.postprocess_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_wrapper.XBeachModelWrapper.postprocess_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">postprocess_case</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">output_vars</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">overwrite_output</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert tab output files to netCDF file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_num : int</span>
+<span class="sd">            The case number.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        output_vars : list, optional</span>
+<span class="sd">            The output variables to postprocess. Default is None.</span>
+<span class="sd">        overwrite_output : bool, optional</span>
+<span class="sd">            Overwrite the output.nc file. Default is True.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        xr.Dataset</span>
+<span class="sd">            The postprocessed Dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">case_num</span><span class="si">}</span><span class="s2">]: Postprocessing case </span><span class="si">{</span><span class="n">case_num</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">case_dir</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="n">output_nc_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;xboutput_postprocessed.nc&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_nc_path</span><span class="p">)</span> <span class="ow">or</span> <span class="n">overwrite_output</span><span class="p">:</span>
+            <span class="n">output_raw</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;xboutput.nc&quot;</span><span class="p">))</span>
+
+            <span class="n">globalx</span> <span class="o">=</span> <span class="n">output_raw</span><span class="o">.</span><span class="n">globalx</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">globaly</span> <span class="o">=</span> <span class="n">output_raw</span><span class="o">.</span><span class="n">globaly</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">zb</span> <span class="o">=</span> <span class="n">output_raw</span><span class="o">.</span><span class="n">zb</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">globalx</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">globalx</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;globalx&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">globalx</span><span class="p">),</span>
+                    <span class="s2">&quot;globaly&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">globaly</span><span class="p">),</span>
+                    <span class="s2">&quot;zb&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">zb</span><span class="p">),</span>
+                <span class="p">},</span>
+                <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">y</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x</span><span class="p">},</span>
+            <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">output_vars</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">var</span> <span class="o">==</span> <span class="s2">&quot;zs_max&quot;</span><span class="p">:</span>
+                    <span class="n">maxed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_max_var</span><span class="p">(</span><span class="n">case_nc</span><span class="o">=</span><span class="n">output_raw</span><span class="p">,</span> <span class="n">var</span><span class="o">=</span><span class="n">var</span><span class="p">)</span>
+                    <span class="n">masked</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;zb&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">maxed</span><span class="p">)</span>
+                    <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">masked</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">averaged</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_average_var</span><span class="p">(</span><span class="n">case_nc</span><span class="o">=</span><span class="n">output_raw</span><span class="p">,</span> <span class="n">var</span><span class="o">=</span><span class="n">var</span><span class="p">)</span>
+                    <span class="n">masked</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;zb&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">averaged</span><span class="p">)</span>
+                    <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">masked</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">(</span><span class="s2">&quot;zb&quot;</span><span class="p">)</span>
+            <span class="n">ds</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">output_nc_path</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">ds</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">case_num</span><span class="si">}</span><span class="s2">]: Reading existing xboutput_postprocessed.nc file.&quot;</span>
+            <span class="p">)</span>
+            <span class="n">output_nc</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">output_nc_path</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">output_nc</span></div>
+
+
+<div class="viewcode-block" id="XBeachModelWrapper.join_postprocessed_files">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_wrapper.XBeachModelWrapper.join_postprocessed_files">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">join_postprocessed_files</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">postprocessed_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Join postprocessed files in a single Dataset.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        postprocessed_files : list</span>
+<span class="sd">            The postprocessed files.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        xr.Dataset</span>
+<span class="sd">            The joined xarray.Dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">postprocessed_files</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s2">&quot;case_num&quot;</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

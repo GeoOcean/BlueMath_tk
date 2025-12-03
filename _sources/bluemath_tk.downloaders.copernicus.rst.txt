@@ -1,0 +1,21 @@
+bluemath\_tk.downloaders.copernicus package
+===========================================
+
+Submodules
+----------
+
+bluemath\_tk.downloaders.copernicus.copernicus\_downloader module
+-----------------------------------------------------------------
+
+.. automodule:: bluemath_tk.downloaders.copernicus.copernicus_downloader
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.downloaders.copernicus
+   :members:
+   :show-inheritance:
+   :undoc-members:

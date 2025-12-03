@@ -1,0 +1,843 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.teslakit.alr_AIC &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.teslakit.alr_AIC</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.teslakit.alr_AIC</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">statsmodels.discrete.discrete_model</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sm</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+
+<div class="viewcode-block" id="AutoLogisticRegression">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr_AIC.AutoLogisticRegression">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AutoLogisticRegression</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Auto-Regressive Logistic (ALR) model for categorical time series modeling.</span>
+
+<span class="sd">    This implementation focuses on statsmodels with AIC-based covariate selection.</span>
+<span class="sd">    The model simulates transitions between discrete states (weather types, climate</span>
+<span class="sd">    patterns, etc.) accounting for:</span>
+<span class="sd">    - Markov dependencies (previous states)</span>
+<span class="sd">    - Seasonality</span>
+<span class="sd">    - Long-term trends</span>
+<span class="sd">    - External covariates</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cluster_size : int</span>
+<span class="sd">        Number of discrete states or clusters in the model</span>
+<span class="sd">    model : statsmodels.MNLogit</span>
+<span class="sd">        Fitted multinomial logistic regression model</span>
+<span class="sd">    terms_fit : dict</span>
+<span class="sd">        Dictionary of terms used for model fitting</span>
+<span class="sd">    terms_fit_names : list</span>
+<span class="sd">        Names of the terms used for model fitting</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the ALR model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cluster_size : int</span>
+<span class="sd">            Number of discrete states/clusters in the model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cluster_size</span> <span class="o">=</span> <span class="n">cluster_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit_names</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mk_order</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cov_names</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="AutoLogisticRegression.get_year_fraction">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr_AIC.AutoLogisticRegression.get_year_fraction">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_year_fraction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_array</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert datetime array to fractional year representation.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        time_array : array-like</span>
+<span class="sd">            Array of datetime objects</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Array of year fractions (0-1 for position within the year)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">time_yfrac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">time_array</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">dt</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">time_array</span><span class="p">):</span>
+            <span class="n">doy</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">timetuple</span><span class="p">()</span><span class="o">.</span><span class="n">tm_yday</span>
+            <span class="n">year_length</span> <span class="o">=</span> <span class="mi">366</span> <span class="k">if</span> <span class="n">dt</span><span class="o">.</span><span class="n">year</span> <span class="o">%</span> <span class="mi">4</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">365</span>
+            <span class="n">time_yfrac</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">year</span> <span class="o">+</span> <span class="n">doy</span> <span class="o">/</span> <span class="n">year_length</span>
+
+        <span class="k">return</span> <span class="n">time_yfrac</span></div>
+
+
+<div class="viewcode-block" id="AutoLogisticRegression.generate_terms">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr_AIC.AutoLogisticRegression.generate_terms">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_terms</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">bmus</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mk_order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">use_constant</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">use_long_term</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">seasonality</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="p">[]),</span>
+        <span class="n">covariates</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cov_seasonality</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">OrderedDict</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate design matrix terms for the ALR model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        bmus : np.ndarray</span>
+<span class="sd">            Array of categorical states (1-indexed)</span>
+<span class="sd">        time : np.ndarray</span>
+<span class="sd">            Array of datetime objects</span>
+<span class="sd">        mk_order : int, optional</span>
+<span class="sd">            Markov chain order (number of previous states to include)</span>
+<span class="sd">        use_constant : bool, optional</span>
+<span class="sd">            Include intercept term</span>
+<span class="sd">        use_long_term : bool, optional</span>
+<span class="sd">            Include long-term trend</span>
+<span class="sd">        seasonality : tuple(bool, list), optional</span>
+<span class="sd">            Tuple of (use_seasonality, [phases]). Example: (True, [1, 2]) for annual</span>
+<span class="sd">            and semi-annual cycles</span>
+<span class="sd">        covariates : xr.Dataset, optional</span>
+<span class="sd">            Dataset with covariates. Should have dimensions (time, cov_names) and variable cov_values</span>
+<span class="sd">        cov_seasonality : bool, optional</span>
+<span class="sd">            Include seasonal modulation of covariates</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        OrderedDict</span>
+<span class="sd">            Dictionary of design matrix terms</span>
+<span class="sd">        list</span>
+<span class="sd">            List of term names</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Convert time to year fractions</span>
+        <span class="n">time_yfrac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_year_fraction</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+
+        <span class="c1"># Initialize containers</span>
+        <span class="n">terms</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">terms_names</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Constant term (intercept)</span>
+        <span class="k">if</span> <span class="n">use_constant</span><span class="p">:</span>
+            <span class="n">terms</span><span class="p">[</span><span class="s2">&quot;constant&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">bmus</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;intercept&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Long-term trend</span>
+        <span class="k">if</span> <span class="n">use_long_term</span><span class="p">:</span>
+            <span class="n">terms</span><span class="p">[</span><span class="s2">&quot;long_term&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">bmus</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">terms</span><span class="p">[</span><span class="s2">&quot;long_term&quot;</span><span class="p">][:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_yfrac</span>
+            <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;long_term&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Seasonality terms (harmonic functions)</span>
+        <span class="k">if</span> <span class="n">seasonality</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">phases</span> <span class="o">=</span> <span class="n">seasonality</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">temp_seas</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time_yfrac</span><span class="p">),</span> <span class="mi">2</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">phases</span><span class="p">)))</span>
+
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">harmonic</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">phases</span><span class="p">):</span>
+                <span class="c1"># Add cosine and sine components for each harmonic</span>
+                <span class="n">temp_seas</span><span class="p">[:,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">harmonic</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">time_yfrac</span> <span class="o">%</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="n">temp_seas</span><span class="p">[:,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span>
+                    <span class="n">harmonic</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">time_yfrac</span> <span class="o">%</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="p">)</span>
+
+                <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cos_</span><span class="si">{</span><span class="n">harmonic</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;sin_</span><span class="si">{</span><span class="n">harmonic</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="n">terms</span><span class="p">[</span><span class="s2">&quot;seasonality&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_seas</span>
+
+        <span class="c1"># External covariates</span>
+        <span class="k">if</span> <span class="n">covariates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cov_values</span> <span class="o">=</span> <span class="n">covariates</span><span class="o">.</span><span class="n">cov_values</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">cov_names</span> <span class="o">=</span> <span class="n">covariates</span><span class="o">.</span><span class="n">cov_names</span><span class="o">.</span><span class="n">values</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cov_names</span> <span class="o">=</span> <span class="n">cov_names</span>
+
+            <span class="c1"># Normalize covariates</span>
+            <span class="n">cov_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">cov_values</span> <span class="o">-</span> <span class="n">cov_values</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span> <span class="o">/</span> <span class="n">cov_values</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="c1"># Add each covariate as a separate term</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cov_names</span><span class="p">):</span>
+                <span class="n">terms</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cov_norm</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="p">(</span><span class="n">cov_norm</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+                <span class="c1"># Add seasonal modulation of covariates if requested</span>
+                <span class="k">if</span> <span class="n">cov_seasonality</span><span class="p">:</span>
+                    <span class="n">cos_term</span> <span class="o">=</span> <span class="n">terms</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span>
+                        <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">time_yfrac</span> <span class="o">%</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">sin_term</span> <span class="o">=</span> <span class="n">terms</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span>
+                        <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">time_yfrac</span> <span class="o">%</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+                    <span class="n">terms</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_cos&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cos_term</span>
+                    <span class="n">terms</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_sin&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sin_term</span>
+
+                    <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_cos&quot;</span><span class="p">)</span>
+                    <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_sin&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Markov terms (previous states)</span>
+        <span class="k">if</span> <span class="n">mk_order</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Define Helmert contrasts for categorical variables</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">helmert_coding</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;Generate Helmert contrast matrix for k categories&quot;&quot;&quot;</span>
+                <span class="n">H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">H</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span>
+                    <span class="n">H</span><span class="p">[(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">H</span>
+
+            <span class="c1"># Generate contrast matrix</span>
+            <span class="n">contrast_matrix</span> <span class="o">=</span> <span class="n">helmert_coding</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cluster_size</span><span class="p">)</span>
+
+            <span class="c1"># Add terms for each lag in the Markov order</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">mk_order</span><span class="p">):</span>
+                <span class="c1"># Initialize terms for this lag</span>
+                <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">bmus</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+
+                <span class="c1"># Set values using the contrast matrix</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bmus</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">bmu_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">bmus</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># Convert 1-indexed to 0-indexed</span>
+                    <span class="n">Z</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">contrast_matrix</span><span class="p">[</span><span class="n">bmu_idx</span><span class="p">,</span> <span class="p">:]</span>
+
+                <span class="c1"># Add to terms</span>
+                <span class="n">terms</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;markov_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Z</span>
+
+                <span class="c1"># Add term names</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cluster_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">terms_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mk</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">c</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">terms</span><span class="p">,</span> <span class="n">terms_names</span></div>
+
+
+<div class="viewcode-block" id="AutoLogisticRegression.fit">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr_AIC.AutoLogisticRegression.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">bmus</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mk_order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">use_constant</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">use_long_term</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">seasonality</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="p">[]),</span>
+        <span class="n">covariates</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cov_seasonality</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit the ALR model to data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        bmus : np.ndarray</span>
+<span class="sd">            Array of categorical states (1-indexed)</span>
+<span class="sd">        time : np.ndarray</span>
+<span class="sd">            Array of datetime objects</span>
+<span class="sd">        mk_order : int, optional</span>
+<span class="sd">            Markov chain order (number of previous states to include)</span>
+<span class="sd">        use_constant : bool, optional</span>
+<span class="sd">            Include intercept term</span>
+<span class="sd">        use_long_term : bool, optional</span>
+<span class="sd">            Include long-term trend</span>
+<span class="sd">        seasonality : tuple(bool, list), optional</span>
+<span class="sd">            Tuple of (use_seasonality, [phases])</span>
+<span class="sd">        covariates : xr.Dataset, optional</span>
+<span class="sd">            Dataset with covariates</span>
+<span class="sd">        cov_seasonality : bool, optional</span>
+<span class="sd">            Include seasonal modulation of covariates</span>
+<span class="sd">        max_iter : int, optional</span>
+<span class="sd">            Maximum iterations for model fitting</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mk_order</span> <span class="o">=</span> <span class="n">mk_order</span>
+
+        <span class="c1"># Generate design matrix terms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_terms</span><span class="p">(</span>
+            <span class="n">bmus</span><span class="o">=</span><span class="n">bmus</span><span class="p">,</span>
+            <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
+            <span class="n">mk_order</span><span class="o">=</span><span class="n">mk_order</span><span class="p">,</span>
+            <span class="n">use_constant</span><span class="o">=</span><span class="n">use_constant</span><span class="p">,</span>
+            <span class="n">use_long_term</span><span class="o">=</span><span class="n">use_long_term</span><span class="p">,</span>
+            <span class="n">seasonality</span><span class="o">=</span><span class="n">seasonality</span><span class="p">,</span>
+            <span class="n">covariates</span><span class="o">=</span><span class="n">covariates</span><span class="p">,</span>
+            <span class="n">cov_seasonality</span><span class="o">=</span><span class="n">cov_seasonality</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Combine terms into design matrix</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">terms_fit</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">bmus</span>
+
+        <span class="c1"># Convert to pandas for statsmodels</span>
+        <span class="n">X_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terms_fit_names</span><span class="p">)</span>
+        <span class="n">y_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;bmus&quot;</span><span class="p">])</span>
+
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Fitting multinomial logistic regression with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">terms_fit_names</span><span class="p">)</span><span class="si">}</span><span class="s2"> terms...&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Fit the model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">MNLogit</span><span class="p">(</span><span class="n">y_df</span><span class="p">,</span> <span class="n">X_df</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;lbfgs&quot;</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">max_iter</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Model fitting complete.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AutoLogisticRegression.select_covariates_by_aic">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr_AIC.AutoLogisticRegression.select_covariates_by_aic">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">select_covariates_by_aic</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">bmus</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">covariates</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+        <span class="n">base_config</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Select optimal covariates using AIC criterion.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        bmus : np.ndarray</span>
+<span class="sd">            Array of categorical states (1-indexed)</span>
+<span class="sd">        time : np.ndarray</span>
+<span class="sd">            Array of datetime objects</span>
+<span class="sd">        covariates : xr.Dataset</span>
+<span class="sd">            Dataset with all potential covariates</span>
+<span class="sd">        base_config : dict, optional</span>
+<span class="sd">            Base configuration for other terms (mk_order, seasonality, etc.)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            List of selected covariate names</span>
+<span class="sd">        float</span>
+<span class="sd">            AIC of the best model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Default base configuration</span>
+        <span class="k">if</span> <span class="n">base_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">base_config</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;mk_order&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="s2">&quot;use_constant&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;use_long_term&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="s2">&quot;seasonality&quot;</span><span class="p">:</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                <span class="s2">&quot;cov_seasonality&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="p">}</span>
+
+        <span class="n">cov_names</span> <span class="o">=</span> <span class="n">covariates</span><span class="o">.</span><span class="n">cov_names</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">n_covs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cov_names</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting covariate selection with </span><span class="si">{</span><span class="n">n_covs</span><span class="si">}</span><span class="s2"> potential covariates...&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Initialize</span>
+        <span class="n">best_aic</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+        <span class="n">best_covs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">all_results</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Test each covariate individually first</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cov</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cov_names</span><span class="p">):</span>
+            <span class="c1"># Create subset of covariates with just this one</span>
+            <span class="n">cov_subset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+                <span class="n">data_vars</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;cov_values&quot;</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;cov_names&quot;</span><span class="p">),</span>
+                        <span class="n">covariates</span><span class="o">.</span><span class="n">cov_values</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+                    <span class="p">),</span>
+                <span class="p">},</span>
+                <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">covariates</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="s2">&quot;cov_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">cov</span><span class="p">]},</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Fit model</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+                    <span class="n">bmus</span><span class="o">=</span><span class="n">bmus</span><span class="p">,</span>
+                    <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
+                    <span class="n">mk_order</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;mk_order&quot;</span><span class="p">],</span>
+                    <span class="n">use_constant</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;use_constant&quot;</span><span class="p">],</span>
+                    <span class="n">use_long_term</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;use_long_term&quot;</span><span class="p">],</span>
+                    <span class="n">seasonality</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;seasonality&quot;</span><span class="p">],</span>
+                    <span class="n">covariates</span><span class="o">=</span><span class="n">cov_subset</span><span class="p">,</span>
+                    <span class="n">cov_seasonality</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;cov_seasonality&quot;</span><span class="p">],</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Get AIC</span>
+                <span class="n">aic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">aic</span>
+                <span class="n">all_results</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">aic</span><span class="p">,</span> <span class="p">[</span><span class="n">cov</span><span class="p">]))</span>
+
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Covariate </span><span class="si">{</span><span class="n">cov</span><span class="si">}</span><span class="s2">: AIC = </span><span class="si">{</span><span class="n">aic</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="c1"># Update best model if improved</span>
+                <span class="k">if</span> <span class="n">aic</span> <span class="o">&lt;</span> <span class="n">best_aic</span><span class="p">:</span>
+                    <span class="n">best_aic</span> <span class="o">=</span> <span class="n">aic</span>
+                    <span class="n">best_covs</span> <span class="o">=</span> <span class="p">[</span><span class="n">cov</span><span class="p">]</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error fitting model with covariate </span><span class="si">{</span><span class="n">cov</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Forward selection - iteratively add variables</span>
+        <span class="n">current_covs</span> <span class="o">=</span> <span class="n">best_covs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">current_aic</span> <span class="o">=</span> <span class="n">best_aic</span>
+
+        <span class="n">improved</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">while</span> <span class="n">improved</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_covs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n_covs</span><span class="p">:</span>
+            <span class="n">improved</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">best_new_aic</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+            <span class="n">best_new_cov</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="c1"># Try adding each remaining covariate</span>
+            <span class="k">for</span> <span class="n">cov</span> <span class="ow">in</span> <span class="n">cov_names</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">cov</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_covs</span><span class="p">:</span>
+                    <span class="n">test_covs</span> <span class="o">=</span> <span class="n">current_covs</span> <span class="o">+</span> <span class="p">[</span><span class="n">cov</span><span class="p">]</span>
+
+                    <span class="c1"># Create subset of covariates</span>
+                    <span class="n">cov_indices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">cov_names</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">test_covs</span><span class="p">]</span>
+                    <span class="n">cov_subset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+                        <span class="n">data_vars</span><span class="o">=</span><span class="p">{</span>
+                            <span class="s2">&quot;cov_values&quot;</span><span class="p">:</span> <span class="p">(</span>
+                                <span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;cov_names&quot;</span><span class="p">),</span>
+                                <span class="n">covariates</span><span class="o">.</span><span class="n">cov_values</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="n">cov_indices</span><span class="p">],</span>
+                            <span class="p">),</span>
+                        <span class="p">},</span>
+                        <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">covariates</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="s2">&quot;cov_names&quot;</span><span class="p">:</span> <span class="n">test_covs</span><span class="p">},</span>
+                    <span class="p">)</span>
+
+                    <span class="c1"># Fit model</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+                            <span class="n">bmus</span><span class="o">=</span><span class="n">bmus</span><span class="p">,</span>
+                            <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
+                            <span class="n">mk_order</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;mk_order&quot;</span><span class="p">],</span>
+                            <span class="n">use_constant</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;use_constant&quot;</span><span class="p">],</span>
+                            <span class="n">use_long_term</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;use_long_term&quot;</span><span class="p">],</span>
+                            <span class="n">seasonality</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;seasonality&quot;</span><span class="p">],</span>
+                            <span class="n">covariates</span><span class="o">=</span><span class="n">cov_subset</span><span class="p">,</span>
+                            <span class="n">cov_seasonality</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;cov_seasonality&quot;</span><span class="p">],</span>
+                        <span class="p">)</span>
+
+                        <span class="c1"># Get AIC</span>
+                        <span class="n">aic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">aic</span>
+                        <span class="n">all_results</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">aic</span><span class="p">,</span> <span class="n">test_covs</span><span class="p">))</span>
+
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Covariates </span><span class="si">{</span><span class="n">test_covs</span><span class="si">}</span><span class="s2">: AIC = </span><span class="si">{</span><span class="n">aic</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                        <span class="c1"># Update best candidate</span>
+                        <span class="k">if</span> <span class="n">aic</span> <span class="o">&lt;</span> <span class="n">best_new_aic</span><span class="p">:</span>
+                            <span class="n">best_new_aic</span> <span class="o">=</span> <span class="n">aic</span>
+                            <span class="n">best_new_cov</span> <span class="o">=</span> <span class="n">cov</span>
+
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Error fitting model with covariates </span><span class="si">{</span><span class="n">test_covs</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="p">)</span>
+
+            <span class="c1"># Check if adding the best new covariate improves AIC</span>
+            <span class="k">if</span> <span class="n">best_new_aic</span> <span class="o">&lt;</span> <span class="n">current_aic</span><span class="p">:</span>
+                <span class="n">improved</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">current_aic</span> <span class="o">=</span> <span class="n">best_new_aic</span>
+                <span class="n">current_covs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_new_cov</span><span class="p">)</span>
+
+                <span class="c1"># Update global best if improved</span>
+                <span class="k">if</span> <span class="n">current_aic</span> <span class="o">&lt;</span> <span class="n">best_aic</span><span class="p">:</span>
+                    <span class="n">best_aic</span> <span class="o">=</span> <span class="n">current_aic</span>
+                    <span class="n">best_covs</span> <span class="o">=</span> <span class="n">current_covs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Added covariate </span><span class="si">{</span><span class="n">best_new_cov</span><span class="si">}</span><span class="s2">, new AIC = </span><span class="si">{</span><span class="n">current_aic</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Final model with best covariates</span>
+        <span class="k">if</span> <span class="n">best_covs</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Best model has AIC = </span><span class="si">{</span><span class="n">best_aic</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> with covariates: </span><span class="si">{</span><span class="n">best_covs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Create final covariate subset</span>
+            <span class="n">cov_indices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">cov_names</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">best_covs</span><span class="p">]</span>
+            <span class="n">best_cov_subset</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+                <span class="n">data_vars</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;cov_values&quot;</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;cov_names&quot;</span><span class="p">),</span>
+                        <span class="n">covariates</span><span class="o">.</span><span class="n">cov_values</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="n">cov_indices</span><span class="p">],</span>
+                    <span class="p">),</span>
+                <span class="p">},</span>
+                <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">covariates</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="s2">&quot;cov_names&quot;</span><span class="p">:</span> <span class="n">best_covs</span><span class="p">},</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Fit final model</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+                <span class="n">bmus</span><span class="o">=</span><span class="n">bmus</span><span class="p">,</span>
+                <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
+                <span class="n">mk_order</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;mk_order&quot;</span><span class="p">],</span>
+                <span class="n">use_constant</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;use_constant&quot;</span><span class="p">],</span>
+                <span class="n">use_long_term</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;use_long_term&quot;</span><span class="p">],</span>
+                <span class="n">seasonality</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;seasonality&quot;</span><span class="p">],</span>
+                <span class="n">covariates</span><span class="o">=</span><span class="n">best_cov_subset</span><span class="p">,</span>
+                <span class="n">cov_seasonality</span><span class="o">=</span><span class="n">base_config</span><span class="p">[</span><span class="s2">&quot;cov_seasonality&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">best_covs</span><span class="p">,</span> <span class="n">best_aic</span></div>
+
+
+<div class="viewcode-block" id="AutoLogisticRegression.simulate">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr_AIC.AutoLogisticRegression.simulate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simulate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">time_sim</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">num_sims</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">covariates_sim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate simulations from the fitted ALR model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        time_sim : np.ndarray</span>
+<span class="sd">            Array of datetime objects for simulation</span>
+<span class="sd">        num_sims : int, optional</span>
+<span class="sd">            Number of simulations to generate</span>
+<span class="sd">        covariates_sim : xr.Dataset, optional</span>
+<span class="sd">            Covariates for simulation period</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Array of simulated states with shape (time, num_sims)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model must be fitted before simulation&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Get basic parameters</span>
+        <span class="n">mk_order</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mk_order</span>
+
+        <span class="c1"># Initialize output array</span>
+        <span class="n">sim_bmus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">time_sim</span><span class="p">),</span> <span class="n">num_sims</span><span class="p">))</span>
+
+        <span class="c1"># Initial values (random start)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_sims</span><span class="p">):</span>
+            <span class="c1"># Initialize with random values</span>
+            <span class="n">init_bmus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_size</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">mk_order</span><span class="p">)</span>
+            <span class="n">sim_bmus</span><span class="p">[:</span><span class="n">mk_order</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">init_bmus</span>
+
+        <span class="c1"># Main simulation loop</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Simulating </span><span class="si">{</span><span class="n">num_sims</span><span class="si">}</span><span class="s2"> time series...&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_sims</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">mk_order</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">time_sim</span><span class="p">)):</span>
+                <span class="c1"># Extract current simulation history</span>
+                <span class="n">hist_bmus</span> <span class="o">=</span> <span class="n">sim_bmus</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="n">mk_order</span> <span class="p">:</span> <span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span>
+
+                <span class="c1"># Generate terms for this step</span>
+                <span class="n">terms_i</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_terms</span><span class="p">(</span>
+                    <span class="n">bmus</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hist_bmus</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                    <span class="n">time</span><span class="o">=</span><span class="n">time_sim</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="n">mk_order</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+                    <span class="n">mk_order</span><span class="o">=</span><span class="n">mk_order</span><span class="p">,</span>
+                    <span class="n">use_constant</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Assuming constant is always used</span>
+                    <span class="n">use_long_term</span><span class="o">=</span><span class="s2">&quot;long_term&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit</span><span class="p">,</span>
+                    <span class="n">seasonality</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;seasonality&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit</span><span class="p">,</span>
+                        <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;seasonality&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit</span> <span class="k">else</span> <span class="p">[],</span>
+                    <span class="p">),</span>
+                    <span class="n">covariates</span><span class="o">=</span><span class="n">covariates_sim</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="n">time_sim</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">covariates_sim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">cov_seasonality</span><span class="o">=</span><span class="nb">any</span><span class="p">(</span>
+                        <span class="n">k</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_cos&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms_fit</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Prepare prediction matrix</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">terms_i</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+                <span class="c1"># Get transition probabilities</span>
+                <span class="n">probs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+                <span class="n">cum_probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">probs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+
+                <span class="c1"># Generate random state based on probabilities</span>
+                <span class="n">rnd_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span>
+                <span class="n">new_bmu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cum_probs</span> <span class="o">&gt;</span> <span class="n">rnd_val</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+                <span class="c1"># Store result</span>
+                <span class="n">sim_bmus</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_bmu</span>
+
+        <span class="k">return</span> <span class="n">sim_bmus</span></div>
+
+
+<div class="viewcode-block" id="AutoLogisticRegression.get_summary">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.alr_AIC.AutoLogisticRegression.get_summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get model summary statistics.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            DataFrame with parameter estimates, p-values, etc.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model must be fitted first&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Extract key information</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+        <span class="n">pvalues</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">pvalues</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+        <span class="n">conf_int</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">conf_int</span><span class="p">()</span>
+
+        <span class="c1"># Organize into a DataFrame</span>
+        <span class="n">summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="c1"># for cluster in range(2, self.cluster_size + 1):</span>
+        <span class="c1">#     cluster_params = params.iloc[cluster - 1].reset_index()</span>
+        <span class="c1">#     cluster_params.columns = [&quot;term&quot;, &quot;coefficient&quot;]</span>
+
+        <span class="c1">#     cluster_pvals = pvalues.iloc[cluster - 1].reset_index()</span>
+        <span class="c1">#     cluster_pvals.columns = [&quot;term&quot;, &quot;p_value&quot;]</span>
+
+        <span class="c1"># # Get confidence intervals</span>
+        <span class="c1"># ci_lower = conf_int.xs(cluster - 1, level=1)[0].reset_index()</span>
+        <span class="c1"># ci_upper = conf_int.xs(cluster - 1, level=1)[1].reset_index()</span>
+
+        <span class="c1"># ci_lower.columns = [&quot;term&quot;, &quot;ci_lower&quot;]</span>
+        <span class="c1"># ci_upper.columns = [&quot;term&quot;, &quot;ci_upper&quot;]</span>
+
+        <span class="c1"># # Combine all info</span>
+        <span class="c1"># cluster_info = cluster_params.merge(cluster_pvals, on=&quot;term&quot;)</span>
+        <span class="c1"># cluster_info = cluster_info.merge(ci_lower, on=&quot;term&quot;)</span>
+        <span class="c1"># cluster_info = cluster_info.merge(ci_upper, on=&quot;term&quot;)</span>
+
+        <span class="c1"># # Add cluster identifier</span>
+        <span class="c1"># cluster_info[&quot;cluster&quot;] = cluster</span>
+
+        <span class="c1"># # Add significance stars</span>
+        <span class="c1"># cluster_info[&quot;significance&quot;] = &quot;&quot;</span>
+        <span class="c1"># cluster_info.loc[cluster_info[&quot;p_value&quot;] &lt; 0.05, &quot;significance&quot;] = &quot;*&quot;</span>
+        <span class="c1"># cluster_info.loc[cluster_info[&quot;p_value&quot;] &lt; 0.01, &quot;significance&quot;] = &quot;**&quot;</span>
+        <span class="c1"># cluster_info.loc[cluster_info[&quot;p_value&quot;] &lt; 0.001, &quot;significance&quot;] = &quot;***&quot;</span>
+
+        <span class="c1"># # Append to summary</span>
+        <span class="c1"># summary = pd.concat([summary, cluster_info])</span>
+
+        <span class="c1"># Add model metrics</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Model Information:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AIC: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">aic</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;BIC: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bic</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Log-Likelihood: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">llf</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Pseudo R-squared: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">prsquared</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</div>
+
+
+        <span class="c1"># return summary.sort_values([&quot;cluster&quot;, &quot;term&quot;]).reset_index(drop=True)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+    <span class="c1"># Create sample data</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+
+    <span class="c1"># Create time array</span>
+    <span class="n">start_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">days</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="n">time_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">start_date</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">days</span><span class="p">)])</span>
+
+    <span class="c1"># Generate weather states (1-6)</span>
+    <span class="n">bmus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">days</span><span class="p">)</span>
+
+    <span class="c1"># Add some seasonality to states</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">days</span><span class="p">):</span>
+        <span class="n">day_of_year</span> <span class="o">=</span> <span class="n">time_array</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">timetuple</span><span class="p">()</span><span class="o">.</span><span class="n">tm_yday</span>
+        <span class="k">if</span> <span class="n">day_of_year</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>  <span class="c1"># Winter</span>
+            <span class="n">bmus</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">p</span><span class="o">=</span><span class="p">[</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">day_of_year</span> <span class="o">&gt;</span> <span class="mi">250</span><span class="p">:</span>  <span class="c1"># Fall</span>
+            <span class="n">bmus</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="n">p</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">])</span>
+
+    <span class="c1"># Create some covariates</span>
+    <span class="n">cov1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">days</span><span class="p">))</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span>
+        <span class="mi">0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">days</span>
+    <span class="p">)</span>  <span class="c1"># Oscillating</span>
+    <span class="n">cov2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">days</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">days</span><span class="p">)</span>  <span class="c1"># Trend</span>
+    <span class="n">cov3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">days</span><span class="p">)</span>  <span class="c1"># Random noise</span>
+
+    <span class="c1"># Create dataset with covariates</span>
+    <span class="n">covariates</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="n">data_vars</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;cov_values&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;cov_names&quot;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">cov1</span><span class="p">,</span> <span class="n">cov2</span><span class="p">,</span> <span class="n">cov3</span><span class="p">])),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">time_array</span><span class="p">,</span> <span class="s2">&quot;cov_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;oscillation&quot;</span><span class="p">,</span> <span class="s2">&quot;trend&quot;</span><span class="p">,</span> <span class="s2">&quot;noise&quot;</span><span class="p">]},</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Initialize and fit the ALR model</span>
+    <span class="n">alr_model</span> <span class="o">=</span> <span class="n">AutoLogisticRegression</span><span class="p">(</span><span class="n">cluster_size</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+
+    <span class="c1"># Select best covariates using AIC</span>
+    <span class="n">best_covs</span><span class="p">,</span> <span class="n">best_aic</span> <span class="o">=</span> <span class="n">alr_model</span><span class="o">.</span><span class="n">select_covariates_by_aic</span><span class="p">(</span>
+        <span class="n">bmus</span><span class="o">=</span><span class="n">bmus</span><span class="p">,</span>
+        <span class="n">time</span><span class="o">=</span><span class="n">time_array</span><span class="p">,</span>
+        <span class="n">covariates</span><span class="o">=</span><span class="n">covariates</span><span class="p">,</span>
+        <span class="n">base_config</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;mk_order&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;use_constant&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;use_long_term&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;seasonality&quot;</span><span class="p">:</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span>
+            <span class="s2">&quot;cov_seasonality&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Get model summary</span>
+    <span class="n">summary</span> <span class="o">=</span> <span class="n">alr_model</span><span class="o">.</span><span class="n">get_summary</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Model Parameter Summary:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span>
+
+    <span class="c1"># Generate future simulation</span>
+    <span class="n">future_days</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">future_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">start_date</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">days</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">future_days</span><span class="p">)]</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create future covariates</span>
+    <span class="n">future_cov1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">11</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">future_days</span><span class="p">)</span>
+    <span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">future_days</span><span class="p">)</span>
+    <span class="n">future_cov2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">,</span> <span class="n">future_days</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span>
+        <span class="mi">0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">future_days</span>
+    <span class="p">)</span>
+    <span class="n">future_cov3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">future_days</span><span class="p">)</span>
+
+    <span class="c1"># Create dataset with future covariates (using only selected covariates)</span>
+    <span class="n">cov_indices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">covariates</span><span class="o">.</span><span class="n">cov_names</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">best_covs</span><span class="p">]</span>
+    <span class="n">future_covs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
+        <span class="p">[[</span><span class="n">future_cov1</span><span class="p">,</span> <span class="n">future_cov2</span><span class="p">,</span> <span class="n">future_cov3</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">cov_indices</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="n">future_covariates</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="n">data_vars</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;cov_values&quot;</span><span class="p">:</span> <span class="p">((</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;cov_names&quot;</span><span class="p">),</span> <span class="n">future_covs</span><span class="p">),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">future_time</span><span class="p">,</span> <span class="s2">&quot;cov_names&quot;</span><span class="p">:</span> <span class="n">best_covs</span><span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Generate simulations</span>
+    <span class="n">simulations</span> <span class="o">=</span> <span class="n">alr_model</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span>
+        <span class="n">time_sim</span><span class="o">=</span><span class="n">future_time</span><span class="p">,</span> <span class="n">num_sims</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">covariates_sim</span><span class="o">=</span><span class="n">future_covariates</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Simulation Results (first 10 time steps):&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">simulations</span><span class="p">[:</span><span class="mi">10</span><span class="p">,</span> <span class="p">:])</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

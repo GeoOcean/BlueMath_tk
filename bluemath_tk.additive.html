@@ -1,0 +1,730 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.additive package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.config package" href="bluemath_tk.config.html" />
+    <link rel="prev" title="bluemath_tk package" href="bluemath_tk.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">bluemath_tk.additive package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.deeplearning.html">bluemath_tk.deeplearning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tcs.html">bluemath_tk.tcs package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.additive package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.additive.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-additive-package">
+<h1>bluemath_tk.additive package<a class="headerlink" href="#bluemath-tk-additive-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.additive.greensurge">
+<span id="bluemath-tk-additive-greensurge-module"></span><h2>bluemath_tk.additive.greensurge module<a class="headerlink" href="#module-bluemath_tk.additive.greensurge" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.GS_LinearWindDragCoef">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">GS_LinearWindDragCoef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Wspeed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">CD_Wl_abc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Wl_abc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#GS_LinearWindDragCoef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.GS_LinearWindDragCoef" title="Link to this definition"></a></dt>
+<dd><p>Calculate the linear drag coefficient based on wind speed and specified thresholds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Wspeed</strong> (<em>np.ndarray</em>) – Wind speed values (1D array).</p></li>
+<li><p><strong>CD_Wl_abc</strong> (<em>np.ndarray</em>) – Coefficients for the drag coefficient calculation, should be a 1D array of length 3.</p></li>
+<li><p><strong>Wl_abc</strong> (<em>np.ndarray</em>) – Wind speed thresholds for the drag coefficient calculation, should be a 1D array of length 3.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Calculated drag coefficient values based on the input wind speed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.GS_LinearWindDragCoef_mat">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">GS_LinearWindDragCoef_mat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Wspeed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">CD_Wl_abc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Wl_abc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#GS_LinearWindDragCoef_mat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.GS_LinearWindDragCoef_mat" title="Link to this definition"></a></dt>
+<dd><p>Calculate the linear drag coefficient based on wind speed and specified thresholds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Wspeed</strong> (<em>np.ndarray</em>) – Wind speed values (1D array).</p></li>
+<li><p><strong>CD_Wl_abc</strong> (<em>np.ndarray</em>) – Coefficients for the drag coefficient calculation, should be a 1D array of length 3.</p></li>
+<li><p><strong>Wl_abc</strong> (<em>np.ndarray</em>) – Wind speed thresholds for the drag coefficient calculation, should be a 1D array of length 3.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Calculated drag coefficient values based on the input wind speed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.GS_wind_partition_tri">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">GS_wind_partition_tri</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds_GFD_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xds_vortex</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#GS_wind_partition_tri"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.GS_wind_partition_tri" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.GS_windsetup_reconstruction_with_postprocess">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">GS_windsetup_reconstruction_with_postprocess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">greensurge_dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_gfd_metadata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wind_direction_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity_thresholds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">array([0,</span> <span class="pre">100,</span> <span class="pre">100])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drag_coefficients</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">array([0.00063,</span> <span class="pre">0.00723,</span> <span class="pre">0.00723])</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#GS_windsetup_reconstruction_with_postprocess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.GS_windsetup_reconstruction_with_postprocess" title="Link to this definition"></a></dt>
+<dd><p>Reconstructs the GreenSurge wind setup using the provided wind direction input and metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>greensurge_dataset</strong> (<em>xr.Dataset</em>) – xarray Dataset containing the GreenSurge mesh and forcing data.</p></li>
+<li><p><strong>ds_gfd_metadata</strong> (<em>xr.Dataset</em>) – xarray Dataset containing metadata for the GFD mesh.</p></li>
+<li><p><strong>wind_direction_input</strong> (<em>xr.Dataset</em>) – xarray Dataset containing wind direction and speed data.</p></li>
+<li><p><strong>velocity_thresholds</strong> (<em>np.ndarray</em>) – Array of velocity thresholds for drag coefficient calculation.</p></li>
+<li><p><strong>drag_coefficients</strong> (<em>np.ndarray</em>) – Array of drag coefficients corresponding to the velocity thresholds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>xarray Dataset containing the reconstructed wind setup.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.GS_windsetup_reconstruction_with_postprocess_parallel">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">GS_windsetup_reconstruction_with_postprocess_parallel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">greensurge_dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_gfd_metadata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wind_direction_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity_thresholds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">array([0,</span> <span class="pre">100,</span> <span class="pre">100])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drag_coefficients</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">array([0.00063,</span> <span class="pre">0.00723,</span> <span class="pre">0.00723])</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#GS_windsetup_reconstruction_with_postprocess_parallel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.GS_windsetup_reconstruction_with_postprocess_parallel" title="Link to this definition"></a></dt>
+<dd><p>Reconstructs the GreenSurge wind setup using the provided wind direction input and metadata in parallel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>greensurge_dataset</strong> (<em>xr.Dataset</em>) – xarray Dataset containing the GreenSurge mesh and forcing data.</p></li>
+<li><p><strong>ds_gfd_metadata</strong> (<em>xr.Dataset</em>) – xarray Dataset containing metadata for the GFD mesh.</p></li>
+<li><p><strong>wind_direction_input</strong> (<em>xr.Dataset</em>) – xarray Dataset containing wind direction and speed data.</p></li>
+<li><p><strong>velocity_thresholds</strong> (<em>np.ndarray</em>) – Array of velocity thresholds for drag coefficient calculation.</p></li>
+<li><p><strong>drag_coefficients</strong> (<em>np.ndarray</em>) – Array of drag coefficients corresponding to the velocity thresholds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>xarray Dataset containing the reconstructed wind setup.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.adcirc2DFlowFM">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">adcirc2DFlowFM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Path_grd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">netcdf_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#adcirc2DFlowFM"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.adcirc2DFlowFM" title="Link to this definition"></a></dt>
+<dd><p>Converts ADCIRC grid data to a NetCDF Delft3DFM format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Path_grd</strong> (<em>str</em>) – Path to the ADCIRC grid file.</p></li>
+<li><p><strong>netcdf_path</strong> (<em>str</em>) – Path where the resulting NetCDF file will be saved.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">adcirc2DFlowFM</span><span class="p">(</span><span class="s2">&quot;path/to/grid.grd&quot;</span><span class="p">,</span> <span class="s2">&quot;path/to/output.nc&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;NetCDF file created successfully.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.build_greensurge_infos_dataset">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">build_greensurge_infos_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_grd_calc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_grd_forz</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wind_speed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simulation_duration_hours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simulation_time_step_hours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forcing_time_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_date_dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Eddy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Chezy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#build_greensurge_infos_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.build_greensurge_infos_dataset" title="Link to this definition"></a></dt>
+<dd><p>Build a structured dataset containing simulation parameters for hybrid modeling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path_grd_calc</strong> (<em>str</em>) – Path to the computational grid file.</p></li>
+<li><p><strong>path_grd_forz</strong> (<em>str</em>) – Path to the forcing grid file.</p></li>
+<li><p><strong>site</strong> (<em>str</em>) – Name of the case study location.</p></li>
+<li><p><strong>wind_speed</strong> (<em>float</em>) – Wind speed for each discretized direction.</p></li>
+<li><p><strong>direction_step</strong> (<em>float</em>) – Step size for wind direction discretization in degrees.</p></li>
+<li><p><strong>simulation_duration_hours</strong> (<em>float</em>) – Total duration of the simulation in hours.</p></li>
+<li><p><strong>simulation_time_step_hours</strong> (<em>float</em>) – Time step used in the simulation in hours.</p></li>
+<li><p><strong>forcing_time_step</strong> (<em>float</em>) – Time step used for applying external forcing data in hours.</p></li>
+<li><p><strong>reference_date_dt</strong> (<em>datetime</em>) – Reference start date of the simulation.</p></li>
+<li><p><strong>Eddy</strong> (<em>float</em>) – Eddy viscosity used in the simulation in m²/s.</p></li>
+<li><p><strong>Chezy</strong> (<em>float</em>) – Chezy coefficient used for bottom friction.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A structured dataset containing simulation parameters for hybrid modeling.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.calculate_edges">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">calculate_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Elmts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#calculate_edges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.calculate_edges" title="Link to this definition"></a></dt>
+<dd><p>Calculates the unique edges from the given triangle elements.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Elmts</strong> (<em>np.ndarray</em>) – A 2D array of shape (nelmts, 3) containing the node indices for each triangle element.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A 2D array of shape (n_edges, 2) containing the unique edges,
+each represented by a pair of node indices.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.compute_water_level_for_time">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">compute_water_level_for_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wind_speed_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction_bins</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forcing_cell_indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">greensurge_dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wind_speed_reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_drag_coeff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drag_coefficients</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">velocity_thresholds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_in_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_output_times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#compute_water_level_for_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.compute_water_level_for_time" title="Link to this definition"></a></dt>
+<dd><p>Compute the water level for a specific time index based on wind direction and speed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>time_index</strong> (<em>int</em>) – The index of the time step to compute the water level for.</p></li>
+<li><p><strong>direction_data</strong> (<em>np.ndarray</em>) – 2D array of wind direction data with shape (n_cells, n_times).</p></li>
+<li><p><strong>wind_speed_data</strong> (<em>np.ndarray</em>) – 2D array of wind speed data with shape (n_cells, n_times).</p></li>
+<li><p><strong>direction_bins</strong> (<em>np.ndarray</em>) – 1D array of wind direction bins.</p></li>
+<li><p><strong>forcing_cell_indices</strong> (<em>np.ndarray</em>) – 1D array of indices for the forcing cells.</p></li>
+<li><p><strong>greensurge_dataset</strong> (<em>xr.Dataset</em>) – xarray Dataset containing the GreenSurge mesh and forcing data.</p></li>
+<li><p><strong>wind_speed_reference</strong> (<em>float</em>) – Reference wind speed value for scaling.</p></li>
+<li><p><strong>base_drag_coeff</strong> (<em>float</em>) – Base drag coefficient value for scaling.</p></li>
+<li><p><strong>drag_coefficients</strong> (<em>np.ndarray</em>) – 1D array of drag coefficients corresponding to the velocity thresholds.</p></li>
+<li><p><strong>velocity_thresholds</strong> (<em>np.ndarray</em>) – 1D array of velocity thresholds for drag coefficient calculation.</p></li>
+<li><p><strong>duration_in_steps</strong> (<em>int</em>) – Total duration of the simulation in steps.</p></li>
+<li><p><strong>num_output_times</strong> (<em>int</em>) – Total number of output time steps.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D array of computed water levels for the specified time index.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.create_triangle_mask">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">create_triangle_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lon_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">triangle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#create_triangle_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.create_triangle_mask" title="Link to this definition"></a></dt>
+<dd><p>Create a mask for a triangle defined by its vertices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lon_grid</strong> (<em>np.ndarray</em>) – The longitude grid.</p></li>
+<li><p><strong>lat_grid</strong> (<em>np.ndarray</em>) – The latitude grid.</p></li>
+<li><p><strong>triangle</strong> (<em>np.ndarray</em>) – The triangle vertices.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The mask for the triangle.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.create_triangle_mask_from_points">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">create_triangle_mask_from_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">triangle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#create_triangle_mask_from_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.create_triangle_mask_from_points" title="Link to this definition"></a></dt>
+<dd><p>Create a mask indicating which scattered points are inside a triangle.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lon</strong> (<em>np.ndarray</em>) – 1D array of longitudes of the points.</p></li>
+<li><p><strong>lat</strong> (<em>np.ndarray</em>) – 1D array of latitudes of the points.</p></li>
+<li><p><strong>triangle</strong> (<em>np.ndarray</em>) – (3, 2) array containing the triangle vertices as (lon, lat) pairs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>mask</strong> – 1D boolean array of same length as lon/lat indicating points inside the triangle.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.extract_pos_nearest_points">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">extract_pos_nearest_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds_mesh_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#extract_pos_nearest_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.extract_pos_nearest_points" title="Link to this definition"></a></dt>
+<dd><p>Extract the nearest point indices for given longitude and latitude points in a mesh dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds_mesh_info</strong> (<em>xr.Dataset</em>) – Dataset containing mesh information with longitude and latitude coordinates.</p></li>
+<li><p><strong>lon_points</strong> (<em>np.ndarray</em>) – Array of longitudes for which to find the nearest point indices.</p></li>
+<li><p><strong>lat_points</strong> (<em>np.ndarray</em>) – Array of latitudes for which to find the nearest point indices.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>pos_lon_points_mesh</strong> (<em>np.ndarray</em>) – Array of longitude indices corresponding to the input longitude points in the mesh.</p></li>
+<li><p><strong>pos_lat_points_mesh</strong> (<em>np.ndarray</em>) – Array of latitude indices corresponding to the input latitude points in the mesh.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.extract_pos_nearest_points_tri">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">extract_pos_nearest_points_tri</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds_mesh_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#extract_pos_nearest_points_tri"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.extract_pos_nearest_points_tri" title="Link to this definition"></a></dt>
+<dd><p>Extract the nearest triangle index for given longitude and latitude points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds_mesh_info</strong> (<em>xr.Dataset</em>) – Dataset containing mesh information with longitude and latitude coordinates.</p></li>
+<li><p><strong>lon_points</strong> (<em>np.ndarray</em>) – Array of longitudes for which to find the nearest triangle index.</p></li>
+<li><p><strong>lat_points</strong> (<em>np.ndarray</em>) – Array of latitudes for which to find the nearest triangle index.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of nearest triangle indices corresponding to the input longitude and latitude points.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.generate_structured_points">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">generate_structured_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">triangle_connectivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_lon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_lat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#generate_structured_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.generate_structured_points" title="Link to this definition"></a></dt>
+<dd><p>Generate structured points for each triangle in the mesh.
+Each triangle will have 10 points: vertices, centroid, midpoints of edges,
+and midpoints of vertex-centroid segments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>triangle_connectivity</strong> (<em>np.ndarray</em>) – Array of shape (n_triangles, 3) containing indices of the vertices for each triangle.</p></li>
+<li><p><strong>node_lon</strong> (<em>np.ndarray</em>) – Array of shape (n_nodes,) containing the longitudes of the nodes.</p></li>
+<li><p><strong>node_lat</strong> (<em>np.ndarray</em>) – Array of shape (n_nodes,) containing the latitudes of the nodes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>lon_all</strong> (<em>np.ndarray</em>) – Array of shape (n_triangles, 10) containing the longitudes of the structured points for each triangle.</p></li>
+<li><p><strong>lat_all</strong> (<em>np.ndarray</em>) – Array of shape (n_triangles, 10) containing the latitudes of the structured points for each triangle.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.get_regular_grid">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">get_regular_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_computation_longitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_computation_latitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_computation_elements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#get_regular_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.get_regular_grid" title="Link to this definition"></a></dt>
+<dd><p>Generate a regular grid based on the node computation longitude and latitude.
+The grid is defined by the minimum and maximum longitude and latitude values,
+and the minimum distance between nodes in both dimensions.
+The grid is generated with a specified factor to adjust the resolution.
+Parameters:
+- node_computation_longitude: 1D array of longitudes for the nodes.
+- node_computation_latitude: 1D array of latitudes for the nodes.
+- node_computation_elements: 2D array of indices defining the elements (triangles).
+- factor: A scaling factor to adjust the resolution of the grid.
+Returns:
+- lon_grid: 1D array of longitudes defining the grid.
+- lat_grid: 1D array of latitudes defining the grid.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.interp_vortex_to_triangles">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">interp_vortex_to_triangles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xds_vortex_GS</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_all</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_all</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'tri_mean'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#interp_vortex_to_triangles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.interp_vortex_to_triangles" title="Link to this definition"></a></dt>
+<dd><p>Interpolates the vortex model data to the triangle points.
+:param xds_vortex_GS: Dataset containing the vortex model data.
+:type xds_vortex_GS: xr.Dataset
+:param lon_all: Longitudes of the triangle points.
+:type lon_all: np.ndarray
+:param lat_all: Latitudes of the triangle points.
+:type lat_all: np.ndarray</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>xds_vortex_interp</strong> (<em>xr.Dataset</em>) – Dataset containing the interpolated vortex model data at the triangle points.</p></li>
+<li><p><em>———–</em></p></li>
+<li><p><em>This function interpolates the vortex model data (wind speed, direction, and pressure)</em></p></li>
+<li><p>to the triangle points defined by <cite>lon_all</cite> and <cite>lat_all</cite>. It reshapes the data</p></li>
+<li><p><em>to match the number of triangles and points, and computes the mean values for each triangle.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.load_GS_database">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">load_GS_database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xds_vortex_interp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_GFD_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_GFD_libdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#load_GS_database"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.load_GS_database" title="Link to this definition"></a></dt>
+<dd><p>Load the Green Surge database based on the interpolated vortex data.
+:param xds_vortex_interp: Interpolated vortex data on the structured grid.
+:type xds_vortex_interp: xarray.Dataset
+:param ds_GFD_info: Dataset containing information about the Green Surge database.
+:type ds_GFD_info: xarray.Dataset
+:param p_GFD_libdir: Path to the Green Surge database directory.
+:type p_GFD_libdir: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dataset containing the Green Surge data for the specified wind directions.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.plot_GS_TG_validation_timeseries">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">plot_GS_TG_validation_timeseries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds_WL_GS_WindSetUp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_WL_GS_IB</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_WL_dynamic_WindSetUp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tide_gauge</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_GFD_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(20,</span> <span class="pre">7)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">WLmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">WLmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#plot_GS_TG_validation_timeseries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.plot_GS_TG_validation_timeseries" title="Link to this definition"></a></dt>
+<dd><p>Plot a time series comparison of GreenSurge, dynamic wind setup, and tide gauge data with a bathymetry map.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds_WL_GS_WindSetUp</strong> (<em>xr.Dataset</em>) – Dataset containing GreenSurge wind setup data with dimensions (nface, time).</p></li>
+<li><p><strong>ds_WL_GS_IB</strong> (<em>xr.Dataset</em>) – Dataset containing inverse barometer data with dimensions (lat, lon, time).</p></li>
+<li><p><strong>ds_WL_dynamic_WindSetUp</strong> (<em>xr.Dataset</em>) – Dataset containing dynamic wind setup data with dimensions (mesh2d_nFaces, time).</p></li>
+<li><p><strong>tide_gauge</strong> (<em>xr.Dataset</em>) – Dataset containing tide gauge data with dimensions (time).</p></li>
+<li><p><strong>ds_GFD_info</strong> (<em>xr.Dataset</em>) – Dataset containing grid information with longitude and latitude coordinates.</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Size of the figure for the plot. Default is (15, 7).</p></li>
+<li><p><strong>WLmin</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum water level for the plot. Default is None.</p></li>
+<li><p><strong>WLmax</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum water level for the plot. Default is None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.plot_GS_input_wind_partition">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">plot_GS_input_wind_partition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xds_vortex_GS</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xds_vortex_interp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_GFD_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SWATH</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#plot_GS_input_wind_partition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.plot_GS_input_wind_partition" title="Link to this definition"></a></dt>
+<dd><p>Plot the wind partition for GreenSurge input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xds_vortex_GS</strong> (<em>xr.Dataset</em>) – Dataset containing the vortex model data for GreenSurge.</p></li>
+<li><p><strong>xds_vortex_interp</strong> (<em>xr.Dataset</em>) – Dataset containing the interpolated vortex model data.</p></li>
+<li><p><strong>ds_GFD_info</strong> (<em>xr.Dataset</em>) – Dataset containing the GreenSurge forcing information.</p></li>
+<li><p><strong>i_time</strong> (<em>int</em><em>, </em><em>optional</em>) – Index of the time step to plot. Default is 0.</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Figure size. Default is (10, 8).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.plot_GS_validation_timeseries">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">plot_GS_validation_timeseries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds_WL_GS_WindSetUp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_WL_GS_IB</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_WL_dynamic_WindSetUp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_GFD_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_obs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[184.8]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_obs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[-21.14]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(20,</span> <span class="pre">7)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">WLmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">WLmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#plot_GS_validation_timeseries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.plot_GS_validation_timeseries" title="Link to this definition"></a></dt>
+<dd><p>Plot a time series comparison of GreenSurge, dynamic wind setup, and tide gauge data with a bathymetry map.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds_WL_GS_WindSetUp</strong> (<em>xr.Dataset</em>) – Dataset containing GreenSurge wind setup data with dimensions (nface, time).</p></li>
+<li><p><strong>ds_WL_GS_IB</strong> (<em>xr.Dataset</em>) – Dataset containing inverse barometer data with dimensions (lat, lon, time).</p></li>
+<li><p><strong>ds_WL_dynamic_WindSetUp</strong> (<em>xr.Dataset</em>) – Dataset containing dynamic wind setup data with dimensions (mesh2d_nFaces, time).</p></li>
+<li><p><strong>ds_GFD_info</strong> (<em>xr.Dataset</em>) – Dataset containing grid information with longitude and latitude coordinates.</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Size of the figure for the plot. Default is (15, 7).</p></li>
+<li><p><strong>WLmin</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum water level for the plot. Default is None.</p></li>
+<li><p><strong>WLmax</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum water level for the plot. Default is None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.plot_GS_vs_dynamic_windsetup">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">plot_GS_vs_dynamic_windsetup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds_WL_GS_WindSetUp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_WL_dynamic_WindSetUp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_gfd_metadata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#plot_GS_vs_dynamic_windsetup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.plot_GS_vs_dynamic_windsetup" title="Link to this definition"></a></dt>
+<dd><p>Plot the GreenSurge and dynamic wind setup from the provided datasets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds_WL_GS_WindSetUp</strong> (<em>xr.Dataset</em>) – xarray Dataset containing the GreenSurge wind setup data.</p></li>
+<li><p><strong>ds_WL_dynamic_WindSetUp</strong> (<em>xr.Dataset</em>) – xarray Dataset containing the dynamic wind setup data.</p></li>
+<li><p><strong>ds_gfd_metadata</strong> (<em>xr.Dataset</em>) – xarray Dataset containing the metadata for the GFD mesh.</p></li>
+<li><p><strong>time</strong> (<em>datetime.datetime</em>) – The time point at which to plot the data.</p></li>
+<li><p><strong>vmin</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum value for the color scale. Default is None.</p></li>
+<li><p><strong>vmax</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum value for the color scale. Default is None.</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Tuple specifying the figure size. Default is (10, 8).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.plot_GS_vs_dynamic_windsetup_swath">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">plot_GS_vs_dynamic_windsetup_swath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds_WL_GS_WindSetUp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_WL_dynamic_WindSetUp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_gfd_metadata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(10,</span> <span class="pre">8)</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#plot_GS_vs_dynamic_windsetup_swath"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.plot_GS_vs_dynamic_windsetup_swath" title="Link to this definition"></a></dt>
+<dd><p>Plot the GreenSurge and dynamic wind setup from the provided datasets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds_WL_GS_WindSetUp</strong> (<em>xr.Dataset</em>) – Dataset containing the GreenSurge wind setup data.</p></li>
+<li><p><strong>ds_WL_dynamic_WindSetUp</strong> (<em>xr.Dataset</em>) – Dataset containing the dynamic wind setup data.</p></li>
+<li><p><strong>ds_gfd_metadata</strong> (<em>xr.Dataset</em>) – Dataset containing the metadata for the GFD mesh.</p></li>
+<li><p><strong>vmin</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum value for the color scale. Default is None.</p></li>
+<li><p><strong>vmax</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum value for the color scale. Default is None.</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Figure size. Default is (10, 8).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>fig</strong> (<em>Figure</em>) – The figure object containing the plots.</p></li>
+<li><p><strong>axs</strong> (<em>list of Axes</em>) – List of Axes objects for the two subplots.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.plot_greensurge_setup">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">plot_greensurge_setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info_ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(10,</span> <span class="pre">10)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Figure</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Axes</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Axes</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#plot_greensurge_setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.plot_greensurge_setup" title="Link to this definition"></a></dt>
+<dd><p>Plot the GreenSurge mesh setup from the provided dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>info_ds</strong> (<em>xr.Dataset</em>) – Dataset containing the mesh information.</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Figure size. Default is (10, 10).</p></li>
+<li><p><strong>fig</strong> (<em>Figure</em><em>, </em><em>optional</em>) – Figure object to plot on. If None, a new figure will be created.</p></li>
+<li><p><strong>ax</strong> (<em>Axes</em><em>, </em><em>optional</em>) – Axes object to plot on. If None, a new axes will be created.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>fig</strong> (<em>Figure</em>) – Figure object.</p></li>
+<li><p><strong>ax</strong> (<em>Axes</em>) – Axes object.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.plot_greensurge_setup_with_raster">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">plot_greensurge_setup_with_raster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">simulation_dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_grd_calc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(7,</span> <span class="pre">7)</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#plot_greensurge_setup_with_raster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.plot_greensurge_setup_with_raster" title="Link to this definition"></a></dt>
+<dd><p>Plot the GreenSurge setup with raster bathymetry.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>simulation_dataset</strong> (<em>xr.Dataset</em>) – Dataset containing simulation information.</p></li>
+<li><p><strong>path_grd_calc</strong> (<em>str</em>) – Path to the ADCIRC grid file for calculation.</p></li>
+<li><p><strong>figsize</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Size of the figure, by default (7, 7)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>None</em></p></li>
+<li><p><em>———–</em></p></li>
+<li><p><em>This function plots the GreenSurge setup using raster bathymetry</em></p></li>
+<li><p><em>and the ADCIRC grid for calculation. It uses Cartopy for geographic</em></p></li>
+<li><p><em>projections and matplotlib for plotting.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.plot_triangle_points">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">plot_triangle_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lon_all</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_all</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_GFD_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(7,</span> <span class="pre">7)</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#plot_triangle_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.plot_triangle_points" title="Link to this definition"></a></dt>
+<dd><p>Plot a triangle and points selection for GreenSurge.
+:param lon_all: Longitudes of the points.
+:type lon_all: array-like
+:param lat_all: Latitudes of the points.
+:type lat_all: array-like
+:param i: Index of the triangle to plot.
+:type i: int
+:param ds_GFD_info: Dataset containing GreenSurge information.
+:type ds_GFD_info: xarray.Dataset
+:param figsize: Size of the figure, by default (7, 7).
+:type figsize: tuple, optional</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.pressure_to_IB">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">pressure_to_IB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xds_presure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#pressure_to_IB"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.pressure_to_IB" title="Link to this definition"></a></dt>
+<dd><p>Convert pressure data in a dataset to inverse barometer (IB) values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>xds_presure</strong> (<em>xr.Dataset</em>) – Dataset containing pressure data with dimensions (lat, lon, time).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with an additional variable ‘IB’ representing the inverse barometer values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.additive.greensurge.read_adcirc_grd">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.additive.greensurge.</span></span><span class="sig-name descname"><span class="pre">read_adcirc_grd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grd_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/additive/greensurge.html#read_adcirc_grd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.additive.greensurge.read_adcirc_grd" title="Link to this definition"></a></dt>
+<dd><p>Reads the ADCIRC grid file and returns the node and element data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>grd_file</strong> (<em>str</em>) – Path to the ADCIRC grid file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A tuple containing:
+- Nodes (np.ndarray): An array of shape (nnodes, 3) containing the coordinates of each node.
+- Elmts (np.ndarray): An array of shape (nelmts, 3) containing the element connectivity,</p>
+<blockquote>
+<div><p>with node indices adjusted (decremented by 1).</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>lines (List[str]): The remaining lines in the file after reading the nodes and elements.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[np.ndarray, np.ndarray, List[str]]</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">nodes</span><span class="p">,</span> <span class="n">elmts</span><span class="p">,</span> <span class="n">lines</span> <span class="o">=</span> <span class="n">read_adcirc_grd</span><span class="p">(</span><span class="s2">&quot;path/to/grid.grd&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">nodes</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">elmts</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
+<span class="go">(1000, 3) (500, 3) 10</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.additive">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bluemath_tk.additive" title="Link to this heading"></a></h2>
+<p>Project: BlueMath_tk
+Sub-Module: additive
+Author: GeoOcean Research Group, Universidad de Cantabria
+Repository: <a class="reference external" href="https://github.com/GeoOcean/BlueMath_tk.git">https://github.com/GeoOcean/BlueMath_tk.git</a>
+Status: Under development (Working)</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.html" class="btn btn-neutral float-left" title="bluemath_tk package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.config.html" class="btn btn-neutral float-right" title="bluemath_tk.config package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

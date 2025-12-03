@@ -1,0 +1,45 @@
+bluemath\_tk.interpolation package
+==================================
+
+Submodules
+----------
+
+bluemath\_tk.interpolation.analogs module
+-----------------------------------------
+
+.. automodule:: bluemath_tk.interpolation.analogs
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.interpolation.gps module
+-------------------------------------
+
+.. automodule:: bluemath_tk.interpolation.gps
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.interpolation.rbf module
+-------------------------------------
+
+.. automodule:: bluemath_tk.interpolation.rbf
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.interpolation.rbf\_scipy module
+--------------------------------------------
+
+.. automodule:: bluemath_tk.interpolation.rbf_scipy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.interpolation
+   :members:
+   :show-inheritance:
+   :undoc-members:

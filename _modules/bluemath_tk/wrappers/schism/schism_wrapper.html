@@ -1,0 +1,1031 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.wrappers.schism.schism_wrapper &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/thebelab.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.wrappers.schism.schism_wrapper</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.wrappers.schism.schism_wrapper</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">interp1d</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.._base_wrappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModelWrapper</span>
+
+<span class="n">sbatch_file_example</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;#!/bin/bash</span>
+<span class="s2">#SBATCH --ntasks=1              # Number of tasks (MPI processes)</span>
+<span class="s2">#SBATCH --partition=geocean     # Standard output and error log</span>
+<span class="s2">#SBATCH --nodes=1               # Number of nodes to use</span>
+<span class="s2">#SBATCH --mem=4gb               # Memory per node in GB (see also --mem-per-cpu)</span>
+<span class="s2">#SBATCH --time=24:00:00</span>
+
+
+<span class="s2">case_dir=$(ls | awk &quot;NR == $SLURM_ARRAY_TASK_ID&quot;)</span>
+<span class="s2">cd $case_dir</span>
+<span class="s2">launchSchism.sh</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="SchismModelWrapper">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SchismModelWrapper</span><span class="p">(</span><span class="n">BaseModelWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper for the Schism model.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    default_parameters : dict</span>
+<span class="sd">        The default parameters type for the wrapper.</span>
+<span class="sd">    available_launchers : dict</span>
+<span class="sd">        The available launchers for the wrapper.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_parameters</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">available_launchers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;geoocean-cluster&quot;</span><span class="p">:</span> <span class="s2">&quot;launchSchism.sh&quot;</span><span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">templates_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">metamodel_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">fixed_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">templates_name</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+        <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the Schism model wrapper.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">templates_dir</span><span class="o">=</span><span class="n">templates_dir</span><span class="p">,</span>
+            <span class="n">metamodel_parameters</span><span class="o">=</span><span class="n">metamodel_parameters</span><span class="p">,</span>
+            <span class="n">fixed_parameters</span><span class="o">=</span><span class="n">fixed_parameters</span><span class="p">,</span>
+            <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+            <span class="n">templates_name</span><span class="o">=</span><span class="n">templates_name</span><span class="p">,</span>
+            <span class="n">default_parameters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">default_parameters</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_logger_name</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;DEBUG&quot;</span> <span class="k">if</span> <span class="n">debug</span> <span class="k">else</span> <span class="s2">&quot;INFO&quot;</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sbatch_file_example</span> <span class="o">=</span> <span class="n">sbatch_file_example</span>
+
+<div class="viewcode-block" id="SchismModelWrapper.build_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper.build_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_case</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the input files for a case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;outputs&quot;</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SchismHyCoFfEE">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SchismHyCoFfEE</span><span class="p">(</span><span class="n">SchismModelWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Schism wrapper: HyCoFfEE : A Hybrid Compound Flooding metamodel for Estuarine Environment.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_parameters</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="c1"># .param file</span>
+        <span class="s2">&quot;indvel&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Method for computing velocity at nodes: 0= linear shape function; 1 = averaging method&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;ihorcon&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Horizontal viscosity option: 0= no viscosity is used; 1= Lapacian&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;ishapiro&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;on/off flag for Shapiro filter: 0= off; 1= on&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;inter_mom&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot; Interpolation is used for velocity at foot of char: 0=linear; 1=Kriging (define kr_co ); -1= spatial Kriging (define krvel.gr3)&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="c1"># CORE</span>
+        <span class="s2">&quot;ipre&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Pre-process flag: 0= normal run; 1= only for single CPU!&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;ibc&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Barotropic flag&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;ibtp&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Baroclinic flag&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="c1"># TRACERS</span>
+        <span class="s2">&quot;ntracer_gen&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;# of tracers&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;ntracer_age&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Age calculation, must be 2*ntracer_gen&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="c1"># SEDIMENTS</span>
+        <span class="s2">&quot;sed_class&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;SED3D&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="c1"># ECO</span>
+        <span class="s2">&quot;eco_class&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">27</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;EcoSim. Must be bewteen [25,60]&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="c1"># OPT</span>
+        <span class="s2">&quot;ieos_type&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;UNESCO 1980 (nonlinear); =1: linear function of T ONLY, i.e. &quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;ieos_pres&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Used only if ieos_type=0. 0: without pressure effects &quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;eos_a&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Needed if ieos_type=1; should be &lt;=0&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;eos_b&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1001</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Needed if ieos_type=1&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="c1"># WWM</span>
+        <span class="s2">&quot;msc2&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">24</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Grid for WWM. Same as msc in .nml ... for consitency check between SCHISM and WWM&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;mdc2&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Grid for WWM. Same as mdc in .nml ... for consitency check between SCHISM and WWM&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="c1"># SCHOUT</span>
+        <span class="s2">&quot;output_WL&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Elev. [m] = 0: off; 1: on&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;output_wind_velocity&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Wind velocity vector [m/s] = 0: off; 1: on&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;output_water_temperature&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Water temperature [C] = 0: off; 1: on&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;output_depth_averaged_vel&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Depth-averaged vel vector [m/s] = 0: off; 1: on&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;output_water_salinity&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Water salinity [PSU] = 0: off; 1: on&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="SchismHyCoFfEE.generate_time_series">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_time_series">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_time_series</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate the required th files for the case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;case_num&quot;</span><span class="p">])</span>
+
+        <span class="c1"># Calculate the start and end times in seconds</span>
+        <span class="n">qp</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Qp&quot;</span><span class="p">)</span>
+        <span class="n">qb</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Qb&quot;</span><span class="p">)</span>
+        <span class="n">tp</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Tp&quot;</span><span class="p">)</span>
+        <span class="n">tau_ss_d</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Tau_ss_d&quot;</span><span class="p">)</span>
+        <span class="n">tau</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Tau&quot;</span><span class="p">)</span>
+        <span class="n">cm</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CM&quot;</span><span class="p">)</span>
+        <span class="n">sb</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Sb&quot;</span><span class="p">)</span>
+        <span class="n">sp</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Sp&quot;</span><span class="p">)</span>
+        <span class="n">hidro</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hidro&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Puede ser que tau(ss-d) sea negativo pero Tp sea tan pequeño que las 24 horas del surge empiecen antes que el hidrograma de caudal</span>
+        <span class="n">time0</span> <span class="o">=</span> <span class="n">tp</span> <span class="o">+</span> <span class="nb">abs</span><span class="p">(</span><span class="n">tau_ss_d</span><span class="p">)</span> <span class="o">-</span> <span class="mi">24</span>
+
+        <span class="c1"># hidrograma SCS</span>
+        <span class="n">hidro_Qp</span> <span class="o">=</span> <span class="n">hidro</span><span class="o">.</span><span class="n">Q</span> <span class="o">*</span> <span class="p">(</span><span class="n">qp</span> <span class="o">-</span> <span class="n">qb</span><span class="p">)</span> <span class="o">+</span> <span class="n">qb</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">tau_ss_d</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">time0</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">tp</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="p">):</span>  <span class="c1"># el hidrograma marca el inicio del tiempo</span>
+            <span class="n">hidro_hours</span> <span class="o">=</span> <span class="n">hidro</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">values</span> <span class="o">*</span> <span class="n">tp</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tau_ss_d</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">time0</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">tp</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">hidro_hours</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">hidro</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">values</span> <span class="o">*</span> <span class="n">tp</span> <span class="o">+</span> <span class="nb">abs</span><span class="p">(</span><span class="n">time0</span><span class="p">)</span>
+                <span class="p">)</span>  <span class="c1"># el storm surge marca el inicio y hay que sumar el Tau con respecto al surge</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">tau_ss_d</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">t0</span> <span class="o">=</span> <span class="mi">24</span> <span class="o">-</span> <span class="p">(</span><span class="n">tp</span> <span class="o">-</span> <span class="n">tau_ss_d</span><span class="p">)</span>
+                    <span class="n">hidro_hours</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">hidro</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">values</span> <span class="o">*</span> <span class="n">tp</span> <span class="o">+</span> <span class="n">t0</span>
+                    <span class="p">)</span>  <span class="c1"># el storm surge marca el inicio y hay que sumar el Tau con respecto al surge</span>
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># el desfase es cero</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">tp</span> <span class="o">==</span> <span class="mi">0</span>
+                    <span class="p">):</span>  <span class="c1"># el tiempo de concentración también, con lo que se supone que el caudal es constante e igual al base</span>
+                        <span class="n">hidro_hours</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">49</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                        <span class="n">hidro_Qp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hidro_hours</span><span class="p">))</span> <span class="o">*</span> <span class="n">qp</span>
+
+        <span class="n">hidro_seg</span> <span class="o">=</span> <span class="n">hidro_hours</span> <span class="o">*</span> <span class="mi">3600</span>
+
+        <span class="c1"># duración teniendo en cuenta los desfases entre picos de caudal y storm surge</span>
+        <span class="c1"># en el caso de Tau(ss-d) &lt; 0 y Tp suficientemente grande para que el hidrograma de caudal marque el inicio</span>
+        <span class="n">timef</span> <span class="o">=</span> <span class="n">tp</span> <span class="o">+</span> <span class="nb">abs</span><span class="p">(</span><span class="n">tau_ss_d</span><span class="p">)</span> <span class="o">+</span> <span class="mi">24</span>
+
+        <span class="c1"># AT</span>
+        <span class="c1"># Creamos un array con los valores de tiempo (48 horas)</span>
+        <span class="n">int_min</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dt&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">timef</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">hidro_hours</span><span class="p">)</span> <span class="ow">and</span> <span class="n">tau_ss_d</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">time0</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">):</span>  <span class="c1"># añadido nuevo el time0&gt;0</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">timef</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">,</span> <span class="n">int_min</span><span class="p">)</span>
+            <span class="c1"># interpolamos caudal a esa resolución temporal</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">,</span> <span class="n">hidro_Qp</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+            <span class="c1"># f = interp1d(hidro_seg, hidro_Qp, kind=&quot;linear&quot;, fill_value=&quot;extrapolate&quot;, bounds_error=False) # CAMBIADO!!!!</span>
+
+            <span class="n">t2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">),</span> <span class="n">int_min</span><span class="p">)</span>
+            <span class="n">hidro_Qp_5_1</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+            <span class="n">t3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+            <span class="n">hidro_Qp_5_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">t3</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">))</span> <span class="o">+</span> <span class="n">hidro_Qp</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">hidro_Qp_5</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">hidro_Qp_5_1</span><span class="p">,</span> <span class="n">hidro_Qp_5_2</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">hidro_hours</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">48</span> <span class="ow">and</span> <span class="n">tau_ss_d</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">time0</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">):</span>  <span class="c1"># añadido nuevo el time0&gt;0</span>
+                <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">48</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">,</span> <span class="n">int_min</span><span class="p">)</span>
+                <span class="c1"># interpolamos caudal a esa resolución temporal</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">,</span> <span class="n">hidro_Qp</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+                <span class="n">t2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">),</span> <span class="n">int_min</span><span class="p">)</span>
+                <span class="n">hidro_Qp_5_1</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+                <span class="n">t3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+                <span class="n">hidro_Qp_5_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">t3</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">))</span> <span class="o">+</span> <span class="n">hidro_Qp</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">hidro_Qp_5</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">hidro_Qp_5_1</span><span class="p">,</span> <span class="n">hidro_Qp_5_2</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">tau_ss_d</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">time0</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">tp</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">hidro_hours</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">48</span><span class="p">:</span>
+                    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">),</span> <span class="n">int_min</span><span class="p">)</span>
+                    <span class="n">hidro_Qp_5_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">time0</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">)),</span> <span class="n">qb</span><span class="p">)</span>
+                    <span class="n">f</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">,</span> <span class="n">hidro_Qp</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+                    <span class="n">t2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">),</span> <span class="n">int_min</span><span class="p">)</span>
+                    <span class="n">hidro_Qp_5_2</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+                    <span class="n">hidro_Qp_5</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">hidro_Qp_5_1</span><span class="p">,</span> <span class="n">hidro_Qp_5_2</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">tau_ss_d</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">time0</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">tp</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">hidro_hours</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">48</span><span class="p">:</span>
+                        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">48</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">,</span> <span class="n">int_min</span><span class="p">)</span>
+                        <span class="n">hidro_Qp_5_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">time0</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">)),</span> <span class="n">qb</span><span class="p">)</span>
+                        <span class="n">f</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">,</span> <span class="n">hidro_Qp</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+                        <span class="n">t2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">),</span> <span class="n">int_min</span><span class="p">)</span>
+                        <span class="n">hidro_Qp_5_2</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+                        <span class="n">time_left</span> <span class="o">=</span> <span class="mi">48</span> <span class="o">-</span> <span class="n">hidro_hours</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                        <span class="n">hidro_Qp_5_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">time_left</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">)),</span> <span class="n">qb</span><span class="p">)</span>
+                        <span class="n">hidro_Qp_5</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span>
+                            <span class="p">(</span><span class="n">hidro_Qp_5_1</span><span class="p">,</span> <span class="n">hidro_Qp_5_2</span><span class="p">,</span> <span class="n">hidro_Qp_5_3</span><span class="p">)</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">hidro_hours</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">48</span><span class="p">:</span>
+                            <span class="n">t0</span> <span class="o">=</span> <span class="mi">24</span> <span class="o">-</span> <span class="p">(</span><span class="n">tp</span> <span class="o">-</span> <span class="n">tau_ss_d</span><span class="p">)</span>
+                            <span class="c1"># timef2 = t0 + np.max()</span>
+                            <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">48</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">,</span> <span class="n">int_min</span><span class="p">)</span>
+                            <span class="n">hidro_Qp_5_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">t0</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">))</span> <span class="o">+</span> <span class="n">qb</span>
+                            <span class="c1"># interpolamos caudal a esa resolución temporal</span>
+                            <span class="n">f</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">,</span> <span class="n">hidro_Qp</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+                            <span class="n">t2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+                                <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">),</span> <span class="n">int_min</span>
+                            <span class="p">)</span>
+                            <span class="n">hidro_Qp_5_1</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+                            <span class="n">t3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+                            <span class="n">hidro_Qp_5_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">t3</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">))</span> <span class="o">+</span> <span class="n">qb</span>
+                            <span class="n">hidro_Qp_5</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span>
+                                <span class="p">(</span><span class="n">hidro_Qp_5_0</span><span class="p">,</span> <span class="n">hidro_Qp_5_1</span><span class="p">,</span> <span class="n">hidro_Qp_5_2</span><span class="p">)</span>
+                            <span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">),</span> <span class="n">int_min</span><span class="p">)</span>
+                            <span class="c1"># interpolamos caudal a esa resolución temporal</span>
+                            <span class="n">f</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">,</span> <span class="n">hidro_Qp</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">tau_ss_d</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                                <span class="n">t0</span> <span class="o">=</span> <span class="mi">24</span> <span class="o">-</span> <span class="p">(</span><span class="n">tp</span> <span class="o">-</span> <span class="n">tau_ss_d</span><span class="p">)</span>
+                                <span class="c1"># hidro_Qp_5_1 = np.full(int(df_v.iloc[n][&#39;Tau_ss_d&#39;]*3600/5),qb)</span>
+                                <span class="n">hidro_Qp_5_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">t0</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">),</span> <span class="n">qb</span><span class="p">)</span>
+                                <span class="n">t2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+                                    <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">hidro_seg</span><span class="p">),</span> <span class="n">int_min</span>
+                                <span class="p">)</span>
+                                <span class="n">hidro_Qp_5_2</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+                                <span class="n">hidro_Qp_5</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">hidro_Qp_5_1</span><span class="p">,</span> <span class="n">hidro_Qp_5_2</span><span class="p">))</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">hidro_Qp_5</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>  <span class="c1"># el hidrograma abarca todo el tiempo</span>
+
+        <span class="c1"># Tau (desfase de la pleamar con respecto al pico de caudal Qp - en horas)</span>
+        <span class="c1"># tau = tau</span>
+
+        <span class="c1"># AT</span>
+        <span class="n">at</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">tau</span> <span class="o">/</span> <span class="mi">6</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">t</span> <span class="o">/</span> <span class="p">(</span><span class="mi">12</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">))</span> <span class="o">*</span> <span class="n">cm</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="c1"># Storm surge</span>
+        <span class="n">time0</span> <span class="o">=</span> <span class="n">tp</span> <span class="o">+</span> <span class="nb">abs</span><span class="p">(</span><span class="n">tau_ss_d</span><span class="p">)</span> <span class="o">-</span> <span class="mi">24</span>
+
+        <span class="k">if</span> <span class="n">tau_ss_d</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="n">time0</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>  <span class="c1"># el hidrograma marca el inicio del tiempo</span>
+            <span class="c1"># desde el inicio del hidrograma hasta que empieza el pico, el valor del surge es el base</span>
+            <span class="c1"># time0=df_v.iloc[n][&#39;Tp&#39;] + abs(df_v.iloc[n][&#39;Tau_ss_d&#39;]) - 24</span>
+            <span class="n">ss0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time0</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">),</span> <span class="n">sb</span><span class="p">)</span>
+            <span class="c1"># 24 horas hasta el pico</span>
+            <span class="n">ss1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">sb</span><span class="p">,</span> <span class="n">sp</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">))</span>
+            <span class="c1"># 24 horas después del pico</span>
+            <span class="n">ss2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">sp</span><span class="p">,</span> <span class="n">sb</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">))</span>
+            <span class="c1"># lo que quede hasta el final del hidrograma</span>
+            <span class="n">timef2</span> <span class="o">=</span> <span class="n">tp</span> <span class="o">+</span> <span class="nb">abs</span><span class="p">(</span><span class="n">tau_ss_d</span><span class="p">)</span> <span class="o">+</span> <span class="mi">24</span>
+            <span class="n">time_final</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">timef2</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">-</span> <span class="n">int_min</span><span class="p">)</span>
+            <span class="n">ss3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time_final</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">),</span> <span class="n">sb</span><span class="p">)</span>
+            <span class="n">ss</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">ss0</span><span class="p">,</span> <span class="n">ss1</span><span class="p">,</span> <span class="n">ss2</span><span class="p">,</span> <span class="n">ss3</span><span class="p">))</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># storm surge marca el inicio del tiempo, surge centrado en las primeras 48 horas</span>
+            <span class="n">ss1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">sb</span><span class="p">,</span> <span class="n">sp</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">))</span>
+            <span class="n">ss2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">sp</span><span class="p">,</span> <span class="n">sb</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">))</span>
+            <span class="n">timet</span> <span class="o">=</span> <span class="n">time0</span> <span class="o">+</span> <span class="n">hidro_hours</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">timet</span> <span class="o">&lt;</span> <span class="mi">48</span><span class="p">:</span>
+                <span class="n">ss</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">ss1</span><span class="p">,</span> <span class="n">ss2</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># a partir de las 48 horas, el surge tiene el valor del base</span>
+                <span class="n">time_final</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="mi">48</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">-</span> <span class="n">int_min</span><span class="p">)</span>
+                <span class="n">ss3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time_final</span> <span class="o">/</span> <span class="n">int_min</span><span class="p">),</span> <span class="n">sb</span><span class="p">)</span>
+                <span class="n">ss</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">ss1</span><span class="p">,</span> <span class="n">ss2</span><span class="p">,</span> <span class="n">ss3</span><span class="p">))</span>
+
+        <span class="n">t_inicial</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">,</span> <span class="n">int_min</span><span class="p">)</span>
+        <span class="n">ss_inicial</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">t_inicial</span><span class="p">))</span> <span class="o">+</span> <span class="n">sb</span>
+        <span class="n">at_inicial</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">tau</span> <span class="o">/</span> <span class="mi">6</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">t_inicial</span> <span class="o">/</span> <span class="p">(</span><span class="mi">12</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">))</span>
+            <span class="o">*</span> <span class="n">cm</span>
+            <span class="o">/</span> <span class="mi">2</span>
+        <span class="p">)</span>
+        <span class="n">q_inicial</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">t_inicial</span><span class="p">))</span> <span class="o">-</span> <span class="n">qb</span>
+
+        <span class="n">t_series</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">t_inicial</span><span class="p">,</span> <span class="n">t_inicial</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">t</span><span class="p">))</span>
+        <span class="n">at_series</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">at_inicial</span><span class="p">,</span> <span class="n">at</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ss</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">at</span><span class="p">):</span>
+            <span class="n">ss4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">at</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">ss</span><span class="p">)),</span> <span class="n">ss</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">ss</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">ss</span><span class="p">,</span> <span class="n">ss4</span><span class="p">))</span>
+            <span class="n">ss_series</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">ss_inicial</span><span class="p">,</span> <span class="n">ss</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ss_series</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">ss_inicial</span><span class="p">,</span> <span class="n">ss</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hidro_Qp_5</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">at</span><span class="p">):</span>
+            <span class="n">qq4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">at</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">hidro_Qp_5</span><span class="p">)),</span> <span class="o">-</span><span class="n">hidro_Qp_5</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">hidro_Qp_5</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">hidro_Qp_5</span><span class="p">,</span> <span class="n">qq4</span><span class="p">))</span>
+            <span class="n">qq_series</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">q_inicial</span><span class="p">,</span> <span class="o">-</span><span class="n">hidro_Qp_5</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">qq_series</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">q_inicial</span><span class="p">,</span> <span class="o">-</span><span class="n">hidro_Qp_5</span><span class="p">))</span>
+
+        <span class="n">AT_SS_series</span> <span class="o">=</span> <span class="n">ss_series</span> <span class="o">+</span> <span class="n">at_series</span>
+
+        <span class="k">return</span> <span class="n">t_series</span><span class="p">,</span> <span class="n">at_series</span><span class="p">,</span> <span class="n">ss_series</span><span class="p">,</span> <span class="n">AT_SS_series</span><span class="p">,</span> <span class="n">qq_series</span></div>
+
+
+<div class="viewcode-block" id="SchismHyCoFfEE.rndays_calculation">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.rndays_calculation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rndays_calculation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">t_series</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the rndays parameter (time of simulation in days).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        t_series : np.ndarray</span>
+<span class="sd">            The time series array.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Calculate the rndays parameter</span>
+        <span class="n">t_rndays</span> <span class="o">=</span> <span class="n">t_series</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">3600</span> <span class="o">*</span> <span class="mi">24</span><span class="p">)</span>
+
+        <span class="n">int_min</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dt&quot;</span><span class="p">)</span>  <span class="c1"># Define the time step in seconds for .th file</span>
+
+        <span class="n">dt_nspool</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dt&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nspool&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Generate time vector for .th file</span>
+        <span class="n">times_sim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="n">t_series</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ihfskip&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="n">dt_nspool</span> <span class="o">/</span> <span class="mf">4.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">int_min</span><span class="p">,</span>
+            <span class="n">int_min</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">t_rndays</span><span class="p">,</span> <span class="n">times_sim</span></div>
+
+
+<div class="viewcode-block" id="SchismHyCoFfEE.generate_wind_th">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_wind_th">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_wind_th</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">times</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate the wind files for a case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1">####### PARAMETERS OBTAINED FROM metamodel_parameters #######</span>
+        <span class="n">wind_magnitude</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;wind_magnitude&quot;</span><span class="p">)</span>
+        <span class="n">wind_direction_era5</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;wind_direction&quot;</span><span class="p">)</span>
+
+        <span class="n">wind_direction_SCHISM</span> <span class="o">=</span> <span class="p">(</span><span class="mi">90</span> <span class="o">-</span> <span class="n">wind_direction_era5</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span>
+        <span class="c1">#############################################################</span>
+
+        <span class="n">u_wind</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">))</span>
+            <span class="o">*</span> <span class="n">wind_magnitude</span>
+            <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">wind_direction_SCHISM</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="n">v_wind</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">))</span>
+            <span class="o">*</span> <span class="n">wind_magnitude</span>
+            <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">wind_direction_SCHISM</span><span class="p">))</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Define the output file path inside the directory</span>
+        <span class="n">output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;wind.th&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Create the output file</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;w+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="c1"># Write each line as time, u_wind, and v_wind separated by spaces</span>
+            <span class="k">for</span> <span class="n">time</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">u_wind</span><span class="p">,</span> <span class="n">v_wind</span><span class="p">):</span>
+                <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">time</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">u</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SchismHyCoFfEE.generate_at_th">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_at_th">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_at_th</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">at_series</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">times</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate the at.th file for a case (not required by SCHISM, but nice to plot).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Define the output file path inside the directory</span>
+        <span class="n">output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;at.th&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Create the output file</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;w+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="c1"># Write each line as time and at_series separated by spaces</span>
+            <span class="k">for</span> <span class="n">time</span><span class="p">,</span> <span class="n">at_serie</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">at_series</span><span class="p">):</span>
+                <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">time</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">at_serie</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SchismHyCoFfEE.generate_ss_th">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_ss_th">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_ss_th</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ss_series</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">times</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate the ss.th file for a case (not required by SCHISM, but nice to plot).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Define the output file path inside the directory</span>
+        <span class="n">output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;ss.th&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Create the output file</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;w+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="c1"># Write each line as time and ss_series separated by spaces</span>
+            <span class="k">for</span> <span class="n">time</span><span class="p">,</span> <span class="n">ss_serie</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">ss_series</span><span class="p">):</span>
+                <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">time</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ss_serie</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SchismHyCoFfEE.generate_elev_th">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_elev_th">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_elev_th</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">AT_SS_series</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">times</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate the elev.th file for a case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Define the output file path inside the directory</span>
+        <span class="n">output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;elev.th&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Create the output file</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;w+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="c1"># Write each line as time and AT_SS_series separated by spaces</span>
+            <span class="k">for</span> <span class="n">time</span><span class="p">,</span> <span class="n">ss_serie</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">AT_SS_series</span><span class="p">):</span>
+                <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">time</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ss_serie</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SchismHyCoFfEE.generate_flux_th">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_flux_th">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_flux_th</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">qq_series</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">times</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate the elev.th file for a case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Define the output file path inside the directory</span>
+        <span class="n">output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;flux.th&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Create the output file</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;w+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="c1"># Write each line as time and AT_SS_series separated by spaces</span>
+            <span class="k">for</span> <span class="n">time</span><span class="p">,</span> <span class="n">qq_serie</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">qq_series</span><span class="p">):</span>
+                <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">time</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">qq_serie</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SchismHyCoFfEE.build_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.build_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_case</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the input files for a case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">build_case</span><span class="p">(</span><span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span> <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
+
+        <span class="c1"># Calculate time series from the cases</span>
+        <span class="n">t_series</span><span class="p">,</span> <span class="n">at_series</span><span class="p">,</span> <span class="n">ss_series</span><span class="p">,</span> <span class="n">AT_SS_series</span><span class="p">,</span> <span class="n">qq_series</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">generate_time_series</span><span class="p">(</span>
+                <span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span>
+                <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Calculate the rndays parameter and time vector for the th files</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;rnday&quot;</span><span class="p">],</span> <span class="n">times_sim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rndays_calculation</span><span class="p">(</span>
+            <span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span>
+            <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span>
+            <span class="n">t_series</span><span class="o">=</span><span class="n">t_series</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Generate the wind.th file for each case</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generate_wind_th</span><span class="p">(</span>
+            <span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span>
+            <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span>
+            <span class="n">times</span><span class="o">=</span><span class="n">times_sim</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Generate the at.th file for each case</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generate_at_th</span><span class="p">(</span>
+            <span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span>
+            <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span>
+            <span class="n">at_series</span><span class="o">=</span><span class="n">at_series</span><span class="p">,</span>
+            <span class="n">times</span><span class="o">=</span><span class="n">times_sim</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Generate the ss.th file for each case</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generate_ss_th</span><span class="p">(</span>
+            <span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span>
+            <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span>
+            <span class="n">ss_series</span><span class="o">=</span><span class="n">ss_series</span><span class="p">,</span>
+            <span class="n">times</span><span class="o">=</span><span class="n">times_sim</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Generate the ss.th file for each case</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generate_elev_th</span><span class="p">(</span>
+            <span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span>
+            <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span>
+            <span class="n">AT_SS_series</span><span class="o">=</span><span class="n">AT_SS_series</span><span class="p">,</span>
+            <span class="n">times</span><span class="o">=</span><span class="n">times_sim</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Generate the flux.th file for each case</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generate_flux_th</span><span class="p">(</span>
+            <span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span>
+            <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span>
+            <span class="n">qq_series</span><span class="o">=</span><span class="n">qq_series</span><span class="p">,</span>
+            <span class="n">times</span><span class="o">=</span><span class="n">times_sim</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SchismOnlyWindModelWrapper">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SchismOnlyWindModelWrapper</span><span class="p">(</span><span class="n">SchismModelWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Schism wrapper: only wind case.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_parameters</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="c1"># .param file</span>
+        <span class="s2">&quot;indvel&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Method for computing velocity at nodes: 0= linear shape function; 1 = averaging method&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;ihorcon&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Horizontal viscosity option: 0= no viscosity is used; 1= Lapacian&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;ishapiro&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;on/off flag for Shapiro filter: 0= off; 1= on&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;inter_mom&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot; Interpolation is used for velocity at foot of char: 0=linear; 1=Kriging (define kr_co ); -1= spatial Kriging (define krvel.gr3)&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="c1"># CORE</span>
+        <span class="s2">&quot;ipre&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Pre-process flag: 0= normal run; 1= only for single CPU!&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;ibc&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Barotropic flag&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;ibtp&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Baroclinic flag&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="c1"># TRACERS</span>
+        <span class="s2">&quot;ntracer_gen&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;# of tracers&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;ntracer_age&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Age calculation, must be 2*ntracer_gen&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="c1"># SEDIMENTS</span>
+        <span class="s2">&quot;sed_class&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;SED3D&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="c1"># ECO</span>
+        <span class="s2">&quot;eco_class&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">27</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;EcoSim. Must be bewteen [25,60]&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="c1"># OPT</span>
+        <span class="s2">&quot;ieos_type&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;UNESCO 1980 (nonlinear); =1: linear function of T ONLY, i.e. &quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;ieos_pres&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Used only if ieos_type=0. 0: without pressure effects &quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;eos_a&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Needed if ieos_type=1; should be &lt;=0&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;eos_b&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1001</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Needed if ieos_type=1&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="c1"># WWM</span>
+        <span class="s2">&quot;msc2&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">24</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Grid for WWM. Same as msc in .nml ... for consitency check between SCHISM and WWM&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;mdc2&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Grid for WWM. Same as mdc in .nml ... for consitency check between SCHISM and WWM&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="c1"># SCHOUT</span>
+        <span class="s2">&quot;output_WL&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Elev. [m] = 0: off; 1: on&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;output_wind_velocity&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Wind velocity vector [m/s] = 0: off; 1: on&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;output_water_temperature&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Water temperature [C] = 0: off; 1: on&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;output_depth_averaged_vel&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Depth-averaged vel vector [m/s] = 0: off; 1: on&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;output_water_salinity&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Water salinity [PSU] = 0: off; 1: on&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="SchismOnlyWindModelWrapper.generate_windth">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper.generate_windth">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_windth</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate the wind files for a case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1">####### PARAMETERS OBTAINED FROM metamodel_parameters #######</span>
+        <span class="n">wind_magnitude</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;wind_magnitude&quot;</span><span class="p">)</span>
+        <span class="n">wind_direction</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;wind_direction&quot;</span><span class="p">)</span>
+        <span class="c1">#############################################################</span>
+
+        <span class="n">total_seconds</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rndays&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span>
+        <span class="p">)</span>  <span class="c1"># Define times in seconds for .th file</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span> <span class="n">total_seconds</span> <span class="o">+</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dt&quot;</span><span class="p">),</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dt&quot;</span><span class="p">)</span>
+        <span class="p">)</span>  <span class="c1"># Generate time vector</span>
+        <span class="n">u_wind</span> <span class="o">=</span> <span class="o">-</span><span class="p">[</span><span class="n">wind_magnitude</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">wind_direction</span><span class="p">))]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="n">times</span>
+        <span class="p">)</span>  <span class="c1"># Calculate u_wind</span>
+        <span class="n">v_wind</span> <span class="o">=</span> <span class="o">-</span><span class="p">[</span><span class="n">wind_magnitude</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">wind_direction</span><span class="p">))]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="n">times</span>
+        <span class="p">)</span>  <span class="c1"># Calculate v_wind</span>
+
+        <span class="c1"># Define the output file path inside the directory</span>
+        <span class="n">output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;wind.th&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Create the output file</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;w+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="c1"># Write each line as time, u_wind, and v_wind separated by spaces</span>
+            <span class="k">for</span> <span class="n">time</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">u_wind</span><span class="p">,</span> <span class="n">v_wind</span><span class="p">):</span>
+                <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">time</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">u</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SchismOnlyWindModelWrapper.build_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper.build_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_case</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the input files for a case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">build_case</span><span class="p">(</span><span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span> <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
+
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;start_year&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tini&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">year</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;start_month&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tini&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">month</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;start_day&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tini&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">day</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;start_hour&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tini&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">hour</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;rndays&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tend&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tini&quot;</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="mi">86400</span>
+
+        <span class="c1"># Generate wind file for each case</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generate_windth</span><span class="p">(</span>
+            <span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span>
+            <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

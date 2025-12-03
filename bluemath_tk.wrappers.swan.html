@@ -1,0 +1,342 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.wrappers.swan package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.wrappers.swash package" href="bluemath_tk.wrappers.swash.html" />
+    <link rel="prev" title="bluemath_tk.wrappers.sfincs package" href="bluemath_tk.wrappers.sfincs.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.additive.html">bluemath_tk.additive package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.deeplearning.html">bluemath_tk.deeplearning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tcs.html">bluemath_tk.tcs package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.wrappers.swan package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.wrappers.swan.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-wrappers-swan-package">
+<h1>bluemath_tk.wrappers.swan package<a class="headerlink" href="#bluemath-tk-wrappers-swan-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.wrappers.swan.swan_example">
+<span id="bluemath-tk-wrappers-swan-swan-example-module"></span><h2>bluemath_tk.wrappers.swan.swan_example module<a class="headerlink" href="#module-bluemath_tk.wrappers.swan.swan_example" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.swan.swan_example.BinWavesWrapper">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.wrappers.swan.swan_example.</span></span><span class="sig-name descname"><span class="pre">BinWavesWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/swan/swan_example.html#BinWavesWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.swan.swan_example.BinWavesWrapper" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper" title="bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper"><code class="xref py py-class docutils literal notranslate"><span class="pre">SwanModelWrapper</span></code></a></p>
+<p>Wrapper example for the BinWaves model.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.swan.swan_example.BinWavesWrapper.build_case">
+<span class="sig-name descname"><span class="pre">build_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/wrappers/swan/swan_example.html#BinWavesWrapper.build_case"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.swan.swan_example.BinWavesWrapper.build_case" title="Link to this definition"></a></dt>
+<dd><p>Build the input files for the BinWaves model.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.wrappers.swan.swan_wrapper">
+<span id="bluemath-tk-wrappers-swan-swan-wrapper-module"></span><h2>bluemath_tk.wrappers.swan.swan_wrapper module<a class="headerlink" href="#module-bluemath_tk.wrappers.swan.swan_wrapper" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.swan.swan_wrapper.BinWavesWrapper">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.wrappers.swan.swan_wrapper.</span></span><span class="sig-name descname"><span class="pre">BinWavesWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/swan/swan_wrapper.html#BinWavesWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.swan.swan_wrapper.BinWavesWrapper" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper" title="bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper"><code class="xref py py-class docutils literal notranslate"><span class="pre">SwanModelWrapper</span></code></a></p>
+<p>Wrapper example for the BinWaves model.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.swan.swan_wrapper.BinWavesWrapper.build_case">
+<span class="sig-name descname"><span class="pre">build_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/wrappers/swan/swan_wrapper.html#BinWavesWrapper.build_case"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.swan.swan_wrapper.BinWavesWrapper.build_case" title="Link to this definition"></a></dt>
+<dd><p>Build the input files for a case.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>case_context</strong> (<em>dict</em>) – The case context.</p></li>
+<li><p><strong>case_dir</strong> (<em>str</em>) – The case directory.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.wrappers.swan.swan_wrapper.</span></span><span class="sig-name descname"><span class="pre">SwanModelWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/swan/swan_wrapper.html#SwanModelWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModelWrapper</span></code></p>
+<p>Wrapper for the SWAN model.
+<a class="reference external" href="https://swanmodel.sourceforge.io/online_doc/swanuse/swanuse.html">https://swanmodel.sourceforge.io/online_doc/swanuse/swanuse.html</a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.default_parameters">
+<span class="sig-name descname"><span class="pre">default_parameters</span></span><a class="headerlink" href="#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.default_parameters" title="Link to this definition"></a></dt>
+<dd><p>The default parameters type for the wrapper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.available_launchers">
+<span class="sig-name descname"><span class="pre">available_launchers</span></span><a class="headerlink" href="#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.available_launchers" title="Link to this definition"></a></dt>
+<dd><p>The available launchers for the wrapper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.output_variables">
+<span class="sig-name descname"><span class="pre">output_variables</span></span><a class="headerlink" href="#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.output_variables" title="Link to this definition"></a></dt>
+<dd><p>The output variables for the wrapper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">available_launchers</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'docker_serial':</span> <span class="pre">'docker</span> <span class="pre">run</span> <span class="pre">--rm</span> <span class="pre">-v</span> <span class="pre">.:/case_dir</span> <span class="pre">-w</span> <span class="pre">/case_dir</span> <span class="pre">geoocean/rocky8</span> <span class="pre">swan_serial.exe',</span> <span class="pre">'geoocean-cluster':</span> <span class="pre">'launchSwan.sh',</span> <span class="pre">'serial':</span> <span class="pre">'swan_serial.exe'}</span></em><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">default_parameters</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'Dir':</span> <span class="pre">{'description':</span> <span class="pre">'Wave</span> <span class="pre">direction.',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">None},</span> <span class="pre">'Dir_array':</span> <span class="pre">{'description':</span> <span class="pre">'Array</span> <span class="pre">of</span> <span class="pre">directions</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">model.',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'numpy.ndarray'&gt;,</span> <span class="pre">'value':</span> <span class="pre">None},</span> <span class="pre">'Freq_array':</span> <span class="pre">{'description':</span> <span class="pre">'Array</span> <span class="pre">of</span> <span class="pre">frequencies</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">model.',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'numpy.ndarray'&gt;,</span> <span class="pre">'value':</span> <span class="pre">None},</span> <span class="pre">'Hs':</span> <span class="pre">{'description':</span> <span class="pre">'Significant</span> <span class="pre">wave</span> <span class="pre">height.',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">None},</span> <span class="pre">'Spr':</span> <span class="pre">{'description':</span> <span class="pre">'Directional</span> <span class="pre">spread.',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">None},</span> <span class="pre">'Tp':</span> <span class="pre">{'description':</span> <span class="pre">'Wave</span> <span class="pre">peak</span> <span class="pre">period.',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">None},</span> <span class="pre">'dir1':</span> <span class="pre">{'description':</span> <span class="pre">'Only</span> <span class="pre">with</span> <span class="pre">SECTOR</span> <span class="pre">option.</span> <span class="pre">The</span> <span class="pre">direction</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">right-hand</span> <span class="pre">boundary</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">sector</span> <span class="pre">when</span> <span class="pre">looking</span> <span class="pre">outward</span> <span class="pre">from</span> <span class="pre">the</span> <span class="pre">sector</span> <span class="pre">(in</span> <span class="pre">degrees).',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">None},</span> <span class="pre">'dir2':</span> <span class="pre">{'description':</span> <span class="pre">'Only</span> <span class="pre">with</span> <span class="pre">SECTOR</span> <span class="pre">option.</span> <span class="pre">The</span> <span class="pre">direction</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">left-hand</span> <span class="pre">boundary</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">sector</span> <span class="pre">when</span> <span class="pre">looking</span> <span class="pre">outward</span> <span class="pre">from</span> <span class="pre">the</span> <span class="pre">sector</span> <span class="pre">(in</span> <span class="pre">degrees).',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">None},</span> <span class="pre">'dir_dist':</span> <span class="pre">{'choices':</span> <span class="pre">['CIRCLE',</span> <span class="pre">'SECTOR'],</span> <span class="pre">'description':</span> <span class="pre">'CIRCLE</span> <span class="pre">indicates</span> <span class="pre">that</span> <span class="pre">the</span> <span class="pre">spectral</span> <span class="pre">directions</span> <span class="pre">cover</span> <span class="pre">the</span> <span class="pre">full</span> <span class="pre">circle.</span> <span class="pre">SECTOR</span> <span class="pre">indicates</span> <span class="pre">that</span> <span class="pre">the</span> <span class="pre">spectral</span> <span class="pre">directions</span> <span class="pre">cover</span> <span class="pre">a</span> <span class="pre">limited</span> <span class="pre">sector</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">circle.',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">'value':</span> <span class="pre">'CIRCLE'},</span> <span class="pre">'fhigh':</span> <span class="pre">{'description':</span> <span class="pre">'High</span> <span class="pre">value</span> <span class="pre">for</span> <span class="pre">frequency.',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0.5},</span> <span class="pre">'flow':</span> <span class="pre">{'description':</span> <span class="pre">'Low</span> <span class="pre">values</span> <span class="pre">for</span> <span class="pre">frequency.',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0.03},</span> <span class="pre">'mdc':</span> <span class="pre">{'description':</span> <span class="pre">'Spectral</span> <span class="pre">directional</span> <span class="pre">discretization.',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'int'&gt;,</span> <span class="pre">'value':</span> <span class="pre">24}}</span></em><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.get_case_percentage_from_file">
+<span class="sig-name descname"><span class="pre">get_case_percentage_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_log_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/bluemath_tk/wrappers/swan/swan_wrapper.html#SwanModelWrapper.get_case_percentage_from_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.get_case_percentage_from_file" title="Link to this definition"></a></dt>
+<dd><p>Get the case percentage from the output log file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>output_log_file</strong> (<em>str</em>) – The output log file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The case percentage.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.join_postprocessed_files">
+<span class="sig-name descname"><span class="pre">join_postprocessed_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">postprocessed_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dataset</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/wrappers/swan/swan_wrapper.html#SwanModelWrapper.join_postprocessed_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.join_postprocessed_files" title="Link to this definition"></a></dt>
+<dd><p>Join postprocessed files in a single Dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>postprocessed_files</strong> (<em>list</em>) – The postprocessed files.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The joined Dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.list_available_output_variables">
+<span class="sig-name descname"><span class="pre">list_available_output_variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/wrappers/swan/swan_wrapper.html#SwanModelWrapper.list_available_output_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.list_available_output_variables" title="Link to this definition"></a></dt>
+<dd><p>List available output variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The available output variables.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.monitor_cases">
+<span class="sig-name descname"><span class="pre">monitor_cases</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value_counts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/bluemath_tk/wrappers/swan/swan_wrapper.html#SwanModelWrapper.monitor_cases"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.monitor_cases" title="Link to this definition"></a></dt>
+<dd><p>Monitor the cases based on the wrapper_out.log file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">output_variables</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'Depth':</span> <span class="pre">{'long_name':</span> <span class="pre">'Water</span> <span class="pre">depth</span> <span class="pre">at</span> <span class="pre">the</span> <span class="pre">point',</span> <span class="pre">'units':</span> <span class="pre">'m'},</span> <span class="pre">'Dir':</span> <span class="pre">{'long_name':</span> <span class="pre">'Wave</span> <span class="pre">direction',</span> <span class="pre">'units':</span> <span class="pre">'degrees'},</span> <span class="pre">'Dspr':</span> <span class="pre">{'long_name':</span> <span class="pre">'Directional</span> <span class="pre">spread',</span> <span class="pre">'units':</span> <span class="pre">'degrees'},</span> <span class="pre">'Hsig':</span> <span class="pre">{'long_name':</span> <span class="pre">'Significant</span> <span class="pre">wave</span> <span class="pre">height',</span> <span class="pre">'units':</span> <span class="pre">'m'},</span> <span class="pre">'PkDir':</span> <span class="pre">{'long_name':</span> <span class="pre">'Peak</span> <span class="pre">wave</span> <span class="pre">direction',</span> <span class="pre">'units':</span> <span class="pre">'degrees'},</span> <span class="pre">'TPsmoo':</span> <span class="pre">{'long_name':</span> <span class="pre">'Peak</span> <span class="pre">wave</span> <span class="pre">period',</span> <span class="pre">'units':</span> <span class="pre">'s'},</span> <span class="pre">'Tm02':</span> <span class="pre">{'long_name':</span> <span class="pre">'Mean</span> <span class="pre">wave</span> <span class="pre">period',</span> <span class="pre">'units':</span> <span class="pre">'s'}}</span></em><a class="headerlink" href="#id2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.postprocess_case">
+<span class="sig-name descname"><span class="pre">postprocess_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_num</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_vars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">['Hsig',</span> <span class="pre">'Tm02',</span> <span class="pre">'Dir']</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/wrappers/swan/swan_wrapper.html#SwanModelWrapper.postprocess_case"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.postprocess_case" title="Link to this definition"></a></dt>
+<dd><p>Convert mat ouput files to netCDF file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>case_num</strong> (<em>int</em>) – The case number.</p></li>
+<li><p><strong>case_dir</strong> (<em>str</em>) – The case directory.</p></li>
+<li><p><strong>output_vars</strong> (<em>list</em><em>, </em><em>optional</em>) – The output variables to postprocess. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The postprocessed Dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.swan.swan_wrapper.generate_fixed_parameters">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.wrappers.swan.swan_wrapper.</span></span><span class="sig-name descname"><span class="pre">generate_fixed_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grid_parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_array</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir_array</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/bluemath_tk/wrappers/swan/swan_wrapper.html#generate_fixed_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.swan.swan_wrapper.generate_fixed_parameters" title="Link to this definition"></a></dt>
+<dd><p>Generate fixed parameters for the SWAN model based on grid parameters and frequency/direction arrays.
+:param grid_parameters: Dictionary with grid configuration for SWAN input.
+:type grid_parameters: dict
+:param freq_array: Array of frequencies for the SWAN model.
+:type freq_array: np.ndarray
+:param dir_array: Array of directions for the SWAN model.
+:type dir_array: np.ndarray</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary with fixed parameters for the SWAN model.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.wrappers.swan">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bluemath_tk.wrappers.swan" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.wrappers.sfincs.html" class="btn btn-neutral float-left" title="bluemath_tk.wrappers.sfincs package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.wrappers.swash.html" class="btn btn-neutral float-right" title="bluemath_tk.wrappers.swash package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

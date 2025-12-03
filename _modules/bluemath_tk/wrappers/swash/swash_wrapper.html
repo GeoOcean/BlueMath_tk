@@ -1,0 +1,896 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.wrappers.swash.swash_wrapper &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/thebelab.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.wrappers.swash.swash_wrapper</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.wrappers.swash.swash_wrapper</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_peaks</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">...waves.series</span><span class="w"> </span><span class="kn">import</span> <span class="n">series_TMA</span><span class="p">,</span> <span class="n">waves_dispersion</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">...waves.spectra</span><span class="w"> </span><span class="kn">import</span> <span class="n">spectral_analysis</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.._base_wrappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModelWrapper</span>
+
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>  <span class="c1"># TODO: check global behavior.</span>
+
+
+<div class="viewcode-block" id="convert_seconds_to_hour_minutes_seconds">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.convert_seconds_to_hour_minutes_seconds">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_seconds_to_hour_minutes_seconds</span><span class="p">(</span><span class="n">seconds</span><span class="p">):</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="n">seconds</span> <span class="o">%</span> <span class="p">(</span><span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">)</span>
+    <span class="n">hour</span> <span class="o">=</span> <span class="n">seconds</span> <span class="o">//</span> <span class="mi">3600</span>
+    <span class="n">seconds</span> <span class="o">%=</span> <span class="mi">3600</span>
+    <span class="n">minutes</span> <span class="o">=</span> <span class="n">seconds</span> <span class="o">//</span> <span class="mi">60</span>
+    <span class="n">seconds</span> <span class="o">%=</span> <span class="mi">60</span>
+
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">hour</span><span class="p">))</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="si">}{</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">minutes</span><span class="p">))</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="si">}{</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">seconds</span><span class="p">))</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">.000&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="SwashModelWrapper">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SwashModelWrapper</span><span class="p">(</span><span class="n">BaseModelWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper for the SWASH model.</span>
+<span class="sd">    https://swash.sourceforge.io/online_doc/swashuse/swashuse.html#input-and-output-files</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    default_parameters : dict</span>
+<span class="sd">        The default parameters type for the wrapper.</span>
+<span class="sd">    available_launchers : dict</span>
+<span class="sd">        The available launchers for the wrapper.</span>
+<span class="sd">    postprocess_functions : dict</span>
+<span class="sd">        The postprocess functions for the wrapper.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_parameters</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;Hs&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Significant wave height.&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;Hs_L0&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Wave height at deep water.&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;WL&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Water level.&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;vegetation_height&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;The vegetation height.&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;dxinp&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;The input spacing.&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;n_nodes_per_wavelength&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;The number of nodes per wavelength.&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;comptime&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">180</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;The computational time.&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;warmup&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;The warmup time.&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;gamma&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;The gamma parameter.&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;deltat&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;The time step.&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+
+    <span class="n">available_launchers</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;serial&quot;</span><span class="p">:</span> <span class="s2">&quot;swash_serial.exe&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;mpi&quot;</span><span class="p">:</span> <span class="s2">&quot;mpirun -np 2 swash_mpi.exe&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;docker_serial&quot;</span><span class="p">:</span> <span class="s2">&quot;docker run --rm -v .:/case_dir -w /case_dir geoocean/rocky8 swash_serial.exe&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;docker_mpi&quot;</span><span class="p">:</span> <span class="s2">&quot;docker run --rm -v .:/case_dir -w /case_dir geoocean/rocky8 mpirun -np 2 swash_mpi.exe&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;geoocean-cluster&quot;</span><span class="p">:</span> <span class="s2">&quot;launchSwash.sh&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">postprocess_functions</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;Ru2&quot;</span><span class="p">:</span> <span class="s2">&quot;calculate_runup2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Runlev&quot;</span><span class="p">:</span> <span class="s2">&quot;calculate_runup&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Msetup&quot;</span><span class="p">:</span> <span class="s2">&quot;calculate_setup&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Hrms&quot;</span><span class="p">:</span> <span class="s2">&quot;calculate_statistical_analysis&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Hfreqs&quot;</span><span class="p">:</span> <span class="s2">&quot;calculate_spectral_analysis&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">templates_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">metamodel_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">fixed_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">depth_array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">templates_name</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+        <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the SWASH model wrapper.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">templates_dir</span><span class="o">=</span><span class="n">templates_dir</span><span class="p">,</span>
+            <span class="n">metamodel_parameters</span><span class="o">=</span><span class="n">metamodel_parameters</span><span class="p">,</span>
+            <span class="n">fixed_parameters</span><span class="o">=</span><span class="n">fixed_parameters</span><span class="p">,</span>
+            <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+            <span class="n">templates_name</span><span class="o">=</span><span class="n">templates_name</span><span class="p">,</span>
+            <span class="n">default_parameters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">default_parameters</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_logger_name</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;DEBUG&quot;</span> <span class="k">if</span> <span class="n">debug</span> <span class="k">else</span> <span class="s2">&quot;INFO&quot;</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">depth_array</span> <span class="o">=</span> <span class="n">depth_array</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mxinp</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth_array</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xlenc</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mxinp</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;dxinp&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;mxinp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mxinp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;xlenc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlenc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;tendc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">convert_seconds_to_hour_minutes_seconds</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;comptime&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;warmup&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="SwashModelWrapper.build_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.build_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_case</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the input files for a case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Build the input waves</span>
+        <span class="n">waves_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;H&quot;</span><span class="p">:</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+                <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gravity</span> <span class="o">*</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Hs_L0&quot;</span><span class="p">])</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;warmup&quot;</span><span class="p">:</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;warmup&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;comptime&quot;</span><span class="p">:</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;comptime&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;gamma&quot;</span><span class="p">:</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;gamma&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;deltat&quot;</span><span class="p">:</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;deltat&quot;</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;waves_dict&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">waves_dict</span>
+
+        <span class="c1"># Define the peak period</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Tp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">waves_dict</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">]</span>
+
+        <span class="c1"># Calculate computational parameters</span>
+        <span class="c1"># Assuming there is always 1m of setup due to (IG, VLF)</span>
+        <span class="n">L1</span><span class="p">,</span> <span class="n">_k1</span><span class="p">,</span> <span class="n">_c1</span> <span class="o">=</span> <span class="n">waves_dispersion</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="n">waves_dict</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">],</span> <span class="n">h</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">_L</span><span class="p">,</span> <span class="n">_k</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">waves_dispersion</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="n">waves_dict</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">],</span> <span class="n">h</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">depth_array</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">L1</span> <span class="o">/</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;n_nodes_per_wavelength&quot;</span><span class="p">]</span>
+
+        <span class="c1"># Computational time step</span>
+        <span class="n">deltc</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">dx</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gravity</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_array</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+        <span class="c1"># Computational grid modifications</span>
+        <span class="n">mxc</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mxinp</span> <span class="o">/</span> <span class="n">dx</span><span class="p">)</span>
+
+        <span class="c1"># Update the case context</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;mxc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mxc</span>
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;deltc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">deltc</span></div>
+
+
+<div class="viewcode-block" id="SwashModelWrapper.list_available_postprocess_vars">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.list_available_postprocess_vars">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_available_postprocess_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        List available postprocess variables.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        List[str]</span>
+<span class="sd">            The available postprocess variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">postprocess_functions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_read_tabfile</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read a tab file and return a pandas DataFrame.</span>
+<span class="sd">        This function is used to read the output files of SWASH.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        file_path : str</span>
+<span class="sd">            The file path.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            The pandas DataFrame.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="c1"># read head colums (variables names)</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c1"># Eliminate &#39;%&#39;</span>
+        <span class="c1"># read data rows</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="mi">7</span><span class="p">:])</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">names</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_convert_case_output_files_to_nc</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">case_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">run_path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert tab files to netCDF file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_num : int</span>
+<span class="sd">            The case number.</span>
+<span class="sd">        output_path : str</span>
+<span class="sd">            The output path.</span>
+<span class="sd">        run_path : str</span>
+<span class="sd">            The run path.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        xr.Dataset</span>
+<span class="sd">            The xarray Dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">df_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_tabfile</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="n">output_path</span><span class="p">)</span>
+        <span class="n">df_output</span><span class="p">[[</span><span class="s2">&quot;Xp&quot;</span><span class="p">,</span> <span class="s2">&quot;Yp&quot;</span><span class="p">,</span> <span class="s2">&quot;Tsec&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">df_output</span><span class="p">[[</span><span class="s2">&quot;Xp&quot;</span><span class="p">,</span> <span class="s2">&quot;Yp&quot;</span><span class="p">,</span> <span class="s2">&quot;Tsec&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+            <span class="nb">int</span>
+        <span class="p">)</span>  <span class="c1"># TODO: check if this is correct</span>
+        <span class="n">df_output</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;Xp&quot;</span><span class="p">,</span> <span class="s2">&quot;Yp&quot;</span><span class="p">,</span> <span class="s2">&quot;Tsec&quot;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>  <span class="c1"># set index to Xp, Yp and Tsec</span>
+        <span class="n">ds_output</span> <span class="o">=</span> <span class="n">df_output</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">()</span>
+
+        <span class="n">df_run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_tabfile</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="n">run_path</span><span class="p">)</span>
+        <span class="n">df_run</span><span class="p">[[</span><span class="s2">&quot;Tsec&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">df_run</span><span class="p">[[</span><span class="s2">&quot;Tsec&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+            <span class="nb">int</span>
+        <span class="p">)</span>  <span class="c1"># TODO: check if this is correct</span>
+        <span class="n">df_run</span><span class="o">.</span><span class="n">set_index</span><span class="p">([</span><span class="s2">&quot;Tsec&quot;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ds_run</span> <span class="o">=</span> <span class="n">df_run</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">()</span>
+
+        <span class="c1"># merge output files to one xarray.Dataset</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">merge</span><span class="p">([</span><span class="n">ds_output</span><span class="p">,</span> <span class="n">ds_run</span><span class="p">],</span> <span class="n">compat</span><span class="o">=</span><span class="s2">&quot;no_conflicts&quot;</span><span class="p">)</span>
+
+        <span class="c1"># assign correct coordinate case_num</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;case_num&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">case_num</span>
+
+        <span class="k">return</span> <span class="n">ds</span>
+
+<div class="viewcode-block" id="SwashModelWrapper.get_case_percentage_from_file">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.get_case_percentage_from_file">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_case_percentage_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_log_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the case percentage from the output log file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        output_log_file : str</span>
+<span class="sd">            The output log file.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            The case percentage.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_log_file</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">&quot;0 %&quot;</span>
+
+        <span class="n">progress_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;\[\s*(\d+)%\]&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_log_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()):</span>
+                <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">progress_pattern</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2"> %&quot;</span>
+
+        <span class="k">return</span> <span class="s2">&quot;0 %&quot;</span>  <span class="c1"># if no progress is found</span></div>
+
+
+<div class="viewcode-block" id="SwashModelWrapper.monitor_cases">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.monitor_cases">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">monitor_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_counts</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Monitor the cases based on different model log files.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">cases_status</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">case_dir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">:</span>
+            <span class="n">case_dir_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;Errfile&quot;</span><span class="p">)):</span>
+                <span class="n">cases_status</span><span class="p">[</span><span class="n">case_dir_name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Errfile&quot;</span>
+            <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;norm_end&quot;</span><span class="p">)):</span>
+                <span class="n">cases_status</span><span class="p">[</span><span class="n">case_dir_name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;END&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">run_tab_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;run.tab&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">run_tab_file</span><span class="p">):</span>
+                    <span class="n">run_tab</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_tabfile</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="n">run_tab_file</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">run_tab</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                        <span class="n">cases_status</span><span class="p">[</span><span class="n">case_dir_name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;NaN&quot;</span>
+                        <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">cases_status</span><span class="p">[</span><span class="n">case_dir_name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;No run.tab&quot;</span>
+                    <span class="k">continue</span>
+                <span class="n">output_log_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;wrapper_out.log&quot;</span><span class="p">)</span>
+                <span class="n">progress</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_case_percentage_from_file</span><span class="p">(</span>
+                    <span class="n">output_log_file</span><span class="o">=</span><span class="n">output_log_file</span>
+                <span class="p">)</span>
+                <span class="n">cases_status</span><span class="p">[</span><span class="n">case_dir_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">progress</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">monitor_cases</span><span class="p">(</span>
+            <span class="n">cases_status</span><span class="o">=</span><span class="n">cases_status</span><span class="p">,</span> <span class="n">value_counts</span><span class="o">=</span><span class="n">value_counts</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SwashModelWrapper.postprocess_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.postprocess_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">postprocess_case</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">output_vars</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">overwrite_output</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">overwrite_output_postprocessed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">remove_tab</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">remove_nc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert tab output files to netCDF file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_num : int</span>
+<span class="sd">            The case number.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        output_vars : list, optional</span>
+<span class="sd">            The output variables to postprocess. Default is None.</span>
+<span class="sd">        overwrite_output : bool, optional</span>
+<span class="sd">            Overwrite the output.nc file. Default is True.</span>
+<span class="sd">        overwrite_output_postprocessed : bool, optional</span>
+<span class="sd">            Overwrite the output_postprocessed.nc file. Default is True.</span>
+<span class="sd">        remove_tab : bool, optional</span>
+<span class="sd">            Remove the tab files. Default is False.</span>
+<span class="sd">        remove_nc : bool, optional</span>
+<span class="sd">            Remove the netCDF file. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        xr.Dataset</span>
+<span class="sd">            The postprocessed Dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">case_num</span><span class="si">}</span><span class="s2">]: Postprocessing case </span><span class="si">{</span><span class="n">case_num</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">case_dir</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">output_vars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">case_num</span><span class="si">}</span><span class="s2">]: Postprocessing all available variables.&quot;</span><span class="p">)</span>
+            <span class="n">output_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">postprocess_functions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="n">output_nc_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;output.nc&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_nc_path</span><span class="p">)</span> <span class="ow">or</span> <span class="n">overwrite_output</span><span class="p">:</span>
+            <span class="c1"># Convert tab files to netCDF file</span>
+            <span class="n">output_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;output.tab&quot;</span><span class="p">)</span>
+            <span class="n">run_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;run.tab&quot;</span><span class="p">)</span>
+            <span class="n">output_nc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_case_output_files_to_nc</span><span class="p">(</span>
+                <span class="n">case_num</span><span class="o">=</span><span class="n">case_num</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="n">output_path</span><span class="p">,</span> <span class="n">run_path</span><span class="o">=</span><span class="n">run_path</span>
+            <span class="p">)</span>
+            <span class="n">output_nc</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">output_nc_path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">case_num</span><span class="si">}</span><span class="s2">]: Reading existing output.nc file.&quot;</span><span class="p">)</span>
+            <span class="n">output_nc</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">output_nc_path</span><span class="p">)</span>
+
+        <span class="n">processed_nc_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;output_postprocessed.nc&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">processed_nc_path</span><span class="p">)</span> <span class="ow">or</span> <span class="n">overwrite_output_postprocessed</span><span class="p">:</span>
+            <span class="c1"># Postprocess variables from output.nc</span>
+            <span class="n">var_ds_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">output_vars</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">postprocess_functions</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">case_num</span><span class="si">}</span><span class="s2">]: Postprocessing variable </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+                    <span class="n">var_ds</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">postprocess_functions</span><span class="p">[</span><span class="n">var</span><span class="p">])(</span>
+                        <span class="n">case_num</span><span class="o">=</span><span class="n">case_num</span><span class="p">,</span> <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">output_nc</span><span class="o">=</span><span class="n">output_nc</span>
+                    <span class="p">)</span>
+                    <span class="n">var_ds_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">var_ds</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># If the variable is present in output_nc, extract and squeeze it</span>
+                    <span class="k">if</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">output_nc</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">case_num</span><span class="si">}</span><span class="s2">]: Extracting variable </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+                        <span class="n">var_ds</span> <span class="o">=</span> <span class="n">output_nc</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+                        <span class="n">var_ds_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">var_ds</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">case_num</span><span class="si">}</span><span class="s2">]: Variable </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2"> is not available for postprocessing.&quot;</span>
+                        <span class="p">)</span>
+
+            <span class="c1"># Merge all variables in one Dataset</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">var_ds_list</span><span class="p">,</span> <span class="n">compat</span><span class="o">=</span><span class="s2">&quot;no_conflicts&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">case_num</span><span class="si">}</span><span class="s2">]: Creating new output_postprocessed.nc file from output.nc.&quot;</span>
+            <span class="p">)</span>
+            <span class="n">ds</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">processed_nc_path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">case_num</span><span class="si">}</span><span class="s2">]: Reading existing output_postprocessed.nc file.&quot;</span>
+            <span class="p">)</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">processed_nc_path</span><span class="p">)</span>
+
+        <span class="c1"># Remove raw files to save space</span>
+        <span class="k">if</span> <span class="n">remove_tab</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">run_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">remove_nc</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">output_nc_path</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ds</span></div>
+
+
+<div class="viewcode-block" id="SwashModelWrapper.join_postprocessed_files">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.join_postprocessed_files">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">join_postprocessed_files</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">postprocessed_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Join postprocessed files in a single Dataset.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        postprocessed_files : list</span>
+<span class="sd">            The postprocessed files.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        xr.Dataset</span>
+<span class="sd">            The joined Dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">postprocessed_files</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s2">&quot;case_num&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SwashModelWrapper.find_maximas">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.find_maximas">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">find_maximas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find the individual maxima of an array.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : np.ndarray</span>
+<span class="sd">            The array (should be the water level time series).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tuple[np.ndarray, np.ndarray]</span>
+<span class="sd">            The peaks and the values of the peaks.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">peaks</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">find_peaks</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">peaks</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="n">peaks</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="SwashModelWrapper.calculate_runup2">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_runup2">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_runup2</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">case_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_nc</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculates runup 2% (Ru2) from the output netCDF file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_num : int</span>
+<span class="sd">            The case number.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        output_nc : xr.Dataset</span>
+<span class="sd">            The output netCDF file.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        xr.Dataset</span>
+<span class="sd">            The runup 2% (Ru2).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># get runup</span>
+        <span class="n">runup</span> <span class="o">=</span> <span class="n">output_nc</span><span class="p">[</span><span class="s2">&quot;Runlev&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="c1"># find individual wave uprushes</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">val_peaks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_maximas</span><span class="p">(</span><span class="n">runup</span><span class="p">)</span>
+
+        <span class="c1"># calculate ru2</span>
+        <span class="n">ru2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">val_peaks</span><span class="p">,</span> <span class="mi">98</span><span class="p">)</span>
+
+        <span class="c1"># create xarray Dataset with ru2 value depending on case_num</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">({</span><span class="s2">&quot;Ru2&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;case_num&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">ru2</span><span class="p">])},</span> <span class="p">{</span><span class="s2">&quot;case_num&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">case_num</span><span class="p">]})</span>
+
+        <span class="k">return</span> <span class="n">ds</span></div>
+
+
+<div class="viewcode-block" id="SwashModelWrapper.calculate_runup">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_runup">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_runup</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">case_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_nc</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Stores runup from the output netCDF file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_num : int</span>
+<span class="sd">            The case number.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        output_nc : xr.Dataset</span>
+<span class="sd">            The output netCDF file.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        xr.Dataset</span>
+<span class="sd">            The runup.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># get runup</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">output_nc</span><span class="p">[</span><span class="s2">&quot;Runlev&quot;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">ds</span></div>
+
+
+<div class="viewcode-block" id="SwashModelWrapper.calculate_setup">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_setup">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_setup</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">case_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_nc</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculates mean setup (Msetup) from the output netCDF file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_num : int</span>
+<span class="sd">            The case number.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        output_nc : xr.Dataset</span>
+<span class="sd">            The output netCDF file.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        xr.Dataset</span>
+<span class="sd">            The mean setup (Msetup).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># create xarray Dataset with mean setup</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">output_nc</span><span class="p">[</span><span class="s2">&quot;Watlev&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;Tsec&quot;</span><span class="p">)</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">to_dataset</span><span class="p">()</span>
+
+        <span class="c1"># eliminate Yp dimension</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+
+        <span class="c1"># rename variable</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;Watlev&quot;</span><span class="p">:</span> <span class="s2">&quot;Msetup&quot;</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">ds</span></div>
+
+
+<div class="viewcode-block" id="SwashModelWrapper.calculate_statistical_analysis">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_statistical_analysis">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_statistical_analysis</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">case_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_nc</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculates zero-upcrossing analysis to obtain individual wave heights (Hi) and wave periods (Ti).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_num : int</span>
+<span class="sd">            The case number.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        output_nc : xr.Dataset</span>
+<span class="sd">            The output netCDF file.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        xr.Dataset</span>
+<span class="sd">            The statistical analysis.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># for every X coordinate in domain</span>
+        <span class="n">df_Hrms</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="c1"># for x in output_nc[&quot;Xp&quot;].values:</span>
+        <span class="c1">#     dsw = output_nc.sel(Xp=x)</span>
+
+        <span class="c1">#     # obtain series of water level</span>
+        <span class="c1">#     series_water = dsw[&quot;Watlev&quot;].values</span>
+        <span class="c1">#     time_series = dsw[&quot;Tsec&quot;].values</span>
+
+        <span class="c1">#     # perform statistical analysis</span>
+        <span class="c1">#     # _, Hi = upcrossing(time_series, series_water)</span>
+        <span class="c1">#     _, Hi = upcrossing(np.vstack([time_series, series_water]).T)</span>
+        <span class="c1">#     Hi = np.std(series_water)</span>
+        <span class="c1">#     # Calculo de Pablo Zubia</span>
+        <span class="c1">#     #standard_deviation = np.std(series_water)</span>
+
+        <span class="c1">#     # calculate Hrms</span>
+        <span class="c1">#     Hrms_x = np.sqrt(np.sum(Hi**2)/len(Hi))</span>
+        <span class="c1">#     df_Hrms.loc[x, &quot;Hrms&quot;] = Hrms_x</span>
+
+        <span class="c1"># # convert pd DataFrame to xr Dataset</span>
+        <span class="c1"># df_Hrms.index.name = &quot;Xp&quot;</span>
+        <span class="c1"># ds = df_Hrms.to_xarray()</span>
+
+        <span class="c1"># # assign coordinate case_num</span>
+        <span class="c1"># ds = ds.assign_coords({&quot;case_num&quot;: [output_nc[&quot;case_num&quot;].values]})</span>
+
+        <span class="c1"># return ds</span>
+
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">output_nc</span><span class="p">[</span><span class="s2">&quot;Xp&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+            <span class="n">dsw</span> <span class="o">=</span> <span class="n">output_nc</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">Xp</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+
+            <span class="c1"># obtain series of water level</span>
+            <span class="n">series_water</span> <span class="o">=</span> <span class="n">dsw</span><span class="p">[</span><span class="s2">&quot;Watlev&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="c1"># time_series = dsw[&#39;Tsec&#39;].values</span>
+
+            <span class="n">standard_deviation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">series_water</span><span class="p">)</span>
+            <span class="n">Hrms_x</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">standard_deviation</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">df_Hrms</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;Hrms&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Hrms_x</span>
+
+        <span class="c1"># convert pd DataFrame to xr Dataset</span>
+        <span class="n">df_Hrms</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Xp&quot;</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">df_Hrms</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">()</span>
+
+        <span class="c1"># assign coordinate case_id</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">({</span><span class="s2">&quot;case_num&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">output_nc</span><span class="p">[</span><span class="s2">&quot;case_num&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">]})</span>
+        <span class="k">return</span> <span class="n">ds</span></div>
+
+
+<div class="viewcode-block" id="SwashModelWrapper.calculate_spectral_analysis">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_spectral_analysis">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_spectral_analysis</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">case_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_nc</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Makes a water level spectral analysis (scipy.signal.welch)</span>
+<span class="sd">        then separates incident waves, infragravity waves, very low frequency waves.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_num : int</span>
+<span class="sd">            The case number.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        output_nc : xr.Dataset</span>
+<span class="sd">            The output netCDF file.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        xr.Dataset</span>
+<span class="sd">            The spectral analysis.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">delttbl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">output_nc</span><span class="p">[</span><span class="s2">&quot;Tsec&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">df_H_spectral</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">output_nc</span><span class="p">[</span><span class="s2">&quot;Xp&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+            <span class="n">dsw</span> <span class="o">=</span> <span class="n">output_nc</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">Xp</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">series_water</span> <span class="o">=</span> <span class="n">dsw</span><span class="p">[</span><span class="s2">&quot;Watlev&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+            <span class="c1"># calculate significant, SS, IG and VLF wave heighs</span>
+            <span class="n">Hs</span><span class="p">,</span> <span class="n">Hss</span><span class="p">,</span> <span class="n">Hig</span><span class="p">,</span> <span class="n">Hvlf</span> <span class="o">=</span> <span class="n">spectral_analysis</span><span class="p">(</span><span class="n">series_water</span><span class="p">,</span> <span class="n">delttbl</span><span class="p">)</span>
+
+            <span class="n">df_H_spectral</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;Hs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Hs</span>
+            <span class="n">df_H_spectral</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;Hss&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Hss</span>
+            <span class="n">df_H_spectral</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;ig&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Hig</span>
+            <span class="n">df_H_spectral</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;Hvlf&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Hvlf</span>
+
+        <span class="c1"># convert pd DataFrame to xr Dataset</span>
+        <span class="n">df_H_spectral</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Xp&quot;</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">df_H_spectral</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">()</span>
+
+        <span class="c1"># assign coordinate case_num</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">({</span><span class="s2">&quot;case_num&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">output_nc</span><span class="p">[</span><span class="s2">&quot;case_num&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">]})</span>
+
+        <span class="k">return</span> <span class="n">ds</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="HySwashVeggyModelWrapper">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.HySwashVeggyModelWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HySwashVeggyModelWrapper</span><span class="p">(</span><span class="n">SwashModelWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper for the SWASH model with vegetation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="HySwashVeggyModelWrapper.build_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.HySwashVeggyModelWrapper.build_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_case</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">build_case</span><span class="p">(</span><span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span> <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
+
+        <span class="c1"># Build the input vegetation file</span>
+        <span class="n">plants</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth_array</span><span class="p">)))</span>
+        <span class="n">plants</span><span class="p">[</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Plants_end&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Wv&quot;</span><span class="p">])</span> <span class="p">:</span> <span class="nb">int</span><span class="p">(</span>
+                <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Plants_end&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Nv&quot;</span><span class="p">]</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;plants.txt&quot;</span><span class="p">),</span> <span class="n">plants</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.6f</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ChySwashModelWrapper">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.ChySwashModelWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChySwashModelWrapper</span><span class="p">(</span><span class="n">SwashModelWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper for the SWASH model with friction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_Cf</span> <span class="o">=</span> <span class="mf">0.0002</span>
+
+<div class="viewcode-block" id="ChySwashModelWrapper.build_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.ChySwashModelWrapper.build_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_case</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">build_case</span><span class="p">(</span><span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span> <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
+
+        <span class="c1"># Build the input waves file</span>
+        <span class="n">waves</span> <span class="o">=</span> <span class="n">series_TMA</span><span class="p">(</span><span class="n">waves</span><span class="o">=</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;waves_dict&quot;</span><span class="p">],</span> <span class="n">depth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">depth_array</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># Save the waves to a file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_array_in_file</span><span class="p">(</span>
+            <span class="n">array</span><span class="o">=</span><span class="n">waves</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;waves.bnd&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Build the input friction file</span>
+        <span class="n">friction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth_array</span><span class="p">)))</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_Cf</span>
+        <span class="n">friction</span><span class="p">[</span>
+            <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;Cf_ini&quot;</span><span class="p">])</span> <span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;Cf_fin&quot;</span><span class="p">])</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;Cf&quot;</span><span class="p">]</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;friction.txt&quot;</span><span class="p">),</span> <span class="n">friction</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%.6f</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

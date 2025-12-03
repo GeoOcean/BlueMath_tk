@@ -1,0 +1,254 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.topo_bathy.swan_grid &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.topo_bathy.swan_grid</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.topo_bathy.swan_grid</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+
+<div class="viewcode-block" id="generate_grid_parameters">
+<a class="viewcode-back" href="../../../bluemath_tk.topo_bathy.html#bluemath_tk.topo_bathy.swan_grid.generate_grid_parameters">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_grid_parameters</span><span class="p">(</span>
+    <span class="n">bathy_data</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">alpc</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">xpc</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ypc</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">xlenc</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ylenc</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">buffer_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate grid parameters for the SWAN model based on bathymetry.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bathy_data : xr.DataArray</span>
+<span class="sd">                Bathymetry data.</span>
+<span class="sd">        Must have the following dimensions:</span>
+<span class="sd">        - lon/x: longitude or x coordinate</span>
+<span class="sd">        - lat/y: latitude or y coordinate</span>
+<span class="sd">    alpc: float</span>
+<span class="sd">        Computational Grid Rotation angle in degrees.</span>
+<span class="sd">    xpc: float</span>
+<span class="sd">        X origin.</span>
+<span class="sd">    ypc: float</span>
+<span class="sd">        Y origin.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Dictionary with grid configuration for SWAN input.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Determine coordinate system based on coordinate names</span>
+    <span class="n">coord_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">bathy_data</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+
+    <span class="c1"># Get coordinate variables</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;longitude&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">coord_names</span><span class="p">):</span>
+        <span class="n">x_coord</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">coord_names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;longitude&quot;</span><span class="p">])</span>
+        <span class="n">y_coord</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">coord_names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;lat&quot;</span><span class="p">,</span> <span class="s2">&quot;latitude&quot;</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">x_coord</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">coord_names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;cx&quot;</span><span class="p">,</span> <span class="s2">&quot;easting&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">y_coord</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">coord_names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="s2">&quot;cy&quot;</span><span class="p">,</span> <span class="s2">&quot;northing&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Get resolution from cropped data</span>
+    <span class="n">grid_resolution_x</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span>
+        <span class="n">bathy_data</span><span class="p">[</span><span class="n">x_coord</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="n">bathy_data</span><span class="p">[</span><span class="n">x_coord</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="p">)</span>
+    <span class="n">grid_resolution_y</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span>
+        <span class="n">bathy_data</span><span class="p">[</span><span class="n">y_coord</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="n">bathy_data</span><span class="p">[</span><span class="n">y_coord</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">alpc</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">angle_rad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">alpc</span><span class="p">)</span>
+        <span class="c1"># Create rotation matrix</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">)],</span>
+                <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">)],</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create unrotated rectangle corners</span>
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="n">xlenc</span><span class="p">,</span> <span class="n">xlenc</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">dy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ylenc</span><span class="p">,</span> <span class="n">ylenc</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">])</span>
+
+        <span class="c1"># Rotate points</span>
+        <span class="n">rotated</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">R</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+        <span class="c1"># Translate to corner position</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">rotated</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">xpc</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">rotated</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">ypc</span>
+        <span class="n">corners</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">])</span>
+
+        <span class="n">x_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">buffer_distance</span>
+        <span class="n">x_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">buffer_distance</span>
+        <span class="n">y_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="n">buffer_distance</span>
+        <span class="n">y_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="n">buffer_distance</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cropping bounds: x=[</span><span class="si">{</span><span class="n">x_min</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">x_max</span><span class="si">}</span><span class="s2">], y=[</span><span class="si">{</span><span class="n">y_min</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">y_max</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Crop bathymetry</span>
+        <span class="n">cropped</span> <span class="o">=</span> <span class="n">bathy_data</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">x_coord</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">),</span>
+                <span class="n">y_coord</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">y_max</span><span class="p">,</span> <span class="n">y_min</span><span class="p">),</span>
+            <span class="p">}</span>  <span class="c1"># Note: slice from max to min for descending coordinates</span>
+        <span class="p">)</span>
+
+        <span class="n">grid_parameters</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;xpc&quot;</span><span class="p">:</span> <span class="n">xpc</span><span class="p">,</span>
+            <span class="s2">&quot;ypc&quot;</span><span class="p">:</span> <span class="n">ypc</span><span class="p">,</span>
+            <span class="s2">&quot;alpc&quot;</span><span class="p">:</span> <span class="n">alpc</span><span class="p">,</span>
+            <span class="s2">&quot;xlenc&quot;</span><span class="p">:</span> <span class="n">xlenc</span><span class="p">,</span>
+            <span class="s2">&quot;ylenc&quot;</span><span class="p">:</span> <span class="n">ylenc</span><span class="p">,</span>
+            <span class="s2">&quot;mxc&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">xlenc</span> <span class="o">/</span> <span class="n">grid_resolution_x</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="s2">&quot;myc&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">ylenc</span> <span class="o">/</span> <span class="n">grid_resolution_y</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="s2">&quot;xpinp&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">cropped</span><span class="p">[</span><span class="n">x_coord</span><span class="p">]),</span>  <span class="c1"># x origin from cropped data</span>
+            <span class="s2">&quot;ypinp&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">cropped</span><span class="p">[</span><span class="n">y_coord</span><span class="p">]),</span>  <span class="c1"># y origin from cropped data</span>
+            <span class="s2">&quot;alpinp&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># x-axis direction</span>
+            <span class="s2">&quot;mxinp&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">cropped</span><span class="p">[</span><span class="n">x_coord</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># number mesh x from cropped data</span>
+            <span class="s2">&quot;myinp&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">cropped</span><span class="p">[</span><span class="n">y_coord</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># number mesh y from cropped data</span>
+            <span class="s2">&quot;dxinp&quot;</span><span class="p">:</span> <span class="n">grid_resolution_x</span><span class="p">,</span>  <span class="c1"># resolution from cropped data</span>
+            <span class="s2">&quot;dyinp&quot;</span><span class="p">:</span> <span class="n">grid_resolution_y</span><span class="p">,</span>  <span class="c1"># resolution from cropped data</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">grid_parameters</span><span class="p">,</span> <span class="n">cropped</span><span class="p">,</span> <span class="n">corners</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Compute parameters from full bathymetry</span>
+        <span class="n">grid_parameters</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;xpc&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="n">x_coord</span><span class="p">])),</span>  <span class="c1"># origin x</span>
+            <span class="s2">&quot;ypc&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="n">y_coord</span><span class="p">])),</span>  <span class="c1"># origin y</span>
+            <span class="s2">&quot;alpc&quot;</span><span class="p">:</span> <span class="n">alpc</span><span class="p">,</span>  <span class="c1"># x-axis direction</span>
+            <span class="s2">&quot;xlenc&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="n">x_coord</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="n">x_coord</span><span class="p">])</span>
+            <span class="p">),</span>  <span class="c1"># grid length x</span>
+            <span class="s2">&quot;ylenc&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="n">y_coord</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="n">y_coord</span><span class="p">])</span>
+            <span class="p">),</span>  <span class="c1"># grid length y</span>
+            <span class="s2">&quot;mxc&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="n">x_coord</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># num mesh x</span>
+            <span class="s2">&quot;myc&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="n">y_coord</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># num mesh y</span>
+            <span class="s2">&quot;xpinp&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="n">x_coord</span><span class="p">])),</span>  <span class="c1"># origin x</span>
+            <span class="s2">&quot;ypinp&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="n">y_coord</span><span class="p">])),</span>  <span class="c1"># origin y</span>
+            <span class="s2">&quot;alpinp&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># x-axis direction</span>
+            <span class="s2">&quot;mxinp&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="n">x_coord</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># num mesh x</span>
+            <span class="s2">&quot;myinp&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="n">y_coord</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># num mesh y</span>
+            <span class="s2">&quot;dxinp&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
+                <span class="nb">abs</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="n">x_coord</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="n">bathy_data</span><span class="p">[</span><span class="n">x_coord</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="p">),</span>  <span class="c1"># resolution x</span>
+            <span class="s2">&quot;dyinp&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
+                <span class="nb">abs</span><span class="p">(</span><span class="n">bathy_data</span><span class="p">[</span><span class="n">y_coord</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="n">bathy_data</span><span class="p">[</span><span class="n">y_coord</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="p">),</span>  <span class="c1"># resolution y</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">grid_parameters</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

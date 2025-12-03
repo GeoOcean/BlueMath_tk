@@ -1,0 +1,1393 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.tcs package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.teslakit package" href="bluemath_tk.teslakit.html" />
+    <link rel="prev" title="bluemath_tk.risk package" href="bluemath_tk.risk.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.additive.html">bluemath_tk.additive package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.deeplearning.html">bluemath_tk.deeplearning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">bluemath_tk.tcs package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.tcs package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.tcs.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-tcs-package">
+<h1>bluemath_tk.tcs package<a class="headerlink" href="#bluemath-tk-tcs-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.tcs.graffitiwaves">
+<span id="bluemath-tk-tcs-graffitiwaves-module"></span><h2>bluemath_tk.tcs.graffitiwaves module<a class="headerlink" href="#module-bluemath_tk.tcs.graffitiwaves" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.tcs.parameterization">
+<span id="bluemath-tk-tcs-parameterization-module"></span><h2>bluemath_tk.tcs.parameterization module<a class="headerlink" href="#module-bluemath_tk.tcs.parameterization" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.tcs.qtcrain">
+<span id="bluemath-tk-tcs-qtcrain-module"></span><h2>bluemath_tk.tcs.qtcrain module<a class="headerlink" href="#module-bluemath_tk.tcs.qtcrain" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.tcs.shytcwaves">
+<span id="bluemath-tk-tcs-shytcwaves-module"></span><h2>bluemath_tk.tcs.shytcwaves module<a class="headerlink" href="#module-bluemath_tk.tcs.shytcwaves" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.shytcwaves.analogue_endpoints">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.shytcwaves.</span></span><span class="sig-name descname"><span class="pre">analogue_endpoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_seg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_analogue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/shytcwaves.html#analogue_endpoints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.shytcwaves.analogue_endpoints" title="Link to this definition"></a></dt>
+<dd><p>Add segment endpoint coordinates by looking up the real target segment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_seg</strong> (<em>pd.DataFrame</em>) – Parameterized historical storm track DataFrame containing:
+- lon, lat : Target origin coordinates
+- aseg : Warmup azimuth
+- daseg : Target azimuth variation</p></li>
+<li><p><strong>df_analogue</strong> (<em>pd.DataFrame</em>) – Analogue segments from library containing:
+- vseg : Mean translational speed (kt)
+- dvseg : Speed variation (kt)
+- daseg : Target azimuth variation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated analogue segments DataFrame with added columns:
+- aseg : Warmup azimuth
+- lon_w, lat_w : Warmup origin coordinates
+- lon_i, lat_i : Target origin coordinates (from df_seg)
+- lon_t, lat_t : Target endpoint coordinates</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Calculates warmup origin by shooting backwards 24h from target origin
+2. Uses target origin from historical track
+3. Calculates target endpoint by shooting forwards 6h from target origin
+4. Accounts for hemisphere when calculating angles
+5. Converts longitudes to [0-360°] convention</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.shytcwaves.find_analogue">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.shytcwaves.</span></span><span class="sig-name descname"><span class="pre">find_analogue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_library</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_case</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ix_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/shytcwaves.html#find_analogue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.shytcwaves.find_analogue" title="Link to this definition"></a></dt>
+<dd><p>Find the minimum distance in a 10-dimensional normalized space.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_library</strong> (<em>pd.DataFrame</em>) – Library parameters DataFrame containing the 10 SHyTCWaves parameters:
+{pseg, vseg, wseg, rseg, dp, dv, dw, dr, dA, lat}</p></li>
+<li><p><strong>df_case</strong> (<em>pd.DataFrame</em>) – Target case parameters DataFrame with same structure as df_library.</p></li>
+<li><p><strong>ix_weights</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>) – Weight factors for each parameter dimension.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Indices of nearest points in the library for each case point.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function finds the minimum distance in a normalized space corresponding
+to the SHyTCWaves 10 parameters:
+- pseg : Segment pressure
+- vseg : Mean translational speed
+- wseg : Maximum winds
+- rseg : RMW
+- dp : Pressure variation
+- dv : Speed variation
+- dw : Wind variation
+- dr : RMW variation
+- dA : Azimuth variation
+- lat : Latitude</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.shytcwaves.find_nearest">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.shytcwaves.</span></span><span class="sig-name descname"><span class="pre">find_nearest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cp_rad_ls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cp_ang_ls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_rad</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_ang</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/shytcwaves.html#find_nearest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.shytcwaves.find_nearest" title="Link to this definition"></a></dt>
+<dd><p>Find nearest points in normalized space of radii and angles.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cp_rad_ls</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>) – Control point radial distances.</p></li>
+<li><p><strong>cp_ang_ls</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>) – Control point angles.</p></li>
+<li><p><strong>mask_rad</strong> (<em>np.ndarray</em>) – SWAN output point radial distances.</p></li>
+<li><p><strong>mask_ang</strong> (<em>np.ndarray</em>) – SWAN output point angles.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Indices of nearest points in SWAN output grid for each control point.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Creates dataframes from control points and SWAN grid points
+2. Treats radial distances as scalar values
+3. Treats angles as directional values (circular)
+4. Uses nearest neighbor search in normalized space</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.shytcwaves.get_coef_calibration">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.shytcwaves.</span></span><span class="sig-name descname"><span class="pre">get_coef_calibration</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/shytcwaves.html#get_coef_calibration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.shytcwaves.get_coef_calibration" title="Link to this definition"></a></dt>
+<dd><p>Get calibration coefficients for SHyTCWaves model pressure bias correction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Linear fit coefficients for pressure bias correction.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Uses Saffir-Simpson category center pressures as reference points
+2. Applies calibrated pressure deltas based on validation against satellite data
+3. Performs linear fit to get correction coefficients</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.shytcwaves.get_cp_radii_angle">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.shytcwaves.</span></span><span class="sig-name descname"><span class="pre">get_cp_radii_angle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">st_lat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">st_lon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cp_lat_ls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cp_lon_ls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sign</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aseg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/shytcwaves.html#get_cp_radii_angle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.shytcwaves.get_cp_radii_angle" title="Link to this definition"></a></dt>
+<dd><p>Extract control point distances and angles in the relative coordinate system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>st_lat</strong> (<em>float</em>) – Storm center latitude.</p></li>
+<li><p><strong>st_lon</strong> (<em>float</em>) – Storm center longitude.</p></li>
+<li><p><strong>cp_lat_ls</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>) – Control point latitudes.</p></li>
+<li><p><strong>cp_lon_ls</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>) – Control point longitudes.</p></li>
+<li><p><strong>sign</strong> (<em>int</em>) – Hemisphere indicator: 1 for north, -1 for south.</p></li>
+<li><p><strong>aseg</strong> (<em>float</em>) – Azimuth of the analogue warm segment (from geographic north).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Two lists containing:
+- cp_dist_ls : Distances from storm center to control points (km)
+- cp_ang_ls : Angles from storm center to control points (degrees)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[List[float], List[float]]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Calculates great circle distances between storm center and control points
+2. Converts distances from degrees to kilometers
+3. Calculates angles relative to geographic north
+4. Transforms angles to relative coordinate system
+5. Adjusts angles for southern hemisphere</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.shytcwaves.get_mask_radii_angle">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.shytcwaves.</span></span><span class="sig-name descname"><span class="pre">get_mask_radii_angle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">icase</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/shytcwaves.html#get_mask_radii_angle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.shytcwaves.get_mask_radii_angle" title="Link to this definition"></a></dt>
+<dd><p>Extract radii and angle indices for output points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>icase</strong> (<em>int</em>) – Analogue case ID.</p></li>
+<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – Option to select SHyTCWaves library resolution (‘’, ‘_lowres’). Default is “”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Two arrays containing:
+- rad : Radial distances from storm center (km)
+- ang : Angles from storm center (degrees)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[np.ndarray, np.ndarray]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Loads output indices associated with distances/angles to target origin
+2. Determines grid size (small/medium/large) based on case ID
+3. Extracts appropriate radii and angle arrays for the grid size
+4. For low resolution mode, uses half the number of radial points</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.shytcwaves.historic2shytcwaves_cluster">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.shytcwaves.</span></span><span class="sig-name descname"><span class="pre">historic2shytcwaves_cluster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_save</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tc_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">storm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_site</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">st_param</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extract_bulk</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_segments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">300</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/shytcwaves.html#historic2shytcwaves_cluster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.shytcwaves.historic2shytcwaves_cluster" title="Link to this definition"></a></dt>
+<dd><p>Process historical storm track data using SHyTCWaves methodology.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path_save</strong> (<em>str</em>) – Base path to store results, without the file name.</p></li>
+<li><p><strong>tc_name</strong> (<em>str</em>) – Storm name.</p></li>
+<li><p><strong>storm</strong> (<em>xr.Dataset</em>) – <p>Storm track dataset with standard IBTrACS variables:</p>
+<p>Required:
+- longitude, latitude : Storm coordinates
+- pressure : Central pressure (mbar)
+- maxwinds : Maximum sustained winds (kt)</p>
+<p>Optional:
+- rmw : Radius of maximum winds (nmile)
+- dist2land : Distance to land
+- basin : Basin identifier</p>
+</p></li>
+<li><p><strong>center</strong> (<em>str</em>) – IBTrACS center code.</p></li>
+<li><p><strong>lon</strong> (<em>np.ndarray</em>) – Longitude coordinates for swath calculation.</p></li>
+<li><p><strong>lat</strong> (<em>np.ndarray</em>) – Latitude coordinates for swath calculation.</p></li>
+<li><p><strong>dict_site</strong> (<em>dict</em><em>, </em><em>optional</em>) – Site data for superpoint building. Default is None.
+Must contain:
+- lonpts : Longitude coordinates
+- latpts : Latitude coordinates
+- namepts : Site names
+- site : Site identifier
+- sectors : Sectors
+- deg_superposition : Superposition degree</p></li>
+<li><p><strong>calibration</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to apply SHyTCWaves calibration. Default is True.</p></li>
+<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – High or low resolution library indices. Default is “”.</p></li>
+<li><p><strong>database_on</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to keep data only at 0,6,12,18 hours. Default is False.</p></li>
+<li><p><strong>st_param</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to keep data as original. Default is False.</p></li>
+<li><p><strong>extract_bulk</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to extract bulk wave parameters. Default is True.</p></li>
+<li><p><strong>max_segments</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of segments to process. Default is 300.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function processes historical storm tracks in several steps:
+1. Performs stopmotion segmentation at 6h intervals
+2. Optionally applies SHyTCWaves calibration to track parameters
+3. Trims track to target domain
+4. Finds analogue segments from library
+5. Extracts bulk wave parameters and/or spectral data
+6. Saves results to specified directory</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.shytcwaves.stopmotion_interpolation">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.shytcwaves.</span></span><span class="sig-name descname"><span class="pre">stopmotion_interpolation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_seg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_warm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">24</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_seg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_prop</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/shytcwaves.html#stopmotion_interpolation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.shytcwaves.stopmotion_interpolation" title="Link to this definition"></a></dt>
+<dd><p>Generate SWAN cases in cartesian coordinates from stopmotion parameterized segments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_seg</strong> (<em>pd.DataFrame</em>) – Stopmotion segments containing:
+- vseg : Mean translational speed (kt)
+- pseg : Segment pressure (mbar)
+- wseg : Maximum winds (kt)
+- rseg : RMW (nmile)
+- laseg : Absolute latitude (degrees)
+- dvseg : Speed variation (kt)
+- dpseg : Pressure variation (mbar)
+- dwseg : Wind variation (kt)
+- drseg : RMW variation (nmile)
+- daseg : Azimuth variation (degrees)</p></li>
+<li><p><strong>st</strong> (<em>pd.DataFrame</em><em>, </em><em>optional</em>) – Real storm track data. If None, MDA segments are used (unrelated to historic tracks).</p></li>
+<li><p><strong>t_warm</strong> (<em>int</em><em>, </em><em>optional</em>) – Warmup period in hours. Default is 24.</p></li>
+<li><p><strong>t_seg</strong> (<em>int</em><em>, </em><em>optional</em>) – Target period in hours. Default is 6.</p></li>
+<li><p><strong>t_prop</strong> (<em>int</em><em>, </em><em>optional</em>) – Propagation period in hours. Default is 42.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Two lists containing:</p>
+<ol class="arabic simple">
+<li><p>List of storm track DataFrames with columns:
+- x, y : Cartesian coordinates (m)
+- lon, lat : Geographic coordinates (degrees)
+- vf : Translation speed (kt)
+- vfx, vfy : Velocity components (kt)
+- pn : Surface pressure (1013 mbar)
+- p0 : Minimum central pressure (mbar)
+- vmax : Maximum winds (kt)
+- rmw : RMW (nmile)
+- latitude : Latitude with hemisphere sign</p></li>
+<li><p>List of empty wave event DataFrames with columns:
+- hs, t02, dir, spr : Wave parameters
+- U10, V10 : Wind components
+- level, tide : Water level parameters</p></li>
+</ol>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[List[pd.DataFrame], List[pd.DataFrame]]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function generates SWAN cases in cartesian coordinates following SHyTCWaves configuration:</p>
+<ol class="upperalpha simple">
+<li><p>Warmup period (24h):
+Over the negative x-axis ending at (x,y)=(0,0)</p></li>
+<li><p>Target period (6h):
+Starting at (x,y)=(0,0)</p></li>
+<li><p>Propagation period (42h):
+No track coordinates (no wind forcing)</p></li>
+</ol>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.shytcwaves.stopmotion_st_bmu">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.shytcwaves.</span></span><span class="sig-name descname"><span class="pre">stopmotion_st_bmu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_analogue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_seg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cp_lon_ls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cp_lat_ls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">60</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tqdm_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/shytcwaves.html#stopmotion_st_bmu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.shytcwaves.stopmotion_st_bmu" title="Link to this definition"></a></dt>
+<dd><p>Extract bulk wave parameters from library analogue cases.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_analogue</strong> (<em>pd.DataFrame</em>) – Analogue prerun segments from library.</p></li>
+<li><p><strong>df_seg</strong> (<em>pd.DataFrame</em>) – Storm 6h-segments parameters.</p></li>
+<li><p><strong>st</strong> (<em>pd.DataFrame</em>) – Storm track interpolated every 6h.</p></li>
+<li><p><strong>cp_lon_ls</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>) – Control point longitude coordinates.</p></li>
+<li><p><strong>cp_lat_ls</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>) – Control point latitude coordinates.</p></li>
+<li><p><strong>max_dist</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum distance (km) to extract closest node. Default is 60.</p></li>
+<li><p><strong>list_out</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to return list of datasets instead of merged dataset. Default is False.</p></li>
+<li><p><strong>tqdm_out</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to show progress bar. Default is False.</p></li>
+<li><p><strong>text_out</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to show text output. Default is True.</p></li>
+<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – High or low resolution library indices. Default is “”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Wave directional spectra with dimensions:
+- case : Storm segments
+- point : Control points
+- time : Time steps</p>
+<p>Contains variables:
+- hs : Significant wave height
+- tp : Peak period
+- lon, lat : Control point coordinates
+- ix_near : Nearest point indices
+- pos_nonan : Valid point mask
+- bmu : Best matching unit indices
+- hsbmu : Maximum Hs per point and time
+- tpbmu : Tp at maximum Hs
+- hswath : Maximum Hs per point
+- tswath : Tp at maximum Hs per point</p>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Accesses library analogue cases for a given storm track
+2. Calculates distance and angle from target segment origin to control points
+3. Extracts wave parameters at closest nodes for each analogue segment
+4. Computes bulk parameter envelope and swath
+5. Handles both high and low resolution libraries</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.shytcwaves.stopmotion_st_spectra">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.shytcwaves.</span></span><span class="sig-name descname"><span class="pre">stopmotion_st_spectra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_analogue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_seg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cp_lon_ls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cp_lat_ls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cp_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">60</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tqdm_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Dataset</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dataset</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/shytcwaves.html#stopmotion_st_spectra"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.shytcwaves.stopmotion_st_spectra" title="Link to this definition"></a></dt>
+<dd><p>Function to access the library analogue cases for a given storm track,
+calculate distance and angle from the target segment origin to the control
+point (relative coordinate system), and extract the directional wave
+spectra at the closest node (for every analogue segment)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_analogue</strong> (<em>pd.DataFrame</em>) – Analogue prerun segments from library.</p></li>
+<li><p><strong>df_seg</strong> (<em>pd.DataFrame</em>) – Storm 6h-segments parameters.</p></li>
+<li><p><strong>st</strong> (<em>pd.DataFrame</em>) – Storm track interpolated every 6h.</p></li>
+<li><p><strong>cp_lon_ls</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>) – Control point geographical coordinates.</p></li>
+<li><p><strong>cp_lat_ls</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>) – Control point geographical coordinates.</p></li>
+<li><p><strong>cp_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – Control point names. Default is [].</p></li>
+<li><p><strong>max_dist</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum distance [km] to extract closest node. Default is 60.</p></li>
+<li><p><strong>list_out</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to list output. Default is False.</p></li>
+<li><p><strong>tqdm_out</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use tqdm. Default is False.</p></li>
+<li><p><strong>text_out</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to print text. Default is True.</p></li>
+<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – Mode. Default is “”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>xds_spec : Wave directional spectra (dim ‘case’)</p></li>
+<li><p>xds_bmu : BMU indices</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[xr.Dataset, xr.Dataset]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Removes NaN values from df_seg and df_analogue
+2. Assigns time to df_seg
+3. Gets hemisphere sign
+4. Gets bmu (wavespectra reconstructed)
+5. Opens seg_sim dataset</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.shytcwaves.storm2stopmotion">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.shytcwaves.</span></span><span class="sig-name descname"><span class="pre">storm2stopmotion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_storm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/shytcwaves.html#storm2stopmotion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.shytcwaves.storm2stopmotion" title="Link to this definition"></a></dt>
+<dd><p>Generate stopmotion segments from storm track.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df_storm</strong> (<em>pd.DataFrame</em>) – Storm track DataFrame containing:
+- lon : Longitude coordinates
+- lat : Latitude coordinates
+- p0 : Minimum central pressure (mbar)
+- vmax : Maximum sustained winds (kt)
+- rmw : Radius of maximum winds (nmile)
+- vmaxfill : Boolean indicating if winds were filled with estimates
+- rmwfill : Boolean indicating if RMW was filled with estimates</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stopmotion segments with columns:
+- vseg : Mean translational speed (kt)
+- dvseg : Speed variation (kt)
+- pseg : Segment pressure (mbar)
+- dpseg : Pressure variation (mbar)
+- wseg : Segment maximum winds (kt)
+- dwseg : Wind variation (kt)
+- rseg : Segment RMW (nmile)
+- drseg : RMW variation (nmile)
+- aseg : Azimuth from geographic North (degrees)
+- daseg : Azimuth variation (degrees)
+- lseg : Latitude (degrees)
+- laseg : Absolute latitude (degrees)
+- dlaseg : Latitude variation (degrees)
+- lon_w : Warmup origin longitude
+- lat_w : Warmup origin latitude
+- lon_i : Target origin longitude
+- lat_i : Target origin latitude
+- lon_t : Target endpoint longitude
+- lat_t : Target endpoint latitude</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function generates stopmotion segments methodology from 6-hour storm track segments:</p>
+<ol class="upperalpha simple">
+<li><dl class="simple">
+<dt>Warmup segment (24h):</dt><dd><ul class="simple">
+<li><p>4 segments to define start/end coordinates</p></li>
+<li><p>Defines {Vmean, relative angle}</p></li>
+<li><p>Last 4th segment defines mean {Pmin, Wmax, Rmw}</p></li>
+<li><p>Endpoint defines {lat}</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Target segment (6h):</dt><dd><p>Defines variations {dP, dV, dW, dR, dAng}</p>
+</dd>
+</dl>
+</li>
+</ol>
+<p>The absolute value of latitude is stored (start of target segment).
+Relative angle is referenced to geographic north (southern hemisphere
+is multiplied by -1).</p>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.tcs.tracks">
+<span id="bluemath-tk-tcs-tracks-module"></span><h2>bluemath_tk.tcs.tracks module<a class="headerlink" href="#module-bluemath_tk.tcs.tracks" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.check_and_plot_track_data">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">check_and_plot_track_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">track_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Figure</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#check_and_plot_track_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.check_and_plot_track_data" title="Link to this definition"></a></dt>
+<dd><p>Check the track data for missing values and plot the track.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>track_data</strong> (<em>xr.Dataset</em>) – The track data to check in IBTrACS format. Must contain variables
+for time, longitude, latitude, pressure, and maximum winds for
+each center.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Figure object containing four subplots:
+1. Storm coordinates (lon vs lat)
+2. Minimum central pressure time series
+3. Maximum sustained winds time series
+4. Radii of maximum winds time series (if available)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>plt.Figure</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Longitude values are converted to [0-360º] convention</p></li>
+<li><p>Wind speeds are converted to 1-minute average using center-specific factors</p></li>
+<li><p>Variables that are entirely NaN are omitted from plots</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.entrance_coords">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">entrance_coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#entrance_coords"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.entrance_coords" title="Link to this definition"></a></dt>
+<dd><p>Calculate storm entrance coordinates at computational domain boundary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>delta</strong> (<em>float</em>) – Storm track angle parameter in degrees.</p></li>
+<li><p><strong>gamma</strong> (<em>float</em>) – Storm forward direction in degrees.</p></li>
+<li><p><strong>x0</strong> (<em>float</em>) – Site longitude coordinate in degrees.</p></li>
+<li><p><strong>y0</strong> (<em>float</em>) – Site latitude coordinate in degrees.</p></li>
+<li><p><strong>R</strong> (<em>float</em>) – Radius of influence in degrees.</p></li>
+<li><p><strong>lon0</strong> (<em>float</em>) – Western longitude bound of computational domain.</p></li>
+<li><p><strong>lon1</strong> (<em>float</em>) – Eastern longitude bound of computational domain.</p></li>
+<li><p><strong>lat0</strong> (<em>float</em>) – Southern latitude bound of computational domain.</p></li>
+<li><p><strong>lat1</strong> (<em>float</em>) – Northern latitude bound of computational domain.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple containing:
+- x1 : Entrance longitude coordinate in degrees.
+- y1 : Entrance latitude coordinate in degrees.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[float, float]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Calculates entrance point on the radius of influence
+2. Determines angles to domain corners from entrance point
+3. Uses storm direction to determine intersection with domain boundary
+4. Returns coordinates where storm track enters computational domain</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">entrance_coords</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span> <span class="mi">270</span><span class="p">,</span> <span class="o">-</span><span class="mi">75</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="o">-</span><span class="mi">80</span><span class="p">,</span> <span class="o">-</span><span class="mi">70</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Entrance point: (</span><span class="si">{</span><span class="n">x1</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">°, </span><span class="si">{</span><span class="n">y1</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">°)&quot;</span><span class="p">)</span>
+<span class="go">Entrance point: (-78.5°, 27.5°)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.filter_track_by_basin">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">filter_track_by_basin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tracks_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_basin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#filter_track_by_basin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.filter_track_by_basin" title="Link to this definition"></a></dt>
+<dd><p>Filter the tracks data by basin.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tracks_data</strong> (<em>xr.Dataset</em>) – The tracks data to filter in IBTrACS format.
+Must contain a ‘basin’ variable.</p></li>
+<li><p><strong>id_basin</strong> (<em>str</em>) – The basin ID to filter by (e.g., ‘NA’, ‘SP’, etc.)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The filtered tracks data containing only storms from the specified basin</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sp_tracks</span> <span class="o">=</span> <span class="n">filter_track_by_basin</span><span class="p">(</span><span class="n">tracks_data</span><span class="p">,</span> <span class="s2">&quot;SP&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sp_tracks</span><span class="o">.</span><span class="n">storm</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.get_category">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">get_category</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ycpres</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#get_category"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.get_category" title="Link to this definition"></a></dt>
+<dd><p>Calculate storm category based on central pressure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ycpres</strong> (<em>np.ndarray</em>) – Array of central pressures in millibars (mbar).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of storm categories:
+- 6: Missing data (pressure = 0 or NaN)
+- 5: Category 5 (pressure &lt; 920 mbar)
+- 4: Category 4 (920 ≤ pressure &lt; 944 mbar)
+- 3: Category 3 (944 ≤ pressure &lt; 964 mbar)
+- 2: Category 2 (964 ≤ pressure &lt; 979 mbar)
+- 1: Category 1 (979 ≤ pressure &lt; 1000 mbar)
+- 0: Tropical Storm/Depression (pressure ≥ 1000 mbar)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Uses np.select for vectorized operations. Categories are based on the
+Saffir-Simpson Hurricane Wind Scale pressure thresholds.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pressures</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">915</span><span class="p">,</span> <span class="mi">950</span><span class="p">,</span> <span class="mi">980</span><span class="p">,</span> <span class="mi">1005</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">get_category</span><span class="p">(</span><span class="n">pressures</span><span class="p">)</span>
+<span class="go">array([5, 3, 1, 0, 6])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.get_center_information">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">get_center_information</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'WMO'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#get_center_information"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.get_center_information" title="Link to this definition"></a></dt>
+<dd><p>Get the center information from the configuration parameters for IBTrACS data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>center</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the center to get information for. Default is “WMO”.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary containing the center information with the following keys:
+- source: Center ID
+- basin: Basin identifier
+- time: Time variable name
+- longitude: Longitude variable name
+- latitude: Latitude variable name
+- pressure: Pressure variable name
+- maxwinds: Maximum winds variable name
+- rmw: Radius of maximum winds variable name (if available)
+- dist2land: Distance to land variable name</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[str, Union[str, None]]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the specified center is not found in the configuration parameters.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span> <span class="o">=</span> <span class="n">get_center_information</span><span class="p">(</span><span class="s2">&quot;USA&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;source&quot;</span><span class="p">]</span>
+<span class="go">&#39;usa&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;rmw&quot;</span><span class="p">]</span>
+<span class="go">&#39;usa_rmw&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.get_vmean">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">get_vmean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deltat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#get_vmean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.get_vmean" title="Link to this definition"></a></dt>
+<dd><p>Calculate storm translation speed and direction between two points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lat1</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>np.ndarray</em><em>]</em>) – Latitude of starting point(s) in degrees</p></li>
+<li><p><strong>lon1</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>np.ndarray</em><em>]</em>) – Longitude of starting point(s) in degrees</p></li>
+<li><p><strong>lat2</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>np.ndarray</em><em>]</em>) – Latitude of ending point(s) in degrees</p></li>
+<li><p><strong>lon2</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>np.ndarray</em><em>]</em>) – Longitude of ending point(s) in degrees</p></li>
+<li><p><strong>deltat</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>np.ndarray</em><em>]</em>) – Time step(s) in hours</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple containing:
+- gamma_h : Forward direction in degrees from North
+- vmean : Translation speed in km/h
+- vu : x-component of translation velocity in km/h
+- vy : y-component of translation velocity in km/h</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Uses great circle distance calculation to determine distance between points.
+Translation speed is calculated by dividing distance by time step.
+Direction components are calculated using trigonometry.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gamma</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">vx</span><span class="p">,</span> <span class="n">vy</span> <span class="o">=</span> <span class="n">get_vmean</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="go">(270.0, 18.55, 18.55, 5.68e-15)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.historic_track_interpolation">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">historic_track_interpolation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt_comp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">great_circle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wind_estimate_on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'first'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radi_estimate_on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#historic_track_interpolation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.historic_track_interpolation" title="Link to this definition"></a></dt>
+<dd><p>Interpolate storm track variables to computational time steps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – Storm track DataFrame with historical data.</p></li>
+<li><p><strong>dt_comp</strong> (<em>float</em>) – Computation time step in minutes.</p></li>
+<li><p><strong>y0</strong> (<em>float</em><em>, </em><em>optional</em>) – Target latitude coordinate. Default is None.</p></li>
+<li><p><strong>x0</strong> (<em>float</em><em>, </em><em>optional</em>) – Target longitude coordinate. Default is None.</p></li>
+<li><p><strong>great_circle</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use great circle distances. Default is True.</p></li>
+<li><p><strong>wind_estimate_on</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use empirical estimates instead of historical winds. Default is False.</p></li>
+<li><p><strong>fit</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to estimate winds when wind=0. Default is False.</p></li>
+<li><p><strong>interpolation</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to interpolate storm variables. Default is True.</p></li>
+<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – Value selection for constant segments (‘first’ or ‘mean’). Default is “first”.</p></li>
+<li><p><strong>radi_estimate_on</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to estimate missing RMW values. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>DataFrame with interpolated storm track variables.</p></li>
+<li><p>Array of interpolated time coordinates.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[pd.DataFrame, np.ndarray]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Interpolates track points to match computational time step
+2. Estimates missing values using empirical relationships:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Maximum winds from pressure (Pmin-Wmax relationship)</p></li>
+<li><p>Radius of maximum winds (Knaff et al. 2016)</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li><p>Can use either linear interpolation or constant segments</p></li>
+<li><p>Preserves metadata and adds computational parameters</p></li>
+</ol>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">st</span><span class="p">,</span> <span class="n">times</span> <span class="o">=</span> <span class="n">historic_track_interpolation</span><span class="p">(</span><span class="n">track_data</span><span class="p">,</span> <span class="n">dt_comp</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Interpolated points: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">Interpolated points: 144</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.historic_track_preprocessing">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">historic_track_preprocessing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'WMO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">st_param</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#historic_track_preprocessing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.historic_track_preprocessing" title="Link to this definition"></a></dt>
+<dd><p>Preprocess historical storm track data from IBTrACS or forecast sources.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xds</strong> (<em>xr.Dataset</em>) – Historical storm track dataset with storm dimension.</p></li>
+<li><p><strong>center</strong> (<em>str</em><em>, </em><em>optional</em>) – IBTrACS center code (e.g., ‘WMO’, ‘TOKYO’). Default is “WMO”.</p></li>
+<li><p><strong>forecast_on</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether track is forecasted (not IBTrACS). Default is False.</p></li>
+<li><p><strong>database_on</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to keep data only at 0,6,12,18 hours. Default is False.</p></li>
+<li><p><strong>st_param</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to keep data as original. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Preprocessed storm track data with columns:
+- center : Storm center identifier
+- basin : Storm basin identifier
+- dist2land : Distance to nearest land (km)
+- longitude : Storm longitude (0-360°)
+- latitude : Storm latitude
+- move : Forward direction (degrees)
+- mean_velocity : Translation speed (kt)
+- pressure : Central pressure (mbar)
+- maxwinds : Maximum winds (kt, 1-min avg)
+- rmw : Radius of maximum winds (nmile)
+- category : Storm category (0-6)
+- timestep : Time step (hours)
+- storm_vmean : Mean translation speed (kt)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Processing steps include:
+1. Removing NaT/NaN values from time and pressure data
+2. Converting longitudes to [0°-360°] convention
+3. Rounding dates to nearest hour
+4. Calculating translation speed and direction
+5. Converting wind speeds to 1-min average
+6. Determining storm category based on pressure</p>
+<p>For forecast tracks:
+- Basin IDs are converted to IBTrACS equivalents
+- Missing pressures are estimated from wind speeds using fitted coefficients
+- Southern hemisphere basins are determined by latitude and longitude</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">historic_track_preprocessing</span><span class="p">(</span><span class="n">track_data</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="s1">&#39;WMO&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Track duration: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> time steps&quot;</span><span class="p">)</span>
+<span class="go">Track duration: 48</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Storm category: </span><span class="si">{</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;category&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">Storm category: 3</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.ibtracs_fit_pmin_wmax">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">ibtracs_fit_pmin_wmax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ibtracs_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#ibtracs_fit_pmin_wmax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.ibtracs_fit_pmin_wmax" title="Link to this definition"></a></dt>
+<dd><p>Generate polynomial fit coefficients for pressure-wind relationship.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ibtracs_data</strong> (<em>xr.Dataset</em>) – The IBTrACS dataset containing storm track data. Must include pressure
+and wind variables for each center.</p></li>
+<li><p><strong>N</strong> (<em>int</em><em>, </em><em>optional</em>) – The order of the polynomial fit. Default is 3.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dataset containing:
+- coef_fit : Polynomial coefficients (center, basin, N+1)
+- pres_data : Pressure data used for fitting
+- wind_data : Wind data used for fitting</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Maximum wind speeds are converted to 1-min average for all RSMC centers</p></li>
+<li><p>The polynomial fit is of the form: p = a₀ + a₁w + a₂w² + … + aₙwⁿ
+where p is pressure and w is wind speed</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fit_data</span> <span class="o">=</span> <span class="n">ibtracs_fit_pmin_wmax</span><span class="p">(</span><span class="n">ibtracs_data</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">fit_data</span><span class="o">.</span><span class="n">coef_fit</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># (n_centers, n_basins, N+1)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.nakajo_track_preprocessing">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">nakajo_track_preprocessing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'WMO'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#nakajo_track_preprocessing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.nakajo_track_preprocessing" title="Link to this definition"></a></dt>
+<dd><p>Preprocess synthetic storm track data from Nakajo format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xds</strong> (<em>xr.Dataset</em>) – Synthetic storm track dataset with storm dimension in Nakajo format.
+Must contain variables for time, longitude (ylon_TC), latitude (ylat_TC),
+and pressure (yCPRES).</p></li>
+<li><p><strong>center</strong> (<em>str</em><em>, </em><em>optional</em>) – IBTrACS center code. Default is “WMO”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Preprocessed storm track data with columns:
+- center : Storm center identifier
+- basin : Storm basin identifier (determined from coordinates)
+- dist2land : Distance to nearest land (fixed at 100 km)
+- longitude : Storm longitude (0-360°)
+- latitude : Storm latitude
+- move : Forward direction (degrees)
+- mean_velocity : Translation speed (kt)
+- pressure : Central pressure (mbar)
+- maxwinds : Maximum winds (kt, not provided)
+- rmw : Radius of maximum winds (not provided)
+- category : Storm category (0-6)
+- timestep : Time step (hours)
+- storm_vmean : Mean translation speed (kt)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Removes NaT (Not a Time) values from time coordinate
+2. Removes NaN values from pressure data
+3. Converts longitudes to [0°-360°] convention
+4. Determines basin based on storm coordinates
+5. Rounds dates to nearest hour
+6. Calculates translation speed and direction
+7. Determines storm category based on pressure</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">processed</span> <span class="o">=</span> <span class="n">nakajo_track_preprocessing</span><span class="p">(</span><span class="n">nakajo_data</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="s1">&#39;WMO&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Track duration: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">processed</span><span class="p">)</span><span class="si">}</span><span class="s2"> time steps&quot;</span><span class="p">)</span>
+<span class="go">Track duration: 48</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Storm category: </span><span class="si">{</span><span class="n">processed</span><span class="p">[</span><span class="s1">&#39;category&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">Storm category: 3</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.resample_storm_6h">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">resample_storm_6h</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">storm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#resample_storm_6h"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.resample_storm_6h" title="Link to this definition"></a></dt>
+<dd><p>Resample storm data to 6-hour intervals.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>storm</strong> (<em>xr.Dataset</em>) – Storm dataset containing time series data with arbitrary time intervals</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Resampled storm dataset with 6-hour intervals</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function:
+1. Removes NaT (Not a Time) values from time coordinate
+2. Removes NaN values from WMO pressure data
+3. Resets lon/lat coordinates
+4. Resamples all variables to 6-hour intervals using linear interpolation
+5. Preserves the original basin identifier</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">resampled</span> <span class="o">=</span> <span class="n">resample_storm_6h</span><span class="p">(</span><span class="n">storm_data</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">resampled</span><span class="o">.</span><span class="n">time</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">))</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.stopmotion_trim_circle">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">stopmotion_trim_circle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_seg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radii</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#stopmotion_trim_circle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.stopmotion_trim_circle" title="Link to this definition"></a></dt>
+<dd><p>Trim storm track segments to those intersecting a circular domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_seg</strong> (<em>pd.DataFrame</em>) – DataFrame containing storm track segments with start/end coordinates.</p></li>
+<li><p><strong>plon</strong> (<em>float</em>) – Longitude of circle center in degrees.</p></li>
+<li><p><strong>plat</strong> (<em>float</em>) – Latitude of circle center in degrees.</p></li>
+<li><p><strong>radii</strong> (<em>float</em>) – Radius of circular domain in degrees.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Trimmed DataFrame containing only segments that intersect the circular domain.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Calculates geodesic distances from both endpoints of each segment to circle center
+2. Takes minimum distance to determine if segment intersects circle
+3. Returns continuous time segment containing all intersecting segments
+4. Preserves original metadata in the returned DataFrame</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">trimmed</span> <span class="o">=</span> <span class="n">stopmotion_trim_circle</span><span class="p">(</span><span class="n">segments</span><span class="p">,</span> <span class="o">-</span><span class="mi">75</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Segments intersecting circle: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">trimmed</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">Segments intersecting circle: 8</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.track_extent">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">track_extent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt_comp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_extent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">48.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#track_extent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.track_extent" title="Link to this definition"></a></dt>
+<dd><p>Extend storm track data for wave propagation analysis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>st</strong> (<em>pd.DataFrame</em>) – Storm track DataFrame containing time series data.</p></li>
+<li><p><strong>time_input</strong> (<em>np.ndarray</em>) – Array of time coordinates.</p></li>
+<li><p><strong>dt_comp</strong> (<em>float</em>) – Computational time step in minutes.</p></li>
+<li><p><strong>time_extent</strong> (<em>float</em><em>, </em><em>optional</em>) – Additional time to extend simulation in hours. Default is 48.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple containing:
+- st_new : Extended storm track DataFrame.
+- we : Wave event DataFrame with empty fields for wave parameters.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[pd.DataFrame, pd.DataFrame]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Calculates total simulation period (storm + propagation)
+2. Creates extended time array with specified time step
+3. Fills storm data in initial period
+4. Creates empty wave event DataFrame for entire period
+5. Preserves metadata and adds computational time step override</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">st_ext</span><span class="p">,</span> <span class="n">wave_evt</span> <span class="o">=</span> <span class="n">track_extent</span><span class="p">(</span><span class="n">track_data</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">time_extent</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Extended duration: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">st_ext</span><span class="p">)</span><span class="si">}</span><span class="s2"> time steps&quot;</span><span class="p">)</span>
+<span class="go">Extended duration: 96 time steps</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.track_site_parameters">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">track_site_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_ini</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'WMO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'SP'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#track_site_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.track_site_parameters" title="Link to this definition"></a></dt>
+<dd><p>Generate parameterized storm track within study area.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>step</strong> (<em>float</em>) – Computational time step in minutes.</p></li>
+<li><p><strong>pmin</strong> (<em>float</em>) – Minimum central pressure in millibars.</p></li>
+<li><p><strong>vmean</strong> (<em>float</em>) – Mean translation speed in knots.</p></li>
+<li><p><strong>delta</strong> (<em>float</em>) – Storm track angle parameter in degrees.</p></li>
+<li><p><strong>gamma</strong> (<em>float</em>) – Storm forward direction in degrees.</p></li>
+<li><p><strong>x0</strong> (<em>float</em>) – Site longitude coordinate in degrees.</p></li>
+<li><p><strong>y0</strong> (<em>float</em>) – Site latitude coordinate in degrees.</p></li>
+<li><p><strong>lon0</strong> (<em>float</em>) – Western longitude bound of computational domain.</p></li>
+<li><p><strong>lon1</strong> (<em>float</em>) – Eastern longitude bound of computational domain.</p></li>
+<li><p><strong>lat0</strong> (<em>float</em>) – Southern latitude bound of computational domain.</p></li>
+<li><p><strong>lat1</strong> (<em>float</em>) – Northern latitude bound of computational domain.</p></li>
+<li><p><strong>R</strong> (<em>float</em>) – Radius of influence in degrees.</p></li>
+<li><p><strong>date_ini</strong> (<em>str</em>) – Initial date in format ‘YYYY-MM-DD HH:MM’.</p></li>
+<li><p><strong>center</strong> (<em>str</em><em>, </em><em>optional</em>) – IBTrACS center code. Default is “WMO”.</p></li>
+<li><p><strong>basin</strong> (<em>str</em><em>, </em><em>optional</em>) – Storm basin identifier. Default is “SP”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Storm track DataFrame with columns:
+- lon : Storm longitude coordinates
+- lat : Storm latitude coordinates
+- move : Forward direction (gamma)
+- vf : Translation speed (kt)
+- vfx : x-component of velocity
+- vfy : y-component of velocity
+- pn : Surface pressure (1013 mbar)
+- p0 : Minimum central pressure
+- vmax : Maximum winds (kt, 1-min avg)
+- rmw : Radius of maximum winds (nmile)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Calculates entrance coordinates at domain boundary
+2. Generates track points at computational time steps
+3. Estimates maximum winds from pressure using fitted coefficients
+4. Estimates radius of maximum winds using Knaff et al. (2016)
+5. Preserves metadata including site coordinates and radius</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">track</span> <span class="o">=</span> <span class="n">track_site_parameters</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">step</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">pmin</span><span class="o">=</span><span class="mi">950</span><span class="p">,</span> <span class="n">vmean</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mi">270</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">x0</span><span class="o">=-</span><span class="mi">75</span><span class="p">,</span> <span class="n">y0</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">lon0</span><span class="o">=-</span><span class="mi">80</span><span class="p">,</span> <span class="n">lon1</span><span class="o">=-</span><span class="mi">70</span><span class="p">,</span> <span class="n">lat0</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">lat1</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">R</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">date_ini</span><span class="o">=</span><span class="s1">&#39;2020-09-01 00:00&#39;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Track points: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">track</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">Track points: 96</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.track_triming">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">track_triming</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat00</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon00</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat01</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon01</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#track_triming"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.track_triming" title="Link to this definition"></a></dt>
+<dd><p>Trim storm track to specified geographical bounds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>st</strong> (<em>pd.DataFrame</em>) – Storm track DataFrame containing time series data.</p></li>
+<li><p><strong>lat00</strong> (<em>float</em>) – Southern latitude bound in degrees.</p></li>
+<li><p><strong>lon00</strong> (<em>float</em>) – Western longitude bound in degrees.</p></li>
+<li><p><strong>lat01</strong> (<em>float</em>) – Northern latitude bound in degrees.</p></li>
+<li><p><strong>lon01</strong> (<em>float</em>) – Eastern longitude bound in degrees.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Trimmed storm track containing only points within the specified bounds
+and preserving continuous time segments.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Identifies all track points within the specified bounds
+2. Finds the earliest and latest times for points within bounds
+3. Returns all track points between these times to maintain continuity
+4. Preserves original metadata in the returned DataFrame</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">trimmed</span> <span class="o">=</span> <span class="n">track_triming</span><span class="p">(</span><span class="n">track_data</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="o">-</span><span class="mi">80</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="o">-</span><span class="mi">60</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Points in bounds: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">trimmed</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">Points in bounds: 24</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.track_triming_circle">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">track_triming_circle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radii</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#track_triming_circle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.track_triming_circle" title="Link to this definition"></a></dt>
+<dd><p>Trim storm track to points within a circular domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>st</strong> (<em>pd.DataFrame</em>) – Storm track DataFrame containing time series data.</p></li>
+<li><p><strong>plon</strong> (<em>float</em>) – Longitude of circle center in degrees.</p></li>
+<li><p><strong>plat</strong> (<em>float</em>) – Latitude of circle center in degrees.</p></li>
+<li><p><strong>radii</strong> (<em>float</em>) – Radius of circular domain in degrees.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Trimmed storm track containing only points within the circular domain
+and preserving continuous time segments.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function:
+1. Calculates geodesic distance from each track point to circle center
+2. Identifies points within the specified radius
+3. Returns continuous time segment containing all points within radius
+4. Preserves original metadata in the returned DataFrame</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">trimmed</span> <span class="o">=</span> <span class="n">track_triming_circle</span><span class="p">(</span><span class="n">track_data</span><span class="p">,</span> <span class="o">-</span><span class="mi">75</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Points in circle: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">trimmed</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">Points in circle: 18</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.wind2pres">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">wind2pres</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xds_coef</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">st_wind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">st_center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">st_basin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#wind2pres"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.wind2pres" title="Link to this definition"></a></dt>
+<dd><p>Convert maximum wind speeds to minimum central pressure using fitted coefficients.
+As many other functions in this module, this works for IBTrACS data for the moment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xds_coef</strong> (<em>xr.Dataset</em>) – Dataset containing polynomial fitting coefficients for Pmin-Wmax relationship.</p></li>
+<li><p><strong>st_wind</strong> (<em>np.ndarray</em>) – Storm maximum winds in knots (1-min average).</p></li>
+<li><p><strong>st_center</strong> (<em>str</em>) – Storm center/agency identifier (e.g., ‘WMO’, ‘TOKYO’).</p></li>
+<li><p><strong>st_basin</strong> (<em>str</em>) – Storm basin identifier (e.g., ‘NA’, ‘WP’).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Predicted minimum central pressure values in millibars</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Uses polynomial regression coefficients to estimate minimum central pressure
+from maximum wind speeds. The polynomial is of the form:
+p = a₀ + a₁w + a₂w² + … + aₙwⁿ
+where p is pressure and w is wind speed.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pres</span> <span class="o">=</span> <span class="n">wind2pres</span><span class="p">(</span><span class="n">coef_dataset</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">100</span><span class="p">]),</span> <span class="s1">&#39;WMO&#39;</span><span class="p">,</span> <span class="s1">&#39;NA&#39;</span><span class="p">)</span>
+<span class="go">array([955.2])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.tracks.wind2rmw">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.tracks.</span></span><span class="sig-name descname"><span class="pre">wind2rmw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/tracks.html#wind2rmw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.tracks.wind2rmw" title="Link to this definition"></a></dt>
+<dd><p>Calculate radius of maximum winds using Knaff et al. (2016) formula.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wmax</strong> (<em>np.ndarray</em>) – Maximum sustained winds in knots</p></li>
+<li><p><strong>vmean</strong> (<em>np.ndarray</em>) – Mean translational speed in knots</p></li>
+<li><p><strong>latitude</strong> (<em>np.ndarray</em>) – Latitude of the storm center in degrees</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Radius of maximum winds (RMW) in nautical miles</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Implements the Knaff et al. (2016) formula for estimating RMW:
+1. Subtracts translational speed from observed maximum wind speed
+2. Converts 10m wind speed to gradient level wind speed using beta factor
+3. Applies empirical formula accounting for wind speed and latitude</p>
+<p class="rubric">References</p>
+<p>Knaff, J. A., et al. (2016). “Estimation of Tropical Cyclone Wind Structure
+Parameters from Satellite Imagery”, Weather and Forecasting.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rmw</span> <span class="o">=</span> <span class="n">wind2rmw</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">100</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">10</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">25</span><span class="p">]))</span>
+<span class="go">array([26.51])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.tcs.vortex">
+<span id="bluemath-tk-tcs-vortex-module"></span><h2>bluemath_tk.tcs.vortex module<a class="headerlink" href="#module-bluemath_tk.tcs.vortex" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.vortex.vortex2delft_3D_FM_nc">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.vortex.</span></span><span class="sig-name descname"><span class="pre">vortex2delft_3D_FM_nc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_vortex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/vortex.html#vortex2delft_3D_FM_nc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.vortex.vortex2delft_3D_FM_nc" title="Link to this definition"></a></dt>
+<dd><p>Convert the vortex dataset to a Delft3D FM compatible netCDF forcing file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh</strong> (<em>xarray.Dataset</em>) – The mesh dataset containing the node coordinates.</p></li>
+<li><p><strong>ds_vortex</strong> (<em>xarray.Dataset</em>) – The vortex dataset containing wind speed and pressure data.</p></li>
+<li><p><strong>path_output</strong> (<em>str</em>) – The output path where the netCDF file will be saved.</p></li>
+<li><p><strong>ds_name</strong> (<em>str</em>) – The name of the output netCDF file, default is “forcing_Tonga_vortex.nc”.</p></li>
+<li><p><strong>forcing_ext</strong> (<em>str</em>) – The extension for the forcing file, default is “GreenSurge_GFDcase_wind.ext”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dataset containing the interpolated wind speed and pressure data,
+ready for use in Delft3D FM.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.tcs.vortex.vortex_model_grid">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.tcs.vortex.</span></span><span class="sig-name descname"><span class="pre">vortex_model_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">storm_track</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cg_lon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cg_lat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coords_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'SPHERICAL'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/tcs/vortex.html#vortex_model_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.tcs.vortex.vortex_model_grid" title="Link to this definition"></a></dt>
+<dd><p>Generate wind vortex fields from storm track parameters using the Dynamic Holland Model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>storm_track</strong> (<em>pd.DataFrame</em>) – DataFrame containing storm track parameters.
+- obligatory fields: vfx, vfy, p0, pn, vmax, rmw
+- for SPHERICAL coordinates: lon, lat
+- for CARTESIAN coordinates: x, y, latitude</p></li>
+<li><p><strong>cg_lon</strong> (<em>np.ndarray</em>) – Computational grid longitudes.</p></li>
+<li><p><strong>cg_lat</strong> (<em>np.ndarray</em>) – Computational grid latitudes.</p></li>
+<li><p><strong>cg_lon</strong> – Computational grid in longitudes and latitudes.</p></li>
+<li><p><strong>cg_lat</strong> – Computational grid in longitudes and latitudes.</p></li>
+<li><p><strong>coords_mode</strong> (<em>str</em>) – ‘SPHERICAL’ for spherical coordinates (latitude, longitude),
+‘CARTESIAN’ for Cartesian coordinates (x, y).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset containing wind speed W, direction Dir (º from north),
+and pressure p at each grid point.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">storm_track</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+<span class="gp">... </span>    <span class="s1">&#39;vfx&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span> <span class="s1">&#39;vfy&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="s1">&#39;p0&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">990</span><span class="p">],</span> <span class="s1">&#39;pn&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">980</span><span class="p">,</span> <span class="mi">970</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="s1">&#39;vmax&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">50</span><span class="p">,</span> <span class="mi">55</span><span class="p">],</span> <span class="s1">&#39;rmw&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">35</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="s1">&#39;lon&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span> <span class="s1">&#39;lat&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">22</span><span class="p">]</span>
+<span class="gp">... </span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cg_lon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cg_lat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">20</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">22</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">coords_mode</span> <span class="o">=</span> <span class="s1">&#39;SPHERICAL&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">vortex_model_grid</span><span class="p">(</span><span class="n">storm_track</span><span class="p">,</span> <span class="n">cg_lon</span><span class="p">,</span> <span class="n">cg_lat</span><span class="p">,</span> <span class="n">coords_mode</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+<span class="go">&lt;xarray.Dataset&gt;</span>
+<span class="go">Dimensions:  (lat: 3, lon: 3, time: 2)</span>
+<span class="go">Coordinates:</span>
+<span class="go">* lat      (lat) float64 20.0 21.0 22.0</span>
+<span class="go">* lon      (lon) float64 10.0 11.0 12.0</span>
+<span class="go">* time     (time) datetime64[ns] 2023-10-01 2023-10-02</span>
+<span class="go">Data variables:</span>
+<span class="go">W        (lat, lon, time) float64 0.0 0.0 0.0 ... 0.0 0.0 0.0</span>
+<span class="go">Dir      (lat, lon, time) float64 0.0 0.0 0.0 ... 0.0 0.0 0.0</span>
+<span class="go">p        (lat, lon, time) float64 0.0 0.0 0.0 ... 0.0 0.0 0.0</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.tcs">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bluemath_tk.tcs" title="Link to this heading"></a></h2>
+<p>Project: BlueMath_tk
+Sub-Module: tcs
+Author: GeoOcean Research Group, Universidad de Cantabria
+Repository: <a class="reference external" href="https://github.com/GeoOcean/BlueMath_tk.git">https://github.com/GeoOcean/BlueMath_tk.git</a>
+Status: Under development (Working)</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.risk.html" class="btn btn-neutral float-left" title="bluemath_tk.risk package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.teslakit.html" class="btn btn-neutral float-right" title="bluemath_tk.teslakit package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

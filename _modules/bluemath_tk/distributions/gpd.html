@@ -1,0 +1,703 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.distributions.gpd &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.distributions.gpd</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.distributions.gpd</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">genpareto</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">._base_distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseDistribution</span><span class="p">,</span> <span class="n">FitResult</span>
+
+
+<div class="viewcode-block" id="GPD">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GPD</span><span class="p">(</span><span class="n">BaseDistribution</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generalized Pareto Distribution (GPD) class.</span>
+
+<span class="sd">    This class contains all the methods assocaited to the GPD distribution.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        The complete name of the distribution (GPD).</span>
+<span class="sd">    nparams : int</span>
+<span class="sd">        Number of GPD parameters.</span>
+<span class="sd">    param_names : List[str]</span>
+<span class="sd">        Names of the GPD parameters (threshold, scale, shape).</span>
+
+<span class="sd">    Methods</span>
+<span class="sd">    -------</span>
+<span class="sd">    pdf(x, threshold, scale, shape)</span>
+<span class="sd">        Probability density function.</span>
+<span class="sd">    cdf(x, threshold, scale, shape)</span>
+<span class="sd">        Cumulative distribution function</span>
+<span class="sd">    qf(p, threshold, scale, shape)</span>
+<span class="sd">        Quantile function</span>
+<span class="sd">    sf(x, threshold, scale, shape)</span>
+<span class="sd">        Survival function</span>
+<span class="sd">    nll(data, threshold, scale, shape)</span>
+<span class="sd">        Negative Log-Likelihood function</span>
+<span class="sd">    fit(data)</span>
+<span class="sd">        Fit distribution to data (NOT IMPLEMENTED).</span>
+<span class="sd">    random(size, threshold, scale, shape)</span>
+<span class="sd">        Generates random values from GPD distribution.</span>
+<span class="sd">    mean(threshold, scale, shape)</span>
+<span class="sd">        Mean of GPD distribution.</span>
+<span class="sd">    median(threshold, scale, shape)</span>
+<span class="sd">        Median of GPD distribution.</span>
+<span class="sd">    variance(threshold, scale, shape)</span>
+<span class="sd">        Variance of GPD distribution.</span>
+<span class="sd">    std(threshold, scale, shape)</span>
+<span class="sd">        Standard deviation of GPD distribution.</span>
+<span class="sd">    stats(threshold, scale, shape)</span>
+<span class="sd">        Summary statistics of GPD distribution.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    - This class is designed to obtain all the properties associated to the GPD distribution.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from bluemath_tk.distributions.gpd import GPD</span>
+<span class="sd">    &gt;&gt;&gt; gpd_pdf = GPD.pdf(x, threshold=0, scale=1, shape=0.1)</span>
+<span class="sd">    &gt;&gt;&gt; gpd_cdf = GPD.cdf(x, threshold=0, scale=1, shape=0.1)</span>
+<span class="sd">    &gt;&gt;&gt; gpd_qf = GPD.qf(p, threshold=0, scale=1, shape=0.1)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the GPD distribution class</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+<div class="viewcode-block" id="GPD.name">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.name">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Generalized Pareto Distribution (GPD)&quot;</span></div>
+
+
+<div class="viewcode-block" id="GPD.nparams">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.nparams">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nparams</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Number of parameters of GPD</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GPD.param_names">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.param_names">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">param_names</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Name of parameters of GPD</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;threshold&quot;</span><span class="p">,</span> <span class="s2">&quot;scale&quot;</span><span class="p">,</span> <span class="s2">&quot;shape&quot;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="GPD.pdf">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.pdf">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Probability density function</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : np.ndarray</span>
+<span class="sd">            Values to compute the probability density value</span>
+<span class="sd">        threshold : float, default=0.0</span>
+<span class="sd">            Threshold parameter</span>
+<span class="sd">        scale : float, default = 1.0</span>
+<span class="sd">            Scale parameter.</span>
+<span class="sd">            Must be greater than 0.</span>
+<span class="sd">        shape : float, default = 0.0</span>
+<span class="sd">            Shape parameter.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pdf : np.ndarray</span>
+<span class="sd">            Probability density function values</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If scale is not greater than 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Scale parameter must be &gt; 0&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">genpareto</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GPD.cdf">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.cdf">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cdf</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Cumulative distribution function</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : np.ndarray</span>
+<span class="sd">            Values to compute their probability</span>
+<span class="sd">        threshold : float, default=0.0</span>
+<span class="sd">            Threshold parameter</span>
+<span class="sd">        scale : float, default = 1.0</span>
+<span class="sd">            Scale parameter.</span>
+<span class="sd">            Must be greater than 0.</span>
+<span class="sd">        shape : float, default = 0.0</span>
+<span class="sd">            Shape parameter.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        p : np.ndarray</span>
+<span class="sd">            Probability</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If scale is not greater than 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Scale parameter must be &gt; 0&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">genpareto</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GPD.sf">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.sf">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sf</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Survival function (1-Cumulative Distribution Function)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : np.ndarray</span>
+<span class="sd">            Values to compute their survival function value</span>
+<span class="sd">        threshold : float, default=0.0</span>
+<span class="sd">            Threshold parameter</span>
+<span class="sd">        scale : float, default = 1.0</span>
+<span class="sd">            Scale parameter.</span>
+<span class="sd">            Must be greater than 0.</span>
+<span class="sd">        shape : float, default = 0.0</span>
+<span class="sd">            Shape parameter.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sp : np.ndarray</span>
+<span class="sd">            Survival function value</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If scale is not greater than 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Scale parameter must be &gt; 0&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">genpareto</span><span class="o">.</span><span class="n">sf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GPD.qf">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.qf">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">qf</span><span class="p">(</span>
+        <span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Quantile function (Inverse of Cumulative Distribution Function)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        p : np.ndarray</span>
+<span class="sd">            Probabilities to compute their quantile</span>
+<span class="sd">        threshold : float, default=0.0</span>
+<span class="sd">            Threshold parameter</span>
+<span class="sd">        scale : float, default = 1.0</span>
+<span class="sd">            Scale parameter.</span>
+<span class="sd">            Must be greater than 0.</span>
+<span class="sd">        shape : float, default = 0.0</span>
+<span class="sd">            Shape parameter.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        q : np.ndarray</span>
+<span class="sd">            Quantile value</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If probabilities are not in the range (0, 1).</span>
+
+<span class="sd">        ValueError</span>
+<span class="sd">            If scale is not greater than 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Probabilities must be in the range (0, 1)&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Scale parameter must be &gt; 0&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">genpareto</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GPD.nll">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.nll">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nll</span><span class="p">(</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Negative Log-Likelihood function</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : np.ndarray</span>
+<span class="sd">            Data to compute the Negative Log-Likelihood value</span>
+<span class="sd">        threshold : float, default=0.0</span>
+<span class="sd">            Threshold parameter</span>
+<span class="sd">        scale : float, default = 1.0</span>
+<span class="sd">            Scale parameter.</span>
+<span class="sd">            Must be greater than 0.</span>
+<span class="sd">        shape : float, default = 0.0</span>
+<span class="sd">            Shape parameter.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        nll : float</span>
+<span class="sd">            Negative Log-Likelihood value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">data</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+        <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+            <span class="n">genpareto</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GPD.fit">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.fit">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FitResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit GEV distribution</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : np.ndarray</span>
+<span class="sd">            Data to fit the GEV distribution</span>
+<span class="sd">        threshold : float, default=0.0</span>
+<span class="sd">            Threshold parameter</span>
+<span class="sd">        **kwargs : dict, optional</span>
+<span class="sd">            Additional keyword arguments for the fitting function.</span>
+<span class="sd">            These can include options like method, bounds, etc.</span>
+<span class="sd">            See fit_dist for more details.</span>
+<span class="sd">            If not provided, default fitting options will be used.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        FitResult</span>
+<span class="sd">            Result of the fit containing the parameters loc, scale, shape,</span>
+<span class="sd">            success status, and negative log-likelihood value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">exceedances</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">exceedances</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No exceedances above threshold&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Adjust exceedances relative to threshold</span>
+        <span class="n">exceedances_adjusted</span> <span class="o">=</span> <span class="n">exceedances</span> <span class="o">-</span> <span class="n">threshold</span>
+
+        <span class="c1"># Default optimization settings</span>
+        <span class="n">default_x0</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">exceedances_adjusted</span><span class="p">),</span> <span class="mf">0.1</span><span class="p">]</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;x0&quot;</span><span class="p">,</span> <span class="n">default_x0</span><span class="p">)</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;method&quot;</span><span class="p">,</span> <span class="s2">&quot;Nelder-Mead&quot;</span><span class="p">)</span>
+        <span class="n">default_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bounds&quot;</span><span class="p">,</span> <span class="n">default_bounds</span><span class="p">)</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;options&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;disp&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+
+        <span class="c1"># Objective function that includes threshold</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">obj</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+            <span class="n">scale</span><span class="p">,</span> <span class="n">shape</span> <span class="o">=</span> <span class="n">params</span>
+            <span class="k">return</span> <span class="n">GPD</span><span class="o">.</span><span class="n">nll</span><span class="p">(</span><span class="n">exceedances</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="c1"># Perform optimization</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizeResult</span><span class="p">,</span> <span class="n">minimize</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">fun</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">)</span>
+
+        <span class="c1"># Create modified result</span>
+        <span class="n">modified_result</span> <span class="o">=</span> <span class="n">OptimizeResult</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="n">threshold</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span>
+            <span class="n">success</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">,</span>
+            <span class="n">fun</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">message</span><span class="p">,</span>
+            <span class="n">hess_inv</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">hess_inv</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">&quot;hess_inv&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Return the fitting result</span>
+        <span class="k">return</span> <span class="n">FitResult</span><span class="p">(</span><span class="n">GPD</span><span class="p">,</span> <span class="n">exceedances</span><span class="p">,</span> <span class="n">modified_result</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GPD.random">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.random">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">random</span><span class="p">(</span>
+        <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">shape</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates random values from GPD distribution</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        size : int</span>
+<span class="sd">            Number of random values to generate</span>
+<span class="sd">        threshold : float, default=0.0</span>
+<span class="sd">            Threshold parameter</span>
+<span class="sd">        scale : float, default = 1.0</span>
+<span class="sd">            Scale parameter.</span>
+<span class="sd">            Must be greater than 0.</span>
+<span class="sd">        shape : float, default = 0.0</span>
+<span class="sd">            Shape parameter.</span>
+<span class="sd">        random_state : np.random.RandomState, optional</span>
+<span class="sd">            Random state for reproducibility.</span>
+<span class="sd">            If None, do not use random stat.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : np.ndarray</span>
+<span class="sd">            Random values from GEV distribution</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If scale is not greater than 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Scale parameter must be &gt; 0&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">genpareto</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span>
+            <span class="n">c</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GPD.mean">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.mean">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mean</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        threshold : float, default=0.0</span>
+<span class="sd">            Threshold parameter</span>
+<span class="sd">        scale : float, default = 1.0</span>
+<span class="sd">            Scale parameter.</span>
+<span class="sd">            Must be greater than 0.</span>
+<span class="sd">        shape : float, default = 0.0</span>
+<span class="sd">            Shape parameter.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mean : np.ndarray</span>
+<span class="sd">            Mean value of GEV with the given parameters</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If scale is not greater than 0.</span>
+
+<span class="sd">        Warning</span>
+<span class="sd">            If shape is greater than or equal to 1, mean is not defined.</span>
+<span class="sd">            In this case, it returns infinity.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Scale parameter must be &gt; 0&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">genpareto</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GPD.median">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.median">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">median</span><span class="p">(</span><span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Median</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        threshold : float, default=0.0</span>
+<span class="sd">            Threshold parameter</span>
+<span class="sd">        scale : float, default = 1.0</span>
+<span class="sd">            Scale parameter.</span>
+<span class="sd">            Must be greater than 0.</span>
+<span class="sd">        shape : float, default = 0.0</span>
+<span class="sd">            Shape parameter.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        median : np.ndarray</span>
+<span class="sd">            Median value of GEV with the given parameters</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If scale is not greater than 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Scale parameter must be &gt; 0&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">genpareto</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">c</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GPD.variance">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.variance">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">variance</span><span class="p">(</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Variance</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        threshold : float, default=0.0</span>
+<span class="sd">            Threshold parameter</span>
+<span class="sd">        scale : float, default = 1.0</span>
+<span class="sd">            Scale parameter.</span>
+<span class="sd">            Must be greater than 0.</span>
+<span class="sd">        shape : float, default = 0.0</span>
+<span class="sd">            Shape parameter.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        var : np.ndarray</span>
+<span class="sd">            Variance of GEV with the given parameters</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If scale is not greater than 0.</span>
+<span class="sd">        Warning</span>
+<span class="sd">            If shape is greater than or equal to 172, mean is not defined.</span>
+<span class="sd">            In this case, it returns infinity.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Scale parameter must be &gt; 0&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">genpareto</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">c</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GPD.std">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.std">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">std</span><span class="p">(</span><span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Standard deviation</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        threshold : float, default=0.0</span>
+<span class="sd">            Threshold parameter</span>
+<span class="sd">        scale : float, default = 1.0</span>
+<span class="sd">            Scale parameter.</span>
+<span class="sd">            Must be greater than 0.</span>
+<span class="sd">        shape : float, default = 0.0</span>
+<span class="sd">            Shape parameter.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        std : np.ndarray</span>
+<span class="sd">            Standard Deviation of GEV with the given</span>
+<span class="sd">            parameters</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If scale is not greater than 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Scale parameter must be &gt; 0&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">genpareto</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">c</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GPD.stats">
+<a class="viewcode-back" href="../../../bluemath_tk.distributions.html#bluemath_tk.distributions.gpd.GPD.stats">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">stats</span><span class="p">(</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Summary statistics</span>
+
+<span class="sd">        Return summary statistics including mean, std, variance, etc.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        threshold : float, default=0.0</span>
+<span class="sd">            Threshold parameter</span>
+<span class="sd">        scale : float, default = 1.0</span>
+<span class="sd">            Scale parameter.</span>
+<span class="sd">            Must be greater than 0.</span>
+<span class="sd">        shape : float, default = 0.0</span>
+<span class="sd">            Shape parameter.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        stats : dict</span>
+<span class="sd">            Summary statistics of GEV distribution with the given</span>
+<span class="sd">            parameters</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If scale is not greater than 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Scale parameter must be &gt; 0&quot;</span><span class="p">)</span>
+
+        <span class="n">stats</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">GPD</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">shape</span><span class="p">)),</span>
+            <span class="s2">&quot;median&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">GPD</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">shape</span><span class="p">)),</span>
+            <span class="s2">&quot;variance&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">GPD</span><span class="o">.</span><span class="n">variance</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">shape</span><span class="p">)),</span>
+            <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">GPD</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">shape</span><span class="p">)),</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">stats</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

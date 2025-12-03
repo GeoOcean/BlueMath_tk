@@ -1,0 +1,53 @@
+bluemath\_tk.deeplearning package
+=================================
+
+Submodules
+----------
+
+bluemath\_tk.deeplearning.autoencoders module
+---------------------------------------------
+
+.. automodule:: bluemath_tk.deeplearning.autoencoders
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.deeplearning.gp\_models module
+-------------------------------------------
+
+.. automodule:: bluemath_tk.deeplearning.gp_models
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.deeplearning.layers module
+---------------------------------------
+
+.. automodule:: bluemath_tk.deeplearning.layers
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.deeplearning.regularizers module
+---------------------------------------------
+
+.. automodule:: bluemath_tk.deeplearning.regularizers
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.deeplearning.unet module
+-------------------------------------
+
+.. automodule:: bluemath_tk.deeplearning.unet
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.deeplearning
+   :members:
+   :show-inheritance:
+   :undoc-members:

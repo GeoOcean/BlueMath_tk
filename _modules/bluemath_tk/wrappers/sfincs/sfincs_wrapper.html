@@ -1,0 +1,427 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.wrappers.sfincs.sfincs_wrapper &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/thebelab.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.wrappers.sfincs.sfincs_wrapper</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.wrappers.sfincs.sfincs_wrapper</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">op</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hydromt_sfincs</span><span class="w"> </span><span class="kn">import</span> <span class="n">SfincsModel</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.._base_wrappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModelWrapper</span>
+
+
+<div class="viewcode-block" id="SfincsModelWrapper">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SfincsModelWrapper</span><span class="p">(</span><span class="n">BaseModelWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper for the SFINCS model.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    default_parameters : dict</span>
+<span class="sd">        The default parameters type for the wrapper.</span>
+<span class="sd">    available_launchers : dict</span>
+<span class="sd">        The available launchers for the wrapper.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_parameters</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">available_launchers</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;docker&quot;</span><span class="p">:</span> <span class="s2">&quot;docker run --rm -v .:/case_dir -w /case_dir deltares/sfincs-cpu&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;cluster&quot;</span><span class="p">:</span> <span class="s2">&quot;launchSfincs.sh&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">templates_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">metamodel_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">fixed_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">templates_name</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+        <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the SFINCS model wrapper.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">templates_dir</span><span class="o">=</span><span class="n">templates_dir</span><span class="p">,</span>
+            <span class="n">metamodel_parameters</span><span class="o">=</span><span class="n">metamodel_parameters</span><span class="p">,</span>
+            <span class="n">fixed_parameters</span><span class="o">=</span><span class="n">fixed_parameters</span><span class="p">,</span>
+            <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+            <span class="n">templates_name</span><span class="o">=</span><span class="n">templates_name</span><span class="p">,</span>
+            <span class="n">default_parameters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">default_parameters</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_logger_name</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;DEBUG&quot;</span> <span class="k">if</span> <span class="n">debug</span> <span class="k">else</span> <span class="s2">&quot;INFO&quot;</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="SfincsModelWrapper.setup_dem">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.setup_dem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup_dem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sf</span><span class="p">:</span> <span class="n">SfincsModel</span><span class="p">,</span> <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Setup the DEM for the SFINCS model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">data_like</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;path_to_dem_tif&quot;</span><span class="p">),</span>
+            <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dem_tif_var_name&quot;</span><span class="p">)],</span>
+            <span class="n">geom</span><span class="o">=</span><span class="n">sf</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+            <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;1&quot;</span><span class="p">},</span>
+        <span class="p">)</span>
+
+        <span class="n">datasets_dep</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;da&quot;</span><span class="p">:</span> <span class="n">ds</span><span class="p">}]</span>  <span class="c1"># &quot;zmin&quot;: 0.001</span>
+
+        <span class="n">sf</span><span class="o">.</span><span class="n">setup_dep</span><span class="p">(</span><span class="n">datasets_dep</span><span class="o">=</span><span class="n">datasets_dep</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">datasets_dep</span></div>
+
+
+<div class="viewcode-block" id="SfincsModelWrapper.setup_friction">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.setup_friction">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup_friction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sf</span><span class="p">:</span> <span class="n">SfincsModel</span><span class="p">,</span> <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Setup the friction for the SFINCS model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">dataset_rgh</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span>
+            <span class="n">data_like</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;path_to_rgh_tif&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">datasets_rgh</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;manning&quot;</span><span class="p">:</span> <span class="n">dataset_rgh</span><span class="p">}]</span>
+
+        <span class="n">sf</span><span class="o">.</span><span class="n">setup_manning_roughness</span><span class="p">(</span>
+            <span class="n">datasets_rgh</span><span class="o">=</span><span class="n">datasets_rgh</span><span class="p">,</span>
+            <span class="n">rgh_lev_land</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># the minimum elevation of the land</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">datasets_rgh</span></div>
+
+
+<div class="viewcode-block" id="SfincsModelWrapper.setup_infiltration">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.setup_infiltration">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup_infiltration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sf</span><span class="p">:</span> <span class="n">SfincsModel</span><span class="p">,</span> <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Setup the infiltration for the SFINCS model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">p_infiltration</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;path_to_inf_tif&quot;</span><span class="p">)</span>
+        <span class="n">ant_moisture</span> <span class="o">=</span> <span class="s2">&quot;avg&quot;</span>
+
+        <span class="n">dataset_inf</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_rasterdataset</span><span class="p">(</span><span class="n">p_infiltration</span><span class="p">)</span>
+
+        <span class="n">dataset_inf</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;cn_</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ant_moisture</span><span class="p">)</span>
+
+        <span class="n">sf</span><span class="o">.</span><span class="n">setup_cn_infiltration</span><span class="p">(</span>
+            <span class="n">dataset_inf</span><span class="o">.</span><span class="n">compute</span><span class="p">(),</span> <span class="n">antecedent_moisture</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ant_moisture</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">dataset_inf</span></div>
+
+
+<div class="viewcode-block" id="SfincsModelWrapper.setup_outflow">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.setup_outflow">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup_outflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sf</span><span class="p">:</span> <span class="n">SfincsModel</span><span class="p">,</span> <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Setup the outflow for the SFINCS model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">gdf</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
+            <span class="n">data_like</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;path_to_outflow_shp&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">sf</span><span class="o">.</span><span class="n">setup_mask_bounds</span><span class="p">(</span><span class="n">btype</span><span class="o">=</span><span class="s2">&quot;outflow&quot;</span><span class="p">,</span> <span class="n">include_mask</span><span class="o">=</span><span class="n">gdf</span><span class="p">,</span> <span class="n">reset_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsModelWrapper.setup_waterlevel_mask">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.setup_waterlevel_mask">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup_waterlevel_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sf</span><span class="p">:</span> <span class="n">SfincsModel</span><span class="p">,</span> <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Setup the waterlevel mask for the SFINCS model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">gdf</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">data_catalog</span><span class="o">.</span><span class="n">get_geodataframe</span><span class="p">(</span>
+            <span class="n">data_like</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;path_to_waterlevel_shp&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">sf</span><span class="o">.</span><span class="n">setup_mask_bounds</span><span class="p">(</span><span class="n">btype</span><span class="o">=</span><span class="s2">&quot;waterlevel&quot;</span><span class="p">,</span> <span class="n">include_mask</span><span class="o">=</span><span class="n">gdf</span><span class="p">,</span> <span class="n">reset_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SfincsModelWrapper.set_ctimes">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.set_ctimes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_ctimes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determine the start time (TSTART) end time (TSTOP) for the simulation based on</span>
+<span class="sd">        precipitation and water level forcing, add 1 hour,</span>
+<span class="sd">        and return it formatted as &#39;YYYYMMDD HHMMSS&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">precip_forcing</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;precipitation_forcing&quot;</span><span class="p">)</span>
+        <span class="n">waterlevel_forcing</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;waterlevel_forcing&quot;</span><span class="p">)</span>
+
+        <span class="n">tstart_times</span><span class="p">,</span> <span class="n">tstop_times</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">precip_forcing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tstart_precip</span> <span class="o">=</span> <span class="n">precip_forcing</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">tstop_precip</span> <span class="o">=</span> <span class="n">precip_forcing</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">tstart_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tstart_precip</span><span class="p">)</span>
+            <span class="n">tstop_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tstop_precip</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">waterlevel_forcing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tstart_waterlevel</span> <span class="o">=</span> <span class="n">waterlevel_forcing</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">tstop_waterlevel</span> <span class="o">=</span> <span class="n">waterlevel_forcing</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">tstart_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tstart_waterlevel</span><span class="p">)</span>
+            <span class="n">tstop_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tstop_waterlevel</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tstart_times</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No forcing data found to determine TSTART.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tstop_times</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No forcing data found to determine TSTOP.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Get the latest time and add one hour</span>
+        <span class="n">tstop_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">tstop_times</span><span class="p">)</span>
+        <span class="n">tstop_plus_1h</span> <span class="o">=</span> <span class="n">tstop_max</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;h&quot;</span><span class="p">)</span>
+
+        <span class="n">tstart_min</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">tstart_times</span><span class="p">)</span>
+
+        <span class="c1"># Convert to pandas.Timestamp (works with numpy.datetime64) then format</span>
+        <span class="n">formatted_tstop</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">tstop_plus_1h</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2"> %H%M%S&quot;</span><span class="p">)</span>
+        <span class="n">formatted_tstart</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">tstart_min</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2"> %H%M%S&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">formatted_tstart</span><span class="p">,</span> <span class="n">formatted_tstop</span></div>
+
+
+<div class="viewcode-block" id="SfincsModelWrapper.build_template_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.build_template_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_template_case</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build a base SFINCS model case used as a template for multiple simulations.</span>
+<span class="sd">        This function sets up all the static components of the model that are</span>
+<span class="sd">        common to all cases, such as grid definition, DEM, friction,</span>
+<span class="sd">        infiltration, subgrid configuration, and boundary masks.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">templates_dir</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w+&quot;</span><span class="p">)</span>
+
+        <span class="n">sf</span><span class="o">.</span><span class="n">setup_grid</span><span class="p">(</span>
+            <span class="n">x0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;x0&quot;</span><span class="p">],</span>
+            <span class="n">y0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;y0&quot;</span><span class="p">],</span>
+            <span class="n">dx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;dx&quot;</span><span class="p">],</span>
+            <span class="n">dy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;dy&quot;</span><span class="p">],</span>
+            <span class="n">nmax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;nmax&quot;</span><span class="p">],</span>
+            <span class="n">mmax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;mmax&quot;</span><span class="p">],</span>
+            <span class="n">rotation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;rotation&quot;</span><span class="p">],</span>
+            <span class="n">epsg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;epsg&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="n">datasets_dep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_dem</span><span class="p">(</span><span class="n">sf</span><span class="o">=</span><span class="n">sf</span><span class="p">,</span> <span class="n">case_context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">)</span>
+
+        <span class="n">sf</span><span class="o">.</span><span class="n">setup_mask_active</span><span class="p">(</span>
+            <span class="n">mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;path_to_mask&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">datasets_rgh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_friction</span><span class="p">(</span><span class="n">sf</span><span class="p">,</span> <span class="n">case_context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">)</span>
+
+        <span class="n">_dataset_inf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_infiltration</span><span class="p">(</span><span class="n">sf</span><span class="p">,</span> <span class="n">case_context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">)</span>
+
+        <span class="n">sf</span><span class="o">.</span><span class="n">setup_subgrid</span><span class="p">(</span>
+            <span class="n">datasets_dep</span><span class="o">=</span><span class="n">datasets_dep</span><span class="p">,</span>
+            <span class="n">datasets_rgh</span><span class="o">=</span><span class="n">datasets_rgh</span><span class="p">,</span>
+            <span class="n">nr_subgrid_pixels</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nr_subgrid_pixels&quot;</span><span class="p">),</span>
+            <span class="n">write_dep_tif</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">write_man_tif</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_outflow</span><span class="p">(</span><span class="n">sf</span><span class="o">=</span><span class="n">sf</span><span class="p">,</span> <span class="n">case_context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_waterlevel_mask</span><span class="p">(</span><span class="n">sf</span><span class="o">=</span><span class="n">sf</span><span class="p">,</span> <span class="n">case_context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">)</span>
+
+        <span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">plot_basemap</span><span class="p">(</span><span class="n">bmap</span><span class="o">=</span><span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="n">zoomlevel</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+
+        <span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="SfincsModelWrapper.build_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.build_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_case</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the base SFINCS model. This includes setting up the grid,</span>
+<span class="sd">        depth, friction, mask, outflow and waterlevel mask. It also</span>
+<span class="sd">        applies the precipitation and waterlevel forcing if specified.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">sf</span> <span class="o">=</span> <span class="n">SfincsModel</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w+&quot;</span><span class="p">)</span>
+
+        <span class="n">sf</span><span class="o">.</span><span class="n">setup_grid</span><span class="p">(</span>
+            <span class="n">x0</span><span class="o">=</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;x0&quot;</span><span class="p">],</span>
+            <span class="n">y0</span><span class="o">=</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;y0&quot;</span><span class="p">],</span>
+            <span class="n">dx</span><span class="o">=</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;dx&quot;</span><span class="p">],</span>
+            <span class="n">dy</span><span class="o">=</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;dy&quot;</span><span class="p">],</span>
+            <span class="n">nmax</span><span class="o">=</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;nmax&quot;</span><span class="p">],</span>
+            <span class="n">mmax</span><span class="o">=</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;mmax&quot;</span><span class="p">],</span>
+            <span class="n">rotation</span><span class="o">=</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;rotation&quot;</span><span class="p">],</span>
+            <span class="n">epsg</span><span class="o">=</span><span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;epsg&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">tstart</span><span class="p">,</span> <span class="n">tstop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_ctimes</span><span class="p">(</span><span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">)</span>
+
+        <span class="n">sf</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tstop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tstop</span>
+        <span class="n">sf</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tstart&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tstart</span>
+        <span class="n">sf</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;dtout&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">60</span>
+        <span class="n">sf</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;storemeteo&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quickly_waterlevel_forcing&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            NOTE - There is not a specific Python function yet, </span>
+<span class="sd">            but one could call the setup_waterlevel_forcing function </span>
+<span class="sd">            twice with saving the files in between and changing their names</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="n">sf</span><span class="o">.</span><span class="n">setup_waterlevel_forcing</span><span class="p">(</span>
+                <span class="n">timeseries</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quickly_waterlevel_forcing&quot;</span><span class="p">),</span>
+                <span class="n">locations</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gdf_boundary_points&quot;</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">sf</span><span class="o">.</span><span class="n">write_forcing</span><span class="p">()</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;sfincs.bzs&quot;</span><span class="p">),</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;sfincs.bzi&quot;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slowly_waterlevel_forcing&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sf</span><span class="o">.</span><span class="n">setup_waterlevel_forcing</span><span class="p">(</span>
+                <span class="n">timeseries</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slowly_waterlevel_forcing&quot;</span><span class="p">),</span>
+                <span class="n">locations</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gdf_boundary_points&quot;</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">sf</span><span class="o">.</span><span class="n">write_forcing</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;precipitation_forcing&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sf</span><span class="o">.</span><span class="n">setup_precip_forcing_from_grid</span><span class="p">(</span>
+                <span class="n">precip</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;precipitation_forcing&quot;</span><span class="p">),</span> <span class="n">aggregate</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gdf_crs&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sf</span><span class="o">.</span><span class="n">setup_observation_lines</span><span class="p">(</span>
+                <span class="n">locations</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gdf_crs&quot;</span><span class="p">),</span> <span class="n">merge</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gdf_obs&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sf</span><span class="o">.</span><span class="n">setup_observation_points</span><span class="p">(</span><span class="n">locations</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gdf_obs&quot;</span><span class="p">))</span>
+
+        <span class="c1"># if case_context.get(&quot;precipitation_forcing&quot;) is not None and case_context.get(&quot;waterlevel_forcing&quot;) is not None:</span>
+        <span class="c1">#    self.setup_rivers(sf)</span>
+        <span class="c1">#    sf.setup_river_inflow(</span>
+        <span class="c1">#        rivers=case_context.get(&quot;precipitation_forcing&quot;), keep_rivers_geom=True</span>
+        <span class="c1">#    )</span>
+
+        <span class="c1"># sf.write_forcing()</span>
+
+        <span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">()</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

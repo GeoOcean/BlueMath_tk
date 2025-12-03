@@ -1,0 +1,794 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.deeplearning.gp_models &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.deeplearning.gp_models</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.deeplearning.gp_models</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Gaussian Process models module.</span>
+
+<span class="sd">This module contains Gaussian Process Regression models using GPyTorch.</span>
+
+<span class="sd">Classes:</span>
+<span class="sd">- BaseGPRModel: Base class for all GP models</span>
+<span class="sd">- ExactGPModel: Exact Gaussian Process Regression model</span>
+
+<span class="sd">1. Wang, Z., Leung, M., Mukhopadhyay, S., et al. (2024). &quot;A hybrid statistical–dynamical framework for compound coastal flooding analysis.&quot; *Environmental Research Letters*, 20(1), 014005.</span>
+<span class="sd">2. Wang, Z., Leung, M., Mukhopadhyay, S., et al. (2025). &quot;Compound coastal flooding in San Francisco Bay under climate change.&quot; *npj Natural Hazards*, 2(1), 3.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">gpytorch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">RBFKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.likelihoods</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.means</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConstantMean</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">BlueMathModel</span>
+
+
+<div class="viewcode-block" id="BaseGPRModel">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.gp_models.BaseGPRModel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseGPRModel</span><span class="p">(</span><span class="n">BlueMathModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for Gaussian Process Regression models.</span>
+
+<span class="sd">    This class provides common functionality for all GP models, including:</span>
+<span class="sd">    - GP-specific training with marginal log likelihood</span>
+<span class="sd">    - Prediction with uncertainty quantification</span>
+<span class="sd">    - Model save/load with likelihood handling</span>
+
+<span class="sd">    GP models differ from standard deep learning models in several ways:</span>
+<span class="sd">    - Use marginal log likelihood (MLL) instead of standard loss functions</span>
+<span class="sd">    - Require explicit training data setting via set_train_data()</span>
+<span class="sd">    - Return distributions (mean + variance) rather than point estimates</span>
+<span class="sd">    - Typically train on full dataset (no batching during training)</span>
+
+<span class="sd">    GP models inherit directly from BlueMathModel (not BaseDeepLearningModel)</span>
+<span class="sd">    because their training and prediction workflows are fundamentally different</span>
+<span class="sd">    from standard neural networks.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model : gpytorch.models.GP</span>
+<span class="sd">        The GPyTorch model.</span>
+<span class="sd">    device : torch.device</span>
+<span class="sd">        The device (CPU/GPU) the model is on.</span>
+<span class="sd">    is_fitted : bool</span>
+<span class="sd">        Whether the model has been fitted.</span>
+<span class="sd">    likelihood : gpytorch.likelihoods.Likelihood</span>
+<span class="sd">        The GP likelihood module.</span>
+<span class="sd">    mll : gpytorch.mlls.MarginalLogLikelihood</span>
+<span class="sd">        The marginal log likelihood objective.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the base GP model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        device : str or torch.device, optional</span>
+<span class="sd">            Device to run the model on. Default is None (auto-detect GPU/CPU).</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Additional keyword arguments passed to BlueMathModel.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Device management (similar to BaseDeepLearningModel but GP-specific)</span>
+        <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
+
+        <span class="c1"># GP-specific attributes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpytorch</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">GP</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpytorch</span><span class="o">.</span><span class="n">likelihoods</span><span class="o">.</span><span class="n">Likelihood</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mll</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">gpytorch</span><span class="o">.</span><span class="n">mlls</span><span class="o">.</span><span class="n">MarginalLogLikelihood</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Exclude from pickling (GPyTorch objects need special handling)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exclude_attributes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;model&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;likelihood&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;mll&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kernel</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the covariance kernel.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        input_dim : int</span>
+<span class="sd">            Number of input dimensions.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        gpytorch.kernels.Kernel</span>
+<span class="sd">            The covariance kernel.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpytorch</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">GP</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the GPyTorch model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        input_shape : Tuple</span>
+<span class="sd">            Shape of input data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        gpytorch.models.GP</span>
+<span class="sd">            The GPyTorch model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="BaseGPRModel.fit">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.gp_models.BaseGPRModel.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">patience</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit the Gaussian Process model.</span>
+
+<span class="sd">        GP models use marginal log likelihood (MLL) optimization, which is</span>
+<span class="sd">        fundamentally different from standard deep learning training.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : np.ndarray</span>
+<span class="sd">            Training input data with shape (n_samples, n_features).</span>
+<span class="sd">        y : np.ndarray</span>
+<span class="sd">            Training target data with shape (n_samples,) or (n_samples, 1).</span>
+<span class="sd">        epochs : int, optional</span>
+<span class="sd">            Maximum number of training epochs. Default is 200.</span>
+<span class="sd">        learning_rate : float, optional</span>
+<span class="sd">            Learning rate for optimizer. Default is 0.1.</span>
+<span class="sd">        optimizer : torch.optim.Optimizer, optional</span>
+<span class="sd">            Optimizer to use. If None, uses Adam. Default is None.</span>
+<span class="sd">        patience : int, optional</span>
+<span class="sd">            Early stopping patience. Default is 30.</span>
+<span class="sd">        verbose : int, optional</span>
+<span class="sd">            Verbosity level. Default is 1.</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Additional keyword arguments passed to _build_model.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Dict[str, list]</span>
+<span class="sd">            Training history with &#39;train_loss&#39; key (negative MLL).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Reshape y if needed</span>
+        <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+        <span class="c1"># Convert to tensors</span>
+        <span class="n">X_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">y_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Build model if not already built</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_model</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="c1"># Initialize likelihood if not set</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="c1"># Initialize MLL</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mll</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_mll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+
+        <span class="c1"># Always update training data (allows retraining with new data)</span>
+        <span class="c1"># This is GP-specific: we need to explicitly set training data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_train_data</span><span class="p">(</span><span class="n">X_tensor</span><span class="p">,</span> <span class="n">y_tensor</span><span class="p">)</span>
+
+        <span class="c1"># Rebuild MLL after setting training data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mll</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_mll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+
+        <span class="c1"># Setup optimizer</span>
+        <span class="k">if</span> <span class="n">optimizer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
+                <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">parameters</span><span class="p">()),</span>
+                <span class="n">lr</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Setup learning rate scheduler</span>
+        <span class="n">scheduler</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">ReduceLROnPlateau</span><span class="p">(</span>
+            <span class="n">optimizer</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">patience</span><span class="o">=</span><span class="mi">10</span>
+        <span class="p">)</span>
+
+        <span class="n">history</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;train_loss&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+        <span class="n">best_loss</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+        <span class="n">patience_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">best_model_state</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">best_likelihood_state</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Training loop</span>
+        <span class="n">use_progress_bar</span> <span class="o">=</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="n">epoch_range</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+        <span class="n">pbar</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">use_progress_bar</span><span class="p">:</span>
+            <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">epoch_range</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Training GP&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;epoch&quot;</span><span class="p">)</span>
+            <span class="n">epoch_range</span> <span class="o">=</span> <span class="n">pbar</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">epoch_range</span><span class="p">:</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+            <span class="c1"># Forward pass: compute negative marginal log likelihood</span>
+            <span class="c1"># This is the GP-specific loss function</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_loss</span><span class="p">(</span><span class="n">X_tensor</span><span class="p">,</span> <span class="n">y_tensor</span><span class="p">)</span>
+
+            <span class="c1"># Backward pass</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span>
+                <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">parameters</span><span class="p">()),</span>
+                <span class="n">max_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+            <span class="n">loss_value</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">history</span><span class="p">[</span><span class="s2">&quot;train_loss&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss_value</span><span class="p">)</span>
+            <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">loss_value</span><span class="p">)</span>
+
+            <span class="c1"># Early stopping</span>
+            <span class="k">if</span> <span class="n">loss_value</span> <span class="o">&lt;</span> <span class="n">best_loss</span> <span class="o">-</span> <span class="mf">1e-4</span><span class="p">:</span>
+                <span class="n">best_loss</span> <span class="o">=</span> <span class="n">loss_value</span>
+                <span class="n">patience_counter</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">best_model_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">best_likelihood_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">patience_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">patience_counter</span> <span class="o">&gt;=</span> <span class="n">patience</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">pbar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="n">pbar</span><span class="o">.</span><span class="n">set_postfix_str</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Early stopping at epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Early stopping at epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">break</span>
+
+            <span class="c1"># Update progress bar</span>
+            <span class="k">if</span> <span class="n">pbar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">set_postfix_str</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loss: </span><span class="si">{</span><span class="n">loss_value</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">//</span> <span class="mi">10</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">epochs</span><span class="si">}</span><span class="s2"> - Loss: </span><span class="si">{</span><span class="n">loss_value</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Restore best model</span>
+        <span class="k">if</span> <span class="n">best_model_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">best_model_state</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">best_likelihood_state</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="n">history</span></div>
+
+
+<div class="viewcode-block" id="BaseGPRModel.predict">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.gp_models.BaseGPRModel.predict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">return_std</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make predictions with the Gaussian Process model.</span>
+
+<span class="sd">        GP models return distributions, so predictions include uncertainty</span>
+<span class="sd">        estimates (standard deviation) by default.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : np.ndarray</span>
+<span class="sd">            Input data with shape (n_samples, n_features).</span>
+<span class="sd">        batch_size : int, optional</span>
+<span class="sd">            Batch size for prediction. If None, processes all at once.</span>
+<span class="sd">            Default is None.</span>
+<span class="sd">        return_std : bool, optional</span>
+<span class="sd">            If True, returns both mean and standard deviation.</span>
+<span class="sd">            Default is False.</span>
+<span class="sd">        verbose : int, optional</span>
+<span class="sd">            Verbosity level. Default is 1.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray or tuple</span>
+<span class="sd">            If return_std=False: predictions (mean) with shape (n_samples,).</span>
+<span class="sd">            If return_std=True: tuple of (mean, std) both with shape (n_samples,).</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If model is not fitted.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model must be fitted before prediction.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+        <span class="n">X_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Process in batches if batch_size is specified</span>
+        <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="n">predictions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">stds</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">n_batches</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">+</span> <span class="n">batch_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">batch_size</span>
+        <span class="n">batch_range</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n_batches</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">batch_range</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span>
+                <span class="n">batch_range</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Predicting&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;batch&quot;</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="n">n_batches</span>
+            <span class="p">)</span>
+
+        <span class="k">with</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">(),</span>
+            <span class="n">gpytorch</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">fast_pred_var</span><span class="p">(),</span>
+            <span class="n">gpytorch</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cholesky_jitter</span><span class="p">(</span><span class="mf">1e-1</span><span class="p">),</span>
+        <span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">batch_range</span><span class="p">:</span>
+                <span class="n">batch_X</span> <span class="o">=</span> <span class="n">X_tensor</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span>
+                <span class="n">pred_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict_batch</span><span class="p">(</span><span class="n">batch_X</span><span class="p">)</span>
+                <span class="n">predictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pred_dist</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+                <span class="k">if</span> <span class="n">return_std</span><span class="p">:</span>
+                    <span class="n">stds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pred_dist</span><span class="o">.</span><span class="n">stddev</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+
+        <span class="n">mean_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">return_std</span><span class="p">:</span>
+            <span class="n">std_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">stds</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">mean_pred</span><span class="p">,</span> <span class="n">std_pred</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">mean_pred</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_train_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set training data for the GP model.</span>
+
+<span class="sd">        This is GP-specific: GP models need explicit training data setting.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : torch.Tensor</span>
+<span class="sd">            Training inputs.</span>
+<span class="sd">        y : torch.Tensor</span>
+<span class="sd">            Training targets.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;set_train_data&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Model </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2"> does not support set_train_data(). &quot;</span>
+                <span class="s2">&quot;This is required for GP models.&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_mll</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">likelihood</span><span class="p">:</span> <span class="n">gpytorch</span><span class="o">.</span><span class="n">likelihoods</span><span class="o">.</span><span class="n">Likelihood</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">gpytorch</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">GP</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpytorch</span><span class="o">.</span><span class="n">mlls</span><span class="o">.</span><span class="n">MarginalLogLikelihood</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the marginal log likelihood objective.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        likelihood : gpytorch.likelihoods.Likelihood</span>
+<span class="sd">            The likelihood module.</span>
+<span class="sd">        model : gpytorch.models.GP</span>
+<span class="sd">            The GP model.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        gpytorch.mlls.MarginalLogLikelihood</span>
+<span class="sd">            The MLL objective.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the training loss (negative MLL).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : torch.Tensor</span>
+<span class="sd">            Training inputs.</span>
+<span class="sd">        y : torch.Tensor</span>
+<span class="sd">            Training targets.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        torch.Tensor</span>
+<span class="sd">            Negative marginal log likelihood.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">with</span> <span class="n">gpytorch</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cholesky_jitter</span><span class="p">(</span><span class="mf">1e-1</span><span class="p">):</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">mll</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">loss</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_predict_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpytorch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make predictions for a batch of inputs.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : torch.Tensor</span>
+<span class="sd">            Input batch.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        gpytorch.distributions.Distribution</span>
+<span class="sd">            Predictive distribution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+
+<div class="viewcode-block" id="BaseGPRModel.save_pytorch_model">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.gp_models.BaseGPRModel.save_pytorch_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_pytorch_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the GP model to a file.</span>
+
+<span class="sd">        GP models require saving both the model and likelihood state dicts.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        model_path : str</span>
+<span class="sd">            Path to the file where the model will be saved.</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Additional arguments for torch.save.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model must be built before saving.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Get model-specific metadata</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_model_metadata</span><span class="p">()</span>
+
+        <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;model_state_dict&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span>
+                <span class="s2">&quot;likelihood_state_dict&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span>
+                <span class="s2">&quot;is_fitted&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted</span><span class="p">,</span>
+                <span class="s2">&quot;model_class&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">metadata</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="n">model_path</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GP model saved to </span><span class="si">{</span><span class="n">model_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseGPRModel.load_pytorch_model">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.gp_models.BaseGPRModel.load_pytorch_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_pytorch_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load a GP model from a file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        model_path : str</span>
+<span class="sd">            Path to the file where the model is saved.</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Additional arguments for torch.load.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">checkpoint</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Restore model-specific attributes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_restore_model_metadata</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">)</span>
+
+        <span class="c1"># Build model first if needed</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Need input shape to build model - use dummy data</span>
+            <span class="c1"># In practice, you should save/load the training data shape</span>
+            <span class="n">dummy_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># Default, user should provide actual shape</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_model</span><span class="p">(</span><span class="n">dummy_shape</span><span class="p">)</span>
+            <span class="c1"># Initialize likelihood if not set (should be set by _build_model, but check anyway)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">[</span><span class="s2">&quot;model_state_dict&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">[</span><span class="s2">&quot;likelihood_state_dict&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted</span> <span class="o">=</span> <span class="n">checkpoint</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;is_fitted&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GP model loaded from </span><span class="si">{</span><span class="n">model_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_model_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get model-specific metadata for saving.</span>
+
+<span class="sd">        Override this method in subclasses to save additional metadata.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Dict</span>
+<span class="sd">            Metadata dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_restore_model_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Restore model-specific metadata from checkpoint.</span>
+
+<span class="sd">        Override this method in subclasses to restore additional metadata.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        checkpoint : Dict</span>
+<span class="sd">            Checkpoint dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="ExactGPModel">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.gp_models.ExactGPModel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExactGPModel</span><span class="p">(</span><span class="n">BaseGPRModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Exact Gaussian Process Regression model using GPyTorch.</span>
+
+<span class="sd">    This model implements exact GP inference, suitable for datasets up to</span>
+<span class="sd">    several thousand samples. For larger datasets, consider using approximate</span>
+<span class="sd">    GP methods.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    kernel : str, optional</span>
+<span class="sd">        Type of kernel to use. Options: &#39;rbf&#39;, &#39;matern&#39;, &#39;rbf+matern&#39;.</span>
+<span class="sd">        Default is &#39;rbf+matern&#39;.</span>
+<span class="sd">    ard_num_dims : int, optional</span>
+<span class="sd">        Number of input dimensions for ARD (Automatic Relevance Determination).</span>
+<span class="sd">        If None, will be inferred from data. Default is None.</span>
+<span class="sd">    device : str or torch.device, optional</span>
+<span class="sd">        Device to run the model on. Default is None (auto-detect).</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">        Additional keyword arguments passed to BaseGPRModel.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; from bluemath_tk.deeplearning import ExactGPModel</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; # Generate sample data</span>
+<span class="sd">    &gt;&gt;&gt; X = np.random.randn(100, 5)</span>
+<span class="sd">    &gt;&gt;&gt; y = np.random.randn(100)</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; # Create and fit model</span>
+<span class="sd">    &gt;&gt;&gt; gp = ExactGPModel(kernel=&#39;rbf+matern&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; history = gp.fit(X, y, epochs=100, learning_rate=0.1)</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; # Make predictions</span>
+<span class="sd">    &gt;&gt;&gt; X_test = np.random.randn(50, 5)</span>
+<span class="sd">    &gt;&gt;&gt; y_pred, y_std = gp.predict(X_test, return_std=True)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">kernel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rbf+matern&quot;</span><span class="p">,</span>
+        <span class="n">ard_num_dims</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kernel_type</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span> <span class="o">=</span> <span class="n">ard_num_dims</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kernel</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the covariance kernel.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ard_num_dims</span> <span class="o">=</span> <span class="n">input_dim</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ard_num_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_type</span> <span class="o">==</span> <span class="s2">&quot;rbf&quot;</span><span class="p">:</span>
+            <span class="n">base_kernel</span> <span class="o">=</span> <span class="n">RBFKernel</span><span class="p">(</span><span class="n">ard_num_dims</span><span class="o">=</span><span class="n">ard_num_dims</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_type</span> <span class="o">==</span> <span class="s2">&quot;matern&quot;</span><span class="p">:</span>
+            <span class="n">base_kernel</span> <span class="o">=</span> <span class="n">MaternKernel</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">ard_num_dims</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_type</span> <span class="o">==</span> <span class="s2">&quot;rbf+matern&quot;</span><span class="p">:</span>
+            <span class="n">base_kernel</span> <span class="o">=</span> <span class="n">RBFKernel</span><span class="p">(</span><span class="n">ard_num_dims</span><span class="o">=</span><span class="n">ard_num_dims</span><span class="p">)</span> <span class="o">+</span> <span class="n">MaternKernel</span><span class="p">(</span>
+                <span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">ard_num_dims</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unknown kernel type: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_type</span><span class="si">}</span><span class="s2">. &quot;</span>
+                <span class="s2">&quot;Options: &#39;rbf&#39;, &#39;matern&#39;, &#39;rbf+matern&#39;&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ScaleKernel</span><span class="p">(</span><span class="n">base_kernel</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExactGP</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the GPyTorch ExactGP model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">input_dim</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">input_dim</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_kernel</span><span class="p">(</span><span class="n">input_dim</span><span class="p">)</span>
+
+        <span class="k">class</span><span class="w"> </span><span class="nc">GPModel</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">,</span> <span class="n">kernel</span><span class="p">):</span>
+                <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span> <span class="o">=</span> <span class="n">ConstantMean</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">kernel</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+                <span class="n">mean_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                <span class="n">covar_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">gpytorch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar_x</span><span class="p">)</span>
+
+        <span class="c1"># Create dummy data for initialization</span>
+        <span class="n">dummy_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">dummy_y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Initialize likelihood and model</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">GPModel</span><span class="p">(</span><span class="n">dummy_x</span><span class="p">,</span> <span class="n">dummy_y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">kernel</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_model_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get model-specific metadata for saving.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;kernel_type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_type</span><span class="p">,</span>
+            <span class="s2">&quot;ard_num_dims&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_restore_model_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Restore model-specific metadata from checkpoint.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">kernel_type</span> <span class="o">=</span> <span class="n">checkpoint</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;kernel_type&quot;</span><span class="p">,</span> <span class="s2">&quot;rbf+matern&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span> <span class="o">=</span> <span class="n">checkpoint</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ard_num_dims&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

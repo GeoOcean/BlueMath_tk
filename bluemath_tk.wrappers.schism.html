@@ -1,0 +1,375 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.wrappers.schism package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.wrappers.sfincs package" href="bluemath_tk.wrappers.sfincs.html" />
+    <link rel="prev" title="bluemath_tk.wrappers.lisflood package" href="bluemath_tk.wrappers.lisflood.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.additive.html">bluemath_tk.additive package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.deeplearning.html">bluemath_tk.deeplearning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tcs.html">bluemath_tk.tcs package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.wrappers.schism package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.wrappers.schism.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-wrappers-schism-package">
+<h1>bluemath_tk.wrappers.schism package<a class="headerlink" href="#bluemath-tk-wrappers-schism-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.wrappers.schism.schism_example">
+<span id="bluemath-tk-wrappers-schism-schism-example-module"></span><h2>bluemath_tk.wrappers.schism.schism_example module<a class="headerlink" href="#module-bluemath_tk.wrappers.schism.schism_example" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.wrappers.schism.schism_wrapper">
+<span id="bluemath-tk-wrappers-schism-schism-wrapper-module"></span><h2>bluemath_tk.wrappers.schism.schism_wrapper module<a class="headerlink" href="#module-bluemath_tk.wrappers.schism.schism_wrapper" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.wrappers.schism.schism_wrapper.</span></span><span class="sig-name descname"><span class="pre">SchismHyCoFfEE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/schism/schism_wrapper.html#SchismHyCoFfEE"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper" title="bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchismModelWrapper</span></code></a></p>
+<p>Schism wrapper: HyCoFfEE : A Hybrid Compound Flooding metamodel for Estuarine Environment.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.build_case">
+<span class="sig-name descname"><span class="pre">build_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/schism/schism_wrapper.html#SchismHyCoFfEE.build_case"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.build_case" title="Link to this definition"></a></dt>
+<dd><p>Build the input files for a case.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>case_context</strong> (<em>dict</em>) – The case context.</p></li>
+<li><p><strong>case_dir</strong> (<em>str</em>) – The case directory.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.default_parameters">
+<span class="sig-name descname"><span class="pre">default_parameters</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'eco_class':</span> <span class="pre">{'description':</span> <span class="pre">'EcoSim.</span> <span class="pre">Must</span> <span class="pre">be</span> <span class="pre">bewteen</span> <span class="pre">[25,60]',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">27},</span> <span class="pre">'eos_a':</span> <span class="pre">{'description':</span> <span class="pre">'Needed</span> <span class="pre">if</span> <span class="pre">ieos_type=1;</span> <span class="pre">should</span> <span class="pre">be</span> <span class="pre">&lt;=0',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">-0.1},</span> <span class="pre">'eos_b':</span> <span class="pre">{'description':</span> <span class="pre">'Needed</span> <span class="pre">if</span> <span class="pre">ieos_type=1',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">1001},</span> <span class="pre">'ibc':</span> <span class="pre">{'description':</span> <span class="pre">'Barotropic</span> <span class="pre">flag',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">1},</span> <span class="pre">'ibtp':</span> <span class="pre">{'description':</span> <span class="pre">'Baroclinic</span> <span class="pre">flag',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'ieos_pres':</span> <span class="pre">{'description':</span> <span class="pre">'Used</span> <span class="pre">only</span> <span class="pre">if</span> <span class="pre">ieos_type=0.</span> <span class="pre">0:</span> <span class="pre">without</span> <span class="pre">pressure</span> <span class="pre">effects</span> <span class="pre">',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'ieos_type':</span> <span class="pre">{'description':</span> <span class="pre">'UNESCO</span> <span class="pre">1980</span> <span class="pre">(nonlinear);</span> <span class="pre">=1:</span> <span class="pre">linear</span> <span class="pre">function</span> <span class="pre">of</span> <span class="pre">T</span> <span class="pre">ONLY,</span> <span class="pre">i.e.</span> <span class="pre">',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'ihorcon':</span> <span class="pre">{'description':</span> <span class="pre">'Horizontal</span> <span class="pre">viscosity</span> <span class="pre">option:</span> <span class="pre">0=</span> <span class="pre">no</span> <span class="pre">viscosity</span> <span class="pre">is</span> <span class="pre">used;</span> <span class="pre">1=</span> <span class="pre">Lapacian',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'indvel':</span> <span class="pre">{'description':</span> <span class="pre">'Method</span> <span class="pre">for</span> <span class="pre">computing</span> <span class="pre">velocity</span> <span class="pre">at</span> <span class="pre">nodes:</span> <span class="pre">0=</span> <span class="pre">linear</span> <span class="pre">shape</span> <span class="pre">function;</span> <span class="pre">1</span> <span class="pre">=</span> <span class="pre">averaging</span> <span class="pre">method',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">1},</span> <span class="pre">'inter_mom':</span> <span class="pre">{'description':</span> <span class="pre">'</span> <span class="pre">Interpolation</span> <span class="pre">is</span> <span class="pre">used</span> <span class="pre">for</span> <span class="pre">velocity</span> <span class="pre">at</span> <span class="pre">foot</span> <span class="pre">of</span> <span class="pre">char:</span> <span class="pre">0=linear;</span> <span class="pre">1=Kriging</span> <span class="pre">(define</span> <span class="pre">kr_co</span> <span class="pre">);</span> <span class="pre">-1=</span> <span class="pre">spatial</span> <span class="pre">Kriging</span> <span class="pre">(define</span> <span class="pre">krvel.gr3)',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'ipre':</span> <span class="pre">{'description':</span> <span class="pre">'Pre-process</span> <span class="pre">flag:</span> <span class="pre">0=</span> <span class="pre">normal</span> <span class="pre">run;</span> <span class="pre">1=</span> <span class="pre">only</span> <span class="pre">for</span> <span class="pre">single</span> <span class="pre">CPU!',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'ishapiro':</span> <span class="pre">{'description':</span> <span class="pre">'on/off</span> <span class="pre">flag</span> <span class="pre">for</span> <span class="pre">Shapiro</span> <span class="pre">filter:</span> <span class="pre">0=</span> <span class="pre">off;</span> <span class="pre">1=</span> <span class="pre">on',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'mdc2':</span> <span class="pre">{'description':</span> <span class="pre">'Grid</span> <span class="pre">for</span> <span class="pre">WWM.</span> <span class="pre">Same</span> <span class="pre">as</span> <span class="pre">mdc</span> <span class="pre">in</span> <span class="pre">.nml</span> <span class="pre">...</span> <span class="pre">for</span> <span class="pre">consitency</span> <span class="pre">check</span> <span class="pre">between</span> <span class="pre">SCHISM</span> <span class="pre">and</span> <span class="pre">WWM',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">30},</span> <span class="pre">'msc2':</span> <span class="pre">{'description':</span> <span class="pre">'Grid</span> <span class="pre">for</span> <span class="pre">WWM.</span> <span class="pre">Same</span> <span class="pre">as</span> <span class="pre">msc</span> <span class="pre">in</span> <span class="pre">.nml</span> <span class="pre">...</span> <span class="pre">for</span> <span class="pre">consitency</span> <span class="pre">check</span> <span class="pre">between</span> <span class="pre">SCHISM</span> <span class="pre">and</span> <span class="pre">WWM',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">24},</span> <span class="pre">'ntracer_age':</span> <span class="pre">{'description':</span> <span class="pre">'Age</span> <span class="pre">calculation,</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">2*ntracer_gen',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">4},</span> <span class="pre">'ntracer_gen':</span> <span class="pre">{'description':</span> <span class="pre">'#</span> <span class="pre">of</span> <span class="pre">tracers',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">2},</span> <span class="pre">'output_WL':</span> <span class="pre">{'description':</span> <span class="pre">'Elev.</span> <span class="pre">[m]</span> <span class="pre">=</span> <span class="pre">0:</span> <span class="pre">off;</span> <span class="pre">1:</span> <span class="pre">on',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">1},</span> <span class="pre">'output_depth_averaged_vel':</span> <span class="pre">{'description':</span> <span class="pre">'Depth-averaged</span> <span class="pre">vel</span> <span class="pre">vector</span> <span class="pre">[m/s]</span> <span class="pre">=</span> <span class="pre">0:</span> <span class="pre">off;</span> <span class="pre">1:</span> <span class="pre">on',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">1},</span> <span class="pre">'output_water_salinity':</span> <span class="pre">{'description':</span> <span class="pre">'Water</span> <span class="pre">salinity</span> <span class="pre">[PSU]</span> <span class="pre">=</span> <span class="pre">0:</span> <span class="pre">off;</span> <span class="pre">1:</span> <span class="pre">on',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'output_water_temperature':</span> <span class="pre">{'description':</span> <span class="pre">'Water</span> <span class="pre">temperature</span> <span class="pre">[C]</span> <span class="pre">=</span> <span class="pre">0:</span> <span class="pre">off;</span> <span class="pre">1:</span> <span class="pre">on',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'output_wind_velocity':</span> <span class="pre">{'description':</span> <span class="pre">'Wind</span> <span class="pre">velocity</span> <span class="pre">vector</span> <span class="pre">[m/s]</span> <span class="pre">=</span> <span class="pre">0:</span> <span class="pre">off;</span> <span class="pre">1:</span> <span class="pre">on',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">1},</span> <span class="pre">'sed_class':</span> <span class="pre">{'description':</span> <span class="pre">'SED3D',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">5}}</span></em><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.default_parameters" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_at_th">
+<span class="sig-name descname"><span class="pre">generate_at_th</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">at_series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/schism/schism_wrapper.html#SchismHyCoFfEE.generate_at_th"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_at_th" title="Link to this definition"></a></dt>
+<dd><p>Generate the at.th file for a case (not required by SCHISM, but nice to plot).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>case_context</strong> (<em>dict</em>) – The case context.</p></li>
+<li><p><strong>case_dir</strong> (<em>str</em>) – The case directory.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_elev_th">
+<span class="sig-name descname"><span class="pre">generate_elev_th</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">AT_SS_series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/schism/schism_wrapper.html#SchismHyCoFfEE.generate_elev_th"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_elev_th" title="Link to this definition"></a></dt>
+<dd><p>Generate the elev.th file for a case.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>case_context</strong> (<em>dict</em>) – The case context.</p></li>
+<li><p><strong>case_dir</strong> (<em>str</em>) – The case directory.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_flux_th">
+<span class="sig-name descname"><span class="pre">generate_flux_th</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qq_series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/schism/schism_wrapper.html#SchismHyCoFfEE.generate_flux_th"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_flux_th" title="Link to this definition"></a></dt>
+<dd><p>Generate the elev.th file for a case.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>case_context</strong> (<em>dict</em>) – The case context.</p></li>
+<li><p><strong>case_dir</strong> (<em>str</em>) – The case directory.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_ss_th">
+<span class="sig-name descname"><span class="pre">generate_ss_th</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ss_series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/schism/schism_wrapper.html#SchismHyCoFfEE.generate_ss_th"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_ss_th" title="Link to this definition"></a></dt>
+<dd><p>Generate the ss.th file for a case (not required by SCHISM, but nice to plot).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>case_context</strong> (<em>dict</em>) – The case context.</p></li>
+<li><p><strong>case_dir</strong> (<em>str</em>) – The case directory.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_time_series">
+<span class="sig-name descname"><span class="pre">generate_time_series</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/schism/schism_wrapper.html#SchismHyCoFfEE.generate_time_series"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_time_series" title="Link to this definition"></a></dt>
+<dd><p>Generate the required th files for the case.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>case_context</strong> (<em>dict</em>) – The case context.</p></li>
+<li><p><strong>case_dir</strong> (<em>str</em>) – The case directory.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_wind_th">
+<span class="sig-name descname"><span class="pre">generate_wind_th</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/schism/schism_wrapper.html#SchismHyCoFfEE.generate_wind_th"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_wind_th" title="Link to this definition"></a></dt>
+<dd><p>Generate the wind files for a case.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>case_context</strong> (<em>dict</em>) – The case context.</p></li>
+<li><p><strong>case_dir</strong> (<em>str</em>) – The case directory.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.rndays_calculation">
+<span class="sig-name descname"><span class="pre">rndays_calculation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/schism/schism_wrapper.html#SchismHyCoFfEE.rndays_calculation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.rndays_calculation" title="Link to this definition"></a></dt>
+<dd><p>Calculate the rndays parameter (time of simulation in days).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>case_context</strong> (<em>dict</em>) – The case context.</p></li>
+<li><p><strong>case_dir</strong> (<em>str</em>) – The case directory.</p></li>
+<li><p><strong>t_series</strong> (<em>np.ndarray</em>) – The time series array.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.wrappers.schism.schism_wrapper.</span></span><span class="sig-name descname"><span class="pre">SchismModelWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/schism/schism_wrapper.html#SchismModelWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModelWrapper</span></code></p>
+<p>Wrapper for the Schism model.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper.default_parameters">
+<span class="sig-name descname"><span class="pre">default_parameters</span></span><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper.default_parameters" title="Link to this definition"></a></dt>
+<dd><p>The default parameters type for the wrapper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper.available_launchers">
+<span class="sig-name descname"><span class="pre">available_launchers</span></span><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper.available_launchers" title="Link to this definition"></a></dt>
+<dd><p>The available launchers for the wrapper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">available_launchers</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'geoocean-cluster':</span> <span class="pre">'launchSchism.sh'}</span></em><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper.build_case">
+<span class="sig-name descname"><span class="pre">build_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/wrappers/schism/schism_wrapper.html#SchismModelWrapper.build_case"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper.build_case" title="Link to this definition"></a></dt>
+<dd><p>Build the input files for a case.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>case_context</strong> (<em>dict</em>) – The case context.</p></li>
+<li><p><strong>case_dir</strong> (<em>str</em>) – The case directory.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">default_parameters</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.wrappers.schism.schism_wrapper.</span></span><span class="sig-name descname"><span class="pre">SchismOnlyWindModelWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/schism/schism_wrapper.html#SchismOnlyWindModelWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper" title="bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchismModelWrapper</span></code></a></p>
+<p>Schism wrapper: only wind case.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper.build_case">
+<span class="sig-name descname"><span class="pre">build_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/schism/schism_wrapper.html#SchismOnlyWindModelWrapper.build_case"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper.build_case" title="Link to this definition"></a></dt>
+<dd><p>Build the input files for a case.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>case_context</strong> (<em>dict</em>) – The case context.</p></li>
+<li><p><strong>case_dir</strong> (<em>str</em>) – The case directory.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper.default_parameters">
+<span class="sig-name descname"><span class="pre">default_parameters</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'eco_class':</span> <span class="pre">{'description':</span> <span class="pre">'EcoSim.</span> <span class="pre">Must</span> <span class="pre">be</span> <span class="pre">bewteen</span> <span class="pre">[25,60]',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">27},</span> <span class="pre">'eos_a':</span> <span class="pre">{'description':</span> <span class="pre">'Needed</span> <span class="pre">if</span> <span class="pre">ieos_type=1;</span> <span class="pre">should</span> <span class="pre">be</span> <span class="pre">&lt;=0',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">-0.1},</span> <span class="pre">'eos_b':</span> <span class="pre">{'description':</span> <span class="pre">'Needed</span> <span class="pre">if</span> <span class="pre">ieos_type=1',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">1001},</span> <span class="pre">'ibc':</span> <span class="pre">{'description':</span> <span class="pre">'Barotropic</span> <span class="pre">flag',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'ibtp':</span> <span class="pre">{'description':</span> <span class="pre">'Baroclinic</span> <span class="pre">flag',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'ieos_pres':</span> <span class="pre">{'description':</span> <span class="pre">'Used</span> <span class="pre">only</span> <span class="pre">if</span> <span class="pre">ieos_type=0.</span> <span class="pre">0:</span> <span class="pre">without</span> <span class="pre">pressure</span> <span class="pre">effects</span> <span class="pre">',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'ieos_type':</span> <span class="pre">{'description':</span> <span class="pre">'UNESCO</span> <span class="pre">1980</span> <span class="pre">(nonlinear);</span> <span class="pre">=1:</span> <span class="pre">linear</span> <span class="pre">function</span> <span class="pre">of</span> <span class="pre">T</span> <span class="pre">ONLY,</span> <span class="pre">i.e.</span> <span class="pre">',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'ihorcon':</span> <span class="pre">{'description':</span> <span class="pre">'Horizontal</span> <span class="pre">viscosity</span> <span class="pre">option:</span> <span class="pre">0=</span> <span class="pre">no</span> <span class="pre">viscosity</span> <span class="pre">is</span> <span class="pre">used;</span> <span class="pre">1=</span> <span class="pre">Lapacian',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'indvel':</span> <span class="pre">{'description':</span> <span class="pre">'Method</span> <span class="pre">for</span> <span class="pre">computing</span> <span class="pre">velocity</span> <span class="pre">at</span> <span class="pre">nodes:</span> <span class="pre">0=</span> <span class="pre">linear</span> <span class="pre">shape</span> <span class="pre">function;</span> <span class="pre">1</span> <span class="pre">=</span> <span class="pre">averaging</span> <span class="pre">method',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">1},</span> <span class="pre">'inter_mom':</span> <span class="pre">{'description':</span> <span class="pre">'</span> <span class="pre">Interpolation</span> <span class="pre">is</span> <span class="pre">used</span> <span class="pre">for</span> <span class="pre">velocity</span> <span class="pre">at</span> <span class="pre">foot</span> <span class="pre">of</span> <span class="pre">char:</span> <span class="pre">0=linear;</span> <span class="pre">1=Kriging</span> <span class="pre">(define</span> <span class="pre">kr_co</span> <span class="pre">);</span> <span class="pre">-1=</span> <span class="pre">spatial</span> <span class="pre">Kriging</span> <span class="pre">(define</span> <span class="pre">krvel.gr3)',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'ipre':</span> <span class="pre">{'description':</span> <span class="pre">'Pre-process</span> <span class="pre">flag:</span> <span class="pre">0=</span> <span class="pre">normal</span> <span class="pre">run;</span> <span class="pre">1=</span> <span class="pre">only</span> <span class="pre">for</span> <span class="pre">single</span> <span class="pre">CPU!',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'ishapiro':</span> <span class="pre">{'description':</span> <span class="pre">'on/off</span> <span class="pre">flag</span> <span class="pre">for</span> <span class="pre">Shapiro</span> <span class="pre">filter:</span> <span class="pre">0=</span> <span class="pre">off;</span> <span class="pre">1=</span> <span class="pre">on',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'mdc2':</span> <span class="pre">{'description':</span> <span class="pre">'Grid</span> <span class="pre">for</span> <span class="pre">WWM.</span> <span class="pre">Same</span> <span class="pre">as</span> <span class="pre">mdc</span> <span class="pre">in</span> <span class="pre">.nml</span> <span class="pre">...</span> <span class="pre">for</span> <span class="pre">consitency</span> <span class="pre">check</span> <span class="pre">between</span> <span class="pre">SCHISM</span> <span class="pre">and</span> <span class="pre">WWM',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">30},</span> <span class="pre">'msc2':</span> <span class="pre">{'description':</span> <span class="pre">'Grid</span> <span class="pre">for</span> <span class="pre">WWM.</span> <span class="pre">Same</span> <span class="pre">as</span> <span class="pre">msc</span> <span class="pre">in</span> <span class="pre">.nml</span> <span class="pre">...</span> <span class="pre">for</span> <span class="pre">consitency</span> <span class="pre">check</span> <span class="pre">between</span> <span class="pre">SCHISM</span> <span class="pre">and</span> <span class="pre">WWM',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">24},</span> <span class="pre">'ntracer_age':</span> <span class="pre">{'description':</span> <span class="pre">'Age</span> <span class="pre">calculation,</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">2*ntracer_gen',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">4},</span> <span class="pre">'ntracer_gen':</span> <span class="pre">{'description':</span> <span class="pre">'#</span> <span class="pre">of</span> <span class="pre">tracers',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">2},</span> <span class="pre">'output_WL':</span> <span class="pre">{'description':</span> <span class="pre">'Elev.</span> <span class="pre">[m]</span> <span class="pre">=</span> <span class="pre">0:</span> <span class="pre">off;</span> <span class="pre">1:</span> <span class="pre">on',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">1},</span> <span class="pre">'output_depth_averaged_vel':</span> <span class="pre">{'description':</span> <span class="pre">'Depth-averaged</span> <span class="pre">vel</span> <span class="pre">vector</span> <span class="pre">[m/s]</span> <span class="pre">=</span> <span class="pre">0:</span> <span class="pre">off;</span> <span class="pre">1:</span> <span class="pre">on',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">1},</span> <span class="pre">'output_water_salinity':</span> <span class="pre">{'description':</span> <span class="pre">'Water</span> <span class="pre">salinity</span> <span class="pre">[PSU]</span> <span class="pre">=</span> <span class="pre">0:</span> <span class="pre">off;</span> <span class="pre">1:</span> <span class="pre">on',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'output_water_temperature':</span> <span class="pre">{'description':</span> <span class="pre">'Water</span> <span class="pre">temperature</span> <span class="pre">[C]</span> <span class="pre">=</span> <span class="pre">0:</span> <span class="pre">off;</span> <span class="pre">1:</span> <span class="pre">on',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">0},</span> <span class="pre">'output_wind_velocity':</span> <span class="pre">{'description':</span> <span class="pre">'Wind</span> <span class="pre">velocity</span> <span class="pre">vector</span> <span class="pre">[m/s]</span> <span class="pre">=</span> <span class="pre">0:</span> <span class="pre">off;</span> <span class="pre">1:</span> <span class="pre">on',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">1},</span> <span class="pre">'sed_class':</span> <span class="pre">{'description':</span> <span class="pre">'SED3D',</span> <span class="pre">'type':</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">'value':</span> <span class="pre">5}}</span></em><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper.default_parameters" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper.generate_windth">
+<span class="sig-name descname"><span class="pre">generate_windth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/wrappers/schism/schism_wrapper.html#SchismOnlyWindModelWrapper.generate_windth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper.generate_windth" title="Link to this definition"></a></dt>
+<dd><p>Generate the wind files for a case.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>case_context</strong> (<em>dict</em>) – The case context.</p></li>
+<li><p><strong>case_dir</strong> (<em>str</em>) – The case directory.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.wrappers.schism">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bluemath_tk.wrappers.schism" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.wrappers.lisflood.html" class="btn btn-neutral float-left" title="bluemath_tk.wrappers.lisflood package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.wrappers.sfincs.html" class="btn btn-neutral float-right" title="bluemath_tk.wrappers.sfincs package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

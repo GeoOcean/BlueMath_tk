@@ -1,0 +1,53 @@
+bluemath\_tk.core.plotting package
+==================================
+
+Submodules
+----------
+
+bluemath\_tk.core.plotting.base\_plotting module
+------------------------------------------------
+
+.. automodule:: bluemath_tk.core.plotting.base_plotting
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.core.plotting.colors module
+----------------------------------------
+
+.. automodule:: bluemath_tk.core.plotting.colors
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.core.plotting.satellite module
+-------------------------------------------
+
+.. automodule:: bluemath_tk.core.plotting.satellite
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.core.plotting.scatter module
+-----------------------------------------
+
+.. automodule:: bluemath_tk.core.plotting.scatter
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.core.plotting.utils module
+---------------------------------------
+
+.. automodule:: bluemath_tk.core.plotting.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.core.plotting
+   :members:
+   :show-inheritance:
+   :undoc-members:

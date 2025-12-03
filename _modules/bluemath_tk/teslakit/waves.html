@@ -1,0 +1,674 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.teslakit.waves &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.teslakit.waves</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.teslakit.waves</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+
+<span class="c1"># tk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.util.time_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_years_months_days</span><span class="p">,</span> <span class="n">npdt64todatetime</span><span class="p">,</span> \
+<span class="n">fast_reindex_hourly</span>
+
+<span class="c1"># hide numpy warnings</span>
+<span class="c1">#np.warnings.filterwarnings(&#39;ignore&#39;)</span>
+
+
+<span class="c1"># TODO: combine GetDistribution functions (parse gow input and call GetDistribution?)</span>
+
+<div class="viewcode-block" id="GetDistribution_gow">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.waves.GetDistribution_gow">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">GetDistribution_gow</span><span class="p">(</span><span class="n">xds_wps</span><span class="p">,</span> <span class="n">swell_sectors</span><span class="p">,</span> <span class="n">n_partitions</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Separates wave partitions (0-n_partitions) into families.</span>
+<span class="sd">    Default: sea, swl1, swl2</span>
+
+<span class="sd">    compatible with GOW.mat file</span>
+
+<span class="sd">    xds_wps (waves partitionss):</span>
+<span class="sd">        xarray.Dataset (time,), phs, pspr, pwfrac... {0-5 partitions}</span>
+
+<span class="sd">    sectors: list of degrees to cut wave energy [(a1, a2), (a2, a3), (a3, a1)]</span>
+
+<span class="sd">    returns</span>
+<span class="sd">        xarray.Dataset (time,), fam_V, {fam: sea,swell_1,swell2. V: Hs,Tp,Dir}</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># fix data</span>
+    <span class="n">hs_fix_data</span> <span class="o">=</span> <span class="mi">50</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">):</span>
+        <span class="n">phs</span> <span class="o">=</span> <span class="n">xds_wps</span><span class="p">[</span><span class="s1">&#39;phs</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">p_fix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">phs</span> <span class="o">&gt;=</span> <span class="n">hs_fix_data</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># fix data</span>
+        <span class="n">xds_wps</span><span class="p">[</span><span class="s1">&#39;phs</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)][</span><span class="n">p_fix</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">xds_wps</span><span class="p">[</span><span class="s1">&#39;ptp</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)][</span><span class="n">p_fix</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">xds_wps</span><span class="p">[</span><span class="s1">&#39;pdir</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)][</span><span class="n">p_fix</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># sea (partition 0)</span>
+    <span class="n">sea_Hs</span> <span class="o">=</span> <span class="n">xds_wps</span><span class="p">[</span><span class="s1">&#39;phs0&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">sea_Tp</span> <span class="o">=</span> <span class="n">xds_wps</span><span class="p">[</span><span class="s1">&#39;ptp0&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">sea_Dir</span> <span class="o">=</span> <span class="n">xds_wps</span><span class="p">[</span><span class="s1">&#39;pdir0&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">xds_wps</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="c1"># concatenate energy groups </span>
+    <span class="n">cat_hs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">xds_wps</span><span class="p">[</span><span class="s1">&#39;phs</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_partitions</span><span class="o">+</span><span class="mi">1</span><span class="p">)])</span>
+    <span class="n">cat_tp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">xds_wps</span><span class="p">[</span><span class="s1">&#39;ptp</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_partitions</span><span class="o">+</span><span class="mi">1</span><span class="p">)])</span>
+    <span class="n">cat_dir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">xds_wps</span><span class="p">[</span><span class="s1">&#39;pdir</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_partitions</span><span class="o">+</span><span class="mi">1</span><span class="p">)])</span>
+
+    <span class="c1"># prepare output array</span>
+    <span class="n">xds_fams</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;sea_Hs&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">sea_Hs</span><span class="p">),</span>
+            <span class="s1">&#39;sea_Tp&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">sea_Tp</span><span class="p">),</span>
+            <span class="s1">&#39;sea_Dir&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">sea_Dir</span><span class="p">),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">time</span><span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="c1"># solve sectors</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">s_ini</span><span class="p">,</span> <span class="n">s_end</span> <span class="ow">in</span> <span class="n">swell_sectors</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">s_ini</span> <span class="o">&lt;</span> <span class="n">s_end</span><span class="p">:</span>
+            <span class="n">p_sw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">cat_dir</span> <span class="o">&lt;=</span> <span class="n">s_end</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">cat_dir</span> <span class="o">&gt;</span> <span class="n">s_ini</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">p_sw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">cat_dir</span> <span class="o">&lt;=</span> <span class="n">s_end</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">cat_dir</span> <span class="o">&gt;</span> <span class="n">s_ini</span><span class="p">))</span>
+
+        <span class="c1"># get data inside sector</span>
+        <span class="n">sect_dir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">cat_dir</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">sect_hs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">cat_dir</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">sect_tp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">cat_dir</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="n">sect_dir</span><span class="p">[</span><span class="n">p_sw</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat_dir</span><span class="p">[</span><span class="n">p_sw</span><span class="p">]</span>
+        <span class="n">sect_hs</span><span class="p">[</span><span class="n">p_sw</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat_hs</span><span class="p">[</span><span class="n">p_sw</span><span class="p">]</span>
+        <span class="n">sect_tp</span><span class="p">[</span><span class="n">p_sw</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat_tp</span><span class="p">[</span><span class="n">p_sw</span><span class="p">]</span>
+
+        <span class="c1"># calculate swell Hs, Tp, Dir</span>
+        <span class="n">swell_Hs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">sect_hs</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="n">swell_Tp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">sect_hs</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">sect_hs</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">sect_tp</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">swell_Dir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">sect_hs</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">sect_tp</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">sect_dir</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">sect_hs</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">sect_tp</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">sect_dir</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># dir correction and denormalization </span>
+        <span class="n">swell_Dir</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">swell_Dir</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">))]</span> <span class="o">=</span> <span class="n">swell_Dir</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">swell_Dir</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">))]</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="n">swell_Dir</span> <span class="o">=</span> <span class="n">swell_Dir</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+
+        <span class="c1"># dont do arctan2 if there is only one dir</span>
+        <span class="n">i_onedir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">sect_dir</span><span class="p">),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">swell_Dir</span><span class="p">[</span><span class="n">i_onedir</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">sect_dir</span><span class="p">[</span><span class="n">i_onedir</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># out of bound dir correction</span>
+        <span class="n">swell_Dir</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">swell_Dir</span><span class="o">&gt;</span><span class="mi">360</span><span class="p">))]</span> <span class="o">=</span> <span class="n">swell_Dir</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">swell_Dir</span><span class="o">&gt;</span><span class="mi">360</span><span class="p">))]</span><span class="o">-</span><span class="mi">360</span>
+        <span class="n">swell_Dir</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">swell_Dir</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">))]</span> <span class="o">=</span> <span class="n">swell_Dir</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">swell_Dir</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">))]</span><span class="o">+</span><span class="mi">360</span>
+
+
+        <span class="c1"># fix swell all-nans to 0s nansum behaviour</span>
+        <span class="n">p_fix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">swell_Hs</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">swell_Hs</span><span class="p">[</span><span class="n">p_fix</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">swell_Dir</span><span class="p">[</span><span class="n">p_fix</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="c1"># append data to partitons dataset</span>
+        <span class="n">xds_fams</span><span class="p">[</span><span class="s1">&#39;swell_</span><span class="si">{0}</span><span class="s1">_Hs&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">swell_Hs</span><span class="p">)</span>
+        <span class="n">xds_fams</span><span class="p">[</span><span class="s1">&#39;swell_</span><span class="si">{0}</span><span class="s1">_Tp&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">swell_Tp</span><span class="p">)</span>
+        <span class="n">xds_fams</span><span class="p">[</span><span class="s1">&#39;swell_</span><span class="si">{0}</span><span class="s1">_Dir&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">swell_Dir</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">+=</span><span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">xds_fams</span></div>
+
+
+<div class="viewcode-block" id="GetDistribution_ws">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.waves.GetDistribution_ws">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">GetDistribution_ws</span><span class="p">(</span><span class="n">xds_wps</span><span class="p">,</span> <span class="n">swell_sectors</span><span class="p">,</span> <span class="n">n_partitions</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Separates wave partitions (0-5) into families.</span>
+<span class="sd">    Default: sea, swl1, swl2</span>
+
+<span class="sd">    Compatible with wavespectra partitions</span>
+
+<span class="sd">    xds_wps (waves partitionss):</span>
+<span class="sd">        xarray.Dataset (time,), phs, pspr, pwfrac... {0-5 partitions}</span>
+
+<span class="sd">    sectors: list of degrees to cut wave energy [(a1, a2), (a2, a3), (a3, a1)]</span>
+
+<span class="sd">    returns</span>
+<span class="sd">        xarray.Dataset (time,), fam_V, {fam: sea,swell_1,swell2. V: Hs,Tp,Dir}</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># sea (partition 0)</span>
+    <span class="n">sea_Hs</span> <span class="o">=</span> <span class="n">xds_wps</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">part</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">hs</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">sea_Tp</span> <span class="o">=</span> <span class="n">xds_wps</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">part</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">tp</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">sea_Dir</span> <span class="o">=</span> <span class="n">xds_wps</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">part</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">dpm</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">xds_wps</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="c1"># fix sea all-nans to 0s nansum behaviour</span>
+    <span class="n">p_fix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">sea_Hs</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">sea_Hs</span><span class="p">[</span><span class="n">p_fix</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">sea_Tp</span><span class="p">[</span><span class="n">p_fix</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">sea_Dir</span><span class="p">[</span><span class="n">p_fix</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># concatenate energy groups </span>
+    <span class="n">cat_hs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">xds_wps</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">part</span><span class="o">=</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">hs</span><span class="o">.</span><span class="n">values</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_partitions</span><span class="o">+</span><span class="mi">1</span><span class="p">)])</span>
+    <span class="n">cat_tp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">xds_wps</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">part</span><span class="o">=</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">tp</span><span class="o">.</span><span class="n">values</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_partitions</span><span class="o">+</span><span class="mi">1</span><span class="p">)])</span>
+    <span class="n">cat_dir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">xds_wps</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">part</span><span class="o">=</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">dpm</span><span class="o">.</span><span class="n">values</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_partitions</span><span class="o">+</span><span class="mi">1</span><span class="p">)])</span>
+
+    <span class="c1"># prepare output array</span>
+    <span class="n">xds_fams</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;sea_Hs&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">sea_Hs</span><span class="p">),</span>
+            <span class="s1">&#39;sea_Tp&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">sea_Tp</span><span class="p">),</span>
+            <span class="s1">&#39;sea_Dir&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">sea_Dir</span><span class="p">),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">time</span><span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="c1"># solve sectors</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">s_ini</span><span class="p">,</span> <span class="n">s_end</span> <span class="ow">in</span> <span class="n">swell_sectors</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">s_ini</span> <span class="o">&lt;</span> <span class="n">s_end</span><span class="p">:</span>
+            <span class="n">p_sw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">cat_dir</span> <span class="o">&lt;=</span> <span class="n">s_end</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">cat_dir</span> <span class="o">&gt;</span> <span class="n">s_ini</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">p_sw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">cat_dir</span> <span class="o">&lt;=</span> <span class="n">s_end</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">cat_dir</span> <span class="o">&gt;</span> <span class="n">s_ini</span><span class="p">))</span>
+
+        <span class="c1"># get data inside sector</span>
+        <span class="n">sect_dir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">cat_dir</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">sect_hs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">cat_dir</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">sect_tp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">cat_dir</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="n">sect_dir</span><span class="p">[</span><span class="n">p_sw</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat_dir</span><span class="p">[</span><span class="n">p_sw</span><span class="p">]</span>
+        <span class="n">sect_hs</span><span class="p">[</span><span class="n">p_sw</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat_hs</span><span class="p">[</span><span class="n">p_sw</span><span class="p">]</span>
+        <span class="n">sect_tp</span><span class="p">[</span><span class="n">p_sw</span><span class="p">]</span> <span class="o">=</span> <span class="n">cat_tp</span><span class="p">[</span><span class="n">p_sw</span><span class="p">]</span>
+
+        <span class="c1"># calculate swell Hs, Tp, Dir</span>
+        <span class="n">swell_Hs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">sect_hs</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="n">swell_Tp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">sect_hs</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">sect_hs</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">sect_tp</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">swell_Dir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">sect_hs</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">sect_tp</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">sect_dir</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">sect_hs</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">sect_tp</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">sect_dir</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># dir correction and denormalization </span>
+        <span class="n">swell_Dir</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">swell_Dir</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">))]</span> <span class="o">=</span> <span class="n">swell_Dir</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">swell_Dir</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">))]</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="n">swell_Dir</span> <span class="o">=</span> <span class="n">swell_Dir</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+
+        <span class="c1"># dont do arctan2 if there is only one dir</span>
+        <span class="n">i_onedir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">sect_dir</span><span class="p">),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">swell_Dir</span><span class="p">[</span><span class="n">i_onedir</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">sect_dir</span><span class="p">[</span><span class="n">i_onedir</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># out of bound dir correction</span>
+        <span class="n">swell_Dir</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">swell_Dir</span><span class="o">&gt;</span><span class="mi">360</span><span class="p">))]</span> <span class="o">=</span> <span class="n">swell_Dir</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">swell_Dir</span><span class="o">&gt;</span><span class="mi">360</span><span class="p">))]</span><span class="o">-</span><span class="mi">360</span>
+        <span class="n">swell_Dir</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">swell_Dir</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">))]</span> <span class="o">=</span> <span class="n">swell_Dir</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">swell_Dir</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">))]</span><span class="o">+</span><span class="mi">360</span>
+
+
+        <span class="c1"># fix swell all-nans to 0s nansum behaviour</span>
+        <span class="n">p_fix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">swell_Hs</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">swell_Hs</span><span class="p">[</span><span class="n">p_fix</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">swell_Tp</span><span class="p">[</span><span class="n">p_fix</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">swell_Dir</span><span class="p">[</span><span class="n">p_fix</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="c1"># append data to partitons dataset</span>
+        <span class="n">xds_fams</span><span class="p">[</span><span class="s1">&#39;swell_</span><span class="si">{0}</span><span class="s1">_Hs&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">swell_Hs</span><span class="p">)</span>
+        <span class="n">xds_fams</span><span class="p">[</span><span class="s1">&#39;swell_</span><span class="si">{0}</span><span class="s1">_Tp&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">swell_Tp</span><span class="p">)</span>
+        <span class="n">xds_fams</span><span class="p">[</span><span class="s1">&#39;swell_</span><span class="si">{0}</span><span class="s1">_Dir&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">swell_Dir</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">+=</span><span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">xds_fams</span></div>
+
+
+<div class="viewcode-block" id="AWL">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.waves.AWL">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">AWL</span><span class="p">(</span><span class="n">hs</span><span class="p">,</span> <span class="n">tp</span><span class="p">):</span>
+    <span class="s1">&#39;Returns Atmospheric Water Level&#39;</span>
+
+    <span class="k">return</span> <span class="mf">0.043</span><span class="o">*</span><span class="p">(</span><span class="n">hs</span><span class="o">*</span><span class="mf">1.56</span><span class="o">*</span><span class="p">(</span><span class="n">tp</span><span class="o">/</span><span class="mf">1.25</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TWL">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.waves.TWL">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">TWL</span><span class="p">(</span><span class="n">awl</span><span class="p">,</span> <span class="n">ss</span><span class="p">,</span> <span class="n">at</span><span class="p">,</span> <span class="n">mmsl</span><span class="p">):</span>
+    <span class="s1">&#39;Returns Total Water Level&#39;</span>
+
+    <span class="k">return</span> <span class="n">awl</span> <span class="o">+</span> <span class="n">ss</span> <span class="o">+</span> <span class="n">at</span> <span class="o">+</span> <span class="n">mmsl</span></div>
+
+
+<div class="viewcode-block" id="Aggregate_WavesFamilies">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.waves.Aggregate_WavesFamilies">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">Aggregate_WavesFamilies</span><span class="p">(</span><span class="n">wvs_fams</span><span class="p">,</span> <span class="n">a_tp</span><span class="o">=</span><span class="s1">&#39;quadratic&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Aggregate Hs, Tp and Dir from waves families data</span>
+
+<span class="sd">    wvs_fams (waves families):</span>
+<span class="sd">        xarray.Dataset (time,), fam1_Hs, fam1_Tp, fam1_Dir, ...</span>
+<span class="sd">        {any number of families}</span>
+
+<span class="sd">    a_tp = &#39;quadratic&#39; / &#39;max_energy&#39;, Tp aggregation formulae</span>
+
+<span class="sd">    returns Hs, Tp, Dir (numpy.array)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># get variable names</span>
+    <span class="n">vs</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">wvs_fams</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+    <span class="n">vs_Hs</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">vs</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_Hs&#39;</span><span class="p">)]</span>
+    <span class="n">vs_Tp</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">vs</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_Tp&#39;</span><span class="p">)]</span>
+    <span class="n">vs_Dir</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">vs</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_Dir&#39;</span><span class="p">)]</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="n">wvs_fams</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+    <span class="c1"># join variable values</span>
+    <span class="n">vv_Hs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">wvs_fams</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vs_Hs</span><span class="p">])</span>
+    <span class="n">vv_Tp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">wvs_fams</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vs_Tp</span><span class="p">])</span>
+    <span class="n">vv_Dir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">wvs_fams</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vs_Dir</span><span class="p">])</span>
+
+    <span class="c1"># TODO: entire row nan?</span>
+    <span class="c1">#p_rn = np.where([x.all() for x in np.isnan(vv_Hs)])[0]</span>
+    <span class="c1">#vv_Hs = vv_Hs[~p_rn]</span>
+    <span class="c1">#vv_Tp = vv_Tp[~p_rn]</span>
+    <span class="c1">#vv_Dir = vv_Dir[~p_rn]</span>
+    <span class="c1">#times = wvs_fams.time.values[~p_rn]</span>
+
+    <span class="c1"># Hs from families</span>
+    <span class="n">HS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">vv_Hs</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># nan positions</span>
+    <span class="n">ix_nan_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">HS</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Tp</span>
+    <span class="k">if</span> <span class="n">a_tp</span> <span class="o">==</span> <span class="s1">&#39;quadratic&#39;</span><span class="p">:</span>
+
+        <span class="c1"># TP from families </span>
+        <span class="n">tmp1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">vv_Hs</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">tmp2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">vv_Hs</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">vv_Tp</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">TP</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">tmp1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">tmp2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">elif</span> <span class="n">a_tp</span> <span class="o">==</span> <span class="s1">&#39;max_energy&#39;</span><span class="p">:</span>
+
+        <span class="c1"># Hs maximun position </span>
+        <span class="n">vv_Hs_nanzero</span> <span class="o">=</span> <span class="n">vv_Hs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">vv_Hs_nanzero</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">vv_Hs</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">p_max_hs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanargmax</span><span class="p">(</span><span class="n">vv_Hs_nanzero</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Tp from families (Hs max pos)</span>
+        <span class="n">TP</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span><span class="p">,</span><span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">vv_Tp</span><span class="p">,</span> <span class="n">p_max_hs</span><span class="p">)])</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># TODO: make it fail</span>
+        <span class="k">pass</span>
+
+
+    <span class="c1"># Dir from families</span>
+    <span class="n">tmp3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">vv_Hs</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">vv_Tp</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">vv_Dir</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">vv_Hs</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">vv_Tp</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">vv_Dir</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">tmp3</span><span class="p">[</span><span class="n">tmp3</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp3</span><span class="p">[</span><span class="n">tmp3</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+    <span class="n">DIR</span> <span class="o">=</span> <span class="n">tmp3</span> <span class="o">*</span> <span class="mi">180</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+
+    <span class="c1"># clear nans</span>
+    <span class="n">HS</span><span class="p">[</span><span class="n">ix_nan_data</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">TP</span><span class="p">[</span><span class="n">ix_nan_data</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">DIR</span><span class="p">[</span><span class="n">ix_nan_data</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># TODO: se usa?</span>
+    <span class="c1"># Dir from families (Hs max pos)</span>
+    <span class="c1">#DIR = np.array([r[i] for r,i in zip(vv_Dir, p_max_hs)])</span>
+
+    <span class="c1"># return xarray.Dataset</span>
+    <span class="n">xds_AGGR</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;Hs&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,),</span> <span class="n">HS</span><span class="p">),</span>
+            <span class="s1">&#39;Tp&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,),</span> <span class="n">TP</span><span class="p">),</span>
+            <span class="s1">&#39;Dir&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,),</span> <span class="n">DIR</span><span class="p">),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">times</span><span class="p">,</span>  <span class="c1"># get time from input</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">xds_AGGR</span></div>
+
+
+<div class="viewcode-block" id="Intradaily_Hydrograph">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.waves.Intradaily_Hydrograph">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">Intradaily_Hydrograph</span><span class="p">(</span><span class="n">xds_wvs</span><span class="p">,</span> <span class="n">xds_tcs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Calculates intradaily hydrograph (hourly) from a time series of storms.</span>
+<span class="sd">    storms waves data (hs, tp, dir) and TCs data (mu, tau, ss) is needed.</span>
+
+<span class="sd">    xds_wvs (waves aggregated):</span>
+<span class="sd">        xarray.Dataset (time,), Hs, Tp, Dir</span>
+
+<span class="sd">    xds_tcs (TCs):</span>
+<span class="sd">        xarray.Dataset (time,), mu, tau, ss</span>
+
+<span class="sd">    returns xarray.Dataset (time,), Hs, Tp, Dir, SS  (hourly)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># input data (storms aggregated waves)</span>
+    <span class="n">Hs</span> <span class="o">=</span> <span class="n">xds_wvs</span><span class="o">.</span><span class="n">Hs</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="n">Tp</span> <span class="o">=</span> <span class="n">xds_wvs</span><span class="o">.</span><span class="n">Tp</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="n">Dir</span> <span class="o">=</span> <span class="n">xds_wvs</span><span class="o">.</span><span class="n">Dir</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="n">ts</span> <span class="o">=</span> <span class="n">xds_wvs</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+    <span class="c1"># fix times</span>
+    <span class="c1"># TODO: this should not be needed</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">):</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="p">[</span><span class="n">npdt64todatetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ts</span><span class="p">]</span>
+
+    <span class="c1"># input data (storms TCs)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tau</span> <span class="o">=</span> <span class="n">xds_tcs</span><span class="o">.</span><span class="n">tau</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>  <span class="c1"># storm max. instant (0-1)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">xds_tcs</span><span class="o">.</span><span class="n">mu</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">ss</span> <span class="o">=</span> <span class="n">xds_tcs</span><span class="o">.</span><span class="n">ss</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">tau</span> <span class="o">=</span> <span class="n">xds_wvs</span><span class="o">.</span><span class="n">tau</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>  <span class="c1"># storm max. instant (0-1)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">xds_wvs</span><span class="o">.</span><span class="n">mu</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+        <span class="n">ss</span> <span class="o">=</span> <span class="n">xds_wvs</span><span class="o">.</span><span class="n">ss</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+    <span class="c1"># storm durations</span>
+    <span class="n">s_dur_d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">days</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">ts</span><span class="p">)])</span>  <span class="c1"># days</span>
+    <span class="n">s_dur_h</span> <span class="o">=</span> <span class="n">s_dur_d</span> <span class="o">*</span> <span class="mi">24</span>  <span class="c1"># hours</span>
+    <span class="n">s_cs_h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">s_dur_h</span><span class="p">)</span>  <span class="c1"># hours since time start</span>
+    <span class="n">s_cs_h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">s_cs_h</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># storm tau max (hourly)</span>
+    <span class="n">tau_h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">s_cs_h</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">s_dur_h</span> <span class="o">*</span> <span class="n">tau</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># aux function</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">CalcHydro</span><span class="p">(</span><span class="n">vv</span><span class="p">,</span> <span class="n">vt</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">mt</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate variable hourly hydrograph.</span>
+<span class="sd">        vv - var value at max.</span>
+<span class="sd">        vt - var time (hours since start, at hydrograph extremes)</span>
+<span class="sd">        tt - tau max time (hours since start).</span>
+<span class="sd">        mt - mu value</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># var value at hydrographs extremes</span>
+        <span class="n">vv_extr</span> <span class="o">=</span> <span class="n">vv</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">mt</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># make it continuous</span>
+        <span class="n">vv_extr_cont</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">vv_extr</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">vv_extr</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">vv_extr_cont</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">vv_extr_cont</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">vv_extr_cont</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">vv_extr_cont</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="c1"># join hydrograph max. and extremes variable data</span>
+        <span class="n">vt_full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">vt</span><span class="p">,</span> <span class="n">tt</span><span class="p">])</span>  <span class="c1"># concatenate times (used for sorting)</span>
+        <span class="n">vv_full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">vv_extr_cont</span><span class="p">,</span> <span class="n">vv</span><span class="p">])</span>
+
+        <span class="c1"># sort data</span>
+        <span class="n">ix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">vt_full</span><span class="p">)</span>
+        <span class="n">vt_sf</span> <span class="o">=</span> <span class="n">vt_full</span><span class="p">[</span><span class="n">ix</span><span class="p">]</span>
+        <span class="n">vv_sf</span> <span class="o">=</span> <span class="n">vv_full</span><span class="p">[</span><span class="n">ix</span><span class="p">]</span>
+
+        <span class="c1"># interpolate to fill all hours</span>
+        <span class="n">h_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">vt_sf</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vt_sf</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">h_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">h_times</span><span class="p">,</span> <span class="n">vt_sf</span><span class="p">,</span> <span class="n">vv_sf</span><span class="p">)</span>
+
+        <span class="c1"># fix times</span>
+        <span class="n">h_times</span> <span class="o">=</span> <span class="n">h_times</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">h_values</span><span class="p">,</span> <span class="n">h_times</span>
+
+    <span class="c1"># hydrograph variables: hs and ss</span>
+    <span class="n">hourly_Hs</span><span class="p">,</span> <span class="n">hourly_times</span> <span class="o">=</span> <span class="n">CalcHydro</span><span class="p">(</span><span class="n">Hs</span><span class="p">,</span> <span class="n">s_cs_h</span><span class="p">,</span> <span class="n">tau_h</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>
+    <span class="n">hourly_ss</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">CalcHydro</span><span class="p">(</span><span class="n">ss</span><span class="p">,</span> <span class="n">s_cs_h</span><span class="p">,</span> <span class="n">tau_h</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>
+
+    <span class="c1"># resample waves data to hourly (pad Tp and Dir)</span>
+    <span class="n">xds_wvs_h</span> <span class="o">=</span> <span class="n">fast_reindex_hourly</span><span class="p">(</span><span class="n">xds_wvs</span><span class="p">)</span>
+
+    <span class="c1"># add Hs and SS </span>
+    <span class="n">xds_wvs_h</span><span class="p">[</span><span class="s1">&#39;Hs&#39;</span><span class="p">]</span> <span class="o">=</span><span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,),</span> <span class="n">hourly_Hs</span><span class="p">)</span>
+    <span class="n">xds_wvs_h</span><span class="p">[</span><span class="s1">&#39;SS&#39;</span><span class="p">]</span> <span class="o">=</span><span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,),</span> <span class="n">hourly_ss</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">xds_wvs_h</span></div>
+
+
+
+<span class="c1"># --------------------------------------</span>
+
+<span class="c1"># TODO check / refactor </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<div class="viewcode-block" id="dispersionLonda">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.waves.dispersionLonda">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dispersionLonda</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span>
+    <span class="n">L1</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">L2</span> <span class="o">=</span> <span class="p">((</span><span class="mf">9.81</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span><span class="o">*</span><span class="n">math</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">h</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">L1</span><span class="p">)</span>
+    <span class="n">umbral</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="k">while</span><span class="p">(</span><span class="n">umbral</span><span class="o">&gt;</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="n">L2</span> <span class="o">=</span> <span class="p">((</span><span class="mf">9.81</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span><span class="o">*</span><span class="n">math</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">h</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">L1</span><span class="p">)</span>
+        <span class="n">umbral</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">L2</span><span class="o">-</span><span class="n">L1</span><span class="p">)</span>
+        <span class="n">L1</span> <span class="o">=</span> <span class="n">L2</span>
+
+    <span class="n">L</span> <span class="o">=</span> <span class="n">L2</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span><span class="o">/</span><span class="n">L</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">9.8</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">k</span><span class="o">*</span><span class="n">h</span><span class="p">)</span><span class="o">/</span><span class="n">k</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">L</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">c</span></div>
+
+
+<div class="viewcode-block" id="Snell_Propagation">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.waves.Snell_Propagation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">Snell_Propagation</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">H_I</span><span class="p">,</span> <span class="n">dir_I</span><span class="p">,</span> <span class="n">Prof_I</span><span class="p">,</span> <span class="n">Prof_E</span><span class="p">,</span> <span class="n">OrientBati</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    [H_E,dir_E]=PropagacionSNELL(T,H_I,dir_I,Prof_I,Prof_E,OrientBati)</span>
+<span class="sd">    [H_E,dir_E,L_E,L_I]=PropagacionSNELL(T,H_I,dir_I,Prof_I,Prof_E,OrientBati)</span>
+<span class="sd">    [H_E,dir_E,L_E,L_I,Ks,Kr]=PropagacionSNELL(T,H_I,dir_I,Prof_I,Prof_E,OrientBati)</span>
+
+<span class="sd">    Descripci?n: Funci?n que propaga el oleaje por SNELL con batimetr?a recta</span>
+<span class="sd">    y paralela.</span>
+
+<span class="sd">    Entradas:</span>
+<span class="sd">      T: Periodo.                                        Segundos.</span>
+<span class="sd">      H_I: Altura de ola en el punto inicial.            Metros.</span>
+<span class="sd">      dir_I: Direcci?n del oleaje inicial.               Rumbo (0 en el N)</span>
+<span class="sd">      prof_I: Profundidad inicial.                       Metros.</span>
+<span class="sd">      prof_E: Profundidad final.                         Metros.</span>
+<span class="sd">      OrientBati: Orientaci?n de la perpendicular a la batimetria. Rumbo (0 en el N)</span>
+
+<span class="sd">    Salidas:</span>
+<span class="sd">      H_E: Altura de ola en el punto final.              Metros.</span>
+<span class="sd">      dir_E: Direccion del oleaje final.                 Rumbo (0 en el N)</span>
+<span class="sd">      L_E: Longitud de onda final.                       Metros</span>
+<span class="sd">      L_I: Longitud de onda inicial.                     Metros</span>
+<span class="sd">      Ks: Coeficiente de asomeramiento (shoaling).</span>
+<span class="sd">      Kr: Coeficiente de refraccion (Snell batimetria recta y paralela).</span>
+
+
+<span class="sd">     Autor:</span>
+
+
+<span class="sd">       Versi?n:Ene/19</span>
+
+<span class="sd">     Basada en el script de:</span>
+<span class="sd">     Soledad Requejo Landeira &amp;   Jos? Antonio ?lvarez Antol?nez</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># Establece el angulo relativo entre el oleaje y la batimetria</span>
+    <span class="n">Teta_I</span> <span class="o">=</span> <span class="n">dir_I</span> <span class="o">-</span> <span class="n">OrientBati</span>
+
+    <span class="c1"># Fija el angulo relativo entre -90 y 90 grados</span>
+    <span class="n">posd1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Teta_I</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">90</span><span class="p">)</span>
+    <span class="n">Teta_I</span><span class="p">[</span><span class="n">posd1</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Teta_I</span><span class="p">[</span><span class="n">posd1</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span> <span class="mi">360</span>
+
+    <span class="n">posd2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Teta_I</span> <span class="o">&gt;</span> <span class="mi">90</span><span class="p">)</span>
+    <span class="n">Teta_I</span><span class="p">[</span><span class="n">posd2</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Teta_I</span><span class="p">[</span><span class="n">posd2</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">-</span> <span class="mi">360</span>
+
+    <span class="c1"># obligamos que el angulo este en este sector</span>
+    <span class="n">Teta_I</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Teta_I</span> <span class="o">&gt;</span> <span class="mi">90</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">90</span>
+    <span class="n">Teta_I</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Teta_I</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">90</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">90</span>
+
+    <span class="c1"># Resolucion de la ec. de dispersion en la profundidad de partida y </span>
+    <span class="c1"># en la objetivo y calculo de las celeridades de grupo correspondientes</span>
+    <span class="n">L_I</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">k_I</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">c_I</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Cg_I</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">L_E</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">k_E</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">c_E</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Cg_E</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">T</span><span class="p">)):</span>
+        <span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">dispersionLonda</span><span class="p">(</span><span class="n">T</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">Prof_I</span><span class="p">)</span>
+        <span class="n">L_I</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">k_I</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="n">c_I</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">Cg_I</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">c</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">b</span><span class="o">*</span><span class="n">Prof_I</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sinh</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">b</span><span class="o">*</span><span class="n">Prof_I</span><span class="p">)))))</span>
+
+        <span class="p">[</span><span class="n">d</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="n">dispersionLonda</span><span class="p">(</span><span class="n">T</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">Prof_E</span><span class="p">)</span>
+        <span class="n">L_E</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">k_E</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="n">c_E</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">Cg_E</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">f</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">e</span><span class="o">*</span><span class="n">Prof_E</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sinh</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">e</span><span class="o">*</span><span class="n">Prof_E</span><span class="p">)))))</span>
+
+
+    <span class="n">dir_E</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Teta_E</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Ks</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Kr</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Cg_E</span><span class="p">)):</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">asin</span><span class="p">((</span><span class="n">k_I</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">Teta_I</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span><span class="o">/</span><span class="n">k_E</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">Teta_E</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">H</span><span class="p">))</span>
+        <span class="n">dir_E</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">H</span><span class="p">)</span> <span class="o">+</span> <span class="n">OrientBati</span><span class="p">)</span>
+        <span class="n">Ks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Cg_I</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="n">Cg_E</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+        <span class="n">Kr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">Teta_I</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">H</span><span class="p">)))</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dir_E</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">dir_E</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">dir_E</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">dir_E</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">360</span>
+        <span class="k">if</span> <span class="n">dir_E</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span><span class="mi">360</span><span class="p">:</span>
+            <span class="n">dir_E</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">dir_E</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span><span class="mi">360</span>
+
+    <span class="c1"># Altura de ola final</span>
+    <span class="n">H_E</span> <span class="o">=</span> <span class="n">H_I</span><span class="o">*</span><span class="n">Kr</span><span class="o">*</span><span class="n">Ks</span>
+
+    <span class="k">return</span> <span class="n">H_E</span><span class="p">,</span> <span class="n">dir_E</span><span class="p">,</span> <span class="n">Ks</span><span class="p">,</span> <span class="n">Kr</span></div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

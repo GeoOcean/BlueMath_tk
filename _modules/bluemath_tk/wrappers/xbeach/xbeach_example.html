@@ -1,0 +1,365 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.wrappers.xbeach.xbeach_example &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/thebelab.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.wrappers.xbeach.xbeach_example</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.wrappers.xbeach.xbeach_example</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">op</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">wavespectra.construct.direction</span><span class="w"> </span><span class="kn">import</span> <span class="n">cartwright</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">wavespectra.construct.frequency</span><span class="w"> </span><span class="kn">import</span> <span class="n">jonswap</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bluemath_tk.wrappers.xbeach.xbeach_wrapper</span><span class="w"> </span><span class="kn">import</span> <span class="n">XBeachModelWrapper</span>
+
+<span class="n">example_directions</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mf">7.5</span><span class="p">,</span>
+    <span class="mf">22.5</span><span class="p">,</span>
+    <span class="mf">37.5</span><span class="p">,</span>
+    <span class="mf">52.5</span><span class="p">,</span>
+    <span class="mf">67.5</span><span class="p">,</span>
+    <span class="mf">82.5</span><span class="p">,</span>
+    <span class="mf">97.5</span><span class="p">,</span>
+    <span class="mf">112.5</span><span class="p">,</span>
+    <span class="mf">127.5</span><span class="p">,</span>
+    <span class="mf">142.5</span><span class="p">,</span>
+    <span class="mf">157.5</span><span class="p">,</span>
+    <span class="mf">172.5</span><span class="p">,</span>
+    <span class="mf">187.5</span><span class="p">,</span>
+    <span class="mf">202.5</span><span class="p">,</span>
+    <span class="mf">217.5</span><span class="p">,</span>
+    <span class="mf">232.5</span><span class="p">,</span>
+    <span class="mf">247.5</span><span class="p">,</span>
+    <span class="mf">262.5</span><span class="p">,</span>
+    <span class="mf">277.5</span><span class="p">,</span>
+    <span class="mf">292.5</span><span class="p">,</span>
+    <span class="mf">307.5</span><span class="p">,</span>
+    <span class="mf">322.5</span><span class="p">,</span>
+    <span class="mf">337.5</span><span class="p">,</span>
+    <span class="mf">352.5</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">example_frequencies</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mf">0.035</span><span class="p">,</span>
+    <span class="mf">0.0385</span><span class="p">,</span>
+    <span class="mf">0.04235</span><span class="p">,</span>
+    <span class="mf">0.046585</span><span class="p">,</span>
+    <span class="mf">0.0512435</span><span class="p">,</span>
+    <span class="mf">0.05636785</span><span class="p">,</span>
+    <span class="mf">0.06200463</span><span class="p">,</span>
+    <span class="mf">0.0682051</span><span class="p">,</span>
+    <span class="mf">0.07502561</span><span class="p">,</span>
+    <span class="mf">0.08252817</span><span class="p">,</span>
+    <span class="mf">0.090781</span><span class="p">,</span>
+    <span class="mf">0.0998591</span><span class="p">,</span>
+    <span class="mf">0.10984501</span><span class="p">,</span>
+    <span class="mf">0.12082952</span><span class="p">,</span>
+    <span class="mf">0.13291247</span><span class="p">,</span>
+    <span class="mf">0.14620373</span><span class="p">,</span>
+    <span class="mf">0.1608241</span><span class="p">,</span>
+    <span class="mf">0.17690653</span><span class="p">,</span>
+    <span class="mf">0.19459718</span><span class="p">,</span>
+    <span class="mf">0.21405691</span><span class="p">,</span>
+    <span class="mf">0.2354626</span><span class="p">,</span>
+    <span class="mf">0.25900885</span><span class="p">,</span>
+    <span class="mf">0.28490975</span><span class="p">,</span>
+    <span class="mf">0.31340075</span><span class="p">,</span>
+    <span class="mf">0.3447408</span><span class="p">,</span>
+    <span class="mf">0.37921488</span><span class="p">,</span>
+    <span class="mf">0.4171364</span><span class="p">,</span>
+    <span class="mf">0.45885003</span><span class="p">,</span>
+    <span class="mf">0.50473505</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="create_dep">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_example.create_dep">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_dep</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">dep</span><span class="p">):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">dep</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="p">),</span> <span class="mi">12</span><span class="p">):</span>
+                <span class="n">sub_row</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">j</span> <span class="p">:</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">12</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sub_row</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">12</span><span class="p">:</span>
+                    <span class="n">sub_row</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sub_row</span><span class="p">,</span> <span class="o">-</span><span class="mi">999</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">sub_row</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">val</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="n">val</span><span class="si">:</span><span class="s2">.7E</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">val</span><span class="si">:</span><span class="s2">.7E</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ManuXBeachModelWrapper">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_example.ManuXBeachModelWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ManuXBeachModelWrapper</span><span class="p">(</span><span class="n">XBeachModelWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper for the XBeach model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">locations</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="mf">465859.59375</span><span class="p">,</span>
+            <span class="mf">466361.03125</span><span class="p">,</span>
+            <span class="mf">466962.75</span><span class="p">,</span>
+            <span class="mf">467564.46875</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="mf">4810529.5</span><span class="p">,</span>
+            <span class="mf">4809724.5</span><span class="p">,</span>
+            <span class="mf">4808919.5</span><span class="p">,</span>
+            <span class="mf">4808114.5</span><span class="p">,</span>
+        <span class="p">],</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="ManuXBeachModelWrapper.create_vardens">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_example.ManuXBeachModelWrapper.create_vardens">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_vardens</span><span class="p">(</span><span class="n">ds</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create the vardens file from the dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">t</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="c1"># Frequencies</span>
+        <span class="n">t</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">freq</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">freq</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">freq</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span>
+
+        <span class="c1"># Directions</span>
+        <span class="n">t</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">dir</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">dirt</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">dir</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+            <span class="n">t</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dirt</span><span class="p">)</span>
+
+        <span class="c1"># Sea_surface_wave_directional_variance_spectral_density</span>
+        <span class="k">for</span> <span class="n">_pf</span><span class="p">,</span> <span class="n">freq</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">freq</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">_pd</span><span class="p">,</span> <span class="n">dirt</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">dir</span><span class="o">.</span><span class="n">values</span><span class="p">)):</span>
+                <span class="n">var</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="n">freq</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="n">dirt</span><span class="p">)</span><span class="o">.</span><span class="n">efth</span><span class="o">.</span><span class="n">values</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
+                    <span class="n">var</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="n">t</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="se">\t</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+            <span class="n">t</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+
+        <span class="k">return</span> <span class="n">t</span></div>
+
+
+<div class="viewcode-block" id="ManuXBeachModelWrapper.write_file">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_example.ManuXBeachModelWrapper.write_file">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ManuXBeachModelWrapper.build_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_example.ManuXBeachModelWrapper.build_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_case</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the XBeach case.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">case_context</span><span class="p">[</span><span class="s2">&quot;case_number_string&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;case_index&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="c1"># /////////////////////// BATHY \\\\\\\\\\\\\\\\\\\\\\\\\</span>
+        <span class="n">pcs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;subset_mda&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">case</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;case_index&quot;</span><span class="p">))[[</span><span class="s2">&quot;PC1&quot;</span><span class="p">,</span> <span class="s2">&quot;PC2&quot;</span><span class="p">,</span> <span class="s2">&quot;PC3&quot;</span><span class="p">,</span> <span class="s2">&quot;PC4&quot;</span><span class="p">]]</span>
+            <span class="o">.</span><span class="n">to_array</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">values</span>
+        <span class="p">)</span>  <span class="c1"># PCs</span>
+        <span class="n">anomalies</span> <span class="o">=</span> <span class="n">pcs</span> <span class="o">@</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;eofs&quot;</span><span class="p">)</span>  <span class="c1"># Anomalies</span>
+        <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+            <span class="n">anomalies</span> <span class="o">+</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mean_bat&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span>
+            <span class="p">(</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dems&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dems&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="n">create_dep</span><span class="p">(</span>
+            <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">case_dir</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;bathy_</span><span class="si">{</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;case_index&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">.dep&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">Z</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># /////////////////////// SPECTRA \\\\\\\\\\\\\\\\\\\\\\\\\\</span>
+        <span class="n">ef</span> <span class="o">=</span> <span class="n">jonswap</span><span class="p">(</span>
+            <span class="n">freq</span><span class="o">=</span><span class="n">example_frequencies</span><span class="p">,</span>
+            <span class="n">fp</span><span class="o">=</span><span class="mi">1</span>
+            <span class="o">/</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;subset_mda&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">case</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;case_index&quot;</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">Tp</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">gamma</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;subset_mda&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">case</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;case_index&quot;</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">gamma</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">hs</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;subset_mda&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">case</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;case_index&quot;</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">Hs</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">gth</span> <span class="o">=</span> <span class="n">cartwright</span><span class="p">(</span>
+            <span class="nb">dir</span><span class="o">=</span><span class="n">example_directions</span><span class="p">,</span>
+            <span class="n">dm</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;subset_mda&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">case</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;case_index&quot;</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">Dir</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">dspr</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;subset_mda&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">case</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;case_index&quot;</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">SPR</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">efth</span> <span class="o">=</span> <span class="n">ef</span> <span class="o">*</span> <span class="n">gth</span>  <span class="c1"># Offshore spectra</span>
+        <span class="n">off_sp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;efth&quot;</span><span class="p">:</span> <span class="p">([</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;freq&quot;</span><span class="p">,</span> <span class="s2">&quot;dir&quot;</span><span class="p">],</span> <span class="n">efth</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">data</span><span class="p">)},</span>
+            <span class="n">coords</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;dir&quot;</span><span class="p">:</span> <span class="n">example_directions</span><span class="p">,</span>
+                <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">([</span><span class="s2">&quot;1996-09-23 11:00&quot;</span><span class="p">]),</span>
+                <span class="s2">&quot;freq&quot;</span><span class="p">:</span> <span class="n">example_frequencies</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="c1"># BinWaves</span>
+        <span class="n">sp</span> <span class="o">=</span> <span class="n">off_sp</span><span class="o">.</span><span class="n">sortby</span><span class="p">([</span><span class="s2">&quot;freq&quot;</span><span class="p">,</span> <span class="s2">&quot;dir&quot;</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">locations</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">locations</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">])):</span>
+            <span class="n">kp</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span>
+                <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;inputs&quot;</span><span class="p">,</span> <span class="s2">&quot;kp_grid&quot;</span><span class="p">,</span> <span class="s2">&quot;kp_lon_</span><span class="si">{0}</span><span class="s2">_lat_</span><span class="si">{1}</span><span class="s2">.nc&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+            <span class="p">)</span>
+
+            <span class="n">EFTH</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">efth</span><span class="o">.</span><span class="n">values</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">kp</span><span class="o">.</span><span class="n">case</span><span class="p">)):</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                    <span class="s2">&quot;Reconstructing Point </span><span class="si">{0}</span><span class="s2">. Bin </span><span class="si">{1}</span><span class="s2"> </span><span class="se">\r</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">case</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+                <span class="n">freq_</span><span class="p">,</span> <span class="n">dir_</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;subset_mda&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">case</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="o">.</span><span class="n">freq</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                    <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;subset_mda&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">case</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="o">.</span><span class="n">Dir</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">efth_case</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="n">freq_</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="n">dir_</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;nearest&quot;</span><span class="p">)</span>
+                <span class="n">kp_case</span> <span class="o">=</span> <span class="n">kp</span><span class="o">.</span><span class="n">sortby</span><span class="p">(</span><span class="s2">&quot;dir&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">case</span><span class="o">=</span><span class="n">case</span><span class="p">)</span>
+
+                <span class="n">EFTH</span> <span class="o">=</span> <span class="n">EFTH</span> <span class="o">+</span> <span class="p">(</span><span class="n">efth_case</span><span class="o">.</span><span class="n">efth</span> <span class="o">*</span> <span class="n">kp_case</span><span class="o">.</span><span class="n">kp</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+
+            <span class="n">near_sp</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">near_sp</span><span class="p">[</span><span class="s2">&quot;efth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;freq&quot;</span><span class="p">,</span> <span class="s2">&quot;dir&quot;</span><span class="p">),</span>
+                <span class="n">EFTH</span><span class="p">,</span>
+            <span class="p">)</span>  <span class="c1"># Nearshore spectra (reconstructed)</span>
+
+            <span class="c1"># Save vardens</span>
+            <span class="n">vardens</span> <span class="o">=</span> <span class="n">near_sp</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">vardens</span><span class="p">[</span><span class="s2">&quot;dir&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">270</span> <span class="o">-</span> <span class="p">(</span><span class="n">vardens</span><span class="p">[</span><span class="s2">&quot;dir&quot;</span><span class="p">]))</span> <span class="o">%</span> <span class="mi">360</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_vardens</span><span class="p">(</span><span class="n">vardens</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_file</span><span class="p">(</span>
+                <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;vardens</span><span class="si">{0}</span><span class="s2">.txt&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">spec</span><span class="p">,</span>
+            <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

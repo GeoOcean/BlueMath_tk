@@ -1,0 +1,543 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.teslakit.numerical_models.swan package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.teslakit.numerical_models.swan.plots package" href="bluemath_tk.teslakit.numerical_models.swan.plots.html" />
+    <link rel="prev" title="bluemath_tk.teslakit.numerical_models package" href="bluemath_tk.teslakit.numerical_models.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.additive.html">bluemath_tk.additive package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.deeplearning.html">bluemath_tk.deeplearning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tcs.html">bluemath_tk.tcs package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.teslakit.numerical_models.html">bluemath_tk.teslakit.numerical_models package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.teslakit.numerical_models.swan package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.teslakit.numerical_models.swan.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-teslakit-numerical-models-swan-package">
+<h1>bluemath_tk.teslakit.numerical_models.swan package<a class="headerlink" href="#bluemath-tk-teslakit-numerical-models-swan-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html">bluemath_tk.teslakit.numerical_models.swan.plots package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#module-bluemath_tk.teslakit.numerical_models.swan.plots.common">bluemath_tk.teslakit.numerical_models.swan.plots.common module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#bluemath_tk.teslakit.numerical_models.swan.plots.common.GetBestRowsCols"><code class="docutils literal notranslate"><span class="pre">GetBestRowsCols()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#bluemath_tk.teslakit.numerical_models.swan.plots.common.GetDivisors"><code class="docutils literal notranslate"><span class="pre">GetDivisors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#bluemath_tk.teslakit.numerical_models.swan.plots.common.calc_quiver"><code class="docutils literal notranslate"><span class="pre">calc_quiver()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#module-bluemath_tk.teslakit.numerical_models.swan.plots.config">bluemath_tk.teslakit.numerical_models.swan.plots.config module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#module-bluemath_tk.teslakit.numerical_models.swan.plots.stat">bluemath_tk.teslakit.numerical_models.swan.plots.stat module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#bluemath_tk.teslakit.numerical_models.swan.plots.stat.axplot_var_map"><code class="docutils literal notranslate"><span class="pre">axplot_var_map()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#bluemath_tk.teslakit.numerical_models.swan.plots.stat.scatter_maps"><code class="docutils literal notranslate"><span class="pre">scatter_maps()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.plots.html#module-bluemath_tk.teslakit.numerical_models.swan.plots">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.test.html">bluemath_tk.teslakit.numerical_models.swan.test package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.test.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.test.html#module-bluemath_tk.teslakit.numerical_models.swan.test.test_io">bluemath_tk.teslakit.numerical_models.swan.test.test_io module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.test.html#module-bluemath_tk.teslakit.numerical_models.swan.test.test_wrap">bluemath_tk.teslakit.numerical_models.swan.test.test_wrap module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.teslakit.numerical_models.swan.test.html#module-bluemath_tk.teslakit.numerical_models.swan.test">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.teslakit.numerical_models.swan.geo">
+<span id="bluemath-tk-teslakit-numerical-models-swan-geo-module"></span><h2>bluemath_tk.teslakit.numerical_models.swan.geo module<a class="headerlink" href="#module-bluemath_tk.teslakit.numerical_models.swan.geo" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.geo.gc_distance">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.geo.</span></span><span class="sig-name descname"><span class="pre">gc_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/geo.html#gc_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.geo.gc_distance" title="Link to this definition"></a></dt>
+<dd><p>Calculate great circle distance and azimuth (exact. parsed ml)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.geo.shoot">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.geo.</span></span><span class="sig-name descname"><span class="pre">shoot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">azimuth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxdist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/geo.html#shoot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.geo.shoot" title="Link to this definition"></a></dt>
+<dd><p>Shooter Function
+Original javascript on <a class="reference external" href="http://williams.best.vwh.net/gccalc.htm">http://williams.best.vwh.net/gccalc.htm</a>
+Translated to python by Thomas Lecocq</p>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.teslakit.numerical_models.swan.io">
+<span id="bluemath-tk-teslakit-numerical-models-swan-io-module"></span><h2>bluemath_tk.teslakit.numerical_models.swan.io module<a class="headerlink" href="#module-bluemath_tk.teslakit.numerical_models.swan.io" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.io.</span></span><span class="sig-name descname"><span class="pre">SwanIO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">swan_proj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>SWAN numerical model input/output</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO.make_project">
+<span class="sig-name descname"><span class="pre">make_project</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO.make_project"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO.make_project" title="Link to this definition"></a></dt>
+<dd><p>makes swan project folder and subfolders</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.io.</span></span><span class="sig-name descname"><span class="pre">SwanIO_NONSTAT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">swan_proj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_NONSTAT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO" title="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SwanIO</span></code></a></p>
+<p>SWAN numerical model input/output - NON STATIONARY cases</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.build_case">
+<span class="sig-name descname"><span class="pre">build_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">waves_event</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">storm_track</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_waves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_winds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">waves_bnd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['N',</span> <span class="pre">'E',</span> <span class="pre">'W',</span> <span class="pre">'S']</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_NONSTAT.build_case"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.build_case" title="Link to this definition"></a></dt>
+<dd><p>Build SWAN NONSTAT case input files for given wave dataset</p>
+<p>case_id  - SWAN case index (int)</p>
+<p>waves_event - waves event time series (pandas.Dataframe)
+also contains level, tide and wind (not storm track) variables
+[n x 8] (hs, per, dir, spr, U10, V10, level, tide)</p>
+<p>storm_track - None / storm track time series (pandas.Dataframe)
+storm_track generated winds have priority over waves_event winds
+[n x 6] (move, vf, lon, lat, pn, p0)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.get_t0_dt">
+<span class="sig-name descname"><span class="pre">get_t0_dt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_NONSTAT.get_t0_dt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.get_t0_dt" title="Link to this definition"></a></dt>
+<dd><p>gets output points time_ini and delta_time (min) from SWAN input.swn file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_input">
+<span class="sig-name descname"><span class="pre">make_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_run</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_waves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_winds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wvs_bnd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['N',</span> <span class="pre">'E',</span> <span class="pre">'W',</span> <span class="pre">'S']</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_NONSTAT.make_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_input" title="Link to this definition"></a></dt>
+<dd><p>Writes input.swn file from waves event for non-stationary execution</p>
+<p>p_file  - input.swn file path
+time    - event time at swan iso format</p>
+<p>make_waves - activates waves input files generation (at waves_bnd)
+make_winds - activates wind input files generation</p>
+<p>more info: <a class="reference external" href="http://swanmodel.sourceforge.net/online_doc/swanuse/node23.html">http://swanmodel.sourceforge.net/online_doc/swanuse/node23.html</a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_level_files">
+<span class="sig-name descname"><span class="pre">make_level_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_case</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wave_event</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_NONSTAT.make_level_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_level_files" title="Link to this definition"></a></dt>
+<dd><p>Generate event level mesh files (swan compatible)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_out_points">
+<span class="sig-name descname"><span class="pre">make_out_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_NONSTAT.make_out_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_out_points" title="Link to this definition"></a></dt>
+<dd><p>Generates desired output-points coordinates file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_vortex_files">
+<span class="sig-name descname"><span class="pre">make_vortex_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_case</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">storm_track</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_NONSTAT.make_vortex_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_vortex_files" title="Link to this definition"></a></dt>
+<dd><p>Generate event wind mesh files (swan compatible)</p>
+<p>uses wave_event storm path data over SWAN computational grid
+needs SPHERICAL COORDINATES</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_wave_files">
+<span class="sig-name descname"><span class="pre">make_wave_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_case</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">waves_event</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bnd</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_NONSTAT.make_wave_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_wave_files" title="Link to this definition"></a></dt>
+<dd><p>Generate event wave files (swan compatible)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_wind_files">
+<span class="sig-name descname"><span class="pre">make_wind_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_case</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">waves_event</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_NONSTAT.make_wind_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.make_wind_files" title="Link to this definition"></a></dt>
+<dd><p>Generate event wind mesh files (swan compatible)</p>
+<p>uses wave_event U10 and V10 values at the entire SWAN comp. grid</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.outmat2xr">
+<span class="sig-name descname"><span class="pre">outmat2xr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_mat</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_NONSTAT.outmat2xr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.outmat2xr" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.output_case">
+<span class="sig-name descname"><span class="pre">output_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_case</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_NONSTAT.output_case"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.output_case" title="Link to this definition"></a></dt>
+<dd><p>read .mat output file from non-stationary and returns xarray.Dataset</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.output_points">
+<span class="sig-name descname"><span class="pre">output_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_case</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_NONSTAT.output_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_NONSTAT.output_points" title="Link to this definition"></a></dt>
+<dd><p>read table_outpts.dat output file and returns xarray.Dataset</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.io.</span></span><span class="sig-name descname"><span class="pre">SwanIO_STAT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">swan_proj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_STAT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO" title="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SwanIO</span></code></a></p>
+<p>SWAN numerical model input/output - STATIONARY cases</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.build_case">
+<span class="sig-name descname"><span class="pre">build_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">waves_ss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bnd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['N',</span> <span class="pre">'E',</span> <span class="pre">'W',</span> <span class="pre">'S']</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_STAT.build_case"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.build_case" title="Link to this definition"></a></dt>
+<dd><p>Build SWAN STAT case input files for given wave sea state (hs, per, dir, spr)</p>
+<p>ix_case  - SWAN case index (int)
+waves_ss - wave sea state (hs, per, dir, spr)
+bnd      - wave sea state active boundaries</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.make_input">
+<span class="sig-name descname"><span class="pre">make_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_run</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ws</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bnd</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_STAT.make_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.make_input" title="Link to this definition"></a></dt>
+<dd><p>Writes input.swn file from waves sea state for stationary execution</p>
+<p>p_file  - input.swn file path
+ws      - wave sea state (hs, per, dr, spr)
+bnd     - wave sea state active boundaries</p>
+<p>more info: <a class="reference external" href="http://swanmodel.sourceforge.net/online_doc/swanuse/node23.html">http://swanmodel.sourceforge.net/online_doc/swanuse/node23.html</a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.make_input_nested">
+<span class="sig-name descname"><span class="pre">make_input_nested</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_run</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_STAT.make_input_nested"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.make_input_nested" title="Link to this definition"></a></dt>
+<dd><p>Writes input_nested.swn file from waves sea state for stationary execution</p>
+<p>p_file  - input_nestedN.swn file path</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.outmat2xr">
+<span class="sig-name descname"><span class="pre">outmat2xr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_mat</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_STAT.outmat2xr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.outmat2xr" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.output_case">
+<span class="sig-name descname"><span class="pre">output_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_case</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#SwanIO_STAT.output_case"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.SwanIO_STAT.output_case" title="Link to this definition"></a></dt>
+<dd><p>read .mat output file from stationary and returns xarray.Dataset</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.io.geo_distance_azimuth">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.io.</span></span><span class="sig-name descname"><span class="pre">geo_distance_azimuth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_point</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/io.html#geo_distance_azimuth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.io.geo_distance_azimuth" title="Link to this definition"></a></dt>
+<dd><p>Returns geodesic distance and azimuth between lat,lon matrix and lat,lon
+point in degrees</p>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.teslakit.numerical_models.swan.storms">
+<span id="bluemath-tk-teslakit-numerical-models-swan-storms-module"></span><h2>bluemath_tk.teslakit.numerical_models.swan.storms module<a class="headerlink" href="#module-bluemath_tk.teslakit.numerical_models.swan.storms" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.storms.track_from_parameters">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.storms.</span></span><span class="sig-name descname"><span class="pre">track_from_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_ini</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hours</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">great_circle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/storms.html#track_from_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.storms.track_from_parameters" title="Link to this definition"></a></dt>
+<dd><p>Calculates storm track variables from storm track parameters</p>
+<p>pmin, vmean, delta, gamma  - storm track parameters
+x0, y0                     - site coordinates (longitude, latitude)
+x1                         - enter point in computational grid
+R                          - radius (º)
+date_ini                   - initial date ‘yyyy-mm-dd HH:SS’
+hours                      - number of hours to generate
+great_circle               - True for using great circle lon,lat calculation</p>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.teslakit.numerical_models.swan.temp_plots">
+<span id="bluemath-tk-teslakit-numerical-models-swan-temp-plots-module"></span><h2>bluemath_tk.teslakit.numerical_models.swan.temp_plots module<a class="headerlink" href="#module-bluemath_tk.teslakit.numerical_models.swan.temp_plots" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.temp_plots.aux_quiver">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.temp_plots.</span></span><span class="sig-name descname"><span class="pre">aux_quiver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vdir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/temp_plots.html#aux_quiver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.temp_plots.aux_quiver" title="Link to this definition"></a></dt>
+<dd><p>interpolates var and plots quiver with var_dir. Requires open figure</p>
+<p>var  - variable module
+vdir - variable direction (º clockwise relative to North)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_output_nonstat">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.temp_plots.</span></span><span class="sig-name descname"><span class="pre">plot_output_nonstat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xds_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_export</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quiver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">np_shore</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([],</span> <span class="pre">dtype=float64)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/temp_plots.html#plot_output_nonstat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_output_nonstat" title="Link to this definition"></a></dt>
+<dd><p>Plots non-stationary SWAN execution output for selected var, for every case</p>
+<p>xds_out    - swan output (xarray.Dataset)
+var_name   - ‘Hsig’, ‘Tm02’, ‘Tpsmoo’
+p_export   - path for exporting figures</p>
+<p>opt. args
+quiver     - True for adding directional quiver plot
+np_shore   - shoreline, np.array x = np_shore[:,0] y = np.shore[:,1]</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_output_points">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.temp_plots.</span></span><span class="sig-name descname"><span class="pre">plot_output_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xds_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_export</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/temp_plots.html#plot_output_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_output_points" title="Link to this definition"></a></dt>
+<dd><p>Plots SWAN execution output table points time series</p>
+<p>xds_out    - swan points output (xarray.Dataset)
+p_export   - path for exporting figures</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_points_times">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.temp_plots.</span></span><span class="sig-name descname"><span class="pre">plot_points_times</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xds_out_case</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_export_case</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/temp_plots.html#plot_points_times"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_points_times" title="Link to this definition"></a></dt>
+<dd><p>Plots non-stationary SWAN points output for selected case</p>
+<p>xds_out_case   - swan case output (xarray.Dataset)
+p_export_case  - path for exporting figures</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_storm_track">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.temp_plots.</span></span><span class="sig-name descname"><span class="pre">plot_storm_track</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lon0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pd_storm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_export</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">np_shore</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([],</span> <span class="pre">dtype=float64)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/temp_plots.html#plot_storm_track"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_storm_track" title="Link to this definition"></a></dt>
+<dd><p>Plots SWAN execution output table points time series</p>
+<p>lon0, lon1  - longitude axes limits (lon0, lon1)
+lat0, lat1  - latitude axes limits (lat0, lat1)
+pd_storm    - storm track pandas.DataFrame (x0, y0, R as metadata)
+p_export    - path for exporting figure</p>
+<p>opt. args
+np_shore   - shoreline, np.array x = np_shore[:,0] y = np.shore[:,1]</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_var_times">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.temp_plots.</span></span><span class="sig-name descname"><span class="pre">plot_var_times</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xds_out_case</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_export_case</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quiver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">np_shore</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([],</span> <span class="pre">dtype=float64)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jet'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/temp_plots.html#plot_var_times"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.temp_plots.plot_var_times" title="Link to this definition"></a></dt>
+<dd><p>Plots non-stationary SWAN execution output for selected var and case</p>
+<p>xds_out_case    - swan output (xarray.Dataset)
+var_name        - ‘Hsig’, ‘Tm02’, ‘Tpsmoo’
+p_export        - path for exporting figures</p>
+<p>opt. args
+quiver     - True for adding directional quiver plot
+np_shore   - shoreline, np.array x = np_shore[:,0] y = np.shore[:,1]
+cmap       - matplotlib colormap</p>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.teslakit.numerical_models.swan.wrap">
+<span id="bluemath-tk-teslakit-numerical-models-swan-wrap-module"></span><h2>bluemath_tk.teslakit.numerical_models.swan.wrap module<a class="headerlink" href="#module-bluemath_tk.teslakit.numerical_models.swan.wrap" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanMesh">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.wrap.</span></span><span class="sig-name descname"><span class="pre">SwanMesh</span></span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/wrap.html#SwanMesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanMesh" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>SWAN numerical model mesh</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanMesh.export_dat">
+<span class="sig-name descname"><span class="pre">export_dat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_case</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/wrap.html#SwanMesh.export_dat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanMesh.export_dat" title="Link to this definition"></a></dt>
+<dd><p>exports depth values to .dat file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanMesh.get_XY">
+<span class="sig-name descname"><span class="pre">get_XY</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/wrap.html#SwanMesh.get_XY"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanMesh.get_XY" title="Link to this definition"></a></dt>
+<dd><p>returns mesh X, Y arrays from computational grid</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanProject">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.wrap.</span></span><span class="sig-name descname"><span class="pre">SwanProject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_proj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_proj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/wrap.html#SwanProject"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanProject" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>SWAN numerical model project parameters, grids and information</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.wrap.</span></span><span class="sig-name descname"><span class="pre">SwanWrap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">swan_proj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">swan_io</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/wrap.html#SwanWrap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>SWAN numerical model wrap for multi-case handling</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.extract_output">
+<span class="sig-name descname"><span class="pre">extract_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/wrap.html#SwanWrap.extract_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.extract_output" title="Link to this definition"></a></dt>
+<dd><p>exctract output from all cases</p>
+<p>return xarray.Dataset (uses new dim “case” to join output)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.extract_output_points">
+<span class="sig-name descname"><span class="pre">extract_output_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/wrap.html#SwanWrap.extract_output_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.extract_output_points" title="Link to this definition"></a></dt>
+<dd><p>exctract output from points all cases table_outpts.dat</p>
+<p>return xarray.Dataset (uses new dim “case” to join output)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.get_run_folders">
+<span class="sig-name descname"><span class="pre">get_run_folders</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/wrap.html#SwanWrap.get_run_folders"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.get_run_folders" title="Link to this definition"></a></dt>
+<dd><p>return sorted list of project cases folders</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_run</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'input.swn'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/wrap.html#SwanWrap.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.run" title="Link to this definition"></a></dt>
+<dd><p>Bash execution commands for launching SWAN</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.run_cases">
+<span class="sig-name descname"><span class="pre">run_cases</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/wrap.html#SwanWrap.run_cases"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap.run_cases" title="Link to this definition"></a></dt>
+<dd><p>run all cases inside project “cases” folder</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_NONSTAT">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.wrap.</span></span><span class="sig-name descname"><span class="pre">SwanWrap_NONSTAT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">swan_proj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/wrap.html#SwanWrap_NONSTAT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_NONSTAT" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap" title="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap"><code class="xref py py-class docutils literal notranslate"><span class="pre">SwanWrap</span></code></a></p>
+<p>SWAN numerical model wrap for NON STATIONARY multi-case handling</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_NONSTAT.build_cases">
+<span class="sig-name descname"><span class="pre">build_cases</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waves_event_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">storm_track_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_waves</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_winds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/wrap.html#SwanWrap_NONSTAT.build_cases"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_NONSTAT.build_cases" title="Link to this definition"></a></dt>
+<dd><p>generates all files needed for swan non-stationary multi-case execution</p>
+<p>waves_event_list - list waves events time series (pandas.DataFrame)
+also contains level, tide and wind (not storm track) variables
+[n x 8] (hs, per, dir, spr, U10, V10, level, tide)</p>
+<p>storm_track_list - list of storm tracks time series (pandas.DataFrame)
+storm_track generated winds have priority over waves_event winds
+[n x 6] (move, vf, lon, lat, pn, p0)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_STAT">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.wrap.</span></span><span class="sig-name descname"><span class="pre">SwanWrap_STAT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">swan_proj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/wrap.html#SwanWrap_STAT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_STAT" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap" title="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap"><code class="xref py py-class docutils literal notranslate"><span class="pre">SwanWrap</span></code></a></p>
+<p>SWAN numerical model wrap for STATIONARY multi-case handling</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_STAT.build_cases">
+<span class="sig-name descname"><span class="pre">build_cases</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waves_dataset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan/wrap.html#SwanWrap_STAT.build_cases"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.wrap.SwanWrap_STAT.build_cases" title="Link to this definition"></a></dt>
+<dd><p>generates all files needed for swan stationary multi-case execution</p>
+<p>waves_dataset - pandas.dataframe with “n” boundary conditions setup
+[n x 4] (hs, per, dir, spr)</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.teslakit.numerical_models.swan">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bluemath_tk.teslakit.numerical_models.swan" title="Link to this heading"></a></h2>
+<p>Module attrs</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.teslakit.numerical_models.swan.set_swan_binary_file">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.teslakit.numerical_models.swan.</span></span><span class="sig-name descname"><span class="pre">set_swan_binary_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bin_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/teslakit/numerical_models/swan.html#set_swan_binary_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.teslakit.numerical_models.swan.set_swan_binary_file" title="Link to this definition"></a></dt>
+<dd><p>copy swan bin_file to wrap bin location</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.teslakit.numerical_models.html" class="btn btn-neutral float-left" title="bluemath_tk.teslakit.numerical_models package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.teslakit.numerical_models.swan.plots.html" class="btn btn-neutral float-right" title="bluemath_tk.teslakit.numerical_models.swan.plots package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

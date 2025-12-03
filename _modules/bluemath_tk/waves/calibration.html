@@ -1,0 +1,996 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.waves.calibration &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.waves.calibration</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.waves.calibration</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">cartopy.crs</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ccrs</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">cartopy.feature</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cfeature</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mpl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">statsmodels.api</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sm</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.figure</span><span class="w"> </span><span class="kn">import</span> <span class="n">Figure</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_data_calval</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">BlueMathModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.plotting.scatter</span><span class="w"> </span><span class="kn">import</span> <span class="n">density_scatter</span><span class="p">,</span> <span class="n">validation_scatter</span>
+
+
+<div class="viewcode-block" id="get_matching_times_between_arrays">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.calibration.get_matching_times_between_arrays">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_matching_times_between_arrays</span><span class="p">(</span>
+    <span class="n">times1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">times2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">max_time_diff</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Finds matching time indices between two arrays of timestamps.</span>
+
+<span class="sd">    For each time in `times1`, finds the closest time in `times2` that is within `max_time_diff` hours.</span>
+<span class="sd">    Returns the indices of matching times in both arrays.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    times1 : np.ndarray</span>
+<span class="sd">        First array of timestamps (reference times, e.g., from model data).</span>
+<span class="sd">    times2 : np.ndarray</span>
+<span class="sd">        Second array of timestamps (e.g., from satellite or validation data).</span>
+<span class="sd">    max_time_diff : int</span>
+<span class="sd">        Maximum time difference in hours for considering times as matching.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[np.ndarray, np.ndarray]</span>
+<span class="sd">        Two arrays containing the indices of matching times:</span>
+<span class="sd">        - First array: indices in times1 that have matches</span>
+<span class="sd">        - Second array: corresponding indices in times2 that match</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+<span class="sd">    &gt;&gt;&gt; idx1, idx2 = get_matching_times_between_arrays(</span>
+<span class="sd">    ...     model_df.index.values,</span>
+<span class="sd">    ...     sat_df.index.values,</span>
+<span class="sd">    ...     max_time_diff=2,</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">indices1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">indices2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">times1</span><span class="p">)):</span>
+        <span class="c1"># Find minimum time difference for current time1</span>
+        <span class="n">time_diffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">times2</span> <span class="o">-</span> <span class="n">times1</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">min_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">time_diffs</span><span class="p">)</span>
+
+        <span class="c1"># If minimum difference is within threshold, record the indices</span>
+        <span class="k">if</span> <span class="n">min_diff</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="n">max_time_diff</span><span class="p">,</span> <span class="s2">&quot;h&quot;</span><span class="p">):</span>
+            <span class="n">min_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">time_diffs</span><span class="p">)</span>
+            <span class="n">indices1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">indices1</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="n">indices2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">indices2</span><span class="p">,</span> <span class="n">min_index</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">indices1</span><span class="p">,</span> <span class="n">indices2</span></div>
+
+
+
+<div class="viewcode-block" id="process_imos_satellite_data">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.calibration.process_imos_satellite_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_imos_satellite_data</span><span class="p">(</span>
+    <span class="n">satellite_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">ini_lat</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">end_lat</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">ini_lon</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">end_lon</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">depth_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mi">200</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processes IMOS satellite data for calibration.</span>
+
+<span class="sd">    This function filters and processes IMOS satellite altimeter data to be used as</span>
+<span class="sd">    reference data for calibration (e.g., as `data_to_calibrate` in CalVal.fit).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    satellite_df : pd.DataFrame</span>
+<span class="sd">        IMOS satellite data. Must contain columns:</span>
+<span class="sd">            - &#39;LATITUDE&#39; (float): Latitude in decimal degrees</span>
+<span class="sd">            - &#39;LONGITUDE&#39; (float): Longitude in decimal degrees</span>
+<span class="sd">            - &#39;SWH_KU_quality_control&#39; (float): Quality control flag for Ku-band</span>
+<span class="sd">            - &#39;SWH_KA_quality_control&#39; (float): Quality control flag for Ka-band</span>
+<span class="sd">            - &#39;SWH_KU_CAL&#39; (float): Calibrated significant wave height (Ku-band)</span>
+<span class="sd">            - &#39;SWH_KA_CAL&#39; (float): Calibrated significant wave height (Ka-band)</span>
+<span class="sd">            - &#39;BOT_DEPTH&#39; (float): Bathymetry (negative values for ocean)</span>
+<span class="sd">    ini_lat : float</span>
+<span class="sd">        Minimum latitude (southern boundary) for filtering.</span>
+<span class="sd">    end_lat : float</span>
+<span class="sd">        Maximum latitude (northern boundary) for filtering.</span>
+<span class="sd">    ini_lon : float</span>
+<span class="sd">        Minimum longitude (western boundary) for filtering.</span>
+<span class="sd">    end_lon : float</span>
+<span class="sd">        Maximum longitude (eastern boundary) for filtering.</span>
+<span class="sd">    depth_threshold : float, optional</span>
+<span class="sd">        Only include points with BOT_DEPTH &lt; depth_threshold. Default is -200.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pd.DataFrame</span>
+<span class="sd">        Filtered and processed satellite data, suitable for use as `data_to_calibrate` in CalVal.fit.</span>
+<span class="sd">        Includes a new column &#39;Hs_CAL&#39; (combination of Ku-band and Ka-band calibrated significant wave heights).</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    - The returned DataFrame can be used directly as the `data_to_calibrate` argument in CalVal.fit.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Filter satellite data by coordinates</span>
+    <span class="n">satellite_df</span> <span class="o">=</span> <span class="n">satellite_df</span><span class="p">[</span>
+        <span class="p">(</span><span class="n">satellite_df</span><span class="o">.</span><span class="n">LATITUDE</span> <span class="o">&gt;</span> <span class="n">ini_lat</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">satellite_df</span><span class="o">.</span><span class="n">LATITUDE</span> <span class="o">&lt;</span> <span class="n">end_lat</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">satellite_df</span><span class="o">.</span><span class="n">LONGITUDE</span> <span class="o">&gt;</span> <span class="n">ini_lon</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">satellite_df</span><span class="o">.</span><span class="n">LONGITUDE</span> <span class="o">&lt;</span> <span class="n">end_lon</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">satellite_df</span><span class="o">.</span><span class="n">BOT_DEPTH</span> <span class="o">&lt;</span> <span class="n">depth_threshold</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Process quality control</span>
+    <span class="n">wave_height_qlt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">satellite_df</span><span class="p">[</span><span class="s2">&quot;SWH_KU_quality_control&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span>
+                <span class="n">satellite_df</span><span class="p">[</span><span class="s2">&quot;SWH_KA_quality_control&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span>
+            <span class="p">),</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">good_qlt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">wave_height_qlt</span> <span class="o">&lt;</span> <span class="mf">1.5</span><span class="p">)</span>
+
+    <span class="c1"># Process wave heights</span>
+    <span class="n">satellite_df</span><span class="p">[</span><span class="s2">&quot;Hs_CAL&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">satellite_df</span><span class="p">[</span><span class="s2">&quot;SWH_KU_CAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span>
+                <span class="n">satellite_df</span><span class="p">[</span><span class="s2">&quot;SWH_KA_CAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span>
+            <span class="p">),</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">satellite_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">good_qlt</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="CalVal">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.calibration.CalVal">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CalVal</span><span class="p">(</span><span class="n">BlueMathModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calibrates wave data using reference data.</span>
+
+<span class="sd">    This class provides a framework for calibrating wave model outputs (e.g., hindcast or reanalysis)</span>
+<span class="sd">    using reference data (e.g., satellite or buoy observations).</span>
+<span class="sd">    It supports directionally-dependent calibration for both sea and swell components.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    direction_bin_size : int</span>
+<span class="sd">        Size of directional bins in degrees.</span>
+<span class="sd">    direction_bins : np.ndarray</span>
+<span class="sd">        Array of bin edges for directions.</span>
+<span class="sd">    calibration_model : sm.OLS</span>
+<span class="sd">        The calibration model, more details in `statsmodels.api.OLS`.</span>
+<span class="sd">    calibrated_data : pd.DataFrame</span>
+<span class="sd">        DataFrame with columns [&#39;Hs&#39;, &#39;Hs_CORR&#39;, &#39;Hs_CAL&#39;] after calibration.</span>
+<span class="sd">        The time domain is the same as the model data.</span>
+<span class="sd">    calibration_params : dict</span>
+<span class="sd">        Dictionary with &#39;sea_correction&#39; and &#39;swell_correction&#39; correction coefficients.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">direction_bin_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">22.5</span>
+    <span class="n">direction_bins</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+        <span class="n">direction_bin_size</span><span class="p">,</span> <span class="mf">360.5</span><span class="p">,</span> <span class="n">direction_bin_size</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the CalVal class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_logger_name</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;CalVal&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span> <span class="n">console</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Save input data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_longitude</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_latitude</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_calibrate</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_max_time_diff</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Initialize calibration results</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_fit</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calibration_model</span><span class="p">:</span> <span class="n">sm</span><span class="o">.</span><span class="n">OLS</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calibrated_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calibration_params</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Exclude large attributes from model saving</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exclude_attributes</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="s2">&quot;_data&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;_data_to_calibrate&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;_data_to_fit&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calibration_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sm</span><span class="o">.</span><span class="n">OLS</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the calibration model.&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calibration_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Calibration model is not available. Please run the fit method first.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calibration_model</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calibrated_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the calibrated data.&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calibrated_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Calibrated data is not available. Please run the fit method first.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calibrated_data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calibration_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the calibration parameters.&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calibration_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Calibration parameters are not available. Please run the fit method first.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calibration_params</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_plot_data_domains</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Figure</span><span class="p">,</span> <span class="n">Axes</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plots the domains of the data points.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tuple[Figure, Axes]</span>
+<span class="sd">            A tuple containing the figure and axes objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span>
+            <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+            <span class="n">subplot_kw</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;projection&quot;</span><span class="p">:</span> <span class="n">ccrs</span><span class="o">.</span><span class="n">PlateCarree</span><span class="p">(</span><span class="n">central_longitude</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_longitude</span><span class="p">)</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">land_10m</span> <span class="o">=</span> <span class="n">cfeature</span><span class="o">.</span><span class="n">NaturalEarthFeature</span><span class="p">(</span>
+            <span class="s2">&quot;physical&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;land&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;10m&quot;</span><span class="p">,</span>
+            <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;face&quot;</span><span class="p">,</span>
+            <span class="n">facecolor</span><span class="o">=</span><span class="n">cfeature</span><span class="o">.</span><span class="n">COLORS</span><span class="p">[</span><span class="s2">&quot;land&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="c1"># Plot calibration data</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_calibrate</span><span class="o">.</span><span class="n">LONGITUDE</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_calibrate</span><span class="o">.</span><span class="n">LATITUDE</span><span class="p">,</span>
+            <span class="n">s</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+            <span class="n">c</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span>
+            <span class="n">transform</span><span class="o">=</span><span class="n">ccrs</span><span class="o">.</span><span class="n">PlateCarree</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="c1"># Plot main data point</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data_longitude</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data_latitude</span><span class="p">,</span>
+            <span class="n">s</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+            <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span>
+            <span class="n">zorder</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">transform</span><span class="o">=</span><span class="n">ccrs</span><span class="o">.</span><span class="n">PlateCarree</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="c1"># Set plot extent</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_extent</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_data_longitude</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_data_longitude</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_data_latitude</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_data_latitude</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="s2">&quot;lightblue&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">add_feature</span><span class="p">(</span><span class="n">land_10m</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_vec_direc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waves</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">direcs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a vector of wave heights for each directional bin.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        waves : np.ndarray</span>
+<span class="sd">            Wave heights.</span>
+<span class="sd">        direcs : np.ndarray</span>
+<span class="sd">            Wave directions in degrees.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Matrix of wave heights for each directional bin.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">waves</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">direction_bins</span><span class="p">)))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">waves</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">direcs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">direcs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">direcs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">360</span>
+            <span class="k">if</span> <span class="n">direcs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">waves</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># Handle direction = 360° case by mapping to the first bin (0-22.5°)</span>
+                <span class="k">if</span> <span class="n">direcs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">360</span><span class="p">:</span>
+                    <span class="n">bin_idx</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">bin_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">direcs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction_bin_size</span><span class="p">)</span>
+                <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">bin_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">waves</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_nparts</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the number of parts in the wave data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : pd.DataFrame</span>
+<span class="sd">            Wave data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">            The number of parts in the wave data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="nb">len</span><span class="p">([</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Hswell&quot;</span><span class="p">)])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_joined_sea_swell_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Joins the sea and swell data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : pd.DataFrame</span>
+<span class="sd">            Wave data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            The joined sea and swell matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Process sea waves</span>
+        <span class="n">Hsea</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_vec_direc</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;Hsea&quot;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;Dirsea&quot;</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="c1"># Process swells</span>
+        <span class="n">Hs_swells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">Hsea</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_nparts</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">Hs_swells</span> <span class="o">+=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_create_vec_direc</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Hswell</span><span class="si">{</span><span class="n">part</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Dirswell</span><span class="si">{</span><span class="n">part</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">])</span>
+            <span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="c1"># Combine sea and swell matrices</span>
+        <span class="n">sea_swell_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">Hsea</span><span class="p">,</span> <span class="n">Hs_swells</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sea_swell_matrix</span>
+
+<div class="viewcode-block" id="CalVal.fit">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.calibration.CalVal.fit">[docs]</a>
+    <span class="nd">@validate_data_calval</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">data_longitude</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">data_latitude</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">data_to_calibrate</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">max_time_diff</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calibrate the model data using reference (calibration) data.</span>
+
+<span class="sd">        This method matches the model data and calibration data in time,</span>
+<span class="sd">        constructs directionally-binned sea and swell matrices,</span>
+<span class="sd">        and fits a linear regression to obtain correction coefficients</span>
+<span class="sd">        for each direction bin.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : pd.DataFrame</span>
+<span class="sd">            Model data to calibrate. Must contain columns:</span>
+<span class="sd">                - &#39;Hs&#39; (float): Significant wave height</span>
+<span class="sd">                - &#39;Hsea&#39; (float): Sea component significant wave height</span>
+<span class="sd">                - &#39;Dirsea&#39; (float): Sea component mean direction (degrees)</span>
+<span class="sd">                - &#39;Hswell1&#39;, &#39;Dirswell1&#39;, ... (float): Swell components (at least one required)</span>
+<span class="sd">            The index must be datetime-like.</span>
+<span class="sd">        data_longitude : float</span>
+<span class="sd">            Longitude of the model location (used for plotting and filtering).</span>
+<span class="sd">        data_latitude : float</span>
+<span class="sd">            Latitude of the model location (used for plotting and filtering).</span>
+<span class="sd">        data_to_calibrate : pd.DataFrame</span>
+<span class="sd">            Reference data for calibration. Must contain column:</span>
+<span class="sd">                - &#39;Hs_CAL&#39; (float): Calibrated significant wave height (e.g., from satellite)</span>
+<span class="sd">            The index must be datetime-like.</span>
+<span class="sd">        max_time_diff : int, optional</span>
+<span class="sd">            Maximum time difference (in hours) allowed when matching model and calibration data.</span>
+<span class="sd">            Default is 2.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - After calling this method, the calibration parameters are stored in `self.calibration_params`</span>
+<span class="sd">        and the calibrated data is available in `self.calibrated_data`.</span>
+<span class="sd">        - The calibration is directionally dependent, meaning it uses different correction coefficients</span>
+<span class="sd">        for different wave directions.</span>
+<span class="sd">        - The coefficients with p-values greater than 0.05 or negative values are set to 1.0,</span>
+<span class="sd">        indicating no correction is applied for those directions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting calibration fit procedure.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Save input data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_longitude</span> <span class="o">=</span> <span class="n">data_longitude</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_latitude</span> <span class="o">=</span> <span class="n">data_latitude</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_calibrate</span> <span class="o">=</span> <span class="n">data_to_calibrate</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_max_time_diff</span> <span class="o">=</span> <span class="n">max_time_diff</span>
+
+        <span class="c1"># Plot data domains</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Plotting data domains.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_plot_data_domains</span><span class="p">()</span>
+
+        <span class="c1"># Construct matrices for calibration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Matching times and constructing matrices for calibration.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Get matching times</span>
+        <span class="n">times_data_to_fit</span><span class="p">,</span> <span class="n">times_data_to_calibrate</span> <span class="o">=</span> <span class="n">get_matching_times_between_arrays</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_calibrate</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">max_time_diff</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_time_diff</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_fit</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">times_data_to_fit</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_calibrate</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">times_data_to_calibrate</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Get joined sea and swell data</span>
+        <span class="n">sea_swell_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_joined_sea_swell_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_to_fit</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># Perform calibration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Fitting OLS regression for calibration.&quot;</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">sea_swell_matrix</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calibration_model</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">OLS</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_to_fit</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;Hs_CAL&quot;</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+        <span class="n">calibrated_model_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calibration_model</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+        <span class="c1"># Get significant correction coefficients</span>
+        <span class="n">significant_model_params</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">model_param</span>
+            <span class="k">if</span> <span class="n">calibrated_model_results</span><span class="o">.</span><span class="n">pvalues</span><span class="p">[</span><span class="n">imp</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">0.05</span> <span class="ow">and</span> <span class="n">model_param</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">else</span> <span class="mf">1.0</span>
+            <span class="k">for</span> <span class="n">imp</span><span class="p">,</span> <span class="n">model_param</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">calibrated_model_results</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Save sea and swell correction coefficients</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calibration_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;sea_correction&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="n">ip</span><span class="p">:</span> <span class="n">param</span>
+                <span class="k">for</span> <span class="n">ip</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">significant_model_params</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">direction_bins</span><span class="p">)])</span>
+                <span class="p">)</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;swell_correction&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="n">ip</span><span class="p">:</span> <span class="n">param</span>
+                <span class="k">for</span> <span class="n">ip</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">significant_model_params</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">direction_bins</span><span class="p">)</span> <span class="p">:])</span>
+                <span class="p">)</span>
+            <span class="p">},</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Save calibrated data to be used in plot_calibration_results()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calibrated_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">correct</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_to_fit</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calibrated_data</span><span class="p">[</span><span class="s2">&quot;Hs_CAL&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_fit</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;Hs_CAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Calibration fit procedure completed.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CalVal.correct">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.calibration.CalVal.correct">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">correct</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply the calibration correction to new data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : pd.DataFrame or xr.Dataset</span>
+<span class="sd">            Data to correct. If DataFrame, must contain columns:</span>
+<span class="sd">                - &#39;Hs&#39;, &#39;Hsea&#39;, &#39;Dirsea&#39;, &#39;Hswell1&#39;, &#39;Dirswell1&#39;, ...</span>
+<span class="sd">            If xarray.Dataset, must have variable &#39;efth&#39; and dimension &#39;part&#39;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame or xr.Dataset</span>
+<span class="sd">            Corrected data. For DataFrame, returns columns [&#39;Hs&#39;, &#39;Hs_CORR&#39;] (original and corrected SWH).</span>
+<span class="sd">            For Dataset, adds variables &#39;corr_coeffs&#39; and &#39;corr_efth&#39;.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - The correction is directionally dependent and uses the coefficients obtained from `fit`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calibration_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Calibration parameters are not available. Run fit() first.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Input is xarray.Dataset. Applying correction to spectra data.&quot;</span>
+            <span class="p">)</span>
+
+            <span class="n">corrected_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># Copy data to avoid modifying original data</span>
+            <span class="n">peak_directions</span> <span class="o">=</span> <span class="n">corrected_data</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">stats</span><span class="p">([</span><span class="s2">&quot;dp&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+            <span class="n">correction_coeffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">peak_directions</span><span class="o">.</span><span class="n">dp</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">n_part</span> <span class="ow">in</span> <span class="n">peak_directions</span><span class="o">.</span><span class="n">part</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">n_part</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">correction_coeffs</span><span class="p">[</span><span class="n">n_part</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                        <span class="p">[</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">calibration_params</span><span class="p">[</span><span class="s2">&quot;sea_correction&quot;</span><span class="p">][</span>
+                                <span class="nb">int</span><span class="p">(</span><span class="n">peak_direction</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction_bin_size</span><span class="p">)</span>
+                                <span class="k">if</span> <span class="n">peak_direction</span> <span class="o">&lt;</span> <span class="mi">360</span>
+                                <span class="k">else</span> <span class="mi">0</span>  <span class="c1"># TODO: Check if this with Javi</span>
+                            <span class="p">]</span>
+                            <span class="k">for</span> <span class="n">peak_direction</span> <span class="ow">in</span> <span class="n">peak_directions</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span>
+                                <span class="n">part</span><span class="o">=</span><span class="n">n_part</span>
+                            <span class="p">)</span><span class="o">.</span><span class="n">dp</span><span class="o">.</span><span class="n">values</span>
+                        <span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">correction_coeffs</span><span class="p">[</span><span class="n">n_part</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                        <span class="p">[</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">calibration_params</span><span class="p">[</span><span class="s2">&quot;swell_correction&quot;</span><span class="p">][</span>
+                                <span class="nb">int</span><span class="p">(</span><span class="n">peak_direction</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction_bin_size</span><span class="p">)</span>
+                                <span class="k">if</span> <span class="n">peak_direction</span> <span class="o">&lt;</span> <span class="mi">360</span>
+                                <span class="k">else</span> <span class="mi">0</span>  <span class="c1"># TODO: Check if this with Javi</span>
+                            <span class="p">]</span>
+                            <span class="k">for</span> <span class="n">peak_direction</span> <span class="ow">in</span> <span class="n">peak_directions</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span>
+                                <span class="n">part</span><span class="o">=</span><span class="n">n_part</span>
+                            <span class="p">)</span><span class="o">.</span><span class="n">dp</span><span class="o">.</span><span class="n">values</span>
+                        <span class="p">]</span>
+                    <span class="p">)</span>
+            <span class="n">corrected_data</span><span class="p">[</span><span class="s2">&quot;corr_coeffs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;part&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">),</span> <span class="n">correction_coeffs</span><span class="p">)</span>
+            <span class="n">corrected_data</span><span class="p">[</span><span class="s2">&quot;corr_efth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">corrected_data</span><span class="o">.</span><span class="n">efth</span> <span class="o">*</span> <span class="n">corrected_data</span><span class="o">.</span><span class="n">corr_coeffs</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Spectra correction complete.&quot;</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">corrected_data</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Input is pandas.DataFrame. Applying correction to wave data.&quot;</span>
+            <span class="p">)</span>
+
+            <span class="n">corrected_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">corrected_data</span><span class="p">[</span><span class="s2">&quot;Hsea&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">corrected_data</span><span class="p">[</span><span class="s2">&quot;Hsea&quot;</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span>
+                <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">calibration_params</span><span class="p">[</span><span class="s2">&quot;sea_correction&quot;</span><span class="p">][</span>
+                            <span class="nb">int</span><span class="p">(</span><span class="n">peak_direction</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction_bin_size</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">peak_direction</span> <span class="o">&lt;</span> <span class="mi">360</span>
+                            <span class="k">else</span> <span class="mi">0</span>
+                        <span class="p">]</span>
+                        <span class="k">for</span> <span class="n">peak_direction</span> <span class="ow">in</span> <span class="n">corrected_data</span><span class="p">[</span><span class="s2">&quot;Dirsea&quot;</span><span class="p">]</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+                <span class="o">**</span> <span class="mi">2</span>
+            <span class="p">)</span>
+            <span class="n">corrected_data</span><span class="p">[</span><span class="s2">&quot;Hs_CORR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">corrected_data</span><span class="p">[</span><span class="s2">&quot;Hsea&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">n_part</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_nparts</span><span class="p">(</span><span class="n">corrected_data</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">corrected_data</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Hswell</span><span class="si">{</span><span class="n">n_part</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">corrected_data</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Hswell</span><span class="si">{</span><span class="n">n_part</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span>
+                    <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                        <span class="p">[</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">calibration_params</span><span class="p">[</span><span class="s2">&quot;swell_correction&quot;</span><span class="p">][</span>
+                                <span class="nb">int</span><span class="p">(</span><span class="n">peak_direction</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction_bin_size</span><span class="p">)</span>
+                                <span class="k">if</span> <span class="n">peak_direction</span> <span class="o">&lt;</span> <span class="mi">360</span>
+                                <span class="k">else</span> <span class="mi">0</span>
+                            <span class="p">]</span>
+                            <span class="k">for</span> <span class="n">peak_direction</span> <span class="ow">in</span> <span class="n">corrected_data</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Dirswell</span><span class="si">{</span><span class="n">n_part</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+                        <span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="o">**</span> <span class="mi">2</span>
+                <span class="p">)</span>
+                <span class="n">corrected_data</span><span class="p">[</span><span class="s2">&quot;Hs_CORR&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">corrected_data</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Hswell</span><span class="si">{</span><span class="n">n_part</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+
+            <span class="n">corrected_data</span><span class="p">[</span><span class="s2">&quot;Hs_CORR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">corrected_data</span><span class="p">[</span><span class="s2">&quot;Hs_CORR&quot;</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Wave data correction complete.&quot;</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">corrected_data</span><span class="p">[[</span><span class="s2">&quot;Hs&quot;</span><span class="p">,</span> <span class="s2">&quot;Hs_CORR&quot;</span><span class="p">]]</span></div>
+
+
+<div class="viewcode-block" id="CalVal.plot_calibration_results">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.calibration.CalVal.plot_calibration_results">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_calibration_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Figure</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot the calibration results, including:</span>
+<span class="sd">        - Pie charts of correction coefficients for sea and swell</span>
+<span class="sd">        - Scatter plots of model vs. reference (before and after correction)</span>
+<span class="sd">        - Polar density plots of sea and swell wave climate</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tuple[Figure, list]</span>
+<span class="sd">            The matplotlib Figure and a list of Axes objects for all subplots.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Plotting calibration results.&quot;</span><span class="p">)</span>
+
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span>
+        <span class="n">gs</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_gridspec</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">wspace</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">hspace</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+
+        <span class="c1"># Create subplots with proper projections</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>  <span class="c1"># Sea correction pie</span>
+        <span class="n">ax2</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>  <span class="c1"># Swell correction pie</span>
+        <span class="n">ax1_cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>  <span class="c1"># Sea correction colorbar</span>
+        <span class="n">ax2_cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>  <span class="c1"># Swell correction colorbar</span>
+        <span class="n">ax3</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>  <span class="c1"># No correction scatter</span>
+        <span class="n">ax4</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>  <span class="c1"># With correction scatter</span>
+        <span class="n">ax5</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">6</span><span class="p">:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">projection</span><span class="o">=</span><span class="s2">&quot;polar&quot;</span><span class="p">)</span>  <span class="c1"># Sea climate</span>
+        <span class="n">ax6</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">6</span><span class="p">:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">projection</span><span class="o">=</span><span class="s2">&quot;polar&quot;</span><span class="p">)</span>  <span class="c1"># Swell climate</span>
+
+        <span class="c1"># Plot sea correction pie chart</span>
+        <span class="n">sea_norm</span> <span class="o">=</span> <span class="mf">0.35</span>  <span class="c1"># Normalization factor for sea correction</span>
+        <span class="n">sea_fracs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calibration_params</span><span class="p">[</span><span class="s2">&quot;sea_correction&quot;</span><span class="p">]))</span>
+        <span class="n">sea_norm</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">sea_norm</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">sea_norm</span><span class="p">)</span>
+        <span class="n">sea_cmap</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span>
+            <span class="s2">&quot;bwr&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calibration_params</span><span class="p">[</span><span class="s2">&quot;sea_correction&quot;</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="n">sea_colors</span> <span class="o">=</span> <span class="n">sea_cmap</span><span class="p">(</span>
+            <span class="n">sea_norm</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calibration_params</span><span class="p">[</span><span class="s2">&quot;sea_correction&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">pie</span><span class="p">(</span>
+            <span class="n">sea_fracs</span><span class="p">,</span>
+            <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">colors</span><span class="o">=</span><span class="n">sea_colors</span><span class="p">,</span>
+            <span class="n">startangle</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
+            <span class="n">counterclock</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">radius</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;SEA $Correction$&quot;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">)</span>
+        <span class="c1"># Add colorbar for sea correction below the pie chart, shrink it</span>
+        <span class="n">_sea_cbar</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">colorbar</span><span class="o">.</span><span class="n">ColorbarBase</span><span class="p">(</span>
+            <span class="n">ax1_cbar</span><span class="p">,</span>
+            <span class="n">cmap</span><span class="o">=</span><span class="n">sea_cmap</span><span class="p">,</span>
+            <span class="n">norm</span><span class="o">=</span><span class="n">sea_norm</span><span class="p">,</span>
+            <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Correction Factor&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="n">ax1_cbar</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+        <span class="n">ax1_cbar</span><span class="o">.</span><span class="n">set_position</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">box</span><span class="o">.</span><span class="n">x0</span> <span class="o">+</span> <span class="mf">0.15</span> <span class="o">*</span> <span class="n">box</span><span class="o">.</span><span class="n">width</span><span class="p">,</span>
+                <span class="n">box</span><span class="o">.</span><span class="n">y0</span> <span class="o">+</span> <span class="mf">0.3</span> <span class="o">*</span> <span class="n">box</span><span class="o">.</span><span class="n">height</span><span class="p">,</span>
+                <span class="mf">0.7</span> <span class="o">*</span> <span class="n">box</span><span class="o">.</span><span class="n">width</span><span class="p">,</span>
+                <span class="mf">0.4</span> <span class="o">*</span> <span class="n">box</span><span class="o">.</span><span class="n">height</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">ax1_cbar</span><span class="o">.</span><span class="n">set_frame_on</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">ax1_cbar</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span>
+            <span class="n">left</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">labelleft</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">labelbottom</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Plot swell correction pie chart</span>
+        <span class="n">swell_norm</span> <span class="o">=</span> <span class="mf">0.35</span>  <span class="c1"># Normalization factor for swell correction</span>
+        <span class="n">swell_fracs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calibration_params</span><span class="p">[</span><span class="s2">&quot;swell_correction&quot;</span><span class="p">]))</span>
+        <span class="n">swell_norm</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">swell_norm</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">swell_norm</span><span class="p">)</span>
+        <span class="n">swell_cmap</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span>
+            <span class="s2">&quot;bwr&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calibration_params</span><span class="p">[</span><span class="s2">&quot;swell_correction&quot;</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="n">swell_colors</span> <span class="o">=</span> <span class="n">swell_cmap</span><span class="p">(</span>
+            <span class="n">swell_norm</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calibration_params</span><span class="p">[</span><span class="s2">&quot;swell_correction&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">pie</span><span class="p">(</span>
+            <span class="n">swell_fracs</span><span class="p">,</span>
+            <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">colors</span><span class="o">=</span><span class="n">swell_colors</span><span class="p">,</span>
+            <span class="n">startangle</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
+            <span class="n">counterclock</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">radius</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;SWELL $Correction$&quot;</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">)</span>
+        <span class="c1"># Add colorbar for swell correction below the pie chart, shrink it</span>
+        <span class="n">_swell_cbar</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">colorbar</span><span class="o">.</span><span class="n">ColorbarBase</span><span class="p">(</span>
+            <span class="n">ax2_cbar</span><span class="p">,</span>
+            <span class="n">cmap</span><span class="o">=</span><span class="n">swell_cmap</span><span class="p">,</span>
+            <span class="n">norm</span><span class="o">=</span><span class="n">swell_norm</span><span class="p">,</span>
+            <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Correction Factor&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="n">ax2_cbar</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+        <span class="n">ax2_cbar</span><span class="o">.</span><span class="n">set_position</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">box</span><span class="o">.</span><span class="n">x0</span> <span class="o">+</span> <span class="mf">0.15</span> <span class="o">*</span> <span class="n">box</span><span class="o">.</span><span class="n">width</span><span class="p">,</span>
+                <span class="n">box</span><span class="o">.</span><span class="n">y0</span> <span class="o">+</span> <span class="mf">0.3</span> <span class="o">*</span> <span class="n">box</span><span class="o">.</span><span class="n">height</span><span class="p">,</span>
+                <span class="mf">0.7</span> <span class="o">*</span> <span class="n">box</span><span class="o">.</span><span class="n">width</span><span class="p">,</span>
+                <span class="mf">0.4</span> <span class="o">*</span> <span class="n">box</span><span class="o">.</span><span class="n">height</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">ax2_cbar</span><span class="o">.</span><span class="n">set_frame_on</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">ax2_cbar</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span>
+            <span class="n">left</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">labelleft</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">labelbottom</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Plot no correction scatter</span>
+        <span class="n">validation_scatter</span><span class="p">(</span>
+            <span class="n">axs</span><span class="o">=</span><span class="n">ax3</span><span class="p">,</span>
+            <span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">calibrated_data</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">calibrated_data</span><span class="p">[</span><span class="s2">&quot;Hs_CAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Hindcast&quot;</span><span class="p">,</span>
+            <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Satellite&quot;</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;No Correction&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Plot with correction scatter</span>
+        <span class="n">validation_scatter</span><span class="p">(</span>
+            <span class="n">axs</span><span class="o">=</span><span class="n">ax4</span><span class="p">,</span>
+            <span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">calibrated_data</span><span class="p">[</span><span class="s2">&quot;Hs_CORR&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">calibrated_data</span><span class="p">[</span><span class="s2">&quot;Hs_CAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Hindcast&quot;</span><span class="p">,</span>
+            <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Satellite&quot;</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;With Correction&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Plot sea wave climate</span>
+        <span class="n">sea_dirs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;Dirsea&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[::</span><span class="mi">10</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
+        <span class="n">sea_heights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;Hsea&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[::</span><span class="mi">10</span><span class="p">]</span>
+        <span class="c1"># Filter out NaN and infinite values</span>
+        <span class="n">valid_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">sea_dirs</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">sea_heights</span><span class="p">)</span>
+        <span class="n">sea_dirs_valid</span> <span class="o">=</span> <span class="n">sea_dirs</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+        <span class="n">sea_heights_valid</span> <span class="o">=</span> <span class="n">sea_heights</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sea_dirs_valid</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">density_scatter</span><span class="p">(</span><span class="n">sea_dirs_valid</span><span class="p">,</span> <span class="n">sea_heights_valid</span><span class="p">)</span>
+            <span class="n">ax5</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;jet&quot;</span><span class="p">)</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">set_theta_zero_location</span><span class="p">(</span><span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([</span><span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="s2">&quot;NE&quot;</span><span class="p">,</span> <span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;SE&quot;</span><span class="p">,</span> <span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="s2">&quot;SW&quot;</span><span class="p">,</span> <span class="s2">&quot;W&quot;</span><span class="p">,</span> <span class="s2">&quot;NW&quot;</span><span class="p">])</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lavender&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lavender&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">set_theta_direction</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;$</span><span class="se">\u03b8</span><span class="s2">_</span><span class="si">{m}</span><span class="s2">$ ($\degree$)&quot;</span><span class="p">)</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;$H_</span><span class="si">{s}</span><span class="s2">$ (m)&quot;</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">ax5</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;SEA $Wave$ $Climate$&quot;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mi">35</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Plot swell wave climate</span>
+        <span class="n">swell_dirs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;Dirswell1&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[::</span><span class="mi">10</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
+        <span class="n">swell_heights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;Hswell1&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[::</span><span class="mi">10</span><span class="p">]</span>
+        <span class="c1"># Filter out NaN and infinite values</span>
+        <span class="n">valid_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">swell_dirs</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">swell_heights</span><span class="p">)</span>
+        <span class="n">swell_dirs_valid</span> <span class="o">=</span> <span class="n">swell_dirs</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+        <span class="n">swell_heights_valid</span> <span class="o">=</span> <span class="n">swell_heights</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">swell_dirs_valid</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">density_scatter</span><span class="p">(</span><span class="n">swell_dirs_valid</span><span class="p">,</span> <span class="n">swell_heights_valid</span><span class="p">)</span>
+            <span class="n">ax6</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;jet&quot;</span><span class="p">)</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">set_theta_zero_location</span><span class="p">(</span><span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([</span><span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="s2">&quot;NE&quot;</span><span class="p">,</span> <span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;SE&quot;</span><span class="p">,</span> <span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="s2">&quot;SW&quot;</span><span class="p">,</span> <span class="s2">&quot;W&quot;</span><span class="p">,</span> <span class="s2">&quot;NW&quot;</span><span class="p">])</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lavender&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lavender&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">set_theta_direction</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;$</span><span class="se">\u03b8</span><span class="s2">_</span><span class="si">{m}</span><span class="s2">$ ($\degree$)&quot;</span><span class="p">)</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;$H_</span><span class="si">{s}</span><span class="s2">$ (m)&quot;</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">ax6</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;SWELL 1 $Wave$ $Climate$&quot;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mi">35</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="p">[</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">,</span> <span class="n">ax1_cbar</span><span class="p">,</span> <span class="n">ax2_cbar</span><span class="p">,</span> <span class="n">ax3</span><span class="p">,</span> <span class="n">ax4</span><span class="p">,</span> <span class="n">ax5</span><span class="p">,</span> <span class="n">ax6</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CalVal.validate_calibration">
+<a class="viewcode-back" href="../../../bluemath_tk.waves.html#bluemath_tk.waves.calibration.CalVal.validate_calibration">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_calibration</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data_to_validate</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Figure</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validate the calibration using independent validation data.</span>
+
+<span class="sd">        This method compares the original and corrected model data to the validation data,</span>
+<span class="sd">        both as time series and with scatter plots.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data_to_validate : pd.DataFrame</span>
+<span class="sd">            Validation data. Must contain column:</span>
+<span class="sd">                - &#39;Hs_VAL&#39; (float): Validation significant wave height (e.g., from buoy)</span>
+<span class="sd">            The index must be datetime-like.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tuple[Figure, list]</span>
+<span class="sd">            The matplotlib Figure and a list of Axes objects:</span>
+<span class="sd">            [time series axis, scatter (no correction), scatter (corrected)].</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="s2">&quot;Hs_VAL&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data_to_validate</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Validation data is missing required column: &#39;Hs_VAL&#39;&quot;</span><span class="p">)</span>
+
+        <span class="n">data_corr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">correct</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
+        <span class="n">data_times</span><span class="p">,</span> <span class="n">data_to_validate_times</span> <span class="o">=</span> <span class="n">get_matching_times_between_arrays</span><span class="p">(</span>
+            <span class="n">times1</span><span class="o">=</span><span class="n">data_corr</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+            <span class="n">times2</span><span class="o">=</span><span class="n">data_to_validate</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+            <span class="n">max_time_diff</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create figure with a 2-row, 2-column grid, top row spans both columns</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+        <span class="n">gs</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_gridspec</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">height_ratios</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">hspace</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">wspace</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+        <span class="c1"># Top row: time series plot (spans both columns)</span>
+        <span class="n">ax_ts</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">data_corr</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">data_times</span><span class="p">]</span>
+        <span class="n">ax_ts</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">t</span><span class="p">,</span>
+            <span class="n">data_to_validate</span><span class="p">[</span><span class="s2">&quot;Hs_VAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">data_to_validate_times</span><span class="p">],</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Validation&quot;</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span>
+            <span class="n">lw</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax_ts</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">t</span><span class="p">,</span>
+            <span class="n">data_corr</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">data_times</span><span class="p">],</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Model (No Correction)&quot;</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:blue&quot;</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax_ts</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">t</span><span class="p">,</span>
+            <span class="n">data_corr</span><span class="p">[</span><span class="s2">&quot;Hs_CORR&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">data_times</span><span class="p">],</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Model (Corrected)&quot;</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:orange&quot;</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax_ts</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;$H_s$ (m)&quot;</span><span class="p">)</span>
+        <span class="n">ax_ts</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)</span>
+        <span class="n">ax_ts</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Time Series Comparison&quot;</span><span class="p">)</span>
+        <span class="n">ax_ts</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;upper right&quot;</span><span class="p">)</span>
+        <span class="n">ax_ts</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+        <span class="c1"># Bottom row: scatter plots</span>
+        <span class="n">ax_sc1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">ax_sc2</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">validation_scatter</span><span class="p">(</span>
+            <span class="n">axs</span><span class="o">=</span><span class="n">ax_sc1</span><span class="p">,</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">data_corr</span><span class="p">[</span><span class="s2">&quot;Hs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">data_times</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">data_to_validate</span><span class="p">[</span><span class="s2">&quot;Hs_VAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">data_to_validate_times</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Model (No Correction)&quot;</span><span class="p">,</span>
+            <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Validation&quot;</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;No Correction&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">validation_scatter</span><span class="p">(</span>
+            <span class="n">axs</span><span class="o">=</span><span class="n">ax_sc2</span><span class="p">,</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">data_corr</span><span class="p">[</span><span class="s2">&quot;Hs_CORR&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">data_times</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">data_to_validate</span><span class="p">[</span><span class="s2">&quot;Hs_VAL&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">data_to_validate_times</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Model (Corrected)&quot;</span><span class="p">,</span>
+            <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Validation&quot;</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;With Correction&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="p">[</span><span class="n">ax_ts</span><span class="p">,</span> <span class="n">ax_sc1</span><span class="p">,</span> <span class="n">ax_sc2</span><span class="p">]</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

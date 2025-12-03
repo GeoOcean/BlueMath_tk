@@ -1,0 +1,327 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.downloaders.copernicus package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.downloaders.ecmwf package" href="bluemath_tk.downloaders.ecmwf.html" />
+    <link rel="prev" title="bluemath_tk.downloaders.aviso package" href="bluemath_tk.downloaders.aviso.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.additive.html">bluemath_tk.additive package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.deeplearning.html">bluemath_tk.deeplearning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tcs.html">bluemath_tk.tcs package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.downloaders.copernicus package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.downloaders.copernicus.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-downloaders-copernicus-package">
+<h1>bluemath_tk.downloaders.copernicus package<a class="headerlink" href="#bluemath-tk-downloaders-copernicus-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.downloaders.copernicus.copernicus_downloader">
+<span id="bluemath-tk-downloaders-copernicus-copernicus-downloader-module"></span><h2>bluemath_tk.downloaders.copernicus.copernicus_downloader module<a class="headerlink" href="#module-bluemath_tk.downloaders.copernicus.copernicus_downloader" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.downloaders.copernicus.copernicus_downloader.</span></span><span class="sig-name descname"><span class="pre">CopernicusDownloader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_path_to_download</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/downloaders/copernicus/copernicus_downloader.html#CopernicusDownloader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="bluemath_tk.downloaders.html#bluemath_tk.downloaders.BaseDownloader" title="bluemath_tk.downloaders._base_downloaders.BaseDownloader"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseDownloader</span></code></a></p>
+<p>Simple downloader for Copernicus Climate Data Store.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">downloader</span> <span class="o">=</span> <span class="n">CopernicusDownloader</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">product</span><span class="o">=</span><span class="s2">&quot;ERA5&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">base_path_to_download</span><span class="o">=</span><span class="s2">&quot;./copernicus_data&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">token</span><span class="o">=</span><span class="s2">&quot;your_token&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">downloader</span><span class="o">.</span><span class="n">download_data</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;swh&quot;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">years</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;2020&quot;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">months</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;01&quot;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">dry_run</span><span class="o">=</span><span class="kc">False</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader.client">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">client</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Client</span></em><a class="headerlink" href="#bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader.client" title="Link to this definition"></a></dt>
+<dd><p>CDS API client (initialized with API key).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>CDS API client instance.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>cdsapi.Client</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader.download_data">
+<span class="sig-name descname"><span class="pre">download_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dry_run</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="bluemath_tk.downloaders.html#bluemath_tk.downloaders.DownloadResult" title="bluemath_tk.downloaders._download_result.DownloadResult"><span class="pre">DownloadResult</span></a></span></span><a class="reference internal" href="_modules/bluemath_tk/downloaders/copernicus/copernicus_downloader.html#CopernicusDownloader.download_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader.download_data" title="Link to this definition"></a></dt>
+<dd><p>Download data for the product.</p>
+<p>Routes to product-specific download methods based on the product type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dry_run</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, only check what would be downloaded without actually downloading.
+Default is True.</p></li>
+<li><p><strong>*args</strong> – Arguments passed to product-specific download method.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments passed to product-specific download method.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result with information about downloaded, skipped, and error files.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="bluemath_tk.downloaders.html#bluemath_tk.downloaders.DownloadResult" title="bluemath_tk.downloaders.DownloadResult">DownloadResult</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the product is not supported.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader.download_data_cerra">
+<span class="sig-name descname"><span class="pre">download_data_cerra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">years</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">months</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">area</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'surface_or_atmosphere'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'analysis'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'netcdf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dry_run</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="bluemath_tk.downloaders.html#bluemath_tk.downloaders.DownloadResult" title="bluemath_tk.downloaders._download_result.DownloadResult"><span class="pre">DownloadResult</span></a></span></span><a class="reference internal" href="_modules/bluemath_tk/downloaders/copernicus/copernicus_downloader.html#CopernicusDownloader.download_data_cerra"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader.download_data_cerra" title="Link to this definition"></a></dt>
+<dd><p>Download CERRA data.</p>
+<p>Downloads CERRA reanalysis data for specified variables, time periods, and optionally
+a geographic area. Files are saved to:
+base_path_to_download/product/dataset/type/product_type/variable/filename.nc</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variables</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of variable names to download. If empty, downloads all available variables.</p></li>
+<li><p><strong>years</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of years to download (e.g., [“2020”, “2021”]).</p></li>
+<li><p><strong>months</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of months to download (e.g., [“01”, “02”]).</p></li>
+<li><p><strong>days</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – List of days to download. If None, downloads all days (1-31). Default is None.</p></li>
+<li><p><strong>times</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – List of times to download (e.g., [“00:00”, “12:00”]). If None, downloads standard
+times (00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00). Default is None.</p></li>
+<li><p><strong>area</strong> (<em>List</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Geographic area as [north, west, south, east]. If None, downloads global data.
+Default is None.</p></li>
+<li><p><strong>level_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Level type (e.g., “surface_or_atmosphere”). Default is “surface_or_atmosphere”.</p></li>
+<li><p><strong>data_type</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – Data type (e.g., [“reanalysis”]). If None, uses [“reanalysis”]. Default is None.</p></li>
+<li><p><strong>product_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Product type (e.g., “analysis”, “forecast”). Default is “analysis”.</p></li>
+<li><p><strong>data_format</strong> (<em>str</em><em>, </em><em>optional</em>) – Data format. Default is “netcdf”.</p></li>
+<li><p><strong>force</strong> (<em>bool</em><em>, </em><em>optional</em>) – Force re-download even if file exists. Default is False.</p></li>
+<li><p><strong>dry_run</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, only check what would be downloaded. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result with all downloaded files and download statistics.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="bluemath_tk.downloaders.html#bluemath_tk.downloaders.DownloadResult" title="bluemath_tk.downloaders.DownloadResult">DownloadResult</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If years or months are empty lists.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader.download_data_era5">
+<span class="sig-name descname"><span class="pre">download_data_era5</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">years</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">months</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">area</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'reanalysis'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'netcdf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'unarchived'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dry_run</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="bluemath_tk.downloaders.html#bluemath_tk.downloaders.DownloadResult" title="bluemath_tk.downloaders._download_result.DownloadResult"><span class="pre">DownloadResult</span></a></span></span><a class="reference internal" href="_modules/bluemath_tk/downloaders/copernicus/copernicus_downloader.html#CopernicusDownloader.download_data_era5"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader.download_data_era5" title="Link to this definition"></a></dt>
+<dd><p>Download ERA5 data.</p>
+<p>Downloads ERA5 reanalysis data for specified variables, time periods, and optionally
+a geographic area. Files are saved to:
+base_path_to_download/product/dataset/type/product_type/variable/filename.nc</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variables</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of variable names to download. If empty, downloads all available variables.</p></li>
+<li><p><strong>years</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of years to download (e.g., [“2020”, “2021”]).</p></li>
+<li><p><strong>months</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of months to download (e.g., [“01”, “02”]).</p></li>
+<li><p><strong>days</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – List of days to download. If None, downloads all days (1-31). Default is None.</p></li>
+<li><p><strong>times</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – List of times to download (e.g., [“00:00”, “12:00”]). If None, downloads all hours.
+Default is None.</p></li>
+<li><p><strong>area</strong> (<em>List</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Geographic area as [north, west, south, east]. If None, downloads global data.
+Default is None.</p></li>
+<li><p><strong>product_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Product type (e.g., “reanalysis”, “ensemble_mean”). Default is “reanalysis”.</p></li>
+<li><p><strong>data_format</strong> (<em>str</em><em>, </em><em>optional</em>) – Data format. Default is “netcdf”.</p></li>
+<li><p><strong>download_format</strong> (<em>str</em><em>, </em><em>optional</em>) – Download format. Default is “unarchived”.</p></li>
+<li><p><strong>force</strong> (<em>bool</em><em>, </em><em>optional</em>) – Force re-download even if file exists. Default is False.</p></li>
+<li><p><strong>dry_run</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, only check what would be downloaded. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result with all downloaded files and download statistics.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="bluemath_tk.downloaders.html#bluemath_tk.downloaders.DownloadResult" title="bluemath_tk.downloaders.DownloadResult">DownloadResult</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If years or months are empty lists.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader.list_variables">
+<span class="sig-name descname"><span class="pre">list_variables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bluemath_tk/downloaders/copernicus/copernicus_downloader.html#CopernicusDownloader.list_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader.list_variables" title="Link to this definition"></a></dt>
+<dd><p>List variables available for the product.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>type</strong> (<em>str</em><em>, </em><em>optional</em>) – Filter by type (e.g., “ocean”). Default is None.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of variable names.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader.product_config">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">product_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader.product_config" title="Link to this definition"></a></dt>
+<dd><p>Product configuration dictionary loaded from config file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Product configuration dictionary.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader.products_configs">
+<span class="sig-name descname"><span class="pre">products_configs</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'CERRA':</span> <span class="pre">{'datasets':</span> <span class="pre">{'reanalysis-cerra-single-levels':</span> <span class="pre">{'description':</span> <span class="pre">'CERRA</span> <span class="pre">Sub-daily</span> <span class="pre">Regional</span> <span class="pre">Reanalysis</span> <span class="pre">Data</span> <span class="pre">for</span> <span class="pre">Europe</span> <span class="pre">on</span> <span class="pre">Single</span> <span class="pre">Levels',</span> <span class="pre">'mandatory_fields':</span> <span class="pre">['variable',</span> <span class="pre">'level_type',</span> <span class="pre">'data_type',</span> <span class="pre">'product_type',</span> <span class="pre">'year',</span> <span class="pre">'month',</span> <span class="pre">'data_format'],</span> <span class="pre">'optional_fields':</span> <span class="pre">['day',</span> <span class="pre">'time',</span> <span class="pre">'area'],</span> <span class="pre">'template':</span> <span class="pre">{'data_format':</span> <span class="pre">'netcdf',</span> <span class="pre">'data_type':</span> <span class="pre">['reanalysis'],</span> <span class="pre">'day':</span> <span class="pre">['02'],</span> <span class="pre">'level_type':</span> <span class="pre">'surface_or_atmosphere',</span> <span class="pre">'month':</span> <span class="pre">['02'],</span> <span class="pre">'product_type':</span> <span class="pre">'analysis',</span> <span class="pre">'time':</span> <span class="pre">['00:00'],</span> <span class="pre">'variable':</span> <span class="pre">['10m_wind_direction'],</span> <span class="pre">'year':</span> <span class="pre">['1985']},</span> <span class="pre">'types':</span> <span class="pre">['surface_or_atmosphere'],</span> <span class="pre">'url':</span> <span class="pre">'https://cds.climate.copernicus.eu/datasets/reanalysis-cerra-single-levels?tab=overview'}},</span> <span class="pre">'url':</span> <span class="pre">'https://cds.climate.copernicus.eu/api',</span> <span class="pre">'variables':</span> <span class="pre">{'10m_wind_direction':</span> <span class="pre">{'cds_name':</span> <span class="pre">'10m_wind_direction',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-cerra-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'10m</span> <span class="pre">wind</span> <span class="pre">direction',</span> <span class="pre">'nc_name':</span> <span class="pre">'10m_wind_direction',</span> <span class="pre">'type':</span> <span class="pre">'surface_or_atmosphere',</span> <span class="pre">'units':</span> <span class="pre">'degree'},</span> <span class="pre">'10m_wind_speed':</span> <span class="pre">{'cds_name':</span> <span class="pre">'10m_wind_speed',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-cerra-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'10m</span> <span class="pre">wind</span> <span class="pre">speed',</span> <span class="pre">'nc_name':</span> <span class="pre">'10m_wind_speed',</span> <span class="pre">'type':</span> <span class="pre">'surface_or_atmosphere',</span> <span class="pre">'units':</span> <span class="pre">'m</span> <span class="pre">s-1'},</span> <span class="pre">'2m_relative_humidity':</span> <span class="pre">{'cds_name':</span> <span class="pre">'2m_relative_humidity',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-cerra-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'2m</span> <span class="pre">relative</span> <span class="pre">humidity',</span> <span class="pre">'nc_name':</span> <span class="pre">'2m_relative_humidity',</span> <span class="pre">'type':</span> <span class="pre">'surface_or_atmosphere',</span> <span class="pre">'units':</span> <span class="pre">'%'},</span> <span class="pre">'2m_temperature':</span> <span class="pre">{'cds_name':</span> <span class="pre">'2m_temperature',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-cerra-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'2m</span> <span class="pre">temperature',</span> <span class="pre">'nc_name':</span> <span class="pre">'2m_temperature',</span> <span class="pre">'type':</span> <span class="pre">'surface_or_atmosphere',</span> <span class="pre">'units':</span> <span class="pre">'K'},</span> <span class="pre">'mean_sea_level_pressure':</span> <span class="pre">{'cds_name':</span> <span class="pre">'mean_sea_level_pressure',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-cerra-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Mean</span> <span class="pre">sea</span> <span class="pre">level</span> <span class="pre">pressure',</span> <span class="pre">'nc_name':</span> <span class="pre">'mean_sea_level_pressure',</span> <span class="pre">'type':</span> <span class="pre">'surface_or_atmosphere',</span> <span class="pre">'units':</span> <span class="pre">'Pa'},</span> <span class="pre">'surface_pressure':</span> <span class="pre">{'cds_name':</span> <span class="pre">'surface_pressure',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-cerra-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Surface</span> <span class="pre">pressure',</span> <span class="pre">'nc_name':</span> <span class="pre">'surface_pressure',</span> <span class="pre">'type':</span> <span class="pre">'surface_or_atmosphere',</span> <span class="pre">'units':</span> <span class="pre">'Pa'},</span> <span class="pre">'total_cloud_cover':</span> <span class="pre">{'cds_name':</span> <span class="pre">'total_cloud_cover',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-cerra-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Total</span> <span class="pre">cloud</span> <span class="pre">cover',</span> <span class="pre">'nc_name':</span> <span class="pre">'total_cloud_cover',</span> <span class="pre">'type':</span> <span class="pre">'surface_or_atmosphere',</span> <span class="pre">'units':</span> <span class="pre">'%'},</span> <span class="pre">'total_precipitation':</span> <span class="pre">{'cds_name':</span> <span class="pre">'total_precipitation',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-cerra-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Total</span> <span class="pre">precipitation',</span> <span class="pre">'nc_name':</span> <span class="pre">'total_precipitation',</span> <span class="pre">'type':</span> <span class="pre">'surface_or_atmosphere',</span> <span class="pre">'units':</span> <span class="pre">'kg</span> <span class="pre">m-2'}}},</span> <span class="pre">'ERA5':</span> <span class="pre">{'datasets':</span> <span class="pre">{'reanalysis-era5-complete':</span> <span class="pre">{'description':</span> <span class="pre">'ERA5</span> <span class="pre">Complete</span> <span class="pre">Dataset',</span> <span class="pre">'mandatory_fields':</span> <span class="pre">['class',</span> <span class="pre">'date',</span> <span class="pre">'direction',</span> <span class="pre">'domain',</span> <span class="pre">'expver',</span> <span class="pre">'frequency',</span> <span class="pre">'param',</span> <span class="pre">'stream',</span> <span class="pre">'time',</span> <span class="pre">'type',</span> <span class="pre">'area',</span> <span class="pre">'format',</span> <span class="pre">'grid'],</span> <span class="pre">'optional_fields':</span> <span class="pre">[],</span> <span class="pre">'template':</span> <span class="pre">{'class':</span> <span class="pre">'ea',</span> <span class="pre">'direction':</span> <span class="pre">'1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24',</span> <span class="pre">'domain':</span> <span class="pre">'g',</span> <span class="pre">'expver':</span> <span class="pre">'1',</span> <span class="pre">'format':</span> <span class="pre">'netcdf',</span> <span class="pre">'frequency':</span> <span class="pre">'1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28/29/30',</span> <span class="pre">'grid':</span> <span class="pre">'0.5/0.5',</span> <span class="pre">'param':</span> <span class="pre">'251.140',</span> <span class="pre">'stream':</span> <span class="pre">'wave',</span> <span class="pre">'time':</span> <span class="pre">'00:00:00/01:00:00/02:00:00/03:00:00/04:00:00/05:00:00/06:00:00/07:00:00/08:00:00/09:00:00/10:00:00/11:00:00/12:00:00/13:00:00/14:00:00/15:00:00/16:00:00/17:00:00/18:00:00/19:00:00/20:00:00/21:00:00/22:00:00/23:00:00',</span> <span class="pre">'type':</span> <span class="pre">'an'},</span> <span class="pre">'types':</span> <span class="pre">['ocean'],</span> <span class="pre">'url':</span> <span class="pre">'https://cds.climate.copernicus.eu/datasets/reanalysis-era5-complete?tab=overview'},</span> <span class="pre">'reanalysis-era5-pressure-levels':</span> <span class="pre">{'description':</span> <span class="pre">'ERA5</span> <span class="pre">Pressure</span> <span class="pre">Levels',</span> <span class="pre">'mandatory_fields':</span> <span class="pre">['product_type',</span> <span class="pre">'variable',</span> <span class="pre">'year',</span> <span class="pre">'month',</span> <span class="pre">'pressure_level',</span> <span class="pre">'data_format',</span> <span class="pre">'download_format'],</span> <span class="pre">'optional_fields':</span> <span class="pre">['day',</span> <span class="pre">'time',</span> <span class="pre">'area'],</span> <span class="pre">'template':</span> <span class="pre">{'data_format':</span> <span class="pre">'netcdf',</span> <span class="pre">'day':</span> <span class="pre">['01'],</span> <span class="pre">'download_format':</span> <span class="pre">'unarchived',</span> <span class="pre">'month':</span> <span class="pre">['01'],</span> <span class="pre">'pressure_level':</span> <span class="pre">['500'],</span> <span class="pre">'product_type':</span> <span class="pre">['reanalysis'],</span> <span class="pre">'time':</span> <span class="pre">['00:00'],</span> <span class="pre">'variable':</span> <span class="pre">['geopotential'],</span> <span class="pre">'year':</span> <span class="pre">['2019']},</span> <span class="pre">'types':</span> <span class="pre">['pressure'],</span> <span class="pre">'url':</span> <span class="pre">'https://cds.climate.copernicus.eu/datasets/reanalysis-era5-pressure-levels?tab=overview'},</span> <span class="pre">'reanalysis-era5-single-levels':</span> <span class="pre">{'description':</span> <span class="pre">'ERA5</span> <span class="pre">Single</span> <span class="pre">Levels',</span> <span class="pre">'mandatory_fields':</span> <span class="pre">['product_type',</span> <span class="pre">'variable',</span> <span class="pre">'year',</span> <span class="pre">'month',</span> <span class="pre">'data_format',</span> <span class="pre">'download_format'],</span> <span class="pre">'optional_fields':</span> <span class="pre">['day',</span> <span class="pre">'time',</span> <span class="pre">'area'],</span> <span class="pre">'template':</span> <span class="pre">{'data_format':</span> <span class="pre">'netcdf',</span> <span class="pre">'day':</span> <span class="pre">['01'],</span> <span class="pre">'download_format':</span> <span class="pre">'unarchived',</span> <span class="pre">'month':</span> <span class="pre">['01'],</span> <span class="pre">'product_type':</span> <span class="pre">['reanalysis'],</span> <span class="pre">'time':</span> <span class="pre">['00:00'],</span> <span class="pre">'variable':</span> <span class="pre">['significant_wave_height_of_first_swell_partition'],</span> <span class="pre">'year':</span> <span class="pre">['2019']},</span> <span class="pre">'types':</span> <span class="pre">['atmosphere',</span> <span class="pre">'ocean'],</span> <span class="pre">'url':</span> <span class="pre">'https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=form'}},</span> <span class="pre">'url':</span> <span class="pre">'https://cds.climate.copernicus.eu/api',</span> <span class="pre">'variables':</span> <span class="pre">{'dwww':</span> <span class="pre">{'cds_name':</span> <span class="pre">'wave_spectral_directional_width_for_wind_waves',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Wave</span> <span class="pre">spectral</span> <span class="pre">directional</span> <span class="pre">width</span> <span class="pre">for</span> <span class="pre">wind</span> <span class="pre">waves',</span> <span class="pre">'nc_name':</span> <span class="pre">'dwww',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'degrees'},</span> <span class="pre">'mdww':</span> <span class="pre">{'cds_name':</span> <span class="pre">'mean_direction_of_wind_waves',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Mean</span> <span class="pre">direction</span> <span class="pre">of</span> <span class="pre">wind</span> <span class="pre">waves',</span> <span class="pre">'nc_name':</span> <span class="pre">'mdww',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'degrees'},</span> <span class="pre">'mpww':</span> <span class="pre">{'cds_name':</span> <span class="pre">'mean_period_of_wind_waves',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Mean</span> <span class="pre">period</span> <span class="pre">of</span> <span class="pre">wind</span> <span class="pre">waves',</span> <span class="pre">'nc_name':</span> <span class="pre">'mpww',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'s'},</span> <span class="pre">'mwd':</span> <span class="pre">{'cds_name':</span> <span class="pre">'mean_wave_direction',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Mean</span> <span class="pre">wave</span> <span class="pre">direction',</span> <span class="pre">'nc_name':</span> <span class="pre">'mwd',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'degrees'},</span> <span class="pre">'mwp':</span> <span class="pre">{'cds_name':</span> <span class="pre">'mean_wave_period',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Mean</span> <span class="pre">wave</span> <span class="pre">period',</span> <span class="pre">'nc_name':</span> <span class="pre">'mwp',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'s'},</span> <span class="pre">'p140121':</span> <span class="pre">{'cds_name':</span> <span class="pre">'significant_wave_height_of_first_swell_partition',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Significant</span> <span class="pre">wave</span> <span class="pre">height</span> <span class="pre">of</span> <span class="pre">first</span> <span class="pre">swell</span> <span class="pre">partition',</span> <span class="pre">'nc_name':</span> <span class="pre">'p140121',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'m'},</span> <span class="pre">'p140122':</span> <span class="pre">{'cds_name':</span> <span class="pre">'mean_wave_direction_of_first_swell_partition',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Mean</span> <span class="pre">wave</span> <span class="pre">direction</span> <span class="pre">of</span> <span class="pre">first</span> <span class="pre">swell</span> <span class="pre">partition',</span> <span class="pre">'nc_name':</span> <span class="pre">'p140122',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'degrees'},</span> <span class="pre">'p140123':</span> <span class="pre">{'cds_name':</span> <span class="pre">'mean_wave_period_of_first_swell_partition',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Mean</span> <span class="pre">wave</span> <span class="pre">period</span> <span class="pre">of</span> <span class="pre">first</span> <span class="pre">swell</span> <span class="pre">partition',</span> <span class="pre">'nc_name':</span> <span class="pre">'p140123',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'s'},</span> <span class="pre">'p140124':</span> <span class="pre">{'cds_name':</span> <span class="pre">'significant_wave_height_of_second_swell_partition',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Significant</span> <span class="pre">wave</span> <span class="pre">height</span> <span class="pre">of</span> <span class="pre">second</span> <span class="pre">swell</span> <span class="pre">partition',</span> <span class="pre">'nc_name':</span> <span class="pre">'p140124',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'m'},</span> <span class="pre">'p140125':</span> <span class="pre">{'cds_name':</span> <span class="pre">'mean_wave_direction_of_second_swell_partition',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Mean</span> <span class="pre">wave</span> <span class="pre">direction</span> <span class="pre">of</span> <span class="pre">second</span> <span class="pre">swell</span> <span class="pre">partition',</span> <span class="pre">'nc_name':</span> <span class="pre">'p140125',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'degrees'},</span> <span class="pre">'p140126':</span> <span class="pre">{'cds_name':</span> <span class="pre">'mean_wave_period_of_second_swell_partition',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Mean</span> <span class="pre">wave</span> <span class="pre">period</span> <span class="pre">of</span> <span class="pre">second</span> <span class="pre">swell</span> <span class="pre">partition',</span> <span class="pre">'nc_name':</span> <span class="pre">'p140126',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'s'},</span> <span class="pre">'p140127':</span> <span class="pre">{'cds_name':</span> <span class="pre">'significant_wave_height_of_third_swell_partition',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Significant</span> <span class="pre">wave</span> <span class="pre">height</span> <span class="pre">of</span> <span class="pre">third</span> <span class="pre">swell</span> <span class="pre">partition',</span> <span class="pre">'nc_name':</span> <span class="pre">'p140127',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'m'},</span> <span class="pre">'p140128':</span> <span class="pre">{'cds_name':</span> <span class="pre">'mean_wave_direction_of_third_swell_partition',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Mean</span> <span class="pre">wave</span> <span class="pre">direction</span> <span class="pre">of</span> <span class="pre">third</span> <span class="pre">swell</span> <span class="pre">partition',</span> <span class="pre">'nc_name':</span> <span class="pre">'p140128',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'degrees'},</span> <span class="pre">'p140129':</span> <span class="pre">{'cds_name':</span> <span class="pre">'mean_wave_period_of_third_swell_partition',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Mean</span> <span class="pre">wave</span> <span class="pre">period</span> <span class="pre">of</span> <span class="pre">third</span> <span class="pre">swell</span> <span class="pre">partition',</span> <span class="pre">'nc_name':</span> <span class="pre">'p140129',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'s'},</span> <span class="pre">'pp1d':</span> <span class="pre">{'cds_name':</span> <span class="pre">'peak_wave_period',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Peak</span> <span class="pre">wave</span> <span class="pre">period',</span> <span class="pre">'nc_name':</span> <span class="pre">'pp1d',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'s'},</span> <span class="pre">'shww':</span> <span class="pre">{'cds_name':</span> <span class="pre">'significant_height_of_wind_waves',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Significant</span> <span class="pre">height</span> <span class="pre">of</span> <span class="pre">wind</span> <span class="pre">waves',</span> <span class="pre">'nc_name':</span> <span class="pre">'shww',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'m'},</span> <span class="pre">'spectra':</span> <span class="pre">{'cds_name':</span> <span class="pre">'full_wave_spectra',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-complete',</span> <span class="pre">'long_name':</span> <span class="pre">'Full</span> <span class="pre">wave</span> <span class="pre">spectra',</span> <span class="pre">'nc_name':</span> <span class="pre">'spectra',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'m^2/Hz·radian'},</span> <span class="pre">'swh':</span> <span class="pre">{'cds_name':</span> <span class="pre">'significant_height_of_combined_wind_waves_and_swell',</span> <span class="pre">'dataset':</span> <span class="pre">'reanalysis-era5-single-levels',</span> <span class="pre">'long_name':</span> <span class="pre">'Significant</span> <span class="pre">height</span> <span class="pre">of</span> <span class="pre">combined</span> <span class="pre">wind</span> <span class="pre">waves</span> <span class="pre">and</span> <span class="pre">swell',</span> <span class="pre">'nc_name':</span> <span class="pre">'swh',</span> <span class="pre">'type':</span> <span class="pre">'ocean',</span> <span class="pre">'units':</span> <span class="pre">'m'}}}}</span></em><a class="headerlink" href="#bluemath_tk.downloaders.copernicus.copernicus_downloader.CopernicusDownloader.products_configs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.downloaders.copernicus">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bluemath_tk.downloaders.copernicus" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.downloaders.aviso.html" class="btn btn-neutral float-left" title="bluemath_tk.downloaders.aviso package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.downloaders.ecmwf.html" class="btn btn-neutral float-right" title="bluemath_tk.downloaders.ecmwf package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

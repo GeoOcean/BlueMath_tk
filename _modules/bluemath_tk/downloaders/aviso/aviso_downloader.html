@@ -1,0 +1,454 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.downloaders.aviso.aviso_downloader &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/thebelab.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.downloaders.aviso.aviso_downloader</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.downloaders.aviso.aviso_downloader</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">ftplib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.._base_downloaders</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseDownloader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.._download_result</span><span class="w"> </span><span class="kn">import</span> <span class="n">DownloadResult</span>
+
+
+<div class="viewcode-block" id="AvisoDownloader">
+<a class="viewcode-back" href="../../../../bluemath_tk.downloaders.aviso.html#bluemath_tk.downloaders.aviso.aviso_downloader.AvisoDownloader">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AvisoDownloader</span><span class="p">(</span><span class="n">BaseDownloader</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple downloader for AVISO data.</span>
+
+<span class="sd">    Downloads all available files from the FTP base path specified in the config.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; downloader = AvisoDownloader(</span>
+<span class="sd">    ...     product=&quot;SWOT&quot;,</span>
+<span class="sd">    ...     base_path_to_download=&quot;./swot_data&quot;,</span>
+<span class="sd">    ...     username=&quot;your_username&quot;,</span>
+<span class="sd">    ...     password=&quot;your_password&quot;</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; result = downloader.download_data(</span>
+<span class="sd">    ...     dataset=&quot;swot-l3-expert&quot;,</span>
+<span class="sd">    ...     cycles=[&quot;cycle_001&quot;],</span>
+<span class="sd">    ...     force=False,</span>
+<span class="sd">    ...     dry_run=False</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">products_configs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;SWOT&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+            <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;SWOT&quot;</span><span class="p">,</span> <span class="s2">&quot;SWOT_config.json&quot;</span><span class="p">))</span>
+        <span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">product</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">base_path_to_download</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the AvisoDownloader.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        product : str</span>
+<span class="sd">            The product to download data from (e.g., &quot;SWOT&quot;).</span>
+<span class="sd">        base_path_to_download : str</span>
+<span class="sd">            Base path where downloaded files will be stored.</span>
+<span class="sd">        username : str</span>
+<span class="sd">            AVISO FTP username.</span>
+<span class="sd">        password : str</span>
+<span class="sd">            AVISO FTP password.</span>
+<span class="sd">        debug : bool, optional</span>
+<span class="sd">            If True, sets logger to DEBUG level. Default is True.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the product configuration is not found or FTP server is not specified.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">product</span><span class="o">=</span><span class="n">product</span><span class="p">,</span> <span class="n">base_path_to_download</span><span class="o">=</span><span class="n">base_path_to_download</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="n">debug</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_product_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">products_configs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">product</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_product_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Product &#39;</span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s2">&#39; not found. Available: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">products_configs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_logger_name</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;AvisoDownloader-</span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;DEBUG&quot;</span> <span class="k">if</span> <span class="n">debug</span> <span class="k">else</span> <span class="s2">&quot;INFO&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Initialize FTP client</span>
+        <span class="n">ftp_server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_product_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ftp_server&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ftp_server</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;FTP server not found in product configuration&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">ftplib</span><span class="o">.</span><span class="n">FTP</span><span class="p">(</span><span class="n">ftp_server</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;---- AVISO DOWNLOADER INITIALIZED (</span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s2">) ----&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">product_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Product configuration dictionary loaded from config file.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Product configuration dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_product_config</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftplib</span><span class="o">.</span><span class="n">FTP</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        FTP client connection (initialized and logged in).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ftplib.FTP</span>
+<span class="sd">            FTP client instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span>
+
+<div class="viewcode-block" id="AvisoDownloader.download_data">
+<a class="viewcode-back" href="../../../../bluemath_tk.downloaders.aviso.html#bluemath_tk.downloaders.aviso.aviso_downloader.AvisoDownloader.download_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DownloadResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download data for the product.</span>
+
+<span class="sd">        Routes to product-specific download methods based on the product type.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dry_run : bool, optional</span>
+<span class="sd">            If True, only check what would be downloaded without actually downloading.</span>
+<span class="sd">            Default is True.</span>
+<span class="sd">        *args</span>
+<span class="sd">            Arguments passed to product-specific download method.</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Keyword arguments passed to product-specific download method.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DownloadResult</span>
+<span class="sd">            Result with information about downloaded, skipped, and error files.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the product is not supported.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">product</span> <span class="o">==</span> <span class="s2">&quot;SWOT&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">download_data_swot</span><span class="p">(</span><span class="n">dry_run</span><span class="o">=</span><span class="n">dry_run</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Download for product </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">product</span><span class="si">}</span><span class="s2"> not supported&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AvisoDownloader.download_data_swot">
+<a class="viewcode-back" href="../../../../bluemath_tk.downloaders.aviso.html#bluemath_tk.downloaders.aviso.aviso_downloader.AvisoDownloader.download_data_swot">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_data_swot</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">cycles</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DownloadResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download SWOT data for a specific dataset.</span>
+
+<span class="sd">        Downloads all .nc files from specified cycles. Files are saved to:</span>
+<span class="sd">        base_path_to_download/dataset/cycle/filename.nc</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dataset : str</span>
+<span class="sd">            The dataset to download (e.g., &quot;swot-l3-expert&quot;).</span>
+<span class="sd">            Use list_datasets() to see available datasets.</span>
+<span class="sd">        cycles : List[str], optional</span>
+<span class="sd">            List of cycle folder names to download (e.g., [&quot;cycle_001&quot;, &quot;cycle_002&quot;]).</span>
+<span class="sd">            If None, uses cycles from dataset configuration. Default is None.</span>
+<span class="sd">        force : bool, optional</span>
+<span class="sd">            Force re-download even if file exists. Default is False.</span>
+<span class="sd">        dry_run : bool, optional</span>
+<span class="sd">            If True, only check what would be downloaded. Default is True.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DownloadResult</span>
+<span class="sd">            Result with all downloaded files and download statistics.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If dataset is not found or no cycles are available.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">dataset</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_datasets</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Dataset &#39;</span><span class="si">{</span><span class="n">dataset</span><span class="si">}</span><span class="s2">&#39; not found. Available: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">list_datasets</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">dataset_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">product_config</span><span class="p">[</span><span class="s2">&quot;datasets&quot;</span><span class="p">][</span><span class="n">dataset</span><span class="p">]</span>
+        <span class="n">ftp_base_path</span> <span class="o">=</span> <span class="n">dataset_config</span><span class="p">[</span><span class="s2">&quot;ftp_base_path&quot;</span><span class="p">]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_download_result</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">cycles</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cycles</span> <span class="o">=</span> <span class="n">dataset_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cycles&quot;</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">cycles</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;No cycles specified for dataset &#39;</span><span class="si">{</span><span class="n">dataset</span><span class="si">}</span><span class="s2">&#39; and cycles parameter not provided&quot;</span>
+                    <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Downloading dataset: </span><span class="si">{</span><span class="n">dataset</span><span class="si">}</span><span class="s2">, cycles: </span><span class="si">{</span><span class="n">cycles</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="n">all_downloaded_files</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">cycle</span> <span class="ow">in</span> <span class="n">cycles</span><span class="p">:</span>
+                <span class="n">files</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_list_all_files_in_cycle</span><span class="p">(</span><span class="n">ftp_base_path</span><span class="p">,</span> <span class="n">cycle</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">files</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No files found in cycle </span><span class="si">{</span><span class="n">cycle</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+
+                <span class="n">downloaded_files</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_download_files</span><span class="p">(</span>
+                    <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span>
+                    <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+                    <span class="n">ftp_base_path</span><span class="o">=</span><span class="n">ftp_base_path</span><span class="p">,</span>
+                    <span class="n">cycle</span><span class="o">=</span><span class="n">cycle</span><span class="p">,</span>
+                    <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">,</span>
+                    <span class="n">dry_run</span><span class="o">=</span><span class="n">dry_run</span><span class="p">,</span>
+                    <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">all_downloaded_files</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">downloaded_files</span><span class="p">)</span>
+
+            <span class="n">result</span><span class="o">.</span><span class="n">downloaded_files</span> <span class="o">=</span> <span class="n">all_downloaded_files</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">finalize_download_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s2">&quot;download_operation&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">finalize_download_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_list_all_files_in_cycle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ftp_base_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cycle</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        List all .nc files from a cycle directory on FTP server.</span>
+
+<span class="sd">        This method navigates to the specified FTP base path and then into the</span>
+<span class="sd">        cycle directory, lists its contents, and filters for files ending with &#39;.nc&#39;.</span>
+<span class="sd">        It assumes the current FTP connection is already logged in.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ftp_base_path : str</span>
+<span class="sd">            FTP base path for the dataset (e.g., &quot;/swot_products/l3_karin_nadir/l3_lr_ssh/v1_0/Expert/&quot;).</span>
+<span class="sd">        cycle : str</span>
+<span class="sd">            Cycle directory name (e.g., &quot;cycle_001&quot;).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        List[str]</span>
+<span class="sd">            List of .nc filenames (without path) found in the cycle directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">files</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">cwd</span><span class="p">(</span><span class="n">ftp_base_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">cwd</span><span class="p">(</span><span class="n">cycle</span><span class="p">)</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">retrlines</span><span class="p">(</span><span class="s2">&quot;LIST&quot;</span><span class="p">,</span> <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">9</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">8</span><span class="p">:])</span>
+                <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.nc&quot;</span><span class="p">):</span>
+                    <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">files</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_download_files</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ftp_base_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">cycle</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">result</span><span class="p">:</span> <span class="n">DownloadResult</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download all files from the list.</span>
+
+<span class="sd">        Files are saved to: base_path_to_download/dataset/cycle/filename.nc</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        files : List[str]</span>
+<span class="sd">            List of filenames to download (without path).</span>
+<span class="sd">        dataset : str</span>
+<span class="sd">            Dataset name (used in local path, e.g., &quot;swot-l3-expert&quot;).</span>
+<span class="sd">        ftp_base_path : str</span>
+<span class="sd">            FTP base path for the dataset (e.g., &quot;/swot_products/l3_karin_nadir/l3_lr_ssh/v1_0/Expert/&quot;).</span>
+<span class="sd">        cycle : str</span>
+<span class="sd">            Cycle directory name (used in local path, e.g., &quot;cycle_001&quot;).</span>
+<span class="sd">        force : bool</span>
+<span class="sd">            Force re-download even if file exists.</span>
+<span class="sd">        dry_run : bool</span>
+<span class="sd">            If True, only simulate download.</span>
+<span class="sd">        result : DownloadResult</span>
+<span class="sd">            Download result object to update.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        List[str]</span>
+<span class="sd">            List of local file paths for successfully downloaded files only.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">downloaded_files</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+            <span class="n">local_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">base_path_to_download</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">cycle</span><span class="p">,</span> <span class="n">filename</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">force</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">local_path</span><span class="p">):</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">add_skipped</span><span class="p">(</span><span class="n">local_path</span><span class="p">,</span> <span class="s2">&quot;Already downloaded&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">dry_run</span><span class="p">:</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">add_skipped</span><span class="p">(</span><span class="n">local_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Would download </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> (dry run)&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">local_path</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">cwd</span><span class="p">(</span><span class="n">ftp_base_path</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">cwd</span><span class="p">(</span><span class="n">cycle</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">retrbinary</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RETR </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">)</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">add_downloaded</span><span class="p">(</span><span class="n">local_path</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Downloaded: </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">local_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">downloaded_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">local_path</span><span class="p">)</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="n">local_path</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error downloading </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">downloaded_files</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

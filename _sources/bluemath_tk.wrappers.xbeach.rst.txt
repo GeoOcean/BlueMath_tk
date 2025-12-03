@@ -1,0 +1,29 @@
+bluemath\_tk.wrappers.xbeach package
+====================================
+
+Submodules
+----------
+
+bluemath\_tk.wrappers.xbeach.xbeach\_example module
+---------------------------------------------------
+
+.. automodule:: bluemath_tk.wrappers.xbeach.xbeach_example
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.wrappers.xbeach.xbeach\_wrapper module
+---------------------------------------------------
+
+.. automodule:: bluemath_tk.wrappers.xbeach.xbeach_wrapper
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.wrappers.xbeach
+   :members:
+   :show-inheritance:
+   :undoc-members:

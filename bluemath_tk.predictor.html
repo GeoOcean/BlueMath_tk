@@ -1,0 +1,529 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.predictor package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.risk package" href="bluemath_tk.risk.html" />
+    <link rel="prev" title="bluemath_tk.interpolation package" href="bluemath_tk.interpolation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.additive.html">bluemath_tk.additive package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.deeplearning.html">bluemath_tk.deeplearning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tcs.html">bluemath_tk.tcs package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.html">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.predictor package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.predictor.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-predictor-package">
+<h1>bluemath_tk.predictor package<a class="headerlink" href="#bluemath-tk-predictor-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bluemath_tk.predictor.xwt">
+<span id="bluemath-tk-predictor-xwt-module"></span><h2>bluemath_tk.predictor.xwt module<a class="headerlink" href="#module-bluemath_tk.predictor.xwt" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.predictor.xwt.</span></span><span class="sig-name descname"><span class="pre">XWT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel" title="bluemath_tk.core.models.BlueMathModel"><span class="pre">BlueMathModel</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#XWT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel" title="bluemath_tk.core.models.BlueMathModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">BlueMathModel</span></code></a></p>
+<p>Xly Weather Types (XWT) class.</p>
+<p>This class implements the XWT method to identify and classify weather patterns
+in a dataset. The XWT method is a combination of Principal Component Analysis (PCA)
+and K-means clustering (KMA).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.steps">
+<span class="sig-name descname"><span class="pre">steps</span></span><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.steps" title="Link to this definition"></a></dt>
+<dd><p>The steps of the XWT method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[str, <a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel" title="bluemath_tk.core.models.BlueMathModel">BlueMathModel</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.num_clusters">
+<span class="sig-name descname"><span class="pre">num_clusters</span></span><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.num_clusters" title="Link to this definition"></a></dt>
+<dd><p>The number of clusters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.kma_bmus">
+<span class="sig-name descname"><span class="pre">kma_bmus</span></span><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.kma_bmus" title="Link to this definition"></a></dt>
+<dd><p>The KMA best matching units (BMUs).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.clusters_annual_probs_df">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clusters_annual_probs_df</span></span><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.clusters_annual_probs_df" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.clusters_monthly_probs_df">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clusters_monthly_probs_df</span></span><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.clusters_monthly_probs_df" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.clusters_perpetual_year_probs_df">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clusters_perpetual_year_probs_df</span></span><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.clusters_perpetual_year_probs_df" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.clusters_probs_df">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clusters_probs_df</span></span><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.clusters_probs_df" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.clusters_seasonal_probs_df">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clusters_seasonal_probs_df</span></span><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.clusters_seasonal_probs_df" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.data">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dataset</span></em><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.data" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable_to_sort_bmus</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#XWT.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.fit" title="Link to this definition"></a></dt>
+<dd><p>Fit the XWT model to the data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>xr.Dataset</em>) – The data to fit the model to. Must be PCA formatted.</p></li>
+<li><p><strong>fit_params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>, </em><em>optional</em>) – The fitting parameters for the PCA and KMA models. Default is {}.</p></li>
+<li><p><strong>variable_to_sort_bmus</strong> (<em>str</em><em>, </em><em>optional</em>) – The variable to sort the BMUs. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference internal" href="#bluemath_tk.predictor.xwt.XWTError" title="bluemath_tk.predictor.xwt.XWTError"><strong>XWTError</strong></a> – If the data is not PCA formatted.</p></li>
+<li><p><strong>TODO</strong> – Standarize PCs by first PC variance.: pca.pcs_df / pca.pcs.stds.isel(n_component=0).values ??</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.get_conditioned_probabilities">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_conditioned_probabilities</span></span><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.get_conditioned_probabilities" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.plot_dwts_probs">
+<span class="sig-name descname"><span class="pre">plot_dwts_probs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax_seasonality</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#XWT.plot_dwts_probs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.plot_dwts_probs" title="Link to this definition"></a></dt>
+<dd><p>Plot Daily Weather Types bmus probabilities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vmax</strong> (<em>float</em><em>, </em><em>optional</em>) – The maximum value of the colorbar. Default is 0.15.</p></li>
+<li><p><strong>vmax_seasonality</strong> (<em>float</em><em>, </em><em>optional</em>) – The maximum value of the colorbar for seasonality. Default is 0.15.</p></li>
+<li><p><strong>plot_text</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to plot the text in each cell. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the kma_bmus time sampling is not daily.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.plot_map_features">
+<span class="sig-name descname"><span class="pre">plot_map_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">land_color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">array([0.9375,</span> <span class="pre">0.9375,</span> <span class="pre">0.859375])</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#XWT.plot_map_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.plot_map_features" title="Link to this definition"></a></dt>
+<dd><p>Plot map features on an axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ax</strong> (<em>Axes</em>) – The axis to plot the map features on.</p></li>
+<li><p><strong>land_color</strong> (<em>str</em><em>, </em><em>optional</em>) – The color of the land. Default is cfeature.COLORS[“land”].</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.plot_perpetual_year">
+<span class="sig-name descname"><span class="pre">plot_perpetual_year</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Axes</span></span></span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#XWT.plot_perpetual_year"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.plot_perpetual_year" title="Link to this definition"></a></dt>
+<dd><p>Plot perpetual year bmus probabilities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The plot with the perpetual year bmus probabilities.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Axes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWT.plot_xwts">
+<span class="sig-name descname"><span class="pre">plot_xwts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_to_plot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anomaly</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Collection</span></span></span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#XWT.plot_xwts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWT.plot_xwts" title="Link to this definition"></a></dt>
+<dd><p>Plot the XWTs for a variable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>var_to_plot</strong> (<em>str</em>) – The variable to plot.</p></li>
+<li><p><strong>anomaly</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to plot the anomaly of the variable. Default is False.</p></li>
+<li><p><strong>map_center</strong> (<em>tuple</em><em>, </em><em>optional</em>) – The center of the map. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The grid specification with the XWTs plot.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>GridSpec</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.XWTError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.predictor.xwt.</span></span><span class="sig-name descname"><span class="pre">XWTError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'XWT</span> <span class="pre">error</span> <span class="pre">occurred.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#XWTError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.xwt.XWTError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Custom exception for XWT class.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.check_model_is_fitted">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.predictor.xwt.</span></span><span class="sig-name descname"><span class="pre">check_model_is_fitted</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#check_model_is_fitted"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.xwt.check_model_is_fitted" title="Link to this definition"></a></dt>
+<dd><p>Decorator to check if the model is fitted.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.xwt.get_dynamic_estela_predictor">
+<span class="sig-prename descclassname"><span class="pre">bluemath_tk.predictor.xwt.</span></span><span class="sig-name descname"><span class="pre">get_dynamic_estela_predictor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estela</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_interpolation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#get_dynamic_estela_predictor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.xwt.get_dynamic_estela_predictor" title="Link to this definition"></a></dt>
+<dd><p>Transform an xarray dataset of longitude, latitude, and time into one where
+each longitude, latitude value at each time is replaced by the corresponding
+time - t, where t is specified in the estela dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>xr.Dataset</em>) – The input dataset with dimensions longitude, latitude, and time.</p></li>
+<li><p><strong>estela</strong> (<em>xr.Dataset</em>) – The dataset containing the F values with dimensions longitude and latitude.</p></li>
+<li><p><strong>check_interpolation</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to check if the data is interpolated. Default is True.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to print verbose output. Default is False.
+If False, Dask logs are suppressed.
+If True, Dask logs are shown.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The transformed dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-bluemath_tk.predictor">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bluemath_tk.predictor" title="Link to this heading"></a></h2>
+<p>Project: BlueMath_tk
+Sub-Module: predictor
+Author: GeoOcean Research Group, Universidad de Cantabria
+Repository: <a class="reference external" href="https://github.com/GeoOcean/BlueMath_tk.git">https://github.com/GeoOcean/BlueMath_tk.git</a>
+Status: Under development (Working)</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bluemath_tk.predictor.</span></span><span class="sig-name descname"><span class="pre">XWT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel" title="bluemath_tk.core.models.BlueMathModel"><span class="pre">BlueMathModel</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#XWT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.XWT" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel" title="bluemath_tk.core.models.BlueMathModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">BlueMathModel</span></code></a></p>
+<p>Xly Weather Types (XWT) class.</p>
+<p>This class implements the XWT method to identify and classify weather patterns
+in a dataset. The XWT method is a combination of Principal Component Analysis (PCA)
+and K-means clustering (KMA).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.steps">
+<span class="sig-name descname"><span class="pre">steps</span></span><a class="headerlink" href="#bluemath_tk.predictor.XWT.steps" title="Link to this definition"></a></dt>
+<dd><p>The steps of the XWT method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[str, <a class="reference internal" href="bluemath_tk.core.html#bluemath_tk.core.models.BlueMathModel" title="bluemath_tk.core.models.BlueMathModel">BlueMathModel</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.num_clusters">
+<span class="sig-name descname"><span class="pre">num_clusters</span></span><a class="headerlink" href="#bluemath_tk.predictor.XWT.num_clusters" title="Link to this definition"></a></dt>
+<dd><p>The number of clusters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.kma_bmus">
+<span class="sig-name descname"><span class="pre">kma_bmus</span></span><a class="headerlink" href="#bluemath_tk.predictor.XWT.kma_bmus" title="Link to this definition"></a></dt>
+<dd><p>The KMA best matching units (BMUs).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.clusters_annual_probs_df">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clusters_annual_probs_df</span></span><a class="headerlink" href="#bluemath_tk.predictor.XWT.clusters_annual_probs_df" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.clusters_monthly_probs_df">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clusters_monthly_probs_df</span></span><a class="headerlink" href="#bluemath_tk.predictor.XWT.clusters_monthly_probs_df" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.clusters_perpetual_year_probs_df">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clusters_perpetual_year_probs_df</span></span><a class="headerlink" href="#bluemath_tk.predictor.XWT.clusters_perpetual_year_probs_df" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.clusters_probs_df">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clusters_probs_df</span></span><a class="headerlink" href="#bluemath_tk.predictor.XWT.clusters_probs_df" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.clusters_seasonal_probs_df">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clusters_seasonal_probs_df</span></span><a class="headerlink" href="#bluemath_tk.predictor.XWT.clusters_seasonal_probs_df" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.data">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dataset</span></em><a class="headerlink" href="#bluemath_tk.predictor.XWT.data" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable_to_sort_bmus</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#XWT.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.XWT.fit" title="Link to this definition"></a></dt>
+<dd><p>Fit the XWT model to the data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>xr.Dataset</em>) – The data to fit the model to. Must be PCA formatted.</p></li>
+<li><p><strong>fit_params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>, </em><em>optional</em>) – The fitting parameters for the PCA and KMA models. Default is {}.</p></li>
+<li><p><strong>variable_to_sort_bmus</strong> (<em>str</em><em>, </em><em>optional</em>) – The variable to sort the BMUs. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference internal" href="#bluemath_tk.predictor.xwt.XWTError" title="bluemath_tk.predictor.xwt.XWTError"><strong>XWTError</strong></a> – If the data is not PCA formatted.</p></li>
+<li><p><strong>TODO</strong> – Standarize PCs by first PC variance.: pca.pcs_df / pca.pcs.stds.isel(n_component=0).values ??</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.get_conditioned_probabilities">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_conditioned_probabilities</span></span><a class="headerlink" href="#bluemath_tk.predictor.XWT.get_conditioned_probabilities" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.plot_dwts_probs">
+<span class="sig-name descname"><span class="pre">plot_dwts_probs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax_seasonality</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#XWT.plot_dwts_probs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.XWT.plot_dwts_probs" title="Link to this definition"></a></dt>
+<dd><p>Plot Daily Weather Types bmus probabilities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vmax</strong> (<em>float</em><em>, </em><em>optional</em>) – The maximum value of the colorbar. Default is 0.15.</p></li>
+<li><p><strong>vmax_seasonality</strong> (<em>float</em><em>, </em><em>optional</em>) – The maximum value of the colorbar for seasonality. Default is 0.15.</p></li>
+<li><p><strong>plot_text</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to plot the text in each cell. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the kma_bmus time sampling is not daily.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.plot_map_features">
+<span class="sig-name descname"><span class="pre">plot_map_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">land_color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">array([0.9375,</span> <span class="pre">0.9375,</span> <span class="pre">0.859375])</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#XWT.plot_map_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.XWT.plot_map_features" title="Link to this definition"></a></dt>
+<dd><p>Plot map features on an axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ax</strong> (<em>Axes</em>) – The axis to plot the map features on.</p></li>
+<li><p><strong>land_color</strong> (<em>str</em><em>, </em><em>optional</em>) – The color of the land. Default is cfeature.COLORS[“land”].</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.plot_perpetual_year">
+<span class="sig-name descname"><span class="pre">plot_perpetual_year</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Axes</span></span></span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#XWT.plot_perpetual_year"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.XWT.plot_perpetual_year" title="Link to this definition"></a></dt>
+<dd><p>Plot perpetual year bmus probabilities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The plot with the perpetual year bmus probabilities.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Axes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluemath_tk.predictor.XWT.plot_xwts">
+<span class="sig-name descname"><span class="pre">plot_xwts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_to_plot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anomaly</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Collection</span></span></span><a class="reference internal" href="_modules/bluemath_tk/predictor/xwt.html#XWT.plot_xwts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluemath_tk.predictor.XWT.plot_xwts" title="Link to this definition"></a></dt>
+<dd><p>Plot the XWTs for a variable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>var_to_plot</strong> (<em>str</em>) – The variable to plot.</p></li>
+<li><p><strong>anomaly</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to plot the anomaly of the variable. Default is False.</p></li>
+<li><p><strong>map_center</strong> (<em>tuple</em><em>, </em><em>optional</em>) – The center of the map. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The grid specification with the XWTs plot.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>GridSpec</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.interpolation.html" class="btn btn-neutral float-left" title="bluemath_tk.interpolation package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.risk.html" class="btn btn-neutral float-right" title="bluemath_tk.risk package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

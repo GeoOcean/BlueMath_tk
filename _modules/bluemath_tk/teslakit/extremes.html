@@ -1,0 +1,427 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.teslakit.extremes &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.teslakit.extremes</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.teslakit.extremes</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="c1"># pip</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span>  <span class="n">gumbel_l</span><span class="p">,</span> <span class="n">genextreme</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.util.time_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">date2datenum</span> <span class="k">as</span> <span class="n">d2d</span>
+
+<div class="viewcode-block" id="FitGEV_KMA_Frechet">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.extremes.FitGEV_KMA_Frechet">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">FitGEV_KMA_Frechet</span><span class="p">(</span><span class="n">bmus</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">var</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns stationary GEV/Gumbel_L params for KMA bmus and varible series</span>
+
+<span class="sd">    bmus        - KMA bmus (time series of KMA centroids)</span>
+<span class="sd">    n_clusters  - number of KMA clusters</span>
+<span class="sd">    var         - time series of variable to fit to GEV/Gumbel_L</span>
+
+<span class="sd">    returns np.array (n_clusters x parameters). parameters = (shape, loc, scale)</span>
+<span class="sd">    for gumbel distributions shape value will be ~0 (0.0000000001)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">param_GEV</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_clusters</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">bmus</span><span class="o">==</span><span class="n">c</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">param_GEV</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="c1"># get variable at cluster position</span>
+            <span class="n">var_c</span> <span class="o">=</span> <span class="n">var</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span>
+            <span class="n">var_c</span> <span class="o">=</span> <span class="n">var_c</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">var_c</span><span class="p">)]</span>
+
+            <span class="c1"># fit to Gumbel_l and get negative loglikelihood</span>
+            <span class="n">loc_gl</span><span class="p">,</span> <span class="n">scale_gl</span> <span class="o">=</span> <span class="n">gumbel_l</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="o">-</span><span class="n">var_c</span><span class="p">)</span>
+            <span class="n">theta_gl</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0000000001</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="n">loc_gl</span><span class="p">,</span> <span class="n">scale_gl</span><span class="p">)</span>
+            <span class="n">nLogL_gl</span> <span class="o">=</span> <span class="n">genextreme</span><span class="o">.</span><span class="n">nnlf</span><span class="p">(</span><span class="n">theta_gl</span><span class="p">,</span> <span class="n">var_c</span><span class="p">)</span>
+
+            <span class="c1"># fit to GEV and get negative loglikelihood</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.1</span>
+            <span class="n">shape_gev</span><span class="p">,</span> <span class="n">loc_gev</span><span class="p">,</span> <span class="n">scale_gev</span> <span class="o">=</span> <span class="n">genextreme</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">var_c</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+            <span class="n">theta_gev</span> <span class="o">=</span> <span class="p">(</span><span class="n">shape_gev</span><span class="p">,</span> <span class="n">loc_gev</span><span class="p">,</span> <span class="n">scale_gev</span><span class="p">)</span>
+            <span class="n">nLogL_gev</span> <span class="o">=</span> <span class="n">genextreme</span><span class="o">.</span><span class="n">nnlf</span><span class="p">(</span><span class="n">theta_gev</span><span class="p">,</span> <span class="n">var_c</span><span class="p">)</span>
+
+            <span class="c1"># store negative shape</span>
+            <span class="n">theta_gev_fix</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">shape_gev</span><span class="p">,</span> <span class="n">loc_gev</span><span class="p">,</span> <span class="n">scale_gev</span><span class="p">)</span>
+
+            <span class="c1"># apply significance test if Frechet</span>
+            <span class="k">if</span> <span class="n">shape_gev</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+
+                <span class="c1"># TODO: cant replicate ML exact solution</span>
+                <span class="k">if</span> <span class="n">nLogL_gl</span> <span class="o">-</span> <span class="n">nLogL_gev</span> <span class="o">&gt;=</span> <span class="mf">1.92</span><span class="p">:</span>
+                    <span class="n">param_GEV</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">theta_gev_fix</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">param_GEV</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">theta_gl</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">param_GEV</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">theta_gev_fix</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">param_GEV</span></div>
+
+
+<div class="viewcode-block" id="Smooth_GEV_Shape">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.extremes.Smooth_GEV_Shape">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">Smooth_GEV_Shape</span><span class="p">(</span><span class="n">cenEOFs</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Smooth GEV shape parameter (for each KMA cluster) by promediation</span>
+<span class="sd">    with neighbour EOFs centroids</span>
+
+<span class="sd">    cenEOFs  - (n_clusters, n_features) KMA centroids</span>
+<span class="sd">    param    - GEV shape parameter for each KMA cluster</span>
+
+<span class="sd">    returns smoothed GEV shape parameter as a np.array (n_clusters)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># number of clusters</span>
+    <span class="n">n_cs</span> <span class="o">=</span> <span class="n">cenEOFs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># calculate distances (optimized)</span>
+    <span class="n">cenEOFs_b</span> <span class="o">=</span> <span class="n">cenEOFs</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cenEOFs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="n">cenEOFs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ijk, ijk-&gt;ij&#39;</span><span class="p">,</span> <span class="n">cenEOFs</span><span class="o">-</span><span class="n">cenEOFs_b</span><span class="p">,</span> <span class="n">cenEOFs</span><span class="o">-</span><span class="n">cenEOFs_b</span><span class="p">))</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+    <span class="c1"># sort distances matrix to find neighbours</span>
+    <span class="n">sort_ord</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_cs</span><span class="p">,</span> <span class="n">n_cs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">D_sorted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_cs</span><span class="p">,</span> <span class="n">n_cs</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_cs</span><span class="p">):</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">,:])</span>
+        <span class="n">sort_ord</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">order</span>
+        <span class="n">D_sorted</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">order</span><span class="p">]</span>
+
+    <span class="c1"># calculate smoothed parameter</span>
+    <span class="n">denom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">D_sorted</span><span class="p">[:,:</span><span class="mi">4</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">param_c</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">param</span><span class="p">[:],</span>
+            <span class="n">param</span><span class="p">[</span><span class="n">sort_ord</span><span class="p">[:,:</span><span class="mi">4</span><span class="p">]]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">D_sorted</span><span class="p">[:,:</span><span class="mi">4</span><span class="p">])</span><span class="o">/</span><span class="n">denom</span><span class="p">[:,</span><span class="kc">None</span><span class="p">]</span>
+        <span class="p">]</span>
+    <span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">param_c</span></div>
+
+
+<div class="viewcode-block" id="ACOV">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.extremes.ACOV">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ACOV</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns asyntotyc variance matrix using Fisher Information matrix inverse</span>
+<span class="sd">    Generalized functions, parameters and data.</span>
+
+<span class="sd">    f      - function to evaluate: GEV, GUMBELL, ...</span>
+<span class="sd">    theta  - function parameters: for GEV (shape, location, scale)</span>
+<span class="sd">    x      - data used for function evaluation</span>
+
+<span class="sd">    Second derivative evaluation - variance and covariance</span>
+<span class="sd">    dxx = (f(x+dt_x) - 2f(x) + f(x-dt_x)) / (dt_x**2)</span>
+<span class="sd">    dxy = (f(x,y) - f(x-dt_x,y) - f(x,y-dt_y) + f(x-dt_x, u-dt_y)) / (dt_x*dt_y)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># parameters differential</span>
+    <span class="n">pm</span> <span class="o">=</span> <span class="mf">0.00001</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+    <span class="n">dt_p</span> <span class="o">=</span> <span class="n">pm</span> <span class="o">*</span> <span class="n">params</span>
+
+    <span class="c1"># Fisher information matrix holder </span>
+    <span class="n">ss</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">FI</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">ss</span><span class="p">,</span><span class="n">ss</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="c1"># TODO: evaluar f falla en algunos casos?? </span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">x</span><span class="p">)):</span>
+        <span class="c1">#print (&#39;ACOV error: nLogL = Inf. {0}&#39;.format(theta))</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">ss</span><span class="p">,</span><span class="n">ss</span><span class="p">))</span><span class="o">*</span><span class="mf">0.0001</span>
+
+    <span class="c1"># variance and covariance</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ss</span><span class="p">):</span>
+
+        <span class="c1"># diferential parameter FI evaluation</span>
+        <span class="n">p1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">);</span> <span class="n">p1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">dt_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">p2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">);</span> <span class="n">p2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">p2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">dt_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># variance</span>
+        <span class="n">FI</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">p1</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">f</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">f</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">p2</span><span class="p">),</span> <span class="n">x</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="n">dt_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">ss</span><span class="p">):</span>
+
+            <span class="c1"># diferential parameter FI evaluation</span>
+            <span class="n">p1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">);</span> <span class="n">p1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">dt_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">p2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">);</span> <span class="n">p2</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">p2</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">dt_p</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">p3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">);</span> <span class="n">p3</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">p3</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">dt_p</span><span class="p">[</span><span class="n">i</span><span class="p">];</span> <span class="n">p3</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">p3</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">dt_p</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+
+            <span class="c1"># covariance</span>
+            <span class="n">cov</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">p1</span><span class="p">),</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">p2</span><span class="p">),</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">f</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">p3</span><span class="p">),</span><span class="n">x</span><span class="p">))</span> \
+                    <span class="o">/</span> <span class="p">(</span><span class="n">dt_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">dt_p</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+            <span class="n">FI</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">cov</span>
+            <span class="n">FI</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cov</span>
+
+    <span class="c1"># asynptotic variance covariance matrix</span>
+    <span class="n">acov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">FI</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">acov</span></div>
+
+
+<div class="viewcode-block" id="Peaks_Over_Threshold">
+<a class="viewcode-back" href="../../../bluemath_tk.teslakit.html#bluemath_tk.teslakit.extremes.Peaks_Over_Threshold">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">Peaks_Over_Threshold</span><span class="p">(</span><span class="n">xds</span><span class="p">,</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">percentile</span><span class="o">=</span><span class="mi">99</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                         <span class="n">window_days</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">    Peaks Over Threshold methodology to find extreme values.</span>
+
+<span class="sd">    xds         - xarray.Dataset (time dim)</span>
+<span class="sd">    var_name    - variable to apply POT</span>
+<span class="sd">    percentile  - if threshold not given, calculate it with this percentile</span>
+<span class="sd">    threshold   - optional, threshold to apply POT</span>
+<span class="sd">    window_days - minimum number of days between consecutive independent peaks</span>
+
+<span class="sd">    returns xarray.Dataset (&#39;time&#39;, ) vars: peaks, excedeence, area, and duration</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># TODO: refactor with times</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_hours</span><span class="p">(</span><span class="n">time_diff</span><span class="p">):</span>
+
+        <span class="c1"># single</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">time_diff</span><span class="p">,</span> <span class="p">(</span><span class="n">timedelta</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">time_diff</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">):</span>
+                <span class="n">dt_h</span> <span class="o">=</span> <span class="n">time_diff</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">time_diff</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">):</span>
+                <span class="n">dt_h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">time_diff</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span><span class="mf">3600.0</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">dt_h</span>
+
+        <span class="c1"># else: array</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">time_diff</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">):</span>
+            <span class="n">dt_h</span> <span class="o">=</span> <span class="n">time_diff</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">time_diff</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">timedelta</span><span class="p">):</span>
+            <span class="n">dt_h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span><span class="mf">3600.0</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">time_diff</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">dt_h</span>
+
+
+    <span class="c1"># get variable</span>
+    <span class="n">vv</span> <span class="o">=</span> <span class="n">xds</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+    <span class="n">vt</span> <span class="o">=</span> <span class="n">xds</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:]</span>
+
+    <span class="c1"># data delta time (hours)</span>
+    <span class="n">npdf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">vt</span><span class="p">)</span>
+    <span class="n">dt_h</span> <span class="o">=</span> <span class="n">to_hours</span><span class="p">(</span><span class="n">npdf</span><span class="p">)</span>
+
+    <span class="c1"># threshold</span>
+    <span class="k">if</span> <span class="n">threshold</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">vv</span><span class="p">,</span> <span class="n">percentile</span><span class="p">)</span>
+
+    <span class="c1"># consecutive peaks over threshold</span>
+    <span class="n">ind_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">vv</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">ind_dif</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">ind_mask</span><span class="p">)</span>
+
+    <span class="c1"># peaks start and end</span>
+    <span class="n">ind_ini</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ind_dif</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">ind_end</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ind_dif</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="c1"># start and end corrections</span>
+    <span class="k">if</span> <span class="n">ind_end</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">&lt;</span><span class="n">ind_ini</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">ind_ini</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">ind_ini</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ind_end</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">&lt;</span><span class="n">ind_ini</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span> <span class="n">ind_end</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ind_end</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ind_dif</span><span class="p">))</span>
+
+    <span class="c1"># store variable max, time max, duration and area above threshold for each peak</span>
+    <span class="n">time_max</span><span class="p">,</span> <span class="n">vv_max</span><span class="p">,</span> <span class="n">area</span><span class="p">,</span> <span class="n">durac</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ind_ini</span><span class="p">,</span> <span class="n">ind_end</span><span class="p">):</span>
+
+        <span class="n">vv_max</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">vv</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">f</span><span class="p">]))</span>
+
+        <span class="n">area</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">vv</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">f</span><span class="p">]</span> <span class="o">*</span> <span class="n">dt_h</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">f</span><span class="p">]</span> <span class="o">-</span> <span class="n">threshold</span><span class="p">))</span>
+
+        <span class="n">ind_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">vv</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">f</span><span class="p">])</span>
+        <span class="n">ind_time</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
+        <span class="n">time_max</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">vt</span><span class="p">[</span><span class="n">ind_time</span><span class="p">[</span><span class="n">ind_max</span><span class="p">]])</span>
+
+        <span class="n">durac</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">to_hours</span><span class="p">(</span><span class="n">vt</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">-</span> <span class="n">vt</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+
+
+    <span class="c1"># ensure independence between maxs</span>
+    <span class="n">ind_window_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">to_hours</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">time_max</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">24</span><span class="o">*</span><span class="n">window_days</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">ind_window_mask</span><span class="p">):</span>
+
+        <span class="c1"># solve dependent events</span>
+        <span class="n">ind_dif</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">ind_window_mask</span><span class="p">)</span>
+
+        <span class="c1"># first event corrections </span>
+        <span class="n">ind_dif</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">ind_dif</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ind_dif</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="n">ind_dif</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="n">ind_ini</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ind_dif</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">ind_fin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ind_dif</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="c1"># Keep maximum of dependent events</span>
+        <span class="n">time_max_indep</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">vv_max_indep</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">durac_indep</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">area_indep</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">ind_delete</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ind_i</span><span class="p">,</span> <span class="n">ind_f</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ind_ini</span><span class="p">,</span> <span class="n">ind_fin</span><span class="p">):</span>
+
+            <span class="n">vv_temp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">vv_max</span><span class="p">[</span><span class="n">ind_i</span><span class="p">:</span><span class="n">ind_f</span><span class="p">])</span>
+            <span class="n">vv_max_indep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">vv_temp</span><span class="p">)</span>
+
+            <span class="n">vv_ind_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">vv_max</span><span class="p">[</span><span class="n">ind_i</span><span class="p">:</span><span class="n">ind_f</span><span class="p">])</span>
+            <span class="n">ind_time</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">ind_i</span><span class="p">,</span><span class="n">ind_f</span><span class="p">))</span>
+            <span class="n">time_temp</span> <span class="o">=</span> <span class="n">time_max</span><span class="p">[</span><span class="n">ind_time</span><span class="p">[</span><span class="n">vv_ind_max</span><span class="p">]]</span>
+            <span class="n">time_max_indep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time_temp</span><span class="p">)</span>
+
+            <span class="n">durac_indep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">to_hours</span><span class="p">(</span><span class="n">time_max</span><span class="p">[</span><span class="n">ind_f</span><span class="p">]</span><span class="o">-</span><span class="n">time_max</span><span class="p">[</span><span class="n">ind_i</span><span class="p">])</span>
+            <span class="p">)</span>
+
+            <span class="n">area_indep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">area</span><span class="p">[</span><span class="n">ind_i</span><span class="p">:</span><span class="n">ind_f</span><span class="p">]))</span>
+
+            <span class="n">ind_delete</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ind_time</span><span class="p">)</span>
+
+        <span class="c1"># remove all dependent events</span>
+        <span class="n">vv_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">vv_max</span><span class="p">,</span> <span class="p">[</span><span class="n">ind_delete</span><span class="p">])</span>
+        <span class="n">time_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">time_max</span><span class="p">,</span> <span class="p">[</span><span class="n">ind_delete</span><span class="p">])</span>
+        <span class="n">durac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">durac</span><span class="p">,</span> <span class="p">[</span><span class="n">ind_delete</span><span class="p">])</span>
+        <span class="n">area</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">area</span><span class="p">,</span> <span class="p">[</span><span class="n">ind_delete</span><span class="p">])</span>
+
+        <span class="c1"># add independent events</span>
+        <span class="n">vv_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">vv_max</span><span class="p">,</span> <span class="n">vv_max_indep</span><span class="p">))</span>
+        <span class="n">time_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">time_max</span><span class="p">,</span> <span class="n">time_max_indep</span><span class="p">))</span>
+        <span class="n">durac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">durac</span><span class="p">,</span> <span class="n">durac_indep</span><span class="p">))</span>  <span class="c1"># hours</span>
+        <span class="n">area</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">area</span><span class="p">,</span> <span class="n">area_indep</span><span class="p">))</span>
+
+    <span class="c1"># output</span>
+    <span class="n">peaks</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var_name</span><span class="p">):</span> <span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,),</span> <span class="n">vv_max</span><span class="p">),</span>
+            <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_exceedances&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var_name</span><span class="p">):</span> <span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,),</span> <span class="n">vv_max</span><span class="o">-</span><span class="n">threshold</span><span class="p">),</span>
+            <span class="s1">&#39;duration&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,),</span> <span class="n">durac</span><span class="p">),</span>
+            <span class="s1">&#39;area&#39;</span><span class="p">:</span> <span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,),</span> <span class="n">area</span><span class="p">),</span>
+        <span class="p">},</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">time_max</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">peaks</span> <span class="o">=</span> <span class="n">peaks</span><span class="o">.</span><span class="n">sortby</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+
+    <span class="c1"># add some attrs</span>
+    <span class="n">peaks</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;threshold&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">threshold</span>
+    <span class="n">peaks</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;percentile&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">percentile</span>
+
+    <span class="k">return</span> <span class="n">peaks</span></div>
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

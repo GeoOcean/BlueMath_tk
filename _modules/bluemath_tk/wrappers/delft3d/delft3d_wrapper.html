@@ -1,0 +1,724 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.wrappers.delft3d.delft3d_wrapper &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/thebelab.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.wrappers.delft3d.delft3d_wrapper</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.wrappers.delft3d.delft3d_wrapper</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">op</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">...additive.greensurge</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">create_triangle_mask</span><span class="p">,</span>
+    <span class="n">create_triangle_mask_from_points</span><span class="p">,</span>
+    <span class="n">get_regular_grid</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">...core.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">nautical_to_mathematical</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.._base_wrappers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModelWrapper</span>
+
+<span class="n">sbatch_file_example</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;#!/bin/bash</span>
+<span class="s2">#SBATCH --ntasks=1              # Number of tasks (MPI processes)</span>
+<span class="s2">#SBATCH --partition=geocean     # Standard output and error log</span>
+<span class="s2">#SBATCH --nodes=1               # Number of nodes to use</span>
+<span class="s2">#SBATCH --mem=4gb               # Memory per node in GB (see also --mem-per-cpu)</span>
+<span class="s2">#SBATCH --time=24:00:00</span>
+
+<span class="s2">source /home/grupos/geocean/faugeree/miniforge3/etc/profile.d/conda.sh</span>
+<span class="s2">conda activate GreenSurge</span>
+
+<span class="s2">case_dir=$(ls | awk &quot;NR == $SLURM_ARRAY_TASK_ID&quot;)</span>
+<span class="s2">launchDelft3d.sh --case-dir $case_dir</span>
+
+<span class="s2">output_file=&quot;$</span><span class="si">{case_dir}</span><span class="s2">/dflowfmoutput/GreenSurge_GFDcase_map.nc&quot;</span>
+<span class="s2">output_file_compressed=&quot;$</span><span class="si">{case_dir}</span><span class="s2">/dflowfmoutput/GreenSurge_GFDcase_map_compressed.nc&quot;</span>
+<span class="s2">output_file_compressed_tmp=&quot;$</span><span class="si">{case_dir}</span><span class="s2">/dflowfmoutput/GreenSurge_GFDcase_map_compressed_tmp.nc&quot;</span>
+
+<span class="s2">ncap2 -s &#39;mesh2d_s1=float(mesh2d_s1)&#39; -v -O &quot;$output_file&quot; &quot;$output_file_compressed_tmp&quot; &amp;&amp; {</span>
+<span class="s2">  ncks -4 -L 4 &quot;$output_file_compressed_tmp&quot; &quot;$output_file_compressed&quot;</span>
+<span class="s2">  rm &quot;$output_file_compressed_tmp&quot;</span>
+<span class="s2">  [[ &quot;$SLURM_ARRAY_TASK_ID&quot; -ne 1 ]] &amp;&amp; rm &quot;$output_file&quot;</span>
+<span class="s2">}</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="Delft3dModelWrapper">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.Delft3dModelWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Delft3dModelWrapper</span><span class="p">(</span><span class="n">BaseModelWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper for the Delft3d model.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    default_parameters : dict</span>
+<span class="sd">        The default parameters type for the wrapper.</span>
+<span class="sd">    available_launchers : dict</span>
+<span class="sd">        The available launchers for the wrapper.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_parameters</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">available_launchers</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;geoocean-cluster&quot;</span><span class="p">:</span> <span class="s2">&quot;launchDelft3d.sh&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;docker_serial&quot;</span><span class="p">:</span> <span class="s2">&quot;docker run --rm -v .:/case_dir -w /case_dir geoocean/rocky8 dimr dimr_config.xml&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">templates_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">metamodel_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">fixed_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">templates_name</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+        <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the Delft3d model wrapper.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">templates_dir</span><span class="o">=</span><span class="n">templates_dir</span><span class="p">,</span>
+            <span class="n">metamodel_parameters</span><span class="o">=</span><span class="n">metamodel_parameters</span><span class="p">,</span>
+            <span class="n">fixed_parameters</span><span class="o">=</span><span class="n">fixed_parameters</span><span class="p">,</span>
+            <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+            <span class="n">templates_name</span><span class="o">=</span><span class="n">templates_name</span><span class="p">,</span>
+            <span class="n">default_parameters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">default_parameters</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_logger_name</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;DEBUG&quot;</span> <span class="k">if</span> <span class="n">debug</span> <span class="k">else</span> <span class="s2">&quot;INFO&quot;</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sbatch_file_example</span> <span class="o">=</span> <span class="n">sbatch_file_example</span>
+
+        <span class="n">forcing_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;forcing_type&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">forcing_type</span> <span class="o">==</span> <span class="s2">&quot;ASCII&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                <span class="s2">&quot;ExtForceFile&quot;</span><span class="p">,</span> <span class="s2">&quot;GreenSurge_GFDcase_wind_ASCII.ext&quot;</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">forcing_type</span> <span class="o">==</span> <span class="s2">&quot;netCDF&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                <span class="s2">&quot;ExtForceFile&quot;</span><span class="p">,</span> <span class="s2">&quot;GreenSurge_GFDcase_wind_netCDF.ext&quot;</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="Delft3dModelWrapper.run_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.Delft3dModelWrapper.run_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_case</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">launcher</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">output_log_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;wrapper_out.log&quot;</span><span class="p">,</span>
+        <span class="n">error_log_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;wrapper_error.log&quot;</span><span class="p">,</span>
+        <span class="n">postprocess</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the case based on the launcher specified.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        launcher : str</span>
+<span class="sd">            The launcher to run the case.</span>
+<span class="sd">        output_log_file : str, optional</span>
+<span class="sd">            The name of the output log file. Default is &quot;wrapper_out.log&quot;.</span>
+<span class="sd">        error_log_file : str, optional</span>
+<span class="sd">            The name of the error log file. Default is &quot;wrapper_error.log&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Get launcher command from the available launchers</span>
+        <span class="n">launcher</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_available_launchers</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">launcher</span><span class="p">,</span> <span class="n">launcher</span><span class="p">)</span>
+
+        <span class="c1"># Run the case in the case directory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running case in </span><span class="si">{</span><span class="n">case_dir</span><span class="si">}</span><span class="s2"> with launcher=</span><span class="si">{</span><span class="n">launcher</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="n">output_log_file</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">output_log_file</span><span class="p">)</span>
+        <span class="n">error_log_file</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">error_log_file</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exec_bash_commands</span><span class="p">(</span>
+            <span class="n">str_cmd</span><span class="o">=</span><span class="n">launcher</span><span class="p">,</span>
+            <span class="n">out_file</span><span class="o">=</span><span class="n">output_log_file</span><span class="p">,</span>
+            <span class="n">err_file</span><span class="o">=</span><span class="n">error_log_file</span><span class="p">,</span>
+            <span class="n">cwd</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">postprocess</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">postprocess_case</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Delft3dModelWrapper.monitor_cases">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.Delft3dModelWrapper.monitor_cases">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">monitor_cases</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">dia_file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value_counts</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Monitor the cases based on the status of the .dia files.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dia_file_name : str</span>
+<span class="sd">            The name of the .dia file to monitor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">cases_status</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">case_dir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">:</span>
+            <span class="n">case_dir_name</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
+            <span class="n">case_dia_file</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">dia_file_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">case_dia_file</span><span class="p">):</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">case_dia_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="s2">&quot;finished&quot;</span> <span class="ow">in</span> <span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">15</span><span class="p">:]):</span>
+                        <span class="n">cases_status</span><span class="p">[</span><span class="n">case_dir_name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;FINISHED&quot;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">cases_status</span><span class="p">[</span><span class="n">case_dir_name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;RUNNING&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cases_status</span><span class="p">[</span><span class="n">case_dir_name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;NOT STARTED&quot;</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">monitor_cases</span><span class="p">(</span>
+            <span class="n">cases_status</span><span class="o">=</span><span class="n">cases_status</span><span class="p">,</span> <span class="n">value_counts</span><span class="o">=</span><span class="n">value_counts</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="format_matrix">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.format_matrix">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_matrix</span><span class="p">(</span><span class="n">mat</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.01</span> <span class="k">else</span> <span class="s2">&quot;0&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">line</span><span class="p">)</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">mat</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="format_zeros">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.format_zeros">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_zeros</span><span class="p">(</span><span class="n">mat_shape</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;0 &quot;</span> <span class="o">*</span> <span class="n">mat_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">mat_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span></div>
+
+
+
+<div class="viewcode-block" id="actualize_grid_info">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.actualize_grid_info">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">actualize_grid_info</span><span class="p">(</span>
+    <span class="n">path_ds_origin</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">ds_GFD_calc_info</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Actualizes the grid information in the GFD calculation info dataset</span>
+<span class="sd">    by adding the node coordinates and triangle connectivity from the original dataset.</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path_ds_origin : str</span>
+<span class="sd">        Path to the original dataset containing the mesh2d node coordinates.</span>
+<span class="sd">    ds_GFD_calc_info : xr.Dataset</span>
+<span class="sd">        The dataset containing the GFD calculation information to be updated.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ds_GFD_calc_info : xr.Dataset</span>
+<span class="sd">        The updated dataset with the node coordinates and triangle connectivity.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ds_ori</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">path_ds_origin</span><span class="p">)</span>
+
+    <span class="n">ds_GFD_calc_info</span><span class="p">[</span><span class="s2">&quot;node_computation_longitude&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s2">&quot;node_cumputation_index&quot;</span><span class="p">,),</span>
+        <span class="n">ds_ori</span><span class="o">.</span><span class="n">mesh2d_node_x</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ds_GFD_calc_info</span><span class="p">[</span><span class="s2">&quot;node_computation_latitude&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s2">&quot;node_cumputation_index&quot;</span><span class="p">,),</span>
+        <span class="n">ds_ori</span><span class="o">.</span><span class="n">mesh2d_node_y</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ds_GFD_calc_info</span><span class="p">[</span><span class="s2">&quot;triangle_computation_connectivity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s2">&quot;element_computation_index&quot;</span><span class="p">,</span> <span class="s2">&quot;triangle_forcing_nodes&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ds_ori</span><span class="o">.</span><span class="n">mesh2d_face_nodes</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;int32&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ds_GFD_calc_info</span></div>
+
+
+
+<div class="viewcode-block" id="GreenSurgeModelWrapper">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.GreenSurgeModelWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GreenSurgeModelWrapper</span><span class="p">(</span><span class="n">Delft3dModelWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper for the Delft3d model for Greensurge.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GreenSurgeModelWrapper.generate_grid_forcing_file_D3DFM">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.GreenSurgeModelWrapper.generate_grid_forcing_file_D3DFM">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_grid_forcing_file_D3DFM</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ds_GFD_info</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate the wind files for a case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        ds_GFD_info : xr.Dataset</span>
+<span class="sd">            The dataset with the GFD information.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dir_steps</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dir_steps&quot;</span><span class="p">)</span>
+        <span class="n">real_dirs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">360</span><span class="p">,</span> <span class="n">dir_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">i_tes</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tesela&quot;</span><span class="p">)</span>
+        <span class="n">i_dir</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;direction&quot;</span><span class="p">)</span>
+        <span class="n">real_dir</span> <span class="o">=</span> <span class="n">real_dirs</span><span class="p">[</span><span class="n">i_dir</span><span class="p">]</span>
+        <span class="n">dt_forz</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dt_forz&quot;</span><span class="p">)</span>
+        <span class="n">wind_magnitude</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;wind_magnitude&quot;</span><span class="p">)</span>
+        <span class="n">simul_time</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;simul_time&quot;</span><span class="p">)</span>
+
+        <span class="n">node_triangle</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">triangle_forcing_connectivity</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span>
+            <span class="n">element_forcing_index</span><span class="o">=</span><span class="n">i_tes</span>
+        <span class="p">)</span>
+        <span class="n">lon_teselas</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">node_forcing_longitude</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span>
+            <span class="n">node_forcing_index</span><span class="o">=</span><span class="n">node_triangle</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">lat_teselas</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">node_forcing_latitude</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span>
+            <span class="n">node_forcing_index</span><span class="o">=</span><span class="n">node_triangle</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="n">lon_grid</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">lon_grid</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">lat_grid</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">lat_grid</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="n">x_llcenter</span> <span class="o">=</span> <span class="n">lon_grid</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">y_llcenter</span> <span class="o">=</span> <span class="n">lat_grid</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">n_cols</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lon_grid</span><span class="p">)</span>
+        <span class="n">n_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lat_grid</span><span class="p">)</span>
+
+        <span class="n">dx</span> <span class="o">=</span> <span class="p">(</span><span class="n">lon_grid</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">lon_grid</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">n_cols</span>
+        <span class="n">dy</span> <span class="o">=</span> <span class="p">(</span><span class="n">lat_grid</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">lat_grid</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">n_rows</span>
+        <span class="n">X0</span><span class="p">,</span> <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">lon_teselas</span>
+        <span class="n">Y0</span><span class="p">,</span> <span class="n">Y1</span><span class="p">,</span> <span class="n">Y2</span> <span class="o">=</span> <span class="n">lat_teselas</span>
+
+        <span class="n">triangle</span> <span class="o">=</span> <span class="p">[(</span><span class="n">X0</span><span class="p">,</span> <span class="n">Y0</span><span class="p">),</span> <span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">Y1</span><span class="p">),</span> <span class="p">(</span><span class="n">X2</span><span class="p">,</span> <span class="n">Y2</span><span class="p">)]</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">create_triangle_mask</span><span class="p">(</span><span class="n">lon_grid</span><span class="p">,</span> <span class="n">lat_grid</span><span class="p">,</span> <span class="n">triangle</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">mask_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Ojo</span>
+
+        <span class="n">u</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">nautical_to_mathematical</span><span class="p">(</span><span class="n">real_dir</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span><span class="p">)</span> <span class="o">*</span> <span class="n">wind_magnitude</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">nautical_to_mathematical</span><span class="p">(</span><span class="n">real_dir</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span><span class="p">)</span> <span class="o">*</span> <span class="n">wind_magnitude</span>
+        <span class="n">u_mat</span> <span class="o">=</span> <span class="n">mask_int</span> <span class="o">*</span> <span class="n">u</span>
+        <span class="n">v_mat</span> <span class="o">=</span> <span class="n">mask_int</span> <span class="o">*</span> <span class="n">v</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Creating Tecelda </span><span class="si">{</span><span class="n">i_tes</span><span class="si">}</span><span class="s2"> direction </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">real_dir</span><span class="p">)</span><span class="si">}</span><span class="s2"> with u = </span><span class="si">{</span><span class="n">u</span><span class="si">}</span><span class="s2"> and v = </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">file_name_u</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;GFD_wind_file.amu&quot;</span><span class="p">)</span>
+        <span class="n">file_name_v</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;GFD_wind_file.amv&quot;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name_u</span><span class="p">,</span> <span class="s2">&quot;w+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fu</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name_v</span><span class="p">,</span> <span class="s2">&quot;w+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fv</span><span class="p">:</span>
+            <span class="n">fu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                <span class="s2">&quot;### START OF HEADER</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;### This file is created by Deltares</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;### Additional commments</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;FileVersion = 1.03</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;filetype = meteo_on_equidistant_grid</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;NODATA_value = -9999.0</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;n_cols = </span><span class="si">{</span><span class="n">n_cols</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;n_rows = </span><span class="si">{</span><span class="n">n_rows</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;grid_unit = degree</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;x_llcenter = </span><span class="si">{</span><span class="n">x_llcenter</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;y_llcenter = </span><span class="si">{</span><span class="n">y_llcenter</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;dx = </span><span class="si">{</span><span class="n">dx</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;dy = </span><span class="si">{</span><span class="n">dy</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;n_quantity = 1</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;quantity1 = x_wind</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;unit1 = m s-1</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;### END OF HEADER</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">fv</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                <span class="s2">&quot;### START OF HEADER</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;### This file is created by Deltares</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;### Additional commments</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;FileVersion = 1.03</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;filetype = meteo_on_equidistant_grid</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;NODATA_value = -9999.0</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;n_cols = </span><span class="si">{</span><span class="n">n_cols</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;n_rows = </span><span class="si">{</span><span class="n">n_rows</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;grid_unit = degree</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;x_llcenter = </span><span class="si">{</span><span class="n">x_llcenter</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;y_llcenter = </span><span class="si">{</span><span class="n">y_llcenter</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;dx = </span><span class="si">{</span><span class="n">dx</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;dy = </span><span class="si">{</span><span class="n">dy</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;n_quantity = 1</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;quantity1 = y_wind</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;unit1 = m s-1</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;### END OF HEADER</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">time</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">time</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">time_real</span> <span class="o">=</span> <span class="n">time</span>
+                <span class="k">elif</span> <span class="n">time</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">time_real</span> <span class="o">=</span> <span class="n">dt_forz</span>
+                <span class="k">elif</span> <span class="n">time</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">time_real</span> <span class="o">=</span> <span class="n">dt_forz</span> <span class="o">+</span> <span class="mf">0.01</span>
+                <span class="k">elif</span> <span class="n">time</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="n">time_real</span> <span class="o">=</span> <span class="n">simul_time</span>
+                <span class="n">fu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;TIME = </span><span class="si">{</span><span class="n">time_real</span><span class="si">}</span><span class="s2"> hours since 2022-01-01 00:00:00 +00:00</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">fv</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;TIME = </span><span class="si">{</span><span class="n">time_real</span><span class="si">}</span><span class="s2"> hours since 2022-01-01 00:00:00 +00:00</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">time</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+                    <span class="n">fu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">format_matrix</span><span class="p">(</span><span class="n">u_mat</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">fv</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">format_matrix</span><span class="p">(</span><span class="n">v_mat</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">fu</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">format_zeros</span><span class="p">(</span><span class="n">u_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">fv</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">format_zeros</span><span class="p">(</span><span class="n">v_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GreenSurgeModelWrapper.generate_grid_forcing_file_netCDF_D3DFM">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.GreenSurgeModelWrapper.generate_grid_forcing_file_netCDF_D3DFM">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_grid_forcing_file_netCDF_D3DFM</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ds_GFD_info</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate the wind files for a case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        ds_GFD_info : xr.Dataset</span>
+<span class="sd">            The dataset with the GFD information.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">triangle_index</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tesela&quot;</span><span class="p">)</span>
+        <span class="n">direction_index</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;direction&quot;</span><span class="p">)</span>
+        <span class="n">wind_direction</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">wind_directions</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">direction_index</span><span class="p">]</span>
+        <span class="n">wind_speed</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;wind_magnitude&quot;</span><span class="p">)</span>
+
+        <span class="n">connectivity</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">triangle_forcing_connectivity</span>
+        <span class="n">triangle_longitude</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">node_forcing_longitude</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span>
+            <span class="n">node_forcing_index</span><span class="o">=</span><span class="n">connectivity</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">triangle_latitude</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">node_forcing_latitude</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span>
+            <span class="n">node_forcing_index</span><span class="o">=</span><span class="n">connectivity</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="n">longitude_points_computation</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">node_computation_longitude</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">latitude_points_computation</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">node_computation_latitude</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">triangle_longitude</span><span class="p">[</span><span class="n">triangle_index</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">triangle_latitude</span><span class="p">[</span><span class="n">triangle_index</span><span class="p">,</span> <span class="p">:]</span>
+
+        <span class="n">triangle_vertices</span> <span class="o">=</span> <span class="p">[(</span><span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">),</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">),</span> <span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)]</span>
+        <span class="n">triangle_mask</span> <span class="o">=</span> <span class="n">create_triangle_mask_from_points</span><span class="p">(</span>
+            <span class="n">longitude_points_computation</span><span class="p">,</span> <span class="n">latitude_points_computation</span><span class="p">,</span> <span class="n">triangle_vertices</span>
+        <span class="p">)</span>
+
+        <span class="n">angle_rad</span> <span class="o">=</span> <span class="n">nautical_to_mathematical</span><span class="p">(</span><span class="n">wind_direction</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
+        <span class="n">wind_u</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">)</span> <span class="o">*</span> <span class="n">wind_speed</span>
+        <span class="n">wind_v</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">)</span> <span class="o">*</span> <span class="n">wind_speed</span>
+
+        <span class="n">windx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">longitude_points_computation</span><span class="p">)))</span>
+        <span class="n">windy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">longitude_points_computation</span><span class="p">)))</span>
+
+        <span class="n">windx</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="n">triangle_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">wind_u</span>
+        <span class="n">windy</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="n">triangle_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">wind_v</span>
+
+        <span class="n">ds_forcing</span> <span class="o">=</span> <span class="n">ds_GFD_info</span><span class="p">[</span>
+            <span class="p">[</span>
+                <span class="s2">&quot;time_forcing_index&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;node_cumputation_index&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;node_computation_longitude&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;node_computation_latitude&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">]</span>
+        <span class="n">ds_forcing</span> <span class="o">=</span> <span class="n">ds_forcing</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;time_forcing_index&quot;</span><span class="p">:</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;node_cumputation_index&quot;</span><span class="p">:</span> <span class="s2">&quot;node&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;node_computation_longitude&quot;</span><span class="p">:</span> <span class="s2">&quot;longitude&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;node_computation_latitude&quot;</span><span class="p">:</span> <span class="s2">&quot;latitude&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">ds_forcing</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">ds_forcing</span><span class="p">[</span><span class="s2">&quot;windx&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;node&quot;</span><span class="p">),</span> <span class="n">windx</span><span class="p">)</span>
+        <span class="n">ds_forcing</span><span class="p">[</span><span class="s2">&quot;windy&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;node&quot;</span><span class="p">),</span> <span class="n">windy</span><span class="p">)</span>
+        <span class="n">ds_forcing</span><span class="p">[</span><span class="s2">&quot;windx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;coordinates&quot;</span><span class="p">:</span> <span class="s2">&quot;time node&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;long_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Wind speed in x direction&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;windx&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;m s-1&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">ds_forcing</span><span class="p">[</span><span class="s2">&quot;windy&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;coordinates&quot;</span><span class="p">:</span> <span class="s2">&quot;time node&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;long_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Wind speed in y direction&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;standard_name&quot;</span><span class="p">:</span> <span class="s2">&quot;windy&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;units&quot;</span><span class="p">:</span> <span class="s2">&quot;m s-1&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">ds_forcing</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;forcing.nc&quot;</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Creating triangle </span><span class="si">{</span><span class="n">triangle_index</span><span class="si">}</span><span class="s2"> direction </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">wind_direction</span><span class="p">)</span><span class="si">}</span><span class="s2"> with u = </span><span class="si">{</span><span class="n">wind_u</span><span class="si">}</span><span class="s2"> and v = </span><span class="si">{</span><span class="n">wind_v</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GreenSurgeModelWrapper.build_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.GreenSurgeModelWrapper.build_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_case</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the input files for a case.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_context : dict</span>
+<span class="sd">            The case context.</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;forcing_type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;netCDF&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">generate_grid_forcing_file_netCDF_D3DFM</span><span class="p">(</span>
+                <span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span>
+                <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span>
+                <span class="n">ds_GFD_info</span><span class="o">=</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ds_GFD_info&quot;</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;forcing_type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;ASCII&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;case_num&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">ds_GFD_info</span> <span class="o">=</span> <span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ds_GFD_info&quot;</span><span class="p">)</span>
+                <span class="n">lon_grid</span><span class="p">,</span> <span class="n">lat_grid</span> <span class="o">=</span> <span class="n">get_regular_grid</span><span class="p">(</span>
+                    <span class="n">node_computation_longitude</span><span class="o">=</span><span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">node_computation_longitude</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                    <span class="n">node_computation_latitude</span><span class="o">=</span><span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">node_computation_latitude</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                    <span class="n">node_computation_elements</span><span class="o">=</span><span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">triangle_computation_connectivity</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ds_GFD_info</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">case_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ds_GFD_info&quot;</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ds_GFD_info</span><span class="p">[</span><span class="s2">&quot;lon_grid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">lon_grid</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ds_GFD_info</span><span class="p">[</span><span class="s2">&quot;lat_grid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lat_grid</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">generate_grid_forcing_file_D3DFM</span><span class="p">(</span>
+                <span class="n">case_context</span><span class="o">=</span><span class="n">case_context</span><span class="p">,</span>
+                <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span>
+                <span class="n">ds_GFD_info</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ds_GFD_info</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="p">(</span><span class="s2">&quot;Unknown forcing type&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GreenSurgeModelWrapper.postprocess_case">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.GreenSurgeModelWrapper.postprocess_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">postprocess_case</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Postprocess the case output file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        case_dir : str</span>
+<span class="sd">            The case directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">output_file</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;dflowfmoutput/GreenSurge_GFDcase_map.nc&quot;</span><span class="p">)</span>
+        <span class="n">output_file_compressed</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;dflowfmoutput/GreenSurge_GFDcase_map_compressed.nc&quot;</span>
+        <span class="p">)</span>
+        <span class="n">output_file_compressed_tmp</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;dflowfmoutput/GreenSurge_GFDcase_map_compressed_tmp.nc&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">case_dir</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="c1"># If the case_dir is the output_dir, we do not remove the original file</span>
+            <span class="n">postprocess_command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                ncap2 -s &#39;mesh2d_s1=float(mesh2d_s1)&#39; -v -O &quot;</span><span class="si">{</span><span class="n">output_file</span><span class="si">}</span><span class="s2">&quot; &quot;</span><span class="si">{</span><span class="n">output_file_compressed_tmp</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="s2">                ncks -4 -L 4 &quot;</span><span class="si">{</span><span class="n">output_file_compressed_tmp</span><span class="si">}</span><span class="s2">&quot; &quot;</span><span class="si">{</span><span class="n">output_file_compressed</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="s2">                rm &quot;</span><span class="si">{</span><span class="n">output_file_compressed_tmp</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="s2">            &quot;&quot;&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">postprocess_command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                ncap2 -s &#39;mesh2d_s1=float(mesh2d_s1)&#39; -v -O &quot;</span><span class="si">{</span><span class="n">output_file</span><span class="si">}</span><span class="s2">&quot; &quot;</span><span class="si">{</span><span class="n">output_file_compressed_tmp</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="s2">                ncks -4 -L 4 &quot;</span><span class="si">{</span><span class="n">output_file_compressed_tmp</span><span class="si">}</span><span class="s2">&quot; &quot;</span><span class="si">{</span><span class="n">output_file_compressed</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="s2">                rm &quot;</span><span class="si">{</span><span class="n">output_file_compressed_tmp</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="s2">                rm &quot;</span><span class="si">{</span><span class="n">output_file</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="s2">            &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exec_bash_commands</span><span class="p">(</span>
+            <span class="n">str_cmd</span><span class="o">=</span><span class="n">postprocess_command</span><span class="p">,</span>
+            <span class="n">cwd</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GreenSurgeModelWrapper.postprocess_cases">
+<a class="viewcode-back" href="../../../../bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.GreenSurgeModelWrapper.postprocess_cases">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">postprocess_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ds_GFD_info</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">parallel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Postprocess the cases output files.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ds_GFD_info : xr.Dataset</span>
+<span class="sd">            The dataset with the GFD information.</span>
+<span class="sd">        parallel : bool, optional</span>
+<span class="sd">            Whether to run the postprocessing in parallel. Default is False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">monitor_cases</span><span class="p">(</span>
+                <span class="n">dia_file_name</span><span class="o">=</span><span class="s2">&quot;dflowfmoutput/GreenSurge_GFDcase.dia&quot;</span><span class="p">,</span>
+                <span class="n">value_counts</span><span class="o">=</span><span class="s2">&quot;percentage&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">&quot;FINISHED&quot;</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">values</span>
+            <span class="o">!=</span> <span class="mf">100.0</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Not all cases are finished. Please check the status of the cases.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">path_computation</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;dflowfmoutput/GreenSurge_GFDcase_map.nc&quot;</span>
+        <span class="p">)</span>
+        <span class="n">ds_GFD_info</span> <span class="o">=</span> <span class="n">actualize_grid_info</span><span class="p">(</span><span class="n">path_computation</span><span class="p">,</span> <span class="n">ds_GFD_info</span><span class="p">)</span>
+        <span class="n">dirname</span><span class="p">,</span> <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;source&quot;</span><span class="p">])</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">basename</span><span class="p">)</span>
+        <span class="n">new_filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_updated</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">ds_GFD_info</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">new_filepath</span><span class="p">)</span>
+
+        <span class="c1"># case_ext = &quot;dflowfmoutput/GreenSurge_GFDcase_map_compressed.nc&quot;</span>
+        <span class="n">case_ext</span> <span class="o">=</span> <span class="s2">&quot;dflowfmoutput/GreenSurge_GFDcase_map.nc&quot;</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">preprocess</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+            <span class="n">file_name</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;source&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">dir_i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">file_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_D_&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">tes_i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">file_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_T_&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_D_&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">dataset</span><span class="p">[[</span><span class="s2">&quot;mesh2d_s1&quot;</span><span class="p">]]</span>
+                <span class="o">.</span><span class="n">expand_dims</span><span class="p">([</span><span class="s2">&quot;forcing_cell&quot;</span><span class="p">])</span>
+                <span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">forcing_cell</span><span class="o">=</span><span class="p">[</span><span class="n">tes_i</span><span class="p">])</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Loaded </span><span class="si">{</span><span class="n">file_name</span><span class="si">}</span><span class="s2"> with forcing_cell=</span><span class="si">{</span><span class="n">tes_i</span><span class="si">}</span><span class="s2"> and dir=</span><span class="si">{</span><span class="n">dir_i</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">dataset</span>
+
+        <span class="n">folder_postprocess</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">&quot;GreenSurge_Postprocess&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">folder_postprocess</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">dir_steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_parameters</span><span class="p">[</span><span class="s2">&quot;dir_steps&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dir_steps</span><span class="p">):</span>
+            <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cases_dirs</span><span class="p">[</span><span class="n">idx</span><span class="p">::</span><span class="n">dir_steps</span><span class="p">]</span>
+            <span class="n">file_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">case_ext</span><span class="p">)</span> <span class="k">for</span> <span class="n">case_dir</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">]</span>
+            <span class="n">DS</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_mfdataset</span><span class="p">(</span>
+                <span class="n">file_paths</span><span class="p">,</span>
+                <span class="n">parallel</span><span class="o">=</span><span class="n">parallel</span><span class="p">,</span>
+                <span class="n">combine</span><span class="o">=</span><span class="s2">&quot;by_coords&quot;</span><span class="p">,</span>
+                <span class="n">preprocess</span><span class="o">=</span><span class="n">preprocess</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">DS</span><span class="o">.</span><span class="n">load</span><span class="p">()</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder_postprocess</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;GreenSurge_DB_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">.nc&quot;</span><span class="p">))</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

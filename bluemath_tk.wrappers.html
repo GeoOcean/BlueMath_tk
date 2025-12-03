@@ -1,0 +1,363 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.wrappers package &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="bluemath_tk.wrappers.delft3d package" href="bluemath_tk.wrappers.delft3d.html" />
+    <link rel="prev" title="bluemath_tk.waves package" href="bluemath_tk.waves.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">bluemath_tk</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bluemath_tk.html">bluemath_tk package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bluemath_tk.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.additive.html">bluemath_tk.additive package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.config.html">bluemath_tk.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.core.html">bluemath_tk.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.datamining.html">bluemath_tk.datamining package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.deeplearning.html">bluemath_tk.deeplearning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.distributions.html">bluemath_tk.distributions package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.downloaders.html">bluemath_tk.downloaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.interpolation.html">bluemath_tk.interpolation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.predictor.html">bluemath_tk.predictor package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.risk.html">bluemath_tk.risk package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tcs.html">bluemath_tk.tcs package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.teslakit.html">bluemath_tk.teslakit package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.tide.html">bluemath_tk.tide package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.topo_bathy.html">bluemath_tk.topo_bathy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.waves.html">bluemath_tk.waves package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">bluemath_tk.wrappers package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.html#module-bluemath_tk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">bluemath_tk</a></li>
+          <li class="breadcrumb-item"><a href="bluemath_tk.html">bluemath_tk package</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.wrappers package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bluemath_tk.wrappers.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bluemath-tk-wrappers-package">
+<h1>bluemath_tk.wrappers package<a class="headerlink" href="#bluemath-tk-wrappers-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html">bluemath_tk.wrappers.delft3d package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#module-bluemath_tk.wrappers.delft3d.delft3d_example">bluemath_tk.wrappers.delft3d.delft3d_example module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_example.Delft3DfmModelWrapper"><code class="docutils literal notranslate"><span class="pre">Delft3DfmModelWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_example.Delft3DfmModelWrapper.build_case"><code class="docutils literal notranslate"><span class="pre">Delft3DfmModelWrapper.build_case()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#module-bluemath_tk.wrappers.delft3d.delft3d_wrapper">bluemath_tk.wrappers.delft3d.delft3d_wrapper module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.Delft3dModelWrapper"><code class="docutils literal notranslate"><span class="pre">Delft3dModelWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.Delft3dModelWrapper.default_parameters"><code class="docutils literal notranslate"><span class="pre">Delft3dModelWrapper.default_parameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.Delft3dModelWrapper.available_launchers"><code class="docutils literal notranslate"><span class="pre">Delft3dModelWrapper.available_launchers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#id0"><code class="docutils literal notranslate"><span class="pre">Delft3dModelWrapper.available_launchers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#id1"><code class="docutils literal notranslate"><span class="pre">Delft3dModelWrapper.default_parameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.Delft3dModelWrapper.monitor_cases"><code class="docutils literal notranslate"><span class="pre">Delft3dModelWrapper.monitor_cases()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.Delft3dModelWrapper.run_case"><code class="docutils literal notranslate"><span class="pre">Delft3dModelWrapper.run_case()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.GreenSurgeModelWrapper"><code class="docutils literal notranslate"><span class="pre">GreenSurgeModelWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.GreenSurgeModelWrapper.build_case"><code class="docutils literal notranslate"><span class="pre">GreenSurgeModelWrapper.build_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.GreenSurgeModelWrapper.generate_grid_forcing_file_D3DFM"><code class="docutils literal notranslate"><span class="pre">GreenSurgeModelWrapper.generate_grid_forcing_file_D3DFM()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.GreenSurgeModelWrapper.generate_grid_forcing_file_netCDF_D3DFM"><code class="docutils literal notranslate"><span class="pre">GreenSurgeModelWrapper.generate_grid_forcing_file_netCDF_D3DFM()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.GreenSurgeModelWrapper.postprocess_case"><code class="docutils literal notranslate"><span class="pre">GreenSurgeModelWrapper.postprocess_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.GreenSurgeModelWrapper.postprocess_cases"><code class="docutils literal notranslate"><span class="pre">GreenSurgeModelWrapper.postprocess_cases()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.actualize_grid_info"><code class="docutils literal notranslate"><span class="pre">actualize_grid_info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.format_matrix"><code class="docutils literal notranslate"><span class="pre">format_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#bluemath_tk.wrappers.delft3d.delft3d_wrapper.format_zeros"><code class="docutils literal notranslate"><span class="pre">format_zeros()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.delft3d.html#module-bluemath_tk.wrappers.delft3d">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.wrappers.lisflood.html">bluemath_tk.wrappers.lisflood package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.lisflood.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.lisflood.html#module-bluemath_tk.wrappers.lisflood.lisflood_wrapper">bluemath_tk.wrappers.lisflood.lisflood_wrapper module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.lisflood.html#module-bluemath_tk.wrappers.lisflood">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.wrappers.schism.html">bluemath_tk.wrappers.schism package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#module-bluemath_tk.wrappers.schism.schism_example">bluemath_tk.wrappers.schism.schism_example module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#module-bluemath_tk.wrappers.schism.schism_wrapper">bluemath_tk.wrappers.schism.schism_wrapper module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE"><code class="docutils literal notranslate"><span class="pre">SchismHyCoFfEE</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.build_case"><code class="docutils literal notranslate"><span class="pre">SchismHyCoFfEE.build_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.default_parameters"><code class="docutils literal notranslate"><span class="pre">SchismHyCoFfEE.default_parameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_at_th"><code class="docutils literal notranslate"><span class="pre">SchismHyCoFfEE.generate_at_th()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_elev_th"><code class="docutils literal notranslate"><span class="pre">SchismHyCoFfEE.generate_elev_th()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_flux_th"><code class="docutils literal notranslate"><span class="pre">SchismHyCoFfEE.generate_flux_th()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_ss_th"><code class="docutils literal notranslate"><span class="pre">SchismHyCoFfEE.generate_ss_th()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_time_series"><code class="docutils literal notranslate"><span class="pre">SchismHyCoFfEE.generate_time_series()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.generate_wind_th"><code class="docutils literal notranslate"><span class="pre">SchismHyCoFfEE.generate_wind_th()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismHyCoFfEE.rndays_calculation"><code class="docutils literal notranslate"><span class="pre">SchismHyCoFfEE.rndays_calculation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper"><code class="docutils literal notranslate"><span class="pre">SchismModelWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper.default_parameters"><code class="docutils literal notranslate"><span class="pre">SchismModelWrapper.default_parameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper.available_launchers"><code class="docutils literal notranslate"><span class="pre">SchismModelWrapper.available_launchers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#id0"><code class="docutils literal notranslate"><span class="pre">SchismModelWrapper.available_launchers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismModelWrapper.build_case"><code class="docutils literal notranslate"><span class="pre">SchismModelWrapper.build_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#id1"><code class="docutils literal notranslate"><span class="pre">SchismModelWrapper.default_parameters</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper"><code class="docutils literal notranslate"><span class="pre">SchismOnlyWindModelWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper.build_case"><code class="docutils literal notranslate"><span class="pre">SchismOnlyWindModelWrapper.build_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper.default_parameters"><code class="docutils literal notranslate"><span class="pre">SchismOnlyWindModelWrapper.default_parameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#bluemath_tk.wrappers.schism.schism_wrapper.SchismOnlyWindModelWrapper.generate_windth"><code class="docutils literal notranslate"><span class="pre">SchismOnlyWindModelWrapper.generate_windth()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.schism.html#module-bluemath_tk.wrappers.schism">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html">bluemath_tk.wrappers.sfincs package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#bluemath-tk-wrappers-sfincs-sfincs-example-module">bluemath_tk.wrappers.sfincs.sfincs_example module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#module-bluemath_tk.wrappers.sfincs.sfincs_wrapper">bluemath_tk.wrappers.sfincs.sfincs_wrapper module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper"><code class="docutils literal notranslate"><span class="pre">SfincsModelWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.default_parameters"><code class="docutils literal notranslate"><span class="pre">SfincsModelWrapper.default_parameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.available_launchers"><code class="docutils literal notranslate"><span class="pre">SfincsModelWrapper.available_launchers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#id0"><code class="docutils literal notranslate"><span class="pre">SfincsModelWrapper.available_launchers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.build_case"><code class="docutils literal notranslate"><span class="pre">SfincsModelWrapper.build_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.build_template_case"><code class="docutils literal notranslate"><span class="pre">SfincsModelWrapper.build_template_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#id1"><code class="docutils literal notranslate"><span class="pre">SfincsModelWrapper.default_parameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.set_ctimes"><code class="docutils literal notranslate"><span class="pre">SfincsModelWrapper.set_ctimes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.setup_dem"><code class="docutils literal notranslate"><span class="pre">SfincsModelWrapper.setup_dem()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.setup_friction"><code class="docutils literal notranslate"><span class="pre">SfincsModelWrapper.setup_friction()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.setup_infiltration"><code class="docutils literal notranslate"><span class="pre">SfincsModelWrapper.setup_infiltration()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.setup_outflow"><code class="docutils literal notranslate"><span class="pre">SfincsModelWrapper.setup_outflow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#bluemath_tk.wrappers.sfincs.sfincs_wrapper.SfincsModelWrapper.setup_waterlevel_mask"><code class="docutils literal notranslate"><span class="pre">SfincsModelWrapper.setup_waterlevel_mask()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.sfincs.html#module-bluemath_tk.wrappers.sfincs">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.wrappers.swan.html">bluemath_tk.wrappers.swan package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#module-bluemath_tk.wrappers.swan.swan_example">bluemath_tk.wrappers.swan.swan_example module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_example.BinWavesWrapper"><code class="docutils literal notranslate"><span class="pre">BinWavesWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_example.BinWavesWrapper.build_case"><code class="docutils literal notranslate"><span class="pre">BinWavesWrapper.build_case()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#module-bluemath_tk.wrappers.swan.swan_wrapper">bluemath_tk.wrappers.swan.swan_wrapper module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_wrapper.BinWavesWrapper"><code class="docutils literal notranslate"><span class="pre">BinWavesWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_wrapper.BinWavesWrapper.build_case"><code class="docutils literal notranslate"><span class="pre">BinWavesWrapper.build_case()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper"><code class="docutils literal notranslate"><span class="pre">SwanModelWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.default_parameters"><code class="docutils literal notranslate"><span class="pre">SwanModelWrapper.default_parameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.available_launchers"><code class="docutils literal notranslate"><span class="pre">SwanModelWrapper.available_launchers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.output_variables"><code class="docutils literal notranslate"><span class="pre">SwanModelWrapper.output_variables</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#id0"><code class="docutils literal notranslate"><span class="pre">SwanModelWrapper.available_launchers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#id1"><code class="docutils literal notranslate"><span class="pre">SwanModelWrapper.default_parameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.get_case_percentage_from_file"><code class="docutils literal notranslate"><span class="pre">SwanModelWrapper.get_case_percentage_from_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.join_postprocessed_files"><code class="docutils literal notranslate"><span class="pre">SwanModelWrapper.join_postprocessed_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.list_available_output_variables"><code class="docutils literal notranslate"><span class="pre">SwanModelWrapper.list_available_output_variables()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.monitor_cases"><code class="docutils literal notranslate"><span class="pre">SwanModelWrapper.monitor_cases()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#id2"><code class="docutils literal notranslate"><span class="pre">SwanModelWrapper.output_variables</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_wrapper.SwanModelWrapper.postprocess_case"><code class="docutils literal notranslate"><span class="pre">SwanModelWrapper.postprocess_case()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#bluemath_tk.wrappers.swan.swan_wrapper.generate_fixed_parameters"><code class="docutils literal notranslate"><span class="pre">generate_fixed_parameters()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.swan.html#module-bluemath_tk.wrappers.swan">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.wrappers.swash.html">bluemath_tk.wrappers.swash package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#module-bluemath_tk.wrappers.swash.swash_example">bluemath_tk.wrappers.swash.swash_example module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#module-bluemath_tk.wrappers.swash.swash_wrapper">bluemath_tk.wrappers.swash.swash_wrapper module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.ChySwashModelWrapper"><code class="docutils literal notranslate"><span class="pre">ChySwashModelWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.ChySwashModelWrapper.build_case"><code class="docutils literal notranslate"><span class="pre">ChySwashModelWrapper.build_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.ChySwashModelWrapper.default_Cf"><code class="docutils literal notranslate"><span class="pre">ChySwashModelWrapper.default_Cf</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.HySwashVeggyModelWrapper"><code class="docutils literal notranslate"><span class="pre">HySwashVeggyModelWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.HySwashVeggyModelWrapper.build_case"><code class="docutils literal notranslate"><span class="pre">HySwashVeggyModelWrapper.build_case()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.default_parameters"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.default_parameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.available_launchers"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.available_launchers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.postprocess_functions"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.postprocess_functions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#id0"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.available_launchers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.build_case"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.build_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_runup"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.calculate_runup()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_runup2"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.calculate_runup2()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_setup"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.calculate_setup()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_spectral_analysis"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.calculate_spectral_analysis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.calculate_statistical_analysis"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.calculate_statistical_analysis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#id1"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.default_parameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.find_maximas"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.find_maximas()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.get_case_percentage_from_file"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.get_case_percentage_from_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.join_postprocessed_files"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.join_postprocessed_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.list_available_postprocess_vars"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.list_available_postprocess_vars()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.monitor_cases"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.monitor_cases()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.SwashModelWrapper.postprocess_case"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.postprocess_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#id2"><code class="docutils literal notranslate"><span class="pre">SwashModelWrapper.postprocess_functions</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#bluemath_tk.wrappers.swash.swash_wrapper.convert_seconds_to_hour_minutes_seconds"><code class="docutils literal notranslate"><span class="pre">convert_seconds_to_hour_minutes_seconds()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.swash.html#module-bluemath_tk.wrappers.swash">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html">bluemath_tk.wrappers.xbeach package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#module-bluemath_tk.wrappers.xbeach.xbeach_example">bluemath_tk.wrappers.xbeach.xbeach_example module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_example.ManuXBeachModelWrapper"><code class="docutils literal notranslate"><span class="pre">ManuXBeachModelWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_example.ManuXBeachModelWrapper.build_case"><code class="docutils literal notranslate"><span class="pre">ManuXBeachModelWrapper.build_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_example.ManuXBeachModelWrapper.create_vardens"><code class="docutils literal notranslate"><span class="pre">ManuXBeachModelWrapper.create_vardens()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_example.ManuXBeachModelWrapper.locations"><code class="docutils literal notranslate"><span class="pre">ManuXBeachModelWrapper.locations</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_example.ManuXBeachModelWrapper.write_file"><code class="docutils literal notranslate"><span class="pre">ManuXBeachModelWrapper.write_file()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_example.create_dep"><code class="docutils literal notranslate"><span class="pre">create_dep()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#module-bluemath_tk.wrappers.xbeach.xbeach_wrapper">bluemath_tk.wrappers.xbeach.xbeach_wrapper module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_wrapper.XBeachModelWrapper"><code class="docutils literal notranslate"><span class="pre">XBeachModelWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_wrapper.XBeachModelWrapper.default_parameters"><code class="docutils literal notranslate"><span class="pre">XBeachModelWrapper.default_parameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_wrapper.XBeachModelWrapper.available_launchers"><code class="docutils literal notranslate"><span class="pre">XBeachModelWrapper.available_launchers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#id0"><code class="docutils literal notranslate"><span class="pre">XBeachModelWrapper.available_launchers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_wrapper.XBeachModelWrapper.build_case"><code class="docutils literal notranslate"><span class="pre">XBeachModelWrapper.build_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#id1"><code class="docutils literal notranslate"><span class="pre">XBeachModelWrapper.default_parameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_wrapper.XBeachModelWrapper.join_postprocessed_files"><code class="docutils literal notranslate"><span class="pre">XBeachModelWrapper.join_postprocessed_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_wrapper.XBeachModelWrapper.monitor_cases"><code class="docutils literal notranslate"><span class="pre">XBeachModelWrapper.monitor_cases()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#bluemath_tk.wrappers.xbeach.xbeach_wrapper.XBeachModelWrapper.postprocess_case"><code class="docutils literal notranslate"><span class="pre">XBeachModelWrapper.postprocess_case()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bluemath_tk.wrappers.xbeach.html#module-bluemath_tk.wrappers.xbeach">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="module-bluemath_tk.wrappers">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bluemath_tk.wrappers" title="Link to this heading"></a></h2>
+<p>Project: BlueMath_tk
+Sub-Module: wrappers
+Author: GeoOcean Research Group, Universidad de Cantabria
+Repository: <a class="reference external" href="https://github.com/GeoOcean/BlueMath_tk.git">https://github.com/GeoOcean/BlueMath_tk.git</a>
+Status: Under development (Working)</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bluemath_tk.waves.html" class="btn btn-neutral float-left" title="bluemath_tk.waves package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bluemath_tk.wrappers.delft3d.html" class="btn btn-neutral float-right" title="bluemath_tk.wrappers.delft3d package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

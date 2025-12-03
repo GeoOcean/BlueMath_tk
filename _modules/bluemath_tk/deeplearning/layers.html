@@ -1,0 +1,1017 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.deeplearning.layers &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.deeplearning.layers</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.deeplearning.layers</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Project: BlueMath_tk</span>
+<span class="sd">Sub-Module: deeplearning.layers</span>
+<span class="sd">Author: GeoOcean Research Group, Universidad de Cantabria</span>
+<span class="sd">Repository: https://github.com/GeoOcean/BlueMath_tk.git</span>
+<span class="sd">Status: Under development (Working)</span>
+
+<span class="sd">Custom PyTorch layers for deep learning models.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+
+
+<div class="viewcode-block" id="DoubleConv">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.DoubleConv">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DoubleConv</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Double convolution block: (convolution =&gt; [BN] =&gt; activation) * 2</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    in_channels : int</span>
+<span class="sd">        Number of input channels.</span>
+<span class="sd">    out_channels : int</span>
+<span class="sd">        Number of output channels.</span>
+<span class="sd">    mid_channels : int, optional</span>
+<span class="sd">        Number of intermediate channels. If None, uses out_channels.</span>
+<span class="sd">    activation : nn.Module, optional</span>
+<span class="sd">        Activation function. Default is SiLU.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">mid_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">mid_channels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mid_channels</span> <span class="o">=</span> <span class="n">out_channels</span>
+        <span class="k">if</span> <span class="n">activation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">activation</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">SiLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">double_conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">mid_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">mid_channels</span><span class="p">),</span>
+            <span class="n">activation</span><span class="p">,</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">mid_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">),</span>
+            <span class="n">activation</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="DoubleConv.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.DoubleConv.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">double_conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DoubleConv3D">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.DoubleConv3D">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DoubleConv3D</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Double 3D convolution block: (convolution =&gt; [BN] =&gt; activation) * 2</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    in_channels : int</span>
+<span class="sd">        Number of input channels.</span>
+<span class="sd">    out_channels : int</span>
+<span class="sd">        Number of output channels.</span>
+<span class="sd">    mid_channels : int, optional</span>
+<span class="sd">        Number of intermediate channels. If None, uses out_channels.</span>
+<span class="sd">    activation : nn.Module, optional</span>
+<span class="sd">        Activation function. Default is SiLU.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">mid_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">mid_channels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mid_channels</span> <span class="o">=</span> <span class="n">out_channels</span>
+        <span class="k">if</span> <span class="n">activation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">activation</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">SiLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">double_conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv3d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">mid_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm3d</span><span class="p">(</span><span class="n">mid_channels</span><span class="p">),</span>
+            <span class="n">activation</span><span class="p">,</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv3d</span><span class="p">(</span><span class="n">mid_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm3d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">),</span>
+            <span class="n">activation</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="DoubleConv3D.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.DoubleConv3D.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">double_conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TripleConv">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.TripleConv">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TripleConv</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Triple convolution with separable spatial convolutions.</span>
+<span class="sd">    Uses (1, kernel_size) and (kernel_size, 1) convolutions then combines.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    in_channels : int</span>
+<span class="sd">        Number of input channels.</span>
+<span class="sd">    out_channels : int</span>
+<span class="sd">        Number of output channels.</span>
+<span class="sd">    mid_channels : int, optional</span>
+<span class="sd">        Number of intermediate channels. If None, uses out_channels.</span>
+<span class="sd">    kernel_size : int, optional</span>
+<span class="sd">        Kernel size for separable convolutions. Must be 3, 5, or 7. Default is 7.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">mid_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">7</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">mid_channels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mid_channels</span> <span class="o">=</span> <span class="n">out_channels</span>
+
+        <span class="k">assert</span> <span class="n">kernel_size</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="s2">&quot;kernel size must be 3, 5, or 7&quot;</span>
+        <span class="n">padding</span> <span class="o">=</span> <span class="n">kernel_size</span> <span class="o">//</span> <span class="mi">2</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span>
+                <span class="n">in_channels</span><span class="p">,</span>
+                <span class="n">mid_channels</span><span class="p">,</span>
+                <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">),</span>
+                <span class="n">padding</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">padding</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">mid_channels</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">SiLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span>
+                <span class="n">in_channels</span><span class="p">,</span>
+                <span class="n">mid_channels</span><span class="p">,</span>
+                <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="n">kernel_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">padding</span><span class="o">=</span><span class="p">(</span><span class="n">padding</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">mid_channels</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">SiLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv_out</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">mid_channels</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">SiLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="TripleConv.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.TripleConv.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv_out</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">x</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Down">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.Down">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Down</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Downscaling with maxpool then double conv.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    in_channels : int</span>
+<span class="sd">        Number of input channels.</span>
+<span class="sd">    out_channels : int</span>
+<span class="sd">        Number of output channels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxpool_conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">DoubleConv</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">)</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="Down.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.Down.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxpool_conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Down3D">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.Down3D">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Down3D</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Downscaling with maxpool then double 3D conv.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    in_channels : int</span>
+<span class="sd">        Number of input channels.</span>
+<span class="sd">    out_channels : int</span>
+<span class="sd">        Number of output channels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxpool_conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">MaxPool3d</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">DoubleConv3D</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">)</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="Down3D.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.Down3D.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxpool_conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Up">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.Up">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Up</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Upscaling then double conv.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    in_channels : int</span>
+<span class="sd">        Number of input channels.</span>
+<span class="sd">    out_channels : int</span>
+<span class="sd">        Number of output channels.</span>
+<span class="sd">    bilinear : bool, optional</span>
+<span class="sd">        Whether to use bilinear upsampling. Default is True.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">bilinear</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">bilinear</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">up</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Upsample</span><span class="p">(</span><span class="n">scale_factor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;bilinear&quot;</span><span class="p">,</span> <span class="n">align_corners</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">DoubleConv</span><span class="p">(</span>
+                <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">mid_channels</span><span class="o">=</span><span class="n">in_channels</span> <span class="o">//</span> <span class="mi">2</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">up</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ConvTranspose2d</span><span class="p">(</span>
+                <span class="n">in_channels</span><span class="p">,</span> <span class="n">in_channels</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">DoubleConv</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Up.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.Up.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">):</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">up</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span>
+        <span class="c1"># input is CHW</span>
+        <span class="n">diffY</span> <span class="o">=</span> <span class="n">x2</span><span class="o">.</span><span class="n">size</span><span class="p">()[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x1</span><span class="o">.</span><span class="n">size</span><span class="p">()[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">diffX</span> <span class="o">=</span> <span class="n">x2</span><span class="o">.</span><span class="n">size</span><span class="p">()[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">x1</span><span class="o">.</span><span class="n">size</span><span class="p">()[</span><span class="mi">3</span><span class="p">]</span>
+
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="p">[</span><span class="n">diffX</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">diffX</span> <span class="o">-</span> <span class="n">diffX</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">diffY</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">diffY</span> <span class="o">-</span> <span class="n">diffY</span> <span class="o">//</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x2</span><span class="p">,</span> <span class="n">x1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Up3D">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.Up3D">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Up3D</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Upscaling then double 3D conv.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    in_channels : int</span>
+<span class="sd">        Number of input channels.</span>
+<span class="sd">    out_channels : int</span>
+<span class="sd">        Number of output channels.</span>
+<span class="sd">    trilinear : bool, optional</span>
+<span class="sd">        Whether to use trilinear upsampling. Default is True.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">trilinear</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">trilinear</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">up</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Upsample</span><span class="p">(</span><span class="n">scale_factor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;trilinear&quot;</span><span class="p">,</span> <span class="n">align_corners</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">DoubleConv3D</span><span class="p">(</span>
+                <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">mid_channels</span><span class="o">=</span><span class="n">in_channels</span> <span class="o">//</span> <span class="mi">2</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">up</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ConvTranspose3d</span><span class="p">(</span>
+                <span class="n">in_channels</span><span class="p">,</span> <span class="n">in_channels</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">DoubleConv3D</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Up3D.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.Up3D.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">):</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">up</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span>
+        <span class="c1"># input is CDHW</span>
+        <span class="n">diffZ</span> <span class="o">=</span> <span class="n">x2</span><span class="o">.</span><span class="n">size</span><span class="p">()[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x1</span><span class="o">.</span><span class="n">size</span><span class="p">()[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">diffY</span> <span class="o">=</span> <span class="n">x2</span><span class="o">.</span><span class="n">size</span><span class="p">()[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">x1</span><span class="o">.</span><span class="n">size</span><span class="p">()[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">diffX</span> <span class="o">=</span> <span class="n">x2</span><span class="o">.</span><span class="n">size</span><span class="p">()[</span><span class="mi">4</span><span class="p">]</span> <span class="o">-</span> <span class="n">x1</span><span class="o">.</span><span class="n">size</span><span class="p">()[</span><span class="mi">4</span><span class="p">]</span>
+
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span>
+            <span class="n">x1</span><span class="p">,</span>
+            <span class="p">[</span>
+                <span class="n">diffX</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="n">diffX</span> <span class="o">-</span> <span class="n">diffX</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="n">diffY</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="n">diffY</span> <span class="o">-</span> <span class="n">diffY</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="n">diffZ</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="n">diffZ</span> <span class="o">-</span> <span class="n">diffZ</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x2</span><span class="p">,</span> <span class="n">x1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OutConv">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.OutConv">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OutConv</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Output convolution layer.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    in_channels : int</span>
+<span class="sd">        Number of input channels.</span>
+<span class="sd">    out_channels : int</span>
+<span class="sd">        Number of output channels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">OutConv</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="OutConv.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.OutConv.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OutConv3D">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.OutConv3D">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OutConv3D</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Output 3D convolution layer.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    in_channels : int</span>
+<span class="sd">        Number of input channels.</span>
+<span class="sd">    out_channels : int</span>
+<span class="sd">        Number of output channels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">OutConv3D</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv3d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="OutConv3D.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.OutConv3D.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LatentDecorr">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.LatentDecorr">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LatentDecorr</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Latent pass-through layer that adds covariance decorrelation loss.</span>
+
+<span class="sd">    This layer encourages the latent representations to be decorrelated</span>
+<span class="sd">    by penalizing off-diagonal elements of the covariance matrix.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    strength : float, optional</span>
+<span class="sd">        Strength of the decorrelation penalty, by default 1e-2.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">strength</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strength</span> <span class="o">=</span> <span class="n">strength</span>
+
+<div class="viewcode-block" id="LatentDecorr.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.LatentDecorr.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass with decorrelation loss.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        z : torch.Tensor</span>
+<span class="sd">            Latent representations, shape (batch, k).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        torch.Tensor</span>
+<span class="sd">            Unchanged latent representations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># z: (batch, k)</span>
+        <span class="n">zc</span> <span class="o">=</span> <span class="n">z</span> <span class="o">-</span> <span class="n">z</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># center</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">zc</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">cov</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">zc</span><span class="o">.</span><span class="n">t</span><span class="p">(),</span> <span class="n">zc</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">B</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># (k, k)</span>
+        <span class="n">diag_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">cov</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">cov</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">cov</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">offdiag</span> <span class="o">=</span> <span class="n">cov</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">diag_mask</span><span class="p">)</span>  <span class="c1"># zero diag</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">strength</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">offdiag</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Add loss to computation graph</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">z</span> <span class="o">+</span> <span class="mi">0</span> <span class="o">*</span> <span class="n">loss</span>  <span class="c1"># Trick to add loss to graph without changing z</span>
+
+        <span class="c1"># Store current loss for retrieval during training</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loss</span> <span class="o">=</span> <span class="n">loss</span>
+
+        <span class="k">return</span> <span class="n">z</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PositionalEmbedding">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.PositionalEmbedding">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PositionalEmbedding</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Learnable positional embedding layer for transformer models.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n_tokens : int</span>
+<span class="sd">        Number of tokens/patches.</span>
+<span class="sd">    d_model : int</span>
+<span class="sd">        Model dimension.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_tokens</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_tokens</span><span class="p">,</span> <span class="n">d_model</span><span class="p">))</span>
+
+<div class="viewcode-block" id="PositionalEmbedding.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.PositionalEmbedding.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : torch.Tensor</span>
+<span class="sd">            Input tokens, shape (B, N, D).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        torch.Tensor</span>
+<span class="sd">            Tokens with positional embeddings added.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Patchify">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.Patchify">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Patchify</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Patchify layer that splits images into patches.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    patch_size : int</span>
+<span class="sd">        Size of each patch (patch_size x patch_size).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">patch_size</span>
+
+<div class="viewcode-block" id="Patchify.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.Patchify.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : torch.Tensor</span>
+<span class="sd">            Input images, shape (B, C, H, W), where H and W are multiples of p.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        torch.Tensor</span>
+<span class="sd">            Patches, shape (B, N, p*p*C).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
+        <span class="n">Hp</span><span class="p">,</span> <span class="n">Wp</span> <span class="o">=</span> <span class="n">H</span> <span class="o">//</span> <span class="n">p</span><span class="p">,</span> <span class="n">W</span> <span class="o">//</span> <span class="n">p</span>
+
+        <span class="c1"># Unfold into patches</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">unfold</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">unfold</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>  <span class="c1"># (B, C, Hp, Wp, p, p)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">Hp</span><span class="p">,</span> <span class="n">Wp</span><span class="p">,</span> <span class="n">p</span> <span class="o">*</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>  <span class="c1"># (B, Hp, Wp, C, p*p)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">Hp</span> <span class="o">*</span> <span class="n">Wp</span><span class="p">,</span> <span class="n">C</span> <span class="o">*</span> <span class="n">p</span> <span class="o">*</span> <span class="n">p</span><span class="p">)</span>  <span class="c1"># (B, N, p*p*C)</span>
+
+        <span class="k">return</span> <span class="n">x</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Unpatchify">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.Unpatchify">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Unpatchify</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Unpatchify layer that reconstructs images from patches.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    patch_size : int</span>
+<span class="sd">        Size of each patch.</span>
+<span class="sd">    Hp : int</span>
+<span class="sd">        Number of patches in height dimension.</span>
+<span class="sd">    Wp : int</span>
+<span class="sd">        Number of patches in width dimension.</span>
+<span class="sd">    C : int</span>
+<span class="sd">        Number of channels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">Hp</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">Wp</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">C</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">patch_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Hp</span> <span class="o">=</span> <span class="n">Hp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Wp</span> <span class="o">=</span> <span class="n">Wp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">C</span> <span class="o">=</span> <span class="n">C</span>
+
+<div class="viewcode-block" id="Unpatchify.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.Unpatchify.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        tokens : torch.Tensor</span>
+<span class="sd">            Patches, shape (B, N=Hp*Wp, p*p*C).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        torch.Tensor</span>
+<span class="sd">            Reconstructed images, shape (B, C, H, W).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span><span class="p">,</span> <span class="n">Hp</span><span class="p">,</span> <span class="n">Wp</span><span class="p">,</span> <span class="n">C</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Hp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Wp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">C</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">Hp</span><span class="p">,</span> <span class="n">Wp</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>  <span class="c1"># (B, C, Hp, p, Wp, p)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">Hp</span> <span class="o">*</span> <span class="n">p</span><span class="p">,</span> <span class="n">Wp</span> <span class="o">*</span> <span class="n">p</span><span class="p">)</span>  <span class="c1"># (B, C, H, W)</span>
+
+        <span class="k">return</span> <span class="n">x</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TimePositionalEncoding">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.TimePositionalEncoding">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TimePositionalEncoding</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sinusoidal positional encoding for temporal sequences.</span>
+
+<span class="sd">    Adds 1D sinusoidal time positions to per-timestep embeddings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TimePositionalEncoding.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.TimePositionalEncoding.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : torch.Tensor</span>
+<span class="sd">            Input sequences, shape (B, L, D).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        torch.Tensor</span>
+<span class="sd">            Sequences with positional encodings added.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># x: (B, L, D)</span>
+        <span class="n">B</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">device</span>
+
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (L, 1)</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (1, D)</span>
+        <span class="n">angles</span> <span class="o">=</span> <span class="n">pos</span> <span class="o">/</span> <span class="p">(</span><span class="mf">10000.0</span> <span class="o">**</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">D</span><span class="p">))</span>
+
+        <span class="n">pe</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">pe</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">pe</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angles</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+
+        <span class="n">pe</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (1, L, D)</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">pe</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ConvLSTMCell">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.ConvLSTMCell">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConvLSTMCell</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ConvLSTM Cell implementation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_dim : int</span>
+<span class="sd">        Number of channels of input tensor.</span>
+<span class="sd">    hidden_dim : int</span>
+<span class="sd">        Number of channels of hidden state.</span>
+<span class="sd">    kernel_size : int or tuple, optional</span>
+<span class="sd">        Size of the convolutional kernel. Default is 3.</span>
+<span class="sd">    bias : bool, optional</span>
+<span class="sd">        Whether to add bias. Default is True.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span> <span class="o">=</span> <span class="n">input_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kernel_size</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">kernel_size</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel_size</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span>
+            <span class="k">else</span> <span class="p">(</span><span class="n">kernel_size</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">padding</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">bias</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span>
+            <span class="n">in_channels</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="o">=</span><span class="mi">4</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span><span class="p">,</span>
+            <span class="n">kernel_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_size</span><span class="p">,</span>
+            <span class="n">padding</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">padding</span><span class="p">,</span>
+            <span class="n">bias</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="ConvLSTMCell.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.ConvLSTMCell.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">cur_state</span><span class="p">):</span>
+        <span class="n">h_cur</span><span class="p">,</span> <span class="n">c_cur</span> <span class="o">=</span> <span class="n">cur_state</span>
+
+        <span class="n">combined</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">h_cur</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>  <span class="c1"># concatenate along channel axis</span>
+
+        <span class="n">combined_conv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">combined</span><span class="p">)</span>
+        <span class="n">cc_i</span><span class="p">,</span> <span class="n">cc_f</span><span class="p">,</span> <span class="n">cc_o</span><span class="p">,</span> <span class="n">cc_g</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">combined_conv</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">cc_i</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">cc_f</span><span class="p">)</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">cc_o</span><span class="p">)</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">cc_g</span><span class="p">)</span>
+
+        <span class="n">c_next</span> <span class="o">=</span> <span class="n">f</span> <span class="o">*</span> <span class="n">c_cur</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="n">g</span>
+        <span class="n">h_next</span> <span class="o">=</span> <span class="n">o</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">c_next</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">h_next</span><span class="p">,</span> <span class="n">c_next</span></div>
+
+
+<div class="viewcode-block" id="ConvLSTMCell.init_hidden">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.ConvLSTMCell.init_hidden">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_hidden</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">image_size</span><span class="p">):</span>
+        <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">image_size</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="n">batch_size</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span><span class="p">,</span>
+                <span class="n">height</span><span class="p">,</span>
+                <span class="n">width</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="n">batch_size</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span><span class="p">,</span>
+                <span class="n">height</span><span class="p">,</span>
+                <span class="n">width</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ConvLSTM">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.ConvLSTM">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConvLSTM</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ConvLSTM module.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_dim : int</span>
+<span class="sd">        Number of channels of input tensor.</span>
+<span class="sd">    hidden_dim : int or list</span>
+<span class="sd">        Number of channels of hidden state(s).</span>
+<span class="sd">    kernel_size : int or tuple, optional</span>
+<span class="sd">        Size of the convolutional kernel. Default is 3.</span>
+<span class="sd">    num_layers : int, optional</span>
+<span class="sd">        Number of ConvLSTM layers. Default is 1.</span>
+<span class="sd">    batch_first : bool, optional</span>
+<span class="sd">        If True, input and output tensors are provided as (batch, seq, channel, height, width).</span>
+<span class="sd">        Default is False.</span>
+<span class="sd">    bias : bool, optional</span>
+<span class="sd">        Whether to add bias. Default is True.</span>
+<span class="sd">    return_all_layers : bool, optional</span>
+<span class="sd">        If True, returns all layers&#39; outputs. Default is False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_dim</span><span class="p">,</span>
+        <span class="n">hidden_dim</span><span class="p">,</span>
+        <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">num_layers</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">batch_first</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">return_all_layers</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_kernel_size_consistency</span><span class="p">(</span><span class="n">kernel_size</span><span class="p">)</span>
+
+        <span class="n">kernel_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extend_for_multilayer</span><span class="p">(</span><span class="n">kernel_size</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">)</span>
+        <span class="n">hidden_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extend_for_multilayer</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">kernel_size</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">)</span> <span class="o">==</span> <span class="n">num_layers</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Inconsistent list length.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span> <span class="o">=</span> <span class="n">input_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kernel_size</span> <span class="o">=</span> <span class="n">kernel_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span> <span class="o">=</span> <span class="n">num_layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span> <span class="o">=</span> <span class="n">batch_first</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">bias</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_all_layers</span> <span class="o">=</span> <span class="n">return_all_layers</span>
+
+        <span class="n">cell_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span><span class="p">):</span>
+            <span class="n">cur_input_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">cell_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">ConvLSTMCell</span><span class="p">(</span>
+                    <span class="n">input_dim</span><span class="o">=</span><span class="n">cur_input_dim</span><span class="p">,</span>
+                    <span class="n">hidden_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                    <span class="n">kernel_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_size</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                    <span class="n">bias</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cell_list</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">(</span><span class="n">cell_list</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ConvLSTM.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.ConvLSTM.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">hidden_state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_first</span><span class="p">:</span>
+            <span class="c1"># (t, b, c, h, w) -&gt; (b, t, c, h, w)</span>
+            <span class="n">input_tensor</span> <span class="o">=</span> <span class="n">input_tensor</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+        <span class="n">b</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">input_tensor</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">hidden_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">hidden_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_hidden</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">))</span>
+
+        <span class="n">layer_output_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">last_state_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">seq_len</span> <span class="o">=</span> <span class="n">input_tensor</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">cur_layer_input</span> <span class="o">=</span> <span class="n">input_tensor</span>
+
+        <span class="k">for</span> <span class="n">layer_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span><span class="p">):</span>
+            <span class="n">h</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">hidden_state</span><span class="p">[</span><span class="n">layer_idx</span><span class="p">]</span>
+            <span class="n">output_inner</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">seq_len</span><span class="p">):</span>
+                <span class="n">h</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_list</span><span class="p">[</span><span class="n">layer_idx</span><span class="p">](</span>
+                    <span class="n">input_tensor</span><span class="o">=</span><span class="n">cur_layer_input</span><span class="p">[:,</span> <span class="n">t</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">cur_state</span><span class="o">=</span><span class="p">[</span><span class="n">h</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">output_inner</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+
+            <span class="n">layer_output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">output_inner</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">cur_layer_input</span> <span class="o">=</span> <span class="n">layer_output</span>
+
+            <span class="n">layer_output_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer_output</span><span class="p">)</span>
+            <span class="n">last_state_list</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">c</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_all_layers</span><span class="p">:</span>
+            <span class="n">layer_output_list</span> <span class="o">=</span> <span class="n">layer_output_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="n">last_state_list</span> <span class="o">=</span> <span class="n">last_state_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="k">return</span> <span class="n">layer_output_list</span><span class="p">,</span> <span class="n">last_state_list</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_hidden</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">image_size</span><span class="p">):</span>
+        <span class="n">init_states</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span><span class="p">):</span>
+            <span class="n">init_states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">init_hidden</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">image_size</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">init_states</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_kernel_size_consistency</span><span class="p">(</span><span class="n">kernel_size</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel_size</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel_size</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">kernel_size</span><span class="p">])</span>
+            <span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`kernel_size` must be tuple or list of tuples&quot;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extend_for_multilayer</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">param</span> <span class="o">=</span> <span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_layers</span>
+        <span class="k">return</span> <span class="n">param</span></div>
+
+
+
+<div class="viewcode-block" id="LinearSelfAttention">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.LinearSelfAttention">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LinearSelfAttention</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Softmax-free, Performer-style linear attention on the time axis.</span>
+
+<span class="sd">    Provides O(B * L * D * H) scaling, good for large sequence lengths.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    d_model : int</span>
+<span class="sd">        Model dimension.</span>
+<span class="sd">    num_heads : int, optional</span>
+<span class="sd">        Number of attention heads, by default 4.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">num_heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">d_model</span> <span class="o">%</span> <span class="n">num_heads</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">d_model</span> <span class="o">=</span> <span class="n">d_model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span> <span class="o">=</span> <span class="n">num_heads</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">d_head</span> <span class="o">=</span> <span class="n">d_model</span> <span class="o">//</span> <span class="n">num_heads</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Wq</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Wk</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Wv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Wo</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_phi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Positive feature map (ELU + 1) as in linear transformers.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">elu</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1.0</span>
+
+<div class="viewcode-block" id="LinearSelfAttention.forward">
+<a class="viewcode-back" href="../../../bluemath_tk.deeplearning.html#bluemath_tk.deeplearning.layers.LinearSelfAttention.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : torch.Tensor</span>
+<span class="sd">            Input sequences, shape (B, L, D).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        torch.Tensor</span>
+<span class="sd">            Output sequences, shape (B, L, D).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># x: (B, L, D)</span>
+        <span class="n">B</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">Q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Wq</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Wk</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Wv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># (B, L, D)</span>
+
+        <span class="c1"># split heads</span>
+        <span class="n">Qh</span> <span class="o">=</span> <span class="n">Q</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_head</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># (B, H, L, Dh)</span>
+        <span class="n">Kh</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_head</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># (B, H, L, Dh)</span>
+        <span class="n">Vh</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_head</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># (B, H, L, Dh)</span>
+
+        <span class="n">Qf</span><span class="p">,</span> <span class="n">Kf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phi</span><span class="p">(</span><span class="n">Qh</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phi</span><span class="p">(</span><span class="n">Kh</span><span class="p">)</span>  <span class="c1"># (B, H, L, Dh)</span>
+
+        <span class="c1"># Precompute Kf^T Vh and Kf^T 1 for normalization (linear time in L)</span>
+        <span class="n">Kv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;bhlm,bhln-&gt;bhmn&quot;</span><span class="p">,</span> <span class="n">Kf</span><span class="p">,</span> <span class="n">Vh</span><span class="p">)</span>  <span class="c1"># (B, H, Dh, Dh)</span>
+        <span class="n">K1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+            <span class="s2">&quot;bhlm,bhl-&gt;bhm&quot;</span><span class="p">,</span>
+            <span class="n">Kf</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">B</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="n">L</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">Kf</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">Kf</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+        <span class="p">)</span>  <span class="c1"># (B, H, Dh)</span>
+
+        <span class="c1"># Numerator: Qf @ (Kf^T V)</span>
+        <span class="n">num</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;bhlm,bhmn-&gt;bhln&quot;</span><span class="p">,</span> <span class="n">Qf</span><span class="p">,</span> <span class="n">Kv</span><span class="p">)</span>  <span class="c1"># (B, H, L, Dh)</span>
+        <span class="c1"># Denominator: Qf @ (Kf^T 1)  (broadcast over Dh)</span>
+        <span class="n">den</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;bhlm,bhm-&gt;bhl&quot;</span><span class="p">,</span> <span class="n">Qf</span><span class="p">,</span> <span class="n">K1</span><span class="p">)</span>  <span class="c1"># (B, H, L)</span>
+        <span class="n">den</span> <span class="o">=</span> <span class="p">(</span><span class="n">den</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (B, H, L, 1)</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="n">num</span> <span class="o">/</span> <span class="n">den</span>  <span class="c1"># (B, H, L, Dh)</span>
+        <span class="c1"># merge heads</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_model</span><span class="p">)</span>  <span class="c1"># (B, L, D)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Wo</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

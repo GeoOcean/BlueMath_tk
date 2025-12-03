@@ -1,0 +1,29 @@
+bluemath\_tk.wrappers.swan package
+==================================
+
+Submodules
+----------
+
+bluemath\_tk.wrappers.swan.swan\_example module
+-----------------------------------------------
+
+.. automodule:: bluemath_tk.wrappers.swan.swan_example
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.wrappers.swan.swan\_wrapper module
+-----------------------------------------------
+
+.. automodule:: bluemath_tk.wrappers.swan.swan_wrapper
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.wrappers.swan
+   :members:
+   :show-inheritance:
+   :undoc-members:

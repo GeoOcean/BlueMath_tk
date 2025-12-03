@@ -1,0 +1,21 @@
+bluemath\_tk.config package
+===========================
+
+Submodules
+----------
+
+bluemath\_tk.config.paths module
+--------------------------------
+
+.. automodule:: bluemath_tk.config.paths
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.config
+   :members:
+   :show-inheritance:
+   :undoc-members:

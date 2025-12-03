@@ -1,0 +1,29 @@
+bluemath\_tk.teslakit.numerical\_models.swan.test package
+=========================================================
+
+Submodules
+----------
+
+bluemath\_tk.teslakit.numerical\_models.swan.test.test\_io module
+-----------------------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.numerical_models.swan.test.test_io
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bluemath\_tk.teslakit.numerical\_models.swan.test.test\_wrap module
+-------------------------------------------------------------------
+
+.. automodule:: bluemath_tk.teslakit.numerical_models.swan.test.test_wrap
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bluemath_tk.teslakit.numerical_models.swan.test
+   :members:
+   :show-inheritance:
+   :undoc-members:

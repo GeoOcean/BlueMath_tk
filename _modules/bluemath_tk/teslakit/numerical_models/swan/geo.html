@@ -1,0 +1,217 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bluemath_tk.teslakit.numerical_models.swan.geo &mdash; Bluemath-Toolkit  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/thebelab.css" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../../_static/thebelab-helper.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Bluemath-Toolkit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../installation.html">Installation for Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../modules.html">bluemath_tk</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Bluemath-Toolkit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../swan.html">bluemath_tk.teslakit.numerical_models.swan</a></li>
+      <li class="breadcrumb-item active">bluemath_tk.teslakit.numerical_models.swan.geo</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bluemath_tk.teslakit.numerical_models.swan.geo</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">radians</span><span class="p">,</span> <span class="n">degrees</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">asin</span><span class="p">,</span> <span class="n">acos</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">atan2</span><span class="p">,</span> <span class="n">pi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<div class="viewcode-block" id="gc_distance">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.geo.gc_distance">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gc_distance</span><span class="p">(</span><span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span><span class="p">):</span>
+    <span class="s1">&#39;Calculate great circle distance and azimuth (exact. parsed ml)&#39;</span>
+
+    <span class="c1"># distance</span>
+    <span class="n">lon1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon2</span><span class="p">,</span> <span class="n">lat2</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">radians</span><span class="p">,</span> <span class="p">[</span><span class="n">lon1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon2</span><span class="p">,</span> <span class="n">lat2</span><span class="p">])</span>
+
+    <span class="n">a</span> <span class="o">=</span> <span class="n">sin</span><span class="p">((</span><span class="n">lat2</span><span class="o">-</span><span class="n">lat1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">cos</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">((</span><span class="n">lon2</span><span class="o">-</span><span class="n">lon1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">;</span>
+    <span class="k">if</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">atan2</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">a</span><span class="p">))</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">degrees</span><span class="p">(</span><span class="n">rng</span><span class="p">)</span>
+
+    <span class="c1"># azimuth</span>
+    <span class="n">az</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span>
+        <span class="n">cos</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">lon2</span><span class="o">-</span><span class="n">lon1</span><span class="p">),</span>
+        <span class="n">cos</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">-</span> <span class="n">sin</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">lon2</span><span class="o">-</span><span class="n">lon1</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">lat1</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">:</span> <span class="n">az</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">lat2</span> <span class="o">&gt;=</span>  <span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">:</span> <span class="n">az</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">lat2</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">:</span> <span class="n">az</span> <span class="o">=</span> <span class="n">pi</span>
+    <span class="k">if</span> <span class="n">lat1</span> <span class="o">&gt;=</span>  <span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">:</span> <span class="n">az</span> <span class="o">=</span> <span class="n">pi</span>
+
+    <span class="n">az</span> <span class="o">=</span> <span class="n">az</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">az</span> <span class="o">=</span> <span class="n">degrees</span><span class="p">(</span><span class="n">az</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">rng</span><span class="p">,</span> <span class="n">az</span></div>
+
+
+<div class="viewcode-block" id="shoot">
+<a class="viewcode-back" href="../../../../../bluemath_tk.teslakit.numerical_models.swan.html#bluemath_tk.teslakit.numerical_models.swan.geo.shoot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">shoot</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">azimuth</span><span class="p">,</span> <span class="n">maxdist</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shooter Function</span>
+<span class="sd">    Original javascript on http://williams.best.vwh.net/gccalc.htm</span>
+<span class="sd">    Translated to python by Thomas Lecocq</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">glat1</span> <span class="o">=</span> <span class="n">lat</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.</span>
+    <span class="n">glon1</span> <span class="o">=</span> <span class="n">lon</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">maxdist</span> <span class="o">/</span> <span class="mf">1.852</span>
+    <span class="n">faz</span> <span class="o">=</span> <span class="n">azimuth</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.</span>
+
+    <span class="n">EPS</span><span class="o">=</span> <span class="mf">0.00000000005</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">glat1</span><span class="p">))</span><span class="o">&lt;</span><span class="n">EPS</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">faz</span><span class="p">))</span><span class="o">&lt;</span><span class="n">EPS</span><span class="p">)):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Only N-S courses are meaningful, starting at a pole!&quot;</span><span class="p">)</span>
+
+    <span class="n">a</span><span class="o">=</span><span class="mf">6378.13</span><span class="o">/</span><span class="mf">1.852</span>
+    <span class="n">f</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mf">298.257223563</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">f</span>
+    <span class="n">tu</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">glat1</span><span class="p">)</span>
+    <span class="n">sf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">faz</span><span class="p">)</span>
+    <span class="n">cf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">faz</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">cf</span><span class="o">==</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">b</span><span class="o">=</span><span class="mf">0.</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">b</span><span class="o">=</span><span class="mf">2.</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span> <span class="p">(</span><span class="n">tu</span><span class="p">,</span> <span class="n">cf</span><span class="p">)</span>
+
+    <span class="n">cu</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">tu</span> <span class="o">*</span> <span class="n">tu</span><span class="p">)</span>
+    <span class="n">su</span> <span class="o">=</span> <span class="n">tu</span> <span class="o">*</span> <span class="n">cu</span>
+    <span class="n">sa</span> <span class="o">=</span> <span class="n">cu</span> <span class="o">*</span> <span class="n">sf</span>
+    <span class="n">c2a</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">sa</span> <span class="o">*</span> <span class="n">sa</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.</span> <span class="o">+</span> <span class="n">c2a</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">/</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="mf">2.</span><span class="p">)</span> <span class="o">/</span> <span class="n">x</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">x</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">/</span> <span class="mf">4.</span> <span class="o">+</span> <span class="mf">1.</span><span class="p">)</span> <span class="o">/</span> <span class="n">c</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.375</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span>
+    <span class="n">tu</span> <span class="o">=</span> <span class="n">s</span> <span class="o">/</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="n">c</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">tu</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">EPS</span><span class="p">):</span>
+
+        <span class="n">sy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">cy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">cz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="mf">2.</span> <span class="o">*</span> <span class="n">cz</span> <span class="o">*</span> <span class="n">cz</span> <span class="o">-</span> <span class="mf">1.</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">e</span> <span class="o">*</span> <span class="n">cy</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">e</span> <span class="o">+</span> <span class="n">e</span> <span class="o">-</span> <span class="mf">1.</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">(((</span><span class="n">sy</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">*</span> <span class="mf">4.</span> <span class="o">-</span> <span class="mf">3.</span><span class="p">)</span> <span class="o">*</span> <span class="n">y</span> <span class="o">*</span> <span class="n">cz</span> <span class="o">*</span> <span class="n">d</span> <span class="o">/</span> <span class="mf">6.</span> <span class="o">+</span> <span class="n">x</span><span class="p">)</span> <span class="o">*</span>
+              <span class="n">d</span> <span class="o">/</span> <span class="mf">4.</span> <span class="o">-</span> <span class="n">cz</span><span class="p">)</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">*</span> <span class="n">d</span> <span class="o">+</span> <span class="n">tu</span>
+
+    <span class="n">b</span> <span class="o">=</span> <span class="n">cu</span> <span class="o">*</span> <span class="n">cy</span> <span class="o">*</span> <span class="n">cf</span> <span class="o">-</span> <span class="n">su</span> <span class="o">*</span> <span class="n">sy</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sa</span> <span class="o">*</span> <span class="n">sa</span> <span class="o">+</span> <span class="n">b</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">su</span> <span class="o">*</span> <span class="n">cy</span> <span class="o">+</span> <span class="n">cu</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">*</span> <span class="n">cf</span>
+    <span class="n">glat2</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">cu</span> <span class="o">*</span> <span class="n">cy</span> <span class="o">-</span> <span class="n">su</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">*</span> <span class="n">cf</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">sy</span> <span class="o">*</span> <span class="n">sf</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="p">((</span><span class="o">-</span><span class="mf">3.</span> <span class="o">*</span> <span class="n">c2a</span> <span class="o">+</span> <span class="mf">4.</span><span class="p">)</span> <span class="o">*</span> <span class="n">f</span> <span class="o">+</span> <span class="mf">4.</span><span class="p">)</span> <span class="o">*</span> <span class="n">c2a</span> <span class="o">*</span> <span class="n">f</span> <span class="o">/</span> <span class="mf">16.</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">((</span><span class="n">e</span> <span class="o">*</span> <span class="n">cy</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">cz</span><span class="p">)</span> <span class="o">*</span> <span class="n">sy</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span> <span class="o">*</span> <span class="n">sa</span>
+    <span class="n">glon2</span> <span class="o">=</span> <span class="p">((</span><span class="n">glon1</span> <span class="o">+</span> <span class="n">x</span> <span class="o">-</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">f</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+
+    <span class="n">baz</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">sa</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+    <span class="n">glon2</span> <span class="o">*=</span> <span class="mf">180.</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+    <span class="n">glat2</span> <span class="o">*=</span> <span class="mf">180.</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+    <span class="n">baz</span> <span class="o">*=</span> <span class="mf">180.</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">glon2</span><span class="p">,</span> <span class="n">glat2</span><span class="p">,</span> <span class="n">baz</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GeoOcean Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
