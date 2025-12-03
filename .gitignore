@@ -78,6 +78,7 @@ docs/logs/
 docs/jupyter_execute/
 docs/*.pkl
 .ruff_cache/
+*.rst
 
 # MkDocs documentation (production)
 site/
@@ -104,8 +105,11 @@ venv.bak/
 notebooks/
 test_cases/
 test_data/
+
+# Automation
 TODO.md
 newsletter.py
+notion/
 
 # Tests
 tests/downloaders/

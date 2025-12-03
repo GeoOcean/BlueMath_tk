@@ -23,7 +23,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install bluemath-tk[docs]
+          pip install .[all]
 
       - name: Sphinx build
         run: |
