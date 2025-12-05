@@ -2,7 +2,7 @@ import warnings
 from datetime import datetime
 from functools import partial
 from multiprocessing import Pool, cpu_count
-from typing import Tuple
+from typing import Tuple, List
 
 import cartopy.crs as ccrs
 import matplotlib.gridspec as gridspec
@@ -16,7 +16,45 @@ from tqdm import tqdm
 
 from ..core.plotting.colors import hex_colors_land, hex_colors_water
 from ..core.plotting.utils import join_colormaps
-from ..topo_bathy.mesh_utils import read_adcirc_grd
+
+
+def read_adcirc_grd(grd_file: str) -> Tuple[np.ndarray, np.ndarray, List[str]]:
+    """
+    Reads the ADCIRC grid file and returns the node and element data.
+
+    Parameters
+    ----------
+    grd_file : str
+        Path to the ADCIRC grid file.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray, List[str]]
+        A tuple containing:
+        - Nodes (np.ndarray): An array of shape (nnodes, 3) containing the coordinates of each node.
+        - Elmts (np.ndarray): An array of shape (nelmts, 3) containing the element connectivity,
+            with node indices adjusted (decremented by 1).
+        - lines (List[str]): The remaining lines in the file after reading the nodes and elements.
+
+    Examples
+    --------
+    >>> nodes, elmts, lines = read_adcirc_grd("path/to/grid.grd")
+    >>> print(nodes.shape, elmts.shape, len(lines))
+    (1000, 3) (500, 3) 10
+    """
+
+    with open(grd_file, "r") as f:
+        _header0 = f.readline()
+        header1 = f.readline()
+        header_nums = list(map(float, header1.split()))
+        nelmts = int(header_nums[0])
+        nnodes = int(header_nums[1])
+
+        Nodes = np.loadtxt(f, max_rows=nnodes)
+        Elmts = np.loadtxt(f, max_rows=nelmts) - 1
+        lines = f.readlines()
+
+    return Nodes, Elmts, lines
 
 
 def get_regular_grid(
@@ -1845,3 +1883,233 @@ def plot_GS_validation_timeseries(
 
     plt.tight_layout()
     plt.show()
+
+
+from functools import lru_cache
+import os, struct
+from tqdm import tqdm
+from bluemath_tk.additive.greensurge import GS_LinearWindDragCoef
+
+@lru_cache(maxsize=256)
+def read_raw_with_header(raw_path):
+    """Lit un fichier .raw avec header de 256 octets et retourne un tableau numpy float32."""
+    with open(raw_path, "rb") as f:
+        header_bytes = f.read(256)
+        dims = list(struct.unpack("4i", header_bytes[:16]))
+        dims = [d for d in dims if d > 0]
+        if len(dims) == 0:
+            raise ValueError(f"{raw_path}: header invalide, aucune dimension >0 trouvée")
+        data = np.fromfile(f, dtype=np.float32)
+    expected_size = np.prod(dims)
+    if data.size != expected_size:
+        raise ValueError(f"{raw_path}: taille incohérente (data={data.size}, attendu={expected_size}, shape={dims})")
+    return np.reshape(data, dims)
+
+def greensurge_wind_setup_rteconstruction_raw(
+    greensurge_dataset: str,
+    ds_GFD_info_update: xr.Dataset,
+    xds_vortex_interp: xr.Dataset,
+) -> xr.Dataset:
+    """Calcule la contribution du vent GreenSurge et retourne un xarray Dataset avec les résultats.
+
+    Args:
+        greensurge_dataset (str): Chemin vers le dataset GreenSurge.
+        ds_GFD_info_update (xr.Dataset): Dataset d'informations GreenSurge mis à jour.
+        xds_vortex_interp (xr.Dataset): Dataset d'interpolation du vortex.
+
+    Returns:
+        xr.Dataset: Dataset contenant la contribution du vent GreenSurge.
+    """
+
+    ds_gfd_metadata=ds_GFD_info_update
+    wind_direction_input=xds_vortex_interp
+    velocity_thresholds = np.array([0, 100, 100])
+    drag_coefficients = np.array([0.00063, 0.00723, 0.00723])
+
+    direction_bins = ds_gfd_metadata.wind_directions.values
+    forcing_cell_indices = ds_gfd_metadata.element_forcing_index.values
+    wind_speed_reference = ds_gfd_metadata.wind_speed.values.item()
+    base_drag_coeff = GS_LinearWindDragCoef(
+        wind_speed_reference, drag_coefficients, velocity_thresholds
+    )
+    time_step_hours = ds_gfd_metadata.time_step_hours.values
+
+    time_start = wind_direction_input.time.values.min()
+    time_end = wind_direction_input.time.values.max()
+    duration_in_steps = (
+        int((ds_gfd_metadata.simulation_duration_hours.values) / time_step_hours) + 1
+    )
+    output_time_vector = np.arange(time_start, time_end,np.timedelta64(int(time_step_hours*60), "m"))
+    num_output_times = len(output_time_vector)
+
+    direction_data = wind_direction_input.Dir.values
+    wind_speed_data = wind_direction_input.W.values
+
+    sample_path = f"{greensurge_dataset}/GF_T_0_D_0/dflowfmoutput/GreenSurge_GFDcase_map.raw"
+    sample_data = read_raw_with_header(sample_path)
+    n_faces = sample_data.shape[-1]
+    wind_setup_output = np.zeros((num_output_times, n_faces), dtype=np.float32)
+    water_level_accumulator = np.zeros(sample_data.shape, dtype=np.float32)
+
+    for time_index in tqdm(range(num_output_times), desc="Processing time steps"):
+        water_level_accumulator[:] = 0
+        for cell_index in forcing_cell_indices.astype(int):
+            current_dir = direction_data[cell_index, time_index] % 360
+            adjusted_bins = np.where(direction_bins == 0, 360, direction_bins)
+            closest_direction_index = np.abs(adjusted_bins - current_dir).argmin()
+
+            raw_path = f"{greensurge_dataset}/GF_T_{cell_index}_D_{closest_direction_index}/dflowfmoutput/GreenSurge_GFDcase_map.raw"
+            #print(f"GF_T_{cell_index}_D_{closest_direction_index}")
+            water_level_case = read_raw_with_header(raw_path)
+
+            water_level_case = np.nan_to_num(water_level_case, nan=0)
+
+            wind_speed_value = wind_speed_data[cell_index, time_index]
+            drag_coeff_value = GS_LinearWindDragCoef(
+                wind_speed_value, drag_coefficients, velocity_thresholds
+            )
+
+            scaling_factor = (wind_speed_value**2 / wind_speed_reference**2) * (
+                drag_coeff_value / base_drag_coeff
+            )
+            water_level_accumulator += water_level_case * scaling_factor
+
+        step_window = min(duration_in_steps, num_output_times - time_index)
+        if (num_output_times - time_index) > step_window:
+            wind_setup_output[time_index : time_index + step_window] += water_level_accumulator
+        else:
+            shift_counter = step_window - (num_output_times - time_index)
+            wind_setup_output[
+                time_index : time_index + step_window - shift_counter
+            ] += water_level_accumulator[: step_window - shift_counter]
+
+    ds_wind_setup = xr.Dataset(
+        {"WL": (["time", "nface"], wind_setup_output)},
+        coords={
+            "time": output_time_vector,
+            "nface": np.arange(wind_setup_output.shape[1]),
+        },
+    )
+    return ds_wind_setup
+
+import xarray as xr
+
+def build_greensurge_infos_dataset_pymesh2d(
+    Nodes_calc, Elmts_calc, Nodes_forz, Elmts_forz,
+    site, wind_speed, direction_step,
+    simulation_duration_hours, simulation_time_step_hours,
+    forcing_time_step, reference_date_dt, Eddy, Chezy
+):
+    """Build a structured dataset for GreenSurge hybrid modeling.
+    
+    Parameters
+    ----------
+    Nodes_calc : array
+        Computational mesh vertices (lon, lat)
+    Elmts_calc : array
+        Computational mesh triangles
+    Nodes_forz : array
+        Forcing mesh vertices (lon, lat)
+    Elmts_forz : array
+        Forcing mesh triangles
+    site : str
+        Study site name
+    wind_speed : float
+        Wind speed for each direction (m/s)
+    direction_step : float
+        Wind direction discretization step (degrees)
+    simulation_duration_hours : float
+        Total simulation duration (hours)
+    simulation_time_step_hours : float
+        Simulation time step (hours)
+    forcing_time_step : float
+        Forcing data time step (hours)
+    reference_date_dt : datetime
+        Reference date for simulation
+    Eddy : float
+        Eddy viscosity (m2/s)
+    Chezy : float
+        Chezy friction coefficient
+    
+    Returns
+    -------
+    xr.Dataset
+        Structured dataset for GreenSurge
+    """
+    num_elements = Elmts_forz.shape[0]
+    num_directions = int(360 / direction_step)
+    wind_directions = np.arange(0, 360, direction_step)
+    reference_date_str = reference_date_dt.strftime("%Y-%m-%d %H:%M:%S")
+    
+    time_forcing_index = [
+        0, forcing_time_step, forcing_time_step + 0.001,
+        simulation_duration_hours - 1
+    ]
+    
+    ds = xr.Dataset(
+        coords=dict(
+            wind_direction_index=("wind_direction_index", np.arange(num_directions)),
+            time_forcing_index=("time_forcing_index", time_forcing_index),
+            node_computation_longitude=("node_cumputation_index", Nodes_calc[:, 0]),
+            node_computation_latitude=("node_cumputation_index", Nodes_calc[:, 1]),
+            triangle_nodes=("triangle_forcing_nodes", np.arange(3)),
+            node_forcing_index=("node_forcing_index", np.arange(len(Nodes_forz))),
+            element_forcing_index=("element_forcing_index", np.arange(num_elements)),
+            node_cumputation_index=("node_cumputation_index", np.arange(len(Nodes_calc))),
+            element_computation_index=("element_computation_index", np.arange(len(Elmts_calc))),
+        ),
+        data_vars=dict(
+            triangle_computation_connectivity=(
+                ("element_computation_index", "triangle_forcing_nodes"),
+                Elmts_calc.astype(int),
+                {"description": "Computational mesh triangle connectivity"}
+            ),
+            node_forcing_longitude=(
+                "node_forcing_index", Nodes_forz[:, 0],
+                {"units": "degrees_east", "description": "Forcing mesh node longitude"}
+            ),
+            node_forcing_latitude=(
+                "node_forcing_index", Nodes_forz[:, 1],
+                {"units": "degrees_north", "description": "Forcing mesh node latitude"}
+            ),
+            triangle_forcing_connectivity=(
+                ("element_forcing_index", "triangle_forcing_nodes"),
+                Elmts_forz.astype(int),
+                {"description": "Forcing mesh triangle connectivity"}
+            ),
+            wind_directions=(
+                "wind_direction_index", wind_directions,
+                {"units": "degrees", "description": "Discretized wind directions"}
+            ),
+            total_elements=((), num_elements, {"description": "Number of forcing elements"}),
+            simulation_duration_hours=((), simulation_duration_hours, {"units": "hours"}),
+            time_step_hours=((), simulation_time_step_hours, {"units": "hours"}),
+            wind_speed=((), wind_speed, {"units": "m/s"}),
+            location_name=((), site),
+            eddy_viscosity=((), Eddy, {"units": "m2/s"}),
+            chezy_coefficient=((), Chezy),
+            reference_date=((), reference_date_str),
+            forcing_time_step=((), forcing_time_step, {"units": "hour"}),
+        ),
+        attrs={
+            "title": "GreenSurge Simulation Input Dataset",
+            "institution": "GeoOcean",
+            "model": "GreenSurge",
+            "created": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+    )
+    
+    # Add coordinate attributes
+    ds["time_forcing_index"].attrs = {
+        "standard_name": "time",
+        "units": f"hours since {reference_date_str} +00:00",
+        "calendar": "gregorian",
+    }
+    ds["node_computation_longitude"].attrs = {
+        "standard_name": "longitude", "units": "degrees_east"
+    }
+    ds["node_computation_latitude"].attrs = {
+        "standard_name": "latitude", "units": "degrees_north"
+    }
+    
+    return ds
