@@ -1,13 +1,21 @@
 import os
 import os.path as op
+from copy import deepcopy
 from typing import Union
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 
-from ...additive.greensurge import create_triangle_mask_from_points
+from ...additive.greensurge import (
+    create_triangle_mask_from_points,
+    generate_structured_points_vectorized,
+    get_regular_grid,
+    point_to_segment_distance_vectorized,
+    actualize_grid_info,
+)
 from ...core.operations import nautical_to_mathematical
+from ...tcs.vortex import vortex2delft_3D_FM_nc
 from .._base_wrappers import BaseModelWrapper
 
 sbatch_file_example = """#!/bin/bash
@@ -17,21 +25,34 @@ sbatch_file_example = """#!/bin/bash
 #SBATCH --mem=4gb               # Memory per node in GB (see also --mem-per-cpu)
 #SBATCH --time=24:00:00
 
-source /home/grupos/geocean/faugeree/miniforge3/etc/profile.d/conda.sh
-conda activate GreenSurge
+source /nfs/home/geocean/faugeree/miniforge3/etc/profile.d/conda.sh
+conda activate work
 
 case_dir=$(ls | awk "NR == $SLURM_ARRAY_TASK_ID")
-launchDelft3d.sh --case-dir $case_dir
+launchDelft3dcomp.sh --case-dir $case_dir
 
 output_file="${case_dir}/dflowfmoutput/GreenSurge_GFDcase_map.nc"
-output_file_compressed="${case_dir}/dflowfmoutput/GreenSurge_GFDcase_map_compressed.nc"
-output_file_compressed_tmp="${case_dir}/dflowfmoutput/GreenSurge_GFDcase_map_compressed_tmp.nc"
+output_file_raw="${case_dir}/dflowfmoutput/GreenSurge_GFDcase_map.raw"
 
-ncap2 -s 'mesh2d_s1=float(mesh2d_s1)' -v -O "$output_file" "$output_file_compressed_tmp" && {
-  ncks -4 -L 4 "$output_file_compressed_tmp" "$output_file_compressed"
-  rm "$output_file_compressed_tmp"
-  [[ "$SLURM_ARRAY_TASK_ID" -ne 1 ]] && rm "$output_file"
-}
+python3 - <<EOF
+import os, xarray as xr, numpy as np, struct
+
+output_file = r"${output_file}"
+output_file_raw = r"${output_file_raw}"
+
+ds = xr.open_dataset(output_file)
+data = ds["mesh2d_s1"].values.astype(np.float32)
+shape = list(data.shape)
+shape += [0] * (4 - len(shape))
+header = struct.pack("4i", *shape) + bytes(256 - 16)
+
+with open(output_file_raw, "wb") as f:
+    f.write(header)
+    f.write(data.tobytes())
+
+# if ${SLURM_ARRAY_TASK_ID} != 1:
+#     os.remove(output_file)
+EOF
 """
 
 
@@ -81,12 +102,23 @@ class Delft3dModelWrapper(BaseModelWrapper):
 
         self.sbatch_file_example = sbatch_file_example
 
+        forcing_type = self.fixed_parameters.get("forcing_type", None)
+        if forcing_type == "ASCII":
+            self.fixed_parameters.setdefault(
+                "ExtForceFile", "GreenSurge_GFDcase_wind_ASCII.ext"
+            )
+        elif forcing_type == "netCDF":
+            self.fixed_parameters.setdefault(
+                "ExtForceFile", "GreenSurge_GFDcase_wind_netCDF.ext"
+            )
+
     def run_case(
         self,
         case_dir: str,
         launcher: str,
         output_log_file: str = "wrapper_out.log",
         error_log_file: str = "wrapper_error.log",
+        postprocess: bool = False,
     ) -> None:
         """
         Run the case based on the launcher specified.
@@ -116,7 +148,8 @@ class Delft3dModelWrapper(BaseModelWrapper):
             err_file=error_log_file,
             cwd=case_dir,
         )
-        self.postprocess_case(case_dir=case_dir)
+        if postprocess:
+            self.postprocess_case(case_dir=case_dir)
 
     def monitor_cases(
         self, dia_file_name: str, value_counts: str = None
@@ -150,51 +183,14 @@ class Delft3dModelWrapper(BaseModelWrapper):
         )
 
 
-# def format_matrix(mat):
-#     return "\n".join(
-#         " ".join(f"{x:.1f}" if abs(x) > 0.01 else "0" for x in line) for line in mat
-#     )
-
-
-# def format_zeros(mat_shape):
-#     return "\n".join("0 " * mat_shape[1] for _ in range(mat_shape[0]))
-
-
-def actualize_grid_info(
-    path_ds_origin: str,
-    ds_GFD_calc_info: xr.Dataset,
-) -> None:
-    """
-    Actualizes the grid information in the GFD calculation info dataset
-    by adding the node coordinates and triangle connectivity from the original dataset.
-    Parameters
-    ----------
-    path_ds_origin : str
-        Path to the original dataset containing the mesh2d node coordinates.
-    ds_GFD_calc_info : xr.Dataset
-        The dataset containing the GFD calculation information to be updated.
-    Returns
-    -------
-    ds_GFD_calc_info : xr.Dataset
-        The updated dataset with the node coordinates and triangle connectivity.
-    """
-
-    ds_ori = xr.open_dataset(path_ds_origin)
-
-    ds_GFD_calc_info["node_computation_longitude"] = (
-        ("node_cumputation_index",),
-        ds_ori.mesh2d_node_x.values,
-    )
-    ds_GFD_calc_info["node_computation_latitude"] = (
-        ("node_cumputation_index",),
-        ds_ori.mesh2d_node_y.values,
-    )
-    ds_GFD_calc_info["triangle_computation_connectivity"] = (
-        ("element_computation_index", "triangle_forcing_nodes"),
-        (ds_ori.mesh2d_face_nodes.values - 1).astype("int32"),
+def format_matrix(mat):
+    return "\n".join(
+        " ".join(f"{x:.1f}" if abs(x) > 0.01 else "0" for x in line) for line in mat
     )
 
-    return ds_GFD_calc_info
+
+def format_zeros(mat_shape):
+    return "\n".join("0 " * mat_shape[1] for _ in range(mat_shape[0]))
 
 
 class GreenSurgeModelWrapper(Delft3dModelWrapper):
@@ -220,7 +216,123 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
         ds_GFD_info : xr.Dataset
             The dataset with the GFD information.
         """
+        dir_steps = case_context.get("dir_steps")
+        real_dirs = np.linspace(0, 360, dir_steps + 1)[:-1]
+        i_tes = case_context.get("tesela")
+        i_dir = case_context.get("direction")
+        real_dir = real_dirs[i_dir]
+        dt_forz = case_context.get("dt_forz")
+        wind_magnitude = case_context.get("wind_magnitude")
+        simul_time = case_context.get("simul_time")
 
+        node_triangle = ds_GFD_info.triangle_forcing_connectivity.isel(
+            element_forcing_index=i_tes
+        )
+        lon_teselas = ds_GFD_info.node_forcing_longitude.isel(
+            node_forcing_index=node_triangle
+        ).values
+        lat_teselas = ds_GFD_info.node_forcing_latitude.isel(
+            node_forcing_index=node_triangle
+        ).values
+
+        lon_grid = ds_GFD_info.lon_grid.values
+        lat_grid = ds_GFD_info.lat_grid.values
+
+        x_llcenter = lon_grid[0]
+        y_llcenter = lat_grid[0]
+
+        n_cols = len(lon_grid)
+        n_rows = len(lat_grid)
+
+        dx = (lon_grid[-1] - lon_grid[0]) / n_cols
+        dy = (lat_grid[-1] - lat_grid[0]) / n_rows
+        X0, X1, X2 = lon_teselas
+        Y0, Y1, Y2 = lat_teselas
+
+        triangle = [(X0, Y0), (X1, Y1), (X2, Y2)]
+        mask = create_triangle_mask_from_points(lon_grid, lat_grid, triangle).astype(
+            int
+        )
+        mask_int = np.flip(mask, axis=0)  # Flip to match grid orientation
+
+        u = -np.cos(nautical_to_mathematical(real_dir) * np.pi / 180) * wind_magnitude
+        v = -np.sin(nautical_to_mathematical(real_dir) * np.pi / 180) * wind_magnitude
+        u_mat = mask_int * u
+        v_mat = mask_int * v
+
+        self.logger.info(
+            f"Creating cell {i_tes} direction {int(real_dir)} with u = {u} and v = {v}"
+        )
+
+        file_name_u = op.join(case_dir, "GFD_wind_file.amu")
+        file_name_v = op.join(case_dir, "GFD_wind_file.amv")
+
+        with open(file_name_u, "w+") as fu, open(file_name_v, "w+") as fv:
+            fu.write(
+                "### START OF HEADER\n"
+                + "### This file is created by Deltares\n"
+                + "### Additional commments\n"
+                + "FileVersion = 1.03\n"
+                + "filetype = meteo_on_equidistant_grid\n"
+                + "NODATA_value = -9999.0\n"
+                + f"n_cols = {n_cols}\n"
+                + f"n_rows = {n_rows}\n"
+                + "grid_unit = degree\n"
+                + f"x_llcenter = {x_llcenter}\n"
+                + f"y_llcenter = {y_llcenter}\n"
+                + f"dx = {dx}\n"
+                + f"dy = {dy}\n"
+                + "n_quantity = 1\n"
+                + "quantity1 = x_wind\n"
+                + "unit1 = m s-1\n"
+                + "### END OF HEADER\n"
+            )
+            fv.write(
+                "### START OF HEADER\n"
+                + "### This file is created by Deltares\n"
+                + "### Additional commments\n"
+                + "FileVersion = 1.03\n"
+                + "filetype = meteo_on_equidistant_grid\n"
+                + "NODATA_value = -9999.0\n"
+                + f"n_cols = {n_cols}\n"
+                + f"n_rows = {n_rows}\n"
+                + "grid_unit = degree\n"
+                + f"x_llcenter = {x_llcenter}\n"
+                + f"y_llcenter = {y_llcenter}\n"
+                + f"dx = {dx}\n"
+                + f"dy = {dy}\n"
+                + "n_quantity = 1\n"
+                + "quantity1 = y_wind\n"
+                + "unit1 = m s-1\n"
+                + "### END OF HEADER\n"
+            )
+            for time in range(4):
+                if time == 0:
+                    time_real = time
+                elif time == 1:
+                    time_real = dt_forz
+                elif time == 2:
+                    time_real = dt_forz + 0.01
+                elif time == 3:
+                    time_real = simul_time
+                fu.write(f"TIME = {time_real} hours since 2022-01-01 00:00:00 +00:00\n")
+                fv.write(f"TIME = {time_real} hours since 2022-01-01 00:00:00 +00:00\n")
+                if time in [0, 1]:
+                    fu.write(format_matrix(u_mat) + "\n")
+                    fv.write(format_matrix(v_mat) + "\n")
+                else:
+                    fu.write(format_zeros(u_mat.shape) + "\n")
+                    fv.write(format_zeros(v_mat.shape) + "\n")
+
+    def generate_grid_forcing_file_netCDF_D3DFM(
+        self,
+        case_context: dict,
+        case_dir: str,
+        ds_GFD_info: xr.Dataset,
+    ):
+        """
+        Generate the wind forcing files for a case in netCDF format (optimized version).
+        """
         triangle_index = case_context.get("tesela")
         direction_index = case_context.get("direction")
         wind_direction = ds_GFD_info.wind_directions.values[direction_index]
@@ -234,58 +346,126 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
             node_forcing_index=connectivity
         ).values
 
-        longitude_points_computation = ds_GFD_info.node_computation_longitude.values
-        latitude_points_computation = ds_GFD_info.node_computation_latitude.values
+        connectivity_compo = ds_GFD_info.triangle_computation_connectivity.values
+        node_lon = ds_GFD_info.node_computation_longitude.values.ravel()
+        node_lat = ds_GFD_info.node_computation_latitude.values.ravel()
 
+        # Selection triangle vertices
         x0, x1, x2 = triangle_longitude[triangle_index, :]
         y0, y1, y2 = triangle_latitude[triangle_index, :]
+        triangle_vertices = np.array([(x0, y0), (x1, y1), (x2, y2)], dtype=float)
 
-        triangle_vertices = [(x0, y0), (x1, y1), (x2, y2)]
-        triangle_mask = create_triangle_mask_from_points(
-            longitude_points_computation, latitude_points_computation, triangle_vertices
+        # Compute centroid with NumPy (avoids shapely dependency)
+        centroid = triangle_vertices.mean(axis=0)
+        scale_factor = 1.001
+        verts_buffered = centroid + (triangle_vertices - centroid) * scale_factor
+
+        # Tolerance based on edge size
+        edge_lengths = np.linalg.norm(
+            np.roll(triangle_vertices, -1, axis=0) - triangle_vertices, axis=1
+        )
+        tol = np.mean(edge_lengths) * 0.001
+
+        # Vectorized distance to 3 edges (~100x faster than shapely loop)
+        dist_edge_01 = point_to_segment_distance_vectorized(
+            node_lon, node_lat, x0, y0, x1, y1
+        )
+        dist_edge_12 = point_to_segment_distance_vectorized(
+            node_lon, node_lat, x1, y1, x2, y2
+        )
+        dist_edge_20 = point_to_segment_distance_vectorized(
+            node_lon, node_lat, x2, y2, x0, y0
+        )
+        dist_to_boundary = np.minimum(
+            np.minimum(dist_edge_01, dist_edge_12), dist_edge_20
         )
 
+        # Points on the boundary
+        mask_on_edge = dist_to_boundary < tol
+
+        # Triangles with at least one node on the boundary
+        mask_tri_to_refine = np.any(mask_on_edge[connectivity_compo], axis=1)
+
+        # Vectorized version of generate_structured_points
+        lon_structured, lat_structured = generate_structured_points_vectorized(
+            connectivity_compo[mask_tri_to_refine],
+            node_lon,
+            node_lat,
+        )
+
+        # Concatenate points
+        longitude_points_computation = np.concatenate(
+            [node_lon, lon_structured.ravel()]
+        )
+        latitude_points_computation = np.concatenate([node_lat, lat_structured.ravel()])
+
+        # Triangle mask (uses matplotlib Path)
+        triangle_mask = create_triangle_mask_from_points(
+            longitude_points_computation,
+            latitude_points_computation,
+            verts_buffered,
+        )
+
+        # Wind computation
         angle_rad = nautical_to_mathematical(wind_direction) * np.pi / 180
         wind_u = -np.cos(angle_rad) * wind_speed
         wind_v = -np.sin(angle_rad) * wind_speed
 
-        windx = np.zeros((4, len(longitude_points_computation)))
-        windy = np.zeros((4, len(longitude_points_computation)))
+        # Initialize and assign wind arrays
+        n_points = len(longitude_points_computation)
+        windx = np.zeros((4, n_points))
+        windy = np.zeros((4, n_points))
+        windx[:2, triangle_mask] = wind_u
+        windy[:2, triangle_mask] = wind_v
 
-        windx[0:2, triangle_mask] = wind_u
-        windy[0:2, triangle_mask] = wind_v
-
-        ds_forcing = ds_GFD_info[
-            [
-                "time_forcing_index",
-                "node_cumputation_index",
-                "node_computation_longitude",
-                "node_computation_latitude",
-            ]
-        ]
-        ds_forcing = ds_forcing.rename(
+        # Build forcing dataset
+        ds_forcing = xr.Dataset(
             {
-                "time_forcing_index": "time",
-                "node_cumputation_index": "node",
-                "node_computation_longitude": "longitude",
-                "node_computation_latitude": "latitude",
+                "time": ds_GFD_info["time_forcing_index"],
+                "node": xr.DataArray(np.arange(n_points), dims=["node"]),
+                "longitude": xr.DataArray(
+                    longitude_points_computation,
+                    dims=["node"],
+                    attrs={
+                        "description": "Longitude of each mesh node of the computational grid",
+                        "standard_name": "longitude",
+                        "long_name": "longitude",
+                        "units": "degrees_east",
+                    },
+                ),
+                "latitude": xr.DataArray(
+                    latitude_points_computation,
+                    dims=["node"],
+                    attrs={
+                        "description": "Latitude of each mesh node of the computational grid",
+                        "standard_name": "latitude",
+                        "long_name": "latitude",
+                        "units": "degrees_north",
+                    },
+                ),
+                "windx": xr.DataArray(
+                    windx,
+                    dims=["time", "node"],
+                    attrs={
+                        "coordinates": "time node",
+                        "long_name": "Wind speed in x direction",
+                        "standard_name": "windx",
+                        "units": "m s-1",
+                    },
+                ),
+                "windy": xr.DataArray(
+                    windy,
+                    dims=["time", "node"],
+                    attrs={
+                        "coordinates": "time node",
+                        "long_name": "Wind speed in y direction",
+                        "standard_name": "windy",
+                        "units": "m s-1",
+                    },
+                ),
             }
         )
-        ds_forcing.attrs = {}
-        ds_forcing["windx"] = (("time", "node"), windx)
-        ds_forcing["windy"] = (("time", "node"), windy)
-        ds_forcing["windx"].attrs = {
-            "coordinates": "time node",
-            "long_name": "Wind speed in x direction",
-            "standard_name": "windx",
-            "units": "m s-1",
-        }
-        ds_forcing["windy"].attrs = {
-            "coordinates": "time node",
-            "long_name": "Wind speed in y direction",
-            "standard_name": "windy",
-            "units": "m s-1",
-        }
+
         ds_forcing.to_netcdf(op.join(case_dir, "forcing.nc"))
 
         self.logger.info(
@@ -307,13 +487,35 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
         case_dir : str
             The case directory.
         """
+        if case_context.get("SetupType") == "GreenSurge":
+            if case_context.get("forcing_type") == "netCDF":
+                self.generate_grid_forcing_file_netCDF_D3DFM(
+                    case_context=case_context,
+                    case_dir=case_dir,
+                    ds_GFD_info=case_context.get("ds_GFD_info"),
+                )
+            elif case_context.get("forcing_type") == "ASCII":
+                if case_context.get("case_num") == 0:
+                    ds_GFD_info = case_context.get("ds_GFD_info")
+                    lon_grid, lat_grid = get_regular_grid(
+                        node_computation_longitude=ds_GFD_info.node_computation_longitude.values,
+                        node_computation_latitude=ds_GFD_info.node_computation_latitude.values,
+                        node_computation_elements=ds_GFD_info.triangle_computation_connectivity.values,
+                    )
+                    self.ds_GFD_info = deepcopy(case_context.get("ds_GFD_info"))
+                    self.ds_GFD_info["lon_grid"] = np.flip(lon_grid)
+                    self.ds_GFD_info["lat_grid"] = lat_grid
 
-        # Generate wind file
-        self.generate_grid_forcing_file_D3DFM(
-            case_context=case_context,
-            case_dir=case_dir,
-            ds_GFD_info=case_context.get("ds_GFD_info"),
-        )
+                self.generate_grid_forcing_file_D3DFM(
+                    case_context=case_context,
+                    case_dir=case_dir,
+                    ds_GFD_info=self.ds_GFD_info,
+                )
+        elif case_context.get("SetupType") == "Dynamic":
+            mesh = xr.open_dataset(case_context.get("mesh_path"))
+            vortex = case_context.get("vortex")
+            forcing = vortex2delft_3D_FM_nc(mesh, vortex)
+            forcing.to_netcdf(op.join(case_dir, "forcing.nc"))
 
     def postprocess_case(self, case_dir: str) -> None:
         """
@@ -381,15 +583,15 @@ class GreenSurgeModelWrapper(Delft3dModelWrapper):
             self.cases_dirs[0], "dflowfmoutput/GreenSurge_GFDcase_map.nc"
         )
         ds_GFD_info = actualize_grid_info(path_computation, ds_GFD_info)
-        dirname, basename = os.path.split(ds_GFD_info.encoding["source"])
+        dirname, basename = os.path.split(ds_GFD_info.attrs["source"])
         name, ext = os.path.splitext(basename)
         new_filepath = os.path.join(dirname, f"{name}_updated{ext}")
         ds_GFD_info.to_netcdf(new_filepath)
 
-        case_ext = "dflowfmoutput/GreenSurge_GFDcase_map_compressed.nc"
+        case_ext = "dflowfmoutput/GreenSurge_GFDcase_map.nc"
 
         def preprocess(dataset):
-            file_name = dataset.encoding.get("source", "Unknown")
+            file_name = dataset.encoding.get("source", None)
             dir_i = int(file_name.split("_D_")[-1].split("/")[0])
             tes_i = int(file_name.split("_T_")[-1].split("_D_")[0])
             dataset = (
