@@ -5,9 +5,8 @@ from typing import List, Union
 import numpy as np
 import pandas as pd
 import xarray as xr
-
-from wavespectra.construct.frequency import jonswap
 from wavespectra.construct.direction import cartwright
+from wavespectra.construct.frequency import jonswap
 
 from .._base_wrappers import BaseModelWrapper
 
@@ -67,7 +66,7 @@ class XBeachModelWrapper(BaseModelWrapper):
         self.set_logger_name(
             name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
         )
-    
+
     def create_vardens(self, ds):
         t = ""
 
@@ -89,9 +88,9 @@ class XBeachModelWrapper(BaseModelWrapper):
                     var = 0.0
                 t += "{0}\t".format(var)
             t += "\n"
-        
+
         return t
-    
+
     def build_case(
         self,
         case_context: dict,
@@ -131,7 +130,7 @@ class XBeachModelWrapper(BaseModelWrapper):
                 dm=case_context["Dir"],
                 dspr=case_context["SPR"],
             )
-            efth = ef * gth  
+            efth = ef * gth
 
             spectrum = xr.Dataset(
                 {
@@ -146,11 +145,10 @@ class XBeachModelWrapper(BaseModelWrapper):
                 },
             ).sortby(["freq", "dir"])
 
-            spectrum['dir'] = (270 - (spectrum['dir'])) % 360
+            spectrum["dir"] = (270 - (spectrum["dir"])) % 360
             spec = self.create_vardens(spectrum)
             with open(f"{case_dir}/vardens.txt", "w") as f:
                 f.write(spec)
-
 
     def _get_average_var(self, case_nc: xr.Dataset, var: str) -> np.ndarray:
         """
@@ -241,6 +239,7 @@ class XBeachModelWrapper(BaseModelWrapper):
         self,
         case_num: int,
         case_dir: str,
+        case_context: dict,
         output_vars: List[str] = None,
         overwrite_output: bool = True,
     ) -> xr.Dataset:
@@ -253,6 +252,8 @@ class XBeachModelWrapper(BaseModelWrapper):
             The case number.
         case_dir : str
             The case directory.
+        case_context : dict
+            The case context.
         output_vars : list, optional
             The output variables to postprocess. Default is None.
         overwrite_output : bool, optional

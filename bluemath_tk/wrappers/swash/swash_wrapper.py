@@ -341,6 +341,7 @@ class SwashModelWrapper(BaseModelWrapper):
         self,
         case_num: int,
         case_dir: str,
+        case_context: dict,
         output_vars: List[str] = None,
         overwrite_output: bool = True,
         overwrite_output_postprocessed: bool = True,
@@ -356,6 +357,8 @@ class SwashModelWrapper(BaseModelWrapper):
             The case number.
         case_dir : str
             The case directory.
+        case_context : dict
+            The case context.
         output_vars : list, optional
             The output variables to postprocess. Default is None.
         overwrite_output : bool, optional
