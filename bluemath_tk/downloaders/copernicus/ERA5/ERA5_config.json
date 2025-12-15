@@ -126,6 +126,7 @@
             }
         }
     },
+    "url": "https://cds.climate.copernicus.eu/api",
     "variables": {
         "swh": {
             "cds_name": "significant_height_of_combined_wind_waves_and_swell",

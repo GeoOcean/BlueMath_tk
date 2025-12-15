@@ -1,4 +1,3 @@
-import os
 import struct
 import warnings
 from datetime import datetime
@@ -10,15 +9,14 @@ import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
-
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.path import Path
 from tqdm import tqdm
 
+from ..core.operations import get_degrees_from_uv
 from ..core.plotting.colors import hex_colors_land, hex_colors_water
 from ..core.plotting.utils import join_colormaps
-from ..core.operations import get_degrees_from_uv
 
 
 def read_adcirc_grd(grd_file: str) -> Tuple[np.ndarray, np.ndarray, List[str]]:
@@ -1836,6 +1834,7 @@ def GS_wind_partition_tri(ds_GFD_info, xds_vortex):
     )
     return xds_vortex_interp
 
+
 def create_triangle_mask(
     lon_grid: np.ndarray, lat_grid: np.ndarray, triangle: np.ndarray
 ) -> np.ndarray:
@@ -1864,6 +1863,7 @@ def create_triangle_mask(
     mask = inside_mask.reshape(lon_grid.shape)
 
     return mask
+
 
 def GS_LinearWindDragCoef(
     Wspeed: np.ndarray, CD_Wl_abc: np.ndarray, Wl_abc: np.ndarray
@@ -1917,6 +1917,7 @@ def GS_LinearWindDragCoef(
         CD = a_CDline_cinf * Wspeed + b_CDline_cinf
 
     return CD
+
 
 def actualize_grid_info(
     path_ds_origin: str,

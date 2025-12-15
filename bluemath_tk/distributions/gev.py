@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 import numpy as np
-from scipy.special import gamma
+from scipy.stats import genextreme
 
 from ._base_distributions import BaseDistribution, FitResult, fit_dist
 
@@ -117,22 +117,7 @@ class GEV(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        y = (x - loc) / scale
-
-        # Gumbel case (shape = 0)
-        if shape == 0.0:
-            pdf = (1 / scale) * (np.exp(-y) * np.exp(-np.exp(-y)))
-
-        # General case (Weibull and Frechet, shape != 0)
-        else:
-            pdf = np.full_like(x, 0, dtype=float)  # 0
-            yy = 1 + shape * y
-            yymask = yy > 0
-            pdf[yymask] = (1 / scale) * (
-                yy[yymask] ** (-1 - (1 / shape)) * np.exp(-(yy[yymask] ** (-1 / shape)))
-            )
-
-        return pdf
+        return genextreme.pdf(x, -shape, loc=loc, scale=scale)
 
     @staticmethod
     def cdf(
@@ -167,17 +152,7 @@ class GEV(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        y = (x - loc) / scale
-
-        # Gumbel case (shape = 0)
-        if shape == 0.0:
-            p = np.exp(-np.exp(-y))
-
-        # General case (Weibull and Frechet, shape != 0)
-        else:
-            p = np.exp(-(np.maximum(1 + shape * y, 0) ** (-1 / shape)))
-
-        return p
+        return genextreme.cdf(x, -shape, loc=loc, scale=scale)
 
     @staticmethod
     def sf(
@@ -212,9 +187,7 @@ class GEV(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        sp = 1 - GEV.cdf(x, loc=loc, scale=scale, shape=shape)
-
-        return sp
+        return genextreme.sf(x, -shape, loc=loc, scale=scale)
 
     @staticmethod
     def qf(
@@ -255,15 +228,7 @@ class GEV(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        # Gumbel case (shape = 0)
-        if shape == 0.0:
-            q = loc - scale * np.log(-np.log(p))
-
-        # General case (Weibull and Frechet, shape != 0)
-        else:
-            q = loc + scale * ((-np.log(p)) ** (-shape) - 1) / shape
-
-        return q
+        return genextreme.ppf(p, -shape, loc=loc, scale=scale)
 
     @staticmethod
     def nll(
@@ -291,35 +256,12 @@ class GEV(BaseDistribution):
         """
 
         if scale <= 0:
-            nll = np.inf  # Return a large value for invalid scale
+            return np.inf  # Return a large value for invalid scale
 
         else:
-            y = (data - loc) / scale
-
-            # # Gumbel case (shape = 0)
-            # if shape == 0.0:
-            #     pass
-            #     nll = data.shape[0] * np.log(scale) + np.sum(
-            #         np.exp(-y) + np.sum(-y)
-            #     )  # Gumbel case
-
-            # # General case (Weibull and Frechet, shape != 0)
-            # else:
-
-            shape = (
-                np.maximum(shape, 1e-8) if shape > 0 else np.minimum(shape, -1e-8)
-            )  # Avoid division by zero
-            y = 1 + shape * y
-            if any(y <= 0):
-                nll = np.inf  # Return a large value for invalid y
-            else:
-                nll = (
-                    data.shape[0] * np.log(scale)
-                    + np.sum(y ** (-1 / shape))
-                    + (1 / shape + 1) * np.sum(np.log(y))
-                )
-
-        return nll
+            return -np.sum(
+                genextreme.logpdf(data, -shape, loc=loc, scale=scale), axis=0
+            )
 
     @staticmethod
     def fit(data: np.ndarray, **kwargs) -> FitResult:
@@ -385,22 +327,9 @@ class GEV(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        # Set random state if provided
-        if random_state is not None:
-            np.random.seed(random_state)
-
-        # Generate uniform random numbers
-        u = np.random.uniform(0, 1, size)
-
-        # Gumbel case (shape = 0)
-        if shape == 0.0:
-            x = loc - scale * np.log(-np.log(u))
-
-        # General case (Weibull and Frechet, shape != 0)
-        else:
-            x = loc + scale * ((-np.log(u)) ** (-shape) - 1) / shape
-
-        return x
+        return genextreme.rvs(
+            -shape, loc=loc, scale=scale, size=size, random_state=random_state
+        )
 
     @staticmethod
     def mean(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
@@ -431,21 +360,7 @@ class GEV(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        eu_cons = np.euler_gamma  # Euler-Mascheroni constant
-
-        # Gumbel case (shape = 0)
-        if shape == 0.0:
-            mean = loc + scale * eu_cons
-
-        # General case (Weibull and Frechet, shape != 0 and shape < 1)
-        elif shape != 0.0 and shape < 1:
-            mean = loc + scale * (gamma(1 - shape) - 1) / shape
-
-        # Shape >= 1 case
-        else:
-            mean = np.inf
-
-        return mean
+        return genextreme.mean(-shape, loc=loc, scale=scale)
 
     @staticmethod
     def median(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
@@ -476,13 +391,7 @@ class GEV(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        if shape == 0.0:
-            median = loc - scale * np.log(np.log(2))
-
-        else:
-            median = loc + scale * ((np.log(2)) ** (-shape) - 1) / shape
-
-        return median
+        return genextreme.median(-shape, loc=loc, scale=scale)
 
     @staticmethod
     def variance(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
@@ -513,21 +422,7 @@ class GEV(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        # Gumbel case (shape = 0)
-        if shape == 0.0:
-            var = (np.pi**2 / 6) * scale**2
-
-        elif shape != 0.0 and shape < 0.5:
-            var = (
-                (scale**2)
-                * (gamma(1 - 2 * shape) - (gamma(1 - shape) ** 2))
-                / (shape**2)
-            )
-
-        else:
-            var = np.inf
-
-        return var
+        return genextreme.var(-shape, loc=loc, scale=scale)
 
     @staticmethod
     def std(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
@@ -559,9 +454,7 @@ class GEV(BaseDistribution):
         if scale <= 0:
             raise ValueError("Scale parameter must be > 0")
 
-        std = np.sqrt(GEV.variance(loc, scale, shape))
-
-        return std
+        return genextreme.std(-shape, loc=loc, scale=scale)
 
     @staticmethod
     def stats(

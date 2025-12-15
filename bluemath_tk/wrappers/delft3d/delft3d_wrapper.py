@@ -8,11 +8,11 @@ import pandas as pd
 import xarray as xr
 
 from ...additive.greensurge import (
+    actualize_grid_info,
     create_triangle_mask_from_points,
     generate_structured_points_vectorized,
     get_regular_grid,
     point_to_segment_distance_vectorized,
-    actualize_grid_info,
 )
 from ...core.operations import nautical_to_mathematical
 from ...tcs.vortex import vortex2delft_3D_FM_nc

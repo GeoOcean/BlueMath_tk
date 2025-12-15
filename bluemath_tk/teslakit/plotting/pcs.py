@@ -99,7 +99,7 @@ def axplot_PCs_3D_WTs(ax, d_PCs, wt_colors, ttl='PCs'):
     ax.set_ylabel('PC2', {'fontsize':10})
     ax.set_zlabel('PC3', {'fontsize':10})
     
-    lim = np.nanmax([np.nanmax(PC1), np.nanmax(PC2), np.nanmax(PC3)])
+    lim = np.nanmax([np.nanmax(np.abs(PC1)), np.nanmax(np.abs(PC2)), np.nanmax(np.abs(PC3))])
     
 #     ax.set_xlim([-3,3])
 #     ax.set_ylim([-3,3])

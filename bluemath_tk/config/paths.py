@@ -36,6 +36,8 @@ PATHS = {
         GEOOCEAN_CLUSTER_DATA,
         "GEOOCEAN/SHyTCWaves/",
     ),
+    "GEBCO_2025": "https://dap.ceda.ac.uk/thredds/dodsC/bodc/gebco/global/gebco_2025/ice_surface_elevation/netcdf/GEBCO_2025.nc",
+    "EMODNET_2024": "https://geoocean.sci.unican.es/thredds/dodsC/geoocean/emodnet-bathy-2024",
 }
 
 
