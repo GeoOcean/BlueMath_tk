@@ -174,36 +174,6 @@ class CalVal(BlueMathModel):
         The time domain is the same as the model data.
     calibration_params : dict
         Dictionary with 'sea_correction' and 'swell_correction' correction coefficients.
-
-    Examples
-    --------
-    .. jupyter-execute::
-
-        import pandas as pd
-        from bluemath_tk.waves.calibration import CalVal, process_imos_satellite_data
-
-        # Load your model data (must have columns: 'Hs', 'Hsea', 'Dirsea', 'Hswell1', 'Dirswell1', ...)
-        model_df = pd.read_csv('model_data.csv', index_col=0, parse_dates=True)
-
-        # Load IMOS satellite data and process it for calibration
-        sat_df = pd.read_csv('imos_satellite.csv', index_col=0, parse_dates=True)
-        data_to_calibrate = process_imos_satellite_data(
-            sat_df, ini_lat=-40, end_lat=-30, ini_lon=140, end_lon=150
-        )
-
-        # Initialize and fit the calibration
-        cal = CalVal()
-        cal.fit(
-            data=model_df,
-            data_longitude=145.0,
-            data_latitude=-35.0,
-            data_to_calibrate=data_to_calibrate,
-            max_time_diff=2,
-        )
-
-        # Plot results
-        cal.plot_calibration_results()
-
     """
 
     direction_bin_size: int = 22.5

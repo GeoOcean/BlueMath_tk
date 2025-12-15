@@ -1,0 +1,115 @@
+{
+    "datasets": {
+        "reanalysis-cerra-single-levels": {
+            "description": "CERRA Sub-daily Regional Reanalysis Data for Europe on Single Levels",
+            "url": "https://cds.climate.copernicus.eu/datasets/reanalysis-cerra-single-levels?tab=overview",
+            "types": [
+                "surface_or_atmosphere"
+            ],
+            "mandatory_fields": [
+                "variable",
+                "level_type",
+                "data_type",
+                "product_type",
+                "year",
+                "month",
+                "data_format"
+            ],
+            "optional_fields": [
+                "day",
+                "time",
+                "area"
+            ],
+            "template": {
+                "variable": [
+                    "10m_wind_direction"
+                ],
+                "level_type": "surface_or_atmosphere",
+                "data_type": [
+                    "reanalysis"
+                ],
+                "product_type": "analysis",
+                "year": [
+                    "1985"
+                ],
+                "month": [
+                    "02"
+                ],
+                "day": [
+                    "02"
+                ],
+                "time": [
+                    "00:00"
+                ],
+                "data_format": "netcdf"
+            }
+        }
+    },
+    "url": "https://cds.climate.copernicus.eu/api",
+    "variables": {
+        "10m_wind_direction": {
+            "cds_name": "10m_wind_direction",
+            "long_name": "10m wind direction",
+            "nc_name": "10m_wind_direction",
+            "type": "surface_or_atmosphere",
+            "units": "degree",
+            "dataset": "reanalysis-cerra-single-levels"
+        },
+        "10m_wind_speed": {
+            "cds_name": "10m_wind_speed",
+            "long_name": "10m wind speed",
+            "nc_name": "10m_wind_speed",
+            "type": "surface_or_atmosphere",
+            "units": "m s-1",
+            "dataset": "reanalysis-cerra-single-levels"
+        },
+        "2m_temperature": {
+            "cds_name": "2m_temperature",
+            "long_name": "2m temperature",
+            "nc_name": "2m_temperature",
+            "type": "surface_or_atmosphere",
+            "units": "K",
+            "dataset": "reanalysis-cerra-single-levels"
+        },
+        "2m_relative_humidity": {
+            "cds_name": "2m_relative_humidity",
+            "long_name": "2m relative humidity",
+            "nc_name": "2m_relative_humidity",
+            "type": "surface_or_atmosphere",
+            "units": "%",
+            "dataset": "reanalysis-cerra-single-levels"
+        },
+        "surface_pressure": {
+            "cds_name": "surface_pressure",
+            "long_name": "Surface pressure",
+            "nc_name": "surface_pressure",
+            "type": "surface_or_atmosphere",
+            "units": "Pa",
+            "dataset": "reanalysis-cerra-single-levels"
+        },
+        "total_precipitation": {
+            "cds_name": "total_precipitation",
+            "long_name": "Total precipitation",
+            "nc_name": "total_precipitation",
+            "type": "surface_or_atmosphere",
+            "units": "kg m-2",
+            "dataset": "reanalysis-cerra-single-levels"
+        },
+        "total_cloud_cover": {
+            "cds_name": "total_cloud_cover",
+            "long_name": "Total cloud cover",
+            "nc_name": "total_cloud_cover",
+            "type": "surface_or_atmosphere",
+            "units": "%",
+            "dataset": "reanalysis-cerra-single-levels"
+        },
+        "mean_sea_level_pressure": {
+            "cds_name": "mean_sea_level_pressure",
+            "long_name": "Mean sea level pressure",
+            "nc_name": "mean_sea_level_pressure",
+            "type": "surface_or_atmosphere",
+            "units": "Pa",
+            "dataset": "reanalysis-cerra-single-levels"
+        }
+    }
+}
