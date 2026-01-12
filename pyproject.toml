@@ -79,3 +79,58 @@ include = ["bluemath_tk*"]
 [tool.setuptools_scm]
 version_file = "bluemath_tk/_version.py"
 local_scheme = "no-local-version"
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+# Select rules to check
+select = [
+    "E",  # pycodestyle errors
+    "F",  # pyflakes
+    "W",  # pycodestyle warnings
+    "D",  # pydocstyle (docstring checking)
+    "I",  # isort (import sorting)
+    "N",  # pep8-naming
+    "UP", # pyupgrade
+]
+
+# Ignore some docstring rules (start lenient, tighten later)
+# Focus on missing docstrings first, style issues can be auto-fixed later
+ignore = [
+    # "D100", # Missing docstring in public module
+    # "D104", # Missing docstring in public package
+    # "D107", # Missing docstring in __init__
+    # "D203", # 1 blank line required before class docstring
+    # "D213", # Multi-line docstring summary should start at the second line
+    # "D401", # First line should be in imperative mood (can be strict)
+    "D202", # No blank lines allowed after docstring (auto-fixable)
+    # "D300", # Use """triple double quotes""" (auto-fixable)
+    "D400", # First line should end with a period (can fix gradually)
+    # "D200", # One-line docstring should fit on one line (auto-fixable)
+    # "D403", # First word of the first line should be capitalized (auto-fixable)
+    # "D404", # First word of the docstring should not be This (auto-fixable)
+    # "D409", # Section underline length mismatch (auto-fixable)
+    # "D411", # No blank line before section (auto-fixable)
+    # "D410", # No blank line after section (auto-fixable)
+    # "D407", # Missing dashed underline after section (auto-fixable)
+    # "D405", # Section name should be properly capitalized (auto-fixable)
+    # "D210", # No whitespace allowed surrounding docstring summary (auto-fixable)
+    # "D406", # Missing newline after section name (auto-fixable)
+    # "D201", # No blank lines allowed before function docstring (auto-fixable)
+    # "D204", # 1 blank line required after class docstring (auto-fixable)
+    # "D206", # Docstring should be indented with spaces, not tabs (auto-fixable)
+    "D205", # 1 blank line required between summary line and description (auto-fixable)
+    # "D419", # Empty docstring (rare, can fix manually)
+    "N802", # Use "f" prefix for string formatting
+    "N803", # Use "f" prefix for string formatting
+    "N806", # Use f-string for string formatting
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy" # Use NumPy convention
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore docstring requirements in tests
+"tests/*" = ["D103"] # Missing docstring in public function
