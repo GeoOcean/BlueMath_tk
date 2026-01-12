@@ -33,5 +33,7 @@
       ]
     }
   },
-  "ftp_server": "ftp-access.aviso.altimetry.fr"
+  "ftp_server": "ftp-access.aviso.altimetry.fr",
+  "docs": "https://www.earthdata.nasa.gov/s3fs-public/2024-06/D-109532_SWOT_UserHandbook_20240502.pdf",
+  "api": "https://podaac.jpl.nasa.gov/SWOT?tab=datasets-information&sections=about"
 }
