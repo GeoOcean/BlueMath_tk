@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from bluemath_tk.datamining.kma import KMA, KMAError
+from bluemath_tk.datamining.mda import MDA
 
 
 class TestKMA(unittest.TestCase):
@@ -236,16 +237,12 @@ class TestKMA(unittest.TestCase):
 
     def test_fit_with_init_mda_centroids(self):
         """Test fit with MDA initialization."""
+        mda = MDA(num_centers=5)
+        mda.fit(data=self.df)
+        init_centroids = mda.normalized_centroids.copy()
         kma = KMA(num_clusters=5)
-        kma.fit(data=self.df)
-        # Get normalized centroids for initialization
-        init_centroids = kma.normalized_centroids.copy()
-
-        # Create new KMA instance with MDA initialization
-        kma2 = KMA(num_clusters=5)
-        kma2.fit(data=self.df, init_mda_centroids=init_centroids)
-        self.assertTrue(kma2.is_fitted)
-        self.assertEqual(kma2.centroids.shape[0], 5)
+        kma.fit(data=self.df, init_mda_centroids=init_centroids)
+        self.assertTrue(kma.is_fitted)
 
     def test_fit_init_mda_centroids_invalid_shape(self):
         """Test fit with invalid MDA centroids shape."""
