@@ -31,6 +31,7 @@ dependencies = [
     "zarr",
     "scipy",
     "scikit-learn",
+    "pyclustering",
     "matplotlib",
     "cartopy",
     "jinja2",
@@ -108,7 +109,7 @@ ignore = [
     "D202", # No blank lines allowed after docstring (auto-fixable)
     # "D300", # Use """triple double quotes""" (auto-fixable)
     "D400", # First line should end with a period (can fix gradually)
-    # "D200", # One-line docstring should fit on one line (auto-fixable)
+    "D200", # One-line docstring should fit on one line (auto-fixable)
     # "D403", # First word of the first line should be capitalized (auto-fixable)
     # "D404", # First word of the docstring should not be This (auto-fixable)
     # "D409", # Section underline length mismatch (auto-fixable)
