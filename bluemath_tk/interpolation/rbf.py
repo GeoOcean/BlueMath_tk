@@ -46,7 +46,7 @@ def gaussian_kernel(r: float, const: float) -> float:
     return np.exp(-0.5 * r * r / (const * const))
 
 
-def multiquadratic_kernel(r, const):
+def multiquadratic_kernel(r: float, const: float):
     """
     Calculate the multiquadratic kernel value.
 
@@ -66,7 +66,7 @@ def multiquadratic_kernel(r, const):
     return np.sqrt(1 + (r / const) ** 2)
 
 
-def inverse_kernel(r, const):
+def inverse_kernel(r: float, const: float):
     """
     Calculate the inverse multiquadratic kernel value.
 
@@ -86,7 +86,7 @@ def inverse_kernel(r, const):
     return 1 / np.sqrt(1 + (r / const) ** 2)
 
 
-def cubic_kernel(r, const):
+def cubic_kernel(r: float, const: float):
     """
     Calculate the cubic kernel value.
 
@@ -106,7 +106,7 @@ def cubic_kernel(r, const):
     return r**3
 
 
-def thin_plate_kernel(r, const):
+def thin_plate_kernel(r: float, const: float):
     """
     Calculate the thin plate spline kernel value.
 
@@ -140,82 +140,12 @@ class RBF(BaseInterpolation):
     """
     Radial Basis Function (RBF) interpolation model.
 
-    Attributes
-    ----------
-    sigma_min : float
-        The minimum value for the sigma parameter.
-        This value might change in the optimization process.
-    sigma_max : float
-        The maximum value for the sigma parameter.
-        This value might change in the optimization process.
-    sigma_diff : float
-        The difference between the optimal bounded sigma and the minimum and
-        maximum sigma values. If the difference is less than this value, the
-        optimization process continues.
-    kernel : str
-        The kernel to use for the RBF model.
-        The available kernels are:
-
-            - gaussian              : ``exp(-1/2 * (r / const)**2)``
-            - multiquadratic        : ``sqrt(1 + (r / const)**2)``
-            - inverse               : ``1 / sqrt(1 + (r / const)**2)``
-            - cubic                 : ``r**3``
-            - thin_plate            : ``r**2 * log(r / const)``
-
-    kernel_func : function
-        The kernel function to use for the RBF model.
-    smooth : float
-        The smoothness parameter.
-    subset_data : pd.DataFrame
-        The subset data used to fit the model.
-    normalized_subset_data : pd.DataFrame
-        The normalized subset data used to fit the model.
-    target_data : pd.DataFrame
-        The target data used to fit the model.
-    normalized_target_data : pd.DataFrame
-        The normalized target data used to fit the model.
-        This attribute is only set if normalize_target_data is True in the fit method.
-    subset_directional_variables : list[str]
-        The subset directional variables.
-    target_directional_variables : list[str]
-        The target directional variables.
-    subset_processed_variables : list[str]
-        The subset processed variables.
-    target_processed_variables : list[str]
-        The target processed variables.
-    subset_custom_scale_factor : dict
-        The custom scale factor for the subset data.
-    target_custom_scale_factor : dict
-        The custom scale factor for the target data.
-    subset_scale_factor : dict
-        The scale factor for the subset data.
-    target_scale_factor : dict
-        The scale factor for the target data.
-    rbf_coeffs : pd.DataFrame
-        The RBF coefficients for the target variables.
-    opt_sigmas : dict
-        The optimal sigmas for the target variables.
-
-    Methods
-    -------
-    fit -> None
-        Fits the model to the data.
-    predict -> pd.DataFrame
-        Predicts the data for the provided dataset.
-    fit_predict -> pd.DataFrame
-        Fits the model to the subset and predicts the interpolated dataset.
-    explain -> dict or shap.Explanation
-        Explains predictions using SHAP values to show feature importance
-        and contributions.
-
     Notes
     -----
     TODO: For the moment, this class only supports optimization for one
           parameter kernels. For this reason, we only have sigma as the
           parameter to optimize. This sigma refers to the sigma parameter
           in the Gaussian kernel (but is used for all kernels).
-
-    Main reference for sigma optimization: https://link.springer.com/article/10.1023/A:1018975909870
 
     Examples
     --------
@@ -241,7 +171,6 @@ class RBF(BaseInterpolation):
         )
 
         rbf = RBF()
-
         predictions = rbf.fit_predict(
             subset_data=subset,
             subset_directional_variables=["Dir"],
@@ -253,12 +182,13 @@ class RBF(BaseInterpolation):
             iteratively_update_sigma=True,
         )
         print(predictions.head())
+        rbf.explain(dataset=dataset, target_variable="HsPred")
 
     References
     ----------
-    [1] https://en.wikipedia.org/wiki/Radial_basis_function
-    [2] https://en.wikipedia.org/wiki/Gaussian_function
-    [3] https://link.springer.com/article/10.1023/A:1018975909870
+    [1] https://link.springer.com/article/10.1023/A:1018975909870
+    [2] https://en.wikipedia.org/wiki/Radial_basis_function
+    [3] https://en.wikipedia.org/wiki/Gaussian_function
     """
 
     rbf_kernels = {
@@ -281,14 +211,20 @@ class RBF(BaseInterpolation):
         """
         Initialize RBF interpolation model.
 
-        Raises
-        ------
-        ValueError
-            If the sigma_min is not a positive float.
-            If the sigma_max is not a positive float greater than sigma_min.
-            If the sigma_diff is not a positive float.
-            If the kernel is not a string and one of the available kernels.
-            If the smooth is not a positive float.
+        Parameters
+        ----------
+        sigma_min : float, optional
+            The minimum value for the sigma parameter. Default is 0.001.
+        sigma_max : float, optional
+            The maximum value for the sigma parameter. Default is 0.1.
+        sigma_diff : float, optional
+            The difference between the sigma parameters. Default is 0.0001.
+        sigma_opt : float, optional
+            The optimal value for the sigma parameter. Default is None.
+        kernel : str, optional
+            The kernel to use for the interpolation. Default is "gaussian".
+        smooth : float, optional
+            The smoothness parameter. Default is 1e-5.
         """
 
         super().__init__()
@@ -1401,6 +1337,40 @@ def KFold_cross_validation_RBF(
 ):
     """
     Perform K-Fold cross-validation for the RBF model.
+
+    Parameters
+    ----------
+    subset_data : pd.DataFrame
+        The subset data used to fit the model.
+    target_data : pd.DataFrame
+        The target data used to fit the model.
+    subset_directional_variables : list[str], optional
+        The subset directional variables. Default is [].
+    target_directional_variables : list[str], optional
+        The target directional variables. Default is [].
+    subset_custom_scale_factor : dict, optional
+        The custom scale factor for the subset data. Default is {}.
+    normalize_target_data : bool, optional
+        Whether to normalize the target data. Default is True.
+    target_custom_scale_factor : dict, optional
+        The custom scale factor for the target data. Default is {}.
+    num_workers : int, optional
+        The number of workers to use for the optimization. Default is None.
+    iteratively_update_sigma : bool, optional
+        Whether to iteratively update the sigma parameter. Default is False.
+    rbf_model : RBF, optional
+        The RBF model to use for the cross-validation. Default is None.
+    n_splits : int, optional
+        The number of splits for the cross-validation. Default is 5.
+    metric : Callable, optional
+        The metric to use for the cross-validation. Default is basic_rbf_metric.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the results of the cross-validation.
+        The keys are the fold indices, and the values are dictionaries containing the
+        train and test data, the predictions, and the metric.
     """
 
     if rbf_model is None:

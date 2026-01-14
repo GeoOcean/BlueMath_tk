@@ -9,6 +9,7 @@ Status: Under development (Working)
 
 import numpy as np
 import pandas as pd
+from scipy.spatial.distance import cdist
 from sklearn.linear_model import LinearRegression
 
 from ..core.decorators import validate_data_kma
@@ -105,6 +106,19 @@ class KMA(BaseClustering):
         super().__init__()
         self.set_logger_name(name=self.__class__.__name__)
 
+        initial_msg = f"""
+        ---------------------------------------------------------------------------------
+        | Initializing KMA object with the following parameters:
+        |    - num_clusters: {num_clusters}
+        |    - seed: {seed}
+        |    - algorithm: {algorithm}
+        |    - distance_metric: {distance_metric}
+        |    - distance_matrix: {distance_matrix}
+        | For more information, please refer to the documentation.
+        ---------------------------------------------------------------------------------
+        """
+        self.logger.info(initial_msg)
+
         if num_clusters > 0:
             self.num_clusters = int(num_clusters)
         else:
@@ -182,20 +196,39 @@ class KMA(BaseClustering):
         list
             Initial centers/medians/medoids (indices if using distance matrix).
         """
+
         if self._init_centers is not None:
             # Use provided initial centers
             if isinstance(self._init_centers, pd.DataFrame):
-                if self.distance_matrix is not None:
-                    # For distance matrix, we need indices, not actual centers
+                if (
+                    self.distance_matrix is not None
+                    or self.algorithm_name == "kmedoids"
+                ):
+                    # For distance matrix or kmedoids, we need indices,
+                    # not actual centers
                     # Find nearest data points to the provided centers
-                    raise NotImplementedError(
-                        "MDA initialization with distance matrix not yet supported"
-                    )
-                initial_centers = self._init_centers.values.tolist()
+                    if self.distance_matrix is not None:
+                        raise NotImplementedError(
+                            "MDA initialization with distance matrix not yet supported"
+                        )
+                    # For kmedoids without distance matrix, find nearest indices
+                    init_values = self._init_centers.values
+                    data_array = np.array(data)
+                    distances = cdist(init_values, data_array)
+                    nearest_indices = np.argmin(distances, axis=1)
+                    initial_centers = [int(i) for i in nearest_indices]
+                else:
+                    initial_centers = self._init_centers.values.tolist()
             else:
-                if self.distance_matrix is not None:
-                    # For distance matrix, initial_centers should be indices
-                    initial_centers = list(np.array(self._init_centers).flatten())
+                if (
+                    self.distance_matrix is not None
+                    or self.algorithm_name == "kmedoids"
+                ):
+                    # For distance matrix or kmedoids,
+                    # initial_centers should be indices
+                    initial_centers = [
+                        int(i) for i in np.array(self._init_centers).flatten()
+                    ]
                 else:
                     initial_centers = np.array(self._init_centers).tolist()
         else:
@@ -206,12 +239,13 @@ class KMA(BaseClustering):
             initial_centers_idx = np.random.choice(
                 n_samples, size=self.num_clusters, replace=False
             )
-            if self.distance_matrix is not None:
-                # For distance matrix, return indices
-                initial_centers = list(initial_centers_idx)
+            if self.distance_matrix is not None or self.algorithm_name == "kmedoids":
+                # For distance matrix or kmedoids, return indices
+                initial_centers = [int(i) for i in initial_centers_idx]
             else:
-                # For raw data, return actual data points
+                # For raw data with kmeans/kmedians, return actual data points
                 initial_centers = [data[i] for i in initial_centers_idx]
+
         return initial_centers
 
     def _create_pyclustering_model(
@@ -232,6 +266,7 @@ class KMA(BaseClustering):
         pyclustering model
             The initialized pyclustering clustering model.
         """
+
         # Build kwargs for pyclustering
         kwargs = {}
         if self.distance_metric is not None:
@@ -280,6 +315,7 @@ class KMA(BaseClustering):
         normalized_data : pd.DataFrame
             Normalized data to fit (ignored if distance_matrix is provided).
         """
+
         try:
             # Use distance matrix if provided, otherwise use normalized data
             if self.distance_matrix is not None:
@@ -313,11 +349,12 @@ class KMA(BaseClustering):
             elif self.algorithm_name == "kmedians":
                 centers = self._model.get_medians()
             elif self.algorithm_name == "kmedoids":
+                # For kmedoids, get_medoids() always returns indices
+                medoid_indices = self._model.get_medoids()
                 if self.distance_matrix is not None:
                     # For distance matrix, medoids are indices, not actual points
                     # We need to get the actual data points corresponding to medoid
                     # indices
-                    medoid_indices = self._model.get_medoids()
                     # If we have normalized_data, use it to get actual centers
                     if not normalized_data.empty:
                         centers = normalized_data.iloc[medoid_indices].values
@@ -330,7 +367,14 @@ class KMA(BaseClustering):
                             "distance_matrix."
                         )
                 else:
-                    centers = self._model.get_medoids()
+                    # For kmedoids without distance matrix,
+                    # medoid_indices are still indices
+                    # Convert to actual data points
+                    if not normalized_data.empty:
+                        centers = normalized_data.iloc[medoid_indices].values
+                    else:
+                        # Fallback: use indices (shouldn't happen)
+                        centers = np.array(medoid_indices)
 
             self._cluster_centers = np.array(centers)
 
@@ -354,6 +398,7 @@ class KMA(BaseClustering):
         np.ndarray
             Cluster labels.
         """
+
         if self._model is None:
             raise KMAError("Model must be fitted before prediction.")
 
