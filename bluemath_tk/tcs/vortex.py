@@ -3,8 +3,10 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import xarray as xr
+from scipy.interpolate import RegularGridInterpolator
 
 from ..core.geo import geo_distance_cartesian, geodesic_distance
+from ..core.operations import nautical_to_mathematical
 
 """
 Dynamic Holland Model for Wind Vortex Fields
@@ -212,6 +214,7 @@ def vortex_model_grid(
         coords={ylab: cg_lat, xlab: cg_lon, "time": times},
     )
 
+from datetime import datetime
 
 def vortex2delft_3D_FM_nc(
     mesh: xr.Dataset,
@@ -226,57 +229,127 @@ def vortex2delft_3D_FM_nc(
         The mesh dataset containing the node coordinates.
     ds_vortex : xarray.Dataset
         The vortex dataset containing wind speed and pressure data.
-    path_output : str
-        The output path where the netCDF file will be saved.
-    ds_name : str
-        The name of the output netCDF file, default is "forcing_Tonga_vortex.nc".
-    forcing_ext : str
-        The extension for the forcing file, default is "GreenSurge_GFDcase_wind.ext".
+
     Returns
     -------
     xarray.Dataset
         A dataset containing the interpolated wind speed and pressure data,
         ready for use in Delft3D FM.
     """
+
     longitude = mesh.mesh2d_node_x.values
     latitude = mesh.mesh2d_node_y.values
+    n_nodes = longitude.size
     n_time = ds_vortex.time.size
 
-    lat_interp = xr.DataArray(latitude, dims="node")
-    lon_interp = xr.DataArray(longitude, dims="node")
+    t = ds_vortex.time.values  # datetime64[ns]
 
-    angle = np.deg2rad((270 - ds_vortex.Dir.values) % 360)
+    hours = (t - t[0]) / np.timedelta64(1, "h")
+    hours = hours.astype(float)
+
+    lon_v = ds_vortex.lon.values
+    lat_v = ds_vortex.lat.values
+
     W = ds_vortex.W.values
+    Dir = ds_vortex.Dir.values
+    p = ds_vortex.p.values
 
-    ds_vortex_interp = xr.Dataset(
-        {
-            "windx": (
-                ("latitude", "longitude", "time"),
-                (W * np.cos(angle)).astype(np.float32),
-            ),
-            "windy": (
-                ("latitude", "longitude", "time"),
-                (W * np.sin(angle)).astype(np.float32),
-            ),
-            "airpressure": (
-                ("latitude", "longitude", "time"),
-                ds_vortex.p.values.astype(np.float32),
-            ),
-        },
-        coords={
-            "latitude": ds_vortex.lat.values,
-            "longitude": ds_vortex.lon.values,
-            "time": np.arange(n_time),
-        },
-    )
+    U_src = -np.cos(nautical_to_mathematical(Dir) * np.pi / 180) * W
+    V_src = -np.sin(nautical_to_mathematical(Dir) * np.pi / 180) * W
+    points_target = np.column_stack((latitude, longitude))
 
-    forcing_dataset = ds_vortex_interp.interp(latitude=lat_interp, longitude=lon_interp)
+    # Initialiser avec l'ordre (time, node) pour correspondre à la structure cible
+    windx_node = np.zeros((n_time, n_nodes), dtype=np.float32)
+    windy_node = np.zeros((n_time, n_nodes), dtype=np.float32)
+    p_node = np.zeros((n_time, n_nodes), dtype=np.float32)
+
+    for t in range(n_time):
+        interp_U = RegularGridInterpolator(
+            (lat_v, lon_v), U_src[:, :, t], 
+            method='linear', bounds_error=False, fill_value=np.nan
+        )
+        interp_V = RegularGridInterpolator(
+            (lat_v, lon_v), V_src[:, :, t], 
+            method='linear', bounds_error=False, fill_value=np.nan
+        )
+        interp_p = RegularGridInterpolator(
+            (lat_v, lon_v), p[:, :, t], 
+            method='linear', bounds_error=False, fill_value=np.nan
+        )
+
+        windx_node[t, :] = interp_U(points_target)
+        windy_node[t, :] = interp_V(points_target)
+        p_node[t, :] = interp_p(points_target)
 
     reference_date_str = (
         ds_vortex.time.values[0]
         .astype("M8[ms]")
         .astype(datetime)
         .strftime("%Y-%m-%d %H:%M:%S")
+    )
+
+    # Construire le dataset avec la même structure que generate_grid_forcing_file_netCDF_D3DFM
+    # mais en gardant la gestion du temps comme dans l'original
+    forcing_dataset = xr.Dataset(
+        {
+            "node": xr.DataArray(
+                np.arange(n_nodes),
+                dims=["node"],
+            ),
+            "longitude": xr.DataArray(
+                longitude,
+                dims=["node"],
+                attrs={
+                    "description": "Longitude of each mesh node of the computational grid",
+                    "standard_name": "longitude",
+                    "long_name": "longitude",
+                    "units": "degrees_east",
+                },
+            ),
+            "latitude": xr.DataArray(
+                latitude,
+                dims=["node"],
+                attrs={
+                    "description": "Latitude of each mesh node of the computational grid",
+                    "standard_name": "latitude",
+                    "long_name": "latitude",
+                    "units": "degrees_north",
+                },
+            ),
+            "windx": xr.DataArray(
+                windx_node,
+                dims=["time", "node"],
+                attrs={
+                    "coordinates": "time node",
+                    "long_name": "Wind speed in x direction",
+                    "standard_name": "windx",
+                    "units": "m s-1",
+                },
+            ),
+            "windy": xr.DataArray(
+                windy_node,
+                dims=["time", "node"],
+                attrs={
+                    "coordinates": "time node",
+                    "long_name": "Wind speed in y direction",
+                    "standard_name": "windy",
+                    "units": "m s-1",
+                },
+            ),
+            "airpressure": xr.DataArray(
+                p_node.astype(np.float32),
+                dims=["time", "node"],
+                attrs={
+                    "coordinates": "time node",
+                    "long_name": "Atmospheric Pressure",
+                    "standard_name": "air_pressure",
+                    "units": "Pa",
+                },
+            ),
+        },
+        coords={
+            "time": hours,
+        },
     )
 
     forcing_dataset["windx"].attrs = {
