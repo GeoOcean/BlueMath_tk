@@ -1,5 +1,14 @@
+"""
+Package: BlueMath_tk
+Module: interpolation
+File: rbf.py
+Author: GeoOcean Research Group, Universidad de Cantabria
+Repository: https://github.com/GeoOcean/BlueMath_tk.git
+Status: Under development (Working)
+"""
+
 import time
-from typing import Callable, List, Tuple
+from collections.abc import Callable
 
 import dask.array as da
 import numpy as np
@@ -13,49 +22,113 @@ from ._base_interpolation import BaseInterpolation
 
 def gaussian_kernel(r: float, const: float) -> float:
     """
-    This function calculates the Gaussian kernel for the given distance and constant.
+    Calculate the Gaussian kernel value for the given distance and constant.
 
     Parameters
     ----------
     r : float
-        The distance.
+        The distance between the data points.
     const : float
-        The constant (default name is usually sigma for gaussian kernel).
+        The constant (usually called sigma for the Gaussian kernel).
 
     Returns
     -------
     float
-        The Gaussian kernel value.
+        The value of the Gaussian kernel.
 
     Notes
     -----
     - The Gaussian kernel is defined as:
-      K(r) = exp(r^2 / 2 * const^2) (https://en.wikipedia.org/wiki/Gaussian_function)
+      K(r) = exp(-0.5 * (r / const)**2) (https://en.wikipedia.org/wiki/Gaussian_function)
     - Here, we are assuming the mean is 0.
     """
 
     return np.exp(-0.5 * r * r / (const * const))
 
 
-def multiquadratic_kernel(r, const):
+def multiquadratic_kernel(r: float, const: float):
+    """
+    Calculate the multiquadratic kernel value.
+
+    Parameters
+    ----------
+    r : float
+        The distance between the data points.
+    const : float
+        The constant parameter.
+
+    Returns
+    -------
+    float
+        The value of the multiquadratic kernel.
+    """
+
     return np.sqrt(1 + (r / const) ** 2)
 
 
-def inverse_kernel(r, const):
+def inverse_kernel(r: float, const: float):
+    """
+    Calculate the inverse multiquadratic kernel value.
+
+    Parameters
+    ----------
+    r : float
+        The distance between the data points.
+    const : float
+        The constant parameter.
+
+    Returns
+    -------
+    float
+        The value of the inverse multiquadratic kernel.
+    """
+
     return 1 / np.sqrt(1 + (r / const) ** 2)
 
 
-def cubic_kernel(r, const):
+def cubic_kernel(r: float, const: float):
+    """
+    Calculate the cubic kernel value.
+
+    Parameters
+    ----------
+    r : float
+        The distance between the data points.
+    const : float
+        The constant parameter (not used in cubic kernel).
+
+    Returns
+    -------
+    float
+        The value of the cubic kernel.
+    """
+
     return r**3
 
 
-def thin_plate_kernel(r, const):
+def thin_plate_kernel(r: float, const: float):
+    """
+    Calculate the thin plate spline kernel value.
+
+    Parameters
+    ----------
+    r : float
+        The distance between the data points.
+    const : float
+        The constant parameter.
+
+    Returns
+    -------
+    float
+        The value of the thin plate spline kernel.
+    """
+
     return r**2 * np.log(r / const)
 
 
 class RBFError(Exception):
     """
-    Custom exception for RBF class.
+    Custom exception for RBF interpolation model.
     """
 
     def __init__(self, message: str = "RBF error occurred."):
@@ -67,77 +140,12 @@ class RBF(BaseInterpolation):
     """
     Radial Basis Function (RBF) interpolation model.
 
-    Attributes
-    ----------
-    sigma_min : float
-        The minimum value for the sigma parameter.
-        This value might change in the optimization process.
-    sigma_max : float
-        The maximum value for the sigma parameter.
-        This value might change in the optimization process.
-    sigma_diff : float
-        The difference between the optimal bounded sigma and the minimum and maximum sigma values.
-        If the difference is less than this value, the optimization process continues.
-    kernel : str
-        The kernel to use for the RBF model.
-        The available kernels are:
-
-            - gaussian              : ``exp(-1/2 * (r / const)**2)``
-            - multiquadratic        : ``sqrt(1 + (r / const)**2)``
-            - inverse               : ``1 / sqrt(1 + (r / const)**2)``
-            - cubic                 : ``r**3``
-            - thin_plate            : ``r**2 * log(r / const)``
-
-    kernel_func : function
-        The kernel function to use for the RBF model.
-    smooth : float
-        The smoothness parameter.
-    subset_data : pd.DataFrame
-        The subset data used to fit the model.
-    normalized_subset_data : pd.DataFrame
-        The normalized subset data used to fit the model.
-    target_data : pd.DataFrame
-        The target data used to fit the model.
-    normalized_target_data : pd.DataFrame
-        The normalized target data used to fit the model.
-        This attribute is only set if normalize_target_data is True in the fit method.
-    subset_directional_variables : List[str]
-        The subset directional variables.
-    target_directional_variables : List[str]
-        The target directional variables.
-    subset_processed_variables : List[str]
-        The subset processed variables.
-    target_processed_variables : List[str]
-        The target processed variables.
-    subset_custom_scale_factor : dict
-        The custom scale factor for the subset data.
-    target_custom_scale_factor : dict
-        The custom scale factor for the target data.
-    subset_scale_factor : dict
-        The scale factor for the subset data.
-    target_scale_factor : dict
-        The scale factor for the target data.
-    rbf_coeffs : pd.DataFrame
-        The RBF coefficients for the target variables.
-    opt_sigmas : dict
-        The optimal sigmas for the target variables.
-
-    Methods
-    -------
-    fit -> None
-        Fits the model to the data.
-    predict -> pd.DataFrame
-        Predicts the data for the provided dataset.
-    fit_predict -> pd.DataFrame
-        Fits the model to the subset and predicts the interpolated dataset.
-
     Notes
     -----
-    TODO: For the moment, this class only supports optimization for one parameter kernels.
-          For this reason, we only have sigma as the parameter to optimize.
-          This sigma refers to the sigma parameter in the Gaussian kernel (but is used for all kernels).
-
-    Main reference for sigma optimization: https://link.springer.com/article/10.1023/A:1018975909870
+    TODO: For the moment, this class only supports optimization for one
+          parameter kernels. For this reason, we only have sigma as the
+          parameter to optimize. This sigma refers to the sigma parameter
+          in the Gaussian kernel (but is used for all kernels).
 
     Examples
     --------
@@ -163,7 +171,6 @@ class RBF(BaseInterpolation):
         )
 
         rbf = RBF()
-
         predictions = rbf.fit_predict(
             subset_data=subset,
             subset_directional_variables=["Dir"],
@@ -175,12 +182,13 @@ class RBF(BaseInterpolation):
             iteratively_update_sigma=True,
         )
         print(predictions.head())
+        rbf.explain(dataset=dataset, target_variable="HsPred")
 
     References
     ----------
-    [1] https://en.wikipedia.org/wiki/Radial_basis_function
-    [2] https://en.wikipedia.org/wiki/Gaussian_function
-    [3] https://link.springer.com/article/10.1023/A:1018975909870
+    [1] https://link.springer.com/article/10.1023/A:1018975909870
+    [2] https://en.wikipedia.org/wiki/Radial_basis_function
+    [3] https://en.wikipedia.org/wiki/Gaussian_function
     """
 
     rbf_kernels = {
@@ -201,14 +209,22 @@ class RBF(BaseInterpolation):
         smooth: float = 1e-5,
     ):
         """
-        Raises
-        ------
-        ValueError
-            If the sigma_min is not a positive float.
-            If the sigma_max is not a positive float greater than sigma_min.
-            If the sigma_diff is not a positive float.
-            If the kernel is not a string and one of the available kernels.
-            If the smooth is not a positive float.
+        Initialize RBF interpolation model.
+
+        Parameters
+        ----------
+        sigma_min : float, optional
+            The minimum value for the sigma parameter. Default is 0.001.
+        sigma_max : float, optional
+            The maximum value for the sigma parameter. Default is 0.1.
+        sigma_diff : float, optional
+            The difference between the sigma parameters. Default is 0.0001.
+        sigma_opt : float, optional
+            The optimal value for the sigma parameter. Default is None.
+        kernel : str, optional
+            The kernel to use for the interpolation. Default is "gaussian".
+        smooth : float, optional
+            The smoothness parameter. Default is 1e-5.
         """
 
         super().__init__()
@@ -264,10 +280,10 @@ class RBF(BaseInterpolation):
         self._normalized_subset_data: pd.DataFrame = pd.DataFrame()
         self._target_data: pd.DataFrame = pd.DataFrame()
         self._normalized_target_data: pd.DataFrame = pd.DataFrame()
-        self._subset_directional_variables: List[str] = []
-        self._target_directional_variables: List[str] = []
-        self._subset_processed_variables: List[str] = []
-        self._target_processed_variables: List[str] = []
+        self._subset_directional_variables: list[str] = []
+        self._target_directional_variables: list[str] = []
+        self._subset_processed_variables: list[str] = []
+        self._target_processed_variables: list[str] = []
         self._subset_custom_scale_factor: dict = {}
         self._target_custom_scale_factor: dict = {}
         self._subset_scale_factor: dict = {}
@@ -283,95 +299,116 @@ class RBF(BaseInterpolation):
 
     @property
     def sigma_min(self) -> float:
+        """Return the minimum sigma value."""
         return self._sigma_min
 
     @property
     def sigma_max(self) -> float:
+        """Return the maximum sigma value."""
         return self._sigma_max
 
     @property
     def sigma_diff(self) -> float:
+        """Return the sigma difference threshold."""
         return self._sigma_diff
 
     @property
     def sigma_opt(self) -> float:
+        """Return the optimal sigma value."""
         return self._sigma_opt
 
     @property
     def kernel(self) -> str:
+        """Return the kernel name."""
         return self._kernel
 
     @property
     def kernel_func(self) -> Callable:
+        """Return the kernel function."""
         return self._kernel_func
 
     @property
     def smooth(self) -> float:
+        """Return the smoothness parameter."""
         return self._smooth
 
     @property
     def subset_data(self) -> pd.DataFrame:
+        """Return the subset data."""
         return self._subset_data
 
     @property
     def normalized_subset_data(self) -> pd.DataFrame:
+        """Return the normalized subset data."""
         return self._normalized_subset_data
 
     @property
     def target_data(self) -> pd.DataFrame:
+        """Return the target data."""
         return self._target_data
 
     @property
     def normalized_target_data(self) -> pd.DataFrame:
+        """Return the normalized target data."""
         if self._normalized_target_data.empty:
             raise ValueError("Target data is not normalized.")
         return self._normalized_target_data
 
     @property
-    def subset_directional_variables(self) -> List[str]:
+    def subset_directional_variables(self) -> list[str]:
+        """Return the subset directional variables."""
         return self._subset_directional_variables
 
     @property
-    def target_directional_variables(self) -> List[str]:
+    def target_directional_variables(self) -> list[str]:
+        """Return the target directional variables."""
         return self._target_directional_variables
 
     @property
-    def subset_processed_variables(self) -> List[str]:
+    def subset_processed_variables(self) -> list[str]:
+        """Return the subset processed variables."""
         return self._subset_processed_variables
 
     @property
-    def target_processed_variables(self) -> List[str]:
+    def target_processed_variables(self) -> list[str]:
+        """Return the target processed variables."""
         return self._target_processed_variables
 
     @property
     def subset_custom_scale_factor(self) -> dict:
+        """Return the subset custom scale factor."""
         return self._subset_custom_scale_factor
 
     @property
     def target_custom_scale_factor(self) -> dict:
+        """Return the target custom scale factor."""
         return self._target_custom_scale_factor
 
     @property
     def subset_scale_factor(self) -> dict:
+        """Return the subset scale factor."""
         return self._subset_scale_factor
 
     @property
     def target_scale_factor(self) -> dict:
+        """Return the target scale factor."""
         return self._target_scale_factor
 
     @property
     def rbf_coeffs(self) -> pd.DataFrame:
+        """Return the RBF coefficients."""
         return self._rbf_coeffs
 
     @property
     def opt_sigmas(self) -> dict:
+        """Return the optimal sigmas."""
         return self._opt_sigmas
 
     def _preprocess_subset_data(
         self, subset_data: pd.DataFrame, is_fit: bool = True
     ) -> pd.DataFrame:
         """
-        This function preprocesses the subset data.
+        Preprocess the subset data.
 
         Parameters
         ----------
@@ -392,7 +429,7 @@ class RBF(BaseInterpolation):
 
         Notes
         -----
-        - This function preprocesses the subset data by:
+        - Preprocesses the subset data by:
             - Checking for NaNs.
             - Preprocessing directional variables.
             - Normalizing the data.
@@ -442,7 +479,7 @@ class RBF(BaseInterpolation):
         normalize_target_data: bool = True,
     ) -> pd.DataFrame:
         """
-        This function preprocesses the target data.
+        Preprocess the target data.
 
         Parameters
         ----------
@@ -463,7 +500,7 @@ class RBF(BaseInterpolation):
 
         Notes
         -----
-        - This function preprocesses the target data by:
+        - Preprocesses the target data by:
             - Checking for NaNs.
             - Preprocessing directional variables.
             - Normalizing the data.
@@ -546,9 +583,9 @@ class RBF(BaseInterpolation):
 
     def _calc_rbf_coeff(
         self, sigma: float, x: np.ndarray, y: np.ndarray
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
-        This function calculates the RBF coefficients for the given data.
+        Calculate the RBF coefficients for the given data.
 
         Parameters
         ----------
@@ -561,7 +598,7 @@ class RBF(BaseInterpolation):
 
         Returns
         -------
-        Tuple[np.ndarray, np.ndarray]
+        tuple[np.ndarray, np.ndarray]
             The RBF coefficients and the A matrix.
         """
 
@@ -581,7 +618,7 @@ class RBF(BaseInterpolation):
 
     def _cost_sigma(self, sigma: float, x: np.ndarray, y: np.ndarray) -> float:
         """
-        This function is called by fminbound to minimize the cost function.
+        Minimize the cost function (called by fminbound).
 
         Parameters
         ----------
@@ -618,7 +655,8 @@ class RBF(BaseInterpolation):
         #     kk = kk - rbf_coeff[m1 - m + i] * x[i, :]
         kk -= np.dot(rbf_coeff[m1 - m :].T, x).reshape(-1)
 
-        # Calculate the cost by multiplying invA with kk and normalizing by the diagonal elements of invA
+        # Calculate the cost by multiplying invA with kk and normalizing
+        # by the diagonal elements of invA
         ceps = np.dot(invA, kk) / np.diagonal(invA)
 
         # Return the norm of ceps, representing the cost
@@ -633,7 +671,7 @@ class RBF(BaseInterpolation):
         iteratively_update_sigma: bool = False,
     ) -> float:
         """
-        This function calculates the optimal sigma for the given target variable.
+        Calculate the optimal sigma for the given target variable.
 
         Parameters
         ----------
@@ -770,7 +808,7 @@ class RBF(BaseInterpolation):
         self, dataset: pd.DataFrame, num_workers: int = None
     ) -> pd.DataFrame:
         """
-        This function interpolates the dataset.
+        Interpolate the dataset.
 
         Parameters
         ----------
@@ -801,7 +839,8 @@ class RBF(BaseInterpolation):
         # Loop through the target variables
         if num_workers > 1:
             self.logger.info(
-                f"Interpolating target variables using parallel execution and num_workers={num_workers}"
+                f"Interpolating target variables using parallel execution "
+                f"and num_workers={num_workers}"
             )
             rbf_interpolated_vars = self.parallel_execute(
                 func=self._rbf_variable_interpolation,
@@ -841,8 +880,8 @@ class RBF(BaseInterpolation):
         self,
         subset_data: pd.DataFrame,
         target_data: pd.DataFrame,
-        subset_directional_variables: List[str] = [],
-        target_directional_variables: List[str] = [],
+        subset_directional_variables: list[str] = [],
+        target_directional_variables: list[str] = [],
         subset_custom_scale_factor: dict = {},
         normalize_target_data: bool = True,
         target_custom_scale_factor: dict = {},
@@ -858,9 +897,9 @@ class RBF(BaseInterpolation):
             The subset data used to fit the model.
         target_data : pd.DataFrame
             The target data used to fit the model.
-        subset_directional_variables : List[str], optional
+        subset_directional_variables : list[str], optional
             The subset directional variables. Default is [].
-        target_directional_variables : List[str], optional
+        target_directional_variables : list[str], optional
             The target directional variables. Default is [].
         subset_custom_scale_factor : dict, optional
             The custom scale factor for the subset data. Default is {}.
@@ -901,7 +940,8 @@ class RBF(BaseInterpolation):
 
         if num_workers > 1:
             self.logger.info(
-                f"Fitting RBF model using parallel execution and num_workers={num_workers}"
+                f"Fitting RBF model using parallel execution "
+                f"and num_workers={num_workers}"
             )
             rbf_coeffs_and_sigmas = self.parallel_execute(
                 func=self._calc_opt_sigma,
@@ -994,8 +1034,8 @@ class RBF(BaseInterpolation):
         subset_data: pd.DataFrame,
         target_data: pd.DataFrame,
         dataset: pd.DataFrame,
-        subset_directional_variables: List[str] = [],
-        target_directional_variables: List[str] = [],
+        subset_directional_variables: list[str] = [],
+        target_directional_variables: list[str] = [],
         subset_custom_scale_factor: dict = {},
         normalize_target_data: bool = True,
         target_custom_scale_factor: dict = {},
@@ -1013,9 +1053,9 @@ class RBF(BaseInterpolation):
             The target data used to fit the model.
         dataset : pd.DataFrame
             The dataset to predict (must have same variables than subset).
-        subset_directional_variables : List[str], optional
+        subset_directional_variables : list[str], optional
             The subset directional variables. Default is [].
-        target_directional_variables : List[str], optional
+        target_directional_variables : list[str], optional
             The target directional variables. Default is [].
         subset_custom_scale_factor : dict, optional
             The custom scale factor for the subset data. Default is {}.
@@ -1035,7 +1075,7 @@ class RBF(BaseInterpolation):
 
         Notes
         -----
-        - This function fits the model to the subset and predicts the interpolated dataset.
+        - Fits the model to the subset and predicts the interpolated dataset.
         """
 
         if num_workers is None:
@@ -1054,6 +1094,211 @@ class RBF(BaseInterpolation):
         )
 
         return self.predict(dataset=dataset, num_workers=num_workers)
+
+    def explain(
+        self,
+        dataset: pd.DataFrame,
+        target_variable: str = None,
+        num_samples: int = 100,
+        max_background_samples: int = 100,
+    ):
+        """
+        Explain RBF predictions using SHAP (SHapley Additive exPlanations) values.
+
+        This method provides comprehensive model interpretability by automatically
+        generating interactive SHAP visualizations for each target variable. It uses
+        the training subset data as background.
+
+        Parameters
+        ----------
+        dataset : pd.DataFrame
+            The test dataset to explain predictions for. Must have the same variables
+            as the subset_data used for fitting.
+        target_variable : str, optional
+            The target variable to explain. If None, explains all target variables.
+            Default is None.
+        num_samples : int, optional
+            Number of samples to use for SHAP approximation. Higher values give
+            more accurate results but are slower. Default is 100.
+            Recommended: 100-500 for good balance between speed and accuracy.
+        max_background_samples : int, optional
+            Maximum number of background samples to use. The subset data will be
+            automatically summarized using k-means if it exceeds this value.
+            Default is 100.
+
+        Returns
+        -------
+        dict
+            Dictionary containing explanation results for each target variable:
+            - 'explanation': SHAP Explanation object
+            - 'shap_values': numpy array of SHAP values
+            - 'expected_value': base/expected prediction value
+            - 'feature_importance': pandas Series with mean absolute SHAP values
+            - 'summary_stats': dictionary with summary statistics
+
+        Raises
+        ------
+        ImportError
+            If SHAP is not installed.
+        RBFError
+            If the model is not fitted.
+        """
+
+        try:
+            import logging
+
+            import shap
+
+            # Suppress SHAP INFO logs (keep progress bars)
+            shap_logger = logging.getLogger("shap")
+            shap_logger.setLevel(logging.WARNING)
+
+            shap.initjs()  # Initialize JavaScript for interactive plots
+        except ImportError:
+            raise ImportError(
+                "SHAP is required for explain method. Install with: pip install shap"
+            )
+
+        if not self.is_fitted:
+            raise RBFError("RBF model must be fitted before explaining.")
+
+        # Determine which target variables to explain
+        if target_variable is None:
+            target_vars = self.target_processed_variables
+        else:
+            if target_variable not in self.target_processed_variables:
+                raise ValueError(
+                    f"target_variable '{target_variable}' not found in "
+                    f"target_processed_variables: {self.target_processed_variables}"
+                )
+            target_vars = [target_variable]
+
+        # Prepare background data from subset (automatic)
+        background = self.subset_data.copy()
+
+        # Summarize background data for efficiency if it's too large
+        if len(background) > max_background_samples:
+            self.logger.info(
+                f"Summarizing background data from {len(background)} "
+                f"to {max_background_samples} samples using k-means"
+            )
+            n_clusters = min(max_background_samples, len(background))
+            background_summary = shap.kmeans(background, n_clusters)
+        else:
+            n_clusters = len(background)
+            background_summary = background
+
+        explanations = {}
+
+        for target_var in target_vars:
+            self.logger.info(
+                f"Explaining predictions for target variable: {target_var}"
+            )
+
+            # Create a prediction function for this specific target variable
+            # This wrapper is needed because SHAP expects a function that takes
+            # numpy arrays and returns predictions
+            def predict_fn(X):
+                """
+                Predict the target variable for SHAP explanation.
+
+                Parameters
+                ----------
+                X : np.ndarray
+                    Input features in normalized space (shape: n_samples, n_features)
+
+                Returns
+                -------
+                np.ndarray
+                    Predictions for the target variable (shape: n_samples,)
+                """
+
+                # Convert to DataFrame with proper column names
+                dataset = pd.DataFrame(X, columns=self.subset_processed_variables)
+
+                # Get predictions for all targets
+                predictions = self.predict(dataset=dataset)
+
+                # Return only the target variable we're explaining
+                return predictions[target_var]
+
+            # Create SHAP explainer
+            self.logger.info(
+                f"Creating SHAP KernelExplainer with {n_clusters} "
+                f"background samples and {num_samples} evaluation samples"
+            )
+            explainer = shap.KernelExplainer(predict_fn, background_summary)
+
+            # Calculate SHAP values using normalized data
+            self.logger.info(f"Calculating SHAP values for {len(dataset)} samples...")
+            shap_values = explainer.shap_values(dataset.values, nsamples=num_samples)
+
+            # Ensure shap_values is 2D (handle both single and multiple samples)
+            shap_values = np.array(shap_values)
+            if shap_values.ndim == 1:
+                shap_values = shap_values.reshape(1, -1)
+
+            # Create SHAP Explanation object using original dataset for plotting
+            explanation = shap.Explanation(
+                values=shap_values,
+                base_values=explainer.expected_value,
+                data=dataset.values,
+                feature_names=dataset.columns.tolist(),
+            )
+
+            # Calculate feature importance (mean absolute SHAP values)
+            feature_importance = pd.Series(
+                np.abs(shap_values).mean(axis=0),
+                index=self.subset_processed_variables,
+                name="mean_abs_shap",
+            ).sort_values(ascending=False)
+
+            # Calculate summary statistics
+            summary_stats = {
+                "n_samples": len(dataset),
+                "n_features": len(self.subset_processed_variables),
+                "expected_value": float(explainer.expected_value),
+                "mean_prediction": float(
+                    shap_values.sum(axis=1).mean() + explainer.expected_value
+                ),
+                "shap_values_range": {
+                    "min": float(shap_values.min()),
+                    "max": float(shap_values.max()),
+                    "mean": float(shap_values.mean()),
+                    "std": float(shap_values.std()),
+                },
+                "top_features": feature_importance.head(10).to_dict(),
+            }
+
+            # Generate single comprehensive plot
+            self.logger.info(f"Generating SHAP summary plot for {target_var}")
+
+            # Print minimal essential statistics
+            print(f"SHAP Explanation: {target_var}")
+            print(f"  Baseline: {summary_stats['expected_value']:.4f}")
+            print(f"  Mean prediction: {summary_stats['mean_prediction']:.4f}")
+            top_features = ", ".join(feature_importance.head(5).index.tolist())
+            print(f"  Top 5 features: {top_features}")
+
+            # Single comprehensive summary plot using original dataset
+            shap.summary_plot(shap_values, dataset, show=True)
+
+            # Store comprehensive explanation
+            explanations[target_var] = {
+                "explanation": explanation,
+                "shap_values": shap_values,
+                "expected_value": explainer.expected_value,
+                "feature_importance": feature_importance,
+                "summary_stats": summary_stats,
+                "explainer": explainer,
+                "data": dataset,  # Store original dataset
+            }
+
+        # Return single explanation if only one target variable
+        if len(explanations) == 1:
+            return list(explanations.values())[0]
+
+        return explanations
 
 
 def basic_rbf_metric(df_true: pd.DataFrame, df_pred: pd.DataFrame) -> float:
@@ -1079,8 +1324,8 @@ def basic_rbf_metric(df_true: pd.DataFrame, df_pred: pd.DataFrame) -> float:
 def KFold_cross_validation_RBF(
     subset_data: pd.DataFrame,
     target_data: pd.DataFrame,
-    subset_directional_variables: List[str] = [],
-    target_directional_variables: List[str] = [],
+    subset_directional_variables: list[str] = [],
+    target_directional_variables: list[str] = [],
     subset_custom_scale_factor: dict = {},
     normalize_target_data: bool = True,
     target_custom_scale_factor: dict = {},
@@ -1092,6 +1337,40 @@ def KFold_cross_validation_RBF(
 ):
     """
     Perform K-Fold cross-validation for the RBF model.
+
+    Parameters
+    ----------
+    subset_data : pd.DataFrame
+        The subset data used to fit the model.
+    target_data : pd.DataFrame
+        The target data used to fit the model.
+    subset_directional_variables : list[str], optional
+        The subset directional variables. Default is [].
+    target_directional_variables : list[str], optional
+        The target directional variables. Default is [].
+    subset_custom_scale_factor : dict, optional
+        The custom scale factor for the subset data. Default is {}.
+    normalize_target_data : bool, optional
+        Whether to normalize the target data. Default is True.
+    target_custom_scale_factor : dict, optional
+        The custom scale factor for the target data. Default is {}.
+    num_workers : int, optional
+        The number of workers to use for the optimization. Default is None.
+    iteratively_update_sigma : bool, optional
+        Whether to iteratively update the sigma parameter. Default is False.
+    rbf_model : RBF, optional
+        The RBF model to use for the cross-validation. Default is None.
+    n_splits : int, optional
+        The number of splits for the cross-validation. Default is 5.
+    metric : Callable, optional
+        The metric to use for the cross-validation. Default is basic_rbf_metric.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the results of the cross-validation.
+        The keys are the fold indices, and the values are dictionaries containing the
+        train and test data, the predictions, and the metric.
     """
 
     if rbf_model is None:

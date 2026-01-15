@@ -9,6 +9,27 @@ on:
       - synchronize
 
 jobs:
+  # Separate linting job for faster feedback
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .[tests]
+
+      - name: Lint with ruff
+        run: |
+          ruff check bluemath_tk/ || true   # TODO: Remove || true once docstrings are fixed
+
   python-tests:
     runs-on: ${{ matrix.os }}
 
@@ -31,10 +52,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install .[all,tests]
-
-      - name: Lint
-        run: |
-          ruff check bluemath_tk/datamining/ || true   # optional: don't fail lint for now
 
       - name: Run tests
         run: |
