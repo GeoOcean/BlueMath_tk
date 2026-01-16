@@ -11,6 +11,7 @@ import time
 from collections.abc import Callable
 
 import dask.array as da
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.optimize import fmin, fminbound
@@ -1384,6 +1385,155 @@ class RBF(BaseInterpolation):
             # Generate SHAP summary plot using original dataset (good magnitudes)
             self.logger.info(f"Generating SHAP summary plot for {target_var}")
             shap.summary_plot(shap_values, dataset, show=True)
+
+    def plot_partial_dependence(
+        self,
+        feature_name: str,
+        target_variable: str = None,
+        n_points: int = 100,
+    ) -> tuple[plt.Figure, plt.Axes]:
+        """
+        Plot partial dependence of a target variable on a single input feature.
+
+        This creates a plot showing how the predicted target variable changes
+        as one input feature varies, while other features are held constant.
+        The RBF interpolation curve will pass exactly through all training points
+        (since RBF is an exact interpolator).
+
+        Parameters
+        ----------
+        feature_name : str
+            Name of the input feature from subset_data to vary.
+        target_variable : str, optional
+            Target variable to plot. If None, plots the first target variable.
+            Default is None.
+        n_points : int, optional
+            Number of points to evaluate along the feature range. Default is 100.
+
+        Returns
+        -------
+        tuple
+            (fig, ax) matplotlib figure and axes objects.
+
+        Raises
+        ------
+        RBFError
+            If the model is not fitted.
+        ValueError
+            If feature_name is not in subset_data or target_variable is invalid.
+        """
+
+        if not self.is_fitted:
+            raise RBFError("RBF model must be fitted before plotting.")
+
+        # Validate feature name
+        if feature_name not in self._original_subset_data.columns:
+            raise ValueError(
+                f"feature_name '{feature_name}' not found in subset_data. "
+                f"Available features: {self._original_subset_data.columns.tolist()}"
+            )
+
+        # Select target variable
+        if target_variable is None:
+            target_variable = self.target_processed_variables[0]
+        elif target_variable not in self.target_processed_variables:
+            raise ValueError(
+                f"target_variable '{target_variable}' not found in "
+                f"target_processed_variables: {self.target_processed_variables}"
+            )
+
+        # Get predictions at the actual training points (using all original features)
+        # This ensures the curve passes exactly through training points since RBF
+        # is exact
+        self.logger.info(
+            f"Computing partial dependence for {feature_name} -> {target_variable}"
+        )
+        training_predictions = self._rbf_interpolate(
+            dataset=self._original_subset_data, target_variable=target_variable
+        )
+
+        # Get feature values and predictions, sort by feature_name for plotting
+        training_x = self._original_subset_data[feature_name].values
+        training_y = training_predictions
+
+        # Sort by feature_name for smooth line plotting
+        sort_idx = np.argsort(training_x)
+        training_x_sorted = training_x[sort_idx]
+        training_y_sorted = training_y[sort_idx]
+
+        # Create additional points for smoother visualization
+        # Use training data range
+        feature_min = training_x_sorted.min()
+        feature_max = training_x_sorted.max()
+        feature_range = np.linspace(feature_min, feature_max, n_points)
+
+        # Create base DataFrame with median values for other features
+        base_data = self._original_subset_data.copy()
+        base_data.drop(columns=[feature_name], inplace=True)
+        base_data_median = base_data.median()
+
+        # Create smooth grid for visualization
+        smooth_data = pd.DataFrame({feature_name: feature_range})
+        for col in base_data_median.index:
+            smooth_data[col] = base_data_median.loc[col]
+
+        # Get predictions on smooth grid
+        smooth_predictions = self._rbf_interpolate(
+            dataset=smooth_data, target_variable=target_variable
+        )
+
+        # Create plot
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        # Plot the smooth interpolation curve (partial dependence with median values)
+        ax.plot(
+            feature_range,
+            smooth_predictions,
+            "b-",
+            linewidth=3,
+            label="RBF interpolation",
+            zorder=2,
+        )
+
+        # Plot the training data points connected by line (exact RBF evaluation)
+        # This shows the actual RBF interpolation at training points
+        ax.plot(
+            training_x_sorted,
+            training_y_sorted,
+            "b-",
+            linewidth=2,
+            alpha=0.5,
+            linestyle="--",
+            zorder=1,
+        )
+
+        # Plot the training data points (should lie exactly on their own curve)
+        ax.scatter(
+            training_x,
+            training_y,
+            c="black",
+            marker="+",
+            s=150,
+            linewidths=2.5,
+            label="Training data",
+            zorder=3,
+            clip_on=False,
+        )
+
+        ax.set_xlabel(f"input, {feature_name}", fontsize=12)
+        ax.set_ylabel(f"output, {target_variable}", fontsize=12)
+        ax.set_title(
+            f"Partial Dependence: {feature_name} → {target_variable}",
+            fontsize=14,
+            fontweight="bold",
+        )
+        ax.grid(True, alpha=0.3, linestyle="--")
+        ax.legend(loc="best", framealpha=0.9)
+
+        plt.tight_layout()
+        plt.show()
+
+        return fig, ax
 
 
 def basic_rbf_metric(df_true: pd.DataFrame, df_pred: pd.DataFrame) -> float:
