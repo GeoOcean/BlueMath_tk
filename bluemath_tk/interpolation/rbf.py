@@ -20,6 +20,146 @@ from ..core.decorators import validate_data_rbf
 from ._base_interpolation import BaseInterpolation
 
 
+def linear_kernel(r: float, const: float):
+    """
+    Calculate the linear kernel value.
+
+    Parameters
+    ----------
+    r : float
+        The distance between the data points.
+    const : float
+        The constant parameter (not used in linear kernel).
+
+    Returns
+    -------
+    float
+        The value of the linear kernel.
+    """
+
+    return -r
+
+
+def cubic_kernel(r: float, const: float):
+    """
+    Calculate the cubic kernel value.
+
+    Parameters
+    ----------
+    r : float
+        The distance between the data points.
+    const : float
+        The constant parameter (not used in cubic kernel).
+
+    Returns
+    -------
+    float
+        The value of the cubic kernel.
+    """
+
+    return r**3
+
+
+def quintic_kernel(r: float, const: float):
+    """
+    Calculate the quintic kernel value.
+
+    Parameters
+    ----------
+    r : float
+        The distance between the data points.
+    const : float
+        The constant parameter (not used in quintic kernel).
+
+    Returns
+    -------
+    float
+        The value of the quintic kernel.
+    """
+
+    return -(r**5)
+
+
+def thin_plate_kernel(r: float, const: float):
+    """
+    Calculate the thin plate spline kernel value.
+
+    Parameters
+    ----------
+    r : float
+        The distance between the data points.
+    const : float
+        The constant parameter.
+
+    Returns
+    -------
+    float
+        The value of the thin plate spline kernel.
+    """
+
+    return r**2 * np.log(r / const)
+
+
+def inverse_kernel(r: float, const: float):
+    """
+    Calculate the inverse multiquadratic kernel value.
+
+    Parameters
+    ----------
+    r : float
+        The distance between the data points.
+    const : float
+        The constant parameter.
+
+    Returns
+    -------
+    float
+        The value of the inverse multiquadratic kernel.
+    """
+
+    return 1 / np.sqrt(1 + (r / const) ** 2)
+
+
+def inverse_quadratic_kernel(r: float, const: float):
+    """
+    Calculate the inverse quadratic kernel value.
+
+    Parameters
+    ----------
+    r : float
+        The distance between the data points.
+    const : float
+        The constant parameter.
+
+    Returns
+    -------
+    float
+        The value of the inverse quadratic kernel.
+    """
+
+    return 1 / (1 + (r / const) ** 2)
+
+
+def multiquadratic_kernel(r: float, const: float):
+    """
+    Calculate the multiquadratic kernel value.
+
+    Parameters
+    ----------
+    r : float
+        The distance between the data points.
+    const : float
+        The constant parameter.
+
+    Returns
+    -------
+    float
+        The value of the multiquadratic kernel.
+    """
+
+    return np.sqrt(1 + (r / const) ** 2)
+
+
 def gaussian_kernel(r: float, const: float) -> float:
     """
     Calculate the Gaussian kernel value for the given distance and constant.
@@ -44,86 +184,6 @@ def gaussian_kernel(r: float, const: float) -> float:
     """
 
     return np.exp(-0.5 * r * r / (const * const))
-
-
-def multiquadratic_kernel(r: float, const: float):
-    """
-    Calculate the multiquadratic kernel value.
-
-    Parameters
-    ----------
-    r : float
-        The distance between the data points.
-    const : float
-        The constant parameter.
-
-    Returns
-    -------
-    float
-        The value of the multiquadratic kernel.
-    """
-
-    return np.sqrt(1 + (r / const) ** 2)
-
-
-def inverse_kernel(r: float, const: float):
-    """
-    Calculate the inverse multiquadratic kernel value.
-
-    Parameters
-    ----------
-    r : float
-        The distance between the data points.
-    const : float
-        The constant parameter.
-
-    Returns
-    -------
-    float
-        The value of the inverse multiquadratic kernel.
-    """
-
-    return 1 / np.sqrt(1 + (r / const) ** 2)
-
-
-def cubic_kernel(r: float, const: float):
-    """
-    Calculate the cubic kernel value.
-
-    Parameters
-    ----------
-    r : float
-        The distance between the data points.
-    const : float
-        The constant parameter (not used in cubic kernel).
-
-    Returns
-    -------
-    float
-        The value of the cubic kernel.
-    """
-
-    return r**3
-
-
-def thin_plate_kernel(r: float, const: float):
-    """
-    Calculate the thin plate spline kernel value.
-
-    Parameters
-    ----------
-    r : float
-        The distance between the data points.
-    const : float
-        The constant parameter.
-
-    Returns
-    -------
-    float
-        The value of the thin plate spline kernel.
-    """
-
-    return r**2 * np.log(r / const)
 
 
 class RBFError(Exception):
@@ -192,18 +252,24 @@ class RBF(BaseInterpolation):
     """
 
     rbf_kernels = {
-        "gaussian": gaussian_kernel,
-        "multiquadratic": multiquadratic_kernel,
-        "inverse": inverse_kernel,
+        "linear": linear_kernel,
         "cubic": cubic_kernel,
+        "quintic": quintic_kernel,
         "thin_plate": thin_plate_kernel,
+        "inverse": inverse_kernel,
+        "inverse_quadratic": inverse_quadratic_kernel,
+        "multiquadratic": multiquadratic_kernel,
+        "gaussian": gaussian_kernel,
     }
+
+    # Kernels that don't require sigma optimization
+    _kernels_no_sigma_opt = {"linear", "cubic", "quintic", "thin_plate"}
 
     def __init__(
         self,
-        sigma_min: float = 0.001,
-        sigma_max: float = 0.1,
-        sigma_diff: float = 0.0001,
+        sigma_min: float = 0.01,
+        sigma_max: float = 10.0,
+        sigma_diff: float = 0.01,
         sigma_opt: float = None,
         kernel: str = "gaussian",
         smooth: float = 1e-5,
@@ -214,11 +280,11 @@ class RBF(BaseInterpolation):
         Parameters
         ----------
         sigma_min : float, optional
-            The minimum value for the sigma parameter. Default is 0.001.
+            The minimum value for the sigma parameter. Default is 0.01.
         sigma_max : float, optional
-            The maximum value for the sigma parameter. Default is 0.1.
+            The maximum value for the sigma parameter. Default is 10.0.
         sigma_diff : float, optional
-            The difference between the sigma parameters. Default is 0.0001.
+            The difference between the sigma parameters. Default is 0.01.
         sigma_opt : float, optional
             The optimal value for the sigma parameter. Default is None.
         kernel : str, optional
@@ -276,6 +342,7 @@ class RBF(BaseInterpolation):
         # Below, we initialize the attributes that will be set in the fit method
         self.is_fitted: bool = False
         self.is_target_normalized: bool = False
+        self._original_subset_data: pd.DataFrame = pd.DataFrame()
         self._subset_data: pd.DataFrame = pd.DataFrame()
         self._normalized_subset_data: pd.DataFrame = pd.DataFrame()
         self._target_data: pd.DataFrame = pd.DataFrame()
@@ -401,7 +468,16 @@ class RBF(BaseInterpolation):
 
     @property
     def opt_sigmas(self) -> dict:
-        """Return the optimal sigmas."""
+        """
+        Return the optimal sigmas.
+
+        Returns
+        -------
+        dict
+            Dictionary mapping target variable names to their optimal sigma values.
+            Values may be None for kernels that don't require sigma optimization
+            (e.g., linear, cubic, quintic, thin_plate).
+        """
         return self._opt_sigmas
 
     def _preprocess_subset_data(
@@ -664,12 +740,23 @@ class RBF(BaseInterpolation):
 
         return yy
 
+    def _needs_sigma_optimization(self) -> bool:
+        """
+        Check if the current kernel requires sigma optimization.
+
+        Returns
+        -------
+        bool
+            True if the kernel requires sigma optimization, False otherwise.
+        """
+        return self.kernel not in self._kernels_no_sigma_opt
+
     def _calc_opt_sigma(
         self,
         target_variable: np.ndarray,
         subset_variables: np.ndarray,
         iteratively_update_sigma: bool = False,
-    ) -> float:
+    ) -> tuple[np.ndarray, float | None]:
         """
         Calculate the optimal sigma for the given target variable.
 
@@ -684,9 +771,23 @@ class RBF(BaseInterpolation):
 
         Returns
         -------
-        float
-            The optimal sigma.
+        tuple[np.ndarray, float | None]
+            A tuple containing the RBF coefficients and the optimal sigma
+            (None if kernel doesn't require optimization).
         """
+
+        # Check if kernel needs sigma optimization
+        if not self._needs_sigma_optimization():
+            self.logger.info(
+                f"Kernel '{self.kernel}' does not require sigma optimization. "
+                "Fitting directly with dummy sigma value."
+            )
+            # Use a dummy sigma value (1.0) for kernels that don't use it
+            dummy_sigma = 1.0
+            rbf_coeff, _ = self._calc_rbf_coeff(
+                sigma=dummy_sigma, x=subset_variables, y=target_variable
+            )
+            return rbf_coeff, None
 
         t0 = time.time()
         # Initialize sigma_min, sigma_max, and d_sigma
@@ -735,7 +836,7 @@ class RBF(BaseInterpolation):
 
     def _rbf_variable_interpolation(
         self,
-        opt_sigma: float,
+        opt_sigma: float | None,
         rbf_coeff: np.ndarray,
         normalized_dataset: pd.DataFrame,
         num_points_subset: int,
@@ -744,8 +845,10 @@ class RBF(BaseInterpolation):
         """
         Interpolates the surface for a variable.
 
-        opt_sigma : float
-            The optimal sigma calculated for variable.
+        Parameters
+        ----------
+        opt_sigma : float | None
+            The optimal sigma calculated for variable (None if kernel doesn't need it).
         rbf_coeff : np.ndarray
             The fitted coefficients for variable.
         normalized_dataset : pd.DataFrame
@@ -755,9 +858,15 @@ class RBF(BaseInterpolation):
         num_vars_subset : int
             The number of variables used in the fitting.
 
+        Returns
+        -------
         np.ndarray
             The interpolated variable.
         """
+
+        # Use dummy sigma if None (for kernels that don't need it)
+        if opt_sigma is None:
+            opt_sigma = 1.0
 
         # Calculate optimal chunk size based on memory
         norm_dataset = normalized_dataset.values
@@ -805,8 +914,11 @@ class RBF(BaseInterpolation):
         return np.concatenate(result)
 
     def _rbf_interpolate(
-        self, dataset: pd.DataFrame, num_workers: int = None
-    ) -> pd.DataFrame:
+        self,
+        dataset: pd.DataFrame,
+        num_workers: int = None,
+        target_variable: str = None,
+    ) -> pd.DataFrame | np.ndarray:
         """
         Interpolate the dataset.
 
@@ -816,11 +928,16 @@ class RBF(BaseInterpolation):
             The dataset to interpolate (must have same variables as subset).
         num_workers : int, optional
             The number of workers to use for the interpolation. Default is None.
+        target_variable : str, optional
+            If provided, only interpolate this target variable and return a numpy array.
+            Default is None (interpolate all variables).
 
         Returns
         -------
-        pd.DataFrame
-            The interpolated dataset (with all target variables).
+        pd.DataFrame | np.ndarray
+            If target_variable is None, returns DataFrame with all target variables.
+            If target_variable is provided, returns numpy array with predictions for
+            that variable only.
         """
 
         normalized_dataset = self._preprocess_subset_data(
@@ -831,7 +948,32 @@ class RBF(BaseInterpolation):
         num_vars_subset, num_points_subset = self.normalized_subset_data.T.shape
         _, num_points_dataset = normalized_dataset.T.shape
 
-        # Initialize the interpolated dataset
+        # If only one target variable requested, return array
+        if target_variable is not None:
+            interpolated_var = self._rbf_variable_interpolation(
+                normalized_dataset=normalized_dataset,
+                opt_sigma=self._opt_sigmas[target_variable],
+                rbf_coeff=self._rbf_coeffs[target_variable].values,
+                num_points_subset=num_points_subset,
+                num_vars_subset=num_vars_subset,
+            )
+
+            # Denormalize if needed
+            if self.is_target_normalized:
+                temp_df = pd.DataFrame(
+                    {target_variable: interpolated_var}, index=dataset.index
+                )
+                scale_factor_single = {
+                    target_variable: self.target_scale_factor[target_variable]
+                }
+                temp_df = self.denormalize(
+                    normalized_data=temp_df, scale_factor=scale_factor_single
+                )
+                interpolated_var = temp_df[target_variable].values
+
+            return interpolated_var
+
+        # Initialize the interpolated dataset for all variables
         interpolated_array = np.zeros(
             (num_points_dataset, len(self.target_processed_variables))
         )
@@ -916,15 +1058,20 @@ class RBF(BaseInterpolation):
         -----
         - This function fits the RBF model to the data by:
             1. Preprocessing the subset and target data.
-            2. Calculating the optimal sigma for the target variables.
+            2. Calculating the optimal sigma for the target variables (skipped for
+               kernels that don't require it: linear, cubic, quintic, thin_plate).
             3. Storing the RBF coefficients and optimal sigmas.
         - The number of threads to use for the optimization can be specified.
+        - For kernels that don't require sigma optimization, the sigma value in
+          opt_sigmas will be None.
         """
 
         self._subset_directional_variables = subset_directional_variables
         self._target_directional_variables = target_directional_variables
         self._subset_custom_scale_factor = subset_custom_scale_factor
         self._target_custom_scale_factor = target_custom_scale_factor
+        # Store original subset_data before preprocessing
+        self._original_subset_data = subset_data.copy()
         subset_data = self._preprocess_subset_data(subset_data=subset_data)
         target_data = self._preprocess_target_data(
             target_data=target_data,
@@ -1101,7 +1248,7 @@ class RBF(BaseInterpolation):
         target_variable: str = None,
         num_samples: int = 100,
         max_background_samples: int = 100,
-    ):
+    ) -> None:
         """
         Explain RBF predictions using SHAP (SHapley Additive exPlanations) values.
 
@@ -1125,16 +1272,6 @@ class RBF(BaseInterpolation):
             Maximum number of background samples to use. The subset data will be
             automatically summarized using k-means if it exceeds this value.
             Default is 100.
-
-        Returns
-        -------
-        dict
-            Dictionary containing explanation results for each target variable:
-            - 'explanation': SHAP Explanation object
-            - 'shap_values': numpy array of SHAP values
-            - 'expected_value': base/expected prediction value
-            - 'feature_importance': pandas Series with mean absolute SHAP values
-            - 'summary_stats': dictionary with summary statistics
 
         Raises
         ------
@@ -1173,8 +1310,10 @@ class RBF(BaseInterpolation):
                 )
             target_vars = [target_variable]
 
-        # Prepare background data from subset (automatic)
-        background = self.subset_data.copy()
+        # Prepare background data from subset (raw data, not preprocessed)
+        # SHAP will normalize it internally, and _rbf_interpolate will handle
+        # preprocessing
+        background = self._original_subset_data.copy()
 
         # Summarize background data for efficiency if it's too large
         if len(background) > max_background_samples:
@@ -1183,12 +1322,10 @@ class RBF(BaseInterpolation):
                 f"to {max_background_samples} samples using k-means"
             )
             n_clusters = min(max_background_samples, len(background))
-            background_summary = shap.kmeans(background, n_clusters)
+            background_summary = shap.kmeans(background.values, n_clusters)
         else:
             n_clusters = len(background)
-            background_summary = background
-
-        explanations = {}
+            background_summary = background.values
 
         for target_var in target_vars:
             self.logger.info(
@@ -1196,8 +1333,9 @@ class RBF(BaseInterpolation):
             )
 
             # Create a prediction function for this specific target variable
-            # This wrapper is needed because SHAP expects a function that takes
-            # numpy arrays and returns predictions
+            # SHAP normalizes the background internally, so X is normalized
+            # We convert back to DataFrame with original column names (matching
+            # subset_data), then _rbf_interpolate handles preprocessing
             def predict_fn(X):
                 """
                 Predict the target variable for SHAP explanation.
@@ -1205,7 +1343,7 @@ class RBF(BaseInterpolation):
                 Parameters
                 ----------
                 X : np.ndarray
-                    Input features in normalized space (shape: n_samples, n_features)
+                    Input features normalized by SHAP (shape: n_samples, n_features)
 
                 Returns
                 -------
@@ -1213,14 +1351,18 @@ class RBF(BaseInterpolation):
                     Predictions for the target variable (shape: n_samples,)
                 """
 
-                # Convert to DataFrame with proper column names
-                dataset = pd.DataFrame(X, columns=self.subset_processed_variables)
+                # Convert normalized array to DataFrame with original column names
+                # (matching self._original_subset_data.columns, not processed columns)
+                # SHAP normalizes based on background, so X is in normalized space
+                # but we need original column structure for _rbf_interpolate
+                dataset_df = pd.DataFrame(X, columns=self._original_subset_data.columns)
 
-                # Get predictions for all targets
-                predictions = self.predict(dataset=dataset)
-
-                # Return only the target variable we're explaining
-                return predictions[target_var]
+                # Use _rbf_interpolate with target_variable to get only that variable
+                # This handles preprocessing internally (Dir -> Dir_u/Dir_v, normalize)
+                # and returns denormalized values
+                return self._rbf_interpolate(
+                    dataset=dataset_df, target_variable=target_var
+                )
 
             # Create SHAP explainer
             self.logger.info(
@@ -1229,7 +1371,8 @@ class RBF(BaseInterpolation):
             )
             explainer = shap.KernelExplainer(predict_fn, background_summary)
 
-            # Calculate SHAP values using normalized data
+            # Calculate SHAP values using original dataset
+            # SHAP will normalize internally, but we use original for plotting
             self.logger.info(f"Calculating SHAP values for {len(dataset)} samples...")
             shap_values = explainer.shap_values(dataset.values, nsamples=num_samples)
 
@@ -1238,67 +1381,9 @@ class RBF(BaseInterpolation):
             if shap_values.ndim == 1:
                 shap_values = shap_values.reshape(1, -1)
 
-            # Create SHAP Explanation object using original dataset for plotting
-            explanation = shap.Explanation(
-                values=shap_values,
-                base_values=explainer.expected_value,
-                data=dataset.values,
-                feature_names=dataset.columns.tolist(),
-            )
-
-            # Calculate feature importance (mean absolute SHAP values)
-            feature_importance = pd.Series(
-                np.abs(shap_values).mean(axis=0),
-                index=self.subset_processed_variables,
-                name="mean_abs_shap",
-            ).sort_values(ascending=False)
-
-            # Calculate summary statistics
-            summary_stats = {
-                "n_samples": len(dataset),
-                "n_features": len(self.subset_processed_variables),
-                "expected_value": float(explainer.expected_value),
-                "mean_prediction": float(
-                    shap_values.sum(axis=1).mean() + explainer.expected_value
-                ),
-                "shap_values_range": {
-                    "min": float(shap_values.min()),
-                    "max": float(shap_values.max()),
-                    "mean": float(shap_values.mean()),
-                    "std": float(shap_values.std()),
-                },
-                "top_features": feature_importance.head(10).to_dict(),
-            }
-
-            # Generate single comprehensive plot
+            # Generate SHAP summary plot using original dataset (good magnitudes)
             self.logger.info(f"Generating SHAP summary plot for {target_var}")
-
-            # Print minimal essential statistics
-            print(f"SHAP Explanation: {target_var}")
-            print(f"  Baseline: {summary_stats['expected_value']:.4f}")
-            print(f"  Mean prediction: {summary_stats['mean_prediction']:.4f}")
-            top_features = ", ".join(feature_importance.head(5).index.tolist())
-            print(f"  Top 5 features: {top_features}")
-
-            # Single comprehensive summary plot using original dataset
             shap.summary_plot(shap_values, dataset, show=True)
-
-            # Store comprehensive explanation
-            explanations[target_var] = {
-                "explanation": explanation,
-                "shap_values": shap_values,
-                "expected_value": explainer.expected_value,
-                "feature_importance": feature_importance,
-                "summary_stats": summary_stats,
-                "explainer": explainer,
-                "data": dataset,  # Store original dataset
-            }
-
-        # Return single explanation if only one target variable
-        if len(explanations) == 1:
-            return list(explanations.values())[0]
-
-        return explanations
 
 
 def basic_rbf_metric(df_true: pd.DataFrame, df_pred: pd.DataFrame) -> float:
