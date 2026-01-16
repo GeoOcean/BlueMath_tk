@@ -1,13 +1,22 @@
+"""
+Package: BlueMath_tk
+Module: interpolation
+File: rbf_scipy.py
+Author: GeoOcean Research Group, Universidad de Cantabria
+Repository: https://github.com/GeoOcean/BlueMath_tk.git
+Status: Under development (Working)
+
+Radial Basis Function interpolation using scipy's RBFInterpolator.
+"""
+
 import copy
 import time
-from typing import List
 
 import numpy as np
 import pandas as pd
 from scipy.interpolate import RBFInterpolator
 from scipy.optimize import fmin, fminbound
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import KFold
+from scipy.spatial.distance import cdist
 
 from ..core.decorators import validate_data_rbf
 from ._base_interpolation import BaseInterpolation
@@ -137,15 +146,17 @@ class RBF(BaseInterpolation):
     Notes
     -----
     .. versionadded:: 1.0.3
-    TODO: For the moment, this class only supports optimization for one parameter kernels.
-          For this reason, we only have sigma as the parameter to optimize.
-          This sigma refers to the sigma parameter in the Gaussian kernel (but is used for all kernels).
+    TODO: For the moment, this class only supports optimization for one
+          parameter kernels. For this reason, we only have sigma as the
+          parameter to optimize. This sigma refers to the sigma parameter
+          in the Gaussian kernel (but is used for all kernels).
     """
 
     def __init__(
         self,
-        sigma_min: float = 0.001,
-        sigma_max: float = 1.0,
+        sigma_min: float = 0.1,
+        sigma_max: float = 10.0,
+        sigma_diff: float = 0.01,
         sigma_opt: float = None,
         kernel: str = "thin_plate_spline",
         smoothing: float = 0.0,
@@ -153,7 +164,7 @@ class RBF(BaseInterpolation):
         neighbors: int = None,
     ):
         """
-        Initializes the RBF model.
+        Initialize the RBF model.
 
         Parameters
         ----------
@@ -161,6 +172,8 @@ class RBF(BaseInterpolation):
             The minimum value for the sigma parameter. Default is 0.001.
         sigma_max : float, optional
             The maximum value for the sigma parameter. Default is 1.0.
+        sigma_diff : float, optional
+            The difference threshold for sigma optimization. Default is 0.0001.
         sigma_opt : float, optional
             The optimal value for the sigma parameter. Default is None.
         kernel : str, optional
@@ -184,6 +197,9 @@ class RBF(BaseInterpolation):
                 "sigma_max must be a positive float greater than sigma_min."
             )
         self._sigma_max = sigma_max
+        if not isinstance(sigma_diff, float) or sigma_diff < 0:
+            raise ValueError("sigma_diff must be a positive float.")
+        self._sigma_diff = sigma_diff
         if sigma_opt is not None:
             if not isinstance(sigma_opt, float) or sigma_opt < 0:
                 raise ValueError("sigma_opt must be a positive float.")
@@ -208,10 +224,10 @@ class RBF(BaseInterpolation):
         self._normalized_subset_data: pd.DataFrame = pd.DataFrame()
         self._target_data: pd.DataFrame = pd.DataFrame()
         self._normalized_target_data: pd.DataFrame = pd.DataFrame()
-        self._subset_directional_variables: List[str] = []
-        self._target_directional_variables: List[str] = []
-        self._subset_processed_variables: List[str] = []
-        self._target_processed_variables: List[str] = []
+        self._subset_directional_variables: list[str] = []
+        self._target_directional_variables: list[str] = []
+        self._subset_processed_variables: list[str] = []
+        self._target_processed_variables: list[str] = []
         self._subset_custom_scale_factor: dict = {}
         self._target_custom_scale_factor: dict = {}
         self._subset_scale_factor: dict = {}
@@ -221,92 +237,119 @@ class RBF(BaseInterpolation):
 
     @property
     def sigma_min(self) -> float:
+        """Return the minimum sigma value."""
         return self._sigma_min
 
     @property
     def sigma_max(self) -> float:
+        """Return the maximum sigma value."""
         return self._sigma_max
 
     @property
+    def sigma_diff(self) -> float:
+        """Return the sigma difference threshold."""
+        return self._sigma_diff
+
+    @property
     def sigma_opt(self) -> float:
+        """Return the optimal sigma value."""
         return self._sigma_opt
 
     @property
     def kernel(self) -> str:
+        """Return the kernel name."""
         return self._kernel
 
     @property
     def smoothing(self) -> float:
+        """Return the smoothing parameter."""
         return self._smoothing
 
     @property
     def degree(self) -> int:
+        """Return the polynomial degree."""
         return self._degree
 
     @property
     def neighbors(self) -> int:
+        """Return the number of neighbors."""
         return self._neighbors
 
     @property
     def rbfs(self) -> dict:
+        """Return the RBF interpolator instances."""
         return self._rbfs
 
     @property
     def subset_data(self) -> pd.DataFrame:
+        """Return the subset data."""
         return self._subset_data
 
     @property
     def normalized_subset_data(self) -> pd.DataFrame:
+        """Return the normalized subset data."""
         return self._normalized_subset_data
 
     @property
     def target_data(self) -> pd.DataFrame:
+        """Return the target data."""
         return self._target_data
 
     @property
     def normalized_target_data(self) -> pd.DataFrame:
+        """Return the normalized target data."""
         if self._normalized_target_data.empty:
             raise ValueError("Target data is not normalized.")
         return self._normalized_target_data
 
     @property
-    def subset_directional_variables(self) -> List[str]:
+    def subset_directional_variables(self) -> list[str]:
+        """Return the subset directional variables."""
         return self._subset_directional_variables
 
     @property
-    def target_directional_variables(self) -> List[str]:
+    def target_directional_variables(self) -> list[str]:
+        """Return the target directional variables."""
         return self._target_directional_variables
 
     @property
-    def subset_processed_variables(self) -> List[str]:
+    def subset_processed_variables(self) -> list[str]:
+        """Return the subset processed variables."""
         return self._subset_processed_variables
 
     @property
-    def target_processed_variables(self) -> List[str]:
+    def target_processed_variables(self) -> list[str]:
+        """Return the target processed variables."""
         return self._target_processed_variables
 
     @property
     def subset_custom_scale_factor(self) -> dict:
+        """Return the subset custom scale factor."""
         return self._subset_custom_scale_factor
 
     @property
     def target_custom_scale_factor(self) -> dict:
+        """Return the target custom scale factor."""
         return self._target_custom_scale_factor
 
     @property
     def subset_scale_factor(self) -> dict:
+        """Return the subset scale factor."""
         return self._subset_scale_factor
 
     @property
     def target_scale_factor(self) -> dict:
+        """Return the target scale factor."""
         return self._target_scale_factor
 
     @property
     def rbf_coeffs(self) -> pd.DataFrame:
+        """Return the RBF coefficients."""
         return self._rbf_coeffs
 
     @property
     def opt_sigmas(self) -> dict:
+        """Return the optimal sigmas."""
         if not self._opt_sigmas:
             raise ValueError("Specified kernel does not require optimization.")
         return self._opt_sigmas
@@ -315,7 +358,7 @@ class RBF(BaseInterpolation):
         self, subset_data: pd.DataFrame, is_fit: bool = True
     ) -> pd.DataFrame:
         """
-        This function preprocesses the subset data.
+        Preprocess the subset data.
 
         Parameters
         ----------
@@ -336,7 +379,7 @@ class RBF(BaseInterpolation):
 
         Notes
         -----
-        - This function preprocesses the subset data by:
+        Preprocesses the subset data by:
             - Checking for NaNs.
             - Preprocessing directional variables.
             - Normalizing the data.
@@ -382,7 +425,7 @@ class RBF(BaseInterpolation):
         normalize_target_data: bool = True,
     ) -> pd.DataFrame:
         """
-        This function preprocesses the target data.
+        Preprocess the target data.
 
         Parameters
         ----------
@@ -403,7 +446,7 @@ class RBF(BaseInterpolation):
 
         Notes
         -----
-        - This function preprocesses the target data by:
+        Preprocesses the target data by:
             - Checking for NaNs.
             - Preprocessing directional variables.
             - Normalizing the data.
@@ -447,64 +490,171 @@ class RBF(BaseInterpolation):
             self.logger.info("Target data preprocessed successfully")
             return target_data.copy()
 
+    def _compute_kernel_matrix(
+        self, dist_matrix: np.ndarray, epsilon: float
+    ) -> np.ndarray:
+        """
+        Compute the kernel matrix for the given distance matrix and epsilon.
+
+        Parameters
+        ----------
+        dist_matrix : np.ndarray
+            Pairwise distance matrix (n_samples, n_samples).
+        epsilon : float
+            The epsilon (sigma) parameter for the kernel.
+
+        Returns
+        -------
+        np.ndarray
+            The kernel matrix (n_samples, n_samples).
+        """
+        r = epsilon * dist_matrix
+
+        if self.kernel == "gaussian":
+            K = np.exp(-(r**2))
+        elif self.kernel == "multiquadric":
+            K = -np.sqrt(1 + r**2)
+        elif self.kernel == "inverse_multiquadric":
+            K = 1.0 / np.sqrt(1 + r**2)
+        elif self.kernel == "inverse_quadratic":
+            K = 1.0 / (1 + r**2)
+        elif self.kernel == "linear":
+            K = -r
+        elif self.kernel == "cubic":
+            K = r**3
+        elif self.kernel == "quintic":
+            K = -(r**5)
+        elif self.kernel == "thin_plate_spline":
+            # Avoid log(0) by setting r=0 to 0
+            r_safe = np.where(r > 0, r, 1.0)
+            K = np.where(r > 0, r**2 * np.log(r_safe), 0.0)
+        else:
+            raise ValueError(f"Unsupported kernel: {self.kernel}")
+
+        return K
+
     def _cost_sigma(
         self, sigma: float, x: np.ndarray, y: np.ndarray, k: int = 5
     ) -> float:
         """
-        Calculate the cost for a given sigma using K-Fold cross-validation.
+        Calculate the cost for a given sigma using Rippa's leave-one-out method.
+
+        This method uses Rippa's efficient algorithm to compute exact leave-one-out
+        cross-validation errors without fitting n models. It's mathematically
+        equivalent to true LOO but much faster (O(n^3) vs O(n^4)).
 
         Parameters
         ----------
         sigma : float
-            The sigma parameter for the kernel.
+            The sigma parameter (epsilon) for the kernel.
         x : np.ndarray
-            The input data.
+            The input data (shape: n_samples, n_features).
         y : np.ndarray
-            The target data.
+            The target data (shape: n_samples,).
         k : int, optional
-            The number of folds for cross-validation. Default is 5.
+            Not used, kept for compatibility. Default is 5.
 
         Returns
         -------
         float
-            The total cost for the RBF interpolation.
+            The leave-one-out cross-validation error (norm of LOO residuals).
         """
+        try:
+            n_samples, n_dims = x.shape
 
-        kf = KFold(n_splits=k)
-        total_cost = 0.0
+            # 1. Compute the distance matrix
+            dist_matrix = cdist(x, x)
 
-        for train_index, val_index in kf.split(x):
-            x_train, x_val = x[train_index], x[val_index]
-            y_train, y_val = y[train_index], y[val_index]
+            # 2. Build the kernel matrix
+            K = self._compute_kernel_matrix(dist_matrix, sigma)
 
-            # Instantiate the RBFInterpolator
-            rbf = RBFInterpolator(
-                y=x_train,
-                d=y_train,
-                neighbors=self.neighbors,
-                smoothing=self.smoothing,
-                kernel=self.kernel,
-                epsilon=sigma,
-                degree=self.degree,
-            )
+            # 3. Add smoothing regularization to diagonal
+            if isinstance(self.smoothing, (int, float)) and self.smoothing > 0:
+                np.fill_diagonal(K, K.diagonal() + self.smoothing)
+            elif isinstance(self.smoothing, np.ndarray):
+                np.fill_diagonal(K, K.diagonal() + self.smoothing)
 
-            # Predict on the validation set
-            predicted_y = rbf(x_val)
+            # 4. Add polynomial terms
+            # Determine polynomial degree (use default if None)
+            if self.degree is None:
+                # Default degrees based on kernel
+                if self.kernel in ["multiquadric", "linear"]:
+                    degree = 0
+                elif self.kernel in ["thin_plate_spline", "cubic"]:
+                    degree = 1
+                elif self.kernel == "quintic":
+                    degree = 2
+                else:
+                    degree = 0
+            else:
+                degree = self.degree
 
-            # Calculate the cost (mean squared error)
-            cost = mean_squared_error(y_val, predicted_y)
-            total_cost += cost
+            # Build polynomial matrix
+            if degree >= 0:
+                P_list = [np.ones((n_samples, 1))]
+                if degree >= 1:
+                    P_list.append(x)
+                if degree >= 2:
+                    # For degree 2, add quadratic terms
+                    for i in range(n_dims):
+                        for j in range(i, n_dims):
+                            P_list.append((x[:, i] * x[:, j]).reshape(-1, 1))
+                P = np.hstack(P_list)
+                n_poly = P.shape[1]
+            else:
+                P = np.empty((n_samples, 0))
+                n_poly = 0
 
-        return total_cost / k
+            # 5. Construct the full system matrix:
+            # [ K   P ]
+            # [ P.T 0 ]
+            if n_poly > 0:
+                upper = np.hstack([K, P])
+                lower = np.hstack([P.T, np.zeros((n_poly, n_poly))])
+                A = np.vstack([upper, lower])
+            else:
+                A = K
+
+            # 6. Solve for weights using pseudo-inverse for numerical stability
+            try:
+                invA = np.linalg.pinv(A)
+            except np.linalg.LinAlgError:
+                return 1e10
+
+            # Pad y with zeros for polynomial constraints
+            if n_poly > 0:
+                rhs = np.concatenate([y, np.zeros(n_poly)])
+            else:
+                rhs = y
+
+            weights = invA @ rhs
+
+            # 7. Rippa's LOO error calculation
+            # error_i = w_i / invA_ii for the RBF weights only
+            w_rbf = weights[:n_samples]
+            invA_diag = np.diagonal(invA)[:n_samples]
+
+            # Avoid division by zero
+            invA_diag_safe = np.where(np.abs(invA_diag) > 1e-12, invA_diag, 1e-12)
+            errors = w_rbf / invA_diag_safe
+
+            # Return the norm of LOO errors
+            return np.linalg.norm(errors)
+
+        except Exception:
+            # If computation fails, return high cost
+            return 1e10
 
     def _calc_opt_sigma(
         self,
         target_variable: np.ndarray,
         subset_variables: np.ndarray,
         iteratively_update_sigma: bool = False,
-    ) -> RBFInterpolator:
+    ) -> tuple[RBFInterpolator, float]:
         """
-        This function calculates the optimal sigma for the given target variable.
+        Calculate the optimal sigma for the given target variable.
+
+        Uses iterative refinement similar to rbf.py to ensure optimal sigma is found.
 
         Parameters
         ----------
@@ -517,30 +667,48 @@ class RBF(BaseInterpolation):
 
         Returns
         -------
-        float
-            The optimal sigma.
+        tuple[RBFInterpolator, float]
+            A tuple containing the fitted RBFInterpolator and the optimal sigma.
         """
 
         t0 = time.time()
 
-        # Optimize sigma using fminbound or fmin
         if self.sigma_opt is not None:
+            # Optimize sigma using the specified sigma_opt as starting point
             opt_sigma = fmin(
                 func=self._cost_sigma,
                 x0=self.sigma_opt,
                 args=(subset_variables, target_variable),
                 disp=0,
-            )[-1]
+            )[0]
             if iteratively_update_sigma:
                 self._sigma_opt = opt_sigma
         else:
+            # Delegate optimization to fminbound - it's robust and handles bounds well
             opt_sigma = fminbound(
                 func=self._cost_sigma,
                 x1=self.sigma_min,
                 x2=self.sigma_max,
                 args=(subset_variables, target_variable),
+                xtol=self.sigma_diff,  # Use sigma_diff as tolerance
+                maxfun=1000,  # More function evaluations for larger datasets
                 disp=0,
             )
+
+            # Check if result is at boundary and log a warning
+            if np.abs(opt_sigma - self.sigma_min) < self.sigma_diff:
+                self.logger.warning(
+                    f"Optimal sigma ({opt_sigma:.6f}) is at or near lower bound "
+                    f"({self.sigma_min:.6f}). Consider decreasing sigma_min."
+                )
+            elif np.abs(opt_sigma - self.sigma_max) < self.sigma_diff:
+                self.logger.warning(
+                    f"Optimal sigma ({opt_sigma:.6f}) is at or near upper bound "
+                    f"({self.sigma_max:.6f}). Consider increasing sigma_max."
+                )
+
+            if iteratively_update_sigma:
+                self._sigma_opt = opt_sigma
 
         # Save the fitted RBF for the optimal sigma
         rbf = RBFInterpolator(
@@ -555,7 +723,9 @@ class RBF(BaseInterpolation):
 
         # Calculate the time taken to optimize sigma
         t1 = time.time()
-        self.logger.info(f"Optimal sigma: {opt_sigma} - Time: {t1 - t0:.2f} seconds")
+        self.logger.info(
+            f"Optimal sigma: {opt_sigma:.6f} - Time: {t1 - t0:.2f} seconds"
+        )
 
         return rbf, opt_sigma
 
@@ -564,8 +734,8 @@ class RBF(BaseInterpolation):
         self,
         subset_data: pd.DataFrame,
         target_data: pd.DataFrame,
-        subset_directional_variables: List[str] = [],
-        target_directional_variables: List[str] = [],
+        subset_directional_variables: list[str] = [],
+        target_directional_variables: list[str] = [],
         subset_custom_scale_factor: dict = {},
         normalize_target_data: bool = True,
         target_custom_scale_factor: dict = {},
@@ -581,9 +751,9 @@ class RBF(BaseInterpolation):
             The subset data used to fit the model.
         target_data : pd.DataFrame
             The target data used to fit the model.
-        subset_directional_variables : List[str], optional
+        subset_directional_variables : list[str], optional
             The subset directional variables. Default is [].
-        target_directional_variables : List[str], optional
+        target_directional_variables : list[str], optional
             The target directional variables. Default is [].
         subset_custom_scale_factor : dict, optional
             The custom scale factor for the subset data. Default is {}.
@@ -731,8 +901,8 @@ class RBF(BaseInterpolation):
         subset_data: pd.DataFrame,
         target_data: pd.DataFrame,
         dataset: pd.DataFrame,
-        subset_directional_variables: List[str] = [],
-        target_directional_variables: List[str] = [],
+        subset_directional_variables: list[str] = [],
+        target_directional_variables: list[str] = [],
         subset_custom_scale_factor: dict = {},
         normalize_target_data: bool = True,
         target_custom_scale_factor: dict = {},
@@ -750,9 +920,9 @@ class RBF(BaseInterpolation):
             The target data used to fit the model.
         dataset : pd.DataFrame
             The dataset to predict (must have same variables than subset).
-        subset_directional_variables : List[str], optional
+        subset_directional_variables : list[str], optional
             The subset directional variables. Default is [].
-        target_directional_variables : List[str], optional
+        target_directional_variables : list[str], optional
             The target directional variables. Default is [].
         subset_custom_scale_factor : dict, optional
             The custom scale factor for the subset data. Default is {}.
@@ -772,7 +942,7 @@ class RBF(BaseInterpolation):
 
         Notes
         -----
-        - This function fits the model to the subset and predicts the interpolated dataset.
+        Fits the model to the subset and predicts the interpolated dataset.
         """
 
         self.fit(
