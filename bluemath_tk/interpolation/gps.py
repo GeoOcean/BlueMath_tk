@@ -57,23 +57,6 @@ class ExactGPInterpolation(BaseInterpolation):
     following the same interface pattern as RBF interpolation. Suitable
     for datasets up to several thousand samples.
 
-    Parameters
-    ----------
-    kernel : str, optional
-        Type of kernel to use. Options: 'rbf', 'matern', 'rbf+matern'.
-        Default is 'rbf+matern'.
-    ard_num_dims : int, optional
-        Number of input dimensions for ARD (Automatic Relevance Determination).
-        If None, will be inferred from data. Default is None.
-    device : str or torch.device, optional
-        Device to run the model on. Default is None (auto-detect GPU/CPU).
-    epochs : int, optional
-        Maximum number of training epochs. Default is 200.
-    learning_rate : float, optional
-        Learning rate for optimizer. Default is 0.1.
-    patience : int, optional
-        Early stopping patience. Default is 30.
-
     Examples
     --------
     .. jupyter-execute::

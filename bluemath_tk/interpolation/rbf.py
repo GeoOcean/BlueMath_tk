@@ -96,9 +96,30 @@ def thin_plate_kernel(r: float, const: float):
     -------
     float
         The value of the thin plate spline kernel.
+
+    Notes
+    -----
+    The thin plate kernel is defined as r^2 * log(r/const).
+    At r=0, this evaluates to 0 (since lim(r->0) r^2*log(r) = 0).
+    We handle this case explicitly to avoid NaN.
     """
 
-    return r**2 * np.log(r / const)
+    # Convert to numpy array for consistent handling
+    r = np.asarray(r)
+    is_scalar = r.ndim == 0
+    if is_scalar:
+        r = np.array([r])
+
+    # Initialize result array
+    result = np.zeros_like(r, dtype=float)
+
+    # For non-zero r, calculate r^2 * log(r/const)
+    # Use mask to handle the case where r is very small
+    mask = r > 1e-10
+    result[mask] = r[mask] ** 2 * np.log(r[mask] / const)
+
+    # Return scalar if input was scalar, otherwise return array
+    return float(result[0]) if is_scalar else result
 
 
 def inverse_kernel(r: float, const: float):
@@ -268,9 +289,9 @@ class RBF(BaseInterpolation):
 
     def __init__(
         self,
-        sigma_min: float = 0.01,
-        sigma_max: float = 10.0,
-        sigma_diff: float = 0.01,
+        sigma_min: float = 0.001,
+        sigma_max: float = 0.1,
+        sigma_diff: float = 0.0001,
         sigma_opt: float = None,
         kernel: str = "gaussian",
         smooth: float = 1e-5,
@@ -281,11 +302,11 @@ class RBF(BaseInterpolation):
         Parameters
         ----------
         sigma_min : float, optional
-            The minimum value for the sigma parameter. Default is 0.01.
+            The minimum value for the sigma parameter. Default is 0.001.
         sigma_max : float, optional
-            The maximum value for the sigma parameter. Default is 10.0.
+            The maximum value for the sigma parameter. Default is 0.1.
         sigma_diff : float, optional
-            The difference between the sigma parameters. Default is 0.01.
+            The difference between the sigma parameters. Default is 0.0001.
         sigma_opt : float, optional
             The optimal value for the sigma parameter. Default is None.
         kernel : str, optional
@@ -356,7 +377,6 @@ class RBF(BaseInterpolation):
         self._target_custom_scale_factor: dict = {}
         self._subset_scale_factor: dict = {}
         self._target_scale_factor: dict = {}
-        self._rbf_coeffs: pd.DataFrame = pd.DataFrame()
         self._opt_sigmas: dict = {}
 
         # Exclude attributes to .save_model() method
@@ -463,11 +483,6 @@ class RBF(BaseInterpolation):
         return self._target_scale_factor
 
     @property
-    def rbf_coeffs(self) -> pd.DataFrame:
-        """Return the RBF coefficients."""
-        return self._rbf_coeffs
-
-    @property
     def opt_sigmas(self) -> dict:
         """
         Return the optimal sigmas.
@@ -481,128 +496,71 @@ class RBF(BaseInterpolation):
         """
         return self._opt_sigmas
 
-    def check_fit_quality(self, verbose: bool = True) -> dict:
-        """
-        Check the quality of the RBF fit and return diagnostic information.
-
-        Parameters
-        ----------
-        verbose : bool, optional
-            If True, print a summary of the fit quality. Default is True.
-
-        Returns
-        -------
-        dict
-            Dictionary containing diagnostic information:
-            - 'sigmas': dict of sigma values for each target variable
-            - 'sigma_warnings': list of warnings about sigma values
-            - 'matrix_condition': dict of condition numbers for each variable
-            - 'matrix_rank': dict of matrix ranks for each variable
-            - 'fit_status': overall fit status ('good', 'warning', 'poor')
-
-        Raises
-        ------
-        RBFError
-            If the model is not fitted.
-        """
-        if not self.is_fitted:
-            raise RBFError("RBF model must be fitted before checking fit quality.")
-
-        diagnostics = {
-            "sigmas": {},
-            "sigma_warnings": [],
-            "matrix_condition": {},
-            "matrix_rank": {},
-            "fit_status": "good",
-        }
-
-        # Check each target variable
-        for target_var in self.target_processed_variables:
-            opt_sigma = self._opt_sigmas.get(target_var)
-
-            if opt_sigma is not None:
-                diagnostics["sigmas"][target_var] = opt_sigma
-
-                # Check if sigma is reasonable
-                if opt_sigma > self.sigma_max * 0.9:
-                    diagnostics["sigma_warnings"].append(
-                        f"{target_var}: sigma ({opt_sigma:.6f}) is near upper "
-                        f"bound ({self.sigma_max})"
-                    )
-                    diagnostics["fit_status"] = "warning"
-                elif opt_sigma < self.sigma_min * 1.1:
-                    diagnostics["sigma_warnings"].append(
-                        f"{target_var}: sigma ({opt_sigma:.6f}) is near lower "
-                        f"bound ({self.sigma_min})"
-                    )
-                    diagnostics["fit_status"] = "warning"
-
-                # Reconstruct matrix to check condition
-                x = self.normalized_subset_data.values.T
-                A = self._rbf_assemble(x=x, sigma=opt_sigma)
-
-                cond = np.linalg.cond(A)
-                rank = np.linalg.matrix_rank(A)
-                expected_rank = A.shape[0]
-
-                diagnostics["matrix_condition"][target_var] = cond
-                diagnostics["matrix_rank"][target_var] = {
-                    "actual": rank,
-                    "expected": expected_rank,
-                    "deficiency": expected_rank - rank,
-                }
-
-                if cond > 1e12:
-                    diagnostics["fit_status"] = "poor"
-                elif cond > 1e8:
-                    if diagnostics["fit_status"] == "good":
-                        diagnostics["fit_status"] = "warning"
-
-                if rank < expected_rank:
-                    if diagnostics["fit_status"] == "good":
-                        diagnostics["fit_status"] = "warning"
-
-        if verbose:
-            self._print_fit_quality_summary(diagnostics)
-
-        return diagnostics
-
-    def _print_fit_quality_summary(self, diagnostics: dict) -> None:
-        """Print a summary of fit quality diagnostics."""
+    def _print_validation_summary(self, all_results: dict) -> None:
+        """Print a summary of validation results."""
         print("\n" + "=" * 60)
-        print("RBF Fit Quality Summary")
+        print("RBF Fit Validation Summary")
         print("=" * 60)
 
-        print(f"\nOverall Status: {diagnostics['fit_status'].upper()}")
+        overall_status = "good"
+        for var, results in all_results.items():
+            if results["status"] == "poor":
+                overall_status = "poor"
+            elif results["status"] == "warning" and overall_status == "good":
+                overall_status = "warning"
 
-        if diagnostics["sigmas"]:
-            print("\nOptimal Sigma Values:")
-            for var, sigma in diagnostics["sigmas"].items():
-                print(f"  {var}: {sigma:.6f}")
+        print(f"\nOverall Status: {overall_status.upper()}")
 
-        if diagnostics["sigma_warnings"]:
-            print("\n⚠️  Sigma Warnings:")
-            for warning in diagnostics["sigma_warnings"]:
-                print(f"  - {warning}")
+        for var, results in all_results.items():
+            print(f"\n{var}:")
+            print(f"  Status: {results['status'].upper()}")
 
-        if diagnostics["matrix_condition"]:
-            print("\nMatrix Condition Numbers:")
-            for var, cond in diagnostics["matrix_condition"].items():
-                status = "⚠️" if cond > 1e8 else "✓"
-                print(f"  {status} {var}: {cond:.2e}")
+            if results["matrix_condition"] is not None:
+                cond = results["matrix_condition"]
+                status_icon = "⚠️" if cond > 1e8 else "✓"
+                print(f"  {status_icon} Matrix condition: {cond:.2e}")
 
-        if diagnostics["matrix_rank"]:
-            print("\nMatrix Rank:")
-            for var, rank_info in diagnostics["matrix_rank"].items():
-                if rank_info["deficiency"] > 0:
+            if results["matrix_rank"] is not None:
+                rank, expected, deficiency = results["matrix_rank"]
+                if deficiency > 0:
                     print(
-                        f"  ⚠️  {var}: {rank_info['actual']}/{rank_info['expected']} "
-                        f"(deficiency: {rank_info['deficiency']})"
+                        f"  ⚠️  Matrix rank: {rank}/{expected} "
+                        f"(deficiency: {deficiency})"
                     )
                 else:
-                    print(
-                        f"  ✓ {var}: {rank_info['actual']}/{rank_info['expected']}"
-                    )
+                    print(f"  ✓ Matrix rank: {rank}/{expected}")
+
+            if results["training_error"] is not None:
+                error = results["training_error"]
+                status_icon = "⚠️" if error > 1e-5 else "✓"
+                print(f"  {status_icon} Training error: {error:.2e}")
+
+            if results["training_std"] is not None:
+                std_max = results["training_std"]["max"]
+                status_icon = "⚠️" if std_max > 1e-3 else "✓"
+                print(f"  {status_icon} Training std: max={std_max:.2e}")
+
+            if results["sigma_status"] is not None:
+                sigma_status = results["sigma_status"]
+                if sigma_status == "ok":
+                    print("  ✓ Sigma: OK")
+                else:
+                    opt_sigma = self._opt_sigmas.get(var)
+                    if sigma_status == "at_lower_boundary":
+                        print(
+                            f"  ⚠️  Sigma ({opt_sigma:.6f}) at lower boundary "
+                            f"({self.sigma_min:.6f})"
+                        )
+                    elif sigma_status == "at_upper_boundary":
+                        print(
+                            f"  ⚠️  Sigma ({opt_sigma:.6f}) at upper boundary "
+                            f"({self.sigma_max:.6f})"
+                        )
+
+            if results["warnings"]:
+                print("  Warnings:")
+                for warning in results["warnings"]:
+                    print(f"    - {warning}")
 
         print("\n" + "=" * 60)
 
@@ -885,141 +843,172 @@ class RBF(BaseInterpolation):
         """
         return self.kernel not in self._kernels_no_sigma_opt
 
-    def _validate_sigma(
+    def _validate_fit(
         self,
-        opt_sigma: float,
-        sigma_min: float,
-        sigma_max: float,
-        subset_variables: np.ndarray,
-    ) -> None:
-        """
-        Validate that the optimized sigma value is reasonable.
-
-        Parameters
-        ----------
-        opt_sigma : float
-            The optimized sigma value.
-        sigma_min : float
-            The minimum sigma value used in optimization.
-        sigma_max : float
-            The maximum sigma value used in optimization.
-        subset_variables : np.ndarray
-            The subset variables used for interpolation.
-
-        Notes
-        -----
-        Logs warnings if:
-        - Sigma is at or near the boundaries (suggests optimization failed)
-        - Sigma is very large relative to data scale (suggests poor fit)
-        """
-        # Check if sigma is at boundaries
-        tolerance = 0.01  # 1% tolerance
-        if opt_sigma <= sigma_min * (1 + tolerance):
-            self.logger.warning(
-                f"Optimal sigma ({opt_sigma:.6f}) is at or near the lower "
-                f"boundary ({sigma_min:.6f}). This may indicate optimization "
-                "failed or the data requires a smaller sigma. Consider "
-                "decreasing sigma_min."
-            )
-        elif opt_sigma >= sigma_max * (1 - tolerance):
-            self.logger.warning(
-                f"Optimal sigma ({opt_sigma:.6f}) is at or near the upper "
-                f"boundary ({sigma_max:.6f}). This may indicate optimization "
-                "failed or the data requires a larger sigma. Consider "
-                "increasing sigma_max."
-            )
-
-        # Check if sigma is very large relative to data scale
-        # For normalized data, typical scale is ~1, so sigma > 10 is suspicious
-        # For Gaussian kernel, sigma should be on the order of typical distances
-        dim, n = subset_variables.shape
-        if dim > 0 and n > 1:
-            # Calculate typical distance between points
-            sample_distances = []
-            for i in range(min(10, n)):  # Sample a few points
-                for j in range(i + 1, min(i + 5, n)):
-                    dist = np.linalg.norm(
-                        subset_variables[:, i] - subset_variables[:, j]
-                    )
-                    sample_distances.append(dist)
-            if sample_distances:
-                typical_distance = np.median(sample_distances)
-                if opt_sigma > 10 * typical_distance:
-                    self.logger.warning(
-                        f"Optimal sigma ({opt_sigma:.6f}) is very large "
-                        f"compared to typical data distances "
-                        f"({typical_distance:.6f}). This may indicate a poor "
-                        "fit or that the Gaussian kernel is not appropriate "
-                        "for this data."
-                    )
-                elif opt_sigma < 0.01 * typical_distance:
-                    self.logger.warning(
-                        f"Optimal sigma ({opt_sigma:.6f}) is very small "
-                        f"compared to typical data distances "
-                        f"({typical_distance:.6f}). This may cause numerical "
-                        "instability or overfitting."
-                    )
-
-    def _validate_fit_quality(
-        self,
+        target_var: str,
+        opt_sigma: float | None,
         A: np.ndarray,
         rbf_coeff: np.ndarray,
         target_variable: np.ndarray,
-    ) -> None:
+        subset_variables: np.ndarray,
+    ) -> dict:
         """
-        Validate the quality of the RBF fit.
+        Validate the RBF fit quality for a single target variable.
+
+        This method performs all validation checks in one place:
+        - Matrix condition and rank
+        - Training point prediction accuracy
+        - Standard deviation values at training points
+        - Sigma value reasonableness (if applicable)
 
         Parameters
         ----------
+        target_var : str
+            Name of the target variable.
+        opt_sigma : float | None
+            Optimal sigma value (None if kernel doesn't need it).
         A : np.ndarray
             The RBF matrix used for fitting.
         rbf_coeff : np.ndarray
             The RBF coefficients.
         target_variable : np.ndarray
-            The target variable values.
+            The target variable values (normalized).
+        subset_variables : np.ndarray
+            The subset variables used for interpolation (normalized).
 
-        Notes
-        -----
-        Logs warnings if:
-        - Matrix is ill-conditioned (high condition number)
-        - Matrix is rank-deficient
-        - Coefficients are very large (suggests instability)
+        Returns
+        -------
+        dict
+            Dictionary containing validation results with keys:
+            - 'status': 'good', 'warning', or 'poor'
+            - 'matrix_condition': condition number
+            - 'matrix_rank': (actual, expected, deficiency)
+            - 'training_error': max absolute error at training points
+            - 'training_std': std values at training points (if return_std was used)
+            - 'sigma_status': sigma validation status (if applicable)
+            - 'warnings': list of warning messages
         """
+
+        results = {
+            "status": "good",
+            "matrix_condition": None,
+            "matrix_rank": None,
+            "training_error": None,
+            "training_std": None,
+            "sigma_status": None,
+            "warnings": [],
+        }
+
         # Check matrix condition number
         cond = np.linalg.cond(A)
+        results["matrix_condition"] = cond
         if cond > 1e12:
-            self.logger.warning(
-                f"RBF matrix is ill-conditioned (condition number: {cond:.2e}). "
-                "This may cause numerical instability and poor predictions. "
-                "Consider increasing the smooth parameter or checking data "
-                "quality."
+            results["status"] = "poor"
+            results["warnings"].append(
+                f"Matrix is ill-conditioned (condition: {cond:.2e})"
             )
         elif cond > 1e8:
-            self.logger.info(
-                f"RBF matrix condition number: {cond:.2e} (moderately high, "
-                "but acceptable)"
+            if results["status"] == "good":
+                results["status"] = "warning"
+            results["warnings"].append(
+                f"Matrix condition is moderately high ({cond:.2e})"
             )
 
         # Check matrix rank
         rank = np.linalg.matrix_rank(A)
         expected_rank = A.shape[0]
+        deficiency = expected_rank - rank
+        results["matrix_rank"] = (rank, expected_rank, deficiency)
         if rank < expected_rank:
-            rank_deficiency = expected_rank - rank
-            self.logger.warning(
-                f"RBF matrix is rank-deficient (rank: {rank}/{expected_rank}, "
-                f"deficiency: {rank_deficiency}). This may prevent exact "
-                "interpolation at training points. Consider checking for "
-                "collinear data points or redundant features."
+            if results["status"] == "good":
+                results["status"] = "warning"
+            results["warnings"].append(
+                f"Matrix is rank-deficient ({rank}/{expected_rank}, "
+                f"deficiency: {deficiency})"
             )
 
-        # Check coefficient magnitudes
-        max_coeff = np.max(np.abs(rbf_coeff))
-        if max_coeff > 1e10:
-            self.logger.warning(
-                f"RBF coefficients are very large (max: {max_coeff:.2e}). "
-                "This may indicate numerical instability or a poor fit. "
-                "Consider adjusting sigma or increasing the smooth parameter."
+        # Check training point prediction accuracy
+        # Predict at training points
+        n_pts = subset_variables.shape[1]
+
+        # Manual prediction at training points
+        training_predictions = []
+        for i in range(n_pts):
+            x_train = subset_variables[:, i : i + 1].T
+            x_subset_T = subset_variables.T
+
+            r_train = np.linalg.norm(
+                x_train[:, None, :] - x_subset_T[None, :, :], axis=2
             )
+            kernel_train = self.kernel_func(r_train, opt_sigma if opt_sigma else 1.0)
+
+            # Get linear coefficients
+            linear_coeffs = rbf_coeff[n_pts + 1 :]
+            if linear_coeffs.ndim == 1:
+                linear_coeffs_2d = linear_coeffs.reshape(-1, 1)
+            else:
+                linear_coeffs_2d = linear_coeffs.T
+
+            linear_term = np.dot(x_train, linear_coeffs_2d)
+            if linear_term.ndim > 1 and linear_term.shape[1] == 1:
+                linear_term = linear_term.squeeze(axis=1)
+
+            pred = (
+                rbf_coeff[n_pts] + np.dot(kernel_train, rbf_coeff[:n_pts]) + linear_term
+            )
+            training_predictions.append(pred.flatten()[0])
+
+        training_predictions = np.array(training_predictions)
+        training_error = np.abs(training_predictions - target_variable)
+        max_error = np.max(training_error)
+        results["training_error"] = max_error
+
+        # Check if training points are perfectly predicted (within numerical precision)
+        if max_error > 1e-5:
+            if results["status"] == "good":
+                results["status"] = "warning"
+            results["warnings"].append(
+                f"Training points not perfectly predicted (max error: {max_error:.2e})"
+            )
+
+        # Check std values at training points (should be ~0)
+        if hasattr(self, "_training_std") and target_var in self._training_std:
+            training_std = self._training_std[target_var]
+            results["training_std"] = {
+                "max": np.max(training_std),
+                "mean": np.mean(training_std),
+            }
+            if np.max(training_std) > 1e-3:
+                if results["status"] == "good":
+                    results["status"] = "warning"
+                results["warnings"].append(
+                    f"Std at training points is non-zero "
+                    f"(max: {np.max(training_std):.2e})"
+                )
+
+        # Check sigma value (if applicable)
+        if opt_sigma is not None:
+            tolerance = 0.01
+            if opt_sigma <= self.sigma_min * (1 + tolerance):
+                if results["status"] == "good":
+                    results["status"] = "warning"
+                results["sigma_status"] = "at_lower_boundary"
+                results["warnings"].append(
+                    f"Sigma ({opt_sigma:.6f}) is at lower boundary "
+                    f"({self.sigma_min:.6f})"
+                )
+            elif opt_sigma >= self.sigma_max * (1 - tolerance):
+                if results["status"] == "good":
+                    results["status"] = "warning"
+                results["sigma_status"] = "at_upper_boundary"
+                results["warnings"].append(
+                    f"Sigma ({opt_sigma:.6f}) is at upper boundary "
+                    f"({self.sigma_max:.6f})"
+                )
+            else:
+                results["sigma_status"] = "ok"
+
+        return results
 
     def _calc_opt_sigma(
         self,
@@ -1097,25 +1086,96 @@ class RBF(BaseInterpolation):
         t1 = time.time()
         self.logger.info(f"Optimal sigma: {opt_sigma} - Time: {t1 - t0:.2f} seconds")
 
-        # Validate sigma value
-        self._validate_sigma(
-            opt_sigma=opt_sigma,
-            sigma_min=sigma_min,
-            sigma_max=sigma_max,
-            subset_variables=subset_variables,
-        )
-
         # Calculate the RBF coefficients for the optimal sigma
-        rbf_coeff, A = self._calc_rbf_coeff(
+        rbf_coeff, _ = self._calc_rbf_coeff(
             sigma=opt_sigma, x=subset_variables, y=target_variable
         )
 
-        # Validate fit quality
-        self._validate_fit_quality(
-            A=A, rbf_coeff=rbf_coeff, target_variable=target_variable
-        )
-
         return rbf_coeff, opt_sigma
+
+    def _rbf_variable_variance(
+        self,
+        opt_sigma: float | None,
+        normalized_dataset: pd.DataFrame,
+    ) -> np.ndarray:
+        """
+        Calculate prediction uncertainty based on distance to training points.
+
+        For RBF interpolation, uncertainty increases with distance from training
+        data. This is a heuristic measure based on the kernel function value
+        at the minimum distance to training points.
+
+        Parameters
+        ----------
+        opt_sigma : float | None
+            The optimal sigma calculated for variable (None if kernel doesn't need it).
+        normalized_dataset : pd.DataFrame
+            The normalized dataset.
+
+        Returns
+        -------
+        np.ndarray
+            The prediction variance (uncertainty) for the variable.
+            Values are in [0, 1] range, where 0 = very certain (at training point),
+            1 = very uncertain (far from training points).
+        """
+
+        # Use dummy sigma if None (for kernels that don't need it)
+        if opt_sigma is None:
+            opt_sigma = 1.0
+
+        norm_dataset = normalized_dataset.values
+        norm_subset = self.normalized_subset_data.values
+
+        if self.row_chunks is not None:
+            chunks = (min(self.row_chunks, norm_dataset.shape[0]), -1)
+            self.logger.info(f"Using row chunks of size {chunks[0]} for variance")
+        else:
+            chunks = (norm_dataset.shape[0], -1)
+
+        # Convert to dask arrays for large operations
+        d_dataset = da.from_array(norm_dataset, chunks=chunks)
+        d_subset = da.from_array(norm_subset)
+
+        # Split computation into chunks
+        variances = []
+        for i in range(0, len(d_dataset), chunks[0]):
+            chunk = d_dataset[i : i + chunks[0]]
+
+            # Calculate distances from chunk to all training points
+            # Shape: (n_chunk, n_subset)
+            r_chunk = da.linalg.norm(chunk[:, None, :] - d_subset[None, :, :], axis=2)
+
+            # Find minimum distance for each prediction point
+            min_distances = da.min(r_chunk, axis=1)  # Shape: (n_chunk,)
+
+            # Calculate uncertainty based on distance
+            # At training points (r=0), variance should be 0
+            # For far points, variance should increase
+            # We normalize by the kernel value at r=0 to ensure
+            # variance=0 at training points
+            kernel_at_zero = self.kernel_func(0.0, opt_sigma)
+            kernel_values = self.kernel_func(min_distances, opt_sigma)
+
+            # Normalize kernel values: if kernel(0) != 1, we need to adjust
+            # For kernels like linear where kernel(0) = 0, we handle it specially
+            if abs(kernel_at_zero) < 1e-10:
+                # Kernel returns 0 at r=0 (e.g., linear kernel)
+                # Use distance-based uncertainty:
+                # variance = min_distance / max_expected_distance
+                # For normalized data, max distance is typically
+                # around sqrt(num_dimensions)
+                max_expected_dist = np.sqrt(norm_subset.shape[1]) * 2
+                variance_chunk = da.minimum(min_distances / max_expected_dist, 1.0)
+            else:
+                # Kernel returns non-zero at r=0 (e.g., Gaussian)
+                # Normalize: variance = 1 - kernel(r) / kernel(0)
+                normalized_kernel = kernel_values / kernel_at_zero
+                variance_chunk = 1.0 - normalized_kernel
+
+            variances.append(variance_chunk.compute())
+
+        return np.concatenate(variances)
 
     def _rbf_variable_interpolation(
         self,
@@ -1216,7 +1276,8 @@ class RBF(BaseInterpolation):
         dataset: pd.DataFrame,
         num_workers: int = None,
         target_variable: str = None,
-    ) -> pd.DataFrame | np.ndarray:
+        return_std: bool = False,
+    ) -> pd.DataFrame | np.ndarray | tuple:
         """
         Interpolate the dataset.
 
@@ -1229,13 +1290,19 @@ class RBF(BaseInterpolation):
         target_variable : str, optional
             If provided, only interpolate this target variable and return a numpy array.
             Default is None (interpolate all variables).
+        return_std : bool, optional
+            If True, returns standard deviations. Default is False.
 
         Returns
         -------
-        pd.DataFrame | np.ndarray
-            If target_variable is None, returns DataFrame with all target variables.
-            If target_variable is provided, returns numpy array with predictions for
-            that variable only.
+        pd.DataFrame | np.ndarray | tuple
+            If target_variable is None and return_std=False: DataFrame with predictions.
+            If target_variable is None and return_std=True: DataFrame with predictions
+            and std.
+            If target_variable is provided and return_std=False: numpy array with
+            predictions.
+            If target_variable is provided and return_std=True: tuple of
+            (predictions, std).
         """
 
         normalized_dataset = self._preprocess_subset_data(
@@ -1248,13 +1315,29 @@ class RBF(BaseInterpolation):
 
         # If only one target variable requested, return array
         if target_variable is not None:
+            # Get current sigma and recalculate coefficients on-the-fly
+            sigma = self._opt_sigmas[target_variable]
+            x = self.normalized_subset_data.values.T
+            y = self.normalized_target_data[target_variable].values
+            rbf_coeff, _ = self._calc_rbf_coeff(sigma=sigma, x=x, y=y)
+            rbf_coeff = rbf_coeff.flatten()
+
             interpolated_var = self._rbf_variable_interpolation(
                 normalized_dataset=normalized_dataset,
-                opt_sigma=self._opt_sigmas[target_variable],
-                rbf_coeff=self._rbf_coeffs[target_variable].values,
+                opt_sigma=sigma,
+                rbf_coeff=rbf_coeff,
                 num_points_subset=num_points_subset,
                 num_vars_subset=num_vars_subset,
             )
+
+            if return_std:
+                # Calculate variance for this variable
+                variance = self._rbf_variable_variance(
+                    normalized_dataset=normalized_dataset,
+                    opt_sigma=self._opt_sigmas[target_variable],
+                )
+                # Ensure non-negative
+                std = np.sqrt(np.maximum(variance, 0))
 
             # Denormalize if needed
             if self.is_target_normalized:
@@ -1269,12 +1352,23 @@ class RBF(BaseInterpolation):
                 )
                 interpolated_var = temp_df[target_variable].values
 
+                if return_std:
+                    # Scale std by the same factor as the prediction
+                    std = std * abs(scale_factor_single[target_variable])
+
+            if return_std:
+                return interpolated_var, std
             return interpolated_var
 
         # Initialize the interpolated dataset for all variables
         interpolated_array = np.zeros(
             (num_points_dataset, len(self.target_processed_variables))
         )
+        std_array = None
+        if return_std:
+            std_array = np.zeros(
+                (num_points_dataset, len(self.target_processed_variables))
+            )
 
         # Loop through the target variables
         if num_workers > 1:
@@ -1282,18 +1376,19 @@ class RBF(BaseInterpolation):
                 f"Interpolating target variables using parallel execution "
                 f"and num_workers={num_workers}"
             )
+            # For parallel execution, we need to calculate coefficients first
+            # since we can't pass functions that depend on instance state easily
+            items = []
+            for target_var in self.target_processed_variables:
+                sigma = self._opt_sigmas[target_var]
+                x = self.normalized_subset_data.values.T
+                y = self.normalized_target_data[target_var].values
+                rbf_coeff, _ = self._calc_rbf_coeff(sigma=sigma, x=x, y=y)
+                items.append((sigma, rbf_coeff.flatten()))
+
             rbf_interpolated_vars = self.parallel_execute(
                 func=self._rbf_variable_interpolation,
-                items=zip(
-                    [
-                        self._opt_sigmas[target_var]
-                        for target_var in self.target_processed_variables
-                    ],
-                    [
-                        self._rbf_coeffs[target_var].values
-                        for target_var in self.target_processed_variables
-                    ],
-                ),
+                items=items,
                 num_workers=num_workers,
                 normalized_dataset=normalized_dataset,
                 num_points_subset=num_points_subset,
@@ -1301,19 +1396,51 @@ class RBF(BaseInterpolation):
             )
             for i_var, interpolated_var in rbf_interpolated_vars.items():
                 interpolated_array[:, i_var] = interpolated_var
+                if return_std:
+                    target_var = self.target_processed_variables[i_var]
+                    variance = self._rbf_variable_variance(
+                        normalized_dataset=normalized_dataset,
+                        opt_sigma=self._opt_sigmas[target_var],
+                    )
+                    std_array[:, i_var] = np.sqrt(np.maximum(variance, 0))
         else:
             for i_var, target_var in enumerate(self.target_processed_variables):
                 self.logger.info(f"Interpolating target variable {target_var}")
+                # Get current sigma and recalculate coefficients on-the-fly
+                sigma = self._opt_sigmas[target_var]
+                x = self.normalized_subset_data.values.T
+                y = self.normalized_target_data[target_var].values
+                rbf_coeff, _ = self._calc_rbf_coeff(sigma=sigma, x=x, y=y)
+                rbf_coeff = rbf_coeff.flatten()
+
                 interpolated_var = self._rbf_variable_interpolation(
                     normalized_dataset=normalized_dataset,
-                    opt_sigma=self._opt_sigmas[target_var],
-                    rbf_coeff=self._rbf_coeffs[target_var].values,
+                    opt_sigma=sigma,
+                    rbf_coeff=rbf_coeff,
                     num_points_subset=num_points_subset,
                     num_vars_subset=num_vars_subset,
                 )
                 interpolated_array[:, i_var] = interpolated_var
 
-        return pd.DataFrame(interpolated_array, columns=self.target_processed_variables)
+                if return_std:
+                    variance = self._rbf_variable_variance(
+                        normalized_dataset=normalized_dataset,
+                        opt_sigma=sigma,
+                    )
+                    std_array[:, i_var] = np.sqrt(np.maximum(variance, 0))
+
+        result = pd.DataFrame(
+            interpolated_array, columns=self.target_processed_variables
+        )
+
+        if return_std:
+            std_df = pd.DataFrame(
+                std_array,
+                columns=[f"{var}_std" for var in self.target_processed_variables],
+            )
+            result = pd.concat([result, std_df], axis=1)
+
+        return result
 
     @validate_data_rbf
     def fit(
@@ -1413,14 +1540,93 @@ class RBF(BaseInterpolation):
                 rbf_coeffs[target_var] = rbf_coeff.flatten()
                 opt_sigmas[target_var] = opt_sigma
 
-        # Store the RBF coefficients and optimal sigmas
-        self._rbf_coeffs = pd.DataFrame(rbf_coeffs)
+        # Store only optimal sigmas (coefficients will be recalculated on-the-fly)
         self._opt_sigmas = opt_sigmas
+
+        # Initialize training std storage (for validation)
+        self._training_std = {}
 
         # Set the is_fitted attribute to True
         self.is_fitted = True
 
-    def predict(self, dataset: pd.DataFrame, num_workers: int = None) -> pd.DataFrame:
+    def validate_fit(self, verbose: bool = True) -> dict:
+        """
+        Validate the RBF fit quality for all target variables.
+
+        This method performs comprehensive validation checks:
+        - Matrix condition and rank consistency
+        - Training point prediction accuracy (should be exact)
+        - Standard deviation values at training points (should be ~0)
+        - Sigma value reasonableness (if kernel requires it)
+
+        Parameters
+        ----------
+        verbose : bool, optional
+            If True, print a summary of the validation results. Default is True.
+
+        Returns
+        -------
+        dict
+            Dictionary containing validation results for each target variable.
+            Keys are target variable names, values are dicts with:
+            - 'status': 'good', 'warning', or 'poor'
+            - 'matrix_condition': condition number
+            - 'matrix_rank': (actual, expected, deficiency)
+            - 'training_error': max absolute error at training points
+            - 'training_std': dict with 'max' and 'mean' std at training points
+            - 'sigma_status': 'ok', 'at_lower_boundary', or 'at_upper_boundary'
+            - 'warnings': list of warning messages
+
+        Raises
+        ------
+        RBFError
+            If the model is not fitted.
+        """
+
+        if not self.is_fitted:
+            raise RBFError("RBF model must be fitted before validation.")
+
+        all_results = {}
+
+        # Check each target variable
+        for target_var in self.target_processed_variables:
+            opt_sigma = self._opt_sigmas.get(target_var)
+
+            # Reconstruct matrix and coefficients for validation
+            x = self.normalized_subset_data.values.T
+            y = self.normalized_target_data[target_var].values
+
+            if opt_sigma is not None:
+                A = self._rbf_assemble(x=x, sigma=opt_sigma)
+            else:
+                # For kernels that don't need sigma, use dummy value
+                A = self._rbf_assemble(x=x, sigma=1.0)
+
+            # Recalculate coefficients on-the-fly using current sigma
+            sigma_val = opt_sigma if opt_sigma else 1.0
+            rbf_coeff, _ = self._calc_rbf_coeff(sigma=sigma_val, x=x, y=y)
+            rbf_coeff = rbf_coeff.flatten()
+
+            # Perform comprehensive validation
+            results = self._validate_fit(
+                target_var=target_var,
+                opt_sigma=opt_sigma,
+                A=A,
+                rbf_coeff=rbf_coeff,
+                target_variable=y,
+                subset_variables=x,
+            )
+
+            all_results[target_var] = results
+
+        if verbose:
+            self._print_validation_summary(all_results)
+
+        return all_results
+
+    def predict(
+        self, dataset: pd.DataFrame, num_workers: int = None, return_std: bool = False
+    ) -> pd.DataFrame:
         """
         Predicts the data for the provided dataset.
 
@@ -1430,15 +1636,25 @@ class RBF(BaseInterpolation):
             The dataset to predict (must have same variables than subset).
         num_workers : int, optional
             The number of workers to use for the interpolation. Default is None.
+        return_std : bool, optional
+            If True, returns standard deviations. Default is False.
 
         Returns
         -------
         pd.DataFrame
-            The interpolated dataset.
+            The interpolated dataset. If return_std=True, includes columns
+            with '_std' suffix for standard deviations.
+
+        Notes
+        -----
+        - Coefficients are recalculated on-the-fly using current `opt_sigmas` values.
+        - To change sigma, modify `rbf.opt_sigmas[target_var] = new_sigma` before
+          calling predict(). This allows experimenting with different sigma values
+          without refitting.
 
         Raises
         ------
-        ValueError
+        RBFError
             If the model is not fitted.
 
         Notes
@@ -1447,6 +1663,8 @@ class RBF(BaseInterpolation):
             1. Reconstructing the data using the fitted coefficients.
             2. Denormalizing the target data if normalize_target_data is True.
             3. Calculating the degrees for the target directional variables.
+        - Standard deviations represent uncertainty based on distance to training
+          points.
         """
 
         if self.is_fitted is False:
@@ -1455,16 +1673,69 @@ class RBF(BaseInterpolation):
         if num_workers is None:
             num_workers = self.num_workers
 
-        self.logger.info("Reconstructing data using fitted coefficients.")
+        self.logger.info("Reconstructing data using current sigma values.")
         interpolated_target = self._rbf_interpolate(
-            dataset=dataset, num_workers=num_workers
+            dataset=dataset, num_workers=num_workers, return_std=return_std
         )
-        if self.is_target_normalized:
-            self.logger.info("Denormalizing target data")
-            interpolated_target = self.denormalize(
-                normalized_data=interpolated_target,
-                scale_factor=self.target_scale_factor,
-            )
+
+        # Handle std columns separately if needed
+        if return_std:
+            # Separate prediction and std columns
+            pred_cols = [
+                col for col in interpolated_target.columns if not col.endswith("_std")
+            ]
+            std_cols = [
+                col for col in interpolated_target.columns if col.endswith("_std")
+            ]
+
+            # Denormalize predictions only
+            if self.is_target_normalized:
+                self.logger.info("Denormalizing target data")
+                interpolated_target[pred_cols] = self.denormalize(
+                    normalized_data=interpolated_target[pred_cols],
+                    scale_factor=self.target_scale_factor,
+                )
+                # Scale std columns by their respective scale factors
+                for std_col in std_cols:
+                    # Extract variable name from std column (e.g., "PC1_std" -> "PC1")
+                    var_name = std_col.replace("_std", "")
+                    if var_name in self.target_scale_factor:
+                        scale_factor = self.target_scale_factor[var_name]
+                        # Scale factor is [min, max], so range = max - min
+                        if isinstance(scale_factor, (list, np.ndarray)):
+                            scale_factor = abs(scale_factor[1] - scale_factor[0])
+                        else:
+                            scale_factor = abs(scale_factor)
+                        interpolated_target[std_col] = (
+                            interpolated_target[std_col] * scale_factor
+                        )
+
+                # Store training std values if predicting at training points
+                # (for validation purposes)
+                try:
+                    if len(dataset) == len(self._original_subset_data):
+                        # Check if we're predicting at training points
+                        # by comparing a few values
+                        if all(
+                            col in dataset.columns
+                            for col in self._original_subset_data.columns
+                        ):
+                            for std_col in std_cols:
+                                var_name = std_col.replace("_std", "")
+                                self._training_std[var_name] = interpolated_target[
+                                    std_col
+                                ].values
+                except Exception:
+                    # If comparison fails, just skip storing training std
+                    pass
+        else:
+            if self.is_target_normalized:
+                self.logger.info("Denormalizing target data")
+                interpolated_target = self.denormalize(
+                    normalized_data=interpolated_target,
+                    scale_factor=self.target_scale_factor,
+                )
+
         for directional_variable in self.target_directional_variables:
             self.logger.info(f"Calculating target degrees for {directional_variable}")
             interpolated_target[directional_variable] = self.get_degrees_from_uv(
@@ -1486,6 +1757,7 @@ class RBF(BaseInterpolation):
         target_custom_scale_factor: dict = {},
         num_workers: int = None,
         iteratively_update_sigma: bool = False,
+        return_std: bool = False,
     ) -> pd.DataFrame:
         """
         Fits the model to the subset and predicts the interpolated dataset.
@@ -1512,11 +1784,14 @@ class RBF(BaseInterpolation):
             The number of workers to use for the optimization. Default is None.
         iteratively_update_sigma : bool, optional
             Whether to iteratively update the sigma parameter. Default is False.
+        return_std : bool, optional
+            If True, returns standard deviations. Default is False.
 
         Returns
         -------
         pd.DataFrame
-            The interpolated dataset.
+            The interpolated dataset. If return_std=True, includes columns
+            with '_std' suffix for standard deviations.
 
         Notes
         -----
@@ -1538,7 +1813,9 @@ class RBF(BaseInterpolation):
             iteratively_update_sigma=iteratively_update_sigma,
         )
 
-        return self.predict(dataset=dataset, num_workers=num_workers)
+        return self.predict(
+            dataset=dataset, num_workers=num_workers, return_std=return_std
+        )
 
     def explain(
         self,
@@ -1688,6 +1965,7 @@ class RBF(BaseInterpolation):
         feature_name: str,
         target_variable: str = None,
         n_points: int = 100,
+        show_std: bool = False,
     ) -> tuple[plt.Figure, plt.Axes]:
         """
         Plot partial dependence of a target variable on a single input feature.
@@ -1706,6 +1984,9 @@ class RBF(BaseInterpolation):
             Default is None.
         n_points : int, optional
             Number of points to evaluate along the feature range. Default is 100.
+        show_std : bool, optional
+            If True, shows standard deviation as a shaded uncertainty band.
+            Default is False.
 
         Returns
         -------
@@ -1745,18 +2026,42 @@ class RBF(BaseInterpolation):
         self.logger.info(
             f"Computing partial dependence for {feature_name} -> {target_variable}"
         )
-        training_predictions = self._rbf_interpolate(
-            dataset=self._original_subset_data, target_variable=target_variable
+        training_results = self.predict(
+            dataset=self._original_subset_data, return_std=show_std
         )
 
-        # Get feature values and predictions, sort by feature_name for plotting
+        if show_std:
+            training_predictions = training_results[target_variable].values
+            training_std = training_results[f"{target_variable}_std"].values
+        else:
+            training_predictions = training_results[target_variable].values
+            training_std = None
+
+        # Get feature values, predictions, and actual target values
         training_x = self._original_subset_data[feature_name].values
         training_y = training_predictions
+        # Get actual target values for comparison
+        # Check if target_variable exists in _target_data (might be processed)
+        if target_variable in self._target_data.columns:
+            training_y_actual = self._target_data[target_variable].values
+        else:
+            # If not found, try to get from normalized_target_data
+            # This handles cases where variable might have been processed
+            # For exact comparison, we should use the original target values
+            # If target was normalized, we need to check the original data
+            self.logger.warning(
+                f"Target variable '{target_variable}' not found in _target_data. "
+                "Using predictions as reference."
+            )
+            training_y_actual = training_y.copy()
 
         # Sort by feature_name for smooth line plotting
         sort_idx = np.argsort(training_x)
         training_x_sorted = training_x[sort_idx]
         training_y_sorted = training_y[sort_idx]
+        training_y_actual_sorted = training_y_actual[sort_idx]
+        if training_std is not None:
+            training_std_sorted = training_std[sort_idx]
 
         # Create additional points for smoother visualization
         # Use training data range
@@ -1775,12 +2080,29 @@ class RBF(BaseInterpolation):
             smooth_data[col] = base_data_median.loc[col]
 
         # Get predictions on smooth grid
-        smooth_predictions = self._rbf_interpolate(
-            dataset=smooth_data, target_variable=target_variable
-        )
+        smooth_results = self.predict(dataset=smooth_data, return_std=show_std)
+
+        if show_std:
+            smooth_predictions = smooth_results[target_variable].values
+            smooth_std = smooth_results[f"{target_variable}_std"].values
+        else:
+            smooth_predictions = smooth_results[target_variable].values
+            smooth_std = None
 
         # Create plot
         fig, ax = plt.subplots(figsize=(10, 6))
+
+        # Plot uncertainty band if show_std is True
+        if show_std and smooth_std is not None:
+            ax.fill_between(
+                feature_range,
+                smooth_predictions - smooth_std,
+                smooth_predictions + smooth_std,
+                alpha=0.3,
+                color="blue",
+                label="±1 std uncertainty",
+                zorder=0,
+            )
 
         # Plot the smooth interpolation curve (partial dependence with median values)
         ax.plot(
@@ -1789,22 +2111,23 @@ class RBF(BaseInterpolation):
             "b-",
             linewidth=3,
             label="RBF interpolation",
-            zorder=2,
-        )
-
-        # Plot the training data points connected by line (exact RBF evaluation)
-        # This shows the actual RBF interpolation at training points
-        ax.plot(
-            training_x_sorted,
-            training_y_sorted,
-            "b-",
-            linewidth=2,
-            alpha=0.5,
-            linestyle="--",
             zorder=1,
         )
 
-        # Plot the training data points (should lie exactly on their own curve)
+        # Plot the actual target values (ground truth)
+        ax.scatter(
+            training_x_sorted,
+            training_y_actual_sorted,
+            c="red",
+            marker="o",
+            s=100,
+            alpha=0.7,
+            label="Actual target values",
+            zorder=2,
+            clip_on=False,
+        )
+
+        # Plot the predicted training data points (should match actual values)
         ax.scatter(
             training_x,
             training_y,
@@ -1812,18 +2135,31 @@ class RBF(BaseInterpolation):
             marker="+",
             s=150,
             linewidths=2.5,
-            label="Training data",
+            label="Predicted training points",
             zorder=3,
             clip_on=False,
         )
 
+        # Optionally show std at training points
+        if show_std and training_std is not None:
+            ax.errorbar(
+                training_x_sorted,
+                training_y_sorted,
+                yerr=training_std_sorted,
+                fmt="none",
+                color="gray",
+                alpha=0.5,
+                capsize=3,
+                capthick=1,
+                zorder=4,
+            )
+
         ax.set_xlabel(f"input, {feature_name}", fontsize=12)
         ax.set_ylabel(f"output, {target_variable}", fontsize=12)
-        ax.set_title(
-            f"Partial Dependence: {feature_name} → {target_variable}",
-            fontsize=14,
-            fontweight="bold",
-        )
+        title = f"Partial Dependence: {feature_name} → {target_variable}"
+        if show_std:
+            title += " (with uncertainty)"
+        ax.set_title(title, fontsize=14, fontweight="bold")
         ax.grid(True, alpha=0.3, linestyle="--")
         ax.legend(loc="best", framealpha=0.9)
 
