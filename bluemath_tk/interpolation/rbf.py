@@ -481,6 +481,131 @@ class RBF(BaseInterpolation):
         """
         return self._opt_sigmas
 
+    def check_fit_quality(self, verbose: bool = True) -> dict:
+        """
+        Check the quality of the RBF fit and return diagnostic information.
+
+        Parameters
+        ----------
+        verbose : bool, optional
+            If True, print a summary of the fit quality. Default is True.
+
+        Returns
+        -------
+        dict
+            Dictionary containing diagnostic information:
+            - 'sigmas': dict of sigma values for each target variable
+            - 'sigma_warnings': list of warnings about sigma values
+            - 'matrix_condition': dict of condition numbers for each variable
+            - 'matrix_rank': dict of matrix ranks for each variable
+            - 'fit_status': overall fit status ('good', 'warning', 'poor')
+
+        Raises
+        ------
+        RBFError
+            If the model is not fitted.
+        """
+        if not self.is_fitted:
+            raise RBFError("RBF model must be fitted before checking fit quality.")
+
+        diagnostics = {
+            "sigmas": {},
+            "sigma_warnings": [],
+            "matrix_condition": {},
+            "matrix_rank": {},
+            "fit_status": "good",
+        }
+
+        # Check each target variable
+        for target_var in self.target_processed_variables:
+            opt_sigma = self._opt_sigmas.get(target_var)
+
+            if opt_sigma is not None:
+                diagnostics["sigmas"][target_var] = opt_sigma
+
+                # Check if sigma is reasonable
+                if opt_sigma > self.sigma_max * 0.9:
+                    diagnostics["sigma_warnings"].append(
+                        f"{target_var}: sigma ({opt_sigma:.6f}) is near upper "
+                        f"bound ({self.sigma_max})"
+                    )
+                    diagnostics["fit_status"] = "warning"
+                elif opt_sigma < self.sigma_min * 1.1:
+                    diagnostics["sigma_warnings"].append(
+                        f"{target_var}: sigma ({opt_sigma:.6f}) is near lower "
+                        f"bound ({self.sigma_min})"
+                    )
+                    diagnostics["fit_status"] = "warning"
+
+                # Reconstruct matrix to check condition
+                x = self.normalized_subset_data.values.T
+                A = self._rbf_assemble(x=x, sigma=opt_sigma)
+
+                cond = np.linalg.cond(A)
+                rank = np.linalg.matrix_rank(A)
+                expected_rank = A.shape[0]
+
+                diagnostics["matrix_condition"][target_var] = cond
+                diagnostics["matrix_rank"][target_var] = {
+                    "actual": rank,
+                    "expected": expected_rank,
+                    "deficiency": expected_rank - rank,
+                }
+
+                if cond > 1e12:
+                    diagnostics["fit_status"] = "poor"
+                elif cond > 1e8:
+                    if diagnostics["fit_status"] == "good":
+                        diagnostics["fit_status"] = "warning"
+
+                if rank < expected_rank:
+                    if diagnostics["fit_status"] == "good":
+                        diagnostics["fit_status"] = "warning"
+
+        if verbose:
+            self._print_fit_quality_summary(diagnostics)
+
+        return diagnostics
+
+    def _print_fit_quality_summary(self, diagnostics: dict) -> None:
+        """Print a summary of fit quality diagnostics."""
+        print("\n" + "=" * 60)
+        print("RBF Fit Quality Summary")
+        print("=" * 60)
+
+        print(f"\nOverall Status: {diagnostics['fit_status'].upper()}")
+
+        if diagnostics["sigmas"]:
+            print("\nOptimal Sigma Values:")
+            for var, sigma in diagnostics["sigmas"].items():
+                print(f"  {var}: {sigma:.6f}")
+
+        if diagnostics["sigma_warnings"]:
+            print("\n⚠️  Sigma Warnings:")
+            for warning in diagnostics["sigma_warnings"]:
+                print(f"  - {warning}")
+
+        if diagnostics["matrix_condition"]:
+            print("\nMatrix Condition Numbers:")
+            for var, cond in diagnostics["matrix_condition"].items():
+                status = "⚠️" if cond > 1e8 else "✓"
+                print(f"  {status} {var}: {cond:.2e}")
+
+        if diagnostics["matrix_rank"]:
+            print("\nMatrix Rank:")
+            for var, rank_info in diagnostics["matrix_rank"].items():
+                if rank_info["deficiency"] > 0:
+                    print(
+                        f"  ⚠️  {var}: {rank_info['actual']}/{rank_info['expected']} "
+                        f"(deficiency: {rank_info['deficiency']})"
+                    )
+                else:
+                    print(
+                        f"  ✓ {var}: {rank_info['actual']}/{rank_info['expected']}"
+                    )
+
+        print("\n" + "=" * 60)
+
     def _preprocess_subset_data(
         self, subset_data: pd.DataFrame, is_fit: bool = True
     ) -> pd.DataFrame:
@@ -648,7 +773,15 @@ class RBF(BaseInterpolation):
         A = self.kernel_func(dists, sigma)
 
         # Subtract the smoothing parameter from the diagonal elements
-        np.fill_diagonal(A, A.diagonal() - self.smooth)
+        # For exact interpolation (smooth=0), use machine epsilon for numerical
+        # stability to handle near-singular matrices while maintaining exactness
+        if self.smooth == 0.0:
+            # Use machine epsilon for minimal numerical stability
+            # This is small enough to maintain essentially exact interpolation
+            numerical_stability = np.finfo(A.dtype).eps
+        else:
+            numerical_stability = self.smooth
+        np.fill_diagonal(A, A.diagonal() - numerical_stability)
 
         # Add the identity matrix to the matrix (polynomial term)
         P = np.hstack((np.ones((n, 1)), x.T))
@@ -689,7 +822,7 @@ class RBF(BaseInterpolation):
         b = np.concatenate((y, np.zeros((m + 1,)))).reshape(-1, 1)
 
         # Calculate the RBF coefficients
-        rbfcoeff, _, _, _ = np.linalg.lstsq(A, b, rcond=None)  # inverse
+        rbfcoeff, _, _, _ = np.linalg.lstsq(A, b, rcond=None)
 
         return rbfcoeff, A
 
@@ -751,6 +884,142 @@ class RBF(BaseInterpolation):
             True if the kernel requires sigma optimization, False otherwise.
         """
         return self.kernel not in self._kernels_no_sigma_opt
+
+    def _validate_sigma(
+        self,
+        opt_sigma: float,
+        sigma_min: float,
+        sigma_max: float,
+        subset_variables: np.ndarray,
+    ) -> None:
+        """
+        Validate that the optimized sigma value is reasonable.
+
+        Parameters
+        ----------
+        opt_sigma : float
+            The optimized sigma value.
+        sigma_min : float
+            The minimum sigma value used in optimization.
+        sigma_max : float
+            The maximum sigma value used in optimization.
+        subset_variables : np.ndarray
+            The subset variables used for interpolation.
+
+        Notes
+        -----
+        Logs warnings if:
+        - Sigma is at or near the boundaries (suggests optimization failed)
+        - Sigma is very large relative to data scale (suggests poor fit)
+        """
+        # Check if sigma is at boundaries
+        tolerance = 0.01  # 1% tolerance
+        if opt_sigma <= sigma_min * (1 + tolerance):
+            self.logger.warning(
+                f"Optimal sigma ({opt_sigma:.6f}) is at or near the lower "
+                f"boundary ({sigma_min:.6f}). This may indicate optimization "
+                "failed or the data requires a smaller sigma. Consider "
+                "decreasing sigma_min."
+            )
+        elif opt_sigma >= sigma_max * (1 - tolerance):
+            self.logger.warning(
+                f"Optimal sigma ({opt_sigma:.6f}) is at or near the upper "
+                f"boundary ({sigma_max:.6f}). This may indicate optimization "
+                "failed or the data requires a larger sigma. Consider "
+                "increasing sigma_max."
+            )
+
+        # Check if sigma is very large relative to data scale
+        # For normalized data, typical scale is ~1, so sigma > 10 is suspicious
+        # For Gaussian kernel, sigma should be on the order of typical distances
+        dim, n = subset_variables.shape
+        if dim > 0 and n > 1:
+            # Calculate typical distance between points
+            sample_distances = []
+            for i in range(min(10, n)):  # Sample a few points
+                for j in range(i + 1, min(i + 5, n)):
+                    dist = np.linalg.norm(
+                        subset_variables[:, i] - subset_variables[:, j]
+                    )
+                    sample_distances.append(dist)
+            if sample_distances:
+                typical_distance = np.median(sample_distances)
+                if opt_sigma > 10 * typical_distance:
+                    self.logger.warning(
+                        f"Optimal sigma ({opt_sigma:.6f}) is very large "
+                        f"compared to typical data distances "
+                        f"({typical_distance:.6f}). This may indicate a poor "
+                        "fit or that the Gaussian kernel is not appropriate "
+                        "for this data."
+                    )
+                elif opt_sigma < 0.01 * typical_distance:
+                    self.logger.warning(
+                        f"Optimal sigma ({opt_sigma:.6f}) is very small "
+                        f"compared to typical data distances "
+                        f"({typical_distance:.6f}). This may cause numerical "
+                        "instability or overfitting."
+                    )
+
+    def _validate_fit_quality(
+        self,
+        A: np.ndarray,
+        rbf_coeff: np.ndarray,
+        target_variable: np.ndarray,
+    ) -> None:
+        """
+        Validate the quality of the RBF fit.
+
+        Parameters
+        ----------
+        A : np.ndarray
+            The RBF matrix used for fitting.
+        rbf_coeff : np.ndarray
+            The RBF coefficients.
+        target_variable : np.ndarray
+            The target variable values.
+
+        Notes
+        -----
+        Logs warnings if:
+        - Matrix is ill-conditioned (high condition number)
+        - Matrix is rank-deficient
+        - Coefficients are very large (suggests instability)
+        """
+        # Check matrix condition number
+        cond = np.linalg.cond(A)
+        if cond > 1e12:
+            self.logger.warning(
+                f"RBF matrix is ill-conditioned (condition number: {cond:.2e}). "
+                "This may cause numerical instability and poor predictions. "
+                "Consider increasing the smooth parameter or checking data "
+                "quality."
+            )
+        elif cond > 1e8:
+            self.logger.info(
+                f"RBF matrix condition number: {cond:.2e} (moderately high, "
+                "but acceptable)"
+            )
+
+        # Check matrix rank
+        rank = np.linalg.matrix_rank(A)
+        expected_rank = A.shape[0]
+        if rank < expected_rank:
+            rank_deficiency = expected_rank - rank
+            self.logger.warning(
+                f"RBF matrix is rank-deficient (rank: {rank}/{expected_rank}, "
+                f"deficiency: {rank_deficiency}). This may prevent exact "
+                "interpolation at training points. Consider checking for "
+                "collinear data points or redundant features."
+            )
+
+        # Check coefficient magnitudes
+        max_coeff = np.max(np.abs(rbf_coeff))
+        if max_coeff > 1e10:
+            self.logger.warning(
+                f"RBF coefficients are very large (max: {max_coeff:.2e}). "
+                "This may indicate numerical instability or a poor fit. "
+                "Consider adjusting sigma or increasing the smooth parameter."
+            )
 
     def _calc_opt_sigma(
         self,
@@ -828,9 +1097,22 @@ class RBF(BaseInterpolation):
         t1 = time.time()
         self.logger.info(f"Optimal sigma: {opt_sigma} - Time: {t1 - t0:.2f} seconds")
 
+        # Validate sigma value
+        self._validate_sigma(
+            opt_sigma=opt_sigma,
+            sigma_min=sigma_min,
+            sigma_max=sigma_max,
+            subset_variables=subset_variables,
+        )
+
         # Calculate the RBF coefficients for the optimal sigma
-        rbf_coeff, _ = self._calc_rbf_coeff(
+        rbf_coeff, A = self._calc_rbf_coeff(
             sigma=opt_sigma, x=subset_variables, y=target_variable
+        )
+
+        # Validate fit quality
+        self._validate_fit_quality(
+            A=A, rbf_coeff=rbf_coeff, target_variable=target_variable
         )
 
         return rbf_coeff, opt_sigma
@@ -897,15 +1179,30 @@ class RBF(BaseInterpolation):
             kernel_values = self.kernel_func(r_chunk, opt_sigma)
 
             # Compute this chunk's result
+            # Get linear coefficients and ensure proper shape for dot product
+            linear_coeffs = rbf_coeff[
+                num_points_subset + 1 : num_points_subset + 1 + num_vars_subset
+            ]
+            # For single column case, linear_coeffs is 1D (num_vars_subset,)
+            # For multiple columns, it's also 1D (num_vars_subset,)
+            # We need to reshape to (num_vars_subset, 1) for matrix multiplication
+            # but then squeeze to get (n_chunk,) instead of (n_chunk, 1)
+            if linear_coeffs.ndim == 1:
+                linear_coeffs_2d = linear_coeffs.reshape(-1, 1)
+            else:
+                linear_coeffs_2d = linear_coeffs.T
+
+            # Compute linear term: chunk (n_chunk, num_vars_subset) @
+            # linear_coeffs_2d (num_vars_subset, 1)
+            # Result is (n_chunk, 1), squeeze to (n_chunk,)
+            linear_term = da.dot(chunk, linear_coeffs_2d)
+            if linear_term.ndim > 1 and linear_term.shape[1] == 1:
+                linear_term = linear_term.squeeze(axis=1)
+
             chunk_result = (
                 rbf_coeff[num_points_subset]
                 + da.dot(kernel_values, rbf_coeff[:num_points_subset])
-                + da.dot(
-                    chunk,
-                    rbf_coeff[
-                        num_points_subset + 1 : num_points_subset + 1 + num_vars_subset
-                    ].T,
-                )
+                + linear_term
             )
 
             # Compute and append
