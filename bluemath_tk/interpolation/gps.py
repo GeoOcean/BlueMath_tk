@@ -27,8 +27,10 @@ References
 """
 
 import gpytorch
+import numpy as np
 import pandas as pd
 import torch
+from gpytorch.constraints import GreaterThan
 from gpytorch.kernels import Kernel, MaternKernel, RBFKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
@@ -123,6 +125,7 @@ class ExactGPInterpolation(BaseInterpolation):
         patience : int, optional
             Early stopping patience. Default is 30.
         """
+
         super().__init__()
         self.set_logger_name(name=self.__class__.__name__)
 
@@ -153,6 +156,7 @@ class ExactGPInterpolation(BaseInterpolation):
         # Interpolation-specific attributes (similar to RBF)
         self.is_fitted: bool = False
         self.is_target_normalized: bool = False
+        self._original_subset_data: pd.DataFrame = pd.DataFrame()
         self._subset_data: pd.DataFrame = pd.DataFrame()
         self._normalized_subset_data: pd.DataFrame = pd.DataFrame()
         self._target_data: pd.DataFrame = pd.DataFrame()
@@ -165,6 +169,7 @@ class ExactGPInterpolation(BaseInterpolation):
         self._target_custom_scale_factor: dict = {}
         self._subset_scale_factor: dict = {}
         self._target_scale_factor: dict = {}
+        self._hyperparameters: dict[str, dict] = {}  # Store hyperparams per target var
 
         # Exclude from pickling
         self._exclude_attributes = ["_models", "_likelihoods", "_mlls"]
@@ -235,6 +240,30 @@ class ExactGPInterpolation(BaseInterpolation):
         """Return the target processed variables."""
         return self._target_processed_variables
 
+    @property
+    def hyperparameters(self) -> dict[str, dict]:
+        """
+        Return the learned hyperparameters for each target variable.
+
+        Returns
+        -------
+        dict
+            Dictionary mapping target variable names to their hyperparameters.
+            Each hyperparameter dict contains:
+            - 'lengthscale': list of lengthscales (one per input dimension if ARD)
+            - 'lengthscales': list of dicts for additive kernels (rbf+matern),
+              each with 'kernel_0', 'kernel_1', etc. keys
+            - 'outputscale': float, output scale from ScaleKernel
+            - 'noise': float, noise variance from likelihood
+            - 'mean_constant': float, mean constant from ConstantMean
+
+        Notes
+        -----
+        Hyperparameters are extracted after training. For additive kernels
+        (rbf+matern), lengthscales are stored per sub-kernel.
+        """
+        return self._hyperparameters
+
     def _build_kernel(self, input_dim: int) -> Kernel:
         """
         Build the covariance kernel.
@@ -300,8 +329,21 @@ class ExactGPInterpolation(BaseInterpolation):
                 covar_x = self.covar_module(x)
                 return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
-        # Initialize likelihood and model
-        likelihood = GaussianLikelihood().to(self.device)
+        # Initialize likelihood with very small noise for exact interpolation
+        # Use a small fixed value (1e-6) for numerical stability while
+        # maintaining near-exact interpolation at training points (like RBF)
+        noise_lower = np.finfo(float).eps
+        noise_constraint = GreaterThan(lower_bound=noise_lower)
+        likelihood = GaussianLikelihood(noise_constraint=noise_constraint).to(
+            self.device
+        )
+        # Initialize noise to a very small value for exact interpolation
+        # This ensures predictions at training points match observed values
+        initial_noise = 1e-6
+        with torch.no_grad():
+            likelihood.noise = torch.tensor(
+                initial_noise, device=self.device, dtype=torch.float32
+            )
         model = GPModel(train_x, train_y, likelihood, kernel.to(self.device)).to(
             self.device
         )
@@ -326,6 +368,7 @@ class ExactGPInterpolation(BaseInterpolation):
         pd.DataFrame
             The preprocessed subset data.
         """
+
         subset_data = subset_data.copy()
 
         self.logger.info("Checking for NaNs in subset data")
@@ -359,6 +402,7 @@ class ExactGPInterpolation(BaseInterpolation):
             ]
 
         self.logger.info("Subset data preprocessed successfully")
+
         return normalized_subset_data.copy()
 
     def _preprocess_target_data(
@@ -381,6 +425,7 @@ class ExactGPInterpolation(BaseInterpolation):
         pd.DataFrame
             The preprocessed target data.
         """
+
         target_data = target_data.copy()
 
         self.logger.info("Checking for NaNs in target data")
@@ -449,10 +494,15 @@ class ExactGPInterpolation(BaseInterpolation):
         verbose : int, optional
             Verbosity level. Default is 1.
         """
+
         self._subset_directional_variables = subset_directional_variables
         self._target_directional_variables = target_directional_variables
         self._subset_custom_scale_factor = subset_custom_scale_factor
         self._target_custom_scale_factor = target_custom_scale_factor
+
+        # Store original subset data before preprocessing
+        # (for explain, plot_partial_dependence, etc.)
+        self._original_subset_data = subset_data.copy()
 
         # Preprocess data
         normalized_subset = self._preprocess_subset_data(subset_data=subset_data)
@@ -524,6 +574,16 @@ class ExactGPInterpolation(BaseInterpolation):
                 )
                 optimizer.step()
 
+                # Keep noise small for exact interpolation
+                # Clip noise to stay within bounds for numerical stability
+                with torch.no_grad():
+                    if hasattr(likelihood, "noise"):
+                        noise_value = likelihood.noise.item()
+                        if noise_value > 1e-5:
+                            likelihood.noise.data.clamp_(
+                                min=np.finfo(float).eps, max=1e-5
+                            )
+
                 loss_value = loss.item()
                 scheduler.step(loss_value)
 
@@ -560,6 +620,45 @@ class ExactGPInterpolation(BaseInterpolation):
             self._likelihoods[target_var] = likelihood
             self._mlls[target_var] = mll
 
+            # Extract and store hyperparameters
+            hyperparams = {}
+
+            # Get lengthscales from kernel
+            covar_module = model.covar_module
+            if hasattr(covar_module, "base_kernel"):
+                base_kernel = covar_module.base_kernel
+                # Handle additive kernels (rbf+matern)
+                if hasattr(base_kernel, "kernels"):
+                    # Additive kernel - extract from each sub-kernel
+                    lengthscales = []
+                    for i, sub_kernel in enumerate(base_kernel.kernels):
+                        if hasattr(sub_kernel, "lengthscale"):
+                            ls = sub_kernel.lengthscale.detach().cpu()
+                            lengthscales.append({f"kernel_{i}": ls.flatten().tolist()})
+                    hyperparams["lengthscales"] = lengthscales
+                else:
+                    # Single kernel
+                    if hasattr(base_kernel, "lengthscale"):
+                        lengthscale = base_kernel.lengthscale.detach().cpu()
+                        hyperparams["lengthscale"] = lengthscale.flatten().tolist()
+
+            # Get output scale
+            if hasattr(covar_module, "outputscale"):
+                outputscale = covar_module.outputscale.detach().cpu().item()
+                hyperparams["outputscale"] = outputscale
+
+            # Get noise variance
+            if hasattr(likelihood, "noise"):
+                noise = likelihood.noise.detach().cpu().item()
+                hyperparams["noise"] = noise
+
+            # Get mean constant
+            if hasattr(model.mean_module, "constant"):
+                mean_const = model.mean_module.constant.detach().cpu().item()
+                hyperparams["mean_constant"] = mean_const
+
+            self._hyperparameters[target_var] = hyperparams
+
         self.is_fitted = True
         self.logger.info("GP models fitted successfully")
 
@@ -592,6 +691,7 @@ class ExactGPInterpolation(BaseInterpolation):
         GPError
             If the model is not fitted.
         """
+
         if not self.is_fitted:
             raise GPError("GP model must be fitted before predicting.")
 
@@ -693,6 +793,7 @@ class ExactGPInterpolation(BaseInterpolation):
         pd.DataFrame
             The interpolated dataset.
         """
+
         self.fit(
             subset_data=subset_data,
             target_data=target_data,
@@ -705,3 +806,143 @@ class ExactGPInterpolation(BaseInterpolation):
         )
 
         return self.predict(dataset=dataset, return_std=return_std, verbose=verbose)
+
+    def explain(
+        self,
+        dataset: pd.DataFrame,
+        target_variable: str = None,
+        num_samples: int = 100,
+        max_background_samples: int = 100,
+    ) -> None:
+        """
+        Explain GP predictions using SHAP (SHapley Additive exPlanations) values.
+
+        This method provides comprehensive model interpretability by automatically
+        generating interactive SHAP visualizations for each target variable. It uses
+        the training subset data as background.
+
+        Parameters
+        ----------
+        dataset : pd.DataFrame
+            The test dataset to explain predictions for. Must have the same variables
+            as the subset_data used for fitting.
+        target_variable : str, optional
+            The target variable to explain. If None, explains all target variables.
+            Default is None.
+        num_samples : int, optional
+            Number of samples to use for SHAP approximation. Higher values give
+            more accurate results but are slower. Default is 100.
+            Recommended: 100-500 for good balance between speed and accuracy.
+        max_background_samples : int, optional
+            Maximum number of background samples to use. The subset data will be
+            automatically summarized using k-means if it exceeds this value.
+            Default is 100.
+
+        Raises
+        ------
+        ImportError
+            If SHAP is not installed.
+        GPError
+            If the model is not fitted.
+        """
+
+        try:
+            import logging
+
+            import shap
+
+            # Suppress SHAP INFO logs (keep progress bars)
+            shap_logger = logging.getLogger("shap")
+            shap_logger.setLevel(logging.WARNING)
+
+            shap.initjs()  # Initialize JavaScript for interactive plots
+        except ImportError:
+            raise ImportError(
+                "SHAP is required for explain method. Install with: pip install shap"
+            )
+
+        if not self.is_fitted:
+            raise GPError("GP model must be fitted before explaining.")
+
+        # Determine which target variables to explain
+        if target_variable is None:
+            target_vars = self._target_processed_variables
+        else:
+            if target_variable not in self._target_processed_variables:
+                raise ValueError(
+                    f"target_variable '{target_variable}' not found in "
+                    f"target_processed_variables: {self._target_processed_variables}"
+                )
+            target_vars = [target_variable]
+
+        # Prepare background data from subset (raw data, not preprocessed)
+        # SHAP will normalize it internally, and predict will handle preprocessing
+        background = self._original_subset_data.copy()
+
+        # Summarize background data for efficiency if it's too large
+        if len(background) > max_background_samples:
+            self.logger.info(
+                f"Summarizing background data from {len(background)} "
+                f"to {max_background_samples} samples using k-means"
+            )
+            n_clusters = min(max_background_samples, len(background))
+            background_summary = shap.kmeans(background.values, n_clusters)
+        else:
+            n_clusters = len(background)
+            background_summary = background.values
+
+        for target_var in target_vars:
+            self.logger.info(
+                f"Explaining predictions for target variable: {target_var}"
+            )
+
+            # Create a prediction function for this specific target variable
+            # SHAP normalizes the background internally, so X is normalized
+            # We convert back to DataFrame with original column names (matching
+            # subset_data), then predict handles preprocessing
+            def predict_fn(X):
+                """
+                Predict the target variable for SHAP explanation.
+
+                Parameters
+                ----------
+                X : np.ndarray
+                    Input features normalized by SHAP (shape: n_samples, n_features)
+
+                Returns
+                -------
+                np.ndarray
+                    Predictions for the target variable (shape: n_samples,)
+                """
+                # Convert normalized array to DataFrame with original column names
+                # (matching self._original_subset_data.columns, not processed columns)
+                # SHAP normalizes based on background, so X is in normalized space
+                # but we need original column structure for predict
+                dataset_df = pd.DataFrame(X, columns=self._original_subset_data.columns)
+
+                # Use predict to get all target variables, then extract the one we want
+                # This handles preprocessing internally (Dir -> Dir_u/Dir_v, normalize)
+                # and returns denormalized values
+                predictions = self.predict(dataset=dataset_df, verbose=0)
+                return predictions[target_var].values
+
+            # Create SHAP explainer
+            self.logger.info(
+                f"Creating SHAP KernelExplainer with {n_clusters} "
+                f"background samples and {num_samples} evaluation samples"
+            )
+            explainer = shap.KernelExplainer(predict_fn, background_summary)
+
+            # Calculate SHAP values using original dataset
+            # SHAP will normalize internally, but we use original for plotting
+            self.logger.info(f"Calculating SHAP values for {len(dataset)} samples...")
+            shap_values = explainer.shap_values(dataset.values, nsamples=num_samples)
+
+            # Ensure shap_values is 2D (handle both single and multiple samples)
+            shap_values = np.array(shap_values)
+            if shap_values.ndim == 1:
+                shap_values = shap_values.reshape(1, -1)
+
+            # Generate SHAP summary plot using original dataset (good magnitudes)
+            self.logger.info(f"Generating SHAP summary plot for {target_var}")
+            shap.summary_plot(shap_values, dataset, show=True)

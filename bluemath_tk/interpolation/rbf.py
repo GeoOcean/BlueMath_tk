@@ -2135,7 +2135,7 @@ class RBF(BaseInterpolation):
             marker="+",
             s=150,
             linewidths=2.5,
-            label="Predicted training points",
+            label="Predicted target values",
             zorder=3,
             clip_on=False,
         )
