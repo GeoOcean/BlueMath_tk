@@ -7,6 +7,8 @@ Repository: https://github.com/GeoOcean/BlueMath_tk.git
 Status: Under development (Working)
 """
 
+import platform
+
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cdist
@@ -269,12 +271,17 @@ class KMA(BaseClustering):
 
         # Build kwargs for pyclustering
         kwargs = {}
+        # Use Python implementation (ccore=False) on macOS to avoid architecture
+        # compatibility issues with the native C++ library (x86_64 vs arm64)
+        # On other platforms, use the faster C++ implementation (ccore=True, default)
+        if platform.system() == "Darwin":  # macOS
+            kwargs["ccore"] = False
         if self.distance_metric is not None:
             # Map common metric names to pyclustering format if needed
-            kwargs["ccore"] = False  # Use Python implementation
             # Note: pyclustering's distance metric handling varies by algorithm
             # For simplicity, we'll let pyclustering use defaults
             # Advanced users can modify the model directly if needed
+            pass
 
         # Import and create the appropriate algorithm
         if self.algorithm_name == "kmeans":

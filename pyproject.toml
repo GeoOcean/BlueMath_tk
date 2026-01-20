@@ -96,7 +96,6 @@ select = [
     "N",  # pep8-naming
     "UP", # pyupgrade
 ]
-
 # Ignore some docstring rules (start lenient, tighten later)
 # Focus on missing docstrings first, style issues can be auto-fixed later
 ignore = [
