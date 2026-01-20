@@ -720,7 +720,23 @@ class ExactGPInterpolation(BaseInterpolation):
                 pred_dist = likelihood(model(X_tensor))
                 predictions_dict[target_var] = pred_dist.mean.cpu().numpy()
                 if return_std:
-                    stds_dict[f"{target_var}_std"] = pred_dist.stddev.cpu().numpy()
+                    # stds_dict[f"{target_var}_std"] = pred_dist.stddev.cpu().numpy()
+                    # self._target_scale_factor[f"{target_var}_std"] = (
+                    #     self._target_scale_factor[target_var]
+                    # )
+                    (
+                        stds_dict[f"{target_var}_lower_ci"],
+                        stds_dict[f"{target_var}_upper_ci"],
+                    ) = (
+                        pred_dist.confidence_region()[0].cpu().numpy(),
+                        pred_dist.confidence_region()[1].cpu().numpy(),
+                    )
+                    self._target_scale_factor[f"{target_var}_lower_ci"] = (
+                        self._target_scale_factor[target_var]
+                    )
+                    self._target_scale_factor[f"{target_var}_upper_ci"] = (
+                        self._target_scale_factor[target_var]
+                    )
 
         # Convert to DataFrame
         result = pd.DataFrame(predictions_dict)
@@ -732,10 +748,8 @@ class ExactGPInterpolation(BaseInterpolation):
         # Denormalize if needed
         if self.is_target_normalized:
             self.logger.info("Denormalizing target data")
-            # Only denormalize the prediction columns, not std columns
-            pred_cols = [col for col in result.columns if not col.endswith("_std")]
-            result[pred_cols] = self.denormalize(
-                normalized_data=result[pred_cols],
+            result = self.denormalize(
+                normalized_data=result,
                 scale_factor=self._target_scale_factor,
             )
 

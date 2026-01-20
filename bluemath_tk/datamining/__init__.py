@@ -13,5 +13,6 @@ from .mda import MDA
 from .pca import PCA
 from .som import SOM
 
-# Optionally, define the module's `__all__` variable to control what gets imported when using `from module import *`.
+# Optionally, define the module's `__all__` variable to control what gets imported
+# when using `from module import *`.
 __all__ = ["KMA", "LHS", "MDA", "PCA", "SOM"]
