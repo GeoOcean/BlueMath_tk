@@ -38,6 +38,7 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.models import ExactGP
 from tqdm import tqdm
 
+from ..core.decorators import validate_gp_data
 from ._base_interpolation import BaseInterpolation
 
 
@@ -461,6 +462,7 @@ class ExactGPInterpolation(BaseInterpolation):
             self.logger.info("Target data preprocessed successfully")
             return target_data.copy()
 
+    @validate_gp_data
     def fit(
         self,
         subset_data: pd.DataFrame,

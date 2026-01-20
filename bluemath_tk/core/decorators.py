@@ -513,3 +513,77 @@ def validate_data_calval(func):
         )
 
     return wrapper
+
+
+def validate_gp_data(func):
+    """
+    Validate data in ExactGPInterpolation class fit method.
+
+    Parameters
+    ----------
+    func : callable
+        The function to be decorated
+
+    Returns
+    -------
+    callable
+        The decorated function
+    """
+
+    @functools.wraps(func)
+    def wrapper(
+        self,
+        subset_data: pd.DataFrame,
+        target_data: pd.DataFrame,
+        subset_directional_variables: list[str] = [],
+        target_directional_variables: list[str] = [],
+        subset_custom_scale_factor: dict = {},
+        normalize_target_data: bool = True,
+        target_custom_scale_factor: dict = {},
+        verbose: int = 1,
+    ):
+        if subset_data is None:
+            raise ValueError("Subset data cannot be None")
+        elif not isinstance(subset_data, pd.DataFrame):
+            raise TypeError("Subset data must be a pandas DataFrame")
+        if target_data is None:
+            raise ValueError("Target data cannot be None")
+        elif not isinstance(target_data, pd.DataFrame):
+            raise TypeError("Target data must be a pandas DataFrame")
+        if not isinstance(subset_directional_variables, list):
+            raise TypeError("Subset directional variables must be a list")
+        for directional_variable in subset_directional_variables:
+            if directional_variable not in subset_data.columns:
+                raise ValueError(
+                    f"Directional variable {directional_variable} "
+                    f"not found in subset data"
+                )
+        if not isinstance(target_directional_variables, list):
+            raise TypeError("Target directional variables must be a list")
+        for directional_variable in target_directional_variables:
+            if directional_variable not in target_data.columns:
+                raise ValueError(
+                    f"Directional variable {directional_variable} "
+                    f"not found in target data"
+                )
+        if not isinstance(subset_custom_scale_factor, dict):
+            raise TypeError("Subset custom scale factor must be a dict")
+        if not isinstance(normalize_target_data, bool):
+            raise TypeError("Normalize target data must be a bool")
+        if not isinstance(target_custom_scale_factor, dict):
+            raise TypeError("Target custom scale factor must be a dict")
+        if not isinstance(verbose, int) or verbose < 0:
+            raise ValueError("Verbose must be an integer >= 0")
+        return func(
+            self,
+            subset_data,
+            target_data,
+            subset_directional_variables,
+            target_directional_variables,
+            subset_custom_scale_factor,
+            normalize_target_data,
+            target_custom_scale_factor,
+            verbose,
+        )
+
+    return wrapper
