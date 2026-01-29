@@ -158,7 +158,7 @@ def process_kp_coefficients(
     return concatened_kp.fillna(0.0).sortby("freq").sortby("dir")
 
 
-def reconstruc_spectra(
+def reconstruct_spectra(
     offshore_spectra: xr.Dataset,
     kp_coeffs: xr.Dataset,
     num_workers: int = None,
@@ -211,13 +211,15 @@ def reconstruc_spectra(
     try:
         # Process with controlled chunks
         offshore_spectra_chunked = offshore_spectra.chunk(
-            {"time": chunk_sizes.get("time", 24 * 7)}
+            {"time": chunk_sizes.get("time", 24)}
         )
         kp_coeffs_chunked = kp_coeffs.chunk({"site": 10})
         with ProgressBar():
             onshore_spectra = (
-                (offshore_spectra_chunked * kp_coeffs_chunked).sum(dim="case_num")
-            ).compute()
+                (offshore_spectra_chunked * kp_coeffs_chunked)
+                .sum(dim="case_num")
+                .compute()
+            )
         return onshore_spectra
 
     finally:
