@@ -1,5 +1,6 @@
 import os
 import re
+from itertools import groupby
 from typing import List, Union
 
 import numpy as np
@@ -9,6 +10,7 @@ import wavespectra
 import xarray as xr
 from wavespectra.construct import construct_partition
 
+from ...core.operations import get_uv_components
 from .._base_wrappers import BaseModelWrapper
 from .._utils_wrappers import write_array_in_file
 
@@ -265,6 +267,7 @@ class SwanModelWrapper(BaseModelWrapper):
         self,
         case_num: int,
         case_dir: str,
+        case_context: dict,
         output_vars: List[str] = ["Hsig", "Tm02", "Dir"],
     ) -> xr.Dataset:
         """
@@ -276,6 +279,8 @@ class SwanModelWrapper(BaseModelWrapper):
             The case number.
         case_dir : str
             The case directory.
+        case_context : dict
+            The case context.
         output_vars : list, optional
             The output variables to postprocess. Default is None.
 
@@ -444,3 +449,226 @@ class BinWavesWrapper(SwanModelWrapper):
             wavespectra.SpecDataset(mono_input_spectrum).to_swan(
                 os.path.join(case_dir, f"input_spectra_{side}.bnd")
             )
+
+
+class HyWindSeaWrapper(SwanModelWrapper):
+    """
+    Wrapper example for the HyWindSea metamodel.
+    """
+
+    def calculate_alpha_matrix_for_case(
+        self, case_dir: str, case_context: dict
+    ) -> None:
+        """
+        Reescale output data for the HyWindSea model.
+        """
+
+        # Open wind data and slice for bathymetry adaptation
+        wind = (
+            xr.open_dataset(case_context.get("wind_file"))
+            .sel(lev=10)
+            .isel(time=case_context.get("day_hour"))
+            .squeeze()
+        )
+        wind_edit = wind.sel(
+            lon=slice(
+                case_context.get("bathy").lon.values.min(),
+                case_context.get("bathy").lon.values.max(),
+            ),
+            lat=slice(
+                case_context.get("bathy").lat.values.min(),
+                case_context.get("bathy").lat.values.max(),
+            ),
+        )
+        bathy_interp = case_context.get("bathy").interp(
+            lon=wind_edit.lon, lat=wind_edit.lat
+        )
+        wind_edit["bathy"] = bathy_interp.depth
+
+        # Calculate percentiles and modify wind speeds
+        perc_dataset = wind_edit.where(wind_edit.bathy > 0).quantile(
+            case_context.get("percentile") / 100, dim=["lon", "lat"]
+        )
+        alpha = case_context.get("umbral") / perc_dataset
+        # alpha["M"] = (
+        #     "time",
+        #     np.where(perc_dataset["M"] > case_context.get("umbral"), 1, alpha["M"]),
+        # )
+
+        # Save wind and alpha data in case_context dict
+        case_context["alpha"] = np.where(
+            perc_dataset["M"] > case_context.get("umbral"), 1, alpha["M"]
+        )
+        wind_done = wind.copy()
+        wind_done["M"] = wind["M"] * case_context["alpha"]
+        case_context["wind"] = wind_done
+
+    def transform_write_wind_data(self, case_dir: str, case_context: dict) -> None:
+        """
+        Transform wind data for the HyWindSea model.
+        """
+
+        # Calculate u10 and v10 components
+        u10, v10 = get_uv_components(case_context["wind"].Dir)
+        case_context["wind"]["u10"] = -u10 * case_context["wind"].M
+        case_context["wind"]["v10"] = -v10 * case_context["wind"].M
+        w = case_context["wind"].interp(
+            lat=case_context.get("bathy").lat.values,
+            lon=case_context.get("bathy").lon.values,
+            method="linear",
+        )
+
+        # extract and save
+        u10 = w.u10.values
+        v10 = w.v10.values
+        arr = np.vstack((u10, v10))
+
+        # Save wind file
+        write_array_in_file(arr, f"{case_dir}/wind_file.dat")
+
+    def transform_postprocess_ouput_data(
+        self, wave_data: dict, case_context: dict
+    ) -> np.ndarray:
+        """
+        Transform wind data for the HyWindSea model.
+        """
+
+        # Use alpha to rescale wave output data
+
+        wave_data["Hsig"] = wave_data["Hsig"] / case_context.get("alpha")
+        return wave_data
+
+    def build_case(self, case_dir: str, case_context: dict) -> None:
+        if self.depth_array is not None:
+            write_array_in_file(self.depth_array, f"{case_dir}/depth_main.dat")
+        if self.locations is not None:
+            write_array_in_file(self.locations, f"{case_dir}/locations.loc")
+        self.calculate_alpha_matrix_for_case(
+            case_dir=case_dir, case_context=case_context
+        )
+        self.transform_write_wind_data(case_dir=case_dir, case_context=case_context)
+
+    def postprocess_case(
+        self, case_num, case_dir, case_context, output_vars=["Hsig", "Tm02", "Dir"]
+    ):
+        wave_data = super().postprocess_case(
+            case_num, case_dir, case_context, output_vars
+        )
+        reescaled_wind = self.transform_postprocess_ouput_data(wave_data, case_context)
+        wave_output = reescaled_wind.expand_dims(
+            {
+                "time": [case_context.get("wind").time.values],
+                "tide": [case_context.get("tide_level")],
+            }
+        )
+        return wave_output
+
+    def join_postprocessed_files(
+        self, postprocessed_files: List[xr.Dataset]
+    ) -> xr.Dataset:
+        """
+        Join postprocessed files in a single Dataset.
+
+        Parameters
+        ----------
+        postprocessed_files : list
+            The postprocessed files.
+
+        Returns
+        -------
+        xr.Dataset
+            The joined Dataset.
+        """
+        # combined_time = xr.concat(postprocessed_files, dim="time")
+        postprocessed_files_sorted = sorted(
+            postprocessed_files, key=lambda ds: float(ds.tide.values)
+        )
+
+        # Agrupar por valor de marea
+        grouped_by_tide = {
+            tide: list(group)
+            for tide, group in groupby(
+                postprocessed_files_sorted, key=lambda ds: float(ds.tide.values)
+            )
+        }
+
+        combined_by_tide = []
+
+        # Combinar los datasets de cada marea por tiempo
+        for tide_val, ds_list in grouped_by_tide.items():
+            ds_tide = xr.concat(
+                ds_list, dim="time", combine_attrs="override", join="outer"
+            )
+            combined_by_tide.append(ds_tide)
+
+        # Combinar todas las mareas
+        combined_all = xr.concat(
+            combined_by_tide, dim="tide", combine_attrs="override", join="outer"
+        )
+
+        return combined_all  # time and tide dimensions
+
+
+class HyRubyWrapper(SwanModelWrapper):
+    """
+    Wrapper example for the metamodel of Panama.
+    """
+
+    def transform_write_wind_data(self, case_dir: str, case_context: dict) -> None:
+        """
+        Transform wind data for the swan model.
+        """
+
+        # Open wind data and slice for bathymetry adaptation
+        wind = (
+            xr.open_dataset(case_context.get("wind_file"))
+            .drop_vars(["number", "expver"])
+            .isel(valid_time=case_context.get("day_hour"))
+            .rename({"longitude": "lon", "latitude": "lat"})
+            .sortby("lat")
+        )
+
+        wind_edit = wind.sel(
+            lon=slice(
+                case_context.get("bathy").lon.values.min(),
+                case_context.get("bathy").lon.values.max(),
+            ),
+            lat=slice(
+                case_context.get("bathy").lat.values.min(),
+                case_context.get("bathy").lat.values.max(),
+            ),
+        )
+        bathy_interp = case_context.get("bathy").interp(
+            lon=wind_edit.lon, lat=wind_edit.lat
+        )
+        wind_edit["bathy"] = bathy_interp.elevation
+
+        # Calculate u10 and v10 components
+        w = wind.interp(
+            lat=case_context.get("bathy").lat.values,
+            lon=case_context.get("bathy").lon.values,
+            method="linear",
+        )
+        # extract and save
+        u10 = w.u10.values
+        v10 = w.v10.values
+        arr = np.vstack((u10, v10))
+
+        # Save wind file
+        write_array_in_file(arr, f"{case_dir}/wind_file.dat")
+
+    def build_case(self, case_dir: str, case_context: dict) -> None:
+        if self.depth_array is not None:
+            write_array_in_file(self.depth_array, f"{case_dir}/depth_main.dat")
+        if self.locations is not None:
+            write_array_in_file(self.locations, f"{case_dir}/locations.loc")
+
+        self.transform_write_wind_data(case_dir=case_dir, case_context=case_context)
+
+    def postprocess_case(
+        self, case_num, case_dir, case_context, output_vars=["Hsig", "Tm02", "Dir"]
+    ):
+        wave_data = super().postprocess_case(
+            case_num, case_dir, case_context, output_vars
+        )
+        return wave_data
