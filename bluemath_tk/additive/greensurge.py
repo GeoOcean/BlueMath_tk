@@ -13,11 +13,91 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.path import Path
 from tqdm import tqdm
+from shapely.geometry import LineString, Point
 
 from ..core.operations import get_degrees_from_uv
 from ..core.plotting.colors import hex_colors_land, hex_colors_water
 from ..core.plotting.utils import join_colormaps
 
+
+def add_forcing_edges_to_computational_domain(poly_clip, vert, tria):
+    """
+    Add edges to the forcing mesh that align with the computational domain boundary.
+    Parameters
+    ----------
+    poly_clip : shapely.geometry.Polygon
+        The polygon representing the computational domain boundary.
+    vert : np.ndarray
+        Array of shape (n_vertices, 2) containing the coordinates of the vertices in the forcing mesh.
+    tria : np.ndarray
+        Array of shape (n_triangles, 3) containing the indices of the vertices for each triangle in the forcing mesh.
+    Returns
+    -------
+    vert_clean : np.ndarray
+        Updated array of vertices including new intersection points.
+    edges_clean : np.ndarray
+        Updated array of edges including new edges along the computational domain boundary.
+    """
+
+    # Extract all edges from forcing mesh triangles
+    edges_new_full = np.vstack([
+        tria[:, [0, 1]],
+        tria[:, [1, 2]],
+        tria[:, [2, 0]]
+    ])
+    edges_new = np.unique(np.sort(edges_new_full, axis=1), axis=0)
+
+    # Check which vertices are inside computational domain
+    mask_node_in = np.array([poly_clip.contains(Point(x, y)) for x, y in vert])
+
+    # Classify edges by how many endpoints are inside
+    count_inside = mask_node_in[edges_new].sum(axis=1)
+    edges_both_inside = edges_new[count_inside == 2]
+    edges_one_inside = edges_new[count_inside == 1]
+
+    # Clip edges at computational domain boundary
+    edges_one_inside_new = edges_one_inside.copy()
+    new_points = []
+
+    for i, (n1, n2) in enumerate(edges_one_inside):
+        p1, p2 = vert[n1], vert[n2]
+        inside1 = mask_node_in[n1]
+        
+        line = LineString([p1, p2])
+        inter = line.intersection(poly_clip.boundary)
+        
+        if inter.is_empty:
+            continue
+        
+        # Handle multiple intersection points
+        if inter.geom_type == "MultiPoint":
+            points = list(inter.geoms)
+            ref = p1 if inside1 else p2
+            dists = [Point(ref).distance(pt) for pt in points]
+            inter_pt = np.array(points[np.argmin(dists)].coords[0])
+        else:
+            inter_pt = np.array(inter.coords[0])
+        
+        new_index = len(vert) + len(new_points)
+        new_points.append(inter_pt)
+        
+        if inside1:
+            edges_one_inside_new[i, 1] = new_index
+        else:
+            edges_one_inside_new[i, 0] = new_index
+
+    # Update vertices with new intersection points
+    if len(new_points) > 0:
+        vert_update = np.vstack([vert, np.array(new_points)])
+
+    # Clean up: keep only used nodes
+    edges_used = np.vstack([edges_both_inside, edges_one_inside_new])
+    used_nodes = np.unique(edges_used.flatten())
+    vert_clean = vert_update[used_nodes]
+    mapping = {old_idx: new_idx for new_idx, old_idx in enumerate(used_nodes)}
+    edges_clean = np.vectorize(mapping.get)(edges_used)
+
+    return vert_clean, edges_clean
 
 def read_adcirc_grd(grd_file: str) -> Tuple[np.ndarray, np.ndarray, List[str]]:
     """
@@ -376,9 +456,6 @@ def plot_greensurge_setup(
     ax.set_extent([*bnd], crs=ccrs.PlateCarree())
     plt.legend(loc="lower left", fontsize=10, markerscale=2.0)
     ax.set_title("GreenSurge Mesh Setup")
-    gl = ax.gridlines(draw_labels=True)
-    gl.top_labels = False
-    gl.right_labels = False
 
     return fig, ax
 
