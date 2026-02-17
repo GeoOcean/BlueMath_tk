@@ -235,6 +235,7 @@ def vortex2delft_3D_FM_nc(
         The extension for the forcing file, default is "GreenSurge_GFDcase_wind.ext".
     fill_value : float
         The fill value to use for missing data, default is 0.
+        
     Returns
     -------
     xarray.Dataset
@@ -244,46 +245,44 @@ def vortex2delft_3D_FM_nc(
     longitude = mesh.mesh2d_node_x.values
     latitude = mesh.mesh2d_node_y.values
     n_time = ds_vortex.time.size
+    time_int = np.arange(n_time) * (ds_vortex.time[1] - ds_vortex.time[0]).values / np.timedelta64(1, 'h')
 
     lat_interp = xr.DataArray(latitude, dims="node")
     lon_interp = xr.DataArray(longitude, dims="node")
+    angle = np.deg2rad((270 - ds_vortex.Dir.values) % 360)
+    W = ds_vortex.W.values
 
-    W_node = ds_vortex.W.interp(
-        lat=lat_interp,
-        lon=lon_interp,
-        method="nearest",
-    )
+    windx_data = (W * np.cos(angle)).astype(np.float32)
+    windy_data = (W * np.sin(angle)).astype(np.float32)
+    pressure_data = ds_vortex.p.values.astype(np.float32)
 
-    Dir_node = ds_vortex.Dir.interp(
-        lat=lat_interp,
-        lon=lon_interp,
-        method="nearest",
-    )
+    if windx_data.ndim == 3:
+        windx_data = np.transpose(windx_data, (2, 0, 1))
+        windy_data = np.transpose(windy_data, (2, 0, 1))
+        pressure_data = np.transpose(pressure_data, (2, 0, 1))
 
-    p_node = ds_vortex.p.interp(
-        lat=lat_interp,
-        lon=lon_interp,
-        method="nearest",
-    )
-
-    angle = np.deg2rad((270 - Dir_node.values) % 360)
-
-    windx_node = (W_node.values * np.cos(angle)).astype(np.float32)
-    windy_node = (W_node.values * np.sin(angle)).astype(np.float32)
-
-    forcing_dataset = xr.Dataset(
+    ds_vortex_interp = xr.Dataset(
         {
-            "windx": (("node", "time"), np.nan_to_num(windx_node, nan=fill_value)),
-            "windy": (("node", "time"), np.nan_to_num(windy_node, nan=fill_value)),
-            "airpressure": (("node", "time"), np.nan_to_num(p_node.values.astype(np.float32), nan=fill_value)),
+            "windx": (
+                ("time", "latitude", "longitude"),
+                np.nan_to_num(windx_data, nan=fill_value),
+            ),
+            "windy": (
+                ("time", "latitude", "longitude"),
+                np.nan_to_num(windy_data, nan=fill_value),
+            ),
+            "airpressure": (
+                ("time", "latitude", "longitude"),
+                np.nan_to_num(pressure_data, nan=fill_value),
+            ),
         },
         coords={
-            "node": np.arange(lat_interp.size),
-            "time": np.arange(n_time),
-            "latitude": ("node", latitude),
-            "longitude": ("node", longitude),
+            "time": time_int,
+            "latitude": ds_vortex.lat.values,
+            "longitude": ds_vortex.lon.values,
         },
     )
+    forcing_dataset = ds_vortex_interp.interp(latitude=lat_interp, longitude=lon_interp)
 
     reference_date_str = (
         ds_vortex.time.values[0]
@@ -333,5 +332,6 @@ def vortex2delft_3D_FM_nc(
         "long_name": "latitude",
         "units": "degrees_north",
     }
+    forcing_dataset = forcing_dataset.fillna(fill_value)
 
     return forcing_dataset
