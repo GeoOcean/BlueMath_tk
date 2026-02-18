@@ -2031,3 +2031,107 @@ def actualize_grid_info(
     )
 
     return ds_GFD_calc_info
+
+def GS_windsetup_reconstruction_nc(
+    greensurge_dataset,
+    ds_gfd_metadata: xr.Dataset,
+    wind_direction_input: xr.Dataset,
+    velocity_thresholds: np.ndarray = np.array([0, 100, 100]),
+    drag_coefficients: np.ndarray = np.array([0.00063, 0.00723, 0.00723]),
+) -> xr.Dataset:
+    """
+    Reconstructs the GreenSurge wind setup using the provided wind direction input and metadata.
+
+    Parameters
+    ----------
+    greensurge_dataset : xr.Dataset
+        xarray Dataset containing the GreenSurge mesh and forcing data.
+    ds_gfd_metadata: xr.Dataset
+        xarray Dataset containing metadata for the GFD mesh.
+    wind_direction_input: xr.Dataset
+        xarray Dataset containing wind direction and speed data.
+    velocity_thresholds : np.ndarray
+        Array of velocity thresholds for drag coefficient calculation.
+    drag_coefficients : np.ndarray
+        Array of drag coefficients corresponding to the velocity thresholds.
+
+    Returns
+    -------
+    xr.Dataset
+        xarray Dataset containing the reconstructed wind setup.
+    """
+
+    velocity_thresholds = np.asarray(velocity_thresholds)
+    drag_coefficients = np.asarray(drag_coefficients)
+
+    direction_bins = ds_gfd_metadata.wind_directions.values
+    forcing_cell_indices = ds_gfd_metadata.element_forcing_index.values
+    wind_speed_reference = ds_gfd_metadata.wind_speed.values.item()
+    base_drag_coeff = GS_LinearWindDragCoef(
+        wind_speed_reference, drag_coefficients, velocity_thresholds
+    )
+    time_step_hours = ds_gfd_metadata.time_step_hours.values
+
+    time_start = wind_direction_input.time.values.min()
+    time_end = wind_direction_input.time.values.max()
+    duration_in_steps = (
+        int((ds_gfd_metadata.simulation_duration_hours.values) / time_step_hours) + 1
+    )
+    output_time_vector = np.arange(
+        time_start, time_end, np.timedelta64(int(60 * time_step_hours.item()), "m")
+    )
+    num_output_times = len(output_time_vector)
+
+    direction_data = wind_direction_input.Dir.values
+    wind_speed_data = wind_direction_input.W.values
+
+    ds_ex = xr.open_dataset(f"{greensurge_dataset}/GF_T_0_D_0/dflowfmoutput/GreenSurge_GFDcase_map.nc")
+
+    n_faces = ds_ex["mesh2d_s1"].shape
+
+    wind_setup_output = np.zeros((num_output_times, n_faces[1]))
+    water_level_accumulator = np.zeros(n_faces)
+
+    for time_index in tqdm(range(num_output_times), desc="Processing time steps"):
+        water_level_accumulator[:] = 0
+        for cell_index in forcing_cell_indices.astype(int):
+            current_dir = direction_data[cell_index, time_index] % 360
+            adjusted_bins = np.where(direction_bins == 0, 360, direction_bins)
+            closest_direction_index = np.abs(adjusted_bins - current_dir).argmin()
+
+            water_level_case = xr.open_dataset(
+                f"{greensurge_dataset}/GF_T_{cell_index}_D_{closest_direction_index}/dflowfmoutput/GreenSurge_GFDcase_map.nc"
+            )["mesh2d_s1"].values
+            water_level_case = np.nan_to_num(water_level_case, nan=0)
+
+            wind_speed_value = wind_speed_data[cell_index, time_index]
+            drag_coeff_value = GS_LinearWindDragCoef(
+                wind_speed_value, drag_coefficients, velocity_thresholds
+            )
+
+            scaling_factor = (wind_speed_value**2 / wind_speed_reference**2) * (
+                drag_coeff_value / base_drag_coeff
+            )
+            water_level_accumulator += water_level_case * scaling_factor
+
+        step_window = min(duration_in_steps, num_output_times - time_index)
+        if (num_output_times - time_index) > step_window:
+            wind_setup_output[time_index : time_index + step_window] += (
+                water_level_accumulator
+            )
+        else:
+            shift_counter = step_window - (num_output_times - time_index)
+            wind_setup_output[
+                time_index : time_index + step_window - shift_counter
+            ] += water_level_accumulator[: step_window - shift_counter]
+
+    ds_wind_setup = xr.Dataset(
+        {"WL": (["time", "nface"], wind_setup_output)},
+        coords={
+            "time": output_time_vector,
+            "nface": np.arange(wind_setup_output.shape[1]),
+        },
+    )
+    ds_wind_setup.attrs["description"] = "Wind setup from GreenSurge methodology"
+
+    return ds_wind_setup
