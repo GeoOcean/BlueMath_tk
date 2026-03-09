@@ -11,6 +11,7 @@ from wavespectra.construct import construct_partition
 
 from .._base_wrappers import BaseModelWrapper
 from .._utils_wrappers import write_array_in_file
+from .swan_utils import generate_forcing_file_GreenWaves, sbatch_file_greenwaves
 
 
 class SwanModelWrapper(BaseModelWrapper):
@@ -446,4 +447,32 @@ class BinWavesWrapper(SwanModelWrapper):
         for side in ["N", "S", "E", "W"]:
             wavespectra.SpecDataset(mono_input_spectrum).to_swan(
                 os.path.join(case_dir, f"input_spectra_{side}.bnd")
+            )
+
+class GreenWavesWrapper(SwanModelWrapper):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sbatch_file_example = sbatch_file_greenwaves
+
+    def build_case(
+        self,
+        case_context: dict,
+        case_dir: str,
+    ) -> None:
+        """
+        Build the input files for a case.
+
+        Parameters
+        ----------
+        case_context : dict
+            The case context.
+        case_dir : str
+            The case directory.
+        """
+
+        generate_forcing_file_GreenWaves(
+            case_context=case_context,
+            case_dir=case_dir,
+            ds_GFD_info=case_context.get("ds_GFD_info"),
             )
