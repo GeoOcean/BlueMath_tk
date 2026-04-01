@@ -4,7 +4,7 @@ from typing import Dict
 from siphon.catalog import TDSCatalog
 
 GEOOCEAN_CLUSTER_DATA = "/lustre/geocean/DATA/"
-GEOOCEAN_THREDDS_DATA = "https://geoocean.sci.unican.es/thredds/dodsC/geoceanData/"
+GEOOCEAN_THREDDS_DATA = "https://geoocean.unican.es/thredds/dodsC/rawData/"
 
 # Default paths dictionary
 PATHS = {
@@ -37,7 +37,7 @@ PATHS = {
         "GEOOCEAN/SHyTCWaves/",
     ),
     "GEBCO_2025": "https://dap.ceda.ac.uk/thredds/dodsC/bodc/gebco/global/gebco_2025/ice_surface_elevation/netcdf/GEBCO_2025.nc",
-    "EMODNET_2024": "https://geoocean.sci.unican.es/thredds/dodsC/geoocean/emodnet-bathy-2024",
+    "EMODNET_2024": "https://geoocean.unican.es/thredds/dodsC/aggregatedDatasets/Emodnet2024.nc",
 }
 
 
@@ -100,7 +100,7 @@ def get_thredds_catalog() -> TDSCatalog:
     """
 
     catalog_url = (
-        "https://geoocean.sci.unican.es/thredds/catalog/geoceanData/catalog.xml"
+        "https://geoocean.unican.es/thredds/catalog/catalog.html"
     )
 
     return TDSCatalog(catalog_url)
