@@ -73,9 +73,9 @@ class GEV(BaseDistribution):
     @staticmethod
     def nparams() -> int:
         """
-        Number of parameters of GEV
+        Return Number of parameters of GEV
         """
-        return int(3)
+        return 3
 
     @staticmethod
     def param_names() -> List[str]:
@@ -139,7 +139,7 @@ class GEV(BaseDistribution):
             Shape parameter.
 
         Returns
-        ----------
+        -------
         p : np.ndarray
             Probability
 
@@ -279,7 +279,7 @@ class GEV(BaseDistribution):
             If not provided, default fitting options will be used.
 
         Returns
-        ----------
+        -------
         FitResult
             Result of the fit containing the parameters loc, scale, shape,
             success status, and negative log-likelihood value.
@@ -296,7 +296,7 @@ class GEV(BaseDistribution):
         random_state: int = None,
     ) -> np.ndarray:
         """
-        Generates random values from GEV distribution
+        Generate random values from GEV distribution
 
         Parameters
         ----------
@@ -314,7 +314,7 @@ class GEV(BaseDistribution):
             If None, do not use random stat.
 
         Returns
-        ----------
+        -------
         x : np.ndarray
             Random values from GEV distribution
 
@@ -427,7 +427,7 @@ class GEV(BaseDistribution):
     @staticmethod
     def std(loc: float = 0.0, scale: float = 1.0, shape: float = 0.0) -> float:
         """
-        Standard deviation
+        Compute Standard deviation
 
         Parameters
         ----------
@@ -440,7 +440,7 @@ class GEV(BaseDistribution):
             Shape parameter.
 
         Returns
-        ----------
+        -------
         std : np.ndarray
             Standard Deviation of GEV with the given
             parameters

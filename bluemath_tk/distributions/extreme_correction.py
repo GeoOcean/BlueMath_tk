@@ -302,13 +302,16 @@ class ExtremeCorrection(BlueMathModel):
         self.p_value = test_result.get("P-value")
         if self.p_value > siglevel:
             self.logger.info(
-                f"Synthetic data comes from fitted distribution (P-value: {self.p_value:.4%})"
+                f"Synthetic data comes from fitted distribution (P-value: {self.p_value:.6f})"
             )
             self.sim_am_data_corr = self.sim_am_data
             self.sim_pit_data_corrected = self.sim_pit_data
             return
 
         else:
+            self.logger.info(
+                f"Synthetic data does not come from fitted distribution (P-value: {self.p_value:.6f})"
+            )
             # Initialize sim_am_data_corr
             self.sim_am_data_corr = np.zeros(self.n_year_sim - self.am_idx_0)
 
@@ -487,8 +490,7 @@ class ExtremeCorrection(BlueMathModel):
 
     def test(self) -> dict:
         """
-        TODO: CAMBIAR EL TEST AL DEL PAPER (BASADO EN BOOTSTRAP)
-        Cramer Von-Mises test to check the GOF of fitted distribution
+        Bootstrap Cramer Von-Mises test to check the GOF of fitted distribution
 
         Test to check the Goodness-of-Fit of the historical fitted distribution with the
         synthetic data.
@@ -503,39 +505,109 @@ class ExtremeCorrection(BlueMathModel):
         -----
         The test is applied in the AM since the correction procedure is applied in the AM
         """
+        Bootstrap_test = 500
+        # Historical parameters estimated
+        u, sigma, xi = self.parameters
+        mu = u + sigma/xi * (self.poiss_parameter ** xi - 1)
+        psi = sigma * self.poiss_parameter ** xi
 
-        if self.method == "pot":
-            gev_location = (
-                self.parameters[0]
-                + (
-                    self.parameters[1]
-                    * (1 - self.poiss_parameter ** self.parameters[2])
+        CvM_statistic = (
+            1/(12*self.n_year_sim) +
+            np.sum(
+                (np.sort(
+                    GEV.cdf(self.sim_am_data, loc=mu, scale=psi, shape=xi)
+                ) -
+                (2 * np.arange(1, self.n_year_sim +1) - 1) /
+                (2 * self.n_year_sim))**2
+            )
+        )
+
+        # Bootstrap calibration
+        boot_statistic = np.zeros(Bootstrap_test)
+
+        for b in range(Bootstrap_test):
+            # 1. Simulate AM of size n_hist from GEV with historical parameters
+            uniform_random_hist = np.random.uniform(size=self.n_year)
+            simulated_am_boot_hist = GEV.qf(
+                uniform_random_hist,
+                loc=mu,
+                scale=psi,
+                shape=xi
+            )
+
+            # 2. Fit GEV to simulated AM
+            [mu_bootfit, psi_bootfit, xi_bootfit] = GEV.fit(
+                simulated_am_boot_hist
+            ).params
+
+            # 3. Simulate AM of size n_sim from GEV with historical parameters
+            uniform_random_sim = np.random.uniform(size=self.n_year_sim)
+            simulated_am_boot_sim = GEV.qf(
+                uniform_random_sim,
+                loc=mu_bootfit,
+                scale=psi_bootfit,
+                shape=xi_bootfit
+            )
+
+            # 4. Compute bootstrap synthetic AM values using the bootfit
+            u_bootfit = GEV.cdf(
+                simulated_am_boot_sim,
+                loc=mu_bootfit,
+                scale=psi_bootfit,
+                shape=xi_bootfit,
+            )
+
+            # 5. Compute CvM test for the bootstrap sample
+            boot_statistic[b] = (
+                1/(12*self.n_year_sim) +
+                np.sum(
+                    (np.sort(
+                        u_bootfit
+                    ) -
+                    (2*np.arange(1, self.n_year_sim + 1) - 1) /
+                    (2*self.n_year_sim))**2
                 )
-                / self.parameters[2]
             )
-            gev_scale = self.parameters[1] * self.poiss_parameter ** self.parameters[2]
 
-            # POT test
-            # res_test = stats.cramervonmises(self.sim_pot_data,
-            #                                 cdf=stats.genpareto.cdf,
-            #                                 args=(self.parameters[2], self.parameters[0], self.parameters[1])
-            #                                 )
+        bootstrap_p_value = (
+            (1 + np.sum(boot_statistic >= CvM_statistic)) /
+            (1 + Bootstrap_test)
+        )
 
-            # AM test to derived GEV from GPD-Poisson
-            res_test = stats.cramervonmises(
-                self.sim_am_data,
-                cdf=stats.genextreme.cdf,
-                args=(self.parameters[2], gev_location, gev_scale),
-            )
-            return {"Statistic": res_test.statistic, "P-value": res_test.pvalue}
+        return {"Statistic": CvM_statistic, "P-value": bootstrap_p_value}
 
-        elif self.method == "am":
-            res_test = stats.cramervonmises(
-                self.sim_am_data,
-                cdf=stats.genextreme.cdf,
-                args=(self.parameters[2], self.parameters[0], self.parameters[1]),
-            )
-            return {"Statistic": res_test.statistic, "P-value": res_test.pvalue}
+        # if self.method == "pot":
+        #     gev_location = (
+        #         self.parameters[0]
+        #         + (
+        #             self.parameters[1]
+        #             * (1 - self.poiss_parameter ** self.parameters[2])
+        #         )
+        #         / self.parameters[2]
+        #     )
+        #     gev_scale = self.parameters[1] * self.poiss_parameter ** self.parameters[2]
+
+        #     # POT test
+        #     # res_test = stats.cramervonmises(self.sim_pot_data,
+        #     #                                 cdf=stats.genpareto.cdf,
+        #     #                                 args=(self.parameters[2], self.parameters[0], self.parameters[1])
+        #     #                                 )
+
+        #     # AM test to derived GEV from GPD-Poisson
+        #     res_test = stats.cramervonmises(
+        #         self.sim_am_data,
+        #         cdf=stats.genextreme.cdf,
+        #         args=(self.parameters[2], gev_location, gev_scale),
+        #     )
+        #     return {"Statistic": res_test.statistic, "P-value": res_test.pvalue}
+
+        # elif self.method == "am":
+        #     res_test = stats.cramervonmises(
+        #         self.sim_am_data,
+        #         cdf=stats.genextreme.cdf,
+        #         args=(self.parameters[2], self.parameters[0], self.parameters[1]),
+        #     )
+        #     return {"Statistic": res_test.statistic, "P-value": res_test.pvalue}
 
     def plot(self) -> tuple[list[plt.Figure], list[plt.Axes]]:
         """
