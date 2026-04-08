@@ -79,14 +79,13 @@ class ExtremeCorrection(BlueMathModel):
             - "pot" : Peaks Over Threshold using GPD distribution.
         conf_level : float, default=0.95
             Confidence level for return period confidence intervals.
-        
+
         References
         ----------
-        [1] Collado, V., Méndez, F.J. & Mínguez, R. Upper-tail correction of 
-            multivariate synthetic environmental series using annual maxima. 
-            Stoch Environ Res Risk Assess 40, 92 (2026). 
+        [1] Collado, V., Méndez, F.J. & Mínguez, R. Upper-tail correction of
+            multivariate synthetic environmental series using annual maxima.
+            Stoch Environ Res Risk Assess 40, 92 (2026).
             https://doi.org/10.1007/s00477-026-03215-0
-            
         """
         super().__init__()
 
@@ -110,7 +109,7 @@ class ExtremeCorrection(BlueMathModel):
         # If GEV (loc, scale, shape)
         # If GPD (threshold, scale, shape)
         self.parameters = np.empty(3)
-        self.threshold = 1e10 # Fix threshold in case "am" method is used
+        self.threshold = 1e10  # Fix threshold in case "am" method is used
 
         # Confidence level
         self.conf = conf_level
@@ -261,7 +260,8 @@ class ExtremeCorrection(BlueMathModel):
         data_sim : xr.Dataset
             Dataset with synthetic data
         quantile : float, default=0.9
-            Quantile to apply the correction. Only values above this quantile will be corrected.
+            Quantile to apply the correction. Only values above this quantile will be
+            corrected.
             By default, the correction is applied to the upper 10% of the data
         prob : str, default="unif"
             Type of probabilities consider to random correct the AM
@@ -289,13 +289,13 @@ class ExtremeCorrection(BlueMathModel):
         self.n_year_sim = self.sim_am_data.shape[0]
 
         # Avoid correct when AM is 0 or lower than the threshold or the quantile given
-        self.am_idx_0 = 0
-        for idx, value in enumerate(np.sort(self.am_data)):
-            ecdf_value = ECDF(self.sim_pit_data)(value)
-            if value == 0 or ecdf_value < ECDF(self.pit_data)(self.threshold):
-                self.am_idx_0 += 1
-            else:
-                break
+        self.am_idx_0 = np.argmin(
+            (self.sim_am_data_sorted == 0)
+            | (
+                ECDF(self.sim_pit_data)(self.sim_am_data_sorted)
+                < ECDF(self.pit_data)(self.threshold)
+            )
+        )
 
         # Test if the correction has to be applied
         test_result = self.test()
@@ -307,7 +307,7 @@ class ExtremeCorrection(BlueMathModel):
             self.sim_am_data_corr = self.sim_am_data
             self.sim_pit_data_corrected = self.sim_pit_data
             return
-        
+
         else:
             # Initialize sim_am_data_corr
             self.sim_am_data_corr = np.zeros(self.n_year_sim - self.am_idx_0)
@@ -351,15 +351,16 @@ class ExtremeCorrection(BlueMathModel):
                 self.sim_pit_data_corrected = np.interp(
                     self.sim_pit_data,  # x-coords to interpolate
                     np.append(
-                        [min(self.sim_pit_data), q_threshold], self.sim_am_data_sorted[self.am_idx_0:]
+                        [min(self.sim_pit_data), q_threshold],
+                        self.sim_am_data_sorted[self.am_idx_0 :],
                     ),  # x-coords of data points
                     np.append(
                         [min(self.sim_pit_data), q_threshold], self.sim_am_data_corr
                     ),  # y-coords of data points
                 )
-            
+
             self.sim_am_data_corr_aux = self.sim_am_data.copy()
-            self.sim_am_data_corr_aux[self.am_idx_0:] = self.sim_am_data_corr
+            self.sim_am_data_corr_aux[self.am_idx_0 :] = self.sim_am_data_corr
             self.sim_am_data_corr = self.sim_am_data_corr_aux
 
         output = self._preprocess_output(data=data_sim)
@@ -370,6 +371,7 @@ class ExtremeCorrection(BlueMathModel):
         self,
         data_hist: xr.Dataset,
         data_sim: xr.Dataset,
+        quantile: float = 0.9,
         bmus: list[bool, str] = [False, ""],
         prob: str = "unif",
         plot_diagnostic: bool = False,
@@ -387,7 +389,8 @@ class ExtremeCorrection(BlueMathModel):
         data_sim : xr.Dataset
             Dataset with synthetic data
         bmus : list[bool, str], default=[False, ""]
-            Whether to apply the correction by BMUS, if given the name of bmus variable should be given
+            Whether to apply the correction by BMUS, if given the name of bmus variable
+            should be given
         prob : str, default="unif"
             Type of probabilities consider to random correct the AM
             If "unif", a sorted random uniform is considered
@@ -404,7 +407,9 @@ class ExtremeCorrection(BlueMathModel):
         """
         self.fit(data_hist=data_hist, plot_diagnostic=plot_diagnostic)
 
-        return self.transform(data_sim=data_sim, prob=prob, random_state=random_state)
+        return self.transform(
+            data_sim=data_sim, quantile=quantile, prob=prob, random_state=random_state
+        )
 
     def _preprocess_data(
         self,
@@ -422,9 +427,11 @@ class ExtremeCorrection(BlueMathModel):
         data : xr.Dataset
             Data to apply correction
         var : list[str]
-            List of variables to apply the correction technique. FUTURE WORK: INCLUDE MORE THAN ONE
+            List of variables to apply the correction technique.
+            TODO: FUTURE WORK: INCLUDE MORE THAN ONE
         bmus : list[bool, str], default=[False, ""]
-            List to decide if the correction must be applied by WT and if so name of the variable
+            List to decide if the correction must be applied by WT and if so name of the
+            variable
         join_sims : bool, default=True
             Whether to joint all the simulations in one array
 
@@ -450,7 +457,7 @@ class ExtremeCorrection(BlueMathModel):
             am_data = data.get(f"{var}").groupby("time.year").max().values.flatten()
 
         return pit_data, am_data
-    
+
     def _preprocess_output(self, data: xr.Dataset) -> xr.Dataset:
         """
         Preprocess the output dataset
@@ -467,19 +474,24 @@ class ExtremeCorrection(BlueMathModel):
         """
         n_sim = data.get("n_sim").values.shape[0]
         n_time = data.get("time").values.shape[0]
-        sim_pit_data_corrected_reshaped = self.sim_pit_data_corrected.reshape(n_sim, n_time)
+        sim_pit_data_corrected_reshaped = self.sim_pit_data_corrected.reshape(
+            n_sim, n_time
+        )
 
-        data[f"{self.var}_corr"] = (data[f"{self.var}"].dims, sim_pit_data_corrected_reshaped)
+        data[f"{self.var}_corr"] = (
+            data[f"{self.var}"].dims,
+            sim_pit_data_corrected_reshaped,
+        )
 
         return data
-
 
     def test(self) -> dict:
         """
         TODO: CAMBIAR EL TEST AL DEL PAPER (BASADO EN BOOTSTRAP)
         Cramer Von-Mises test to check the GOF of fitted distribution
 
-        Test to check the Goodness-of-Fit of the historical fitted distribution with the synthetic data.
+        Test to check the Goodness-of-Fit of the historical fitted distribution with the
+        synthetic data.
         Null Hypothesis: sampled AM comes from the fitted extreme distribution.
 
         Returns
@@ -767,11 +779,11 @@ class ExtremeCorrection(BlueMathModel):
         ax.grid()
 
         return fig, ax
-    
+
     def ecdf_plot(self) -> tuple[plt.Figure, plt.Axes]:
         """
         Empirical Cumulative Distribution Function plot for historical and
-        synthetic before and after the correction.    
+        synthetic before and after the correction.
 
         Returns
         -------
@@ -782,19 +794,30 @@ class ExtremeCorrection(BlueMathModel):
         """
         fig, ax = plt.subplots(1, 1, figsize=(7, 7))
         # Historical ECDF
-        ax.ecdf(self.pit_data, label="Historical", alpha=0.9, linewidth=2.5, color = "gray")
+        ax.ecdf(
+            self.pit_data, label="Historical", alpha=0.9, linewidth=2.5, color="gray"
+        )
         # Synthetic ECDF
-        ax.ecdf(self.sim_pit_data, label="Before", alpha=0.9, linewidth=2.5, color = "black")
-        ax.ecdf(self.sim_pit_data_corrected, label="After", alpha=0.9, linewidth=2.5, color = "black", linestyle='dashed')
-        
+        ax.ecdf(
+            self.sim_pit_data, label="Before", alpha=0.9, linewidth=2.5, color="black"
+        )
+        ax.ecdf(
+            self.sim_pit_data_corrected,
+            label="After",
+            alpha=0.9,
+            linewidth=2.5,
+            color="black",
+            linestyle="dashed",
+        )
+
         # ax.set_xlim(self.threshold, 12)
-        ax.set_ylim(0.0,1.0)
+        ax.set_ylim(0.0, 1.0)
         ax.set_xlabel(f"{self.var}")
         ax.set_ylabel("Probability")
         ax.grid()
         ax.legend(loc="lower right")
-        ax.tick_params(axis='both', which='major')
-        ax.tick_params(axis='both', which='minor')
+        ax.tick_params(axis="both", which="major")
+        ax.tick_params(axis="both", which="minor")
 
         return fig, ax
 
