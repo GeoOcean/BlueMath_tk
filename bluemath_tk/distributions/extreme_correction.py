@@ -576,39 +576,6 @@ class ExtremeCorrection(BlueMathModel):
 
         return {"Statistic": CvM_statistic, "P-value": bootstrap_p_value}
 
-        # if self.method == "pot":
-        #     gev_location = (
-        #         self.parameters[0]
-        #         + (
-        #             self.parameters[1]
-        #             * (1 - self.poiss_parameter ** self.parameters[2])
-        #         )
-        #         / self.parameters[2]
-        #     )
-        #     gev_scale = self.parameters[1] * self.poiss_parameter ** self.parameters[2]
-
-        #     # POT test
-        #     # res_test = stats.cramervonmises(self.sim_pot_data,
-        #     #                                 cdf=stats.genpareto.cdf,
-        #     #                                 args=(self.parameters[2], self.parameters[0], self.parameters[1])
-        #     #                                 )
-
-        #     # AM test to derived GEV from GPD-Poisson
-        #     res_test = stats.cramervonmises(
-        #         self.sim_am_data,
-        #         cdf=stats.genextreme.cdf,
-        #         args=(self.parameters[2], gev_location, gev_scale),
-        #     )
-        #     return {"Statistic": res_test.statistic, "P-value": res_test.pvalue}
-
-        # elif self.method == "am":
-        #     res_test = stats.cramervonmises(
-        #         self.sim_am_data,
-        #         cdf=stats.genextreme.cdf,
-        #         args=(self.parameters[2], self.parameters[0], self.parameters[1]),
-        #     )
-        #     return {"Statistic": res_test.statistic, "P-value": res_test.pvalue}
-
     def plot(self) -> tuple[list[plt.Figure], list[plt.Axes]]:
         """
         Plot return periods
@@ -627,6 +594,7 @@ class ExtremeCorrection(BlueMathModel):
 
         fig3, ax3 = self.ecdf_plot()
         figs.append(fig3)
+        axes.append(ax3)
 
         return figs, axes
 
