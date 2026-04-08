@@ -279,8 +279,8 @@ class TestExtremeCorrection(unittest.TestCase):
 
         # Test plot method
         figs, axes = ec.plot()
-        self.assertEqual(len(figs), 2)
-        self.assertEqual(len(axes), 2)
+        self.assertEqual(len(figs), 3)
+        self.assertEqual(len(axes), 3)
 
     def test_preprocess_data_single_dataset(self):
         """Test data preprocessing with single dataset"""
