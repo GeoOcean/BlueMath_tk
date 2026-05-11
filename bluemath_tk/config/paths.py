@@ -1,5 +1,4 @@
 import os.path as op
-from typing import Dict
 
 from siphon.catalog import TDSCatalog
 
@@ -99,20 +98,18 @@ def get_thredds_catalog() -> TDSCatalog:
         Siphon TDSCatalog object containing the catalog information.
     """
 
-    catalog_url = (
-        "https://geoocean.unican.es/thredds/catalog/catalog.html"
-    )
+    catalog_url = "https://geoocean.unican.es/thredds/catalog/catalog.html"
 
     return TDSCatalog(catalog_url)
 
 
-def get_catalog_folders() -> Dict[str, str]:
+def get_catalog_folders() -> dict[str, str]:
     """
     Get a dictionary of folder names and their links from the first level of the catalog.
 
     Returns
     -------
-    Dict[str, str]
+    dict[str, str]
         Dictionary with folder names as keys and their catalog URLs as values.
     """
 
