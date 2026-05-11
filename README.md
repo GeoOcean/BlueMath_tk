@@ -1,7 +1,7 @@
 # Bluemath {**Toolkit**}
 
 <p align="center">
-  <img alt="GitHub Actions" src="https://github.com/GeoOcean/BlueMath_tk/actions/workflows/python-tests.yml/badge.svg?branch=main">
+  <img alt="GitHub Actions" src="https://github.com/GeoOcean/BlueMath_tk/actions/workflows/python-tests.yml/badge.svg">
   <img alt="GitHub" src="https://img.shields.io/github/license/GeoOcean/BlueMath_tk">
   <img alt="PyPI" src="https://img.shields.io/pypi/v/BlueMath_tk">
   <img alt="Conda (channel only)" src="https://img.shields.io/conda/vn/conda-forge/bluemath-tk.svg">
