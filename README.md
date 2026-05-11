@@ -3,6 +3,7 @@
 <p align="center">
   <img alt="GitHub Actions" src="https://github.com/GeoOcean/BlueMath_tk/actions/workflows/python-tests.yml/badge.svg">
   <img alt="GitHub" src="https://img.shields.io/github/license/GeoOcean/BlueMath_tk">
+  <a href="https://doi.org/10.5281/zenodo.20118222"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.20118222.svg" alt="DOI"></a>
   <img alt="PyPI" src="https://img.shields.io/pypi/v/BlueMath_tk">
   <img alt="Conda (channel only)" src="https://img.shields.io/conda/vn/conda-forge/bluemath-tk.svg">
   <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/BlueMath_tk">

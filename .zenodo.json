@@ -71,9 +71,11 @@
             "orcid": "0009-0003-1397-789X"
         }
     ],
-    "license": {
-        "id": "GPL-3.0+"
-    },
+    "contributors": [],
     "title": "Bluemath {Toolkit}",
+    "access_right": "open",
+    "license": {
+        "id": "GPL-3.0"
+    },
     "upload_type": "software"
 }
