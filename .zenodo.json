@@ -1,0 +1,79 @@
+{
+    "creators": [
+        {
+            "name": "Cagigal, Laura",
+            "affiliation": "GeoOcean Group, Universidad de Cantabria. Santander, Spain.",
+            "orcid": "0000-0001-5384-6382"
+        },
+        {
+            "name": "Tausia Hoyal, Javier",
+            "affiliation": "GeoOcean Group, Universidad de Cantabria. Santander, Spain.",
+            "orcid": "0000-0002-2299-2915"
+        },
+        {
+            "name": "Castanedo, Sonia",
+            "affiliation": "GeoOcean Group, Universidad de Cantabria. Santander, Spain.",
+            "orcid": "0000-0002-5016-2468"
+        },
+        {
+            "name": "Ricondo, Alba",
+            "affiliation": "Oregon State University. Corvallis, USA.",
+            "orcid": "0000-0002-4703-8220"
+        },
+        {
+            "name": "Zornoza Aguado, Manuel",
+            "affiliation": "Universidade Federal de Santa Catarina. Florianópolis, Santa Catarina, BR.",
+            "orcid": "0000-0002-1962-9832"
+        },
+        {
+            "name": "Pérez Díaz, Beatriz",
+            "affiliation": "GeoOcean Group, Universidad de Cantabria. Santander, Spain.",
+            "orcid": "0000-0002-1987-2605"
+        },
+        {
+            "name": "Ortiz-Angulo Cantos, Jared",
+            "affiliation": "GeoOcean Group, Universidad de Cantabria. Santander, Spain.",
+            "orcid": "0009-0004-4479-5789"
+        },
+        {
+            "name": "Jiménez Tobio, Mirian",
+            "affiliation": "GeoOcean Group, Universidad de Cantabria. Santander, Spain.",
+            "orcid": "0000-0002-8975-7717"
+        },
+        {
+            "name": "Alonso-Alguacil, Pablo",
+            "affiliation": "GeoOcean Group, Universidad de Cantabria. Santander, Spain.",
+            "orcid": "0009-0007-7375-9578"
+        },
+        {
+            "name": "Bellido Prieto, Gabriel",
+            "affiliation": "GeoOcean Group, Universidad de Cantabria. Santander, Spain.",
+            "orcid": "0009-0002-0659-1254"
+        },
+        {
+            "name": "Faugere, Etienne",
+            "affiliation": "GeoOcean Group, Universidad de Cantabria. Santander, Spain.",
+            "orcid": "0009-0009-4082-3953"
+        },
+        {
+            "name": "Montaño Muñoz, Jennifer Katherine",
+            "affiliation": "GeoOcean Group, Universidad de Cantabria. Santander, Spain.",
+            "orcid": "0000-0002-4142-6214"
+        },
+        {
+            "name": "del Jesus, Manuel",
+            "affiliation": "Departamento de Ciencias y Técnicas del Agua y del Medio Ambiente, Universidad de Cantabria. Santander, Spain.",
+            "orcid": "0000-0003-0703-8960"
+        },
+        {
+            "name": "Collado Fernández, Víctor",
+            "affiliation": "Universidad Carlos III de Madrid. Madrid, Spain.",
+            "orcid": "0009-0003-1397-789X"
+        }
+    ],
+    "license": {
+        "id": "GPL-3.0+"
+    },
+    "title": "Bluemath {Toolkit}",
+    "upload_type": "software"
+}
