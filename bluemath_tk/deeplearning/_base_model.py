@@ -1,3 +1,4 @@
+import copy
 from abc import abstractmethod
 from typing import Dict, Optional, Union
 
@@ -202,7 +203,7 @@ class BaseDeepLearningModel(BlueMathModel):
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 patience_counter = 0
-                best_model_state = self.model.state_dict().copy()
+                best_model_state = copy.deepcopy(self.model.state_dict())
             else:
                 patience_counter += 1
                 if patience_counter >= patience:
