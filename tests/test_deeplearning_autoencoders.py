@@ -24,6 +24,7 @@ from bluemath_tk.deeplearning.autoencoders import (
     LSTMAutoencoder,
     OrthogonalAutoencoder,
     StandardAutoencoder,
+    VisionTransformerAutoencoder,
 )
 
 
@@ -134,14 +135,6 @@ def test_cnn_autoencoder_fit_predict_encode_shapes():
     assert np.isfinite(Z).all()
 
 
-@pytest.mark.xfail(
-    reason=(
-        "Current ViT decoder appears to send d_model-sized tokens directly to "
-        "Unpatchify, which expects patch_size*patch_size*C tokens. Add a decoder "
-        "projection from d_model to patch dimension before unpatchify."
-    ),
-    strict=False,
-)
 def test_vit_autoencoder_d_model_can_differ_from_patch_dimension():
     """
     VisionTransformerAutoencoder should allow d_model != patch_size*patch_size*C.
@@ -172,14 +165,6 @@ def test_vit_autoencoder_d_model_can_differ_from_patch_dimension():
     assert np.isfinite(Z).all()
 
 
-@pytest.mark.xfail(
-    reason=(
-        "Current ConvLSTMAutoencoder returns a single frame but default fit(X) "
-        "uses the full 5D input as target. Either fit should use X[:, -1] as the "
-        "target or the decoder should reconstruct the full sequence."
-    ),
-    strict=False,
-)
 def test_convlstm_autoencoder_default_fit_reconstructs_documented_single_frame():
     """
     ConvLSTMAutoencoder example/docstring says fit(X) should work and predict
@@ -203,15 +188,6 @@ def test_convlstm_autoencoder_default_fit_reconstructs_documented_single_frame()
     assert np.isfinite(Z).all()
 
 
-@pytest.mark.xfail(
-    reason=(
-        "Current HybridConvLSTMTransformerAutoencoder appears to reference "
-        "self.efficient_attention inside the inner model without assigning it. "
-        "It also has the same single-frame vs full-sequence fit target mismatch "
-        "as ConvLSTMAutoencoder."
-    ),
-    strict=False,
-)
 def test_hybrid_autoencoder_default_fit_reconstructs_documented_single_frame():
     """
     HybridConvLSTMTransformerAutoencoder example/docstring says fit(X) should
@@ -239,15 +215,6 @@ def test_hybrid_autoencoder_default_fit_reconstructs_documented_single_frame():
     assert np.isfinite(Z).all()
 
 
-@pytest.mark.xfail(
-    reason=(
-        "Current StandardAutoencoder docstring says multidimensional inputs are "
-        "flattened, but _build_model appears to use only input_shape[-1] as the "
-        "feature count. Either restrict StandardAutoencoder to 2D input or make "
-        "flattening consistent in build, fit, predict, and loss target handling."
-    ),
-    strict=False,
-)
 def test_standard_autoencoder_multidimensional_flatten_contract():
     """
     Document the current ambiguity in StandardAutoencoder.

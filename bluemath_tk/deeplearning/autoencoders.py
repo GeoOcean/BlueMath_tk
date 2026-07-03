@@ -20,6 +20,7 @@ Each autoencoder is a subclass of BaseDeepLearningModel and implements the follo
 - evaluate(X)
 """
 
+import copy
 from typing import Dict, Optional, Tuple
 
 import numpy as np
@@ -91,17 +92,20 @@ class StandardAutoencoder(BaseDeepLearningModel):
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
         """Build the standard fully-connected autoencoder model."""
-        # Handle input shape: (n_samples, n_features) or (n_features,)
+        # Handle input shape: (n_samples, ...) or a single sample shape.
+        # For fit(X), input_shape includes the batch dimension, so the
+        # per-sample shape is input_shape[1:].
         if len(input_shape) == 1:
-            n_features = input_shape[0]
+            sample_shape = (input_shape[0],)
         else:
-            # Take last dimension as features (handles (n_samples, n_features))
-            n_features = input_shape[-1]
+            sample_shape = tuple(input_shape[1:])
+        n_features = int(np.prod(sample_shape))
 
         class StandardAutoencoderModel(nn.Module):
-            def __init__(self, n_features, hidden_dims, k):
+            def __init__(self, n_features, hidden_dims, k, sample_shape):
                 super().__init__()
                 self.n_features = n_features
+                self.sample_shape = tuple(sample_shape)
                 # Encoder
                 encoder_layers = []
                 prev_dim = n_features
@@ -132,7 +136,7 @@ class StandardAutoencoder(BaseDeepLearningModel):
                     x = x.unsqueeze(0)
                 z = self.encoder(x)
                 x_recon = self.decoder(z)
-                return x_recon
+                return x_recon.view(x_recon.size(0), *self.sample_shape)
 
             def encode_forward(self, x):
                 """Encode input to latent space."""
@@ -142,7 +146,7 @@ class StandardAutoencoder(BaseDeepLearningModel):
                     x = x.unsqueeze(0)
                 return self.encoder(x)
 
-        return StandardAutoencoderModel(n_features, self.hidden_dims, self.k)
+        return StandardAutoencoderModel(n_features, self.hidden_dims, self.k, sample_shape)
 
 
 class OrthogonalAutoencoder(BaseDeepLearningModel):
@@ -204,16 +208,22 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
         """Build the orthogonal autoencoder model."""
-        # Handle input shape: (n_samples, n_features) or (n_features,)
+        # Handle input shape: (n_samples, ...) or a single sample shape.
+        # For fit(X), input_shape includes the batch dimension, so the
+        # per-sample shape is input_shape[1:].
         if len(input_shape) == 1:
-            n_features = input_shape[0]
+            sample_shape = (input_shape[0],)
         else:
-            n_features = input_shape[-1]
+            sample_shape = tuple(input_shape[1:])
+        n_features = int(np.prod(sample_shape))
 
         class OrthogonalAutoencoderModel(nn.Module):
-            def __init__(self, n_features, hidden_dims, k, lambda_W, lambda_Z):
+            def __init__(
+                self, n_features, hidden_dims, k, lambda_W, lambda_Z, sample_shape
+            ):
                 super().__init__()
                 self.n_features = n_features
+                self.sample_shape = tuple(sample_shape)
                 self.lambda_W = lambda_W
                 self.lambda_Z = lambda_Z
 
@@ -265,7 +275,7 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
                 z = z + 0 * ortho_loss
 
                 x_recon = self.decoder(z)
-                return x_recon
+                return x_recon.view(x_recon.size(0), *self.sample_shape)
 
             def encode_forward(self, x):
                 """Encode input to latent space."""
@@ -287,7 +297,12 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
                 return ortho_loss, decorr_loss
 
         return OrthogonalAutoencoderModel(
-            n_features, self.hidden_dims, self.k, self.lambda_W, self.lambda_Z
+            n_features,
+            self.hidden_dims,
+            self.k,
+            self.lambda_W,
+            self.lambda_Z,
+            sample_shape,
         )
 
     def fit(
@@ -410,7 +425,7 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 patience_counter = 0
-                best_model_state = self.model.state_dict().copy()
+                best_model_state = copy.deepcopy(self.model.state_dict())
             else:
                 patience_counter += 1
                 if patience_counter >= patience:
@@ -838,6 +853,7 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
                 self.H = H
                 self.W = W
                 self.C = C
+                self.d_model = d_model
 
                 # Patchify + embed + pos
                 self.patchify = Patchify(patch_size)
@@ -879,6 +895,7 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
                         )
                     )
                 self.decoder_blocks = nn.Sequential(*decoder_blocks)
+                self.patch_reconstruct = nn.Linear(d_model, Pdim)
 
                 # Reconstruct patches
                 self.unpatchify = Unpatchify(patch_size, Hp, Wp, C)
@@ -930,7 +947,8 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
                     y = block(y)
 
                 # Reconstruct patches
-                rec_patches = self.unpatchify(y)  # (B, C, H+pad_h, W+pad_w)
+                patch_tokens = self.patch_reconstruct(y)  # (B, N, Pdim)
+                rec_patches = self.unpatchify(patch_tokens)  # (B, C, H+pad_h, W+pad_w)
 
                 # Crop padding
                 if self.pad_h > 0 or self.pad_w > 0:
@@ -1036,6 +1054,47 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
         self.k = k
         super().__init__(device=device, **kwargs)
 
+    def fit(
+        self,
+        X: np.ndarray,
+        y: Optional[np.ndarray] = None,
+        validation_split: float = 0.2,
+        epochs: int = 500,
+        batch_size: int = 64,
+        learning_rate: float = 1e-3,
+        optimizer: Optional[torch.optim.Optimizer] = None,
+        criterion: Optional[nn.Module] = None,
+        patience: int = 20,
+        verbose: int = 1,
+        **kwargs,
+    ) -> Dict[str, list]:
+        """Fit the ConvLSTM autoencoder.
+
+        If ``y`` is not provided, the model reconstructs the last frame of each
+        input sequence, matching the documented prediction shape ``(B, C, H, W)``.
+        """
+        if y is None:
+            if X.ndim != 5:
+                raise ValueError(
+                    "ConvLSTMAutoencoder expects 5D input "
+                    "(n_samples, seq_len, C, H, W)."
+                )
+            y = X[:, -1]
+
+        return super().fit(
+            X,
+            y=y,
+            validation_split=validation_split,
+            epochs=epochs,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            optimizer=optimizer,
+            criterion=criterion,
+            patience=patience,
+            verbose=verbose,
+            **kwargs,
+        )
+
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
         """Build the ConvLSTM autoencoder model."""
         # Parse input shape: (n_samples, seq_len, C, H, W) - channels-first format
@@ -1068,7 +1127,7 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
                 self.convlstm1 = ConvLSTM(
                     input_dim=C,
                     hidden_dim=32,
-                    kernel_size=3,
+                    kernel_size=(3, 3),
                     num_layers=1,
                     batch_first=True,
                     return_all_layers=False,
@@ -1077,7 +1136,7 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
                 self.convlstm2 = ConvLSTM(
                     input_dim=32,
                     hidden_dim=32,
-                    kernel_size=3,
+                    kernel_size=(3, 3),
                     num_layers=1,
                     batch_first=True,
                     return_all_layers=False,
@@ -1276,6 +1335,47 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
         self.k = k
         super().__init__(device=device, **kwargs)
 
+    def fit(
+        self,
+        X: np.ndarray,
+        y: Optional[np.ndarray] = None,
+        validation_split: float = 0.2,
+        epochs: int = 500,
+        batch_size: int = 64,
+        learning_rate: float = 1e-3,
+        optimizer: Optional[torch.optim.Optimizer] = None,
+        criterion: Optional[nn.Module] = None,
+        patience: int = 20,
+        verbose: int = 1,
+        **kwargs,
+    ) -> Dict[str, list]:
+        """Fit the hybrid ConvLSTM-Transformer autoencoder.
+
+        If ``y`` is not provided, the model reconstructs the last frame of each
+        input sequence, matching the documented prediction shape ``(B, C, H, W)``.
+        """
+        if y is None:
+            if X.ndim != 5:
+                raise ValueError(
+                    "HybridConvLSTMTransformerAutoencoder expects 5D input "
+                    "(n_samples, seq_len, C, H, W)."
+                )
+            y = X[:, -1]
+
+        return super().fit(
+            X,
+            y=y,
+            validation_split=validation_split,
+            epochs=epochs,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            optimizer=optimizer,
+            criterion=criterion,
+            patience=patience,
+            verbose=verbose,
+            **kwargs,
+        )
+
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
         """Build the hybrid autoencoder model."""
         # Parse input shape: (n_samples, seq_len, C, H, W) - channels-first format
@@ -1314,6 +1414,7 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                 self.H = H
                 self.W = W
                 self.C = C
+                self.efficient_attention = efficient_attention
 
                 # ConvLSTM stack
                 from .layers import ConvLSTM
@@ -1321,7 +1422,7 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                 self.convlstm1 = ConvLSTM(
                     input_dim=C,
                     hidden_dim=32,
-                    kernel_size=3,
+                    kernel_size=(3, 3),
                     num_layers=1,
                     batch_first=True,
                     return_all_layers=True,
@@ -1329,7 +1430,7 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                 self.convlstm2 = ConvLSTM(
                     input_dim=32,
                     hidden_dim=32,
-                    kernel_size=3,
+                    kernel_size=(3, 3),
                     num_layers=1,
                     batch_first=True,
                     return_all_layers=True,
