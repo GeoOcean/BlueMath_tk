@@ -350,14 +350,22 @@ class LatentDecorr(nn.Module):
         """
         # z: (batch, k)
         zc = z - z.mean(dim=0, keepdim=True)  # center
-        B = zc.size(0)
-        cov = torch.matmul(zc.t(), zc) / (B - 1.0)  # (k, k)
-        diag_mask = torch.eye(cov.size(0), device=cov.device, dtype=cov.dtype)
-        offdiag = cov * (1 - diag_mask)  # zero diag
-        loss = self.strength * torch.sum(offdiag**2)
+        batch_size = zc.size(0)
+
+        if batch_size < 2:
+            loss = z.new_zeros(())
+        else:
+            cov = torch.matmul(zc.t(), zc) / (batch_size - 1.0)  # (k, k)
+            diag_mask = torch.eye(
+                cov.size(0),
+                device=cov.device,
+                dtype=cov.dtype,
+            )
+            offdiag = cov * (1 - diag_mask)
+            loss = self.strength * torch.sum(offdiag**2)
 
         # Add loss to computation graph
-        z = z + 0 * loss  # Trick to add loss to graph without changing z
+        z = z + 0 * loss
 
         # Store current loss for retrieval during training
         self._loss = loss

@@ -50,10 +50,10 @@ class StandardAutoencoder(BaseDeepLearningModel):
     Input Shape
     -----------
     X : np.ndarray
-        Input data with shape (n_samples, n_features) or (n_samples,).
-        - For 2D arrays: (n_samples, n_features) - each row is a sample
-        - For 1D arrays: (n_features,) - single sample (will be reshaped)
-        The model automatically flattens multi-dimensional inputs.
+        Input data with a leading sample dimension.
+        For tabular data use (n_samples, n_features). Higher-dimensional
+        per-sample inputs are flattened internally and reconstructed to
+        their original sample shape.
 
     Examples
     --------
@@ -146,6 +146,12 @@ class StandardAutoencoder(BaseDeepLearningModel):
                     x = x.unsqueeze(0)
                 return self.encoder(x)
 
+
+            def decode_forward(self, z):
+                """Decode latent vectors to the original sample shape."""
+                x_recon = self.decoder(z)
+                return x_recon.view(x_recon.size(0), *self.sample_shape)
+
         return StandardAutoencoderModel(n_features, self.hidden_dims, self.k, sample_shape)
 
 
@@ -160,10 +166,10 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
     Input Shape
     -----------
     X : np.ndarray
-        Input data with shape (n_samples, n_features) or (n_samples,).
-        - For 2D arrays: (n_samples, n_features) - each row is a sample
-        - For 1D arrays: (n_features,) - single sample (will be reshaped)
-        The model automatically flattens multi-dimensional inputs.
+        Input data with a leading sample dimension.
+        For tabular data use (n_samples, n_features). Higher-dimensional
+        per-sample inputs are flattened internally and reconstructed to
+        their original sample shape.
 
     Examples
     --------
@@ -296,6 +302,12 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
                 decorr_loss = getattr(self.latent_decorr, "_loss", None)
                 return ortho_loss, decorr_loss
 
+
+            def decode_forward(self, z):
+                """Decode latent vectors to the original sample shape."""
+                x_recon = self.decoder(z)
+                return x_recon.view(x_recon.size(0), *self.sample_shape)
+
         return OrthogonalAutoencoderModel(
             n_features,
             self.hidden_dims,
@@ -325,9 +337,25 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
         This method overrides the base fit() to properly add orthogonality
         and decorrelation regularization losses during training.
         """
+        if not isinstance(X, np.ndarray):
+            raise TypeError("X must be a NumPy array.")
+        if y is None:
+            y = self._get_reconstruction_target(X)
+        self._validate_fit_inputs(
+            X,
+            y,
+            validation_split,
+            batch_size,
+            epochs,
+            patience,
+        )
+        self._validate_or_set_build_input_shape(tuple(X.shape))
+
         if self.model is None:
             self.model = self._build_model(X.shape, **kwargs)
             self.model = self.model.to(self.device)
+
+        avoid_singleton = self._requires_non_singleton_training_batches()
 
         if optimizer is None:
             optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
@@ -372,11 +400,15 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
             # Training
             self.model.train()
             train_loss = 0.0
-            n_batches = (len(Xtr) + batch_size - 1) // batch_size
-
-            for i in range(0, len(Xtr), batch_size):
-                batch_X = Xtr_tensor[i : i + batch_size]
-                batch_y = ytr_tensor[i : i + batch_size]
+            train_slices = self._batch_slices(
+                len(Xtr),
+                batch_size,
+                avoid_singleton=avoid_singleton,
+            )
+            n_batches = len(train_slices)
+            for start, stop in train_slices:
+                batch_X = Xtr_tensor[start:stop]
+                batch_y = ytr_tensor[start:stop]
 
                 optimizer.zero_grad()
                 output = self.model(batch_X)
@@ -389,6 +421,7 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
                 if decorr_loss is not None:
                     loss = loss + decorr_loss
 
+                self._require_scalar_loss(loss)
                 loss.backward()
                 optimizer.step()
 
@@ -401,10 +434,15 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
             self.model.eval()
             val_loss = 0.0
             with torch.no_grad():
-                n_val_batches = (len(Xval) + batch_size - 1) // batch_size
-                for i in range(0, len(Xval), batch_size):
-                    batch_X = Xval_tensor[i : i + batch_size]
-                    batch_y = yval_tensor[i : i + batch_size]
+                val_slices = self._batch_slices(
+                    len(Xval),
+                    batch_size,
+                    avoid_singleton=False,
+                )
+                n_val_batches = len(val_slices)
+                for start, stop in val_slices:
+                    batch_X = Xval_tensor[start:stop]
+                    batch_y = yval_tensor[start:stop]
 
                     output = self.model(batch_X)
                     loss = criterion(output, batch_y)
@@ -416,6 +454,7 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
                     if decorr_loss is not None:
                         loss = loss + decorr_loss
 
+                    self._require_scalar_loss(loss)
                     val_loss += loss.item()
 
                 val_loss /= n_val_batches
@@ -558,6 +597,18 @@ class LSTMAutoencoder(BaseDeepLearningModel):
                 x, _ = self.lstm2(x)
                 z = self.latent(x[:, -1, :])  # Take last timestep
                 return z
+
+
+            def decode_forward(self, z):
+                """Decode latent vectors to full temporal sequences."""
+                z_expanded = (
+                    self.latent_to_seq(z)
+                    .unsqueeze(1)
+                    .repeat(1, self.seq_len, 1)
+                )
+                x, _ = self.lstm3(z_expanded)
+                x, _ = self.lstm4(x)
+                return x
 
         return LSTMAutoencoderModel(seq_len, n_features, self.hidden, self.k)
 
@@ -739,6 +790,23 @@ class CNNAutoencoder(BaseDeepLearningModel):
                 z = self.fc2(x)
 
                 return z
+
+
+            def decode_forward(self, z):
+                """Decode latent vectors to channels-first spatial grids."""
+                batch_size = z.size(0)
+                x = F.relu(self.fc3(z))
+                x = F.relu(self.fc4(x))
+                x = x.view(
+                    batch_size,
+                    64,
+                    (self.H + self.pad_h) // 4,
+                    (self.W + self.pad_w) // 4,
+                )
+                x = self.decoder(x)
+                if self.pad_h > 0 or self.pad_w > 0:
+                    x = x[:, :, : self.H, : self.W]
+                return x
 
         return CNNAutoencoderModel(H, W, C, self.k, pad_h, pad_w)
 
@@ -993,6 +1061,24 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
 
                 return z_k
 
+
+            def decode_forward(self, z):
+                """Decode latent vectors to channels-first spatial grids."""
+                batch_size = z.size(0)
+                dec_seed = F.relu(self.dec_seed(z))
+                dec_tokens = dec_seed.view(batch_size, N, self.d_model)
+                dec_tokens = self.dec_pos_embed(dec_tokens)
+                y = dec_tokens
+                for block in self.decoder_blocks:
+                    y = block(y)
+                patch_tokens = self.patch_reconstruct(y)
+                reconstruction = self.unpatchify(patch_tokens)
+                if self.pad_h > 0 or self.pad_w > 0:
+                    reconstruction = reconstruction[
+                        :, :, : self.H, : self.W
+                    ]
+                return reconstruction
+
         return ViTAutoencoderModel(
             H,
             W,
@@ -1094,6 +1180,16 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
             verbose=verbose,
             **kwargs,
         )
+
+
+    def _get_reconstruction_target(self, X: np.ndarray) -> np.ndarray:
+        """Use the last input frame as the default reconstruction target."""
+        if X.ndim != 5:
+            raise ValueError(
+                "ConvLSTMAutoencoder expects 5D input "
+                "(n_samples, seq_len, C, H, W)."
+            )
+        return X[:, -1]
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
         """Build the ConvLSTM autoencoder model."""
@@ -1270,6 +1366,25 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
 
                 return z
 
+
+            def decode_forward(self, z):
+                """Decode latent vectors to the reconstructed final frame."""
+                batch_size = z.size(0)
+                x = F.relu(self.fc_dec(z))
+                x = x.view(
+                    batch_size,
+                    64,
+                    (self.H + self.pad_h) // 4,
+                    (self.W + self.pad_w) // 4,
+                )
+                x = self.upsample1(x)
+                x = F.relu(self.deconv1(x))
+                x = self.upsample2(x)
+                x = self.deconv2(x)
+                if self.pad_h > 0 or self.pad_w > 0:
+                    x = x[:, :, : self.H, : self.W]
+                return x
+
         return ConvLSTMAutoencoderModel(seq_len, H, W, C, self.k, pad_h, pad_w)
 
 
@@ -1375,6 +1490,16 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
             verbose=verbose,
             **kwargs,
         )
+
+
+    def _get_reconstruction_target(self, X: np.ndarray) -> np.ndarray:
+        """Use the last input frame as the default reconstruction target."""
+        if X.ndim != 5:
+            raise ValueError(
+                "HybridConvLSTMTransformerAutoencoder expects 5D input "
+                "(n_samples, seq_len, C, H, W)."
+            )
+        return X[:, -1]
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
         """Build the hybrid autoencoder model."""
@@ -1634,6 +1759,22 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                 z = self.latent(x)
 
                 return z
+
+
+            def decode_forward(self, z):
+                """Decode latent vectors to the reconstructed final frame."""
+                batch_size = z.size(0)
+                x = F.relu(self.fc_dec(z))
+                height = (self.H + self.pad_h) // 4
+                width = (self.W + self.pad_w) // 4
+                x = x.view(batch_size, 64, height, width)
+                x = self.upsample1(x)
+                x = F.relu(self.deconv1(x))
+                x = self.upsample2(x)
+                x = self.deconv2(x)
+                if self.pad_h > 0 or self.pad_w > 0:
+                    x = x[:, :, : self.H, : self.W]
+                return x
 
         return HybridAutoencoderModel(
             seq_len,
