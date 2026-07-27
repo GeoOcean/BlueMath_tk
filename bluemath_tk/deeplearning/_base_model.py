@@ -1,6 +1,6 @@
 import copy
+import inspect
 from abc import abstractmethod
-from typing import Dict, Optional, Union
 
 import numpy as np
 import torch
@@ -8,6 +8,8 @@ import torch.nn as nn
 from tqdm import tqdm
 
 from ..core.models import BlueMathModel
+from .metrics import evaluate_reconstruction as evaluate_reconstruction_metric
+from .metrics import reconstruction_error as reconstruction_error_metric
 
 
 class BaseDeepLearningModel(BlueMathModel):
@@ -28,7 +30,7 @@ class BaseDeepLearningModel(BlueMathModel):
     """
 
     @abstractmethod
-    def __init__(self, device: Optional[Union[str, torch.device]] = None, **kwargs):
+    def __init__(self, device: str | torch.device | None = None, **kwargs):
         """
         Initialize the base deep learning model.
 
@@ -51,8 +53,9 @@ class BaseDeepLearningModel(BlueMathModel):
         else:
             self.device = device
 
-        self.model: Optional[nn.Module] = None
+        self.model: nn.Module | None = None
         self.is_fitted = False
+        self._build_input_shape: tuple | None = None
 
         self._exclude_attributes = [
             "model",
@@ -71,20 +74,176 @@ class BaseDeepLearningModel(BlueMathModel):
 
         pass
 
+
+    def _get_reconstruction_target(self, X: np.ndarray) -> np.ndarray:
+        """Return the default reconstruction target for ``X``."""
+        return X
+
+    @staticmethod
+    def _batch_slices(
+        n_samples: int,
+        batch_size: int,
+        avoid_singleton: bool = False,
+    ) -> list[tuple[int, int]]:
+        """Return batch slices, optionally avoiding a final singleton batch."""
+        if avoid_singleton and batch_size == 1:
+            raise ValueError(
+                "batch_size=1 is incompatible with this model's BatchNorm1d "
+                "layers. Use batch_size>=2."
+            )
+
+        slices = [
+            (start, min(start + batch_size, n_samples))
+            for start in range(0, n_samples, batch_size)
+        ]
+
+        if (
+            avoid_singleton
+            and len(slices) > 1
+            and slices[-1][1] - slices[-1][0] == 1
+        ):
+            previous_start, previous_stop = slices[-2]
+            final_stop = slices[-1][1]
+            previous_size = previous_stop - previous_start
+
+            if previous_size > 2:
+                slices[-2] = (previous_start, previous_stop - 1)
+                slices[-1] = (previous_stop - 1, final_stop)
+            else:
+                slices[-2] = (previous_start, final_stop)
+                slices.pop()
+
+        return slices
+
+    def _requires_non_singleton_training_batches(self) -> bool:
+        """Return whether BatchNorm1d requires at least two training samples."""
+        if self.model is None:
+            return False
+        return any(
+            isinstance(module, nn.BatchNorm1d)
+            for module in self.model.modules()
+        )
+
+    def _validate_or_set_build_input_shape(self, input_shape: tuple) -> None:
+        """Store the build shape or reject incompatible repeated fitting."""
+        input_shape = tuple(input_shape)
+        if self._build_input_shape is None:
+            self._build_input_shape = input_shape
+            return
+
+        if tuple(self._build_input_shape[1:]) != tuple(input_shape[1:]):
+            raise ValueError(
+                "The fitted model input shape is incompatible with the new data. "
+                f"Expected per-sample shape {self._build_input_shape[1:]}, "
+                f"got {input_shape[1:]}."
+            )
+
+    @staticmethod
+    def _validate_inference_inputs(
+        X: np.ndarray,
+        batch_size: int,
+        name: str = "X",
+    ) -> None:
+        """Validate common prediction, encoding, and decoding inputs."""
+        if not isinstance(X, np.ndarray):
+            raise TypeError(f"{name} must be a NumPy array.")
+        if X.ndim < 1:
+            raise ValueError(f"{name} must have at least one dimension.")
+        if len(X) == 0:
+            raise ValueError(f"{name} must contain at least one sample.")
+        if batch_size < 1:
+            raise ValueError("batch_size must be at least 1.")
+
+    @staticmethod
+    def _validate_fit_inputs(
+        X: np.ndarray,
+        y: np.ndarray,
+        validation_split: float,
+        batch_size: int,
+        epochs: int,
+        patience: int,
+    ) -> None:
+        """Validate common training inputs before building the model."""
+        if not isinstance(X, np.ndarray):
+            raise TypeError("X must be a NumPy array.")
+        if not isinstance(y, np.ndarray):
+            raise TypeError("y must be a NumPy array.")
+        if X.ndim < 2:
+            raise ValueError(
+                "X must include a leading sample dimension. "
+                "For tabular data use shape (n_samples, n_features)."
+            )
+        if len(X) != len(y):
+            raise ValueError(
+                f"X and y must contain the same number of samples; "
+                f"got {len(X)} and {len(y)}."
+            )
+        if not 0.0 < validation_split < 1.0:
+            raise ValueError("validation_split must be strictly between 0 and 1.")
+        if batch_size < 1:
+            raise ValueError("batch_size must be at least 1.")
+        if epochs < 1:
+            raise ValueError("epochs must be at least 1.")
+        if patience < 1:
+            raise ValueError("patience must be at least 1.")
+
+        split = int((1 - validation_split) * len(X))
+        if split < 2:
+            raise ValueError(
+                "The training split must contain at least two samples. "
+                "Increase the dataset size or reduce validation_split."
+            )
+        if len(X) - split < 1:
+            raise ValueError(
+                "The validation split must contain at least one sample."
+            )
+
+    def _get_init_config(self) -> dict:
+        """Collect constructor parameters needed to recreate this model."""
+        config = {}
+        missing = []
+        signature = inspect.signature(self.__class__.__init__)
+        for name, parameter in signature.parameters.items():
+            if name in {"self", "device"}:
+                continue
+            if parameter.kind is inspect.Parameter.VAR_KEYWORD:
+                continue
+            if hasattr(self, name):
+                config[name] = getattr(self, name)
+            else:
+                missing.append(name)
+
+        if missing:
+            raise ValueError(
+                f"{self.__class__.__name__} cannot create a self-describing "
+                f"checkpoint because these constructor parameters are not "
+                f"stored as attributes: {missing}. Override _get_init_config()."
+            )
+        return config
+
+    @staticmethod
+    def _require_scalar_loss(loss: torch.Tensor) -> None:
+        """Raise when a criterion returns a non-scalar training loss."""
+        if loss.ndim != 0:
+            raise ValueError(
+                "The training criterion must return a scalar loss. "
+                "Use reduction='mean' or reduction='sum'."
+            )
+
     def fit(
         self,
         X: np.ndarray,
-        y: Optional[np.ndarray] = None,
+        y: np.ndarray | None = None,
         validation_split: float = 0.2,
         epochs: int = 500,
         batch_size: int = 64,
         learning_rate: float = 1e-3,
-        optimizer: Optional[torch.optim.Optimizer] = None,
-        criterion: Optional[nn.Module] = None,
+        optimizer: torch.optim.Optimizer | None = None,
+        criterion: nn.Module | None = None,
         patience: int = 20,
         verbose: int = 1,
         **kwargs,
-    ) -> Dict[str, list]:
+    ) -> dict[str, list]:
         """
         Fit the model.
 
@@ -115,13 +274,30 @@ class BaseDeepLearningModel(BlueMathModel):
 
         Returns
         -------
-        Dict[str, list]
+        dict[str, list]
             Training history with 'train_loss' and 'val_loss' keys.
         """
+
+        if not isinstance(X, np.ndarray):
+            raise TypeError("X must be a NumPy array.")
+        if y is None:
+            y = self._get_reconstruction_target(X)
+
+        self._validate_fit_inputs(
+            X,
+            y,
+            validation_split,
+            batch_size,
+            epochs,
+            patience,
+        )
+        self._validate_or_set_build_input_shape(tuple(X.shape))
 
         if self.model is None:
             self.model = self._build_model(X.shape, **kwargs)
             self.model = self.model.to(self.device)
+
+        avoid_singleton = self._requires_non_singleton_training_batches()
 
         if optimizer is None:
             optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
@@ -137,11 +313,7 @@ class BaseDeepLearningModel(BlueMathModel):
         train_idx, val_idx = idx[:split], idx[split:]
         Xtr, Xval = X[train_idx], X[val_idx]
 
-        if y is None:
-            # Autoencoder case
-            ytr, yval = Xtr, Xval
-        else:
-            ytr, yval = y[train_idx], y[val_idx]
+        ytr, yval = y[train_idx], y[val_idx]
 
         # Convert to tensors
         Xtr_tensor = torch.FloatTensor(Xtr).to(self.device)
@@ -166,15 +338,21 @@ class BaseDeepLearningModel(BlueMathModel):
             # Training
             self.model.train()
             train_loss = 0.0
-            n_batches = (len(Xtr) + batch_size - 1) // batch_size
+            train_slices = self._batch_slices(
+                len(Xtr),
+                batch_size,
+                avoid_singleton=avoid_singleton,
+            )
+            n_batches = len(train_slices)
 
-            for i in range(0, len(Xtr), batch_size):
-                batch_X = Xtr_tensor[i : i + batch_size]
-                batch_y = ytr_tensor[i : i + batch_size]
+            for start, stop in train_slices:
+                batch_X = Xtr_tensor[start:stop]
+                batch_y = ytr_tensor[start:stop]
 
                 optimizer.zero_grad()
                 output = self.model(batch_X)
                 loss = criterion(output, batch_y)
+                self._require_scalar_loss(loss)
                 loss.backward()
                 optimizer.step()
 
@@ -187,13 +365,19 @@ class BaseDeepLearningModel(BlueMathModel):
             self.model.eval()
             val_loss = 0.0
             with torch.no_grad():
-                n_val_batches = (len(Xval) + batch_size - 1) // batch_size
-                for i in range(0, len(Xval), batch_size):
-                    batch_X = Xval_tensor[i : i + batch_size]
-                    batch_y = yval_tensor[i : i + batch_size]
+                val_slices = self._batch_slices(
+                    len(Xval),
+                    batch_size,
+                    avoid_singleton=False,
+                )
+                n_val_batches = len(val_slices)
+                for start, stop in val_slices:
+                    batch_X = Xval_tensor[start:stop]
+                    batch_y = yval_tensor[start:stop]
 
                     output = self.model(batch_X)
                     loss = criterion(output, batch_y)
+                    self._require_scalar_loss(loss)
                     val_loss += loss.item()
 
                 val_loss /= n_val_batches
@@ -216,11 +400,15 @@ class BaseDeepLearningModel(BlueMathModel):
             # Update progress bar with current losses
             if pbar is not None:
                 pbar.set_postfix_str(
-                    f"Train Loss: {train_loss:.6f}, Val Loss: {val_loss:.6f}, Patience: {patience_counter}/{patience}"
+                    f"Train Loss: {train_loss:.6f}, "
+                    f"Val Loss: {val_loss:.6f}, "
+                    f"Patience: {patience_counter}/{patience}"
                 )
             elif verbose > 0 and (epoch + 1) % max(1, epochs // 10) == 0:
                 self.logger.info(
-                    f"Epoch {epoch + 1}/{epochs} - Train Loss: {train_loss:.6f}, Val Loss: {val_loss:.6f}"
+                    f"Epoch {epoch + 1}/{epochs} - "
+                    f"Train Loss: {train_loss:.6f}, "
+                    f"Val Loss: {val_loss:.6f}"
                 )
 
         # Restore best model
@@ -259,6 +447,7 @@ class BaseDeepLearningModel(BlueMathModel):
 
         if not self.is_fitted or self.model is None:
             raise ValueError("Model must be fitted before prediction.")
+        self._validate_inference_inputs(X, batch_size)
 
         self.model.eval()
         X_tensor = torch.FloatTensor(X).to(self.device)
@@ -308,6 +497,7 @@ class BaseDeepLearningModel(BlueMathModel):
 
         if not self.is_fitted or self.model is None:
             raise ValueError("Model must be fitted before encoding.")
+        self._validate_inference_inputs(X, batch_size)
 
         # Check if model has encode_forward method
         if not hasattr(self.model, "encode_forward"):
@@ -336,48 +526,198 @@ class BaseDeepLearningModel(BlueMathModel):
 
         return np.concatenate(encodings, axis=0)
 
+
+    def decode(
+        self,
+        Z: np.ndarray,
+        batch_size: int = 64,
+        verbose: int = 1,
+    ) -> np.ndarray:
+        """Decode latent vectors into the reconstruction space."""
+        if not self.is_fitted or self.model is None:
+            raise ValueError("Model must be fitted before decoding.")
+        if not hasattr(self.model, "decode_forward"):
+            raise ValueError(
+                f"Model {self.__class__.__name__} does not support decoding."
+            )
+
+        Z = np.asarray(Z)
+        if Z.ndim == 1:
+            Z = Z[None, :]
+        self._validate_inference_inputs(Z, batch_size, name="Z")
+
+        self.model.eval()
+        Z_tensor = torch.as_tensor(Z, dtype=torch.float32, device=self.device)
+        outputs = []
+        batch_range = range(0, len(Z), batch_size)
+        n_batches = (len(Z) + batch_size - 1) // batch_size
+
+        if verbose > 0 and n_batches > 1:
+            batch_range = tqdm(
+                batch_range,
+                desc="Decoding",
+                unit="batch",
+                total=n_batches,
+            )
+
+        with torch.no_grad():
+            for start in batch_range:
+                output = self.model.decode_forward(
+                    Z_tensor[start : start + batch_size]
+                )
+                outputs.append(output.cpu().numpy())
+
+        return np.concatenate(outputs, axis=0)
+
+    def reconstruction_error(
+        self,
+        X: np.ndarray,
+        y: np.ndarray | None = None,
+        metric: str = "mse",
+        reduction: str = "sample",
+        batch_size: int = 64,
+        verbose: int = 0,
+        eps: float = 0.0,
+    ):
+        """Compute reconstruction error with the shared metrics module."""
+        self._validate_inference_inputs(X, batch_size)
+        target = self._get_reconstruction_target(X) if y is None else y
+        prediction = self.predict(X, batch_size=batch_size, verbose=verbose)
+        return reconstruction_error_metric(
+            target,
+            prediction,
+            metric=metric,
+            reduction=reduction,
+            eps=eps,
+        )
+
+    def evaluate_reconstruction(
+        self,
+        X: np.ndarray,
+        y: np.ndarray | None = None,
+        metric: str = "mse",
+        batch_size: int = 64,
+        verbose: int = 0,
+        eps: float = 0.0,
+    ) -> dict[str, float]:
+        """Return summary statistics for reconstruction error."""
+        self._validate_inference_inputs(X, batch_size)
+        target = self._get_reconstruction_target(X) if y is None else y
+        prediction = self.predict(X, batch_size=batch_size, verbose=verbose)
+        return evaluate_reconstruction_metric(
+            target,
+            prediction,
+            metric=metric,
+            eps=eps,
+        )
+
+    def evaluate(self, X: np.ndarray, **kwargs) -> dict[str, float]:
+        """Alias for :meth:`evaluate_reconstruction`."""
+        return self.evaluate_reconstruction(X, **kwargs)
+
     def save_pytorch_model(self, model_path: str, **kwargs):
-        """
-        Save the PyTorch model to a file.
-
-        Parameters
-        ----------
-        model_path : str
-            Path to the file where the model will be saved.
-        **kwargs
-            Additional arguments for torch.save.
-        """
-
+        """Save weights and metadata required to rebuild the model."""
         if self.model is None:
             raise ValueError("PyTorch model must be built before saving.")
+        if self._build_input_shape is None:
+            raise ValueError(
+                "The model input shape is unknown. Fit or load the model before saving."
+            )
 
         torch.save(
             {
+                "checkpoint_version": 2,
                 "model_state_dict": self.model.state_dict(),
                 "is_fitted": self.is_fitted,
                 "model_class": self.__class__.__name__,
+                "init_config": self._get_init_config(),
+                "build_input_shape": self._build_input_shape,
             },
             model_path,
             **kwargs,
         )
         self.logger.info(f"PyTorch model saved to {model_path}")
 
-    def load_pytorch_model(self, model_path: str, **kwargs):
-        """
-        Load a PyTorch model from a file.
+    def load_pytorch_model(
+        self,
+        model_path: str,
+        map_location=None,
+        **kwargs,
+    ):
+        """Load a checkpoint into this instance."""
+        if map_location is None:
+            map_location = self.device
 
-        Parameters
-        ----------
-        model_path : str
-            Path to the file where the model is saved.
-        **kwargs
-            Additional arguments for torch.load.
-        """
+        checkpoint = torch.load(
+            model_path,
+            map_location=map_location,
+            **kwargs,
+        )
+        checkpoint_class = checkpoint.get("model_class")
+        if checkpoint_class and checkpoint_class != self.__class__.__name__:
+            raise ValueError(
+                f"Checkpoint contains {checkpoint_class}, "
+                f"not {self.__class__.__name__}."
+            )
 
         if self.model is None:
-            raise ValueError("PyTorch model must be built before loading.")
+            build_input_shape = checkpoint.get("build_input_shape")
+            if build_input_shape is None:
+                raise ValueError(
+                    "This legacy checkpoint does not include build_input_shape. "
+                    "Build the model manually before loading it."
+                )
 
-        checkpoint = torch.load(model_path, **kwargs)
+            init_config = checkpoint.get("init_config", {})
+            for name, value in init_config.items():
+                if hasattr(self, name):
+                    setattr(self, name, value)
+
+            self._build_input_shape = tuple(build_input_shape)
+            self.model = self._build_model(self._build_input_shape)
+            self.model = self.model.to(self.device)
+
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.is_fitted = checkpoint.get("is_fitted", False)
+        if self._build_input_shape is None:
+            shape = checkpoint.get("build_input_shape")
+            if shape is not None:
+                self._build_input_shape = tuple(shape)
         self.logger.info(f"PyTorch model loaded from {model_path}")
+        return self
+
+    @classmethod
+    def from_pytorch_model(
+        cls,
+        model_path: str,
+        device: str | torch.device | None = "cpu",
+        map_location="cpu",
+        **kwargs,
+    ):
+        """Create a fitted model from a self-describing checkpoint."""
+        checkpoint = torch.load(
+            model_path,
+            map_location=map_location,
+            **kwargs,
+        )
+        checkpoint_class = checkpoint.get("model_class")
+        if checkpoint_class and checkpoint_class != cls.__name__:
+            raise ValueError(
+                f"Checkpoint contains {checkpoint_class}, not {cls.__name__}."
+            )
+
+        init_config = checkpoint.get("init_config")
+        build_input_shape = checkpoint.get("build_input_shape")
+        if init_config is None or build_input_shape is None:
+            raise ValueError(
+                "Automatic loading requires a version-2 checkpoint containing "
+                "init_config and build_input_shape."
+            )
+
+        instance = cls(device=device, **dict(init_config))
+        instance._build_input_shape = tuple(build_input_shape)
+        instance.model = instance._build_model(instance._build_input_shape)
+        instance.model = instance.model.to(instance.device)
+        instance.model.load_state_dict(checkpoint["model_state_dict"])
+        instance.is_fitted = checkpoint.get("is_fitted", False)
+        return instance

@@ -6,10 +6,8 @@ Anaconda environment.
 
 Run from the repository root with:
 
-    pytest -q tests/test_deeplearning_autoencoders.py
+    pytest -q tests/deeplearning/test_autoencoders.py
 
-Some tests are marked xfail because they document likely current bugs in the
-implementation. After fixing each issue, remove the corresponding xfail marker.
 """
 
 import numpy as np
