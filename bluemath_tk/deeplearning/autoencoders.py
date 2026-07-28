@@ -6,6 +6,7 @@ This module is a pytorch translation from a tensorflow implementation developed 
 This module contains the following autoencoders:
 - StandardAutoencoder
 - OrthogonalAutoencoder
+- VariationalAutoencoder
 - LSTMAutoencoder
 - CNNAutoencoder
 - VisionTransformerAutoencoder
@@ -38,6 +39,8 @@ from .layers import (
     TimePositionalEncoding,
     Unpatchify,
 )
+from .variational_autoencoders import VariationalAutoencoder
+
 
 
 class StandardAutoencoder(BaseDeepLearningModel):
