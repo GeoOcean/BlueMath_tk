@@ -12,6 +12,7 @@ This module contains the following autoencoders:
 - VisionTransformerAutoencoder
 - ConvLSTMAutoencoder
 - HybridConvLSTMTransformerAutoencoder
+- SpatialTokenConvLSTMTransformerAutoencoder
 
 Each autoencoder is a subclass of BaseDeepLearningModel and implements the following methods:
 - fit(X, y=None, epochs=10, batch_size=32, verbose=1)
@@ -39,6 +40,7 @@ from .layers import (
     TimePositionalEncoding,
     Unpatchify,
 )
+from .spatiotemporal_autoencoders import SpatialTokenConvLSTMTransformerAutoencoder
 from .variational_autoencoders import VariationalAutoencoder
 
 
