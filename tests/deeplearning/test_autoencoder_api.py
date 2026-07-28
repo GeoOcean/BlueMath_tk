@@ -79,7 +79,7 @@ def _fit_kwargs():
         (
             lambda: ConvLSTMAutoencoder(k=4, device="cpu"),
             (16, 3, 1, 8, 8),
-            (16, 1, 8, 8),
+            (16, 3, 1, 8, 8),
         ),
         (
             lambda: HybridConvLSTMTransformerAutoencoder(
@@ -91,7 +91,7 @@ def _fit_kwargs():
                 device="cpu",
             ),
             (16, 3, 1, 8, 8),
-            (16, 1, 8, 8),
+            (16, 3, 1, 8, 8),
         ),
     ],
 )
@@ -270,8 +270,8 @@ def test_standard_autoencoder_reconstruction_convenience_methods():
     assert summary["n_samples"] == len(X)
 
 
-def test_convlstm_metrics_use_last_frame_as_default_target():
-    """ConvLSTM metrics should compare predictions with the final input frame."""
+def test_convlstm_metrics_use_complete_sequence_as_default_target():
+    """ConvLSTM metrics should compare predictions with the complete sequence."""
     X = np.random.randn(16, 3, 1, 8, 8).astype("float32")
     model = ConvLSTMAutoencoder(k=4, device="cpu")
     model.fit(X, **_fit_kwargs())
@@ -284,8 +284,8 @@ def test_convlstm_metrics_use_last_frame_as_default_target():
         batch_size=4,
     )
     manual = np.mean(
-        (prediction - X[:, -1]) ** 2,
-        axis=(1, 2, 3),
+        (prediction - X) ** 2,
+        axis=(1, 2, 3, 4),
     )
 
     assert np.allclose(errors, manual)
