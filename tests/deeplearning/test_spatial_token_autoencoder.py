@@ -2,19 +2,24 @@
 
 import numpy as np
 import pytest
+import torch
 
-torch = pytest.importorskip("torch")
-
-from bluemath_tk.deeplearning.autoencoders import (  # noqa: E402
+from bluemath_tk.deeplearning.autoencoders import (
     SpatialTokenConvLSTMTransformerAutoencoder,
+)
+from bluemath_tk.deeplearning.spatiotemporal_autoencoders import (
+    _FactorizedSpatiotemporalBlock,
 )
 
 
 @pytest.fixture(autouse=True)
 def _set_seed():
+    previous_threads = torch.get_num_threads()
     np.random.seed(503)
     torch.manual_seed(503)
     torch.set_num_threads(1)
+    yield
+    torch.set_num_threads(previous_threads)
 
 
 def _model():
@@ -77,7 +82,7 @@ def test_spatial_token_fixed_sample_shape_validation():
             verbose=0,
         )
     with pytest.raises(ValueError, match="Expected per-sample shape"):
-        model.predict(
+        model.encode(
             np.random.randn(4, 3, 2, 8, 8).astype("float32"),
             verbose=0,
         )
@@ -100,11 +105,8 @@ def test_spatial_token_rejects_non_sequence_input():
 
 def test_spatial_token_rejects_non_sequence_targets():
     X = np.random.randn(12, 3, 1, 8, 8).astype("float32")
-    frame_target = X[:, -1]
-    broadcastable_target = X[:, :1]
-
-    for target in (frame_target, broadcastable_target):
-        with pytest.raises(ValueError, match="same shape as X"):
+    for target in (X[:, -1], X[:, :1]):
+        with pytest.raises(ValueError, match="Target shape"):
             _model().fit(
                 X,
                 y=target,
@@ -138,6 +140,31 @@ def test_spatial_token_rejects_pool_larger_than_encoded_grid():
         )
 
 
+def test_spatial_token_singleton_tiny_grid_is_safe_and_input_sensitive():
+    outer = SpatialTokenConvLSTMTransformerAutoencoder(
+        k=2,
+        spatial_pool_size=(1, 1),
+        d_model=4,
+        n_heads=1,
+        n_layers=1,
+        device="cpu",
+    )
+    inner = outer._build_model((2, 1, 1, 1, 1)).eval()
+    inputs = torch.tensor(
+        [
+            [[[[0.0]]]],
+            [[[[1.0]]]],
+        ]
+    )
+    with torch.no_grad():
+        latent = inner.encode_forward(inputs)
+        reconstruction = inner(inputs)
+
+    assert reconstruction.shape == (2, 1, 1, 1, 1)
+    assert torch.isfinite(reconstruction).all()
+    assert not torch.allclose(latent[0], latent[1], atol=1e-6, rtol=1e-5)
+
+
 @pytest.mark.parametrize(
     ("kwargs", "message"),
     [
@@ -145,6 +172,8 @@ def test_spatial_token_rejects_pool_larger_than_encoded_grid():
         ({"spatial_pool_size": (0, 2)}, "spatial_pool_size"),
         ({"spatial_pool_size": [2, 2]}, "spatial_pool_size"),
         ({"d_model": 0}, "d_model"),
+        ({"d_model": 1}, "d_model"),
+        ({"d_model": 2}, "d_model"),
         ({"n_heads": 0}, "n_heads"),
         ({"d_model": 10, "n_heads": 3}, "divisible"),
         ({"n_layers": 0}, "n_layers"),
@@ -157,48 +186,77 @@ def test_spatial_token_rejects_invalid_constructor_arguments(kwargs, message):
 
 def test_spatial_token_gradients_reach_space_time_and_latent_paths():
     X = torch.randn(4, 3, 1, 6, 6)
-    outer = _model()
-    model = outer._build_model(tuple(X.shape))
+    model = _model()._build_model(tuple(X.shape))
 
     reconstruction = model(X)
     reconstruction.square().mean().backward()
 
-    names = {
-        "encoder_temporal": (
-            model.encoder_blocks[0].temporal_attention.in_proj_weight
-        ),
-        "encoder_spatial": (
-            model.encoder_blocks[0].spatial_attention.in_proj_weight
-        ),
-        "decoder_temporal": (
-            model.decoder_blocks[0].temporal_attention.in_proj_weight
-        ),
-        "decoder_spatial": (
-            model.decoder_blocks[0].spatial_attention.in_proj_weight
-        ),
+    parameters = {
+        "encoder_temporal": (model.encoder_blocks[0].temporal_attention.in_proj_weight),
+        "encoder_spatial": (model.encoder_blocks[0].spatial_attention.in_proj_weight),
+        "decoder_temporal": (model.decoder_blocks[0].temporal_attention.in_proj_weight),
+        "decoder_spatial": (model.decoder_blocks[0].spatial_attention.in_proj_weight),
         "latent": model.latent.weight,
         "time_query": model.decoder_time_query,
         "space_query": model.decoder_space_query,
     }
-    for name, parameter in names.items():
+    for name, parameter in parameters.items():
         assert parameter.grad is not None, name
         assert torch.isfinite(parameter.grad).all(), name
         assert torch.count_nonzero(parameter.grad) > 0, name
 
 
-def test_spatial_token_decoder_depends_on_time_and_space_queries():
-    outer = _model()
-    model = outer._build_model((4, 3, 1, 8, 8))
-    z = torch.zeros(2, 4)
+def _set_identity_attention(attention):
+    dimension = attention.embed_dim
+    identity = torch.eye(dimension)
+    with torch.no_grad():
+        attention.in_proj_weight.zero_()
+        attention.in_proj_weight[:dimension].copy_(identity)
+        attention.in_proj_weight[dimension : 2 * dimension].copy_(identity)
+        attention.in_proj_weight[2 * dimension :].copy_(identity)
+        attention.in_proj_bias.zero_()
+        attention.out_proj.weight.copy_(identity)
+        attention.out_proj.bias.zero_()
 
-    reconstruction = model.decode_forward(z)
-    time_difference = torch.max(
-        torch.abs(reconstruction[:, 0] - reconstruction[:, 1])
-    )
-    spatial_variation = reconstruction.var(dim=(-2, -1)).mean()
 
-    assert time_difference > 1e-7
-    assert spatial_variation > 1e-10
+def _zero_module(module):
+    with torch.no_grad():
+        for parameter in module.parameters():
+            parameter.zero_()
+
+
+def test_factorized_block_temporal_attention_mixes_timesteps():
+    block = _FactorizedSpatiotemporalBlock(d_model=4, n_heads=1)
+    _set_identity_attention(block.temporal_attention)
+    _zero_module(block.spatial_attention)
+    _zero_module(block.feed_forward)
+
+    values = torch.zeros(1, 3, 2, 4)
+    values[0, 0, 0] = torch.tensor([1.0, -1.0, 0.5, -0.5])
+    enabled = block(values.clone())
+    with torch.no_grad():
+        block.temporal_attention.out_proj.weight.zero_()
+    disabled = block(values.clone())
+
+    cross_time_change = torch.abs(enabled[0, 1, 0] - disabled[0, 1, 0])
+    assert torch.max(cross_time_change) > 1e-4
+
+
+def test_factorized_block_spatial_attention_mixes_tokens():
+    block = _FactorizedSpatiotemporalBlock(d_model=4, n_heads=1)
+    _zero_module(block.temporal_attention)
+    _set_identity_attention(block.spatial_attention)
+    _zero_module(block.feed_forward)
+
+    values = torch.zeros(1, 2, 3, 4)
+    values[0, 0, 0] = torch.tensor([1.0, -1.0, 0.5, -0.5])
+    enabled = block(values.clone())
+    with torch.no_grad():
+        block.spatial_attention.out_proj.weight.zero_()
+    disabled = block(values.clone())
+
+    cross_space_change = torch.abs(enabled[0, 0, 1] - disabled[0, 0, 1])
+    assert torch.max(cross_space_change) > 1e-4
 
 
 def test_spatial_token_checkpoint_round_trip(tmp_path):
