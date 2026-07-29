@@ -11,8 +11,20 @@ from ._base_model import BaseDeepLearningModel
 from .layers import ConvLSTM
 
 
+class _ChannelLayerNorm2d(nn.Module):
+    """Apply LayerNorm over channels for every spatial position."""
+
+    def __init__(self, n_channels: int):
+        super().__init__()
+        self.normalization = nn.LayerNorm(n_channels)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        normalized = self.normalization(x.permute(0, 2, 3, 1))
+        return normalized.permute(0, 3, 1, 2)
+
+
 class _FactorizedSpatiotemporalBlock(nn.Module):
-    """Apply temporal attention, spatial attention, and a feed-forward block."""
+    """Apply temporal attention, spatial attention, and feed-forward updates."""
 
     def __init__(self, d_model: int, n_heads: int):
         super().__init__()
@@ -77,30 +89,14 @@ class _FactorizedSpatiotemporalBlock(nn.Module):
 class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
     """ConvLSTM-Transformer autoencoder with explicit spatial tokens.
 
-    The model keeps several spatial tokens at every timestep, applies
-    factorized temporal and spatial attention, compresses the full input
-    window to one vector of size ``k``, and reconstructs the complete input
-    sequence.
+    The model retains multiple spatial tokens at each timestep, applies
+    factorized temporal and spatial attention, compresses the complete window
+    to one vector of size ``k``, and reconstructs the complete input sequence.
 
-    Parameters
-    ----------
-    k : int, optional
-        Number of latent dimensions, by default 20.
-    spatial_pool_size : tuple of int, optional
-        Number of pooled token rows and columns, by default ``(4, 4)``.
-        Each value must not exceed the corresponding spatial-encoder output
-        dimension, approximately ``ceil(H / 4)`` and ``ceil(W / 4)``.
-    d_model : int, optional
-        Token dimension, by default 128.
-    n_heads : int, optional
-        Number of attention heads, by default 4.
-    n_layers : int, optional
-        Number of factorized attention blocks in both encoder and decoder,
-        by default 2.
-    device : str or torch.device, optional
-        Device on which to run the model.
-    **kwargs
-        Additional keyword arguments passed to ``BaseDeepLearningModel``.
+    Factorized standard-attention score work scales approximately as
+    ``O(B * d * (S * T**2 + T * S**2))`` for ``S`` spatial tokens and ``T``
+    timesteps, in addition to projection and feed-forward work of
+    ``O(B * T * S * d**2)``.
     """
 
     def __init__(
@@ -119,22 +115,24 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
             not isinstance(spatial_pool_size, tuple)
             or len(spatial_pool_size) != 2
             or any(
-                not isinstance(value, int)
-                or isinstance(value, bool)
-                or value < 1
+                not isinstance(value, int) or isinstance(value, bool) or value < 1
                 for value in spatial_pool_size
             )
         ):
             raise ValueError(
                 "spatial_pool_size must be a tuple of two positive integers."
             )
-        if not isinstance(d_model, int) or isinstance(d_model, bool) or d_model < 1:
-            raise ValueError("d_model must be a positive integer.")
-        if not isinstance(n_heads, int) or isinstance(n_heads, bool) or n_heads < 1:
+        if not isinstance(d_model, int) or isinstance(d_model, bool) or d_model < 3:
+            raise ValueError("d_model must be an integer of at least 3.")
+        if not isinstance(n_heads, int) or isinstance(n_heads, bool):
+            raise ValueError("n_heads must be a positive integer.")
+        if n_heads < 1:
             raise ValueError("n_heads must be a positive integer.")
         if d_model % n_heads != 0:
             raise ValueError("d_model must be divisible by n_heads.")
-        if not isinstance(n_layers, int) or isinstance(n_layers, bool) or n_layers < 1:
+        if not isinstance(n_layers, int) or isinstance(n_layers, bool):
+            raise ValueError("n_layers must be a positive integer.")
+        if n_layers < 1:
             raise ValueError("n_layers must be a positive integer.")
 
         self.k = k
@@ -162,13 +160,6 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
         if not isinstance(X, np.ndarray):
             raise TypeError("X must be a NumPy array.")
         target = self._get_reconstruction_target(X) if y is None else y
-        if not isinstance(target, np.ndarray):
-            raise TypeError("y must be a NumPy array.")
-        if tuple(target.shape) != tuple(X.shape):
-            raise ValueError(
-                "Spatial-token autoencoder targets must have the same "
-                "shape as X for full-sequence reconstruction."
-            )
         return super().fit(
             X,
             y=target,
@@ -205,7 +196,9 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
         seq_len = input_shape[1]
         channels, height, width = input_shape[2:]
         if any(value < 1 for value in (seq_len, channels, height, width)):
-            raise ValueError("All sequence and spatial dimensions must be positive.")
+            raise ValueError(
+                "All sequence, channel, and spatial dimensions must be positive."
+            )
 
         pooled_height, pooled_width = self.spatial_pool_size
         encoded_height = (height + 3) // 4
@@ -253,10 +246,10 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                 )
                 self.spatial_encoder = nn.Sequential(
                     nn.Conv2d(32, 64, 3, stride=2, padding=1),
-                    nn.GroupNorm(8, 64),
+                    _ChannelLayerNorm2d(64),
                     nn.GELU(),
                     nn.Conv2d(64, d_model, 3, stride=2, padding=1),
-                    nn.GroupNorm(_group_count(d_model), d_model),
+                    _ChannelLayerNorm2d(d_model),
                     nn.GELU(),
                 )
 
@@ -290,10 +283,10 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                 )
                 self.spatial_decoder = nn.Sequential(
                     nn.Conv2d(d_model, 64, 3, padding=1),
-                    nn.GroupNorm(8, 64),
+                    _ChannelLayerNorm2d(64),
                     nn.GELU(),
                     nn.Conv2d(64, 32, 3, padding=1),
-                    nn.GroupNorm(8, 32),
+                    _ChannelLayerNorm2d(32),
                     nn.GELU(),
                     nn.Conv2d(32, channels, 3, padding=1),
                 )
@@ -308,9 +301,7 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
 
             def _validate_input(self, x: torch.Tensor) -> None:
                 if x.dim() != 5:
-                    raise ValueError(
-                        "Expected 5D input with shape (B, T, C, H, W)."
-                    )
+                    raise ValueError("Expected 5D input with shape (B, T, C, H, W).")
                 expected = (
                     self.seq_len,
                     self.channels,
@@ -349,9 +340,7 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                     self.d_model,
                 )
                 tokens = (
-                    tokens
-                    + self.encoder_time_embedding
-                    + self.encoder_space_embedding
+                    tokens + self.encoder_time_embedding + self.encoder_space_embedding
                 )
                 for block in self.encoder_blocks:
                     tokens = block(tokens)
@@ -365,8 +354,7 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
             def decode_forward(self, z: torch.Tensor) -> torch.Tensor:
                 if z.dim() != 2 or z.shape[1] != self.latent_dim:
                     raise ValueError(
-                        "Latent input must have shape "
-                        f"(batch, {self.latent_dim})."
+                        f"Latent input must have shape (batch, {self.latent_dim})."
                     )
                 batch_size = z.size(0)
                 seed = self.latent_to_tokens(z).reshape(
@@ -375,11 +363,7 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                     1,
                     self.d_model,
                 )
-                tokens = (
-                    seed
-                    + self.decoder_time_query
-                    + self.decoder_space_query
-                )
+                tokens = seed + self.decoder_time_query + self.decoder_space_query
                 for block in self.decoder_blocks:
                     tokens = block(tokens)
 
@@ -408,11 +392,3 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                 return self.decode_forward(self.encode_forward(x))
 
         return SpatialTokenModel()
-
-
-def _group_count(n_channels: int) -> int:
-    """Return a GroupNorm group count that divides ``n_channels``."""
-    for candidate in (8, 4, 2, 1):
-        if n_channels % candidate == 0:
-            return candidate
-    return 1
