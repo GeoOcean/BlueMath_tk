@@ -23,6 +23,7 @@ Each autoencoder is a subclass of BaseDeepLearningModel and implements the follo
 """
 
 import copy
+import math
 from typing import Dict, Optional, Tuple
 
 import numpy as np
@@ -40,9 +41,50 @@ from .layers import (
     TimePositionalEncoding,
     Unpatchify,
 )
-from .spatiotemporal_autoencoders import SpatialTokenConvLSTMTransformerAutoencoder
-from .variational_autoencoders import VariationalAutoencoder
+from .spatiotemporal_autoencoders import (
+    SpatialTokenConvLSTMTransformerAutoencoder as _SpatialTokenAutoencoder,
+)
+from .variational_autoencoders import (
+    VariationalAutoencoder as _VariationalAutoencoder,
+)
 
+SpatialTokenConvLSTMTransformerAutoencoder = _SpatialTokenAutoencoder
+VariationalAutoencoder = _VariationalAutoencoder
+
+
+def _validate_positive_integer(name: str, value: int) -> int:
+    if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+        raise ValueError(f"{name} must be a positive integer.")
+    return value
+
+
+def _validate_positive_integer_sequence(
+    name: str,
+    values,
+    expected_length: int | None = None,
+) -> list[int]:
+    if not isinstance(values, (list, tuple)) or not values:
+        raise ValueError(f"{name} must contain positive integers.")
+    if expected_length is not None and len(values) != expected_length:
+        raise ValueError(
+            f"{name} must contain exactly {expected_length} values."
+        )
+    validated = [
+        _validate_positive_integer(f"{name} entry", value)
+        for value in values
+    ]
+    return validated
+
+
+def _validate_nonnegative_number(name: str, value: float) -> float:
+    if (
+        not isinstance(value, (int, float))
+        or isinstance(value, bool)
+        or not math.isfinite(float(value))
+        or value < 0
+    ):
+        raise ValueError(f"{name} must be a finite non-negative number.")
+    return float(value)
 
 
 class StandardAutoencoder(BaseDeepLearningModel):
@@ -89,10 +131,12 @@ class StandardAutoencoder(BaseDeepLearningModel):
         device: Optional[torch.device] = None,
         **kwargs,
     ):
+        self.k = _validate_positive_integer("k", k)
         if hidden_dims is None:
             hidden_dims = [512, 256, 128, 64]
-        self.hidden_dims = hidden_dims
-        self.k = k
+        self.hidden_dims = _validate_positive_integer_sequence(
+            "hidden_dims", hidden_dims
+        )
         super().__init__(device=device, **kwargs)
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
@@ -209,12 +253,14 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
         device: Optional[torch.device] = None,
         **kwargs,
     ):
+        self.k = _validate_positive_integer("k", k)
         if hidden_dims is None:
             hidden_dims = [512, 256, 128, 64]
-        self.hidden_dims = hidden_dims
-        self.k = k
-        self.lambda_W = lambda_W
-        self.lambda_Z = lambda_Z
+        self.hidden_dims = _validate_positive_integer_sequence(
+            "hidden_dims", hidden_dims
+        )
+        self.lambda_W = _validate_nonnegative_number("lambda_W", lambda_W)
+        self.lambda_Z = _validate_nonnegative_number("lambda_Z", lambda_Z)
         super().__init__(device=device, **kwargs)
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
@@ -336,12 +382,7 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
         verbose: int = 1,
         **kwargs,
     ) -> Dict[str, list]:
-        """
-        Fit the orthogonal autoencoder with regularization losses.
-
-        This method overrides the base fit() to properly add orthogonality
-        and decorrelation regularization losses during training.
-        """
+        """Fit with orthogonality and latent-decorrelation penalties."""
         if not isinstance(X, np.ndarray):
             raise TypeError("X must be a NumPy array.")
         if y is None:
@@ -355,146 +396,161 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
             patience,
         )
         self._validate_or_set_build_input_shape(tuple(X.shape))
+        self.is_fitted = False
 
         if self.model is None:
-            self.model = self._build_model(X.shape, **kwargs)
-            self.model = self.model.to(self.device)
+            self.model = self._build_model(X.shape, **kwargs).to(self.device)
 
         avoid_singleton = self._requires_non_singleton_training_batches()
-
         if optimizer is None:
             optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
-
         if criterion is None:
             criterion = nn.MSELoss()
 
-        # Train/validation split
-        n_samples = len(X)
-        idx = np.arange(n_samples)
-        np.random.shuffle(idx)
-        split = int((1 - validation_split) * n_samples)
-        train_idx, val_idx = idx[:split], idx[split:]
-        Xtr, Xval = X[train_idx], X[val_idx]
-
-        if y is None:
-            # Autoencoder case
-            ytr, yval = Xtr, Xval
-        else:
-            ytr, yval = y[train_idx], y[val_idx]
-
-        # Convert to tensors
-        Xtr_tensor = torch.FloatTensor(Xtr).to(self.device)
-        Xval_tensor = torch.FloatTensor(Xval).to(self.device)
-        ytr_tensor = torch.FloatTensor(ytr).to(self.device)
-        yval_tensor = torch.FloatTensor(yval).to(self.device)
+        indices = np.arange(len(X))
+        np.random.shuffle(indices)
+        split = int((1 - validation_split) * len(X))
+        train_indices, validation_indices = indices[:split], indices[split:]
+        X_train = torch.as_tensor(
+            X[train_indices], dtype=torch.float32, device=self.device
+        )
+        y_train = torch.as_tensor(
+            y[train_indices], dtype=torch.float32, device=self.device
+        )
+        X_validation = torch.as_tensor(
+            X[validation_indices], dtype=torch.float32, device=self.device
+        )
+        y_validation = torch.as_tensor(
+            y[validation_indices], dtype=torch.float32, device=self.device
+        )
 
         history = {"train_loss": [], "val_loss": []}
-        best_val_loss = float("inf")
+        best_validation_loss = float("inf")
         patience_counter = 0
         best_model_state = None
 
-        # Create progress bar if verbose > 0
-        use_progress_bar = verbose > 0
         epoch_range = range(epochs)
-        pbar = None
-        if use_progress_bar:
-            pbar = tqdm(epoch_range, desc="Training", unit="epoch")
-            epoch_range = pbar
+        progress_bar = None
+        if verbose > 0:
+            progress_bar = tqdm(epoch_range, desc="Training", unit="epoch")
+            epoch_range = progress_bar
 
         for epoch in epoch_range:
-            # Training
             self.model.train()
-            train_loss = 0.0
-            train_slices = self._batch_slices(
-                len(Xtr),
+            train_total = 0.0
+            train_sample_count = 0
+            for start, stop in self._batch_slices(
+                len(X_train),
                 batch_size,
                 avoid_singleton=avoid_singleton,
-            )
-            n_batches = len(train_slices)
-            for start, stop in train_slices:
-                batch_X = Xtr_tensor[start:stop]
-                batch_y = ytr_tensor[start:stop]
+            ):
+                batch_X = X_train[start:stop]
+                batch_y = y_train[start:stop]
+                current_batch_size = stop - start
 
                 optimizer.zero_grad()
                 output = self.model(batch_X)
-                loss = criterion(output, batch_y)
-
-                # Add regularization losses
+                self._require_matching_output_shape(
+                    output, batch_y, "Orthogonal training"
+                )
+                self._require_finite_tensor(
+                    output, "Orthogonal training output"
+                )
+                self._require_finite_buffers()
+                reconstruction_loss = criterion(output, batch_y)
+                self._require_scalar_loss(reconstruction_loss)
                 ortho_loss, decorr_loss = self.model.get_regularization_losses()
+                regularization_loss = torch.zeros(
+                    (), device=self.device, dtype=reconstruction_loss.dtype
+                )
                 if ortho_loss is not None:
-                    loss = loss + ortho_loss
+                    regularization_loss = regularization_loss + ortho_loss
                 if decorr_loss is not None:
-                    loss = loss + decorr_loss
-
-                self._require_scalar_loss(loss)
+                    regularization_loss = regularization_loss + decorr_loss
+                loss = reconstruction_loss + regularization_loss
+                self._require_finite_loss(loss, "Orthogonal training")
                 loss.backward()
+                self._require_finite_gradients()
                 optimizer.step()
+                self._require_finite_parameters()
 
-                train_loss += loss.item()
+                train_total += self._loss_to_sample_total(
+                    reconstruction_loss,
+                    current_batch_size,
+                    criterion,
+                )
+                train_total += (
+                    float(regularization_loss.item()) * current_batch_size
+                )
+                train_sample_count += current_batch_size
 
-            train_loss /= n_batches
+            train_loss = train_total / train_sample_count
             history["train_loss"].append(train_loss)
 
-            # Validation
             self.model.eval()
-            val_loss = 0.0
+            validation_total = 0.0
+            validation_sample_count = 0
             with torch.no_grad():
-                val_slices = self._batch_slices(
-                    len(Xval),
+                for start, stop in self._batch_slices(
+                    len(X_validation),
                     batch_size,
-                    avoid_singleton=False,
-                )
-                n_val_batches = len(val_slices)
-                for start, stop in val_slices:
-                    batch_X = Xval_tensor[start:stop]
-                    batch_y = yval_tensor[start:stop]
-
+                ):
+                    batch_X = X_validation[start:stop]
+                    batch_y = y_validation[start:stop]
+                    current_batch_size = stop - start
                     output = self.model(batch_X)
-                    loss = criterion(output, batch_y)
-
-                    # Add regularization losses for validation
-                    ortho_loss, decorr_loss = self.model.get_regularization_losses()
+                    self._require_matching_output_shape(
+                        output, batch_y, "Orthogonal validation"
+                    )
+                    self._require_finite_tensor(
+                        output, "Orthogonal validation output"
+                    )
+                    self._require_finite_parameters()
+                    reconstruction_loss = criterion(output, batch_y)
+                    self._require_scalar_loss(reconstruction_loss)
+                    ortho_loss, decorr_loss = (
+                        self.model.get_regularization_losses()
+                    )
+                    regularization_loss = torch.zeros(
+                        (), device=self.device, dtype=reconstruction_loss.dtype
+                    )
                     if ortho_loss is not None:
-                        loss = loss + ortho_loss
+                        regularization_loss = regularization_loss + ortho_loss
                     if decorr_loss is not None:
-                        loss = loss + decorr_loss
+                        regularization_loss = regularization_loss + decorr_loss
+                    loss = reconstruction_loss + regularization_loss
+                    self._require_finite_loss(loss, "Orthogonal validation")
+                    validation_total += self._loss_to_sample_total(
+                        reconstruction_loss,
+                        current_batch_size,
+                        criterion,
+                    )
+                    validation_total += (
+                        float(regularization_loss.item()) * current_batch_size
+                    )
+                    validation_sample_count += current_batch_size
 
-                    self._require_scalar_loss(loss)
-                    val_loss += loss.item()
-
-                val_loss /= n_val_batches
-                history["val_loss"].append(val_loss)
-
-            # Early stopping
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
+            validation_loss = validation_total / validation_sample_count
+            history["val_loss"].append(validation_loss)
+            if validation_loss < best_validation_loss:
+                best_validation_loss = validation_loss
                 patience_counter = 0
                 best_model_state = copy.deepcopy(self.model.state_dict())
             else:
                 patience_counter += 1
                 if patience_counter >= patience:
-                    if verbose > 0:
-                        if pbar is not None:
-                            pbar.set_postfix_str(f"Early stopping at epoch {epoch + 1}")
-                        self.logger.info(f"Early stopping at epoch {epoch + 1}")
+                    if progress_bar is not None:
+                        progress_bar.set_postfix_str(
+                            f"Early stopping at epoch {epoch + 1}"
+                        )
                     break
 
-            # Update progress bar with current losses
-            if pbar is not None:
-                pbar.set_postfix_str(
-                    f"Train Loss: {train_loss:.6f}, Val Loss: {val_loss:.6f}, Patience: {patience_counter}/{patience}"
-                )
-            elif verbose > 0 and (epoch + 1) % max(1, epochs // 10) == 0:
-                self.logger.info(
-                    f"Epoch {epoch + 1}/{epochs} - Train Loss: {train_loss:.6f}, Val Loss: {val_loss:.6f}"
-                )
-
-        # Restore best model
-        if best_model_state is not None:
-            self.model.load_state_dict(best_model_state)
-
+        if best_model_state is None:
+            raise FloatingPointError(
+                "Training completed without a finite validation loss."
+            )
+        self.model.load_state_dict(best_model_state)
         self.is_fitted = True
-
         return history
 
 
@@ -541,8 +597,12 @@ class LSTMAutoencoder(BaseDeepLearningModel):
         device: Optional[torch.device] = None,
         **kwargs,
     ):
-        self.hidden = hidden
-        self.k = k
+        self.k = _validate_positive_integer("k", k)
+        self.hidden = tuple(
+            _validate_positive_integer_sequence(
+                "hidden", hidden, expected_length=2
+            )
+        )
         super().__init__(device=device, **kwargs)
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
@@ -659,7 +719,7 @@ class CNNAutoencoder(BaseDeepLearningModel):
         device: Optional[torch.device] = None,
         **kwargs,
     ):
-        self.k = k
+        self.k = _validate_positive_integer("k", k)
         super().__init__(device=device, **kwargs)
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
@@ -872,12 +932,18 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
         device: Optional[torch.device] = None,
         **kwargs,
     ):
-        self.patch_size = patch_size
-        self.d_model = d_model
-        self.depth_enc = depth_enc
-        self.depth_dec = depth_dec
-        self.heads = heads
-        self.k = k
+        self.k = _validate_positive_integer("k", k)
+        self.patch_size = _validate_positive_integer(
+            "patch_size", patch_size
+        )
+        self.d_model = _validate_positive_integer("d_model", d_model)
+        if self.d_model < 3:
+            raise ValueError("d_model must be at least 3.")
+        self.depth_enc = _validate_positive_integer("depth_enc", depth_enc)
+        self.depth_dec = _validate_positive_integer("depth_dec", depth_dec)
+        self.heads = _validate_positive_integer("heads", heads)
+        if self.d_model % self.heads != 0:
+            raise ValueError("d_model must be divisible by heads.")
         super().__init__(device=device, **kwargs)
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
@@ -1128,7 +1194,7 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
                 "reconstruction_mode is no longer supported; "
                 "ConvLSTMAutoencoder always reconstructs the full sequence."
             )
-        self.k = k
+        self.k = _validate_positive_integer("k", k)
         super().__init__(device=device, **kwargs)
 
     def fit(
@@ -1405,10 +1471,18 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                 "HybridConvLSTMTransformerAutoencoder always reconstructs "
                 "the full sequence."
             )
-        self.k = k
-        self.d_model = d_model
-        self.n_heads = n_heads
-        self.n_layers = n_layers
+        self.k = _validate_positive_integer("k", k)
+        self.d_model = _validate_positive_integer("d_model", d_model)
+        if self.d_model < 3:
+            raise ValueError("d_model must be at least 3.")
+        self.n_heads = _validate_positive_integer("n_heads", n_heads)
+        self.n_layers = _validate_positive_integer("n_layers", n_layers)
+        if self.d_model % self.n_heads != 0:
+            raise ValueError("d_model must be divisible by n_heads.")
+        if efficient_attention not in {"linear", None}:
+            raise ValueError(
+                "efficient_attention must be 'linear' or None."
+            )
         self.efficient_attention = efficient_attention
         super().__init__(device=device, **kwargs)
 
