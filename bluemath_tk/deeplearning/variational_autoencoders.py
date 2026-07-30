@@ -232,6 +232,7 @@ class VariationalAutoencoder(BaseDeepLearningModel):
         ``val_deterministic_reconstruction_loss`` reports posterior-mean
         reconstruction for stable scientific comparison.
         """
+        learning_rate = self._validate_learning_rate(learning_rate)
         if not isinstance(X, np.ndarray):
             raise TypeError("X must be a NumPy array.")
         if y is None:

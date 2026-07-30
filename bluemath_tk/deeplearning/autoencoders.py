@@ -20,6 +20,16 @@ Each autoencoder is a subclass of BaseDeepLearningModel and implements the follo
 - encode(X)
 - decode(X)
 - evaluate(X)
+
+Limitations
+-----------
+Inputs are converted to float32. Complete training and validation splits are
+currently transferred to the selected device instead of being streamed one
+batch at a time, and full-resolution ConvLSTM activations can dominate memory.
+A variational model with beta=0 is not a prior-matched generative model.
+Latent dimensional compression is neither entropy coding nor a deployable,
+bitrate-controlled codec. CUDA RNG preservation is implemented in the test
+suite but still requires validation on CUDA-capable hardware.
 """
 
 import copy
@@ -52,6 +62,19 @@ SpatialTokenConvLSTMTransformerAutoencoder = _SpatialTokenAutoencoder
 VariationalAutoencoder = _VariationalAutoencoder
 
 
+__all__ = [
+    "StandardAutoencoder",
+    "OrthogonalAutoencoder",
+    "LSTMAutoencoder",
+    "CNNAutoencoder",
+    "VisionTransformerAutoencoder",
+    "ConvLSTMAutoencoder",
+    "HybridConvLSTMTransformerAutoencoder",
+    "VariationalAutoencoder",
+    "SpatialTokenConvLSTMTransformerAutoencoder",
+]
+
+
 def _validate_positive_integer(name: str, value: int) -> int:
     if not isinstance(value, int) or isinstance(value, bool) or value < 1:
         raise ValueError(f"{name} must be a positive integer.")
@@ -66,13 +89,8 @@ def _validate_positive_integer_sequence(
     if not isinstance(values, (list, tuple)) or not values:
         raise ValueError(f"{name} must contain positive integers.")
     if expected_length is not None and len(values) != expected_length:
-        raise ValueError(
-            f"{name} must contain exactly {expected_length} values."
-        )
-    validated = [
-        _validate_positive_integer(f"{name} entry", value)
-        for value in values
-    ]
+        raise ValueError(f"{name} must contain exactly {expected_length} values.")
+    validated = [_validate_positive_integer(f"{name} entry", value) for value in values]
     return validated
 
 
@@ -195,13 +213,14 @@ class StandardAutoencoder(BaseDeepLearningModel):
                     x = x.unsqueeze(0)
                 return self.encoder(x)
 
-
             def decode_forward(self, z):
                 """Decode latent vectors to the original sample shape."""
                 x_recon = self.decoder(z)
                 return x_recon.view(x_recon.size(0), *self.sample_shape)
 
-        return StandardAutoencoderModel(n_features, self.hidden_dims, self.k, sample_shape)
+        return StandardAutoencoderModel(
+            n_features, self.hidden_dims, self.k, sample_shape
+        )
 
 
 class OrthogonalAutoencoder(BaseDeepLearningModel):
@@ -353,7 +372,6 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
                 decorr_loss = getattr(self.latent_decorr, "_loss", None)
                 return ortho_loss, decorr_loss
 
-
             def decode_forward(self, z):
                 """Decode latent vectors to the original sample shape."""
                 x_recon = self.decoder(z)
@@ -383,6 +401,7 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
         **kwargs,
     ) -> Dict[str, list]:
         """Fit with orthogonality and latent-decorrelation penalties."""
+        learning_rate = self._validate_learning_rate(learning_rate)
         if not isinstance(X, np.ndarray):
             raise TypeError("X must be a NumPy array.")
         if y is None:
@@ -453,9 +472,7 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
                 self._require_matching_output_shape(
                     output, batch_y, "Orthogonal training"
                 )
-                self._require_finite_tensor(
-                    output, "Orthogonal training output"
-                )
+                self._require_finite_tensor(output, "Orthogonal training output")
                 self._require_finite_buffers()
                 reconstruction_loss = criterion(output, batch_y)
                 self._require_scalar_loss(reconstruction_loss)
@@ -479,9 +496,7 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
                     current_batch_size,
                     criterion,
                 )
-                train_total += (
-                    float(regularization_loss.item()) * current_batch_size
-                )
+                train_total += float(regularization_loss.item()) * current_batch_size
                 train_sample_count += current_batch_size
 
             train_loss = train_total / train_sample_count
@@ -502,15 +517,11 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
                     self._require_matching_output_shape(
                         output, batch_y, "Orthogonal validation"
                     )
-                    self._require_finite_tensor(
-                        output, "Orthogonal validation output"
-                    )
+                    self._require_finite_tensor(output, "Orthogonal validation output")
                     self._require_finite_parameters()
                     reconstruction_loss = criterion(output, batch_y)
                     self._require_scalar_loss(reconstruction_loss)
-                    ortho_loss, decorr_loss = (
-                        self.model.get_regularization_losses()
-                    )
+                    ortho_loss, decorr_loss = self.model.get_regularization_losses()
                     regularization_loss = torch.zeros(
                         (), device=self.device, dtype=reconstruction_loss.dtype
                     )
@@ -599,9 +610,7 @@ class LSTMAutoencoder(BaseDeepLearningModel):
     ):
         self.k = _validate_positive_integer("k", k)
         self.hidden = tuple(
-            _validate_positive_integer_sequence(
-                "hidden", hidden, expected_length=2
-            )
+            _validate_positive_integer_sequence("hidden", hidden, expected_length=2)
         )
         super().__init__(device=device, **kwargs)
 
@@ -663,13 +672,10 @@ class LSTMAutoencoder(BaseDeepLearningModel):
                 z = self.latent(x[:, -1, :])  # Take last timestep
                 return z
 
-
             def decode_forward(self, z):
                 """Decode latent vectors to full temporal sequences."""
                 z_expanded = (
-                    self.latent_to_seq(z)
-                    .unsqueeze(1)
-                    .repeat(1, self.seq_len, 1)
+                    self.latent_to_seq(z).unsqueeze(1).repeat(1, self.seq_len, 1)
                 )
                 x, _ = self.lstm3(z_expanded)
                 x, _ = self.lstm4(x)
@@ -856,7 +862,6 @@ class CNNAutoencoder(BaseDeepLearningModel):
 
                 return z
 
-
             def decode_forward(self, z):
                 """Decode latent vectors to channels-first spatial grids."""
                 batch_size = z.size(0)
@@ -933,9 +938,7 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
         **kwargs,
     ):
         self.k = _validate_positive_integer("k", k)
-        self.patch_size = _validate_positive_integer(
-            "patch_size", patch_size
-        )
+        self.patch_size = _validate_positive_integer("patch_size", patch_size)
         self.d_model = _validate_positive_integer("d_model", d_model)
         if self.d_model < 3:
             raise ValueError("d_model must be at least 3.")
@@ -1132,7 +1135,6 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
 
                 return z_k
 
-
             def decode_forward(self, z):
                 """Decode latent vectors to channels-first spatial grids."""
                 batch_size = z.size(0)
@@ -1145,9 +1147,7 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
                 patch_tokens = self.patch_reconstruct(y)
                 reconstruction = self.unpatchify(patch_tokens)
                 if self.pad_h > 0 or self.pad_w > 0:
-                    reconstruction = reconstruction[
-                        :, :, : self.H, : self.W
-                    ]
+                    reconstruction = reconstruction[:, :, : self.H, : self.W]
                 return reconstruction
 
         return ViTAutoencoderModel(
@@ -1165,6 +1165,7 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
             N,
             Pdim,
         )
+
 
 class ConvLSTMAutoencoder(BaseDeepLearningModel):
     """ConvLSTM autoencoder for complete spatiotemporal sequences.
@@ -1236,8 +1237,7 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
             raise TypeError("X must be a NumPy array.")
         if X.ndim != 5:
             raise ValueError(
-                "ConvLSTMAutoencoder expects 5D input "
-                "(n_samples, seq_len, C, H, W)."
+                "ConvLSTMAutoencoder expects 5D input (n_samples, seq_len, C, H, W)."
             )
         return X
 
@@ -1259,8 +1259,7 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
         """Build the ConvLSTM encoder and full-sequence decoder."""
         if len(input_shape) != 5:
             raise ValueError(
-                "ConvLSTMAutoencoder expects input shape "
-                "(n_samples, seq_len, C, H, W)."
+                "ConvLSTMAutoencoder expects input shape (n_samples, seq_len, C, H, W)."
             )
 
         seq_len = input_shape[1]
@@ -1346,15 +1345,13 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
             def _validate_input(self, x: torch.Tensor) -> None:
                 if x.dim() != 5:
                     raise ValueError(
-                        "ConvLSTMAutoencoder expects 5D input "
-                        "(B, T, C, H, W)."
+                        "ConvLSTMAutoencoder expects 5D input (B, T, C, H, W)."
                     )
                 sample_shape = tuple(x.shape[1:])
                 expected = (self.seq_len, self.C, self.H, self.W)
                 if sample_shape != expected:
                     raise ValueError(
-                        f"Expected per-sample shape {expected}, "
-                        f"got {sample_shape}."
+                        f"Expected per-sample shape {expected}, got {sample_shape}."
                     )
 
             def _encode(self, x: torch.Tensor) -> torch.Tensor:
@@ -1411,9 +1408,7 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
                         f"got {tuple(z.shape)}."
                     )
 
-                temporal_input = (
-                    z.unsqueeze(1) + self.decoder_time_embedding
-                )
+                temporal_input = z.unsqueeze(1) + self.decoder_time_embedding
                 temporal_codes, _ = self.temporal_decoder(temporal_input)
                 batch_size = z.size(0)
                 frames = self._decode_spatial(
@@ -1480,9 +1475,7 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
         if self.d_model % self.n_heads != 0:
             raise ValueError("d_model must be divisible by n_heads.")
         if efficient_attention not in {"linear", None}:
-            raise ValueError(
-                "efficient_attention must be 'linear' or None."
-            )
+            raise ValueError("efficient_attention must be 'linear' or None.")
         self.efficient_attention = efficient_attention
         super().__init__(device=device, **kwargs)
 
@@ -1705,8 +1698,7 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                 expected = (self.seq_len, self.C, self.H, self.W)
                 if sample_shape != expected:
                     raise ValueError(
-                        f"Expected per-sample shape {expected}, "
-                        f"got {sample_shape}."
+                        f"Expected per-sample shape {expected}, got {sample_shape}."
                     )
 
             def _encode(self, x: torch.Tensor) -> torch.Tensor:
@@ -1774,9 +1766,7 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                     )
 
                 decoder_tokens = self.latent_to_decoder(z).unsqueeze(1)
-                decoder_tokens = (
-                    decoder_tokens + self.decoder_time_queries
-                )
+                decoder_tokens = decoder_tokens + self.decoder_time_queries
                 decoder_tokens = self.decoder_time_pos_enc(decoder_tokens)
                 decoder_tokens = self._run_blocks(
                     decoder_tokens,
