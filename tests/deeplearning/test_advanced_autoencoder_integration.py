@@ -7,16 +7,35 @@ torch = pytest.importorskip("torch")
 
 from bluemath_tk.deeplearning import autoencoders  # noqa: E402
 from bluemath_tk.deeplearning.autoencoders import (  # noqa: E402
+    CNNAutoencoder,
+    ConvLSTMAutoencoder,
+    HybridConvLSTMTransformerAutoencoder,
+    LSTMAutoencoder,
+    OrthogonalAutoencoder,
     SpatialTokenConvLSTMTransformerAutoencoder,
+    StandardAutoencoder,
     VariationalAutoencoder,
+    VisionTransformerAutoencoder,
 )
 
 
 @pytest.fixture(autouse=True)
 def _set_seed():
-    np.random.seed(607)
-    torch.manual_seed(607)
-    torch.set_num_threads(1)
+    previous_threads = torch.get_num_threads()
+    numpy_state = np.random.get_state()
+    torch_state = torch.random.get_rng_state()
+    cuda_states = torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
+    try:
+        np.random.seed(607)
+        torch.manual_seed(607)
+        torch.set_num_threads(1)
+        yield
+    finally:
+        torch.set_num_threads(previous_threads)
+        np.random.set_state(numpy_state)
+        torch.random.set_rng_state(torch_state)
+        if cuda_states is not None:
+            torch.cuda.set_rng_state_all(cuda_states)
 
 
 def test_advanced_autoencoders_are_publicly_exported():
@@ -25,6 +44,26 @@ def test_advanced_autoencoders_are_publicly_exported():
         autoencoders.SpatialTokenConvLSTMTransformerAutoencoder
         is SpatialTokenConvLSTMTransformerAutoencoder
     )
+
+
+def test_autoencoder_all_contains_exact_public_classes():
+    expected = {
+        "StandardAutoencoder": StandardAutoencoder,
+        "OrthogonalAutoencoder": OrthogonalAutoencoder,
+        "LSTMAutoencoder": LSTMAutoencoder,
+        "CNNAutoencoder": CNNAutoencoder,
+        "VisionTransformerAutoencoder": VisionTransformerAutoencoder,
+        "ConvLSTMAutoencoder": ConvLSTMAutoencoder,
+        "HybridConvLSTMTransformerAutoencoder": (HybridConvLSTMTransformerAutoencoder),
+        "VariationalAutoencoder": VariationalAutoencoder,
+        "SpatialTokenConvLSTMTransformerAutoencoder": (
+            SpatialTokenConvLSTMTransformerAutoencoder
+        ),
+    }
+
+    assert autoencoders.__all__ == list(expected)
+    for name, intended_class in expected.items():
+        assert getattr(autoencoders, name) is intended_class
 
 
 def test_advanced_autoencoders_follow_common_encode_decode_contract():

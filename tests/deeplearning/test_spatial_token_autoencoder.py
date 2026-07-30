@@ -15,11 +15,20 @@ from bluemath_tk.deeplearning.spatiotemporal_autoencoders import (
 @pytest.fixture(autouse=True)
 def _set_seed():
     previous_threads = torch.get_num_threads()
-    np.random.seed(503)
-    torch.manual_seed(503)
-    torch.set_num_threads(1)
-    yield
-    torch.set_num_threads(previous_threads)
+    numpy_state = np.random.get_state()
+    torch_state = torch.random.get_rng_state()
+    cuda_states = torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
+    try:
+        np.random.seed(503)
+        torch.manual_seed(503)
+        torch.set_num_threads(1)
+        yield
+    finally:
+        torch.set_num_threads(previous_threads)
+        np.random.set_state(numpy_state)
+        torch.random.set_rng_state(torch_state)
+        if cuda_states is not None:
+            torch.cuda.set_rng_state_all(cuda_states)
 
 
 def _model():
