@@ -163,11 +163,8 @@ def test_vit_autoencoder_d_model_can_differ_from_patch_dimension():
     assert np.isfinite(Z).all()
 
 
-def test_convlstm_autoencoder_default_fit_reconstructs_documented_single_frame():
-    """
-    ConvLSTMAutoencoder example/docstring says fit(X) should work and predict
-    returns a single reconstructed frame with shape (B, C, H, W).
-    """
+def test_convlstm_autoencoder_reconstructs_complete_sequence():
+    """ConvLSTMAutoencoder should reconstruct its complete input sequence."""
     X = np.random.randn(16, 3, 1, 8, 8).astype("float32")
 
     ae = ConvLSTMAutoencoder(
@@ -180,17 +177,14 @@ def test_convlstm_autoencoder_default_fit_reconstructs_documented_single_frame()
     Z = ae.encode(X, batch_size=4, verbose=0)
 
     assert set(history) == {"train_loss", "val_loss"}
-    assert X_hat.shape == X[:, -1].shape
+    assert X_hat.shape == X.shape
     assert Z.shape == (16, 4)
     assert np.isfinite(X_hat).all()
     assert np.isfinite(Z).all()
 
 
-def test_hybrid_autoencoder_default_fit_reconstructs_documented_single_frame():
-    """
-    HybridConvLSTMTransformerAutoencoder example/docstring says fit(X) should
-    work and predict returns a single reconstructed frame with shape (B, C, H, W).
-    """
+def test_hybrid_autoencoder_reconstructs_complete_sequence():
+    """The hybrid autoencoder should reconstruct its complete input sequence."""
     X = np.random.randn(16, 3, 1, 8, 8).astype("float32")
 
     ae = HybridConvLSTMTransformerAutoencoder(
@@ -207,7 +201,7 @@ def test_hybrid_autoencoder_default_fit_reconstructs_documented_single_frame():
     Z = ae.encode(X, batch_size=4, verbose=0)
 
     assert set(history) == {"train_loss", "val_loss"}
-    assert X_hat.shape == X[:, -1].shape
+    assert X_hat.shape == X.shape
     assert Z.shape == (16, 4)
     assert np.isfinite(X_hat).all()
     assert np.isfinite(Z).all()
