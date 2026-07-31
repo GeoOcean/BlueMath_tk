@@ -35,6 +35,10 @@ hex_colors_water = [
     "#f1e2c6",
 ]
 
+# Fractional position within `hex_colors_water` where the deep blues give way to the
+# shallow beige/green tones (index of "#c8ebd8" over the number of colour intervals).
+hex_colors_water_transition = 7 / (len(hex_colors_water) - 1)
+
 hex_colors_land = [
     "#cfe2bd",
     "#aece91",
