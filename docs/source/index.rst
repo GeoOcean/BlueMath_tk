@@ -14,6 +14,7 @@ BlueMath-tk: A Python Library for Coastal Climate Hazards
    installation
    contribute
    modules
+   validation
 
 Indices and tables
 ==================
