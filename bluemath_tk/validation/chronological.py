@@ -5,20 +5,21 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from decimal import ROUND_FLOOR, Decimal
+from fractions import Fraction
 from numbers import Integral, Real
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any
+from typing import Any, TypeAlias
 
 import numpy as np
 import pandas as pd
 
-_SCHEMA_VERSION = 1
-_FINGERPRINT_SCHEMA = "bluemath-time-axis-v2"
+_SCHEMA_VERSION = 2
+_FINGERPRINT_SCHEMA = "bluemath-time-axis-v3"
 _DEFAULT_FRACTIONS = (0.7, 0.15, 0.15)
 _BOUNDARY_POLICY = "complete_interval_half_open"
 _PARTITION_CLOSURE = "train:end<b1;validation:start>=b1,end<b2;test:start>=b2"
@@ -33,6 +34,23 @@ _SUPPORTED_TIME_KINDS = {
 
 JsonScalar = str | int | float | bool | None
 JsonValue = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
+RealScalar: TypeAlias = Real | np.floating[Any] | np.integer[Any]
+CanonicalFraction = tuple[Fraction, str]
+
+_FRACTION_SUM_TOLERANCE = Fraction(1, 10_000_000)
+_FIXED_DATETIME_UNIT_TO_NS: dict[str, Fraction] = {
+    "W": Fraction(604_800_000_000_000, 1),
+    "D": Fraction(86_400_000_000_000, 1),
+    "h": Fraction(3_600_000_000_000, 1),
+    "m": Fraction(60_000_000_000, 1),
+    "s": Fraction(1_000_000_000, 1),
+    "ms": Fraction(1_000_000, 1),
+    "us": Fraction(1_000, 1),
+    "ns": Fraction(1, 1),
+    "ps": Fraction(1, 1_000),
+    "fs": Fraction(1, 1_000_000),
+    "as": Fraction(1, 1_000_000_000),
+}
 
 
 def _is_exact_integer(value: Any) -> bool:
@@ -56,6 +74,26 @@ def _validate_index_values(
             raise TypeError(f"{name} must contain exact non-Boolean integer values.")
         normalized.append(int(value))
     result = tuple(normalized)
+    if result != tuple(sorted(result)):
+        raise ValueError(f"{name} must be sorted in ascending order.")
+    if len(set(result)) != len(result):
+        raise ValueError(f"{name} must not contain repeated indices.")
+    if any(value < 0 or value >= n_samples for value in result):
+        raise ValueError(f"{name} contains an index outside [0, n_samples).")
+    return result
+
+
+def _validate_manifest_index_values(
+    values: Any,
+    *,
+    name: str,
+    n_samples: int,
+) -> tuple[int, ...]:
+    if type(values) not in {list, tuple}:
+        raise TypeError(f"{name} must be a JSON-style list or tuple of integers.")
+    if any(type(value) is not int for value in values):
+        raise TypeError(f"{name} must contain exact built-in integer values.")
+    result = tuple(values)
     if result != tuple(sorted(result)):
         raise ValueError(f"{name} must be sorted in ascending order.")
     if len(set(result)) != len(result):
@@ -140,7 +178,10 @@ def _require_sequence(value: Any, *, name: str, length: int) -> list[Any]:
         raise TypeError(
             f"{name} must be a one-dimensional sequence of length {length}."
         )
-    array = np.asarray(value, dtype=object)
+    if isinstance(value, np.ndarray):
+        array = np.asarray(value)
+    else:
+        array = np.asarray(value, dtype=object)
     if array.ndim == 0:
         raise TypeError(
             f"{name} must be a one-dimensional sequence of length {length}."
@@ -149,7 +190,7 @@ def _require_sequence(value: Any, *, name: str, length: int) -> list[Any]:
         raise ValueError(f"{name} must be one-dimensional.")
     if array.size != length:
         raise ValueError(f"{name} must contain exactly {length} values.")
-    return array.tolist()
+    return [array[index] for index in range(array.size)]
 
 
 def _validate_gap(gap: Any) -> int:
@@ -161,37 +202,102 @@ def _validate_gap(gap: Any) -> int:
     return gap_int
 
 
-def _validate_fractions(fractions: Any) -> tuple[float, float, float]:
-    values = _require_sequence(fractions, name="fractions", length=3)
-    validated: list[float] = []
-    for value in values:
-        if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
-            raise TypeError("Every fraction must be a finite real number, not Boolean.")
-        number = float(value)
+def _canonicalize_fraction_scalar(value: Any, *, name: str) -> CanonicalFraction:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
+        raise TypeError(f"{name} must be a finite real number, not Boolean.")
+    if isinstance(value, Fraction):
+        fraction = value
+    elif isinstance(value, np.floating):
+        if not bool(np.isfinite(value)):
+            raise ValueError(f"{name} must be finite.")
+        fraction = Fraction(str(value))
+    elif isinstance(value, float):
+        if not math.isfinite(value):
+            raise ValueError(f"{name} must be finite.")
+        fraction = Fraction(str(value))
+    elif isinstance(value, Integral):
+        fraction = Fraction(int(value), 1)
+    else:
+        try:
+            number = float(value)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise TypeError(f"{name} must be a finite real number.") from exc
         if not math.isfinite(number):
-            raise ValueError("Fractions must be finite.")
-        if number <= 0 or number >= 1:
-            raise ValueError("Every fraction must be strictly between zero and one.")
-        validated.append(number)
-    if not math.isclose(sum(validated), 1.0, rel_tol=0.0, abs_tol=1e-7):
+            raise ValueError(f"{name} must be finite.")
+        fraction = Fraction(str(value))
+    if fraction <= 0 or fraction >= 1:
+        raise ValueError(f"{name} must be strictly between zero and one.")
+    canonical = f"{fraction.numerator}/{fraction.denominator}"
+    return fraction, canonical
+
+
+def _fraction_from_canonical(value: Any, *, name: str) -> Fraction:
+    if (
+        type(value) is not str
+        or re.fullmatch(
+            r"[1-9][0-9]*/[1-9][0-9]*",
+            value,
+        )
+        is None
+    ):
+        raise TypeError(
+            f"{name} must be a canonical positive numerator/denominator string."
+        )
+    numerator_text, denominator_text = value.split("/", maxsplit=1)
+    fraction = Fraction(int(numerator_text), int(denominator_text))
+    if fraction <= 0 or fraction >= 1:
+        raise ValueError(
+            f"{name} must represent a value strictly between zero and one."
+        )
+    if value != f"{fraction.numerator}/{fraction.denominator}":
+        raise ValueError(f"{name} must use reduced canonical fraction form.")
+    return fraction
+
+
+def _validate_runtime_fractions(
+    fractions: Any,
+) -> tuple[tuple[Fraction, Fraction, Fraction], tuple[str, str, str]]:
+    values = _require_sequence(fractions, name="fractions", length=3)
+    canonicalized = tuple(
+        _canonicalize_fraction_scalar(value, name=f"fractions[{index}]")
+        for index, value in enumerate(values)
+    )
+    exact = tuple(item[0] for item in canonicalized)
+    canonical = tuple(item[1] for item in canonicalized)
+    if abs(sum(exact, start=Fraction(0, 1)) - 1) > _FRACTION_SUM_TOLERANCE:
         raise ValueError("Train, validation, and test fractions must sum to 1.0.")
-    return validated[0], validated[1], validated[2]
+    return exact, canonical
+
+
+def _validate_manifest_fractions(
+    fractions: Any,
+) -> tuple[tuple[Fraction, Fraction, Fraction], tuple[str, str, str]]:
+    values = _require_sequence(
+        fractions,
+        name="parameters.fractions",
+        length=3,
+    )
+    exact = tuple(
+        _fraction_from_canonical(
+            value,
+            name=f"parameters.fractions[{index}]",
+        )
+        for index, value in enumerate(values)
+    )
+    if abs(sum(exact, start=Fraction(0, 1)) - 1) > _FRACTION_SUM_TOLERANCE:
+        raise ValueError("Manifest fractions must sum to 1.0.")
+    return exact, tuple(values)
 
 
 def _fraction_boundary_indices(
     n_samples: int,
-    fractions: tuple[float, float, float],
+    fractions: tuple[Fraction, Fraction, Fraction],
 ) -> tuple[int, int]:
-    """Resolve cumulative-floor boundaries without binary-float underflow."""
-    train = Decimal(str(fractions[0]))
-    validation = Decimal(str(fractions[1]))
-    sample_count = Decimal(n_samples)
-    validation_index = int(
-        (sample_count * train).to_integral_value(rounding=ROUND_FLOOR)
-    )
-    test_index = int(
-        (sample_count * (train + validation)).to_integral_value(rounding=ROUND_FLOOR)
-    )
+    """Resolve cumulative-floor boundaries using exact rational arithmetic."""
+    train, validation, _ = fractions
+    validation_index = (n_samples * train.numerator) // train.denominator
+    cumulative = train + validation
+    test_index = (n_samples * cumulative.numerator) // cumulative.denominator
     return validation_index, test_index
 
 
@@ -257,6 +363,61 @@ def _datetime_to_ns(value: Any, *, name: str, aware: bool) -> int:
     return value_ns
 
 
+def _numpy_datetime_scalar_to_ns(value: np.datetime64, *, name: str) -> int:
+    if np.isnat(value):
+        raise ValueError(f"{name} contains NaT values.")
+    unit, step = np.datetime_data(value.dtype)
+    if unit == "generic":
+        raise ValueError(f"{name} uses an unsupported generic datetime64 unit.")
+    raw = int(value.astype(np.int64))
+    if unit in {"Y", "M"}:
+        calendar_offset = raw * step
+        if unit == "Y":
+            year = 1970 + calendar_offset
+            month = None
+        else:
+            year_offset, month_index = divmod(calendar_offset, 12)
+            year = 1970 + year_offset
+            month = month_index + 1
+        if year < 1677 or year > 2262:
+            raise ValueError(
+                f"{name} contains a datetime outside the supported nanosecond range."
+            )
+        text = f"{year:04d}" if month is None else f"{year:04d}-{month:02d}"
+        return _datetime_to_ns(text, name=name, aware=False)
+    scale = _FIXED_DATETIME_UNIT_TO_NS.get(unit)
+    if scale is None:
+        raise ValueError(f"{name} uses unsupported datetime64 unit {unit!r}.")
+    exact_ns = Fraction(raw * step, 1) * scale
+    if exact_ns.denominator != 1:
+        raise ValueError(
+            f"{name} contains a datetime64[{unit}] value that is not an exact "
+            "nanosecond multiple."
+        )
+    value_ns = exact_ns.numerator
+    if value_ns < np.iinfo(np.int64).min + 1 or value_ns > np.iinfo(np.int64).max:
+        raise ValueError(
+            f"{name} contains a datetime outside the supported nanosecond range."
+        )
+    return int(value_ns)
+
+
+def _normalize_numpy_datetime_array(
+    array: np.ndarray,
+    *,
+    name: str,
+) -> tuple[np.ndarray, str, tuple[str, ...]]:
+    integers = np.array(
+        [_numpy_datetime_scalar_to_ns(value, name=name) for value in array],
+        dtype=np.int64,
+    )
+    return (
+        integers,
+        "datetime64[ns]-naive",
+        tuple(str(int(value)) for value in integers),
+    )
+
+
 def _normalize_datetime_values(
     items: list[Any],
     *,
@@ -266,10 +427,17 @@ def _normalize_datetime_values(
     if any(awareness) and not all(awareness):
         raise ValueError(f"{name} mixes timezone-aware and timezone-naive values.")
     aware = all(awareness)
-    integers = np.array(
-        [_datetime_to_ns(item, name=name, aware=aware) for item in items],
-        dtype=np.int64,
-    )
+    normalized: list[int] = []
+    for item in items:
+        if isinstance(item, np.datetime64):
+            if aware:
+                raise ValueError(
+                    f"{name} mixes timezone-aware values with NumPy datetime64 values."
+                )
+            normalized.append(_numpy_datetime_scalar_to_ns(item, name=name))
+        else:
+            normalized.append(_datetime_to_ns(item, name=name, aware=aware))
+    integers = np.array(normalized, dtype=np.int64)
     kind = "datetime64[ns]-aware-utc" if aware else "datetime64[ns]-naive"
     return integers, kind, tuple(str(int(value)) for value in integers)
 
@@ -309,7 +477,7 @@ def _normalize_time_values(
         raise ValueError(f"{name} must not be empty.")
 
     if np.issubdtype(array.dtype, np.datetime64):
-        return _normalize_datetime_values(array.tolist(), name=name)
+        return _normalize_numpy_datetime_array(array, name=name)
     if np.issubdtype(array.dtype, np.bool_):
         raise TypeError(f"{name} must not contain Boolean values.")
     if np.issubdtype(array.dtype, np.integer):
@@ -587,7 +755,9 @@ def _validate_manifest_parameters(
     if method == "fractions":
         if validated_json["rounding_policy"] != _ROUNDING_POLICY:
             raise ValueError("Manifest rounding_policy is unsupported.")
-        fractions = _validate_fractions(validated_json["fractions"])
+        fractions, canonical_fractions = _validate_manifest_fractions(
+            validated_json["fractions"]
+        )
         validation_index, test_index = _fraction_boundary_indices(
             n_samples,
             fractions,
@@ -624,7 +794,7 @@ def _validate_manifest_parameters(
                 time_kind=time_kind,
                 name=f"parameters.resolved_boundary_values[{index}]",
             )
-        validated_json["fractions"] = list(fractions)
+        validated_json["fractions"] = list(canonical_fractions)
         validated_json["resolved_boundary_indices"] = resolved_indices
         validated_json["resolved_boundary_values"] = resolved_values
     elif method == "boundary_indices":
@@ -799,29 +969,29 @@ class ValidationSplitManifest:
             raise TypeError("n_samples must be an exact non-Boolean integer.")
         if self.n_samples < 3:
             raise ValueError("n_samples must be at least 3.")
-        if type(self.method) is not str or self.method not in {
+        if type(self.method) is not str:
+            raise TypeError("method must be an exact built-in string.")
+        if self.method not in {
             "fractions",
             "boundary_indices",
             "boundary_times",
         }:
             raise ValueError(f"Unsupported split method: {self.method!r}.")
+        if type(self.axis_mode) is not str:
+            raise TypeError("axis_mode must be an exact built-in string.")
         if self.axis_mode not in {"point", "interval"}:
             raise ValueError("axis_mode must be 'point' or 'interval'.")
+        if type(self.time_kind) is not str:
+            raise TypeError("time_kind must be an exact built-in string.")
         if self.time_kind not in _SUPPORTED_TIME_KINDS:
             raise ValueError(f"Unsupported time_kind: {self.time_kind!r}.")
-        if (
-            type(self.dataset_fingerprint) is not str
-            or len(self.dataset_fingerprint) != 64
-        ):
+        if type(self.dataset_fingerprint) is not str:
+            raise TypeError("dataset_fingerprint must be an exact built-in string.")
+        if re.fullmatch(r"[0-9a-f]{64}", self.dataset_fingerprint) is None:
             raise ValueError(
-                "dataset_fingerprint must be a 64-character SHA-256 hex digest."
+                "dataset_fingerprint must be a lowercase 64-character SHA-256 "
+                "hex digest."
             )
-        try:
-            int(self.dataset_fingerprint, 16)
-        except ValueError as exc:
-            raise ValueError(
-                "dataset_fingerprint must contain hexadecimal characters."
-            ) from exc
 
         validated_parameters = _validate_manifest_parameters(
             self.method,
@@ -843,7 +1013,7 @@ class ValidationSplitManifest:
         }
         normalized: dict[str, tuple[int, ...]] = {}
         for name, values in partitions.items():
-            normalized[name] = _validate_index_values(
+            normalized[name] = _validate_manifest_index_values(
                 values,
                 name=name,
                 n_samples=self.n_samples,
@@ -902,6 +1072,8 @@ class ValidationSplitManifest:
         """Construct a validated manifest from a dictionary."""
         if not isinstance(payload, Mapping):
             raise TypeError("Manifest payload must be a mapping.")
+        if any(type(key) is not str for key in payload):
+            raise TypeError("Manifest field names must be exact built-in strings.")
         required = {
             "schema_version",
             "method",
@@ -921,6 +1093,17 @@ class ValidationSplitManifest:
             raise ValueError(f"Manifest is missing required fields: {missing}.")
         if extra:
             raise ValueError(f"Manifest contains unsupported fields: {extra}.")
+        if type(payload["parameters"]) is not dict:
+            raise TypeError("Manifest parameters must be an exact JSON object.")
+        for field_name in (
+            "train_indices",
+            "validation_indices",
+            "test_indices",
+            "excluded_indices",
+        ):
+            if type(payload[field_name]) is not list:
+                raise TypeError(f"Manifest {field_name} must be an exact JSON list.")
+        _validate_json_value(dict(payload), path="manifest")
         return cls(**{key: payload[key] for key in required})
 
     @classmethod
@@ -1096,7 +1279,7 @@ def split_chronologically(
     sample_times: Sequence[Any] | np.ndarray | pd.Index | pd.Series | None = None,
     sample_start_times: Sequence[Any] | np.ndarray | pd.Index | pd.Series | None = None,
     sample_end_times: Sequence[Any] | np.ndarray | pd.Index | pd.Series | None = None,
-    fractions: Sequence[float] | None = None,
+    fractions: Sequence[RealScalar] | None = None,
     boundary_indices: Sequence[int] | None = None,
     boundary_times: Sequence[Any] | None = None,
     gap: int = 0,
@@ -1135,7 +1318,9 @@ def split_chronologically(
 
     parameters = _base_parameters(gap_int)
     if fractions is not None:
-        validated_fractions = _validate_fractions(fractions)
+        validated_fractions, canonical_fractions = _validate_runtime_fractions(
+            fractions
+        )
         validation_index, test_index = _fraction_boundary_indices(
             axis.n_samples,
             validated_fractions,
@@ -1152,7 +1337,7 @@ def split_chronologically(
         method = "fractions"
         parameters.update(
             {
-                "fractions": list(validated_fractions),
+                "fractions": list(canonical_fractions),
                 "rounding_policy": _ROUNDING_POLICY,
                 "resolved_boundary_indices": [validation_index, test_index],
                 "resolved_boundary_values": [

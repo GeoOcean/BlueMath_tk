@@ -2,6 +2,7 @@
 
 from .chronological import (
     ChronologicalSplit,
+    RealScalar,
     ValidationSplitManifest,
     apply_split_manifest,
     split_chronologically,
@@ -9,6 +10,7 @@ from .chronological import (
 
 __all__ = [
     "ChronologicalSplit",
+    "RealScalar",
     "ValidationSplitManifest",
     "apply_split_manifest",
     "split_chronologically",

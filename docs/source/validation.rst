@@ -39,10 +39,15 @@ Fraction splits use cumulative flooring. For ``n`` samples and fractions
 
 The test partition receives the remainder. Fractions must be positive finite
 real scalars, must sum to one within numerical tolerance, and must leave all
-three candidate partitions non-empty. Boundary resolution uses a decimal-safe
-representation of the validated scalars, so common values such as
-``(0.7, 0.1, 0.2)`` do not lose a sample through binary floating-point
-round-off. ``fractions.Fraction`` and NumPy real scalars are supported.
+three candidate partitions non-empty. Boundary resolution preserves an exact
+canonical rational for every scalar. ``fractions.Fraction`` values retain their
+exact numerator and denominator. Python and NumPy floating scalars use their
+round-trip decimal spelling before conversion to a rational. Homogeneous NumPy
+arrays retain their original scalar dtype during sequence validation, so common
+values such as ``np.array([0.7, 0.1, 0.2], dtype=np.float32)`` resolve to
+``(7/10, 1/10, 1/5)`` without an intermediate Python ``float`` conversion. The
+manifest stores reduced ``numerator/denominator`` strings and therefore replays
+with the same arithmetic after JSON round trips.
 
 Explicit boundaries
 -------------------
@@ -113,6 +118,14 @@ at checked nanosecond resolution. Timezone awareness remains part of the
 manifest and fingerprint, so an aware axis cannot be replayed as a naive axis.
 Values outside the supported nanosecond range, or values that cannot round-trip
 exactly at that resolution, are rejected rather than wrapped or truncated.
+NumPy ``datetime64`` arrays retain their dtype unit during normalization.
+Sub-nanosecond units such as picoseconds and femtoseconds are accepted only
+when every value is an exact nanosecond multiple; otherwise the split is
+rejected. Calendar units, including stepped year and month dtypes, are checked
+with arbitrary-precision offsets before NumPy renders a date, so extreme counts
+cannot wrap into ordinary in-range dates. Equivalent exact
+picosecond/nanosecond axes therefore share a fingerprint, while scaled,
+truncated, or wrapped axes do not.
 
 Timezone-naive datetime values remain distinct from timezone-aware values.
 Interval starts, ends, and explicit time boundaries must use the same awareness
@@ -147,6 +160,7 @@ unknown parameters, missing parameters, coercible non-integer indices, and
 unsupported schema versions are rejected. During replay, BlueMath_tk recomputes
 the split from the stored parameters and supplied coordinates and compares all
 partitions. Changed, reordered, or contradictory data therefore fail clearly.
+SHA-256 digests are stored as exactly 64 lowercase hexadecimal characters.
 
 Preprocessing
 -------------

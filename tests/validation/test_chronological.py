@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from fractions import Fraction
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -11,6 +12,7 @@ import pytest
 
 from bluemath_tk.validation import (
     ChronologicalSplit,
+    RealScalar,
     ValidationSplitManifest,
     apply_split_manifest,
     split_chronologically,
@@ -260,7 +262,7 @@ def test_manifest_json_is_stable_and_has_newline():
     second = ValidationSplitManifest.from_dict(split.manifest.to_dict()).to_json()
     assert first == second
     assert first.endswith("\n")
-    assert '"schema_version": 1' in first
+    assert '"schema_version": 2' in first
     assert '"axis_mode": "point"' in first
 
 
@@ -430,7 +432,7 @@ def test_manifest_rejects_coercible_index_values(value):
     split = split_chronologically(sample_times=np.arange(10), boundary_indices=(5, 8))
     payload = split.manifest.to_dict()
     payload["train_indices"][0] = value
-    with pytest.raises(TypeError, match="exact non-Boolean integer"):
+    with pytest.raises(TypeError, match="integer|non-JSON"):
         ValidationSplitManifest.from_dict(payload)
 
 
@@ -474,7 +476,7 @@ def test_manifest_fraction_parameters_are_cross_validated():
         fractions=(0.7, 0.15, 0.15),
     )
     for field, value in (
-        ("fractions", [0.6, 0.2, 0.2]),
+        ("fractions", ["3/5", "1/5", "1/5"]),
         ("resolved_boundary_indices", [13, 17]),
         ("gap_samples_before_later_partition", 9),
     ):
@@ -602,3 +604,214 @@ def test_manifest_replay_recomputes_gap_partitions():
     altered = ValidationSplitManifest.from_dict(payload)
     with pytest.raises(ValueError, match="contradicts"):
         apply_split_manifest(altered, sample_times=times)
+
+
+if TYPE_CHECKING:
+
+    def _fraction_typing_examples(values: tuple[RealScalar, RealScalar, RealScalar]):
+        split_chronologically(sample_times=np.arange(10), fractions=values)
+        split_chronologically(
+            sample_times=np.arange(3),
+            fractions=(Fraction(1, 3), np.float32(1 / 3), 1 / 3),
+        )
+
+
+@pytest.mark.parametrize(
+    "n_samples,expected_validation,expected_test",
+    [(3, 1, 2), (6, 2, 4)],
+)
+def test_exact_rational_thirds_use_exact_cumulative_floor(
+    n_samples,
+    expected_validation,
+    expected_test,
+):
+    split = split_chronologically(
+        sample_times=np.arange(n_samples),
+        fractions=(Fraction(1, 3), Fraction(1, 3), Fraction(1, 3)),
+    )
+    assert split.validation_indices[0] == expected_validation
+    assert split.test_indices[0] == expected_test
+    assert split.manifest.parameters["fractions"] == ("1/3", "1/3", "1/3")
+
+
+def test_high_denominator_fraction_near_floor_boundaries_is_exact():
+    denominator = 1_000_000_007
+    fractions = (
+        Fraction(333_333_336, denominator),
+        Fraction(333_333_336, denominator),
+        Fraction(333_333_335, denominator),
+    )
+    split = split_chronologically(sample_times=np.arange(3), fractions=fractions)
+    assert split.train_indices.tolist() == [0]
+    assert split.validation_indices.tolist() == [1]
+    assert split.test_indices.tolist() == [2]
+
+
+def test_numpy_float32_fractions_preserve_decimal_intent():
+    split = split_chronologically(
+        sample_times=np.arange(10),
+        fractions=(np.float32(0.7), np.float32(0.1), np.float32(0.2)),
+    )
+    assert split.manifest.parameters["fractions"] == ("7/10", "1/10", "1/5")
+    assert split.manifest.parameters["resolved_boundary_indices"] == (7, 8)
+
+
+def test_numpy_float32_fraction_array_preserves_intent_and_replays():
+    fractions = np.array([0.7, 0.1, 0.2], dtype=np.float32)
+    times = np.arange(10)
+    split = split_chronologically(sample_times=times, fractions=fractions)
+    assert split.manifest.parameters["fractions"] == ("7/10", "1/10", "1/5")
+    assert split.manifest.parameters["resolved_boundary_indices"] == (7, 8)
+
+    loaded = ValidationSplitManifest.from_dict(split.manifest.to_dict())
+    replay = apply_split_manifest(loaded, sample_times=times)
+    assert replay.train_indices.tolist() == list(range(7))
+    assert replay.validation_indices.tolist() == [7]
+    assert replay.test_indices.tolist() == [8, 9]
+
+
+def test_exact_fraction_manifest_round_trip_replays_identically(tmp_path):
+    times = np.arange(6)
+    split = split_chronologically(
+        sample_times=times,
+        fractions=(Fraction(1, 3), Fraction(1, 3), Fraction(1, 3)),
+    )
+    path = tmp_path / "fraction-split.json"
+    split.manifest.save(path)
+    loaded = ValidationSplitManifest.load(path)
+    replay = apply_split_manifest(loaded, sample_times=times)
+    assert loaded.parameters["fractions"] == ("1/3", "1/3", "1/3")
+    assert replay.validation_indices.tolist() == [2, 3]
+    assert replay.test_indices.tolist() == [4, 5]
+
+
+def test_numpy_picosecond_axis_replays_equivalent_nanoseconds_only():
+    picoseconds = np.array([0, 1000, 2000, 3000, 4000, 5000], dtype="datetime64[ps]")
+    split = split_chronologically(
+        sample_times=picoseconds,
+        boundary_indices=(2, 4),
+    )
+    equivalent_ns = picoseconds.astype("datetime64[ns]")
+    replay = apply_split_manifest(split.manifest, sample_times=equivalent_ns)
+    assert replay.validation_indices.tolist() == [2, 3]
+
+    scaled_collision = picoseconds.astype(np.int64).astype("datetime64[ns]")
+    with pytest.raises(ValueError, match="fingerprint"):
+        apply_split_manifest(split.manifest, sample_times=scaled_collision)
+
+
+def test_numpy_subnanosecond_values_must_be_exact_nanosecond_multiples():
+    picoseconds = np.array([0, 1001, 2000], dtype="datetime64[ps]")
+    with pytest.raises(ValueError, match="exact nanosecond multiple"):
+        split_chronologically(sample_times=picoseconds)
+
+
+def test_numpy_femtosecond_exact_multiples_normalize_to_nanoseconds():
+    femtoseconds = np.array(
+        [0, 1_000_000, 2_000_000, 3_000_000],
+        dtype="datetime64[fs]",
+    )
+    split = split_chronologically(
+        sample_times=femtoseconds,
+        boundary_indices=(1, 3),
+    )
+    equivalent_ns = femtoseconds.astype("datetime64[ns]")
+    replay = apply_split_manifest(split.manifest, sample_times=equivalent_ns)
+    assert replay.test_indices.tolist() == [3]
+
+
+@pytest.mark.parametrize(
+    "fingerprint",
+    [
+        "+" + "0" * 63,
+        " " + "0" * 63,
+        "g" + "0" * 63,
+        "A" * 64,
+        "0" * 63,
+    ],
+)
+def test_manifest_fingerprint_requires_lowercase_sha256_hex(fingerprint):
+    split = split_chronologically(sample_times=np.arange(10), boundary_indices=(5, 8))
+    payload = split.manifest.to_dict()
+    payload["dataset_fingerprint"] = fingerprint
+    with pytest.raises(ValueError, match="lowercase 64-character"):
+        ValidationSplitManifest.from_dict(payload)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("axis_mode", np.str_("point")),
+        ("time_kind", np.str_("integer-signed")),
+        ("method", np.str_("boundary_indices")),
+    ],
+)
+def test_manifest_rejects_numpy_string_top_level_metadata(field, value):
+    split = split_chronologically(sample_times=np.arange(10), boundary_indices=(5, 8))
+    payload = split.manifest.to_dict()
+    payload[field] = value
+    with pytest.raises(TypeError, match="non-JSON|built-in string"):
+        ValidationSplitManifest.from_dict(payload)
+
+
+@pytest.mark.parametrize("value", [np.int64(0), np.uint64(0)])
+def test_manifest_rejects_numpy_integral_indices(value):
+    split = split_chronologically(sample_times=np.arange(10), boundary_indices=(5, 8))
+    payload = split.manifest.to_dict()
+    payload["train_indices"][0] = value
+    with pytest.raises(TypeError, match="non-JSON|built-in integer"):
+        ValidationSplitManifest.from_dict(payload)
+
+
+@pytest.mark.parametrize("value", [[], {}, ["point"], {"point": True}])
+def test_manifest_axis_mode_container_types_raise_clear_type_error(value):
+    split = split_chronologically(sample_times=np.arange(10), boundary_indices=(5, 8))
+    payload = split.manifest.to_dict()
+    payload["axis_mode"] = value
+    with pytest.raises(TypeError, match="non-JSON|built-in string"):
+        ValidationSplitManifest.from_dict(payload)
+
+
+@pytest.mark.parametrize("dtype", ["datetime64[M]", "datetime64[Y]", "datetime64[2M]"])
+def test_numpy_calendar_datetime_units_normalize_without_tolist_loss(dtype):
+    values = np.arange(6, dtype=np.int64).astype(dtype)
+    split = split_chronologically(sample_times=values, boundary_indices=(2, 4))
+    equivalent_ns = values.astype("datetime64[ns]")
+    replay = apply_split_manifest(split.manifest, sample_times=equivalent_ns)
+    assert replay.validation_indices.tolist() == [2, 3]
+
+
+@pytest.mark.parametrize("dtype", ["datetime64[2M]", "datetime64[2Y]"])
+@pytest.mark.parametrize("edge", ["high", "low"])
+def test_extreme_stepped_calendar_counts_reject_before_numpy_rendering(
+    dtype,
+    edge,
+):
+    limits = np.iinfo(np.int64)
+    if edge == "high":
+        raw = np.array([limits.max - 2, limits.max - 1, limits.max])
+    else:
+        raw = np.array([limits.min + 1, limits.min + 2, limits.min + 3])
+    values = raw.astype(dtype)
+    with pytest.raises(ValueError, match="supported nanosecond range"):
+        split_chronologically(sample_times=values, boundary_indices=(1, 2))
+
+
+@pytest.mark.parametrize(
+    "field,value,match",
+    [
+        ("method", [], "built-in string"),
+        ("time_kind", {}, "built-in string"),
+        ("dataset_fingerprint", [], "built-in string"),
+    ],
+)
+def test_manifest_top_level_container_scalars_raise_clear_type_errors(
+    field,
+    value,
+    match,
+):
+    split = split_chronologically(sample_times=np.arange(10), boundary_indices=(5, 8))
+    payload = split.manifest.to_dict()
+    payload[field] = value
+    with pytest.raises(TypeError, match=match):
+        ValidationSplitManifest.from_dict(payload)
