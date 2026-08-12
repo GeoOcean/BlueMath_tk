@@ -22,6 +22,7 @@ from . import (
     teslakit,
     tide,
     topo_bathy,
+    validation,
     waves,
     wrappers,
 )
@@ -42,6 +43,7 @@ __all__ = [
     "teslakit",
     "tide",
     "topo_bathy",
+    "validation",
     "waves",
     "wrappers",
 ]
