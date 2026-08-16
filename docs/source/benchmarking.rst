@@ -99,13 +99,27 @@ an explicit message before scikit-learn is reached.
 accepted public workflow: ``fit`` with explicit chronological validation data
 and ``predict`` for reconstruction. Model architectures are never modified.
 
-The two families are treated asymmetrically in exactly one respect, and the
-report records it explicitly through ``uses_validation_partition``:
+The two families are inherently different procedures, so a few asymmetries are
+unavoidable. Each one is recorded rather than hidden:
 
 * PCA has no early stopping and no validation-driven model selection, so it is
   fitted on the training partition alone and never sees the validation
-  partition.
-* Autoencoders receive the validation partition for early stopping only.
+  partition. Autoencoders receive the validation partition for early stopping
+  only. This is recorded per method as ``uses_validation_partition``.
+* PCA has a closed-form solution, while autoencoders are fitted by mini-batch
+  gradient descent. Training samples are therefore permuted once before an
+  autoencoder is fitted, so that mini-batches are not contiguous blocks of
+  adjacent timestamps, which would otherwise make batch statistics and gradient
+  estimates reflect temporally correlated neighbours. The permutation is drawn
+  inside the benchmark's isolated random state, so it is controlled by the run
+  ``seed`` and never touches the caller's random state. It reorders training
+  rows only: partition membership, and in particular validation membership, is
+  unchanged. This is recorded per method as ``shuffle_training_data`` and can be
+  disabled with ``shuffle_training_data=False``.
+
+No other asymmetry is introduced. Both families see the same training samples,
+neither sees the test partition, and both are scored by the same metric code on
+the same test samples.
 
 Supplying a model
 -----------------
@@ -125,14 +139,32 @@ A method may also be written from scratch. Anything exposing
 ``reconstruct(X)`` satisfies the ``ReconstructionMethod`` protocol and can be
 wrapped in a :class:`~bluemath_tk.benchmarking.BenchmarkMethod`.
 
+Two constructor arguments are refused for autoencoders. ``validation_data`` and
+``validation_split`` are refused because the benchmark controls partition
+membership. ``optimizer`` and ``criterion`` are refused because a stateful
+object built for one model instance would be silently reused by the fresh
+instance of the next run; a PyTorch optimizer bound to another model's
+parameters skips them without raising, which would report an untrained network
+as a legitimate result.
+
+A wrapped autoencoder must also declare ``validation_data`` explicitly in its
+``fit`` signature. A ``fit(self, X, **kwargs)`` signature would absorb the
+argument silently and remain free to build its own random validation split,
+which is exactly the leakage this framework exists to prevent, so it is
+rejected.
+
 Common metrics
 --------------
 
 Metrics are computed with the accepted implementation in
-:mod:`bluemath_tk.deeplearning.metrics`, so benchmark numbers agree exactly with
-``reconstruction_error`` and with the per-model ``evaluate_reconstruction``
-methods. The available metrics are ``mse``, ``mae``, and ``rmse``, all reported
-with ``reduction="mean"``.
+:mod:`bluemath_tk.deeplearning.metrics`. The available metrics are ``mse``,
+``mae``, and ``rmse``, all reported with ``reduction="mean"``.
+
+Benchmark numbers are therefore bit-identical to a direct call to
+``reconstruction_error(y_true, y_pred, metric=..., reduction="mean")``. They
+agree with the per-model ``evaluate_reconstruction`` summaries to floating-point
+rounding rather than bit for bit, because those summarise per-sample errors
+through a different reduction path.
 
 Note that ``rmse`` follows the BlueMath convention: it is the mean over samples
 of the per-sample root-mean-square error, which is not the same quantity as the
@@ -228,11 +260,22 @@ Results are returned as a
 rejected, and no timestamps are written.
 
 ``identity()`` and ``identity_digest()`` describe *what was compared*: dataset
-shape, partition sizes, split identity, requested metrics, seed, and every
-method specification. They deliberately exclude measured outcomes. Metric values
-and wall-clock timings are observational and are not reproducible bit for bit
-across machines, library versions, or devices, so including them in a
-reproducibility identity would make that identity meaningless.
+shape, a digest of the data values, partition sizes, split identity, requested
+metrics, seed, and every method specification. They deliberately exclude
+measured outcomes. Metric values and wall-clock timings are observational and
+are not reproducible bit for bit across machines, library versions, or devices,
+so including them in a reproducibility identity would make that identity
+meaningless.
+
+Two fingerprints are recorded, and they cover different things:
+
+* ``split_identity["time_axis_fingerprint"]`` comes from the split manifest and
+  covers the **time coordinates** only.
+* ``data_digest`` covers the **benchmarked values**, their dtype, and their
+  shape. It is normalised to C order, so C-ordered and Fortran-ordered copies of
+  the same data produce the same digest.
+
+Both are needed: identical time coordinates do not imply identical data.
 
 Timing and random state
 -----------------------
@@ -247,6 +290,11 @@ global NumPy state and PyTorch generator states are restored afterwards. When
 makes a run repeatable on the same machine, device, and library versions; it
 does not guarantee bitwise-identical PyTorch results across devices, because
 algorithm selection and reduction order may differ.
+
+Two limits of that isolation are worth stating precisely. Python's standard
+library ``random`` module is not isolated, so a model that draws from it is
+neither seeded nor restored. On a multi-GPU host, only the current CUDA device's
+generator is forked and restored.
 
 Current limitations
 -------------------
@@ -264,8 +312,21 @@ Current limitations
 * No shared preprocessing, and no dataset-specific loaders or downloads.
 * Metrics require the ``deeplearning`` extra, because they are reused from
   :mod:`bluemath_tk.deeplearning.metrics`.
-* Partitions are materialised as copies, so peak memory includes one copy of the
-  train, validation, and test partitions.
+* Partitions are materialised as copies, and each method receives its own copies
+  so that a method writing to its inputs cannot affect later methods. Peak
+  memory therefore includes two copies of the train, validation, and test
+  partitions.
+* :class:`bluemath_tk.datamining.pca.PCA` logs at INFO and WARNING level on every
+  fit and every transform, and creates a ``logs/`` directory in the working
+  directory. A benchmark run surfaces that existing behaviour and offers no way
+  to quiet it; ``verbose=0`` applies to autoencoders only.
+* ``PCAReconstruction`` does not pass ``random_state`` to scikit-learn. For large
+  problems ``svd_solver="auto"`` may select randomized SVD, which draws from the
+  global NumPy random state; supply a benchmark ``seed`` if you need that to be
+  reproducible.
+* ``uses_validation_partition`` is a declaration by the specification, not a
+  measurement. It states whether a method is handed the validation partition; it
+  cannot verify what the method then does with it.
 * The runner cannot verify that ``X`` is ordered by the manifest's time axis
   unless the time coordinates are passed through ``sample_times``,
   ``sample_start_times``, or ``sample_end_times``.

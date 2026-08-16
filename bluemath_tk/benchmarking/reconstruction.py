@@ -16,7 +16,9 @@ compression ratio.
 from __future__ import annotations
 
 import hashlib
+import inspect
 import math
+import re
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass, field
@@ -280,7 +282,10 @@ class PCAReconstruction:
         _validate_sample_data(X_train, name="X_train")
         sample_shape = tuple(X_train.shape[1:])
         n_features = int(np.prod(sample_shape))
-        available = min(int(X_train.shape[0]), n_features)
+        # PCA centers the training matrix, so its rank is at most n_train - 1.
+        # Allowing n_train components would retain a numerically null component
+        # and inflate the reported latent dimensionality.
+        available = min(int(X_train.shape[0]) - 1, n_features)
         if self.n_components > available:
             raise ValueError(
                 f"n_components={self.n_components} exceeds the {available} "
@@ -316,6 +321,28 @@ class PCAReconstruction:
         return np.asarray(reconstructed[_PCA_VARIABLE].values, dtype=np.float64)
 
 
+def _require_explicit_validation_data_support(model: Any) -> None:
+    """Reject models whose ``fit`` would swallow ``validation_data``.
+
+    A ``fit(self, X, **kwargs)`` signature accepts ``validation_data`` silently
+    and is free to build its own random validation split, which is exactly the
+    leakage this framework exists to prevent. Requiring the parameter to be
+    declared makes that impossible to do by accident.
+    """
+    try:
+        signature = inspect.signature(model.fit)
+    except (TypeError, ValueError):  # pragma: no cover - exotic callables
+        return
+    parameter = signature.parameters.get("validation_data")
+    if parameter is None or parameter.kind is inspect.Parameter.VAR_KEYWORD:
+        raise TypeError(
+            f"{type(model).__name__}.fit() must declare an explicit "
+            "validation_data parameter. Without it the benchmark cannot prove "
+            "that the chronological validation partition is the one actually "
+            "used, because **kwargs would silently absorb it."
+        )
+
+
 class AutoencoderReconstruction:
     """Benchmark adapter around a BlueMath autoencoder.
 
@@ -330,10 +357,19 @@ class AutoencoderReconstruction:
     latent_dimension : int
         The latent width declared for this model. When the model exposes ``k``
         the two values must agree.
+    shuffle_training_data : bool, optional
+        When True (the default), the training samples are permuted once before
+        fitting so that mini-batches are not contiguous blocks of adjacent
+        timestamps. The permutation is drawn inside the benchmark's isolated
+        random state, so it is controlled by the run ``seed`` and never touches
+        the caller's random state. Validation membership is unaffected. Set to
+        False to train on the chronological order exactly as supplied.
     fit_kwargs : dict, optional
         Extra keyword arguments forwarded to ``model.fit``. ``validation_data``
         and ``validation_split`` are rejected because the benchmark controls
-        partition membership. ``verbose`` defaults to 0.
+        partition membership, and ``optimizer`` and ``criterion`` are rejected
+        because a stateful object built for one model instance must not be
+        reused by the fresh instance of another run. ``verbose`` defaults to 0.
     predict_kwargs : dict, optional
         Extra keyword arguments forwarded to ``model.predict``. ``verbose``
         defaults to 0.
@@ -346,13 +382,21 @@ class AutoencoderReconstruction:
     autoencoder reconstructions is not a like-for-like measurement.
     """
 
-    _FORBIDDEN_FIT_KWARGS = ("X", "y", "validation_data", "validation_split")
+    _FORBIDDEN_FIT_KWARGS = (
+        "X",
+        "y",
+        "criterion",
+        "optimizer",
+        "validation_data",
+        "validation_split",
+    )
 
     def __init__(
         self,
         model: Any,
         latent_dimension: int,
         *,
+        shuffle_training_data: bool = True,
         fit_kwargs: Mapping[str, Any] | None = None,
         predict_kwargs: Mapping[str, Any] | None = None,
     ):
@@ -362,7 +406,12 @@ class AutoencoderReconstruction:
                     f"model must expose a callable {attribute}() method to be "
                     "benchmarked as an autoencoder."
                 )
+        _require_explicit_validation_data_support(model)
         self.model = model
+        self.shuffle_training_data = _validate_boolean(
+            "shuffle_training_data",
+            shuffle_training_data,
+        )
         self._latent_dimension = _validate_positive_integer(
             "latent_dimension",
             latent_dimension,
@@ -380,8 +429,8 @@ class AutoencoderReconstruction:
         )
         if forbidden:
             raise ValueError(
-                "The benchmark controls partition membership; remove these "
-                f"fit_kwargs: {forbidden}."
+                "The benchmark controls partition membership and builds a fresh "
+                f"model for every run; remove these fit_kwargs: {forbidden}."
             )
         self._fit_kwargs.setdefault("verbose", 0)
 
@@ -416,10 +465,12 @@ class AutoencoderReconstruction:
         Parameters
         ----------
         X_train : np.ndarray
-            Training samples. Every one of them is used for optimisation.
+            Training samples. Every one of them is used for optimisation. When
+            ``shuffle_training_data`` is True they are permuted first, so that
+            mini-batches are not contiguous blocks of adjacent timestamps.
         X_validation : np.ndarray
             Validation samples. Exactly these samples drive the validation loss
-            and early stopping.
+            and early stopping. Their membership is never changed by shuffling.
         """
         _validate_sample_data(X_train, name="X_train")
         if X_validation is None:
@@ -428,6 +479,8 @@ class AutoencoderReconstruction:
                 "early stopping. Declare uses_validation_partition=True."
             )
         _validate_sample_data(X_validation, name="X_validation")
+        if self.shuffle_training_data:
+            X_train = X_train[np.random.permutation(len(X_train))]
         self._history = self.model.fit(
             X_train,
             validation_data=(X_validation, None),
@@ -557,6 +610,7 @@ def autoencoder_benchmark_method(
     model_factory: Callable[[], Any],
     latent_dimension: int,
     configuration: Mapping[str, JsonValue] | None = None,
+    shuffle_training_data: bool = True,
     fit_kwargs: Mapping[str, Any] | None = None,
     predict_kwargs: Mapping[str, Any] | None = None,
 ) -> BenchmarkMethod:
@@ -576,6 +630,12 @@ def autoencoder_benchmark_method(
     configuration : mapping, optional
         JSON-compatible description of the architecture and hyperparameters.
         This is recorded verbatim; the factory itself is never introspected.
+        The reserved key ``"shuffle_training_data"`` is added automatically and
+        must not be supplied.
+    shuffle_training_data : bool, optional
+        Permute the training samples once before fitting, so that mini-batches
+        are not contiguous blocks of adjacent timestamps. Default is True. The
+        choice is recorded in the method configuration.
     fit_kwargs : mapping, optional
         Extra keyword arguments for ``model.fit``.
     predict_kwargs : mapping, optional
@@ -590,13 +650,23 @@ def autoencoder_benchmark_method(
     if not callable(model_factory):
         raise TypeError("model_factory must be a zero-argument callable.")
     width = _validate_positive_integer("latent_dimension", latent_dimension)
+    shuffle = _validate_boolean("shuffle_training_data", shuffle_training_data)
     frozen_fit_kwargs = dict(fit_kwargs or {})
     frozen_predict_kwargs = dict(predict_kwargs or {})
+
+    recorded = _validate_configuration(configuration, name="configuration")
+    if "shuffle_training_data" in recorded:
+        raise ValueError(
+            "configuration must not set the reserved key "
+            "'shuffle_training_data'; use the shuffle_training_data argument."
+        )
+    recorded["shuffle_training_data"] = shuffle
 
     def factory() -> ReconstructionMethod:
         return AutoencoderReconstruction(
             model_factory(),
             latent_dimension=width,
+            shuffle_training_data=shuffle,
             fit_kwargs=frozen_fit_kwargs,
             predict_kwargs=frozen_predict_kwargs,
         )
@@ -606,7 +676,7 @@ def autoencoder_benchmark_method(
         method_type="autoencoder",
         latent_dimension=width,
         factory=factory,
-        configuration=configuration,
+        configuration=recorded,
         uses_validation_partition=True,
     )
 
@@ -822,6 +892,10 @@ class ReconstructionBenchmarkReport:
         Total samples in the benchmarked dataset.
     sample_shape : tuple of int
         Per-sample shape, excluding the leading sample dimension.
+    data_digest : str
+        SHA-256 digest of the benchmarked values, their dtype, and their shape.
+        The split manifest fingerprints the time axis only, so this is what
+        establishes that two runs compared the same data.
     partition_sizes : mapping
         Sample counts for the train, validation, test, and excluded partitions.
     metrics : tuple of str
@@ -844,6 +918,7 @@ class ReconstructionBenchmarkReport:
     schema_version: int
     n_samples: int
     sample_shape: tuple[int, ...]
+    data_digest: str
     partition_sizes: Mapping[str, int]
     metrics: tuple[str, ...]
     seed: int | None
@@ -878,6 +953,13 @@ class ReconstructionBenchmarkReport:
         )
         if not self.sample_shape:
             raise ValueError("sample_shape must contain at least one dimension.")
+
+        if type(self.data_digest) is not str:
+            raise TypeError("data_digest must be an exact built-in string.")
+        if re.fullmatch(r"[0-9a-f]{64}", self.data_digest) is None:
+            raise ValueError(
+                "data_digest must be a lowercase 64-character SHA-256 hex digest."
+            )
 
         if not isinstance(self.partition_sizes, Mapping):
             raise TypeError("partition_sizes must be a mapping.")
@@ -941,6 +1023,7 @@ class ReconstructionBenchmarkReport:
             "schema_version": self.schema_version,
             "n_samples": self.n_samples,
             "sample_shape": list(self.sample_shape),
+            "data_digest": self.data_digest,
             "partition_sizes": _thaw_json(self.partition_sizes),
             "metrics": list(self.metrics),
             "seed": self.seed,
@@ -964,6 +1047,7 @@ class ReconstructionBenchmarkReport:
             "schema_version": self.schema_version,
             "n_samples": self.n_samples,
             "sample_shape": list(self.sample_shape),
+            "data_digest": self.data_digest,
             "partition_sizes": _thaw_json(self.partition_sizes),
             "metrics": list(self.metrics),
             "seed": self.seed,
@@ -985,6 +1069,7 @@ class ReconstructionBenchmarkReport:
             "schema_version",
             "n_samples",
             "sample_shape",
+            "data_digest",
             "partition_sizes",
             "metrics",
             "seed",
@@ -1002,6 +1087,7 @@ class ReconstructionBenchmarkReport:
             schema_version=payload["schema_version"],
             n_samples=payload["n_samples"],
             sample_shape=tuple(payload["sample_shape"]),
+            data_digest=payload["data_digest"],
             partition_sizes=payload["partition_sizes"],
             metrics=tuple(payload["metrics"]),
             seed=payload["seed"],
@@ -1050,6 +1136,22 @@ def _isolated_random_state(seed: int | None) -> Iterator[None]:
             np.random.set_state(numpy_state)
 
 
+def _data_digest(X: np.ndarray) -> str:
+    """Return a layout-independent SHA-256 digest of the benchmarked values.
+
+    The split manifest fingerprints the time axis, never the data values, so a
+    separate digest is needed before two runs can be claimed to have compared
+    the same samples. Normalising to C order first makes the digest independent
+    of whether the caller supplied C-ordered or Fortran-ordered data.
+    """
+    contiguous = np.ascontiguousarray(X)
+    digest = hashlib.sha256()
+    digest.update(str(contiguous.dtype.str).encode("utf-8"))
+    digest.update(str(contiguous.shape).encode("utf-8"))
+    digest.update(memoryview(contiguous).cast("B"))
+    return digest.hexdigest()
+
+
 def _split_identity(
     split: ChronologicalSplit,
     *,
@@ -1068,7 +1170,9 @@ def _split_identity(
         "manifest_schema_version": manifest.schema_version,
         "method": manifest.method,
         "n_samples": manifest.n_samples,
-        "dataset_fingerprint": manifest.dataset_fingerprint,
+        # Named as the manifest names it. This fingerprints the time axis only;
+        # the report's separate data_digest covers the benchmarked values.
+        "time_axis_fingerprint": manifest.dataset_fingerprint,
         "time_kind": manifest.time_kind,
         "axis_mode": manifest.axis_mode,
         "partition_digest": digest,
@@ -1281,6 +1385,8 @@ def run_reconstruction_benchmark(
             raise ValueError(f"split.{name} contains an index outside X.")
 
     # Fancy indexing copies, so no method can reach or mutate the caller's X.
+    # These references stay pristine: each method receives its own copies, and
+    # metrics are always computed against this untouched test partition.
     X_train = X[train_indices]
     X_validation = X[validation_indices]
     X_test = X[test_indices]
@@ -1301,15 +1407,20 @@ def run_reconstruction_benchmark(
                 )
             built.append(instance)
 
-            fit_start = perf_counter()
-            instance.fit(
-                X_train,
-                X_validation if specification.uses_validation_partition else None,
+            # Every method gets its own copies, so a method that writes to its
+            # inputs cannot corrupt the partitions seen by later methods.
+            method_train = X_train.copy()
+            method_validation = (
+                X_validation.copy() if specification.uses_validation_partition else None
             )
+            method_test = X_test.copy()
+
+            fit_start = perf_counter()
+            instance.fit(method_train, method_validation)
             fit_seconds = perf_counter() - fit_start
 
             reconstruction_start = perf_counter()
-            reconstruction = instance.reconstruct(X_test)
+            reconstruction = instance.reconstruct(method_test)
             reconstruction_seconds = perf_counter() - reconstruction_start
 
         reconstruction = _validate_reconstruction(
@@ -1344,6 +1455,7 @@ def run_reconstruction_benchmark(
         schema_version=_SCHEMA_VERSION,
         n_samples=int(X.shape[0]),
         sample_shape=sample_shape,
+        data_digest=_data_digest(X),
         partition_sizes={name: int(counts[name]) for name in _PARTITION_NAMES},
         metrics=requested_metrics,
         seed=seed,

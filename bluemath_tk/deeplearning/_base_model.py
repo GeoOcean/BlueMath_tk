@@ -276,12 +276,14 @@ class BaseDeepLearningModel(BlueMathModel):
                 raise ValueError(f"{name} must be a positive integer.")
 
         if validation_data is not None:
+            # The pair itself is validated once, in _resolve_fit_partitions,
+            # which runs immediately after this method and before the model is
+            # built.
             if len(X) < 2:
                 raise ValueError(
                     "Explicit validation_data requires at least two training "
                     "samples in X."
                 )
-            self._validate_validation_data(X, validation_data)
             return
 
         split = int((1 - validation_split) * len(X))

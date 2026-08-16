@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import inspect
 import json
 
 import numpy as np
@@ -21,7 +22,10 @@ from bluemath_tk.benchmarking import (  # noqa: E402
     pca_benchmark_method,
     run_reconstruction_benchmark,
 )
-from bluemath_tk.deeplearning.autoencoders import StandardAutoencoder  # noqa: E402
+from bluemath_tk.deeplearning.autoencoders import (  # noqa: E402
+    OrthogonalAutoencoder,
+    StandardAutoencoder,
+)
 from bluemath_tk.deeplearning.metrics import reconstruction_error  # noqa: E402
 from bluemath_tk.deeplearning.variational_autoencoders import (  # noqa: E402
     VariationalAutoencoder,
@@ -510,6 +514,28 @@ def test_pca_is_not_given_the_validation_partition():
     assert pca_benchmark_method("p", n_components=2).uses_validation_partition is False
 
 
+def test_pca_adapter_ignores_any_validation_data_it_is_handed():
+    X = _low_rank_dataset()
+    split = _split_for(len(X))
+    X_train = X[split.train_indices]
+
+    without = PCAReconstruction(n_components=3)
+    without.fit(X_train, None)
+    with_validation = PCAReconstruction(n_components=3)
+    with_validation.fit(X_train, X[split.validation_indices])
+
+    assert np.array_equal(
+        without.pca.pca.components_,
+        with_validation.pca.pca.components_,
+    )
+    assert np.array_equal(without.pca.pca.mean_, with_validation.pca.pca.mean_)
+    assert np.array_equal(
+        without.pca.stacked_data_matrix,
+        with_validation.pca.stacked_data_matrix,
+    )
+    assert without.pca.stacked_data_matrix.shape[0] == int(split.train_indices.size)
+
+
 # ---------------------------------------------------------------------------
 # F. Validation-set fidelity
 # ---------------------------------------------------------------------------
@@ -540,6 +566,7 @@ def test_autoencoder_adapter_forwards_the_exact_validation_partition():
         model_factory=_CapturingModel,
         latent_dimension=2,
         configuration={"architecture": "capturing"},
+        shuffle_training_data=False,
     )
     run_reconstruction_benchmark(X, split=split, methods=[specification])
 
@@ -589,6 +616,7 @@ def test_autoencoder_adapter_requires_a_validation_partition():
         is_fitted = False
 
         def fit(self, X_train, validation_data=None, **kwargs):
+            self.is_fitted = True
             return {}
 
         def predict(self, X, **kwargs):
@@ -609,6 +637,135 @@ def test_autoencoder_adapter_requires_a_validation_partition():
 
     with pytest.raises(ValueError, match="requires the validation partition"):
         run_reconstruction_benchmark(X, split=split, methods=[specification])
+
+
+def test_models_that_would_swallow_validation_data_are_rejected():
+    class _Swallowing:
+        k = 2
+        is_fitted = False
+
+        def fit(self, X, **kwargs):
+            return {}
+
+        def predict(self, X, **kwargs):
+            return X
+
+    with pytest.raises(TypeError, match="explicit\\s+validation_data parameter"):
+        AutoencoderReconstruction(_Swallowing(), latent_dimension=2)
+
+
+def test_every_shipped_autoencoder_declares_validation_data():
+    for model_class in (
+        StandardAutoencoder,
+        OrthogonalAutoencoder,
+        VariationalAutoencoder,
+    ):
+        parameter = inspect.signature(model_class.fit).parameters.get("validation_data")
+        assert parameter is not None
+        assert parameter.kind is not inspect.Parameter.VAR_KEYWORD
+
+
+def test_training_data_is_shuffled_by_default_without_changing_membership():
+    X = _low_rank_dataset(n_samples=40, sample_shape=(6,), rank=3)
+    split = _split_for(len(X))
+    captured = {}
+
+    class _CapturingModel:
+        k = 2
+        is_fitted = False
+
+        def fit(self, X_train, validation_data=None, **kwargs):
+            captured["train"] = np.array(X_train, copy=True)
+            captured["validation"] = np.array(validation_data[0], copy=True)
+            self.is_fitted = True
+            return {}
+
+        def predict(self, X, **kwargs):
+            return np.array(X, copy=True)
+
+    shuffled = autoencoder_benchmark_method(
+        "shuffled",
+        model_factory=_CapturingModel,
+        latent_dimension=2,
+    )
+    report = run_reconstruction_benchmark(
+        X,
+        split=split,
+        methods=[shuffled],
+        seed=0,
+    )
+    expected_train = X[split.train_indices]
+    assert not np.array_equal(captured["train"], expected_train)
+    # Shuffling reorders the training rows but never changes membership.
+    assert sorted(row.tobytes() for row in captured["train"]) == sorted(
+        row.tobytes() for row in expected_train
+    )
+    assert np.array_equal(captured["validation"], X[split.validation_indices])
+    assert report.results[0].configuration["shuffle_training_data"] is True
+
+    ordered = autoencoder_benchmark_method(
+        "ordered",
+        model_factory=_CapturingModel,
+        latent_dimension=2,
+        shuffle_training_data=False,
+    )
+    report = run_reconstruction_benchmark(X, split=split, methods=[ordered], seed=0)
+    assert np.array_equal(captured["train"], expected_train)
+    assert report.results[0].configuration["shuffle_training_data"] is False
+
+
+def test_training_shuffle_is_reproducible_and_isolated():
+    X = _low_rank_dataset(n_samples=40, sample_shape=(6,), rank=3)
+    split = _split_for(len(X))
+    seen = []
+
+    class _CapturingModel:
+        k = 2
+        is_fitted = False
+
+        def fit(self, X_train, validation_data=None, **kwargs):
+            seen.append(np.array(X_train, copy=True))
+            self.is_fitted = True
+            return {}
+
+        def predict(self, X, **kwargs):
+            return np.array(X, copy=True)
+
+    def _method(name):
+        return autoencoder_benchmark_method(
+            name,
+            model_factory=_CapturingModel,
+            latent_dimension=2,
+        )
+
+    np.random.seed(2024)
+    state_before = np.random.get_state()
+    run_reconstruction_benchmark(X, split=split, methods=[_method("a")], seed=4)
+    run_reconstruction_benchmark(X, split=split, methods=[_method("b")], seed=4)
+    state_after = np.random.get_state()
+
+    assert np.array_equal(seen[0], seen[1])
+    assert np.array_equal(state_before[1], state_after[1])
+
+
+def test_reserved_shuffle_configuration_key_is_rejected():
+    class _Model:
+        k = 2
+        is_fitted = False
+
+        def fit(self, X, validation_data=None, **kwargs):
+            return {}
+
+        def predict(self, X, **kwargs):
+            return X
+
+    with pytest.raises(ValueError, match="reserved key"):
+        autoencoder_benchmark_method(
+            "clash",
+            model_factory=_Model,
+            latent_dimension=2,
+            configuration={"shuffle_training_data": False},
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -667,9 +824,64 @@ def test_a_method_that_mutates_its_partition_cannot_corrupt_the_input():
         return np.array(values, copy=True)
 
     specification, _ = _recording_spec(transform=_destructive)
-    run_reconstruction_benchmark(X, split=split, methods=[specification])
+    report = run_reconstruction_benchmark(X, split=split, methods=[specification])
 
     assert np.array_equal(X, X_before)
+    # Metrics must be scored against the pristine test partition, not against
+    # the copy the method just zeroed.
+    expected = float(
+        reconstruction_error(
+            X[split.test_indices],
+            np.zeros_like(X[split.test_indices]),
+            metric="mse",
+            reduction="mean",
+        )
+    )
+    assert report.results[0].test_metrics["mse"] == expected
+    assert report.results[0].test_metrics["mse"] > 0.0
+
+
+def test_a_mutating_method_cannot_corrupt_later_methods():
+    X = _low_rank_dataset()
+    split = _split_for(len(X))
+
+    class _Vandal:
+        latent_dimension = 2
+        is_fitted = False
+
+        def fit(self, X_train, X_validation):
+            X_train[...] = 0.0
+            if X_validation is not None:
+                X_validation[...] = 0.0
+            self.is_fitted = True
+
+        def reconstruct(self, X_predict):
+            X_predict[...] = 0.0
+            return np.zeros_like(X_predict)
+
+    vandal = BenchmarkMethod(
+        name="vandal",
+        method_type="controlled-fake",
+        latent_dimension=2,
+        factory=_Vandal,
+        uses_validation_partition=True,
+    )
+    victim, victim_created = _recording_spec(name="victim")
+
+    report = run_reconstruction_benchmark(
+        X,
+        split=split,
+        methods=[vandal, victim],
+    )
+
+    instance = victim_created[0]
+    assert np.array_equal(instance.fit_train, X[split.train_indices])
+    assert np.array_equal(instance.fit_validation, X[split.validation_indices])
+    assert np.array_equal(instance.reconstruct_inputs[0], X[split.test_indices])
+    # The victim reconstructs its input perfectly, so a corrupted test
+    # partition would have shown up as a spuriously perfect score too.
+    assert report.results[1].test_metrics["mse"] == 0.0
+    assert report.results[0].test_metrics["mse"] > 0.0
 
 
 def test_each_run_builds_a_fresh_method_instance():
@@ -761,16 +973,32 @@ def test_pca_rejects_more_components_than_available():
         )
 
 
-def test_pca_rejects_more_components_than_training_samples():
+@pytest.mark.parametrize("n_components", [6, 7, 10])
+def test_pca_rejects_more_components_than_the_centered_training_rank(n_components):
     X = _low_rank_dataset(n_samples=12, sample_shape=(20,), rank=3)
     split = _split_for(len(X), fractions=(0.5, 0.25, 0.25))
+    assert int(split.train_indices.size) == 6
 
+    # Centering costs one degree of freedom, so 6 training samples support at
+    # most 5 components.
     with pytest.raises(ValueError, match="components available"):
         run_reconstruction_benchmark(
             X,
             split=split,
-            methods=[pca_benchmark_method("too-many", n_components=10)],
+            methods=[pca_benchmark_method("too-many", n_components=n_components)],
         )
+
+
+def test_pca_accepts_the_largest_meaningful_component_count():
+    X = _low_rank_dataset(n_samples=12, sample_shape=(20,), rank=3)
+    split = _split_for(len(X), fractions=(0.5, 0.25, 0.25))
+
+    report = run_reconstruction_benchmark(
+        X,
+        split=split,
+        methods=[pca_benchmark_method("max-k", n_components=5)],
+    )
+    assert report.results[0].latent_dimension == 5
 
 
 def test_autoencoder_latent_width_must_match_the_specification():
@@ -778,7 +1006,7 @@ def test_autoencoder_latent_width_must_match_the_specification():
         k = 3
         is_fitted = False
 
-        def fit(self, X, **kwargs):
+        def fit(self, X, validation_data=None, **kwargs):
             return {}
 
         def predict(self, X, **kwargs):
@@ -1010,6 +1238,11 @@ def test_timings_are_finite_and_non_negative():
     assert result.fit_seconds >= 0.0
     assert result.reconstruction_seconds >= 0.0
 
+    timing = report.to_dict()["results"][0]["timing"]
+    assert set(timing) == {"fit_seconds", "reconstruction_seconds"}
+    assert all(type(value) is float for value in timing.values())
+    assert all(np.isfinite(value) and value >= 0.0 for value in timing.values())
+
 
 # ---------------------------------------------------------------------------
 # M. Reproducible metadata
@@ -1075,6 +1308,51 @@ def test_identity_digest_ignores_timing_and_metric_values():
     rebuilt = ReconstructionBenchmarkReport.from_dict(tampered)
     assert rebuilt.identity_digest() == report.identity_digest()
     assert rebuilt.to_dict() != payload
+
+
+def test_identity_digest_distinguishes_different_datasets():
+    split = _split_for(60)
+    method = pca_benchmark_method("pca-k2", n_components=2)
+
+    first = run_reconstruction_benchmark(
+        _low_rank_dataset(seed=0),
+        split=split,
+        methods=[method],
+    )
+    second = run_reconstruction_benchmark(
+        _low_rank_dataset(seed=1),
+        split=split,
+        methods=[method],
+    )
+
+    assert first.data_digest != second.data_digest
+    assert first.identity_digest() != second.identity_digest()
+
+
+def test_data_digest_is_stable_and_layout_independent():
+    X = _low_rank_dataset()
+    split = _split_for(len(X))
+    method = pca_benchmark_method("pca-k2", n_components=2)
+
+    first = run_reconstruction_benchmark(X, split=split, methods=[method])
+    second = run_reconstruction_benchmark(X.copy(), split=split, methods=[method])
+    fortran = run_reconstruction_benchmark(
+        np.asfortranarray(X),
+        split=split,
+        methods=[method],
+    )
+
+    assert first.data_digest == second.data_digest == fortran.data_digest
+    assert len(first.data_digest) == 64
+
+
+def test_report_rejects_a_malformed_data_digest():
+    report = _example_report()
+    payload = report.to_dict()
+    payload["data_digest"] = "not-a-digest"
+
+    with pytest.raises(ValueError, match="SHA-256 hex digest"):
+        ReconstructionBenchmarkReport.from_dict(payload)
 
 
 def test_identity_digest_changes_when_the_split_changes():
@@ -1313,22 +1591,32 @@ def test_stochastic_variational_reconstruction_is_rejected():
         )
 
 
-def test_benchmark_controlled_fit_kwargs_are_rejected():
+@pytest.mark.parametrize(
+    "fit_kwargs",
+    [
+        {"validation_split": 0.3},
+        {"validation_data": (np.zeros((2, 6)), None)},
+        {"optimizer": object()},
+        {"criterion": object()},
+        {"y": np.zeros((2, 6))},
+    ],
+)
+def test_benchmark_controlled_fit_kwargs_are_rejected(fit_kwargs):
     class _Model:
         k = 2
         is_fitted = False
 
-        def fit(self, X, **kwargs):
+        def fit(self, X, validation_data=None, **kwargs):
             return {}
 
         def predict(self, X, **kwargs):
             return X
 
-    with pytest.raises(ValueError, match="remove these"):
+    with pytest.raises(ValueError, match="remove these fit_kwargs"):
         AutoencoderReconstruction(
             _Model(),
             latent_dimension=2,
-            fit_kwargs={"validation_split": 0.3},
+            fit_kwargs=fit_kwargs,
         )
 
 
