@@ -154,6 +154,7 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
         criterion: nn.Module | None = None,
         patience: int = 20,
         verbose: int = 1,
+        validation_data: tuple[np.ndarray, np.ndarray | None] | None = None,
         **kwargs,
     ) -> dict[str, list]:
         """Fit the model to reconstruct the complete input sequence."""
@@ -171,6 +172,7 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
             criterion=criterion,
             patience=patience,
             verbose=verbose,
+            validation_data=validation_data,
             **kwargs,
         )
 

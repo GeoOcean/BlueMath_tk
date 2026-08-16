@@ -398,9 +398,18 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
         criterion: Optional[nn.Module] = None,
         patience: int = 20,
         verbose: int = 1,
+        validation_data: tuple[np.ndarray, np.ndarray | None] | None = None,
         **kwargs,
     ) -> Dict[str, list]:
-        """Fit with orthogonality and latent-decorrelation penalties."""
+        """Fit with orthogonality and latent-decorrelation penalties.
+
+        Parameters
+        ----------
+        validation_data : tuple, optional
+            An explicit ``(X_validation, y_validation)`` pair. When supplied,
+            ``validation_split`` is ignored and exactly these samples drive the
+            validation objective and early stopping. Default is None.
+        """
         learning_rate = self._validate_learning_rate(learning_rate)
         if not isinstance(X, np.ndarray):
             raise TypeError("X must be a NumPy array.")
@@ -413,7 +422,14 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
             batch_size,
             epochs,
             patience,
+            validation_data=validation_data,
         )
+        (
+            X_train_array,
+            y_train_array,
+            X_validation_array,
+            y_validation_array,
+        ) = self._resolve_fit_partitions(X, y, validation_split, validation_data)
         self._validate_or_set_build_input_shape(tuple(X.shape))
         self.is_fitted = False
 
@@ -426,21 +442,17 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
         if criterion is None:
             criterion = nn.MSELoss()
 
-        indices = np.arange(len(X))
-        np.random.shuffle(indices)
-        split = int((1 - validation_split) * len(X))
-        train_indices, validation_indices = indices[:split], indices[split:]
         X_train = torch.as_tensor(
-            X[train_indices], dtype=torch.float32, device=self.device
+            X_train_array, dtype=torch.float32, device=self.device
         )
         y_train = torch.as_tensor(
-            y[train_indices], dtype=torch.float32, device=self.device
+            y_train_array, dtype=torch.float32, device=self.device
         )
         X_validation = torch.as_tensor(
-            X[validation_indices], dtype=torch.float32, device=self.device
+            X_validation_array, dtype=torch.float32, device=self.device
         )
         y_validation = torch.as_tensor(
-            y[validation_indices], dtype=torch.float32, device=self.device
+            y_validation_array, dtype=torch.float32, device=self.device
         )
 
         history = {"train_loss": [], "val_loss": []}
@@ -1210,6 +1222,7 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
         criterion: nn.Module | None = None,
         patience: int = 20,
         verbose: int = 1,
+        validation_data: tuple[np.ndarray, np.ndarray | None] | None = None,
         **kwargs,
     ) -> dict[str, list]:
         """Fit the model to reconstruct the complete input sequence."""
@@ -1228,6 +1241,7 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
             criterion=criterion,
             patience=patience,
             verbose=verbose,
+            validation_data=validation_data,
             **kwargs,
         )
 
@@ -1491,6 +1505,7 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
         criterion: nn.Module | None = None,
         patience: int = 20,
         verbose: int = 1,
+        validation_data: tuple[np.ndarray, np.ndarray | None] | None = None,
         **kwargs,
     ) -> dict[str, list]:
         """Fit the model to reconstruct the complete input sequence."""
@@ -1509,6 +1524,7 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
             criterion=criterion,
             patience=patience,
             verbose=verbose,
+            validation_data=validation_data,
             **kwargs,
         )
 
