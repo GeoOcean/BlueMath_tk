@@ -9,6 +9,7 @@ Status: Under development (Working)
 # Import specific modules instead of using wildcard imports
 from . import (
     additive,
+    benchmarking,
     config,
     core,
     datamining,
@@ -30,6 +31,7 @@ from . import (
 # Add __all__ variable to control what gets imported when using `from module import *`.
 __all__ = [
     "additive",
+    "benchmarking",
     "config",
     "core",
     "datamining",
