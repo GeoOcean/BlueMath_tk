@@ -81,6 +81,21 @@ manifest is validated against those coordinates, which proves the manifest is
 being replayed against the dataset it was created from rather than against a
 reordered or different dataset.
 
+The recorded configuration of the autoencoder above describes the **effective**
+training run, not only what the caller happened to spell out. Defaults that were
+never passed are filled in, so the serialized identity is complete:
+
+.. code-block:: python
+
+   >>> report.results[1].configuration["fit_kwargs"]
+   {'batch_size': 16, 'epochs': 50, 'learning_rate': 0.001, 'patience': 20}
+   >>> report.results[1].configuration["predict_kwargs"]
+   {'batch_size': 64}
+
+Changing ``epochs``, ``learning_rate``, ``batch_size``, or ``patience``
+therefore changes ``identity_digest()``. Nothing has to be duplicated by hand
+inside ``configuration``.
+
 How PCA and autoencoders are compared
 -------------------------------------
 
@@ -152,6 +167,23 @@ A wrapped autoencoder must also declare ``validation_data`` explicitly in its
 argument silently and remain free to build its own random validation split,
 which is exactly the leakage this framework exists to prevent, so it is
 rejected.
+
+Everything else in ``fit_kwargs`` and ``predict_kwargs`` must be
+JSON-compatible, and is rejected with a clear error otherwise. This is a
+deliberate constraint rather than an implementation limit: a training setting
+that cannot be recorded cannot form part of a reproducible identity, and
+guessing at a ``repr`` of an arbitrary object would produce an identity that
+looks precise while meaning nothing.
+
+The recorded values are deep copies. Mutating a nested mapping you passed as
+``configuration``, ``fit_kwargs``, or ``predict_kwargs`` after building the
+specification changes neither what later runs execute nor what the report
+records, and each run receives its own containers.
+
+This automatic recording belongs to ``autoencoder_benchmark_method``. If you
+assemble a :class:`~bluemath_tk.benchmarking.BenchmarkMethod` by hand around a
+custom method, the ``configuration`` you supply is the whole of what gets
+recorded, so it must describe everything that defines the experiment.
 
 Common metrics
 --------------
@@ -277,6 +309,17 @@ Two fingerprints are recorded, and they cover different things:
 
 Both are needed: identical time coordinates do not imply identical data.
 
+A report rebuilt with ``from_dict`` is re-validated across fields, not only
+field by field, so internally inconsistent scientific metadata is rejected
+rather than silently trusted. The partition sizes must sum to ``n_samples``;
+train, validation, and test must each be non-empty; ``split_identity`` must
+record the same ``n_samples`` as the report and well-formed digests; each
+result's ``original_scalars_per_sample`` must equal the product of
+``sample_shape``; ``latent_dimension`` must equal ``latent_scalars_per_sample``;
+``latent_dimensionality_ratio`` must equal the ratio it claims to be; and no
+reconstruction metric may be negative, since MSE, MAE, and RMSE are
+non-negative by construction.
+
 Timing and random state
 -----------------------
 
@@ -291,10 +334,14 @@ makes a run repeatable on the same machine, device, and library versions; it
 does not guarantee bitwise-identical PyTorch results across devices, because
 algorithm selection and reduction order may differ.
 
-Two limits of that isolation are worth stating precisely. Python's standard
+``torch.manual_seed`` reseeds every visible CUDA device, not only the current
+one, so every visible CUDA device is forked and restored. When CUDA is
+unavailable no device is queried at all, which keeps CPU-only environments free
+of any CUDA initialization.
+
+One limit of that isolation is worth stating precisely: Python's standard
 library ``random`` module is not isolated, so a model that draws from it is
-neither seeded nor restored. On a multi-GPU host, only the current CUDA device's
-generator is forked and restored.
+neither seeded nor restored.
 
 Current limitations
 -------------------

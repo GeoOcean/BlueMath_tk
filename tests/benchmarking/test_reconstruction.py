@@ -22,6 +22,12 @@ from bluemath_tk.benchmarking import (  # noqa: E402
     pca_benchmark_method,
     run_reconstruction_benchmark,
 )
+from bluemath_tk.benchmarking.reconstruction import (  # noqa: E402
+    _BENCHMARK_FIT_DEFAULTS,
+    _BENCHMARK_PREDICT_DEFAULTS,
+    _isolated_random_state,
+)
+from bluemath_tk.deeplearning._base_model import BaseDeepLearningModel  # noqa: E402
 from bluemath_tk.deeplearning.autoencoders import (  # noqa: E402
     OrthogonalAutoencoder,
     StandardAutoencoder,
@@ -33,6 +39,26 @@ from bluemath_tk.deeplearning.variational_autoencoders import (  # noqa: E402
 from bluemath_tk.validation import split_chronologically  # noqa: E402
 
 METRICS = ("mse", "mae", "rmse")
+
+
+class _JsonModel:
+    """Minimal duck-typed autoencoder used for identity and mutation tests."""
+
+    k = 2
+    is_fitted = False
+
+    def __init__(self):
+        self.fit_calls = []
+        self.predict_calls = []
+
+    def fit(self, X_train, validation_data=None, **kwargs):
+        self.fit_calls.append(copy.deepcopy(kwargs))
+        self.is_fitted = True
+        return {}
+
+    def predict(self, X, **kwargs):
+        self.predict_calls.append(copy.deepcopy(kwargs))
+        return np.array(X, copy=True)
 
 
 def _low_rank_dataset(
@@ -1514,7 +1540,7 @@ def test_every_method_starts_from_the_same_seeded_state():
     assert first_created[0].random_draws == second_created[0].random_draws
 
 
-@pytest.mark.parametrize("seed", [-1, 1.5, True, "3"])
+@pytest.mark.parametrize("seed", [-1, 1.5, True, "3", 2**32, 2**40])
 def test_invalid_seeds_are_rejected(seed):
     X = _low_rank_dataset()
     split = _split_for(len(X))
@@ -1623,3 +1649,394 @@ def test_benchmark_controlled_fit_kwargs_are_rejected(fit_kwargs):
 def test_autoencoder_adapter_requires_fit_and_predict():
     with pytest.raises(TypeError, match="callable fit"):
         AutoencoderReconstruction(object(), latent_dimension=2)
+
+
+# ---------------------------------------------------------------------------
+# P. Effective training configuration contributes to the identity
+# ---------------------------------------------------------------------------
+
+
+def _autoencoder_identity(**kwargs) -> str:
+    """Return the identity digest of a run differing only in the given kwargs."""
+    X = _low_rank_dataset(n_samples=40, sample_shape=(6,), rank=2)
+    split = _split_for(len(X))
+    specification = autoencoder_benchmark_method(
+        "ae",
+        model_factory=_JsonModel,
+        latent_dimension=2,
+        configuration={"architecture": "JsonModel"},
+        **kwargs,
+    )
+    report = run_reconstruction_benchmark(X, split=split, methods=[specification])
+    return report.identity_digest()
+
+
+@pytest.mark.parametrize(
+    "changed",
+    [
+        {"epochs": 7},
+        {"batch_size": 4},
+        {"learning_rate": 0.05},
+        {"patience": 3},
+        {"epochs": 7, "learning_rate": 0.05},
+    ],
+)
+def test_changing_effective_fit_kwargs_changes_the_identity(changed):
+    baseline = _autoencoder_identity(fit_kwargs={"epochs": 5})
+    altered = _autoencoder_identity(fit_kwargs={"epochs": 5, **changed})
+    assert altered != baseline
+
+
+def test_changing_predict_kwargs_changes_the_identity():
+    baseline = _autoencoder_identity(predict_kwargs={"batch_size": 64})
+    altered = _autoencoder_identity(predict_kwargs={"batch_size": 8})
+    assert altered != baseline
+
+
+def test_omitting_a_default_records_the_same_identity_as_passing_it():
+    explicit = _autoencoder_identity(
+        fit_kwargs=dict(_BENCHMARK_FIT_DEFAULTS),
+        predict_kwargs=dict(_BENCHMARK_PREDICT_DEFAULTS),
+    )
+    omitted = _autoencoder_identity()
+    assert explicit == omitted
+
+
+def test_verbosity_does_not_change_the_identity():
+    quiet = _autoencoder_identity(fit_kwargs={"epochs": 5, "verbose": 0})
+    loud = _autoencoder_identity(
+        fit_kwargs={"epochs": 5, "verbose": 2},
+        predict_kwargs={"verbose": 1},
+    )
+    assert quiet == loud
+
+
+def test_timing_does_not_change_the_identity():
+    first = _autoencoder_identity(fit_kwargs={"epochs": 5})
+    second = _autoencoder_identity(fit_kwargs={"epochs": 5})
+    assert first == second
+
+
+def test_effective_fit_configuration_is_recorded_in_the_report():
+    X = _low_rank_dataset(n_samples=40, sample_shape=(6,), rank=2)
+    split = _split_for(len(X))
+    specification = autoencoder_benchmark_method(
+        "ae",
+        model_factory=_JsonModel,
+        latent_dimension=2,
+        configuration={"architecture": "JsonModel"},
+        fit_kwargs={"epochs": 5, "verbose": 0},
+        predict_kwargs={"batch_size": 8},
+    )
+    report = run_reconstruction_benchmark(X, split=split, methods=[specification])
+
+    recorded = report.results[0].configuration
+    assert recorded["architecture"] == "JsonModel"
+    assert dict(recorded["fit_kwargs"]) == {
+        "batch_size": 64,
+        "epochs": 5,
+        "learning_rate": 1e-3,
+        "patience": 20,
+    }
+    assert dict(recorded["predict_kwargs"]) == {"batch_size": 8}
+    # Verbosity is excluded from the identity but still reaches the model.
+    assert "verbose" not in recorded["fit_kwargs"]
+    payload = json.loads(report.to_json())
+    assert payload["results"][0]["configuration"]["fit_kwargs"]["epochs"] == 5
+
+
+def test_recorded_defaults_still_match_the_model_signatures():
+    fit_parameters = inspect.signature(BaseDeepLearningModel.fit).parameters
+    for name, value in _BENCHMARK_FIT_DEFAULTS.items():
+        assert fit_parameters[name].default == value, name
+
+    predict_parameters = inspect.signature(BaseDeepLearningModel.predict).parameters
+    for name, value in _BENCHMARK_PREDICT_DEFAULTS.items():
+        assert predict_parameters[name].default == value, name
+
+
+def test_verbosity_still_reaches_the_model_even_though_it_is_not_recorded():
+    X = _low_rank_dataset(n_samples=40, sample_shape=(6,), rank=2)
+    split = _split_for(len(X))
+    built = []
+
+    def factory():
+        model = _JsonModel()
+        built.append(model)
+        return model
+
+    specification = autoencoder_benchmark_method(
+        "ae",
+        model_factory=factory,
+        latent_dimension=2,
+        fit_kwargs={"epochs": 5, "verbose": 3},
+    )
+    run_reconstruction_benchmark(X, split=split, methods=[specification])
+
+    assert built[0].fit_calls[0]["verbose"] == 3
+    assert built[0].fit_calls[0]["epochs"] == 5
+    assert built[0].predict_calls[0]["verbose"] == 0
+
+
+@pytest.mark.parametrize(
+    "key", ["fit_kwargs", "predict_kwargs", "shuffle_training_data"]
+)
+def test_reserved_configuration_keys_are_rejected(key):
+    with pytest.raises(ValueError, match="reserved key"):
+        autoencoder_benchmark_method(
+            "clash",
+            model_factory=_JsonModel,
+            latent_dimension=2,
+            configuration={key: 1},
+        )
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"fit_kwargs": {"callback": len}},
+        {"fit_kwargs": {"nested": {"bad": object()}}},
+        {"predict_kwargs": {"hook": len}},
+        {"fit_kwargs": {"epochs": float("nan")}},
+    ],
+)
+def test_non_serializable_fit_or_predict_kwargs_are_rejected(kwargs):
+    with pytest.raises((TypeError, ValueError)):
+        autoencoder_benchmark_method(
+            "bad",
+            model_factory=_JsonModel,
+            latent_dimension=2,
+            **kwargs,
+        )
+
+
+@pytest.mark.parametrize("key", ["optimizer", "criterion", "validation_split", "y"])
+def test_forbidden_fit_kwargs_are_rejected_at_specification_time(key):
+    with pytest.raises(ValueError, match="remove these fit_kwargs"):
+        autoencoder_benchmark_method(
+            "bad",
+            model_factory=_JsonModel,
+            latent_dimension=2,
+            fit_kwargs={key: object()},
+        )
+
+
+def test_stochastic_prediction_is_rejected_at_specification_time():
+    with pytest.raises(ValueError, match="Stochastic reconstruction"):
+        autoencoder_benchmark_method(
+            "bad",
+            model_factory=_JsonModel,
+            latent_dimension=2,
+            predict_kwargs={"stochastic": True},
+        )
+
+
+def test_nested_fit_kwargs_cannot_be_mutated_after_specification():
+    X = _low_rank_dataset(n_samples=40, sample_shape=(6,), rank=2)
+    split = _split_for(len(X))
+    nested = {"schedule": {"warmup": 5}}
+    caller_fit_kwargs = {"epochs": 5, "extra": nested}
+    built = []
+
+    def factory():
+        model = _JsonModel()
+        built.append(model)
+        return model
+
+    specification = autoencoder_benchmark_method(
+        "ae",
+        model_factory=factory,
+        latent_dimension=2,
+        fit_kwargs=caller_fit_kwargs,
+    )
+    before = run_reconstruction_benchmark(X, split=split, methods=[specification])
+
+    # Mutate the caller's mappings at every nesting depth after construction.
+    nested["schedule"]["warmup"] = 9999
+    nested["injected"] = True
+    caller_fit_kwargs["epochs"] = 1234
+
+    after = run_reconstruction_benchmark(X, split=split, methods=[specification])
+
+    assert before.identity_digest() == after.identity_digest()
+    assert built[0].fit_calls[0] == built[1].fit_calls[0]
+    assert built[1].fit_calls[0]["extra"] == {"schedule": {"warmup": 5}}
+    assert built[1].fit_calls[0]["epochs"] == 5
+
+
+def test_each_run_receives_independent_keyword_argument_containers():
+    X = _low_rank_dataset(n_samples=40, sample_shape=(6,), rank=2)
+    split = _split_for(len(X))
+    seen = []
+
+    class _MutatingModel(_JsonModel):
+        def fit(self, X_train, validation_data=None, **kwargs):
+            # Snapshot what this run was handed before vandalising it, so the
+            # assertion cannot be satisfied by this run's own mutation.
+            seen.append((kwargs, copy.deepcopy(kwargs)))
+            kwargs["extra"]["schedule"]["warmup"] = -1
+            self.is_fitted = True
+            return {}
+
+    specification = autoencoder_benchmark_method(
+        "ae",
+        model_factory=_MutatingModel,
+        latent_dimension=2,
+        fit_kwargs={"extra": {"schedule": {"warmup": 5}}},
+    )
+    run_reconstruction_benchmark(X, split=split, methods=[specification])
+    run_reconstruction_benchmark(X, split=split, methods=[specification])
+
+    first_kwargs, first_snapshot = seen[0]
+    second_kwargs, second_snapshot = seen[1]
+    assert first_kwargs is not second_kwargs
+    assert first_kwargs["extra"] is not second_kwargs["extra"]
+    assert first_kwargs["extra"]["schedule"] is not second_kwargs["extra"]["schedule"]
+    # Run 1 zeroed its own container; run 2 must still start from the spec.
+    assert first_snapshot["extra"]["schedule"]["warmup"] == 5
+    assert second_snapshot["extra"]["schedule"]["warmup"] == 5
+    assert first_kwargs["extra"]["schedule"]["warmup"] == -1
+
+
+# ---------------------------------------------------------------------------
+# Q. Multi-device random-state isolation
+# ---------------------------------------------------------------------------
+
+
+def _fork_rng_spy(monkeypatch):
+    """Record the devices requested from fork_rng, forking only the CPU."""
+    recorded = {}
+    real_fork_rng = torch.random.fork_rng
+
+    def spy(*args, **kwargs):
+        devices = kwargs.get("devices", args[0] if args else None)
+        recorded["devices"] = None if devices is None else list(devices)
+        return real_fork_rng(devices=[])
+
+    monkeypatch.setattr(torch.random, "fork_rng", spy)
+    return recorded
+
+
+def test_every_visible_cuda_device_is_forked(monkeypatch):
+    recorded = _fork_rng_spy(monkeypatch)
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: 3)
+
+    with _isolated_random_state(11):
+        pass
+
+    # torch.manual_seed reseeds every visible device, so every visible device
+    # must be forked, not only the current one.
+    assert recorded["devices"] == [0, 1, 2]
+
+
+def test_no_cuda_device_is_touched_when_cuda_is_unavailable(monkeypatch):
+    recorded = _fork_rng_spy(monkeypatch)
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+
+    def _forbidden():
+        raise AssertionError("device_count must not be called without CUDA.")
+
+    monkeypatch.setattr(torch.cuda, "device_count", _forbidden)
+
+    with _isolated_random_state(11):
+        pass
+
+    assert recorded["devices"] == []
+
+
+def test_isolated_random_state_restores_cpu_generators():
+    np.random.seed(5)
+    torch.manual_seed(6)
+    numpy_before = np.random.get_state()
+    torch_before = torch.random.get_rng_state().clone()
+
+    with _isolated_random_state(77):
+        np.random.rand(10)
+        torch.rand(10)
+
+    assert np.array_equal(numpy_before[1], np.random.get_state()[1])
+    assert torch.equal(torch_before, torch.random.get_rng_state())
+
+
+# ---------------------------------------------------------------------------
+# R. Serialized cross-field validation
+# ---------------------------------------------------------------------------
+
+
+def test_partition_sizes_must_sum_to_the_sample_count():
+    payload = _example_report().to_dict()
+    payload["partition_sizes"]["excluded"] = 7
+
+    with pytest.raises(ValueError, match="partition_sizes sum to"):
+        ReconstructionBenchmarkReport.from_dict(payload)
+
+
+@pytest.mark.parametrize("partition", ["train", "validation", "test"])
+def test_scientific_partitions_must_not_be_empty(partition):
+    payload = _example_report().to_dict()
+    payload["partition_sizes"]["excluded"] += payload["partition_sizes"][partition]
+    payload["partition_sizes"][partition] = 0
+
+    with pytest.raises(ValueError, match="at least one\\s+sample"):
+        ReconstructionBenchmarkReport.from_dict(payload)
+
+
+def test_split_identity_sample_count_must_agree_with_the_report():
+    payload = _example_report().to_dict()
+    payload["split_identity"]["n_samples"] = 999
+
+    with pytest.raises(ValueError, match="split_identity records"):
+        ReconstructionBenchmarkReport.from_dict(payload)
+
+
+def test_split_identity_must_record_a_sample_count():
+    payload = _example_report().to_dict()
+    del payload["split_identity"]["n_samples"]
+
+    with pytest.raises(ValueError, match="must record n_samples"):
+        ReconstructionBenchmarkReport.from_dict(payload)
+
+
+@pytest.mark.parametrize("field", ["time_axis_fingerprint", "partition_digest"])
+def test_split_identity_digests_must_be_well_formed(field):
+    payload = _example_report().to_dict()
+    payload["split_identity"][field] = "nope"
+
+    with pytest.raises(ValueError, match="SHA-256 hex digest"):
+        ReconstructionBenchmarkReport.from_dict(payload)
+
+
+def test_original_scalars_must_agree_with_the_sample_shape():
+    payload = _example_report().to_dict()
+    payload["results"][0]["original_scalars_per_sample"] = 11
+    payload["results"][0]["latent_dimensionality_ratio"] = (
+        payload["results"][0]["latent_scalars_per_sample"] / 11
+    )
+
+    with pytest.raises(ValueError, match="scalars per sample"):
+        ReconstructionBenchmarkReport.from_dict(payload)
+
+
+def test_latent_dimension_must_agree_with_latent_scalars():
+    payload = _example_report().to_dict()
+    payload["results"][0]["latent_dimension"] = 5
+
+    with pytest.raises(ValueError, match="must equal\\s+latent_scalars_per_sample"):
+        ReconstructionBenchmarkReport.from_dict(payload)
+
+
+@pytest.mark.parametrize("metric", ["mse", "mae", "rmse"])
+def test_negative_reconstruction_metrics_are_rejected(metric):
+    payload = _example_report().to_dict()
+    payload["results"][0]["test_metrics"][metric] = -0.5
+
+    with pytest.raises(ValueError, match="must not be negative"):
+        ReconstructionBenchmarkReport.from_dict(payload)
+
+
+def test_a_consistent_report_still_round_trips_after_the_new_checks():
+    report = _example_report()
+    rebuilt = ReconstructionBenchmarkReport.from_dict(report.to_dict())
+    assert rebuilt.to_dict() == report.to_dict()
+    assert rebuilt.identity_digest() == report.identity_digest()
