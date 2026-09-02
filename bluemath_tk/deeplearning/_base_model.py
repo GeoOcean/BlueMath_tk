@@ -235,6 +235,7 @@ class BaseDeepLearningModel(BlueMathModel):
         batch_size: int,
         epochs: int,
         patience: int,
+        validation_data: tuple[np.ndarray, np.ndarray | None] | None = None,
     ) -> None:
         """Validate common training inputs before building the model."""
         if not isinstance(X, np.ndarray):
@@ -257,7 +258,7 @@ class BaseDeepLearningModel(BlueMathModel):
         self._validate_finite_array(X, "X")
         self._validate_finite_array(y, "y")
 
-        if (
+        if validation_data is None and (
             not isinstance(validation_split, (int, float))
             or isinstance(validation_split, bool)
             or not np.isfinite(float(validation_split))
@@ -274,6 +275,17 @@ class BaseDeepLearningModel(BlueMathModel):
             if not isinstance(value, int) or isinstance(value, bool) or value < 1:
                 raise ValueError(f"{name} must be a positive integer.")
 
+        if validation_data is not None:
+            # The pair itself is validated once, in _resolve_fit_partitions,
+            # which runs immediately after this method and before the model is
+            # built.
+            if len(X) < 2:
+                raise ValueError(
+                    "Explicit validation_data requires at least two training "
+                    "samples in X."
+                )
+            return
+
         split = int((1 - validation_split) * len(X))
         if split < 2:
             raise ValueError(
@@ -282,6 +294,97 @@ class BaseDeepLearningModel(BlueMathModel):
             )
         if len(X) - split < 1:
             raise ValueError("The validation split must contain at least one sample.")
+
+    def _validate_validation_data(
+        self,
+        X: np.ndarray,
+        validation_data: tuple[np.ndarray, np.ndarray | None],
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Validate explicit validation data and return the resolved arrays.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            The training inputs, used to check the per-sample contract.
+        validation_data : tuple
+            An ``(X_validation, y_validation)`` pair. ``y_validation`` may be
+            ``None``, in which case the model's default reconstruction target
+            is derived from ``X_validation``.
+
+        Returns
+        -------
+        tuple of np.ndarray
+            The validated ``(X_validation, y_validation)`` arrays.
+        """
+        if not isinstance(validation_data, tuple) or len(validation_data) != 2:
+            raise TypeError(
+                "validation_data must be an (X_validation, y_validation) tuple; "
+                "pass y_validation=None to reconstruct X_validation itself."
+            )
+        X_validation, y_validation = validation_data
+        if not isinstance(X_validation, np.ndarray):
+            raise TypeError("validation_data[0] must be a NumPy array.")
+        if X_validation.ndim != X.ndim:
+            raise ValueError(
+                f"validation_data[0] must have {X.ndim} dimensions to match X; "
+                f"got {X_validation.ndim}."
+            )
+        if len(X_validation) < 1:
+            raise ValueError("validation_data[0] must contain at least one sample.")
+        if tuple(X_validation.shape[1:]) != tuple(X.shape[1:]):
+            raise ValueError(
+                "validation_data[0] per-sample shape "
+                f"{tuple(X_validation.shape[1:])} does not match the training "
+                f"per-sample shape {tuple(X.shape[1:])}."
+            )
+        self._validate_finite_array(X_validation, "validation_data[0]")
+
+        if y_validation is None:
+            y_validation = self._get_reconstruction_target(X_validation)
+        if not isinstance(y_validation, np.ndarray):
+            raise TypeError("validation_data[1] must be a NumPy array or None.")
+        if len(y_validation) != len(X_validation):
+            raise ValueError(
+                "validation_data arrays must contain the same number of samples; "
+                f"got {len(X_validation)} and {len(y_validation)}."
+            )
+        self._validate_target_shape(X_validation, y_validation)
+        self._validate_finite_array(y_validation, "validation_data[1]")
+        return X_validation, y_validation
+
+    def _resolve_fit_partitions(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        validation_split: float,
+        validation_data: tuple[np.ndarray, np.ndarray | None] | None,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Return the training and validation arrays used by one fit call.
+
+        With ``validation_data=None`` the historical behaviour is preserved
+        exactly: one random permutation of ``X`` is cut at ``validation_split``
+        using the global NumPy random state.
+
+        When explicit ``validation_data`` is supplied, ``validation_split`` is
+        ignored, every sample of ``X`` is used for optimisation in the given
+        order, and the global NumPy random state is left untouched. This makes
+        the validation membership exactly reproducible, which is required for
+        chronological validation.
+        """
+        if validation_data is None:
+            indices = np.arange(len(X))
+            np.random.shuffle(indices)
+            split = int((1 - validation_split) * len(X))
+            train_indices, validation_indices = indices[:split], indices[split:]
+            return (
+                X[train_indices],
+                y[train_indices],
+                X[validation_indices],
+                y[validation_indices],
+            )
+
+        X_validation, y_validation = self._validate_validation_data(X, validation_data)
+        return X, y, X_validation, y_validation
 
     def _get_init_config(self) -> dict:
         """Collect constructor parameters needed to recreate this model."""
@@ -536,9 +639,21 @@ class BaseDeepLearningModel(BlueMathModel):
         criterion: nn.Module | None = None,
         patience: int = 20,
         verbose: int = 1,
+        validation_data: tuple[np.ndarray, np.ndarray | None] | None = None,
         **kwargs,
     ) -> dict[str, list]:
-        """Fit a reconstruction model with finite, sample-weighted losses."""
+        """Fit a reconstruction model with finite, sample-weighted losses.
+
+        Parameters
+        ----------
+        validation_data : tuple, optional
+            An explicit ``(X_validation, y_validation)`` pair. When supplied,
+            ``validation_split`` is ignored, all of ``X`` is used for
+            optimisation, and exactly these samples drive the validation loss
+            and early stopping. ``y_validation`` may be ``None`` to reconstruct
+            ``X_validation`` itself. Default is None, which keeps the historical
+            random ``validation_split`` behaviour.
+        """
         learning_rate = self._validate_learning_rate(learning_rate)
         if not isinstance(X, np.ndarray):
             raise TypeError("X must be a NumPy array.")
@@ -552,7 +667,14 @@ class BaseDeepLearningModel(BlueMathModel):
             batch_size,
             epochs,
             patience,
+            validation_data=validation_data,
         )
+        (
+            X_train_array,
+            y_train_array,
+            X_validation_array,
+            y_validation_array,
+        ) = self._resolve_fit_partitions(X, y, validation_split, validation_data)
         self._validate_or_set_build_input_shape(tuple(X.shape))
         self.is_fitted = False
 
@@ -566,22 +688,17 @@ class BaseDeepLearningModel(BlueMathModel):
         if criterion is None:
             criterion = nn.MSELoss()
 
-        indices = np.arange(len(X))
-        np.random.shuffle(indices)
-        split = int((1 - validation_split) * len(X))
-        train_indices, validation_indices = indices[:split], indices[split:]
-
         X_train = torch.as_tensor(
-            X[train_indices], dtype=torch.float32, device=self.device
+            X_train_array, dtype=torch.float32, device=self.device
         )
         y_train = torch.as_tensor(
-            y[train_indices], dtype=torch.float32, device=self.device
+            y_train_array, dtype=torch.float32, device=self.device
         )
         X_validation = torch.as_tensor(
-            X[validation_indices], dtype=torch.float32, device=self.device
+            X_validation_array, dtype=torch.float32, device=self.device
         )
         y_validation = torch.as_tensor(
-            y[validation_indices], dtype=torch.float32, device=self.device
+            y_validation_array, dtype=torch.float32, device=self.device
         )
 
         history = {"train_loss": [], "val_loss": []}

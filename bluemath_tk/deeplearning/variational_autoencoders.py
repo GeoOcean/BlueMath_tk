@@ -223,6 +223,7 @@ class VariationalAutoencoder(BaseDeepLearningModel):
         criterion: nn.Module | None = None,
         patience: int = 20,
         verbose: int = 1,
+        validation_data: tuple[np.ndarray, np.ndarray | None] | None = None,
         **kwargs,
     ) -> dict[str, list]:
         """Fit the VAE with stochastic train and validation objectives.
@@ -231,6 +232,13 @@ class VariationalAutoencoder(BaseDeepLearningModel):
         used for training and controls early stopping. The separate
         ``val_deterministic_reconstruction_loss`` reports posterior-mean
         reconstruction for stable scientific comparison.
+
+        Parameters
+        ----------
+        validation_data : tuple, optional
+            An explicit ``(X_validation, y_validation)`` pair. When supplied,
+            ``validation_split`` is ignored and exactly these samples drive the
+            validation objective and early stopping. Default is None.
         """
         learning_rate = self._validate_learning_rate(learning_rate)
         if not isinstance(X, np.ndarray):
@@ -245,7 +253,14 @@ class VariationalAutoencoder(BaseDeepLearningModel):
             batch_size,
             epochs,
             patience,
+            validation_data=validation_data,
         )
+        (
+            X_train_array,
+            y_train_array,
+            X_validation_array,
+            y_validation_array,
+        ) = self._resolve_fit_partitions(X, y, validation_split, validation_data)
         self._validate_or_set_build_input_shape(tuple(X.shape))
         self.is_fitted = False
 
@@ -266,29 +281,23 @@ class VariationalAutoencoder(BaseDeepLearningModel):
                 "reconstruction criterion."
             )
 
-        indices = np.arange(len(X))
-        np.random.shuffle(indices)
-        split = int((1 - validation_split) * len(X))
-        train_indices = indices[:split]
-        validation_indices = indices[split:]
-
         X_train = torch.as_tensor(
-            X[train_indices],
+            X_train_array,
             dtype=torch.float32,
             device=self.device,
         )
         y_train = torch.as_tensor(
-            y[train_indices],
+            y_train_array,
             dtype=torch.float32,
             device=self.device,
         )
         X_validation = torch.as_tensor(
-            X[validation_indices],
+            X_validation_array,
             dtype=torch.float32,
             device=self.device,
         )
         y_validation = torch.as_tensor(
-            y[validation_indices],
+            y_validation_array,
             dtype=torch.float32,
             device=self.device,
         )
