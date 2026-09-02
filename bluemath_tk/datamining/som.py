@@ -370,7 +370,7 @@ class SOM(BaseClustering):
             normalized_data=normalized_data.values
         )
 
-        return winner_neurons, self.centroids.iloc[winner_neurons]
+        return winner_neurons, self.centroids.loc[winner_neurons]
 
     def fit_predict(
         self,
