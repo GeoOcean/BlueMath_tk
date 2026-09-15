@@ -43,6 +43,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from ._base_model import BaseDeepLearningModel
+from .latent_structure import StructuredLatentLinear
 from .layers import (
     LatentDecorr,
     LinearSelfAttention,
@@ -147,6 +148,11 @@ class StandardAutoencoder(BaseDeepLearningModel):
         k: int = 20,
         hidden_dims: Optional[list] = None,
         device: Optional[torch.device] = None,
+        *,
+        latent_structure: str = "none",
+        latent_orthogonality_weight: float = 1e-2,
+        latent_decorrelation_weight: float = 1e-2,
+        latent_ordering_probability: float = 0.5,
         **kwargs,
     ):
         self.k = _validate_positive_integer("k", k)
@@ -155,7 +161,14 @@ class StandardAutoencoder(BaseDeepLearningModel):
         self.hidden_dims = _validate_positive_integer_sequence(
             "hidden_dims", hidden_dims
         )
-        super().__init__(device=device, **kwargs)
+        super().__init__(
+            device=device,
+            latent_structure=latent_structure,
+            latent_orthogonality_weight=latent_orthogonality_weight,
+            latent_decorrelation_weight=latent_decorrelation_weight,
+            latent_ordering_probability=latent_ordering_probability,
+            **kwargs,
+        )
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
         """Build the standard fully-connected autoencoder model."""
@@ -167,6 +180,11 @@ class StandardAutoencoder(BaseDeepLearningModel):
         else:
             sample_shape = tuple(input_shape[1:])
         n_features = int(np.prod(sample_shape))
+
+        latent_structure = self.latent_structure
+        latent_orthogonality_weight = self.latent_orthogonality_weight
+        latent_decorrelation_weight = self.latent_decorrelation_weight
+        latent_ordering_probability = self.latent_ordering_probability
 
         class StandardAutoencoderModel(nn.Module):
             def __init__(self, n_features, hidden_dims, k, sample_shape):
@@ -181,7 +199,16 @@ class StandardAutoencoder(BaseDeepLearningModel):
                     encoder_layers.append(nn.BatchNorm1d(dim))
                     encoder_layers.append(nn.ReLU())
                     prev_dim = dim
-                encoder_layers.append(nn.Linear(prev_dim, k))
+                encoder_layers.append(
+                    StructuredLatentLinear(
+                        prev_dim,
+                        k,
+                        mode=latent_structure,
+                        orthogonality_weight=latent_orthogonality_weight,
+                        decorrelation_weight=latent_decorrelation_weight,
+                        ordering_probability=latent_ordering_probability,
+                    )
+                )
                 self.encoder = nn.Sequential(*encoder_layers)
 
                 # Decoder
@@ -618,13 +645,25 @@ class LSTMAutoencoder(BaseDeepLearningModel):
         k: int = 20,
         hidden: Tuple[int, int] = (256, 128),
         device: Optional[torch.device] = None,
+        *,
+        latent_structure: str = "none",
+        latent_orthogonality_weight: float = 1e-2,
+        latent_decorrelation_weight: float = 1e-2,
+        latent_ordering_probability: float = 0.5,
         **kwargs,
     ):
         self.k = _validate_positive_integer("k", k)
         self.hidden = tuple(
             _validate_positive_integer_sequence("hidden", hidden, expected_length=2)
         )
-        super().__init__(device=device, **kwargs)
+        super().__init__(
+            device=device,
+            latent_structure=latent_structure,
+            latent_orthogonality_weight=latent_orthogonality_weight,
+            latent_decorrelation_weight=latent_decorrelation_weight,
+            latent_ordering_probability=latent_ordering_probability,
+            **kwargs,
+        )
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
         """Build the LSTM autoencoder model."""
@@ -637,6 +676,11 @@ class LSTMAutoencoder(BaseDeepLearningModel):
         n_features = input_shape[-1]
         seq_len = input_shape[1]  # Infer from input shape
 
+        latent_structure = self.latent_structure
+        latent_orthogonality_weight = self.latent_orthogonality_weight
+        latent_decorrelation_weight = self.latent_decorrelation_weight
+        latent_ordering_probability = self.latent_ordering_probability
+
         class LSTMAutoencoderModel(nn.Module):
             def __init__(self, seq_len, n_features, hidden, k):
                 super().__init__()
@@ -646,7 +690,14 @@ class LSTMAutoencoder(BaseDeepLearningModel):
                 # Encoder
                 self.lstm1 = nn.LSTM(n_features, hidden[0], batch_first=True)
                 self.lstm2 = nn.LSTM(hidden[0], hidden[1], batch_first=True)
-                self.latent = nn.Linear(hidden[1], k)
+                self.latent = StructuredLatentLinear(
+                    hidden[1],
+                    k,
+                    mode=latent_structure,
+                    orthogonality_weight=latent_orthogonality_weight,
+                    decorrelation_weight=latent_decorrelation_weight,
+                    ordering_probability=latent_ordering_probability,
+                )
 
                 # Decoder
                 self.latent_to_seq = nn.Linear(k, hidden[1])
@@ -735,10 +786,22 @@ class CNNAutoencoder(BaseDeepLearningModel):
         self,
         k: int = 20,
         device: Optional[torch.device] = None,
+        *,
+        latent_structure: str = "none",
+        latent_orthogonality_weight: float = 1e-2,
+        latent_decorrelation_weight: float = 1e-2,
+        latent_ordering_probability: float = 0.5,
         **kwargs,
     ):
         self.k = _validate_positive_integer("k", k)
-        super().__init__(device=device, **kwargs)
+        super().__init__(
+            device=device,
+            latent_structure=latent_structure,
+            latent_orthogonality_weight=latent_orthogonality_weight,
+            latent_decorrelation_weight=latent_decorrelation_weight,
+            latent_ordering_probability=latent_ordering_probability,
+            **kwargs,
+        )
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
         """Build the CNN autoencoder model."""
@@ -758,6 +821,11 @@ class CNNAutoencoder(BaseDeepLearningModel):
         # Pad to make H, W divisible by 4
         pad_h = (4 - (H % 4)) % 4
         pad_w = (4 - (W % 4)) % 4
+
+        latent_structure = self.latent_structure
+        latent_orthogonality_weight = self.latent_orthogonality_weight
+        latent_decorrelation_weight = self.latent_decorrelation_weight
+        latent_ordering_probability = self.latent_ordering_probability
 
         class CNNAutoencoderModel(nn.Module):
             def __init__(self, H, W, C, k, pad_h, pad_w):
@@ -789,7 +857,14 @@ class CNNAutoencoder(BaseDeepLearningModel):
                 self.flat_size = H_enc * W_enc * 64
 
                 self.fc1 = nn.Linear(self.flat_size, 256)
-                self.fc2 = nn.Linear(256, k)
+                self.fc2 = StructuredLatentLinear(
+                    256,
+                    k,
+                    mode=latent_structure,
+                    orthogonality_weight=latent_orthogonality_weight,
+                    decorrelation_weight=latent_decorrelation_weight,
+                    ordering_probability=latent_ordering_probability,
+                )
 
                 # Decoder
                 self.fc3 = nn.Linear(k, 256)
@@ -947,6 +1022,11 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
         depth_dec: int = 2,
         heads: int = 4,
         device: Optional[torch.device] = None,
+        *,
+        latent_structure: str = "none",
+        latent_orthogonality_weight: float = 1e-2,
+        latent_decorrelation_weight: float = 1e-2,
+        latent_ordering_probability: float = 0.5,
         **kwargs,
     ):
         self.k = _validate_positive_integer("k", k)
@@ -959,7 +1039,14 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
         self.heads = _validate_positive_integer("heads", heads)
         if self.d_model % self.heads != 0:
             raise ValueError("d_model must be divisible by heads.")
-        super().__init__(device=device, **kwargs)
+        super().__init__(
+            device=device,
+            latent_structure=latent_structure,
+            latent_orthogonality_weight=latent_orthogonality_weight,
+            latent_decorrelation_weight=latent_decorrelation_weight,
+            latent_ordering_probability=latent_ordering_probability,
+            **kwargs,
+        )
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
         """Build the ViT autoencoder model."""
@@ -982,6 +1069,11 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
         Hp, Wp = (H + pad_h) // self.patch_size, (W + pad_w) // self.patch_size
         N = Hp * Wp
         Pdim = self.patch_size * self.patch_size * C
+
+        latent_structure = self.latent_structure
+        latent_orthogonality_weight = self.latent_orthogonality_weight
+        latent_decorrelation_weight = self.latent_decorrelation_weight
+        latent_ordering_probability = self.latent_ordering_probability
 
         class ViTAutoencoderModel(nn.Module):
             def __init__(
@@ -1030,7 +1122,14 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
 
                 # Global bottleneck (latent k)
                 self.global_pool = nn.AdaptiveAvgPool1d(1)
-                self.latent_k = nn.Linear(d_model, k)
+                self.latent_k = StructuredLatentLinear(
+                    d_model,
+                    k,
+                    mode=latent_structure,
+                    orthogonality_weight=latent_orthogonality_weight,
+                    decorrelation_weight=latent_decorrelation_weight,
+                    ordering_probability=latent_ordering_probability,
+                )
 
                 # Project back to token space for decoding
                 self.dec_seed = nn.Linear(k, N * d_model)
@@ -1200,6 +1299,11 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
         self,
         k: int = 20,
         device: str | torch.device | None = None,
+        *,
+        latent_structure: str = "none",
+        latent_orthogonality_weight: float = 1e-2,
+        latent_decorrelation_weight: float = 1e-2,
+        latent_ordering_probability: float = 0.5,
         **kwargs,
     ):
         if "reconstruction_mode" in kwargs:
@@ -1208,7 +1312,14 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
                 "ConvLSTMAutoencoder always reconstructs the full sequence."
             )
         self.k = _validate_positive_integer("k", k)
-        super().__init__(device=device, **kwargs)
+        super().__init__(
+            device=device,
+            latent_structure=latent_structure,
+            latent_orthogonality_weight=latent_orthogonality_weight,
+            latent_decorrelation_weight=latent_decorrelation_weight,
+            latent_ordering_probability=latent_ordering_probability,
+            **kwargs,
+        )
 
     def fit(
         self,
@@ -1282,6 +1393,11 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
         pad_w = (-width) % 4
         latent_dim = self.k
 
+        latent_structure = self.latent_structure
+        latent_orthogonality_weight = self.latent_orthogonality_weight
+        latent_decorrelation_weight = self.latent_decorrelation_weight
+        latent_ordering_probability = self.latent_ordering_probability
+
         class ConvLSTMAutoencoderModel(nn.Module):
             def __init__(self):
                 super().__init__()
@@ -1320,7 +1436,14 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
                 encoded_h = (height + pad_h) // 4
                 encoded_w = (width + pad_w) // 4
                 self.flat_size = encoded_h * encoded_w * 64
-                self.latent = nn.Linear(self.flat_size, latent_dim)
+                self.latent = StructuredLatentLinear(
+                    self.flat_size,
+                    latent_dim,
+                    mode=latent_structure,
+                    orthogonality_weight=latent_orthogonality_weight,
+                    decorrelation_weight=latent_decorrelation_weight,
+                    ordering_probability=latent_ordering_probability,
+                )
 
                 self.fc_dec = nn.Linear(latent_dim, self.flat_size)
                 self.upsample1 = nn.Upsample(
@@ -1472,6 +1595,11 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
         n_layers: int = 2,
         efficient_attention: str | None = "linear",
         device: str | torch.device | None = None,
+        *,
+        latent_structure: str = "none",
+        latent_orthogonality_weight: float = 1e-2,
+        latent_decorrelation_weight: float = 1e-2,
+        latent_ordering_probability: float = 0.5,
         **kwargs,
     ):
         if "reconstruction_mode" in kwargs:
@@ -1491,7 +1619,14 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
         if efficient_attention not in {"linear", None}:
             raise ValueError("efficient_attention must be 'linear' or None.")
         self.efficient_attention = efficient_attention
-        super().__init__(device=device, **kwargs)
+        super().__init__(
+            device=device,
+            latent_structure=latent_structure,
+            latent_orthogonality_weight=latent_orthogonality_weight,
+            latent_decorrelation_weight=latent_decorrelation_weight,
+            latent_ordering_probability=latent_ordering_probability,
+            **kwargs,
+        )
 
     def fit(
         self,
@@ -1571,6 +1706,11 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
         n_layers = self.n_layers
         efficient_attention = self.efficient_attention
 
+        latent_structure = self.latent_structure
+        latent_orthogonality_weight = self.latent_orthogonality_weight
+        latent_decorrelation_weight = self.latent_decorrelation_weight
+        latent_ordering_probability = self.latent_ordering_probability
+
         class HybridAutoencoderModel(nn.Module):
             def __init__(self):
                 super().__init__()
@@ -1611,7 +1751,14 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                 self.transformer_blocks = self._make_blocks()
 
                 self.global_pool_time = nn.AdaptiveAvgPool1d(1)
-                self.latent = nn.Linear(d_model, latent_dim)
+                self.latent = StructuredLatentLinear(
+                    d_model,
+                    latent_dim,
+                    mode=latent_structure,
+                    orthogonality_weight=latent_orthogonality_weight,
+                    decorrelation_weight=latent_decorrelation_weight,
+                    ordering_probability=latent_ordering_probability,
+                )
 
                 encoded_h = (height + pad_h) // 4
                 encoded_w = (width + pad_w) // 4
