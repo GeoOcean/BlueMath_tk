@@ -12,6 +12,7 @@ import torch.nn.functional as functional
 from tqdm import tqdm
 
 from ._base_model import BaseDeepLearningModel
+from .latent_structure import StructuredLatentLinear
 
 
 class VariationalAutoencoder(BaseDeepLearningModel):
@@ -52,6 +53,11 @@ class VariationalAutoencoder(BaseDeepLearningModel):
         beta: float = 1.0,
         validation_mc_samples: int = 4,
         device: str | torch.device | None = None,
+        *,
+        latent_structure: str = "none",
+        latent_orthogonality_weight: float = 1e-2,
+        latent_decorrelation_weight: float = 1e-2,
+        latent_ordering_probability: float = 0.5,
         **kwargs,
     ):
         if not isinstance(k, int) or isinstance(k, bool) or k < 1:
@@ -83,7 +89,14 @@ class VariationalAutoencoder(BaseDeepLearningModel):
         self.hidden_dims = list(hidden_dims)
         self.beta = float(beta)
         self.validation_mc_samples = validation_mc_samples
-        super().__init__(device=device, **kwargs)
+        super().__init__(
+            device=device,
+            latent_structure=latent_structure,
+            latent_orthogonality_weight=latent_orthogonality_weight,
+            latent_decorrelation_weight=latent_decorrelation_weight,
+            latent_ordering_probability=latent_ordering_probability,
+            **kwargs,
+        )
 
     def _build_model(self, input_shape: tuple, **kwargs) -> nn.Module:
         """Build the encoder, posterior parameterization, and decoder."""
@@ -98,6 +111,11 @@ class VariationalAutoencoder(BaseDeepLearningModel):
         n_features = int(np.prod(sample_shape))
         hidden_dims = tuple(self.hidden_dims)
         latent_dim = self.k
+
+        latent_structure = self.latent_structure
+        latent_orthogonality_weight = self.latent_orthogonality_weight
+        latent_decorrelation_weight = self.latent_decorrelation_weight
+        latent_ordering_probability = self.latent_ordering_probability
 
         class VariationalAutoencoderModel(nn.Module):
             def __init__(self):
@@ -117,7 +135,15 @@ class VariationalAutoencoder(BaseDeepLearningModel):
                     )
                     previous_dim = hidden_dim
                 self.encoder = nn.Sequential(*encoder_layers)
-                self.mu_layer = nn.Linear(previous_dim, latent_dim)
+                self.mu_layer = StructuredLatentLinear(
+                    previous_dim,
+                    latent_dim,
+                    mode=latent_structure,
+                    orthogonality_weight=latent_orthogonality_weight,
+                    decorrelation_weight=latent_decorrelation_weight,
+                    ordering_probability=latent_ordering_probability,
+                    apply_ordering_in_forward=False,
+                )
                 self.variance_layer = nn.Linear(previous_dim, latent_dim)
 
                 decoder_layers: list[nn.Module] = []
@@ -206,7 +232,11 @@ class VariationalAutoencoder(BaseDeepLearningModel):
                 mu, log_var = self.encode_distribution_forward(x)
                 if stochastic is None:
                     stochastic = self.training
-                z = self.reparameterize(mu, log_var) if stochastic else mu
+                if stochastic:
+                    z = self.reparameterize(mu, log_var)
+                    z = self.mu_layer.apply_ordering(z)
+                else:
+                    z = mu
                 return self.decode_forward(z)
 
         return VariationalAutoencoderModel()
@@ -428,6 +458,12 @@ class VariationalAutoencoder(BaseDeepLearningModel):
             reconstruction_losses = []
             for _ in range(stochastic_samples):
                 z = self.model.reparameterize(mu, log_var)
+                latent_projection = getattr(self.model, "mu_layer", None)
+                if (
+                    latent_projection is not None
+                    and hasattr(latent_projection, "apply_ordering")
+                ):
+                    z = latent_projection.apply_ordering(z)
                 reconstruction = self.model.decode_forward(z)
                 self._require_matching_output_shape(
                     reconstruction, batch_y, "VAE reconstruction"
@@ -444,7 +480,14 @@ class VariationalAutoencoder(BaseDeepLearningModel):
             mean_reconstruction_loss = torch.stack(reconstruction_losses).mean()
             kl_loss = self.model.kl_divergence(mu, log_var)
             self._require_finite_loss(kl_loss, "VAE KL")
-            loss = mean_reconstruction_loss + self.beta * kl_loss
+            regularization_loss = self._model_regularization_loss(
+                mean_reconstruction_loss
+            )
+            loss = (
+                mean_reconstruction_loss
+                + self.beta * kl_loss
+                + regularization_loss
+            )
             self._require_finite_loss(loss, "VAE total")
 
             deterministic_loss = None
