@@ -110,7 +110,7 @@ class SwanModelWrapper(BaseModelWrapper):
             for line in reversed(f.readlines()):
                 match = re.search(progress_pattern, line)
                 if match:
-                    if float(match.group(1)) > 98.0:
+                    if float(match.group(1)) >= 98.0:
                         return "100 %"
                     return f"{match.group(1)} %"
 
