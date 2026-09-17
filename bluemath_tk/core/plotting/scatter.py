@@ -1,5 +1,3 @@
-from typing import List, Optional, Tuple
-
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
@@ -13,7 +11,7 @@ from .colors import default_colors
 
 def density_scatter(
     x: np.ndarray, y: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Compute a density scatter for two arrays using gaussian KDE.
 
@@ -31,6 +29,8 @@ def density_scatter(
         - Sorted x values
         - Sorted y values
         - Density values corresponding to each point
+
+    TODO: check mpl_scatter_density
     """
 
     if len(x) != len(y):
@@ -122,10 +122,10 @@ def validation_scatter(
 
 
 def plot_scatters_in_triangle(
-    dataframes: List[pd.DataFrame],
-    data_colors: Optional[List[str]] = None,
+    dataframes: list[pd.DataFrame],
+    data_colors: list[str] = None,
     **kwargs,
-) -> Tuple[Figure, np.ndarray]:
+) -> tuple[Figure, np.ndarray]:
     """
     Plot scatter plots of the dataframes with axes in a triangle arrangement.
 

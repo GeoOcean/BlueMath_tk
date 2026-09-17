@@ -27,11 +27,17 @@ References
 """
 
 import gpytorch
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
 from gpytorch.constraints import GreaterThan
-from gpytorch.kernels import Kernel, MaternKernel, RBFKernel, ScaleKernel
+from gpytorch.kernels import (
+    Kernel,
+    MaternKernel,
+    RBFKernel,
+    ScaleKernel,
+)
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.mlls import ExactMarginalLogLikelihood
@@ -39,6 +45,7 @@ from gpytorch.models import ExactGP
 from tqdm import tqdm
 
 from ..core.decorators import validate_gp_data
+from ..core.plotting.scatter import validation_scatter
 from ._base_interpolation import BaseInterpolation
 
 
@@ -50,6 +57,29 @@ class GPError(Exception):
     def __init__(self, message: str = "GP error occurred."):
         self.message = message
         super().__init__(self.message)
+
+
+class GPModel(ExactGP):
+    """
+    Module-level ExactGP model so instances are pickle-serializable.
+    """
+
+    def __init__(
+        self,
+        train_x: torch.Tensor,
+        train_y: torch.Tensor,
+        likelihood: GaussianLikelihood,
+        kernel: Kernel,
+    ):
+        super().__init__(train_x, train_y, likelihood)
+        self.mean_module = ConstantMean()
+        self.covar_module = kernel
+
+    def forward(self, x: torch.Tensor) -> gpytorch.distributions.MultivariateNormal:
+        """Compute GP prior distribution at inputs."""
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 
 class ExactGPInterpolation(BaseInterpolation):
@@ -173,7 +203,7 @@ class ExactGPInterpolation(BaseInterpolation):
         self._hyperparameters: dict[str, dict] = {}  # Store hyperparams per target var
 
         # Exclude from pickling
-        self._exclude_attributes = ["_models", "_likelihoods", "_mlls"]
+        self._exclude_attributes = []
 
         initial_msg = f"""
         ---------------------------------------------------------------------------------
@@ -318,17 +348,6 @@ class ExactGPInterpolation(BaseInterpolation):
             (GP model, likelihood)
         """
         kernel = self._build_kernel(input_dim)
-
-        class GPModel(ExactGP):
-            def __init__(self, train_x, train_y, likelihood, kernel):
-                super().__init__(train_x, train_y, likelihood)
-                self.mean_module = ConstantMean()
-                self.covar_module = kernel
-
-            def forward(self, x):
-                mean_x = self.mean_module(x)
-                covar_x = self.covar_module(x)
-                return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
         # Initialize likelihood with very small noise for exact interpolation
         # Use a small fixed value (1e-6) for numerical stability while
@@ -742,6 +761,7 @@ class ExactGPInterpolation(BaseInterpolation):
 
         # Convert to DataFrame
         result = pd.DataFrame(predictions_dict)
+        result.index = dataset.index
 
         if return_std:
             std_df = pd.DataFrame(stds_dict)
@@ -822,3 +842,249 @@ class ExactGPInterpolation(BaseInterpolation):
         )
 
         return self.predict(dataset=dataset, return_std=return_std, verbose=verbose)
+
+    def _print_validation_summary(self, all_results: dict) -> None:
+        """Print a summary of validation results."""
+        print("\n" + "=" * 60)
+        print("GP Fit Validation Summary")
+        print("=" * 60)
+
+        overall_status = "good"
+        for var, results in all_results.items():
+            if results["status"] == "poor":
+                overall_status = "poor"
+            elif results["status"] == "warning" and overall_status == "good":
+                overall_status = "warning"
+
+        print(f"\nOverall Status: {overall_status.upper()}")
+
+        for var, results in all_results.items():
+            print(f"\n{var}:")
+            print(f"  Status: {results['status'].upper()}")
+
+            # Training error metrics
+            error = results["training_error"]
+            print("  Training Error:")
+            print(f"    Max absolute error: {error['max']:.4e}")
+            print(f"    Mean absolute error: {error['mean']:.4e}")
+
+            # Uncertainty
+            uncertainty = results["training_uncertainty"]
+            print("  Training Uncertainty:")
+            print(f"    Max std: {uncertainty['max']:.4e}")
+            print(f"    Mean std: {uncertainty['mean']:.4e}")
+
+            # Hyperparameters (main focus)
+            hyperparams = results["hyperparameters"]
+            print("  Hyperparameters:")
+            if "noise" in hyperparams:
+                print(f"    Noise: {hyperparams['noise']:.4e}")
+            if "outputscale" in hyperparams:
+                print(f"    Output scale: {hyperparams['outputscale']:.4f}")
+            if "mean_constant" in hyperparams:
+                print(f"    Mean constant: {hyperparams['mean_constant']:.4f}")
+            if "lengthscale" in hyperparams:
+                ls = hyperparams["lengthscale"]
+                if isinstance(ls, list):
+                    if len(ls) == 1:
+                        print(f"    Lengthscale: {ls[0]:.4f}")
+                    else:
+                        ls_str = [f"{ls_val:.4f}" for ls_val in ls]
+                        print(f"    Lengthscale (ARD): {ls_str}")
+                else:
+                    print(f"    Lengthscale: {ls}")
+            elif "lengthscales" in hyperparams:
+                print("    Lengthscales (additive kernel):")
+                for i, ls_dict in enumerate(hyperparams["lengthscales"]):
+                    for kernel_name, ls in ls_dict.items():
+                        if isinstance(ls, list):
+                            if len(ls) == 1:
+                                print(f"      {kernel_name}: {ls[0]:.4f}")
+                            else:
+                                ls_str = [f"{ls_val:.4f}" for ls_val in ls]
+                                print(f"      {kernel_name} (ARD): {ls_str}")
+                        else:
+                            print(f"      {kernel_name}: {ls}")
+
+            # Warnings
+            if results["warnings"]:
+                print("  Warnings:")
+                for warning in results["warnings"]:
+                    print(f"    ⚠️  {warning}")
+            else:
+                print("  ✓ No warnings")
+
+        print("\n" + "=" * 60)
+
+    def validate_fit(
+        self,
+        verbose: bool = True,
+        show_plots: bool = True,
+        target_variable: str = None,
+    ) -> dict:
+        """
+        Validate the GP fit quality for all target variables.
+
+        This method performs comprehensive validation checks:
+        - Training point prediction accuracy
+        - Uncertainty quantification at training points
+        - Hyperparameter values
+        - Validation scatter plots comparing observed vs predicted values
+
+        Parameters
+        ----------
+        verbose : bool, optional
+            If True, print a summary of the validation results. Default is True.
+        show_plots : bool, optional
+            If True, display validation scatter plots. Default is True.
+        target_variable : str, optional
+            Specific target variable to validate. If None, validates all variables.
+            Default is None.
+
+        Returns
+        -------
+        dict
+            Dictionary containing validation results for each target variable.
+            Keys are target variable names, values are dicts with:
+            - 'status': 'good', 'warning', or 'poor'
+            - 'training_error': dict with 'max', 'mean' absolute errors
+            - 'training_uncertainty': dict with 'max', 'mean' std at training points
+            - 'hyperparameters': dict with learned hyperparameters
+            - 'warnings': list of warning messages
+
+        Raises
+        ------
+        GPError
+            If the model is not fitted.
+        """
+
+        if not self.is_fitted:
+            raise GPError("GP model must be fitted before validation.")
+
+        all_results = {}
+
+        # Get predictions at training points
+        self.logger.info("Computing predictions at training points for validation")
+        training_predictions = self.predict(
+            dataset=self._original_subset_data, return_std=True, verbose=0
+        )
+
+        # Determine which target variables to validate
+        if target_variable is None:
+            target_vars = self.target_processed_variables
+        else:
+            if target_variable not in self.target_processed_variables:
+                raise ValueError(
+                    f"target_variable '{target_variable}' not found in "
+                    f"target_processed_variables: {self.target_processed_variables}"
+                )
+            target_vars = [target_variable]
+
+        # Validate each target variable
+        for target_var in target_vars:
+            self.logger.info(f"Validating target variable: {target_var}")
+
+            # Get observed and predicted values
+            if self.is_target_normalized:
+                # Get original target values
+                observed = self._target_data[target_var].values
+            else:
+                observed = self._target_data[target_var].values
+
+            predicted = training_predictions[target_var].values
+
+            # Calculate basic error metrics
+            max_error = np.abs(observed - predicted).max()
+            mean_error = np.abs(observed - predicted).mean()
+
+            # Get uncertainty (standard deviation) at training points
+            if f"{target_var}_lower_ci" in training_predictions.columns:
+                # Calculate std from confidence intervals
+                std_values = (
+                    training_predictions[f"{target_var}_upper_ci"].values
+                    - training_predictions[f"{target_var}_lower_ci"].values
+                ) / (2 * 1.96)  # Approximate std from 95% CI
+            else:
+                std_values = np.zeros_like(observed)
+
+            max_std = std_values.max()
+            mean_std = std_values.mean()
+
+            # Get hyperparameters
+            hyperparams = self.hyperparameters.get(target_var, {})
+
+            # Determine status and warnings
+            warnings = []
+            status = "good"
+
+            # Check training error (should be very small for exact interpolation)
+            if max_error > 0.1:
+                warnings.append(
+                    f"Large training error (max={max_error:.4f}). "
+                    "GP may not be fitting training points well."
+                )
+                status = "poor"
+            elif max_error > 0.01:
+                warnings.append(
+                    f"Moderate training error (max={max_error:.4f}). "
+                    "Consider checking hyperparameters."
+                )
+                if status == "good":
+                    status = "warning"
+
+            # Check uncertainty at training points (should be small)
+            if mean_std > 0.1:
+                warnings.append(
+                    f"Large uncertainty at training points (mean={mean_std:.4f}). "
+                    "Noise parameter may be too high."
+                )
+                if status == "good":
+                    status = "warning"
+
+            # Check hyperparameters
+            noise = hyperparams.get("noise", None)
+            if noise is not None and noise > 1e-4:
+                warnings.append(
+                    f"Noise parameter ({noise:.2e}) is relatively high. "
+                    "Consider if this is appropriate for your application."
+                )
+                if status == "good":
+                    status = "warning"
+
+            # Store results
+            results = {
+                "status": status,
+                "training_error": {
+                    "max": max_error,
+                    "mean": mean_error,
+                },
+                "training_uncertainty": {
+                    "max": max_std,
+                    "mean": mean_std,
+                },
+                "hyperparameters": hyperparams,
+                "warnings": warnings,
+            }
+
+            all_results[target_var] = results
+
+            # Create validation scatter plot (metrics calculated inside)
+            if show_plots:
+                fig, ax = plt.subplots(figsize=(6, 6))
+                validation_scatter(
+                    axs=ax,
+                    x=observed,
+                    y=predicted,
+                    xlabel=f"Observed {target_var}",
+                    ylabel=f"Predicted {target_var}",
+                    title=f"GP Validation: {target_var}",
+                    cmap="rainbow",
+                )
+                plt.tight_layout()
+                plt.show()
+
+        # Print summary
+        if verbose:
+            self._print_validation_summary(all_results)
+
+        return all_results

@@ -318,6 +318,8 @@ class BaseModelWrapper(BlueMathModel, ABC):
 
         template = self.env.get_template(name=template_name)
         rendered_content = template.render(context)
+        if rendered_content.startswith("\n"):
+            rendered_content = rendered_content[1:]
         if output_filename is None:
             output_filename = op.join(self.output_dir, template_name)
         with open(output_filename, "w") as f:
@@ -534,9 +536,52 @@ class BaseModelWrapper(BlueMathModel, ABC):
             file.write(self.sbatch_file_example)
         self.logger.info(f"SBATCH example file generated in {self.output_dir}")
 
+    def cases_dir_to_txt(self, filename: str = "case_dirs.txt") -> str:
+        """
+        Write the list of case directories to a plain text file, one
+        absolute path per line, in the same order as self.cases_dirs.
+
+        This is meant to be read by a SLURM job array script (e.g. via
+        `sed -n "${SLURM_ARRAY_TASK_ID}p" case_dirs.txt`, 1-indexed) instead
+        of relying on `ls`, which breaks if the output directory contains
+        anything other than case directories.
+
+        Parameters
+        ----------
+        filename : str, optional
+            The name of the file to write. Default is "case_dirs.txt".
+            Saved in self.output_dir.
+
+        Returns
+        -------
+        str
+            The full path to the written file.
+
+        Raises
+        ------
+        ValueError
+            If cases_dirs is not set.
+        """
+
+        if self.cases_dirs is None:
+            raise ValueError(
+                "Cases directories are not set. Please run build_cases() first."
+            )
+
+        filepath = op.join(self.output_dir, filename)
+        with open(filepath, "w") as file:
+            file.write("\n".join(self.cases_dirs))
+        self.logger.info(
+            f"{len(self.cases_dirs)} case directories written to {filepath}."
+        )
+
+        return filepath
+
     def run_case(
         self,
+        case_num: int,
         case_dir: str,
+        case_context: dict,
         launcher: str,
         output_log_file: str = "wrapper_out.log",
         error_log_file: str = "wrapper_error.log",
@@ -607,8 +652,11 @@ class BaseModelWrapper(BlueMathModel, ABC):
                 f"Cases to run was specified, so just {cases_to_run} will be run."
             )
             cases_dir_to_run = [self.cases_dirs[case] for case in cases_to_run]
+            cases_context_to_run = [self.cases_context[case] for case in cases_to_run]
         else:
+            cases_to_run = list(range(len(self.cases_dirs)))
             cases_dir_to_run = copy.deepcopy(self.cases_dirs)
+            cases_context_to_run = copy.deepcopy(self.cases_context)
 
         if num_workers > 1:
             self.logger.debug(
@@ -616,16 +664,20 @@ class BaseModelWrapper(BlueMathModel, ABC):
             )
             _results = self.parallel_execute(
                 func=self.run_case,
-                items=cases_dir_to_run,
+                items=zip(cases_to_run, cases_dir_to_run, cases_context_to_run),
                 num_workers=num_workers,
                 launcher=launcher,
             )
         else:
             self.logger.debug(f"Running cases sequentially with launcher={launcher}.")
-            for case_dir in cases_dir_to_run:
+            for case_num, case_dir, case_context in zip(
+                cases_to_run, cases_dir_to_run, cases_context_to_run
+            ):
                 try:
                     self.run_case(
+                        case_num=case_num,
                         case_dir=case_dir,
+                        case_context=case_context,
                         launcher=launcher,
                     )
                 except Exception as exc:

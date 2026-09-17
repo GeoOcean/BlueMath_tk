@@ -156,11 +156,20 @@ class PCA(BaseReduction):
         else:
             self.logger.info(f"Explained variance ratio: {n_components}")
         self.n_components = n_components
+
+        # try:
+        #     import torch
+        #     from qrpca.decomposition import qrpca
+
+        #     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        #     self.logger.warning(f"Using QRPCA with device: {device}")
+        #     self._pca = qrpca(n_component_ratio=self.n_components, device=device)
+        # except ImportError:
         if is_incremental:
-            self.logger.info("Using Incremental PCA")
+            self.logger.warning("Using Incremental PCA")
             self._pca = IncrementalPCA_(n_components=self.n_components)
         else:
-            self.logger.info("Using PCA")
+            self.logger.warning("Using PCA")
             self._pca = PCA_(n_components=self.n_components)
 
         self.is_fitted: bool = False
@@ -817,7 +826,7 @@ class PCA(BaseReduction):
             if map_center:
                 p_var = eofs[var].plot(
                     col="n_component",
-                    col_wrap=3,
+                    col_wrap=6,
                     transform=ccrs.PlateCarree(),
                     subplot_kws={"projection": ccrs.Orthographic(*map_center)},
                 )
