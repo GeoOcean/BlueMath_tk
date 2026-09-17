@@ -118,8 +118,8 @@ def transform_spectra_to_binwaves(
     case_num_spectra = []
     for case_num, (case_dir, case_freq) in enumerate(
         zip(
-            kps_dataset["dm"].values,
-            kps_dataset["fp"].values,
+            kps_dataset["run_dm"].values,
+            kps_dataset["run_fp"].values,
         )
     ):
         try:
@@ -186,7 +186,7 @@ def reconstruct_spectra(
             "freq": kp["freq"],
             "dir": kp["dir"],
         },
-        name="kps",
+        name="efth",
     )
 
     # Carry over auxiliary site/global coordinates (coord_x, coord_y, lat, lon, ...)
