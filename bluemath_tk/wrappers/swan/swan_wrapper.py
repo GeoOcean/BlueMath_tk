@@ -480,13 +480,16 @@ class BinWavesUnstructuredWrapper(SwanUnstructuredModelWrapper, BinWavesModelWra
         Build the input spectra file for a case.
         """
 
+        # Save hs value depending on 5 second peak period (fp) value
+        case_context["hs"] = 1.0 if case_context.get("fp") < 0.2 else 0.1
+
         # Construct the input spectrum
         input_spectrum = construct_partition(
             freq_name="jonswap",
             freq_kwargs={
                 "freq": case_context.get("frequencies_array"),
                 "fp": case_context.get("fp"),
-                "hs": 1.0 if case_context.get("fp") < 0.2 else 0.1,
+                "hs": case_context.get("hs"),
             },
             dir_name="cartwright",
             dir_kwargs={
@@ -559,6 +562,7 @@ class BinWavesUnstructuredWrapper(SwanUnstructuredModelWrapper, BinWavesModelWra
                     "dm": (("case_num"), [case_context.get("dm")]),
                     "fp": (("case_num"), [case_context.get("fp")]),
                     "tp": (("case_num"), [1.0 / case_context.get("fp")]),
+                    "hs": (("case_num"), [case_context.get("hs")]),
                 }
             )
             output_nc.to_netcdf(os.path.join(case_dir, "output.nc"))
