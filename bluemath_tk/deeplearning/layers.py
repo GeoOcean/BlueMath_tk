@@ -350,14 +350,22 @@ class LatentDecorr(nn.Module):
         """
         # z: (batch, k)
         zc = z - z.mean(dim=0, keepdim=True)  # center
-        B = zc.size(0)
-        cov = torch.matmul(zc.t(), zc) / (B - 1.0)  # (k, k)
-        diag_mask = torch.eye(cov.size(0), device=cov.device, dtype=cov.dtype)
-        offdiag = cov * (1 - diag_mask)  # zero diag
-        loss = self.strength * torch.sum(offdiag**2)
+        batch_size = zc.size(0)
+
+        if batch_size < 2:
+            loss = z.new_zeros(())
+        else:
+            cov = torch.matmul(zc.t(), zc) / (batch_size - 1.0)  # (k, k)
+            diag_mask = torch.eye(
+                cov.size(0),
+                device=cov.device,
+                dtype=cov.dtype,
+            )
+            offdiag = cov * (1 - diag_mask)
+            loss = self.strength * torch.sum(offdiag**2)
 
         # Add loss to computation graph
-        z = z + 0 * loss  # Trick to add loss to graph without changing z
+        z = z + 0 * loss
 
         # Store current loss for retrieval during training
         self._loss = loss
@@ -728,9 +736,12 @@ class ConvLSTM(nn.Module):
 
 class LinearSelfAttention(nn.Module):
     """
-    Softmax-free, Performer-style linear attention on the time axis.
+    Softmax-free linear attention with an ELU+1 feature map.
 
-    Provides O(B * L * D * H) scaling, good for large sequence lengths.
+    Attention contractions scale linearly with sequence length. Including
+    dense projections, total compute is approximately ``O(B * L * D**2)``;
+    accumulated key-value state across all heads is approximately
+    ``O(B * D**2 / H)``.
 
     Parameters
     ----------
@@ -742,7 +753,22 @@ class LinearSelfAttention(nn.Module):
 
     def __init__(self, d_model: int, num_heads: int = 4):
         super().__init__()
-        assert d_model % num_heads == 0
+        for name, value in (
+            ("d_model", d_model),
+            ("num_heads", num_heads),
+        ):
+            if (
+                not isinstance(value, int)
+                or isinstance(value, bool)
+                or value < 1
+            ):
+                raise ValueError(
+                    f"{name} must be a positive integer."
+                )
+        if d_model % num_heads != 0:
+            raise ValueError(
+                "d_model must be divisible by num_heads."
+            )
         self.d_model = d_model
         self.num_heads = num_heads
         self.d_head = d_model // num_heads
@@ -770,6 +796,11 @@ class LinearSelfAttention(nn.Module):
             Output sequences, shape (B, L, D).
         """
         # x: (B, L, D)
+        if x.dim() != 3 or x.size(-1) != self.d_model:
+            raise ValueError(
+                "LinearSelfAttention expects input shape "
+                f"(B, L, {self.d_model}), got {tuple(x.shape)}."
+            )
         B, L, D = x.shape
         Q = self.Wq(x)
         K = self.Wk(x)

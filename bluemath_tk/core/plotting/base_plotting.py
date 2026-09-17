@@ -1,15 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Dict, List, Tuple, Union
 
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
+import numpy as np
 import plotly.graph_objects as go
 import xarray as xr
 
 from ...config.paths import PATHS
-from .colors import hex_colors_land, hex_colors_water
+from .colors import hex_colors_land, hex_colors_water, hex_colors_water_transition
 from .satellite import get_satellite_image
-from .utils import join_colormaps
+from .utils import format_ticks, join_colormaps, nice_ticks, single_colormap
 
 
 class BasePlotting(ABC):
@@ -117,6 +118,11 @@ class DefaultStaticPlotting(BasePlotting):
         ax: plt.Axes,
         source: str,
         area: Tuple[float, float, float, float],
+        var_name: str = "elevation",
+        transition_depth: float = None,
+        isodepths: Union[float, List[float]] = None,
+        isodepths_labels: bool = True,
+        isodepths_kwargs: Dict = None,
         **kwargs,
     ) -> None:
         """
@@ -130,33 +136,163 @@ class DefaultStaticPlotting(BasePlotting):
             The source of the bathymetry data. Must be a key in the PATHS dictionary.
         area: Tuple[float, float, float, float]
             The area of the bathymetry data in the format (lon_min, lon_max, lat_min, lat_max).
+        transition_depth: float
+            Depth (negative, in data units) at which the ocean colormap turns from
+            blue to beige. Only used with the "albita_ocean" colormap. Default is
+            None, which spreads the ocean colours evenly over the depth range.
+        isodepths: Union[float, List[float]]
+            Depth / elevation values (in data units, so depths are negative) at which
+            to draw contour lines on top of the map. Default is None (no contours).
+        isodepths_labels: bool
+            Whether to annotate the contour lines with their value. Default is True.
+        isodepths_kwargs: Dict
+            Additional keyword arguments passed to the contour call (e.g. colors,
+            linewidths, linestyles), and, under the "labels_kwargs" key, a dictionary
+            of arguments passed to ax.clabel().
         **kwargs
             Additional keyword arguments passed to the xr.Dataset.plot() function.
         """
 
-        if source not in PATHS:
-            raise ValueError(f"Source {source} not found in PATHS")
-        else:
-            bathymetry_ds = (
-                xr.open_dataset(PATHS[source])
-                .sel(lon=slice(area[0], area[1]), lat=slice(area[2], area[3]))
-                .elevation
-            )
+        if isinstance(source, str):
+            if source not in PATHS:
+                raise ValueError(f"Source '{source}' not found in PATHS.")
+
+            else:
+                bathymetry_ds = (
+                    xr.open_dataset(PATHS[source])
+                    .sel(lon=slice(area[0], area[1]), lat=slice(area[2], area[3]))[var_name]
+                )
+
+        elif isinstance(source, xr.Dataset):
+            bathymetry_ds = source[var_name].sel(lon=slice(area[0], area[1]), lat=slice(area[2], area[3]))
+
+        elif isinstance(source, xr.DataArray):
+            bathymetry_ds = source
 
         cmap = kwargs.pop("cmap", self.bathymetry_defaults.get("cmap"))
         if cmap == "albita_ocean":
-            cmap, norm = join_colormaps(
-                cmap1=hex_colors_water,
-                cmap2=hex_colors_land,
-                value_range1=(bathymetry_ds.min(), 0.0),
-                value_range2=(0.0, bathymetry_ds.max()),
+            vmin, vmax = float(bathymetry_ds.min()), float(bathymetry_ds.max())
+            anchor = (
+                None
+                if transition_depth is None
+                else (hex_colors_water_transition, transition_depth)
             )
+
+            # Only keep the halves of the colormap the data actually covers, so that
+            # e.g. an all-ocean map does not carry an unused land ramp in its colorbar
+            if vmax <= 0.0:
+                cmap, norm = single_colormap(
+                    cmap=hex_colors_water,
+                    value_range=(vmin, vmax),
+                    anchor=anchor,
+                )
+            elif vmin >= 0.0:
+                cmap, norm = single_colormap(
+                    cmap=hex_colors_land,
+                    value_range=(vmin, vmax),
+                )
+            else:
+                cmap, norm = join_colormaps(
+                    cmap1=hex_colors_water,
+                    cmap2=hex_colors_land,
+                    value_range1=(vmin, 0.0),
+                    value_range2=(0.0, vmax),
+                    anchor1=anchor,
+                )
+
+            # The norm is boundary-based, so ask for a colorbar that stays linear in
+            # data space and is labelled with round values instead of raw boundaries
+            ticks = None
+            if kwargs.get("add_colorbar", True):
+                cbar_kwargs = dict(kwargs.pop("cbar_kwargs", None) or {})
+                cbar_kwargs.setdefault("spacing", "proportional")
+                if "ticks" not in cbar_kwargs:
+                    ticks = nice_ticks((vmin, vmax), include=0.0)
+                    cbar_kwargs["ticks"] = ticks
+                kwargs["cbar_kwargs"] = cbar_kwargs
+
             p = bathymetry_ds.plot(ax=ax, cmap=cmap, norm=norm, **kwargs)
-            # Hide minor ticks on colorbar
             if hasattr(p, "colorbar") and p.colorbar is not None:
+                # Hide minor ticks on colorbar
                 p.colorbar.minorticks_off()
+                if ticks is not None:
+                    # End ticks sit at the exact data limits, so round their labels
+                    p.colorbar.set_ticklabels(format_ticks(ticks))
         else:
             bathymetry_ds.plot(ax=ax, cmap=cmap, **kwargs)
+
+        if isodepths is not None:
+            self.plot_isodepths(
+                ax=ax,
+                bathymetry=bathymetry_ds,
+                isodepths=isodepths,
+                labels=isodepths_labels,
+                transform=kwargs.get("transform"),
+                **(isodepths_kwargs or {}),
+            )
+
+    @staticmethod
+    def plot_isodepths(
+        ax: plt.Axes,
+        bathymetry: xr.DataArray,
+        isodepths: Union[float, List[float]],
+        labels: bool = True,
+        transform=None,
+        **kwargs,
+    ):
+        """
+        Draw isodepth contour lines on top of a bathymetry map.
+
+        Parameters
+        ----------
+        ax: plt.Axes
+            The axes on which to plot the contours.
+        bathymetry: xr.DataArray
+            The bathymetry data to contour.
+        isodepths: Union[float, List[float]]
+            Depth / elevation values (in data units, so depths are negative).
+        labels: bool
+            Whether to annotate the contour lines with their value. Default is True.
+        transform
+            Cartopy transform of the data, if any.
+        **kwargs
+            Additional keyword arguments passed to the contour call. The
+            "labels_kwargs" key holds a dictionary of arguments passed to ax.clabel().
+
+        Returns
+        -------
+        matplotlib.contour.QuadContourSet
+            The contour set, so that it can be further customized.
+        """
+
+        levels = sorted(np.atleast_1d(isodepths).astype(float))
+        labels_kwargs = kwargs.pop("labels_kwargs", {})
+        if transform is not None:
+            kwargs.setdefault("transform", transform)
+
+        contours = bathymetry.plot.contour(
+            ax=ax,
+            levels=levels,
+            colors=kwargs.pop("colors", "black"),
+            linewidths=kwargs.pop("linewidths", 0.5),
+            # Solid by default, as matplotlib dashes negative levels (i.e. all depths)
+            linestyles=kwargs.pop("linestyles", "solid"),
+            add_colorbar=False,
+            add_labels=False,
+            **kwargs,
+        )
+        if labels:
+            ax.clabel(
+                contours,
+                **{
+                    "fmt": "%g",
+                    "inline": True,
+                    "fontsize": 7,
+                    **labels_kwargs,
+                },
+            )
+
+        return contours
 
     def plot_satellite(
         self,

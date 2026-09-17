@@ -6,11 +6,13 @@ This module is a pytorch translation from a tensorflow implementation developed 
 This module contains the following autoencoders:
 - StandardAutoencoder
 - OrthogonalAutoencoder
+- VariationalAutoencoder
 - LSTMAutoencoder
 - CNNAutoencoder
 - VisionTransformerAutoencoder
 - ConvLSTMAutoencoder
 - HybridConvLSTMTransformerAutoencoder
+- SpatialTokenConvLSTMTransformerAutoencoder
 
 Each autoencoder is a subclass of BaseDeepLearningModel and implements the following methods:
 - fit(X, y=None, epochs=10, batch_size=32, verbose=1)
@@ -18,9 +20,20 @@ Each autoencoder is a subclass of BaseDeepLearningModel and implements the follo
 - encode(X)
 - decode(X)
 - evaluate(X)
+
+Limitations
+-----------
+Inputs are converted to float32. Complete training and validation splits are
+currently transferred to the selected device instead of being streamed one
+batch at a time, and full-resolution ConvLSTM activations can dominate memory.
+A variational model with beta=0 is not a prior-matched generative model.
+Latent dimensional compression is neither entropy coding nor a deployable,
+bitrate-controlled codec. CUDA RNG preservation is implemented in the test
+suite but still requires validation on CUDA-capable hardware.
 """
 
 import copy
+import math
 from typing import Dict, Optional, Tuple
 
 import numpy as np
@@ -38,6 +51,58 @@ from .layers import (
     TimePositionalEncoding,
     Unpatchify,
 )
+from .spatiotemporal_autoencoders import (
+    SpatialTokenConvLSTMTransformerAutoencoder as _SpatialTokenAutoencoder,
+)
+from .variational_autoencoders import (
+    VariationalAutoencoder as _VariationalAutoencoder,
+)
+
+SpatialTokenConvLSTMTransformerAutoencoder = _SpatialTokenAutoencoder
+VariationalAutoencoder = _VariationalAutoencoder
+
+
+__all__ = [
+    "StandardAutoencoder",
+    "OrthogonalAutoencoder",
+    "LSTMAutoencoder",
+    "CNNAutoencoder",
+    "VisionTransformerAutoencoder",
+    "ConvLSTMAutoencoder",
+    "HybridConvLSTMTransformerAutoencoder",
+    "VariationalAutoencoder",
+    "SpatialTokenConvLSTMTransformerAutoencoder",
+]
+
+
+def _validate_positive_integer(name: str, value: int) -> int:
+    if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+        raise ValueError(f"{name} must be a positive integer.")
+    return value
+
+
+def _validate_positive_integer_sequence(
+    name: str,
+    values,
+    expected_length: int | None = None,
+) -> list[int]:
+    if not isinstance(values, (list, tuple)) or not values:
+        raise ValueError(f"{name} must contain positive integers.")
+    if expected_length is not None and len(values) != expected_length:
+        raise ValueError(f"{name} must contain exactly {expected_length} values.")
+    validated = [_validate_positive_integer(f"{name} entry", value) for value in values]
+    return validated
+
+
+def _validate_nonnegative_number(name: str, value: float) -> float:
+    if (
+        not isinstance(value, (int, float))
+        or isinstance(value, bool)
+        or not math.isfinite(float(value))
+        or value < 0
+    ):
+        raise ValueError(f"{name} must be a finite non-negative number.")
+    return float(value)
 
 
 class StandardAutoencoder(BaseDeepLearningModel):
@@ -50,10 +115,10 @@ class StandardAutoencoder(BaseDeepLearningModel):
     Input Shape
     -----------
     X : np.ndarray
-        Input data with shape (n_samples, n_features) or (n_samples,).
-        - For 2D arrays: (n_samples, n_features) - each row is a sample
-        - For 1D arrays: (n_features,) - single sample (will be reshaped)
-        The model automatically flattens multi-dimensional inputs.
+        Input data with a leading sample dimension.
+        For tabular data use (n_samples, n_features). Higher-dimensional
+        per-sample inputs are flattened internally and reconstructed to
+        their original sample shape.
 
     Examples
     --------
@@ -84,10 +149,12 @@ class StandardAutoencoder(BaseDeepLearningModel):
         device: Optional[torch.device] = None,
         **kwargs,
     ):
+        self.k = _validate_positive_integer("k", k)
         if hidden_dims is None:
             hidden_dims = [512, 256, 128, 64]
-        self.hidden_dims = hidden_dims
-        self.k = k
+        self.hidden_dims = _validate_positive_integer_sequence(
+            "hidden_dims", hidden_dims
+        )
         super().__init__(device=device, **kwargs)
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
@@ -146,7 +213,14 @@ class StandardAutoencoder(BaseDeepLearningModel):
                     x = x.unsqueeze(0)
                 return self.encoder(x)
 
-        return StandardAutoencoderModel(n_features, self.hidden_dims, self.k, sample_shape)
+            def decode_forward(self, z):
+                """Decode latent vectors to the original sample shape."""
+                x_recon = self.decoder(z)
+                return x_recon.view(x_recon.size(0), *self.sample_shape)
+
+        return StandardAutoencoderModel(
+            n_features, self.hidden_dims, self.k, sample_shape
+        )
 
 
 class OrthogonalAutoencoder(BaseDeepLearningModel):
@@ -160,10 +234,10 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
     Input Shape
     -----------
     X : np.ndarray
-        Input data with shape (n_samples, n_features) or (n_samples,).
-        - For 2D arrays: (n_samples, n_features) - each row is a sample
-        - For 1D arrays: (n_features,) - single sample (will be reshaped)
-        The model automatically flattens multi-dimensional inputs.
+        Input data with a leading sample dimension.
+        For tabular data use (n_samples, n_features). Higher-dimensional
+        per-sample inputs are flattened internally and reconstructed to
+        their original sample shape.
 
     Examples
     --------
@@ -198,12 +272,14 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
         device: Optional[torch.device] = None,
         **kwargs,
     ):
+        self.k = _validate_positive_integer("k", k)
         if hidden_dims is None:
             hidden_dims = [512, 256, 128, 64]
-        self.hidden_dims = hidden_dims
-        self.k = k
-        self.lambda_W = lambda_W
-        self.lambda_Z = lambda_Z
+        self.hidden_dims = _validate_positive_integer_sequence(
+            "hidden_dims", hidden_dims
+        )
+        self.lambda_W = _validate_nonnegative_number("lambda_W", lambda_W)
+        self.lambda_Z = _validate_nonnegative_number("lambda_Z", lambda_Z)
         super().__init__(device=device, **kwargs)
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
@@ -296,6 +372,11 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
                 decorr_loss = getattr(self.latent_decorr, "_loss", None)
                 return ortho_loss, decorr_loss
 
+            def decode_forward(self, z):
+                """Decode latent vectors to the original sample shape."""
+                x_recon = self.decoder(z)
+                return x_recon.view(x_recon.size(0), *self.sample_shape)
+
         return OrthogonalAutoencoderModel(
             n_features,
             self.hidden_dims,
@@ -317,140 +398,182 @@ class OrthogonalAutoencoder(BaseDeepLearningModel):
         criterion: Optional[nn.Module] = None,
         patience: int = 20,
         verbose: int = 1,
+        validation_data: tuple[np.ndarray, np.ndarray | None] | None = None,
         **kwargs,
     ) -> Dict[str, list]:
-        """
-        Fit the orthogonal autoencoder with regularization losses.
+        """Fit with orthogonality and latent-decorrelation penalties.
 
-        This method overrides the base fit() to properly add orthogonality
-        and decorrelation regularization losses during training.
+        Parameters
+        ----------
+        validation_data : tuple, optional
+            An explicit ``(X_validation, y_validation)`` pair. When supplied,
+            ``validation_split`` is ignored and exactly these samples drive the
+            validation objective and early stopping. Default is None.
         """
+        learning_rate = self._validate_learning_rate(learning_rate)
+        if not isinstance(X, np.ndarray):
+            raise TypeError("X must be a NumPy array.")
+        if y is None:
+            y = self._get_reconstruction_target(X)
+        self._validate_fit_inputs(
+            X,
+            y,
+            validation_split,
+            batch_size,
+            epochs,
+            patience,
+            validation_data=validation_data,
+        )
+        (
+            X_train_array,
+            y_train_array,
+            X_validation_array,
+            y_validation_array,
+        ) = self._resolve_fit_partitions(X, y, validation_split, validation_data)
+        self._validate_or_set_build_input_shape(tuple(X.shape))
+        self.is_fitted = False
+
         if self.model is None:
-            self.model = self._build_model(X.shape, **kwargs)
-            self.model = self.model.to(self.device)
+            self.model = self._build_model(X.shape, **kwargs).to(self.device)
 
+        avoid_singleton = self._requires_non_singleton_training_batches()
         if optimizer is None:
             optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
-
         if criterion is None:
             criterion = nn.MSELoss()
 
-        # Train/validation split
-        n_samples = len(X)
-        idx = np.arange(n_samples)
-        np.random.shuffle(idx)
-        split = int((1 - validation_split) * n_samples)
-        train_idx, val_idx = idx[:split], idx[split:]
-        Xtr, Xval = X[train_idx], X[val_idx]
-
-        if y is None:
-            # Autoencoder case
-            ytr, yval = Xtr, Xval
-        else:
-            ytr, yval = y[train_idx], y[val_idx]
-
-        # Convert to tensors
-        Xtr_tensor = torch.FloatTensor(Xtr).to(self.device)
-        Xval_tensor = torch.FloatTensor(Xval).to(self.device)
-        ytr_tensor = torch.FloatTensor(ytr).to(self.device)
-        yval_tensor = torch.FloatTensor(yval).to(self.device)
+        X_train = torch.as_tensor(
+            X_train_array, dtype=torch.float32, device=self.device
+        )
+        y_train = torch.as_tensor(
+            y_train_array, dtype=torch.float32, device=self.device
+        )
+        X_validation = torch.as_tensor(
+            X_validation_array, dtype=torch.float32, device=self.device
+        )
+        y_validation = torch.as_tensor(
+            y_validation_array, dtype=torch.float32, device=self.device
+        )
 
         history = {"train_loss": [], "val_loss": []}
-        best_val_loss = float("inf")
+        best_validation_loss = float("inf")
         patience_counter = 0
         best_model_state = None
 
-        # Create progress bar if verbose > 0
-        use_progress_bar = verbose > 0
         epoch_range = range(epochs)
-        pbar = None
-        if use_progress_bar:
-            pbar = tqdm(epoch_range, desc="Training", unit="epoch")
-            epoch_range = pbar
+        progress_bar = None
+        if verbose > 0:
+            progress_bar = tqdm(epoch_range, desc="Training", unit="epoch")
+            epoch_range = progress_bar
 
         for epoch in epoch_range:
-            # Training
             self.model.train()
-            train_loss = 0.0
-            n_batches = (len(Xtr) + batch_size - 1) // batch_size
-
-            for i in range(0, len(Xtr), batch_size):
-                batch_X = Xtr_tensor[i : i + batch_size]
-                batch_y = ytr_tensor[i : i + batch_size]
+            train_total = 0.0
+            train_sample_count = 0
+            for start, stop in self._batch_slices(
+                len(X_train),
+                batch_size,
+                avoid_singleton=avoid_singleton,
+            ):
+                batch_X = X_train[start:stop]
+                batch_y = y_train[start:stop]
+                current_batch_size = stop - start
 
                 optimizer.zero_grad()
                 output = self.model(batch_X)
-                loss = criterion(output, batch_y)
-
-                # Add regularization losses
+                self._require_matching_output_shape(
+                    output, batch_y, "Orthogonal training"
+                )
+                self._require_finite_tensor(output, "Orthogonal training output")
+                self._require_finite_buffers()
+                reconstruction_loss = criterion(output, batch_y)
+                self._require_scalar_loss(reconstruction_loss)
                 ortho_loss, decorr_loss = self.model.get_regularization_losses()
+                regularization_loss = torch.zeros(
+                    (), device=self.device, dtype=reconstruction_loss.dtype
+                )
                 if ortho_loss is not None:
-                    loss = loss + ortho_loss
+                    regularization_loss = regularization_loss + ortho_loss
                 if decorr_loss is not None:
-                    loss = loss + decorr_loss
-
+                    regularization_loss = regularization_loss + decorr_loss
+                loss = reconstruction_loss + regularization_loss
+                self._require_finite_loss(loss, "Orthogonal training")
                 loss.backward()
+                self._require_finite_gradients()
                 optimizer.step()
+                self._require_finite_parameters()
 
-                train_loss += loss.item()
+                train_total += self._loss_to_sample_total(
+                    reconstruction_loss,
+                    current_batch_size,
+                    criterion,
+                )
+                train_total += float(regularization_loss.item()) * current_batch_size
+                train_sample_count += current_batch_size
 
-            train_loss /= n_batches
+            train_loss = train_total / train_sample_count
             history["train_loss"].append(train_loss)
 
-            # Validation
             self.model.eval()
-            val_loss = 0.0
+            validation_total = 0.0
+            validation_sample_count = 0
             with torch.no_grad():
-                n_val_batches = (len(Xval) + batch_size - 1) // batch_size
-                for i in range(0, len(Xval), batch_size):
-                    batch_X = Xval_tensor[i : i + batch_size]
-                    batch_y = yval_tensor[i : i + batch_size]
-
+                for start, stop in self._batch_slices(
+                    len(X_validation),
+                    batch_size,
+                ):
+                    batch_X = X_validation[start:stop]
+                    batch_y = y_validation[start:stop]
+                    current_batch_size = stop - start
                     output = self.model(batch_X)
-                    loss = criterion(output, batch_y)
-
-                    # Add regularization losses for validation
+                    self._require_matching_output_shape(
+                        output, batch_y, "Orthogonal validation"
+                    )
+                    self._require_finite_tensor(output, "Orthogonal validation output")
+                    self._require_finite_parameters()
+                    reconstruction_loss = criterion(output, batch_y)
+                    self._require_scalar_loss(reconstruction_loss)
                     ortho_loss, decorr_loss = self.model.get_regularization_losses()
+                    regularization_loss = torch.zeros(
+                        (), device=self.device, dtype=reconstruction_loss.dtype
+                    )
                     if ortho_loss is not None:
-                        loss = loss + ortho_loss
+                        regularization_loss = regularization_loss + ortho_loss
                     if decorr_loss is not None:
-                        loss = loss + decorr_loss
+                        regularization_loss = regularization_loss + decorr_loss
+                    loss = reconstruction_loss + regularization_loss
+                    self._require_finite_loss(loss, "Orthogonal validation")
+                    validation_total += self._loss_to_sample_total(
+                        reconstruction_loss,
+                        current_batch_size,
+                        criterion,
+                    )
+                    validation_total += (
+                        float(regularization_loss.item()) * current_batch_size
+                    )
+                    validation_sample_count += current_batch_size
 
-                    val_loss += loss.item()
-
-                val_loss /= n_val_batches
-                history["val_loss"].append(val_loss)
-
-            # Early stopping
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
+            validation_loss = validation_total / validation_sample_count
+            history["val_loss"].append(validation_loss)
+            if validation_loss < best_validation_loss:
+                best_validation_loss = validation_loss
                 patience_counter = 0
                 best_model_state = copy.deepcopy(self.model.state_dict())
             else:
                 patience_counter += 1
                 if patience_counter >= patience:
-                    if verbose > 0:
-                        if pbar is not None:
-                            pbar.set_postfix_str(f"Early stopping at epoch {epoch + 1}")
-                        self.logger.info(f"Early stopping at epoch {epoch + 1}")
+                    if progress_bar is not None:
+                        progress_bar.set_postfix_str(
+                            f"Early stopping at epoch {epoch + 1}"
+                        )
                     break
 
-            # Update progress bar with current losses
-            if pbar is not None:
-                pbar.set_postfix_str(
-                    f"Train Loss: {train_loss:.6f}, Val Loss: {val_loss:.6f}, Patience: {patience_counter}/{patience}"
-                )
-            elif verbose > 0 and (epoch + 1) % max(1, epochs // 10) == 0:
-                self.logger.info(
-                    f"Epoch {epoch + 1}/{epochs} - Train Loss: {train_loss:.6f}, Val Loss: {val_loss:.6f}"
-                )
-
-        # Restore best model
-        if best_model_state is not None:
-            self.model.load_state_dict(best_model_state)
-
+        if best_model_state is None:
+            raise FloatingPointError(
+                "Training completed without a finite validation loss."
+            )
+        self.model.load_state_dict(best_model_state)
         self.is_fitted = True
-
         return history
 
 
@@ -497,8 +620,10 @@ class LSTMAutoencoder(BaseDeepLearningModel):
         device: Optional[torch.device] = None,
         **kwargs,
     ):
-        self.hidden = hidden
-        self.k = k
+        self.k = _validate_positive_integer("k", k)
+        self.hidden = tuple(
+            _validate_positive_integer_sequence("hidden", hidden, expected_length=2)
+        )
         super().__init__(device=device, **kwargs)
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
@@ -559,6 +684,15 @@ class LSTMAutoencoder(BaseDeepLearningModel):
                 z = self.latent(x[:, -1, :])  # Take last timestep
                 return z
 
+            def decode_forward(self, z):
+                """Decode latent vectors to full temporal sequences."""
+                z_expanded = (
+                    self.latent_to_seq(z).unsqueeze(1).repeat(1, self.seq_len, 1)
+                )
+                x, _ = self.lstm3(z_expanded)
+                x, _ = self.lstm4(x)
+                return x
+
         return LSTMAutoencoderModel(seq_len, n_features, self.hidden, self.k)
 
 
@@ -603,7 +737,7 @@ class CNNAutoencoder(BaseDeepLearningModel):
         device: Optional[torch.device] = None,
         **kwargs,
     ):
-        self.k = k
+        self.k = _validate_positive_integer("k", k)
         super().__init__(device=device, **kwargs)
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
@@ -740,6 +874,22 @@ class CNNAutoencoder(BaseDeepLearningModel):
 
                 return z
 
+            def decode_forward(self, z):
+                """Decode latent vectors to channels-first spatial grids."""
+                batch_size = z.size(0)
+                x = F.relu(self.fc3(z))
+                x = F.relu(self.fc4(x))
+                x = x.view(
+                    batch_size,
+                    64,
+                    (self.H + self.pad_h) // 4,
+                    (self.W + self.pad_w) // 4,
+                )
+                x = self.decoder(x)
+                if self.pad_h > 0 or self.pad_w > 0:
+                    x = x[:, :, : self.H, : self.W]
+                return x
+
         return CNNAutoencoderModel(H, W, C, self.k, pad_h, pad_w)
 
 
@@ -799,12 +949,16 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
         device: Optional[torch.device] = None,
         **kwargs,
     ):
-        self.patch_size = patch_size
-        self.d_model = d_model
-        self.depth_enc = depth_enc
-        self.depth_dec = depth_dec
-        self.heads = heads
-        self.k = k
+        self.k = _validate_positive_integer("k", k)
+        self.patch_size = _validate_positive_integer("patch_size", patch_size)
+        self.d_model = _validate_positive_integer("d_model", d_model)
+        if self.d_model < 3:
+            raise ValueError("d_model must be at least 3.")
+        self.depth_enc = _validate_positive_integer("depth_enc", depth_enc)
+        self.depth_dec = _validate_positive_integer("depth_dec", depth_dec)
+        self.heads = _validate_positive_integer("heads", heads)
+        if self.d_model % self.heads != 0:
+            raise ValueError("d_model must be divisible by heads.")
         super().__init__(device=device, **kwargs)
 
     def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
@@ -993,6 +1147,21 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
 
                 return z_k
 
+            def decode_forward(self, z):
+                """Decode latent vectors to channels-first spatial grids."""
+                batch_size = z.size(0)
+                dec_seed = F.relu(self.dec_seed(z))
+                dec_tokens = dec_seed.view(batch_size, N, self.d_model)
+                dec_tokens = self.dec_pos_embed(dec_tokens)
+                y = dec_tokens
+                for block in self.decoder_blocks:
+                    y = block(y)
+                patch_tokens = self.patch_reconstruct(y)
+                reconstruction = self.unpatchify(patch_tokens)
+                if self.pad_h > 0 or self.pad_w > 0:
+                    reconstruction = reconstruction[:, :, : self.H, : self.W]
+                return reconstruction
+
         return ViTAutoencoderModel(
             H,
             W,
@@ -1011,79 +1180,59 @@ class VisionTransformerAutoencoder(BaseDeepLearningModel):
 
 
 class ConvLSTMAutoencoder(BaseDeepLearningModel):
-    """
-    ConvLSTM autoencoder for spatiotemporal data (image sequences).
+    """ConvLSTM autoencoder for complete spatiotemporal sequences.
 
-    Combines convolutional and LSTM layers for spatiotemporal sequences.
-    Designed for video-like data or time series of images.
-
-    Input Shape
-    -----------
-    X : np.ndarray
-        Input data with shape (n_samples, seq_len, C, H, W).
-        - n_samples: number of sequences
-        - seq_len: number of frames in each sequence (automatically inferred from X.shape[1])
-        - C: number of channels (e.g., 1 for grayscale, 3 for RGB)
-        - H, W: height and width of each frame
-
-    Examples
-    --------
-    >>> # Video-like data (time series of images)
-    >>> X = np.random.randn(100, 10, 3, 64, 64)  # 100 sequences, 10 frames, 3 channels, 64x64
-    >>> ae = ConvLSTMAutoencoder(k=20)
-    >>> history = ae.fit(X, epochs=10)
-    >>> X_recon = ae.predict(X)  # Shape: (100, 3, 64, 64) - single frame reconstruction
-    >>> Z = ae.encode(X)  # Latent representations: (100, 20)
+    The model compresses each input window to one latent vector and
+    reconstructs the complete window. For input shape ``(B, T, C, H, W)``,
+    ``predict`` and ``decode`` return ``(B, T, C, H, W)``.
 
     Parameters
     ----------
     k : int, optional
         Number of latent dimensions, by default 20.
     device : str or torch.device, optional
-        Device to run the model on.
+        Device on which to run the model.
     **kwargs
-        Additional keyword arguments passed to BaseDeepLearningModel.
+        Additional keyword arguments passed to ``BaseDeepLearningModel``.
     """
 
     def __init__(
         self,
         k: int = 20,
-        device: Optional[torch.device] = None,
+        device: str | torch.device | None = None,
         **kwargs,
     ):
-        self.k = k
+        if "reconstruction_mode" in kwargs:
+            raise TypeError(
+                "reconstruction_mode is no longer supported; "
+                "ConvLSTMAutoencoder always reconstructs the full sequence."
+            )
+        self.k = _validate_positive_integer("k", k)
         super().__init__(device=device, **kwargs)
 
     def fit(
         self,
         X: np.ndarray,
-        y: Optional[np.ndarray] = None,
+        y: np.ndarray | None = None,
         validation_split: float = 0.2,
         epochs: int = 500,
         batch_size: int = 64,
         learning_rate: float = 1e-3,
-        optimizer: Optional[torch.optim.Optimizer] = None,
-        criterion: Optional[nn.Module] = None,
+        optimizer: torch.optim.Optimizer | None = None,
+        criterion: nn.Module | None = None,
         patience: int = 20,
         verbose: int = 1,
+        validation_data: tuple[np.ndarray, np.ndarray | None] | None = None,
         **kwargs,
-    ) -> Dict[str, list]:
-        """Fit the ConvLSTM autoencoder.
-
-        If ``y`` is not provided, the model reconstructs the last frame of each
-        input sequence, matching the documented prediction shape ``(B, C, H, W)``.
-        """
-        if y is None:
-            if X.ndim != 5:
-                raise ValueError(
-                    "ConvLSTMAutoencoder expects 5D input "
-                    "(n_samples, seq_len, C, H, W)."
-                )
-            y = X[:, -1]
-
+    ) -> dict[str, list]:
+        """Fit the model to reconstruct the complete input sequence."""
+        if not isinstance(X, np.ndarray):
+            raise TypeError("X must be a NumPy array.")
+        target = self._get_reconstruction_target(X) if y is None else y
+        self._validate_target_shape(X, target)
         return super().fit(
             X,
-            y=y,
+            y=target,
             validation_split=validation_split,
             epochs=epochs,
             batch_size=batch_size,
@@ -1092,40 +1241,61 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
             criterion=criterion,
             patience=patience,
             verbose=verbose,
+            validation_data=validation_data,
             **kwargs,
         )
 
-    def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
-        """Build the ConvLSTM autoencoder model."""
-        # Parse input shape: (n_samples, seq_len, C, H, W) - channels-first format
+    def _get_reconstruction_target(self, X: np.ndarray) -> np.ndarray:
+        """Use the complete input sequence as the reconstruction target."""
+        if not isinstance(X, np.ndarray):
+            raise TypeError("X must be a NumPy array.")
+        if X.ndim != 5:
+            raise ValueError(
+                "ConvLSTMAutoencoder expects 5D input (n_samples, seq_len, C, H, W)."
+            )
+        return X
+
+    def _validate_target_shape(
+        self,
+        X: np.ndarray,
+        target: np.ndarray,
+    ) -> None:
+        if not isinstance(target, np.ndarray):
+            raise TypeError("y must be a NumPy array.")
+        expected = X.shape
+        if target.shape != expected:
+            raise ValueError(
+                f"Target shape {target.shape} is incompatible with full "
+                f"sequence reconstruction; expected {expected}."
+            )
+
+    def _build_model(self, input_shape: tuple, **kwargs) -> nn.Module:
+        """Build the ConvLSTM encoder and full-sequence decoder."""
         if len(input_shape) != 5:
             raise ValueError(
-                f"ConvLSTMAutoencoder expects 5D input shape (n_samples, seq_len, C, H, W), "
-                f"got {input_shape} with {len(input_shape)} dimensions"
+                "ConvLSTMAutoencoder expects input shape (n_samples, seq_len, C, H, W)."
             )
-        # (n_samples, seq_len, C, H, W)
-        seq_len = input_shape[1]  # Infer from input shape
-        C, H, W = input_shape[2], input_shape[3], input_shape[4]
 
-        # Compute padding so (H+pad) and (W+pad) are divisible by 4
-        pad_h = (-H) % 4
-        pad_w = (-W) % 4
+        seq_len = input_shape[1]
+        channels, height, width = input_shape[2:]
+        pad_h = (-height) % 4
+        pad_w = (-width) % 4
+        latent_dim = self.k
 
         class ConvLSTMAutoencoderModel(nn.Module):
-            def __init__(self, seq_len, H, W, C, k, pad_h, pad_w):
+            def __init__(self):
                 super().__init__()
-                self.seq_len = seq_len
-                self.pad_h = pad_h
-                self.pad_w = pad_w
-                self.H = H
-                self.W = W
-                self.C = C
-
-                # ConvLSTM layers
                 from .layers import ConvLSTM
 
+                self.seq_len = seq_len
+                self.H = height
+                self.W = width
+                self.C = channels
+                self.pad_h = pad_h
+                self.pad_w = pad_w
+
                 self.convlstm1 = ConvLSTM(
-                    input_dim=C,
+                    input_dim=channels,
                     hidden_dim=32,
                     kernel_size=(3, 3),
                     num_layers=1,
@@ -1142,180 +1312,156 @@ class ConvLSTMAutoencoder(BaseDeepLearningModel):
                     return_all_layers=False,
                 )
 
-                # Spatial downsample
                 self.conv1 = nn.Conv2d(32, 32, 3, padding=1)
                 self.pool1 = nn.MaxPool2d(2)
                 self.conv2 = nn.Conv2d(32, 64, 3, padding=1)
                 self.pool2 = nn.MaxPool2d(2)
 
-                # Flatten and latent
-                H_enc = (H + pad_h) // 4
-                W_enc = (W + pad_w) // 4
-                self.flat_size = H_enc * W_enc * 64
-                self.latent = nn.Linear(self.flat_size, k)
+                encoded_h = (height + pad_h) // 4
+                encoded_w = (width + pad_w) // 4
+                self.flat_size = encoded_h * encoded_w * 64
+                self.latent = nn.Linear(self.flat_size, latent_dim)
 
-                # Decoder
-                self.fc_dec = nn.Linear(k, self.flat_size)
+                self.fc_dec = nn.Linear(latent_dim, self.flat_size)
                 self.upsample1 = nn.Upsample(
-                    scale_factor=2, mode="bilinear", align_corners=True
+                    scale_factor=2,
+                    mode="bilinear",
+                    align_corners=True,
                 )
-                self.deconv1 = nn.ConvTranspose2d(64, 64, 3, padding=1)
+                self.deconv1 = nn.ConvTranspose2d(
+                    64,
+                    64,
+                    3,
+                    padding=1,
+                )
                 self.upsample2 = nn.Upsample(
-                    scale_factor=2, mode="bilinear", align_corners=True
+                    scale_factor=2,
+                    mode="bilinear",
+                    align_corners=True,
                 )
-                self.deconv2 = nn.ConvTranspose2d(64, C, 3, padding=1)
+                self.deconv2 = nn.ConvTranspose2d(
+                    64,
+                    channels,
+                    3,
+                    padding=1,
+                )
 
-            def forward(self, x):
-                # Only accept (B, T, C, H, W) format - channels-first
+                self.decoder_time_embedding = nn.Parameter(
+                    torch.zeros(1, seq_len, latent_dim)
+                )
+                nn.init.normal_(self.decoder_time_embedding, std=0.02)
+                self.temporal_decoder = nn.LSTM(
+                    input_size=latent_dim,
+                    hidden_size=latent_dim,
+                    batch_first=True,
+                )
+
+            def _validate_input(self, x: torch.Tensor) -> None:
                 if x.dim() != 5:
                     raise ValueError(
-                        f"ConvLSTMAutoencoder expects 5D input (B, T, C, H, W), "
-                        f"got shape {x.shape}"
+                        "ConvLSTMAutoencoder expects 5D input (B, T, C, H, W)."
                     )
-                B, T, C_in, H, W = x.shape
-
-                # Validate channels are in the correct position
-                if C_in != self.C:
+                sample_shape = tuple(x.shape[1:])
+                expected = (self.seq_len, self.C, self.H, self.W)
+                if sample_shape != expected:
                     raise ValueError(
-                        f"ConvLSTMAutoencoder expects channels-first format (B, T, C, H, W). "
-                        f"Expected C={self.C} at position 2, but got shape {x.shape}. "
-                        f"If your data is channels-last (B, T, H, W, C), please permute it: "
-                        f"X = np.transpose(X, (0, 1, 4, 2, 3))"
+                        f"Expected per-sample shape {expected}, got {sample_shape}."
                     )
 
-                # Pad
+            def _encode(self, x: torch.Tensor) -> torch.Tensor:
+                self._validate_input(x)
+                batch_size = x.size(0)
+
                 if self.pad_h > 0 or self.pad_w > 0:
                     x = F.pad(x, (0, self.pad_w, 0, self.pad_h))
 
-                # ConvLSTM
-                x_list, _ = self.convlstm1(x)  # Returns list
-                x = x_list[0]  # (B, T, 32, H+pad, W+pad)
-                x = x.permute(0, 2, 1, 3, 4)  # (B, 32, T, H+pad, W+pad)
-                x = self.bn1(x)
-                x = x.permute(0, 2, 1, 3, 4)  # (B, T, 32, H+pad, W+pad)
-                x_list, _ = self.convlstm2(x)
-                x = x_list[0]  # (B, T, 32, H+pad, W+pad)
-
-                # Take last timestep
-                x = x[:, -1]  # (B, 32, H+pad, W+pad)
-
-                # Spatial downsample
-                x = F.relu(self.conv1(x))
-                x = self.pool1(x)
-                x = F.relu(self.conv2(x))
-                x = self.pool2(x)
-
-                # Flatten and latent
-                x = x.view(B, -1)
-                z = self.latent(x)
-
-                # Decoder
-                x = F.relu(self.fc_dec(z))
-                x = x.view(B, 64, (H + self.pad_h) // 4, (W + self.pad_w) // 4)
-                x = self.upsample1(x)
-                x = F.relu(self.deconv1(x))
-                x = self.upsample2(x)
-                x = self.deconv2(x)
-
-                # Crop padding
-                if self.pad_h > 0 or self.pad_w > 0:
-                    x = x[:, :, : self.H, : self.W]
-
-                return x
-
-            def encode_forward(self, x):
-                """Encode input to latent space."""
-                # Only accept (B, T, C, H, W) format - channels-first
-                if x.dim() != 5:
-                    raise ValueError(
-                        f"ConvLSTMAutoencoder expects 5D input (B, T, C, H, W), "
-                        f"got shape {x.shape}"
-                    )
-                B, T, C_in, H, W = x.shape
-
-                # Validate channels are in the correct position
-                if C_in != self.C:
-                    raise ValueError(
-                        f"ConvLSTMAutoencoder expects channels-first format (B, T, C, H, W). "
-                        f"Expected C={self.C} at position 2, but got shape {x.shape}. "
-                        f"If your data is channels-last (B, T, H, W, C), please permute it: "
-                        f"X = np.transpose(X, (0, 1, 4, 2, 3))"
-                    )
-
-                # Pad
-                if self.pad_h > 0 or self.pad_w > 0:
-                    x = F.pad(x, (0, self.pad_w, 0, self.pad_h))
-
-                # ConvLSTM
                 x_list, _ = self.convlstm1(x)
                 x = x_list[0]
                 x = x.permute(0, 2, 1, 3, 4)
                 x = self.bn1(x)
                 x = x.permute(0, 2, 1, 3, 4)
                 x_list, _ = self.convlstm2(x)
-                x = x_list[0]
+                x = x_list[0][:, -1]
 
-                # Take last timestep
-                x = x[:, -1]
-
-                # Spatial downsample
                 x = F.relu(self.conv1(x))
                 x = self.pool1(x)
                 x = F.relu(self.conv2(x))
                 x = self.pool2(x)
+                return self.latent(x.reshape(batch_size, -1))
 
-                # Flatten and latent
-                x = x.view(B, -1)
-                z = self.latent(x)
+            def _decode_spatial(self, codes: torch.Tensor) -> torch.Tensor:
+                frame_count = codes.size(0)
+                x = F.relu(self.fc_dec(codes))
+                x = x.view(
+                    frame_count,
+                    64,
+                    (self.H + self.pad_h) // 4,
+                    (self.W + self.pad_w) // 4,
+                )
+                x = self.upsample1(x)
+                x = F.relu(self.deconv1(x))
+                x = self.upsample2(x)
+                x = self.deconv2(x)
+                if self.pad_h > 0 or self.pad_w > 0:
+                    x = x[:, :, : self.H, : self.W]
+                return x
 
-                return z
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
+                """Encode and reconstruct the complete input sequence."""
+                return self.decode_forward(self.encode_forward(x))
 
-        return ConvLSTMAutoencoderModel(seq_len, H, W, C, self.k, pad_h, pad_w)
+            def encode_forward(self, x: torch.Tensor) -> torch.Tensor:
+                """Encode a complete input sequence to one latent vector."""
+                return self._encode(x)
+
+            def decode_forward(self, z: torch.Tensor) -> torch.Tensor:
+                """Decode latent vectors to complete sequences."""
+                if z.dim() != 2 or z.size(1) != latent_dim:
+                    raise ValueError(
+                        f"Expected latent shape (B, {latent_dim}), "
+                        f"got {tuple(z.shape)}."
+                    )
+
+                temporal_input = z.unsqueeze(1) + self.decoder_time_embedding
+                temporal_codes, _ = self.temporal_decoder(temporal_input)
+                batch_size = z.size(0)
+                frames = self._decode_spatial(
+                    temporal_codes.reshape(batch_size * self.seq_len, -1)
+                )
+                return frames.view(
+                    batch_size,
+                    self.seq_len,
+                    self.C,
+                    self.H,
+                    self.W,
+                )
+
+        return ConvLSTMAutoencoderModel()
 
 
 class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
-    """
-    Hybrid ConvLSTM + Transformer autoencoder for spatiotemporal data.
+    """ConvLSTM-Transformer autoencoder for complete sequences.
 
-    Combines ConvLSTM for spatiotemporal encoding with Transformer attention
-    for temporal modeling.
-    Designed for complex spatiotemporal patterns (video-like data or time series of images).
-
-    Input Shape
-    -----------
-    X : np.ndarray
-        Input data with shape (n_samples, seq_len, C, H, W).
-        - n_samples: number of sequences
-        - seq_len: number of frames in each sequence (automatically inferred from X.shape[1])
-        - C: number of channels (e.g., 1 for grayscale, 3 for RGB)
-        - H, W: height and width of each frame
-
-    Examples
-    --------
-    >>> # Complex spatiotemporal data
-    >>> X = np.random.randn(100, 10, 3, 64, 64)  # 100 sequences, 10 frames, 3 channels, 64x64
-    >>> ae = HybridConvLSTMTransformerAutoencoder(k=20, d_model=256)
-    >>> history = ae.fit(X, epochs=10)
-    >>> X_recon = ae.predict(X)  # Shape: (100, 3, 64, 64) - single frame reconstruction
-    >>> Z = ae.encode(X)  # Latent representations: (100, 20)
+    The encoder combines ConvLSTM features with temporal attention and maps
+    the complete input window to one latent vector. The decoder uses
+    latent-conditioned temporal queries to reconstruct every input frame.
 
     Parameters
     ----------
     k : int, optional
         Number of latent dimensions, by default 20.
     d_model : int, optional
-        Model dimension, by default 256.
+        Transformer embedding dimension, by default 256.
     n_heads : int, optional
         Number of attention heads, by default 4.
     n_layers : int, optional
-        Number of transformer layers, by default 2.
-    efficient_attention : str, optional
-        Use 'linear' for efficient linear attention, None for standard MHA,
-        by default 'linear'.
+        Number of Transformer layers, by default 2.
+    efficient_attention : {"linear", None}, optional
+        Attention implementation, by default ``"linear"``.
     device : str or torch.device, optional
-        Device to run the model on.
+        Device on which to run the model.
     **kwargs
-        Additional keyword arguments passed to BaseDeepLearningModel.
+        Additional keyword arguments passed to ``BaseDeepLearningModel``.
     """
 
     def __init__(
@@ -1324,47 +1470,52 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
         d_model: int = 256,
         n_heads: int = 4,
         n_layers: int = 2,
-        efficient_attention: Optional[str] = "linear",
-        device: Optional[torch.device] = None,
+        efficient_attention: str | None = "linear",
+        device: str | torch.device | None = None,
         **kwargs,
     ):
-        self.d_model = d_model
-        self.n_heads = n_heads
-        self.n_layers = n_layers
+        if "reconstruction_mode" in kwargs:
+            raise TypeError(
+                "reconstruction_mode is no longer supported; "
+                "HybridConvLSTMTransformerAutoencoder always reconstructs "
+                "the full sequence."
+            )
+        self.k = _validate_positive_integer("k", k)
+        self.d_model = _validate_positive_integer("d_model", d_model)
+        if self.d_model < 3:
+            raise ValueError("d_model must be at least 3.")
+        self.n_heads = _validate_positive_integer("n_heads", n_heads)
+        self.n_layers = _validate_positive_integer("n_layers", n_layers)
+        if self.d_model % self.n_heads != 0:
+            raise ValueError("d_model must be divisible by n_heads.")
+        if efficient_attention not in {"linear", None}:
+            raise ValueError("efficient_attention must be 'linear' or None.")
         self.efficient_attention = efficient_attention
-        self.k = k
         super().__init__(device=device, **kwargs)
 
     def fit(
         self,
         X: np.ndarray,
-        y: Optional[np.ndarray] = None,
+        y: np.ndarray | None = None,
         validation_split: float = 0.2,
         epochs: int = 500,
         batch_size: int = 64,
         learning_rate: float = 1e-3,
-        optimizer: Optional[torch.optim.Optimizer] = None,
-        criterion: Optional[nn.Module] = None,
+        optimizer: torch.optim.Optimizer | None = None,
+        criterion: nn.Module | None = None,
         patience: int = 20,
         verbose: int = 1,
+        validation_data: tuple[np.ndarray, np.ndarray | None] | None = None,
         **kwargs,
-    ) -> Dict[str, list]:
-        """Fit the hybrid ConvLSTM-Transformer autoencoder.
-
-        If ``y`` is not provided, the model reconstructs the last frame of each
-        input sequence, matching the documented prediction shape ``(B, C, H, W)``.
-        """
-        if y is None:
-            if X.ndim != 5:
-                raise ValueError(
-                    "HybridConvLSTMTransformerAutoencoder expects 5D input "
-                    "(n_samples, seq_len, C, H, W)."
-                )
-            y = X[:, -1]
-
+    ) -> dict[str, list]:
+        """Fit the model to reconstruct the complete input sequence."""
+        if not isinstance(X, np.ndarray):
+            raise TypeError("X must be a NumPy array.")
+        target = self._get_reconstruction_target(X) if y is None else y
+        self._validate_target_shape(X, target)
         return super().fit(
             X,
-            y=y,
+            y=target,
             validation_split=validation_split,
             epochs=epochs,
             batch_size=batch_size,
@@ -1373,54 +1524,68 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
             criterion=criterion,
             patience=patience,
             verbose=verbose,
+            validation_data=validation_data,
             **kwargs,
         )
 
-    def _build_model(self, input_shape: Tuple, **kwargs) -> nn.Module:
-        """Build the hybrid autoencoder model."""
-        # Parse input shape: (n_samples, seq_len, C, H, W) - channels-first format
+    def _get_reconstruction_target(self, X: np.ndarray) -> np.ndarray:
+        """Use the complete input sequence as the reconstruction target."""
+        if not isinstance(X, np.ndarray):
+            raise TypeError("X must be a NumPy array.")
+        if X.ndim != 5:
+            raise ValueError(
+                "HybridConvLSTMTransformerAutoencoder expects 5D input "
+                "(n_samples, seq_len, C, H, W)."
+            )
+        return X
+
+    def _validate_target_shape(
+        self,
+        X: np.ndarray,
+        target: np.ndarray,
+    ) -> None:
+        if not isinstance(target, np.ndarray):
+            raise TypeError("y must be a NumPy array.")
+        expected = X.shape
+        if target.shape != expected:
+            raise ValueError(
+                f"Target shape {target.shape} is incompatible with full "
+                f"sequence reconstruction; expected {expected}."
+            )
+
+    def _build_model(self, input_shape: tuple, **kwargs) -> nn.Module:
+        """Build the hybrid encoder and full-sequence decoder."""
         if len(input_shape) != 5:
             raise ValueError(
-                f"HybridConvLSTMTransformerAutoencoder expects 5D input shape (n_samples, seq_len, C, H, W), "
-                f"got {input_shape} with {len(input_shape)} dimensions"
+                "HybridConvLSTMTransformerAutoencoder expects input shape "
+                "(n_samples, seq_len, C, H, W)."
             )
-        # (n_samples, seq_len, C, H, W)
-        seq_len = input_shape[1]  # Infer from input shape
-        C, H, W = input_shape[2], input_shape[3], input_shape[4]
 
-        # Compute padding
-        pad_h = (-H) % 4
-        pad_w = (-W) % 4
+        seq_len = input_shape[1]
+        channels, height, width = input_shape[2:]
+        pad_h = (-height) % 4
+        pad_w = (-width) % 4
+        latent_dim = self.k
+        d_model = self.d_model
+        n_heads = self.n_heads
+        n_layers = self.n_layers
+        efficient_attention = self.efficient_attention
 
         class HybridAutoencoderModel(nn.Module):
-            def __init__(
-                self,
-                seq_len,
-                H,
-                W,
-                C,
-                k,
-                d_model,
-                n_heads,
-                n_layers,
-                efficient_attention,
-                pad_h,
-                pad_w,
-            ):
+            def __init__(self):
                 super().__init__()
-                self.seq_len = seq_len
-                self.pad_h = pad_h
-                self.pad_w = pad_w
-                self.H = H
-                self.W = W
-                self.C = C
-                self.efficient_attention = efficient_attention
-
-                # ConvLSTM stack
                 from .layers import ConvLSTM
 
+                self.seq_len = seq_len
+                self.H = height
+                self.W = width
+                self.C = channels
+                self.pad_h = pad_h
+                self.pad_w = pad_w
+                self.efficient_attention = efficient_attention
+
                 self.convlstm1 = ConvLSTM(
-                    input_dim=C,
+                    input_dim=channels,
                     hidden_dim=32,
                     kernel_size=(3, 3),
                     num_layers=1,
@@ -1436,26 +1601,68 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                     return_all_layers=True,
                 )
 
-                # Spatial downsample + per-frame embedding
                 self.conv1 = nn.Conv2d(32, 32, 3, padding=1)
                 self.pool1 = nn.MaxPool2d(2)
                 self.conv2 = nn.Conv2d(32, 64, 3, padding=1)
                 self.pool2 = nn.MaxPool2d(2)
-
-                H_enc = (H + pad_h) // 4
-                W_enc = (W + pad_w) // 4
                 self.global_pool = nn.AdaptiveAvgPool2d(1)
                 self.frame_embed = nn.Linear(64, d_model)
                 self.time_pos_enc = TimePositionalEncoding()
+                self.transformer_blocks = self._make_blocks()
 
-                # Temporal Transformer / Linear attention
-                if efficient_attention == "linear":
-                    self.transformer_blocks = nn.ModuleList(
+                self.global_pool_time = nn.AdaptiveAvgPool1d(1)
+                self.latent = nn.Linear(d_model, latent_dim)
+
+                encoded_h = (height + pad_h) // 4
+                encoded_w = (width + pad_w) // 4
+                self.flat_size = encoded_h * encoded_w * 64
+
+                self.latent_to_decoder = nn.Linear(
+                    latent_dim,
+                    d_model,
+                )
+                self.decoder_time_queries = nn.Parameter(
+                    torch.zeros(1, seq_len, d_model)
+                )
+                nn.init.normal_(self.decoder_time_queries, std=0.02)
+                self.decoder_time_pos_enc = TimePositionalEncoding()
+                self.decoder_transformer_blocks = self._make_blocks()
+                self.frame_seed = nn.Linear(d_model, self.flat_size)
+
+                self.upsample1 = nn.Upsample(
+                    scale_factor=2,
+                    mode="bilinear",
+                    align_corners=True,
+                )
+                self.deconv1 = nn.ConvTranspose2d(
+                    64,
+                    64,
+                    3,
+                    padding=1,
+                )
+                self.upsample2 = nn.Upsample(
+                    scale_factor=2,
+                    mode="bilinear",
+                    align_corners=True,
+                )
+                self.deconv2 = nn.ConvTranspose2d(
+                    64,
+                    channels,
+                    3,
+                    padding=1,
+                )
+
+            def _make_blocks(self) -> nn.ModuleList:
+                if self.efficient_attention == "linear":
+                    return nn.ModuleList(
                         [
                             nn.ModuleDict(
                                 {
                                     "norm1": nn.LayerNorm(d_model),
-                                    "attn": LinearSelfAttention(d_model, n_heads),
+                                    "attn": LinearSelfAttention(
+                                        d_model,
+                                        n_heads,
+                                    ),
                                     "norm2": nn.LayerNorm(d_model),
                                     "mlp": nn.Sequential(
                                         nn.Linear(d_model, d_model * 4),
@@ -1469,182 +1676,133 @@ class HybridConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                             for _ in range(n_layers)
                         ]
                     )
-                else:
-                    self.transformer_blocks = nn.ModuleList(
-                        [
-                            nn.TransformerEncoderLayer(
-                                d_model,
-                                n_heads,
-                                dim_feedforward=d_model * 4,
-                                activation="gelu",
-                                batch_first=True,
-                            )
-                            for _ in range(n_layers)
-                        ]
-                    )
-
-                # Pool time to one latent vector
-                self.global_pool_time = nn.AdaptiveAvgPool1d(1)
-                self.latent = nn.Linear(d_model, k)
-
-                # Decoder
-                self.fc_dec = nn.Linear(k, H_enc * W_enc * 64)
-                self.upsample1 = nn.Upsample(
-                    scale_factor=2, mode="bilinear", align_corners=True
+                return nn.ModuleList(
+                    [
+                        nn.TransformerEncoderLayer(
+                            d_model,
+                            n_heads,
+                            dim_feedforward=d_model * 4,
+                            activation="gelu",
+                            batch_first=True,
+                        )
+                        for _ in range(n_layers)
+                    ]
                 )
-                self.deconv1 = nn.ConvTranspose2d(64, 64, 3, padding=1)
-                self.upsample2 = nn.Upsample(
-                    scale_factor=2, mode="bilinear", align_corners=True
-                )
-                self.deconv2 = nn.ConvTranspose2d(64, C, 3, padding=1)
 
-            def forward(self, x):
-                # Only accept (B, T, C, H, W) format - channels-first
+            def _run_blocks(
+                self,
+                x: torch.Tensor,
+                blocks: nn.ModuleList,
+            ) -> torch.Tensor:
+                if self.efficient_attention == "linear":
+                    for block in blocks:
+                        x_norm = block["norm1"](x)
+                        x = x + block["attn"](x_norm)
+                        x = x + block["mlp"](block["norm2"](x))
+                    return x
+                for block in blocks:
+                    x = block(x)
+                return x
+
+            def _validate_input(self, x: torch.Tensor) -> None:
                 if x.dim() != 5:
                     raise ValueError(
-                        f"HybridConvLSTMTransformerAutoencoder expects 5D input "
-                        f"(B, T, C, H, W), got shape {x.shape}"
+                        "HybridConvLSTMTransformerAutoencoder expects 5D "
+                        "input (B, T, C, H, W)."
                     )
-                B, T, C_in, H, W = x.shape
-
-                # Validate channels are in the correct position
-                if C_in != self.C:
+                sample_shape = tuple(x.shape[1:])
+                expected = (self.seq_len, self.C, self.H, self.W)
+                if sample_shape != expected:
                     raise ValueError(
-                        f"HybridConvLSTMTransformerAutoencoder expects channels-first format (B, T, C, H, W). "
-                        f"Expected C={self.C} at position 2, but got shape {x.shape}. "
-                        f"If your data is channels-last (B, T, H, W, C), please permute it: "
-                        f"X = np.transpose(X, (0, 1, 4, 2, 3))"
+                        f"Expected per-sample shape {expected}, got {sample_shape}."
                     )
 
-                # Pad
+            def _encode(self, x: torch.Tensor) -> torch.Tensor:
+                self._validate_input(x)
+                batch_size, seq_size = x.shape[:2]
+
                 if self.pad_h > 0 or self.pad_w > 0:
                     x = F.pad(x, (0, self.pad_w, 0, self.pad_h))
 
-                # ConvLSTM
                 x_list, _ = self.convlstm1(x)
-                x = x_list[0]  # Take output (B, T, 32, H+pad, W+pad)
+                x = x_list[0]
                 x_list, _ = self.convlstm2(x)
-                x = x_list[0]  # (B, T, 32, H+pad, W+pad)
+                x = x_list[0]
 
-                # Spatial downsample per frame
                 frame_features = []
-                for t in range(T):
-                    frame = x[:, t]  # (B, 32, H+pad, W+pad)
-                    frame = F.relu(self.conv1(frame))
+                for index in range(seq_size):
+                    frame = F.relu(self.conv1(x[:, index]))
                     frame = self.pool1(frame)
                     frame = F.relu(self.conv2(frame))
-                    frame = self.pool2(frame)  # (B, 64, H_enc, W_enc)
-                    frame = self.global_pool(frame).squeeze(-1).squeeze(-1)  # (B, 64)
-                    frame = self.frame_embed(frame)  # (B, d_model)
-                    frame_features.append(frame)
+                    frame = self.pool2(frame)
+                    frame = self.global_pool(frame).flatten(1)
+                    frame_features.append(self.frame_embed(frame))
 
-                x = torch.stack(frame_features, dim=1)  # (B, T, d_model)
+                x = torch.stack(frame_features, dim=1)
                 x = self.time_pos_enc(x)
+                x = self._run_blocks(x, self.transformer_blocks)
+                x = self.global_pool_time(x.transpose(1, 2)).squeeze(-1)
+                return self.latent(x).view(batch_size, latent_dim)
 
-                # Transformer blocks
-                if self.efficient_attention == "linear":
-                    for block in self.transformer_blocks:
-                        x_norm = block["norm1"](x)
-                        attn_out = block["attn"](x_norm)
-                        x = x + attn_out
-                        x = x + block["mlp"](block["norm2"](x))
-                else:
-                    for block in self.transformer_blocks:
-                        x = block(x)
-
-                # Pool time to one latent vector
-                x = x.transpose(1, 2)  # (B, d_model, T)
-                x = self.global_pool_time(x).squeeze(-1)  # (B, d_model)
-                z = self.latent(x)  # (B, k)
-
-                # Decoder
-                x = F.relu(self.fc_dec(z))
-                H_enc = (H + self.pad_h) // 4
-                W_enc = (W + self.pad_w) // 4
-                x = x.view(B, 64, H_enc, W_enc)
+            def _decode_spatial(
+                self,
+                codes: torch.Tensor,
+                projection: nn.Linear,
+            ) -> torch.Tensor:
+                frame_count = codes.size(0)
+                x = F.relu(projection(codes))
+                x = x.view(
+                    frame_count,
+                    64,
+                    (self.H + self.pad_h) // 4,
+                    (self.W + self.pad_w) // 4,
+                )
                 x = self.upsample1(x)
                 x = F.relu(self.deconv1(x))
                 x = self.upsample2(x)
                 x = self.deconv2(x)
-
-                # Crop padding
                 if self.pad_h > 0 or self.pad_w > 0:
                     x = x[:, :, : self.H, : self.W]
-
                 return x
 
-            def encode_forward(self, x):
-                """Encode input to latent space."""
-                # Only accept (B, T, C, H, W) format - channels-first
-                if x.dim() != 5:
-                    raise ValueError(
-                        f"HybridConvLSTMTransformerAutoencoder expects 5D input "
-                        f"(B, T, C, H, W), got shape {x.shape}"
-                    )
-                B, T, C_in, H, W = x.shape
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
+                """Encode and reconstruct the complete input sequence."""
+                return self.decode_forward(self.encode_forward(x))
 
-                # Validate channels are in the correct position
-                if C_in != self.C:
+            def encode_forward(self, x: torch.Tensor) -> torch.Tensor:
+                """Encode a complete input sequence to one latent vector."""
+                return self._encode(x)
+
+            def decode_forward(self, z: torch.Tensor) -> torch.Tensor:
+                """Decode latent vectors to complete sequences."""
+                if z.dim() != 2 or z.size(1) != latent_dim:
                     raise ValueError(
-                        f"HybridConvLSTMTransformerAutoencoder expects channels-first format (B, T, C, H, W). "
-                        f"Expected C={self.C} at position 2, but got shape {x.shape}. "
-                        f"If your data is channels-last (B, T, H, W, C), please permute it: "
-                        f"X = np.transpose(X, (0, 1, 4, 2, 3))"
+                        f"Expected latent shape (B, {latent_dim}), "
+                        f"got {tuple(z.shape)}."
                     )
 
-                # Pad
-                if self.pad_h > 0 or self.pad_w > 0:
-                    x = F.pad(x, (0, self.pad_w, 0, self.pad_h))
+                decoder_tokens = self.latent_to_decoder(z).unsqueeze(1)
+                decoder_tokens = decoder_tokens + self.decoder_time_queries
+                decoder_tokens = self.decoder_time_pos_enc(decoder_tokens)
+                decoder_tokens = self._run_blocks(
+                    decoder_tokens,
+                    self.decoder_transformer_blocks,
+                )
 
-                # ConvLSTM
-                x_list, _ = self.convlstm1(x)
-                x = x_list[0]
-                x_list, _ = self.convlstm2(x)
-                x = x_list[0]
+                batch_size = z.size(0)
+                frames = self._decode_spatial(
+                    decoder_tokens.reshape(
+                        batch_size * self.seq_len,
+                        d_model,
+                    ),
+                    self.frame_seed,
+                )
+                return frames.view(
+                    batch_size,
+                    self.seq_len,
+                    self.C,
+                    self.H,
+                    self.W,
+                )
 
-                # Spatial downsample per frame
-                frame_features = []
-                for t in range(T):
-                    frame = x[:, t]
-                    frame = F.relu(self.conv1(frame))
-                    frame = self.pool1(frame)
-                    frame = F.relu(self.conv2(frame))
-                    frame = self.pool2(frame)
-                    frame = self.global_pool(frame).squeeze(-1).squeeze(-1)
-                    frame = self.frame_embed(frame)
-                    frame_features.append(frame)
-
-                x = torch.stack(frame_features, dim=1)
-                x = self.time_pos_enc(x)
-
-                # Transformer blocks
-                if self.efficient_attention == "linear":
-                    for block in self.transformer_blocks:
-                        x_norm = block["norm1"](x)
-                        attn_out = block["attn"](x_norm)
-                        x = x + attn_out
-                        x = x + block["mlp"](block["norm2"](x))
-                else:
-                    for block in self.transformer_blocks:
-                        x = block(x)
-
-                # Pool time to one latent vector
-                x = x.transpose(1, 2)
-                x = self.global_pool_time(x).squeeze(-1)
-                z = self.latent(x)
-
-                return z
-
-        return HybridAutoencoderModel(
-            seq_len,
-            H,
-            W,
-            C,
-            self.k,
-            self.d_model,
-            self.n_heads,
-            self.n_layers,
-            self.efficient_attention,
-            pad_h,
-            pad_w,
-        )
+        return HybridAutoencoderModel()
