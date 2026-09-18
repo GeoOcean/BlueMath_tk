@@ -81,7 +81,12 @@ def process_kp_coefficients(
                 .drop_vars("time")
                 .expand_dims({"case_num": [i]})
             )
-            kp = output_spec / input_spec.sum(dim=["freq", "dir"])
+            # Normalize by the true energy (m0) delivered at the source, not
+            # a raw sum of densities - the frequency grid is log-spaced, so
+            # an unweighted density sum does not track energy consistently
+            # across cases with different fp.
+            input_energy = input_spec.spec.to_energy().sum(dim=["freq", "dir"])
+            kp = output_spec / input_energy
             output_kp_list.append(kp)
         except Exception as e:
             print(f"Error processing {input_spec_file} and {output_spec_file}")
@@ -115,6 +120,14 @@ def transform_spectra_to_binwaves(
         The wave spectra dataset in binwaves format with case_num dimension.
     """
 
+    # kp (from process_kp_coefficients) is output density per unit of source
+    # ENERGY, so the real spectrum must contribute the energy in its matching
+    # bin here too - not the raw density point value, which ignores that
+    # bin's (non-uniform) frequency width. Computed once, outside the loop:
+    # this is a full-dataset multiply, and redoing it per case_num (~1260x)
+    # was the earlier version's slowdown.
+    energy = spectra_dataset.efth.spec.to_energy()
+
     case_num_spectra = []
     for case_num, (case_dir, case_freq) in enumerate(
         zip(
@@ -124,9 +137,7 @@ def transform_spectra_to_binwaves(
     ):
         try:
             closest_case = (
-                spectra_dataset.efth.sel(
-                    freq=case_freq, method="nearest", tolerance=0.001
-                )
+                energy.sel(freq=case_freq, method="nearest", tolerance=0.001)
                 .sel(dir=case_dir, method="nearest", tolerance=1.0)
                 .expand_dims({"case_num": [case_num]})
             )
@@ -134,7 +145,7 @@ def transform_spectra_to_binwaves(
         except Exception as _e:
             # Add a zeros array if the case number is not available
             case_num_spectra.append(
-                xr.zeros_like(spectra_dataset.efth.isel(freq=0, dir=0)).expand_dims(
+                xr.zeros_like(energy.isel(freq=0, dir=0)).expand_dims(
                     {"case_num": [case_num]}
                 )
             )

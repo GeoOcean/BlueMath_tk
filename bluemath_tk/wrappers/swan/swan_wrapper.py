@@ -449,12 +449,19 @@ class BinWavesStructuredWrapper(SwanStructuredModelWrapper, BinWavesModelWrapper
                 "dspr": 1.0,
             },
         )
-        argmax_bin = np.argmax(input_spectrum.values)
-        mono_spec_array = np.zeros(input_spectrum.freq.size * input_spectrum.dir.size)
-        mono_spec_array[argmax_bin] = input_spectrum.sum(dim=["freq", "dir"])
-        mono_spec_array = mono_spec_array.reshape(
-            input_spectrum.freq.size, input_spectrum.dir.size
+        # Total energy (m0) of the partition, properly integrated over the
+        # (non-uniform) frequency bin widths and direction step, so collapsing
+        # it to a single bin below preserves the intended hs regardless of
+        # where fp falls on the log-spaced frequency grid.
+        m0 = float(input_spectrum.spec.to_energy().sum(dim=["freq", "dir"]))
+        df = input_spectrum.spec.df.values
+        dd = input_spectrum.spec.dd
+
+        argmax_bin = np.unravel_index(
+            np.argmax(input_spectrum.values), input_spectrum.shape
         )
+        mono_spec_array = np.zeros_like(input_spectrum.values)
+        mono_spec_array[argmax_bin] = m0 / (df[argmax_bin[0]] * dd)
         mono_input_spectrum = xr.Dataset(
             {
                 "efth": (["freq", "dir"], mono_spec_array),
@@ -498,12 +505,19 @@ class BinWavesUnstructuredWrapper(SwanUnstructuredModelWrapper, BinWavesModelWra
                 "dspr": 1.0,
             },
         )
-        argmax_bin = np.argmax(input_spectrum.values)
-        mono_spec_array = np.zeros(input_spectrum.freq.size * input_spectrum.dir.size)
-        mono_spec_array[argmax_bin] = input_spectrum.sum(dim=["freq", "dir"])
-        mono_spec_array = mono_spec_array.reshape(
-            input_spectrum.freq.size, input_spectrum.dir.size
+        # Total energy (m0) of the partition, properly integrated over the
+        # (non-uniform) frequency bin widths and direction step, so collapsing
+        # it to a single bin below preserves the intended hs regardless of
+        # where fp falls on the log-spaced frequency grid.
+        m0 = float(input_spectrum.spec.to_energy().sum(dim=["freq", "dir"]))
+        df = input_spectrum.spec.df.values
+        dd = input_spectrum.spec.dd
+
+        argmax_bin = np.unravel_index(
+            np.argmax(input_spectrum.values), input_spectrum.shape
         )
+        mono_spec_array = np.zeros_like(input_spectrum.values)
+        mono_spec_array[argmax_bin] = m0 / (df[argmax_bin[0]] * dd)
         mono_input_spectrum = xr.Dataset(
             {
                 "efth": (["freq", "dir"], mono_spec_array),
