@@ -1,128 +1,65 @@
-import logging
-import os
-from typing import List, Tuple
+"""
+BinWaves utilities for processing SWAN input and output files.
+"""
 
 import numpy as np
-import pandas as pd
 import xarray as xr
-from dask.diagnostics.progress import ProgressBar
-from matplotlib import cm
-from matplotlib import pyplot as plt
-from matplotlib.colors import ListedColormap
 from wavespectra.input.swan import read_swan
 
-from ..core.dask import setup_dask_client
-from ..core.plotting.base_plotting import DefaultStaticPlotting
 
-
-def generate_swan_cases(
-    frequencies_array: np.ndarray = None,
-    directions_array: np.ndarray = None,
-    direction_range: tuple = (0, 360),
-    direction_divisions: int = 24,
-    direction_sector: tuple = None,
-    frequency_range: tuple = (0.035, 0.5),
-    frequency_divisions: int = 29,
-    gamma: float = 50,
-    spr: float = 2,
-) -> xr.Dataset:
+def generate_swan_cases_and_fixed_parameters(
+    frequencies_array: list | np.ndarray,
+    directions_array: list | np.ndarray,
+) -> tuple[dict, dict]:
     """
-    Generate the SWAN cases monocromatic wave parameters.
+    Generate the SWAN cases dictionary and fixed parameters.
 
     Parameters
     ----------
-    frequencies_array : np.ndarray, optional
-        The frequencies array. If None, it is generated using frequency_range and frequency_divisions.
-    directions_array : np.ndarray, optional
-        The directions array. If None, it is generated using direction_range and direction_divisions.
-    direction_range : tuple
-        (min, max) range for directions in degrees.
-    direction_divisions : int
-        Number of directional divisions.
-    frequency_range : tuple
-        (min, max) range for frequencies in Hz.
-    frequency_divisions : int
-        Number of frequency divisions.
+    frequencies_array : list | np.ndarray
+        The frequencies array.
+    directions_array : list | np.ndarray
+        The directions array.
 
     Returns
     -------
-    xr.Dataset
-        The SWAN monocromatic cases Dataset with coordinates freq and dir.
+    tuple[dict, dict]
+        A tuple containing the SWAN monocromatic cases dictionary with keys as case IDs
+        and values as dictionaries containing frequency and direction,
+        and the fixed parameters.
     """
 
-    # Auto-generate directions if not provided
-    if directions_array is None:
-        step = (direction_range[1] - direction_range[0]) / direction_divisions
-        directions_array = np.arange(
-            direction_range[0] + step / 2, direction_range[1], step
-        )
+    if len(frequencies_array) != len(np.unique(frequencies_array)):
+        raise ValueError("The frequencies_array contains duplicate values.")
+    if len(directions_array) != len(np.unique(directions_array)):
+        raise ValueError("The directions_array contains duplicate values.")
 
-    if direction_sector is not None:
-        start, end = direction_sector
-        if start < end:
-            directions_array = directions_array[
-                (directions_array >= start) & (directions_array <= end)
-            ]
-        else:  # caso circular, ej. 270–90
-            directions_array = directions_array[
-                (directions_array >= start) | (directions_array <= end)
-            ]
-
-    # Auto-generate frequencies if not provided
-    if frequencies_array is None:
-        frequencies_array = np.geomspace(
-            frequency_range[0], frequency_range[1], frequency_divisions
-        )
-
-    # Constants for SWAN
-    gamma = gamma  # waves gamma
-    spr = spr  # waves directional spread
-
-    # Initialize data arrays for each variable
-    hs = np.zeros((len(directions_array), len(frequencies_array)))
-    tp = np.zeros((len(directions_array), len(frequencies_array)))
-    gamma_arr = np.full((len(directions_array), len(frequencies_array)), gamma)
-    spr_arr = np.full((len(directions_array), len(frequencies_array)), spr)
-
-    # Fill hs and tp arrays
-    for i, freq in enumerate(frequencies_array):
-        period = 1 / freq
-        hs_val = 1.0 if period > 5 else 0.1
-        hs[:, i] = hs_val
-        tp[:, i] = np.round(period, 4)
-
-    # Create xarray Dataset
-    ds = xr.Dataset(
-        {
-            "hs": (("dir", "freq"), hs),
-            "tp": (("dir", "freq"), tp),
-            "spr": (("dir", "freq"), spr_arr),
-            "gamma": (("dir", "freq"), gamma_arr),
-        },
-        coords={
-            "dir": directions_array,
-            "freq": frequencies_array,
-        },
-    )
-
-    # To get DataFrame if needed:
-    # df = ds.to_dataframe().reset_index()
-
-    return ds
+    return {
+        "dm": directions_array,
+        "fp": frequencies_array,
+    }, {
+        "mdc": len(directions_array),
+        "flow": min(frequencies_array),
+        "fhigh": max(frequencies_array),
+        "freq_discretization": len(frequencies_array),
+        "dir_discretization": len(directions_array),
+        "frequencies_array": frequencies_array,
+        "directions_array": directions_array,
+    }
 
 
 def process_kp_coefficients(
-    list_of_input_spectra: List[str],
-    list_of_output_spectra: List[str],
+    list_of_input_spectra: list[str],
+    list_of_output_spectra: list[str],
 ) -> xr.Dataset:
     """
     Process the kp coefficients from the output and input spectra.
 
     Parameters
     ----------
-    list_of_input_spectra : List[str]
+    list_of_input_spectra : list[str]
         The list of input spectra files.
-    list_of_output_spectra : List[str]
+    list_of_output_spectra : list[str]
         The list of output spectra files.
 
     Returns
@@ -144,7 +81,12 @@ def process_kp_coefficients(
                 .drop_vars("time")
                 .expand_dims({"case_num": [i]})
             )
-            kp = output_spec / input_spec.sum(dim=["freq", "dir"])
+            # Normalize by the true energy (m0) delivered at the source, not
+            # a raw sum of densities - the frequency grid is log-spaced, so
+            # an unweighted density sum does not track energy consistently
+            # across cases with different fp.
+            input_energy = input_spec.spec.to_energy().sum(dim=["freq", "dir"])
+            kp = output_spec / input_energy
             output_kp_list.append(kp)
         except Exception as e:
             print(f"Error processing {input_spec_file} and {output_spec_file}")
@@ -158,199 +100,112 @@ def process_kp_coefficients(
     return concatened_kp.fillna(0.0).sortby("freq").sortby("dir")
 
 
-def reconstruct_spectra(
-    offshore_spectra: xr.Dataset,
-    kp_coeffs: xr.Dataset,
-    num_workers: int = None,
-    memory_limit: float = 0.5,
-    chunk_sizes: dict = {"time": 24},
-    verbose: bool = False,
-):
+def transform_spectra_to_binwaves(
+    spectra_dataset: xr.Dataset,
+    kps_dataset: xr.Dataset,
+) -> xr.Dataset:
     """
-    Reconstruct the onshore spectra using offshore spectra and kp coefficients.
+    Transform the wave spectra to binwaves format.
 
     Parameters
     ----------
-    offshore_spectra : xr.Dataset
-        The offshore spectra dataset.
-    kp_coeffs : xr.Dataset
+    spectra_dataset : xr.Dataset
+        The wave spectra dataset.
+    kps_dataset : xr.Dataset
         The kp coefficients dataset.
-    num_workers : int, optional
-        The number of workers to use. Default is None.
-    memory_limit : float, optional
-        The memory limit to use. Default is 0.5.
-    chunk_sizes : dict, optional
-        The chunk sizes to use. Default is {"time": 24}.
-    verbose : bool, optional
-        Whether to print verbose output. Default is False.
-        If False, Dask logs are suppressed.
-        If True, Dask logs are shown.
+
+    Returns
+    -------
+    spectra_binwaves_format : xr.Dataset
+        The wave spectra dataset in binwaves format with case_num dimension.
+    """
+
+    # kp (from process_kp_coefficients) is output density per unit of source
+    # ENERGY, so the real spectrum must contribute the energy in its matching
+    # bin here too - not the raw density point value, which ignores that
+    # bin's (non-uniform) frequency width. Computed once, outside the loop:
+    # this is a full-dataset multiply, and redoing it per case_num (~1260x)
+    # was the earlier version's slowdown.
+    energy = spectra_dataset.efth.spec.to_energy()
+
+    case_num_spectra = []
+    for case_num, (case_dir, case_freq) in enumerate(
+        zip(
+            kps_dataset["run_dm"].values,
+            kps_dataset["run_fp"].values,
+        )
+    ):
+        try:
+            closest_case = (
+                energy.sel(freq=case_freq, method="nearest", tolerance=0.001)
+                .sel(dir=case_dir, method="nearest", tolerance=1.0)
+                .expand_dims({"case_num": [case_num]})
+            )
+            case_num_spectra.append(closest_case)
+        except Exception as _e:
+            # Add a zeros array if the case number is not available
+            case_num_spectra.append(
+                xr.zeros_like(energy.isel(freq=0, dir=0)).expand_dims(
+                    {"case_num": [case_num]}
+                )
+            )
+
+    return (
+        xr.concat(case_num_spectra, dim="case_num").drop_vars("dir").drop_vars("freq")
+    )
+
+
+def reconstruct_spectra(
+    offshore_spectra: xr.DataArray,
+    kp_coeffs: xr.Dataset,
+) -> xr.Dataset:
+    """
+    Reconstruct onshore spectra from offshore spectra and kp coefficients.
+
+    Parameters
+    ----------
+    offshore_spectra : xr.DataArray
+        Offshore spectral energy binned by SWAN case, with dims
+        `(time, case_num)`.
+    kp_coeffs : xr.Dataset
+        Propagation coefficients with data variable `"kps"` and dims
+        `(case_num, site, freq, dir)`.
 
     Returns
     -------
     xr.Dataset
-        The reconstructed onshore spectra dataset.
+        Reconstructed onshore spectra: data variable `"kps"`, dims
+        `(time, site, freq, dir)`.
     """
 
-    if not verbose:
-        # Suppress Dask logs
-        logging.getLogger("distributed").setLevel(logging.ERROR)
-        logging.getLogger("distributed.client").setLevel(logging.ERROR)
-        logging.getLogger("distributed.scheduler").setLevel(logging.ERROR)
-        logging.getLogger("distributed.worker").setLevel(logging.ERROR)
-        logging.getLogger("distributed.nanny").setLevel(logging.ERROR)
-        # Also suppress bokeh and tornado logs that Dask uses
-        logging.getLogger("bokeh").setLevel(logging.ERROR)
-        logging.getLogger("tornado").setLevel(logging.ERROR)
+    kp = kp_coeffs["kps"].transpose("case_num", "site", "freq", "dir")
+    kp_matrix = kp.values.reshape(kp.sizes["case_num"], -1).astype(np.float32)
 
-    # Setup Dask client
-    if num_workers is None:
-        num_workers = os.environ.get("BLUEMATH_NUM_WORKERS", 4)
-    client = setup_dask_client(n_workers=num_workers, memory_limit=memory_limit)
+    offshore = offshore_spectra.transpose("time", "case_num")
+    offshore_matrix = offshore.values.astype(np.float32)
 
-    try:
-        # Process with controlled chunks
-        offshore_spectra_chunked = offshore_spectra.chunk(
-            {"time": chunk_sizes.get("time", 24)}
-        )
-        kp_coeffs_chunked = kp_coeffs.chunk({"site": 10})
-        with ProgressBar():
-            onshore_spectra = (
-                (offshore_spectra_chunked * kp_coeffs_chunked)
-                .sum(dim="case_num")
-                .compute()
-            )
-        return onshore_spectra
+    result = offshore_matrix @ kp_matrix  # (time, site * freq * dir)
 
-    finally:
-        client.close()
-
-
-def plot_selected_subset_parameters(
-    selected_subset: pd.DataFrame,
-    color: str = "blue",
-    **kwargs,
-) -> Tuple[plt.figure, plt.axes]:
-    """
-    Plot the selected subset parameters.
-
-    Parameters
-    ----------
-    selected_subset : pd.DataFrame
-        The selected subset parameters.
-    color : str, optional
-        The color to use in the plot. Default is "blue".
-    **kwargs : dict, optional
-        Additional keyword arguments to be passed to the scatter plot function.
-
-    Returns
-    -------
-    plt.figure
-        The figure object containing the plot.
-    plt.axes
-        Array of axes objects for the subplots.
-    """
-
-    # Create figure and axes
-    default_static_plot = DefaultStaticPlotting()
-    fig, axes = default_static_plot.get_subplots(
-        nrows=len(selected_subset) - 1,
-        ncols=len(selected_subset) - 1,
-        sharex=False,
-        sharey=False,
+    reconstructed = xr.DataArray(
+        result.reshape(
+            offshore.sizes["time"], kp.sizes["site"], kp.sizes["freq"], kp.sizes["dir"]
+        ),
+        dims=("time", "site", "freq", "dir"),
+        coords={
+            "time": offshore["time"],
+            "site": kp["site"],
+            "freq": kp["freq"],
+            "dir": kp["dir"],
+        },
+        name="efth",
     )
 
-    for c1, v1 in enumerate(list(selected_subset.columns)[1:]):
-        for c2, v2 in enumerate(list(selected_subset.columns)[:-1]):
-            default_static_plot.plot_scatter(
-                ax=axes[c2, c1],
-                x=selected_subset[v1],
-                y=selected_subset[v2],
-                c=color,
-                alpha=0.6,
-                **kwargs,
-            )
-            if c1 == c2:
-                axes[c2, c1].set_xlabel(list(selected_subset.columns)[c1 + 1])
-                axes[c2, c1].set_ylabel(list(selected_subset.columns)[c2])
-            elif c1 > c2:
-                axes[c2, c1].xaxis.set_ticklabels([])
-                axes[c2, c1].yaxis.set_ticklabels([])
-            else:
-                fig.delaxes(axes[c2, c1])
+    # Carry over auxiliary site/global coordinates (coord_x, coord_y, lat, lon, ...)
+    extra_coords = {
+        name: coord
+        for name, coord in kp_coeffs.coords.items()
+        if name not in reconstructed.coords
+        and set(coord.dims) <= set(reconstructed.dims)
+    }
 
-    return fig, axes
-
-
-def plot_selected_cases_grid(
-    frequencies: np.ndarray,
-    directions: np.ndarray,
-    figsize: Tuple[int, int] = (8, 8),
-    **kwargs,
-):
-    """
-    Plot the selected subset parameters.
-
-    Parameters
-    ----------
-    frequencies : np.ndarray
-        The frequencies array.
-    directions : np.ndarray
-        The directions array.
-    figsize : tuple, optional
-        The figure size. Default is (8, 8).
-    **kwargs : dict, optional
-        Additional keyword arguments to be passed to the pcolormesh function.
-    """
-
-    # generate figure and axes
-    fig = plt.figure(figsize=figsize)
-    ax = fig.add_subplot(1, 1, 1, projection="polar")
-
-    # prepare data
-    x = np.append(np.deg2rad(directions), np.deg2rad(directions)[0])
-    y = np.append(0, frequencies)
-    z = (
-        np.array(range(len(frequencies) * len(directions)))
-        .reshape(len(directions), len(frequencies))
-        .T
-    )
-
-    # custom colormap
-    cmn = np.vstack(
-        (
-            cm.get_cmap("plasma", 124)(np.linspace(0, 0.9, 70)),
-            cm.get_cmap("magma_r", 124)(np.linspace(0.1, 0.4, 80)),
-            cm.get_cmap("rainbow_r", 124)(np.linspace(0.1, 0.8, 80)),
-            cm.get_cmap("Blues_r", 124)(np.linspace(0.4, 0.8, 40)),
-            cm.get_cmap("cubehelix_r", 124)(np.linspace(0.1, 0.8, 80)),
-        )
-    )
-    cmn = ListedColormap(cmn, name="cmn")
-
-    # plot cases id
-    p1 = ax.pcolormesh(
-        x,
-        y,
-        z,
-        vmin=0,
-        vmax=np.nanmax(z),
-        edgecolor="grey",
-        linewidth=0.005,
-        cmap=cmn,
-        shading="flat",
-        **kwargs,
-    )
-
-    # customize axes
-    ax.set_theta_zero_location("N", offset=0)
-    ax.set_theta_direction(-1)
-    ax.tick_params(
-        axis="both",
-        colors="black",
-        labelsize=14,
-        pad=10,
-    )
-
-    # add colorbar
-    plt.colorbar(p1, pad=0.1, shrink=0.7).set_label("Case ID", fontsize=16)
+    return reconstructed.assign_coords(extra_coords).to_dataset()

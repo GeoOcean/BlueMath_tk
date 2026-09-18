@@ -1,8 +1,13 @@
+"""
+Wrapper for the SWAN model.
+https://swanmodel.sourceforge.io/online_doc/swanuse/swanuse.html
+"""
+
 import os
 import re
 from itertools import groupby
-from typing import List, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.io as sio
@@ -31,69 +36,7 @@ class SwanModelWrapper(BaseModelWrapper):
         The output variables for the wrapper.
     """
 
-    default_parameters = {
-        "Hs": {
-            "type": float,
-            "value": None,
-            "description": "Significant wave height.",
-        },
-        "Tp": {
-            "type": float,
-            "value": None,
-            "description": "Wave peak period.",
-        },
-        "Dir": {
-            "type": float,
-            "value": None,
-            "description": "Wave direction.",
-        },
-        "Spr": {
-            "type": float,
-            "value": None,
-            "description": "Directional spread.",
-        },
-        "dir_dist": {
-            "type": str,
-            "choices": ["CIRCLE", "SECTOR"],
-            "value": "CIRCLE",
-            "description": "CIRCLE indicates that the spectral directions cover the full circle. SECTOR indicates that the spectral directions cover a limited sector of the circle.",
-        },
-        "dir1": {
-            "type": float,
-            "value": None,
-            "description": "Only with SECTOR option. The direction of the right-hand boundary of the sector when looking outward from the sector (in degrees).",
-        },
-        "dir2": {
-            "type": float,
-            "value": None,
-            "description": "Only with SECTOR option. The direction of the left-hand boundary of the sector when looking outward from the sector (in degrees).",
-        },
-        "mdc": {
-            "type": int,
-            "value": 24,
-            "description": "Spectral directional discretization.",
-        },
-        "flow": {
-            "type": float,
-            "value": 0.03,
-            "description": "Low values for frequency.",
-        },
-        "fhigh": {
-            "type": float,
-            "value": 0.5,
-            "description": "High value for frequency.",
-        },
-        "Freq_array": {
-            "type": np.ndarray,
-            "value": None,
-            "description": "Array of frequencies for the model.",
-        },
-        "Dir_array": {
-            "type": np.ndarray,
-            "value": None,
-            "description": "Array of directions for the model.",
-        },
-    }
+    default_parameters = {}
 
     available_launchers = {
         "serial": "swan_serial.exe",
@@ -132,90 +75,17 @@ class SwanModelWrapper(BaseModelWrapper):
         },
     }
 
-    def __init__(
-        self,
-        templates_dir: str,
-        metamodel_parameters: dict,
-        fixed_parameters: dict,
-        output_dir: str,
-        templates_name: dict = "all",
-        depth_array: np.ndarray = None,
-        locations: np.ndarray = None,
-        debug: bool = True,
-    ) -> None:
-        """
-        Initialize the SWAN model wrapper.
-        """
-
-        super().__init__(
-            templates_dir=templates_dir,
-            metamodel_parameters=metamodel_parameters,
-            fixed_parameters=fixed_parameters,
-            output_dir=output_dir,
-            templates_name=templates_name,
-            default_parameters=self.default_parameters,
-        )
-        self.set_logger_name(
-            name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
-        )
-
-        if depth_array is not None:
-            self.depth_array = np.round(depth_array, 5)
-        else:
-            self.depth_array = None
-
-        if locations is not None:
-            self.locations = np.column_stack(locations)
-        else:
-            self.locations = None
-
-    def list_available_output_variables(self) -> List[str]:
+    def list_available_output_variables(self) -> list[str]:
         """
         List available output variables.
 
         Returns
         -------
-        List[str]
+        list[str]
             The available output variables.
         """
 
         return list(self.output_variables.keys())
-
-    def _convert_case_output_files_to_nc(
-        self, case_num: int, output_path: str, output_vars: List[str]
-    ) -> xr.Dataset:
-        """
-        Convert mat file to netCDF file.
-
-        Parameters
-        ----------
-        case_num : int
-            The case number.
-        output_path : str
-            The output path.
-        output_vars : List[str]
-            The output variables to use.
-
-        Returns
-        -------
-        xr.Dataset
-            The xarray Dataset.
-        """
-
-        # Read mat file
-        output_dict = sio.loadmat(output_path)
-
-        # Create Dataset
-        ds_output_dict = {var: (("Yp", "Xp"), output_dict[var]) for var in output_vars}
-        ds = xr.Dataset(
-            ds_output_dict,
-            coords={"Xp": output_dict["Xp"][0, :], "Yp": output_dict["Yp"][:, 0]},
-        )
-
-        # assign correct coordinate case_num
-        ds.coords["case_num"] = case_num
-
-        return ds
 
     def get_case_percentage_from_file(self, output_log_file: str) -> str:
         """
@@ -240,13 +110,13 @@ class SwanModelWrapper(BaseModelWrapper):
             for line in reversed(f.readlines()):
                 match = re.search(progress_pattern, line)
                 if match:
-                    if float(match.group(1)) > 99.5:
+                    if float(match.group(1)) >= 98.0:
                         return "100 %"
                     return f"{match.group(1)} %"
 
         return "0 %"  # if no progress is found
 
-    def monitor_cases(self, value_counts: str = None) -> Union[pd.DataFrame, dict]:
+    def monitor_cases(self, value_counts: str = None) -> tuple[pd.DataFrame, dict]:
         """
         Monitor the cases based on the wrapper_out.log file.
         """
@@ -264,12 +134,110 @@ class SwanModelWrapper(BaseModelWrapper):
             cases_status=cases_status, value_counts=value_counts
         )
 
+    def join_postprocessed_files(
+        self, postprocessed_files: list[xr.Dataset]
+    ) -> xr.Dataset:
+        """
+        Join postprocessed files in a single Dataset.
+
+        Parameters
+        ----------
+        postprocessed_files : list
+            The postprocessed files.
+
+        Returns
+        -------
+        xr.Dataset
+            The joined Dataset.
+        """
+
+        return xr.concat(postprocessed_files, dim="case_num")
+
+
+class SwanStructuredModelWrapper(SwanModelWrapper):
+    """
+    Wrapper for the SWAN structured model.
+    """
+
+    def __init__(
+        self,
+        templates_dir: str,
+        metamodel_parameters: dict,
+        fixed_parameters: dict,
+        output_dir: str,
+        templates_name: dict = "all",
+        depth_array: np.ndarray = None,
+        locations: np.ndarray = None,
+        debug: bool = True,
+    ) -> None:
+        """
+        Initialize the SWAN structured model wrapper.
+        """
+
+        super().__init__(
+            templates_dir=templates_dir,
+            metamodel_parameters=metamodel_parameters,
+            fixed_parameters=fixed_parameters,
+            output_dir=output_dir,
+            templates_name=templates_name,
+            default_parameters=self.default_parameters,
+        )
+        self.set_logger_name(
+            name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
+        )
+
+        if depth_array is not None:
+            self.depth_array = np.round(depth_array, 5)
+        else:
+            self.depth_array = None
+
+        if locations is not None:
+            self.locations = np.column_stack(locations)
+        else:
+            self.locations = None
+
+    def _convert_case_output_files_to_nc(
+        self, case_num: int, output_path: str, output_vars: list[str]
+    ) -> xr.Dataset:
+        """
+        Convert mat file to netCDF file.
+
+        Parameters
+        ----------
+        case_num : int
+            The case number.
+        output_path : str
+            The output path.
+        output_vars : list[str]
+            The output variables to use.
+
+        Returns
+        -------
+        xr.Dataset
+            The xarray Dataset.
+        """
+
+        # Read mat file
+        output_dict = sio.loadmat(output_path)
+
+        # Create Dataset
+        ds_output_dict = {var: (("Yp", "Xp"), output_dict[var]) for var in output_vars}
+        ds = xr.Dataset(
+            ds_output_dict,
+            coords={"Xp": output_dict["Xp"][0, :], "Yp": output_dict["Yp"][:, 0]},
+        )
+
+        # assign correct coordinate case_num
+        ds.coords["case_num"] = case_num
+
+        return ds
+
     def postprocess_case(
         self,
         case_num: int,
         case_dir: str,
         case_context: dict,
-        output_vars: List[str] = ["Hsig", "Tm02", "Dir"],
+        output_vars: list[str] = ["Hsig", "Tm02", "Dir"],
     ) -> xr.Dataset:
         """
         Convert mat ouput files to netCDF file.
@@ -311,101 +279,156 @@ class SwanModelWrapper(BaseModelWrapper):
 
         return output_nc
 
-    def join_postprocessed_files(
-        self, postprocessed_files: List[xr.Dataset]
+
+class SwanUnstructuredModelWrapper(SwanModelWrapper):
+    """
+    Wrapper for the SWAN unstructured model.
+    """
+
+    def __init__(
+        self,
+        templates_dir: str,
+        metamodel_parameters: dict,
+        fixed_parameters: dict,
+        output_dir: str,
+        templates_name: dict = "all",
+        debug: bool = True,
+    ) -> None:
+        """
+        Initialize the SWAN unstructured model wrapper.
+        """
+
+        super().__init__(
+            templates_dir=templates_dir,
+            metamodel_parameters=metamodel_parameters,
+            fixed_parameters=fixed_parameters,
+            output_dir=output_dir,
+            templates_name=templates_name,
+            default_parameters=self.default_parameters,
+        )
+        self.set_logger_name(
+            name=self.__class__.__name__, level="DEBUG" if debug else "INFO"
+        )
+
+    def _convert_case_output_files_to_nc(
+        self, case_num: int, output_path: str, output_vars: list[str]
     ) -> xr.Dataset:
         """
-        Join postprocessed files in a single Dataset.
+        Convert mat file to netCDF file.
 
         Parameters
         ----------
-        postprocessed_files : list
-            The postprocessed files.
+        case_num : int
+            The case number.
+        output_path : str
+            The output path.
+        output_vars : list[str]
+            The output variables to use.
 
         Returns
         -------
         xr.Dataset
-            The joined Dataset.
+            The xarray Dataset.
         """
 
-        return xr.concat(postprocessed_files, dim="case_num")
+        # Read mat file
+        output_dict = sio.loadmat(output_path)
+
+        # Create Dataset
+        ds_output_dict = {
+            var: (("case_num", "node"), output_dict[var]) for var in output_vars
+        }
+        ds = xr.Dataset(
+            ds_output_dict,
+            coords={
+                "case_num": [case_num],
+                "Xp": (("node"), output_dict["Xp"][0]),
+                "Yp": (("node"), output_dict["Yp"][0]),
+                "Depth": (("node"), output_dict["Depth"][0]),
+            },
+        )
+
+        return ds
 
 
-def generate_fixed_parameters(
-    grid_parameters: dict,
-    freq_array: np.array,
-    dir_array: np.array,
-) -> dict:
+class BinWavesModelWrapper:
+    def plot_cases_to_run(
+        self,
+        cmap: str = "turbo",
+        figsize: tuple[float, float] = (8, 8),
+    ) -> plt.Figure:
+        """
+        Plot the SWAN case library as a polar frequency/direction grid,
+        colored by case ID.
+
+        Parameters
+        ----------
+        cmap : str, optional
+            Colormap used to color cases by ID, by default "turbo".
+        figsize : tuple[float, float], optional
+            Figure size, by default (8, 8).
+
+        Returns
+        -------
+        Figure
+            Matplotlib figure with the polar case grid.
+        """
+
+        dirs = np.array([case.get("dm") for case in self.cases_context])
+        freqs = np.array([case.get("fp") for case in self.cases_context])
+        case_ids = np.arange(len(self.cases_context))
+
+        directions = np.sort(np.unique(dirs))
+        frequencies = np.sort(np.unique(freqs))
+        dir_to_col = {d: i for i, d in enumerate(directions)}
+        freq_to_row = {f: i for i, f in enumerate(frequencies)}
+
+        # grid of case IDs (rows=freq, cols=dir); left as NaN where a
+        # dir/freq combination is missing (e.g. a direction-sector subset)
+        grid = np.full((len(frequencies), len(directions)), np.nan)
+        for case_id, dir_val, freq_val in zip(case_ids, dirs, freqs):
+            grid[freq_to_row[freq_val], dir_to_col[dir_val]] = case_id
+
+        fig, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": "polar"})
+
+        dtheta = np.diff(directions).mean()
+        theta = np.deg2rad(np.append(directions, directions[0] + 360) - dtheta / 2)
+        radius = np.append(0, frequencies)
+
+        pcm = ax.pcolormesh(
+            theta,
+            radius,
+            grid,
+            cmap=cmap,
+            edgecolors="grey",
+            linewidth=0.1,
+            shading="flat",
+        )
+
+        ax.set_theta_zero_location("N")
+        ax.set_theta_direction(-1)
+        ax.set_title(
+            f"SWAN case library ({len(self.cases_context)} cases)", pad=20, fontsize=14
+        )
+        ax.set_ylabel("Frequency [Hz]", labelpad=30)
+        ax.tick_params(labelsize=9)
+
+        fig.colorbar(pcm, ax=ax, pad=0.1, shrink=0.7, label="Case ID")
+        fig.tight_layout()
+
+        return fig
+
+
+class BinWavesStructuredWrapper(SwanStructuredModelWrapper, BinWavesModelWrapper):
     """
-    Generate fixed parameters for the SWAN model based on grid parameters and frequency/direction arrays.
-    Parameters
-    ----------
-    grid_parameters : dict
-        Dictionary with grid configuration for SWAN input.
-    freq_array : np.ndarray
-        Array of frequencies for the SWAN model.
-    dir_array : np.ndarray
-        Array of directions for the SWAN model.
-    Returns
-    -------
-    dict
-        Dictionary with fixed parameters for the SWAN model.
-    """
-
-    dirs = np.sort(np.unique(dir_array)) % 360
-    step = np.round(np.median(np.diff(np.sort(dirs))), 4)
-
-    # Compute angular gaps between sorted directions (including wrap-around)
-    diffs = np.diff(np.concatenate([dirs, [dirs[0] + 360]]))
-    max_gap_idx = np.argmax(diffs)
-
-    if np.isclose(diffs[max_gap_idx], step, atol=1e-2):
-        dir_dist = "CIRCLE"
-        dir1, dir2 = None, None
-    else:
-        dir_dist = "SECTOR"
-        dir1 = float((dirs[(max_gap_idx + 1) % len(dirs)]) % 360)  # right-hand boundary
-        dir2 = float((dirs[max_gap_idx]) % 360)  # left-hand boundary
-    print("Distribución direccional:", dir_dist)
-    if dir_dist == "SECTOR":
-        print(f"Direcciones de {dir1}° a {dir2}°")
-
-    return {
-        "xpc": grid_parameters["xpc"],  # origin x
-        "ypc": grid_parameters["ypc"],  # origin y
-        "alpc": grid_parameters["alpc"],  # x-axis direction
-        "xlenc": grid_parameters["xlenc"],  # grid length x
-        "ylenc": grid_parameters["ylenc"],  # grid length y
-        "mxc": grid_parameters["mxc"],  # num mesh x
-        "myc": grid_parameters["myc"],  # num mesh y
-        "xpinp": grid_parameters["xpinp"],  # origin x for input grid
-        "ypinp": grid_parameters["ypinp"],  # origin y for input grid
-        "alpinp": grid_parameters["alpinp"],  # x-axis direction
-        "mxinp": grid_parameters["mxinp"],  # num mesh x for input grid
-        "myinp": grid_parameters["myinp"],  # num mesh y for input grid
-        "dxinp": grid_parameters["dxinp"],  # resolution x for input grid
-        "dyinp": grid_parameters["dyinp"],  # resolution y for input grid
-        "dir_dist": dir_dist,  # direction distribution type
-        "dir1": dir1,  # min direction
-        "dir2": dir2,  # max direction
-        "freq_discretization": len(np.unique(freq_array)),  # frequency discretization
-        "dir_discretization": int(
-            360 / (np.unique(dir_array)[1] - np.unique(dir_array)[0])
-        ),  # direction discretization
-        "mdc": int(
-            360 / (np.unique(dir_array)[1] - np.unique(dir_array)[0])
-        ),  # number of depth cases
-        "flow": float(np.min(np.unique(freq_array))),  # low frequency limit
-        "fhigh": float(np.max(np.unique(freq_array))),  # high frequency limit
-    }
-
-
-class BinWavesWrapper(SwanModelWrapper):
-    """
-    Wrapper example for the BinWaves model.
+    Wrapper example for the BinWaves structured model.
     """
 
     def build_case(self, case_dir: str, case_context: dict) -> None:
+        """
+        Build the input spectra files for a case.
+        """
+
         if self.depth_array is not None:
             write_array_in_file(self.depth_array, f"{case_dir}/depth.dat")
         if self.locations is not None:
@@ -415,28 +438,30 @@ class BinWavesWrapper(SwanModelWrapper):
         input_spectrum = construct_partition(
             freq_name="jonswap",
             freq_kwargs={
-                "freq": np.geomspace(
-                    case_context.get("flow", 0.035),
-                    case_context.get("fhigh", 0.5),
-                    case_context.get("freq_discretization", 29),
-                ),
-                # "freq": np.linspace(case_context.get("flow", 0.035), case_context.get("fhigh", 0.5), case_context.get("freq_discretization", 29)),
-                "fp": 1.0 / case_context.get("tp"),
-                "hs": case_context.get("hs"),
+                "freq": case_context.get("frequencies_array"),
+                "fp": case_context.get("fp"),
+                "hs": 1.0,
             },
             dir_name="cartwright",
             dir_kwargs={
-                "dir": np.linspace(0, 360, case_context.get("dir_discretization", 24)),
-                "dm": case_context.get("dir"),
-                "dspr": case_context.get("spr"),
+                "dir": case_context.get("directions_array"),
+                "dm": case_context.get("dm"),
+                "dspr": 1.0,
             },
         )
-        argmax_bin = np.argmax(input_spectrum.values)
-        mono_spec_array = np.zeros(input_spectrum.freq.size * input_spectrum.dir.size)
-        mono_spec_array[argmax_bin] = input_spectrum.sum(dim=["freq", "dir"])
-        mono_spec_array = mono_spec_array.reshape(
-            input_spectrum.freq.size, input_spectrum.dir.size
+        # Total energy (m0) of the partition, properly integrated over the
+        # (non-uniform) frequency bin widths and direction step, so collapsing
+        # it to a single bin below preserves the intended hs regardless of
+        # where fp falls on the log-spaced frequency grid.
+        m0 = float(input_spectrum.spec.to_energy().sum(dim=["freq", "dir"]))
+        df = input_spectrum.spec.df.values
+        dd = input_spectrum.spec.dd
+
+        argmax_bin = np.unravel_index(
+            np.argmax(input_spectrum.values), input_spectrum.shape
         )
+        mono_spec_array = np.zeros_like(input_spectrum.values)
+        mono_spec_array[argmax_bin] = m0 / (df[argmax_bin[0]] * dd)
         mono_input_spectrum = xr.Dataset(
             {
                 "efth": (["freq", "dir"], mono_spec_array),
@@ -452,8 +477,126 @@ class BinWavesWrapper(SwanModelWrapper):
             )
 
 
+class BinWavesUnstructuredWrapper(SwanUnstructuredModelWrapper, BinWavesModelWrapper):
+    """
+    Wrapper example for the BinWaves unstructured model.
+    """
+
+    def build_case(self, case_dir: str, case_context: dict) -> None:
+        """
+        Build the input spectra file for a case.
+        """
+
+        # Save hs value depending on 5 second peak period (fp) value
+        case_context["hs"] = 1.0 if case_context.get("fp") < 0.2 else 0.1
+
+        # Construct the input spectrum
+        input_spectrum = construct_partition(
+            freq_name="jonswap",
+            freq_kwargs={
+                "freq": case_context.get("frequencies_array"),
+                "fp": case_context.get("fp"),
+                "hs": case_context.get("hs"),
+            },
+            dir_name="cartwright",
+            dir_kwargs={
+                "dir": case_context.get("directions_array"),
+                "dm": case_context.get("dm"),
+                "dspr": 1.0,
+            },
+        )
+        # Total energy (m0) of the partition, properly integrated over the
+        # (non-uniform) frequency bin widths and direction step, so collapsing
+        # it to a single bin below preserves the intended hs regardless of
+        # where fp falls on the log-spaced frequency grid.
+        m0 = float(input_spectrum.spec.to_energy().sum(dim=["freq", "dir"]))
+        df = input_spectrum.spec.df.values
+        dd = input_spectrum.spec.dd
+
+        argmax_bin = np.unravel_index(
+            np.argmax(input_spectrum.values), input_spectrum.shape
+        )
+        mono_spec_array = np.zeros_like(input_spectrum.values)
+        mono_spec_array[argmax_bin] = m0 / (df[argmax_bin[0]] * dd)
+        mono_input_spectrum = xr.Dataset(
+            {
+                "efth": (["freq", "dir"], mono_spec_array),
+            },
+            coords={
+                "freq": input_spectrum.freq,
+                "dir": input_spectrum.dir,
+            },
+        )
+        wavespectra.SpecDataset(mono_input_spectrum).to_swan(
+            os.path.join(case_dir, "input_spectra.bnd")
+        )
+
+    def postprocess_case(
+        self,
+        case_num: int,
+        case_dir: str,
+        case_context: dict,
+        output_vars: list[str] = ["Hsig", "Tm02", "Dir"],
+    ) -> xr.Dataset:
+        """
+        Convert mat ouput files to netCDF file.
+
+        Parameters
+        ----------
+        case_num : int
+            The case number.
+        case_dir : str
+            The case directory.
+        case_context : dict
+            The case context.
+        output_vars : list, optional
+            The output variables to postprocess. Default is None.
+
+        Returns
+        -------
+        xr.Dataset
+            The postprocessed Dataset.
+        """
+
+        if output_vars is None:
+            self.logger.info("Postprocessing all available variables.")
+            output_vars = list(self.output_variables.keys())
+
+        output_nc_path = os.path.join(case_dir, "output.nc")
+        if not os.path.exists(output_nc_path):
+            # Convert tab files to netCDF file
+            output_path = os.path.join(case_dir, "output.mat")
+            output_nc = self._convert_case_output_files_to_nc(
+                case_num=case_num,
+                output_path=output_path,
+                output_vars=output_vars,
+            )
+            output_nc = output_nc.assign_coords(
+                {
+                    "dm": (("case_num"), [case_context.get("dm")]),
+                    "fp": (("case_num"), [case_context.get("fp")]),
+                    "tp": (("case_num"), [1.0 / case_context.get("fp")]),
+                    "hs": (("case_num"), [case_context.get("hs")]),
+                }
+            )
+            output_nc.to_netcdf(os.path.join(case_dir, "output.nc"))
+        else:
+            self.logger.info("Reading existing output.nc file.")
+            output_nc = xr.open_dataset(output_nc_path)
+
+        return output_nc
+
+
 class GreenWavesWrapper(SwanModelWrapper):
+    """
+    Wrapper example for the GreenWaves model.
+    """
+
     def __init__(self, *args, **kwargs):
+        """
+        Initialize the GreenWaves wrapper.
+        """
+
         super().__init__(*args, **kwargs)
         self.sbatch_file_example = sbatch_file_greenwaves
 
@@ -696,7 +839,7 @@ class HyWindSeaWrapper(SwanModelWrapper):
         return wave_output
 
     def join_postprocessed_files(
-        self, postprocessed_files: List[xr.Dataset]
+        self, postprocessed_files: list[xr.Dataset]
     ) -> xr.Dataset:
         """
         Join postprocessed files in a single Dataset.
