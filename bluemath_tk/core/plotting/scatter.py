@@ -2,6 +2,7 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from scipy.stats import gaussian_kde, probplot
@@ -124,6 +125,8 @@ def validation_scatter(
 def plot_scatters_in_triangle(
     dataframes: List[pd.DataFrame],
     data_colors: Optional[List[str]] = None,
+    variables: Optional[List[str]] = None,
+    color: Optional[str] = None,
     **kwargs,
 ) -> Tuple[Figure, np.ndarray]:
     """
@@ -132,15 +135,28 @@ def plot_scatters_in_triangle(
     Parameters
     ----------
     dataframes : List[pd.DataFrame]
-        List of dataframes to plot. Each dataframe should contain the same columns.
+        List of dataframes to plot. Each dataframe should contain the variables
+        specified in `variables`.
     data_colors : Optional[List[str]], optional
         List of colors for the dataframes. If None, uses default_colors.
+        Ignored when `color` is provided.
+    variables : Optional[List[str]], optional
+        List of dataframe columns to use as scatter plot axes. If None, all
+        columns from the first dataframe are used.
+    color : Optional[str], optional
+        Name of the dataframe column used to color the scatter points.
+        If provided, a shared colorbar is added to the figure.
+        If None, each dataframe is plotted using its corresponding color
+        from `data_colors`.
     **kwargs : dict, optional
         Additional keyword arguments for the scatter plot. These will be passed to
         matplotlib.pyplot.scatter. Common parameters include:
         - s : float, marker size
         - alpha : float, transparency
         - marker : str, marker style
+        - cmap : str, colormap used when `color` is provided
+        - vmin : float, minimum value for colormap normalization
+        - vmax : float, maximum value for colormap normalization
 
     Returns
     -------
@@ -152,14 +168,18 @@ def plot_scatters_in_triangle(
     Raises
     ------
     ValueError
-        If the variables in the first dataframe are not present in all other dataframes.
+        If the specified variables or color variable are not present in all
+        dataframes.
     """
 
     if data_colors is None:
         data_colors = default_colors
 
-    # Get the number and names of variables from the first dataframe
-    variables_names = list(dataframes[0].columns)
+    # Get the number and names of variables
+    if variables is None:
+        variables = list(dataframes[0].columns)
+
+    variables_names = variables
     num_variables = len(variables_names)
 
     # Check variables names are in all dataframes
@@ -168,6 +188,18 @@ def plot_scatters_in_triangle(
             raise ValueError(
                 f"Variables {variables_names} are not in dataframe {df.columns}."
             )
+        if color is not None and color not in df.columns:
+            raise ValueError(
+                f"Color variable '{color}' is not in dataframe {df.columns}."
+            )
+
+    # Set common color limits when coloring by a dataframe variable
+    if color is not None:
+        color_values = np.concatenate(
+            [df[color].dropna().values for df in dataframes]
+        )
+        kwargs.setdefault("vmin", np.nanmin(color_values))
+        kwargs.setdefault("vmax", np.nanmax(color_values))
 
     # Create figure and axes
     default_static_plot = DefaultStaticPlotting()
@@ -177,6 +209,7 @@ def plot_scatters_in_triangle(
         sharex=False,
         sharey=False,
     )
+
     if isinstance(axes, Axes):
         axes = np.array([[axes]])
 
@@ -187,10 +220,11 @@ def plot_scatters_in_triangle(
                     ax=axes[c2, c1],
                     x=df[v1],
                     y=df[v2],
-                    c=data_colors[idf],
+                    c=df[color] if color is not None else data_colors[idf],
                     alpha=0.6,
                     **kwargs,
                 )
+
             if c1 == c2:
                 axes[c2, c1].set_xlabel(variables_names[c1 + 1])
                 axes[c2, c1].set_ylabel(variables_names[c2])
@@ -199,5 +233,23 @@ def plot_scatters_in_triangle(
                 axes[c2, c1].yaxis.set_ticklabels([])
             else:
                 fig.delaxes(axes[c2, c1])
+
+    # Add shared colorbar when coloring by a dataframe variable
+    if color is not None:
+        cmap = kwargs.get("cmap", "viridis")
+        norm = plt.Normalize(
+            vmin=kwargs["vmin"],
+            vmax=kwargs["vmax"],
+        )
+        sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
+        sm.set_array([])
+
+        visible_axes = [ax for ax in axes.flat if ax in fig.axes]
+
+        fig.colorbar(
+            sm,
+            ax=visible_axes,
+            label=color,
+        )
 
     return fig, axes
