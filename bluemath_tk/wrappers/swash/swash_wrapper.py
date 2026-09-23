@@ -254,25 +254,30 @@ class SwashModelWrapper(BaseModelWrapper):
         """
 
         df_output = self._read_tabfile(file_path=output_path)
-        df_output[["Xp", "Yp", "Tsec"]] = df_output[["Xp", "Yp", "Tsec"]].astype(
-            int
-        )  # TODO: check if this is correct
-        df_output.set_index(
-            ["Xp", "Yp", "Tsec"], inplace=True
-        )  # set index to Xp, Yp and Tsec
+
+        # Set water level to NaN at dry points
+        dry_threshold = 0.05
+        dry_points = df_output["Depth"].round(12) <= dry_threshold
+        df_output.loc[dry_points, "Watlev"] = np.nan
+
+        df_output[["Xp"]] = df_output[["Xp"]].astype(int)
+        df_output["Tsec"] = df_output["Tsec"].round().astype(int)
+
+        df_output.set_index(["Xp", "Tsec"], inplace=True)
         ds_output = df_output.to_xarray()
 
+        # Read runup output
         df_run = self._read_tabfile(file_path=run_path)
-        df_run[["Tsec"]] = df_run[["Tsec"]].astype(
-            int
-        )  # TODO: check if this is correct
+
+        df_run["Tsec"] = df_run["Tsec"].round().astype(int)
+
         df_run.set_index(["Tsec"], inplace=True)
         ds_run = df_run.to_xarray()
 
-        # merge output files to one xarray.Dataset
+        # Merge output files into one xarray.Dataset
         ds = xr.merge([ds_output, ds_run], compat="no_conflicts")
 
-        # assign correct coordinate case_num
+        # Assign case number
         ds.coords["case_num"] = case_num
 
         return ds

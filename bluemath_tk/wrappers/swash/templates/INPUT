@@ -48,7 +48,7 @@ QUANTITY XP hexp=10
 QUANT RUNUP delrp 0.01
 $
 CURVE 'line' 0 0 {{ xlenc }} {{ xlenc }} 0
-TABLE 'line' HEAD 'output.tab' TSEC XP YP WATL OUTPUT 0 1 SEC
+TABLE 'line' HEAD 'output.tab' TSEC XP WATL OUTPUT 0 1 SEC
 $
 TABLE 'NOGRID' HEAD 'run.tab' TSEC RUNUP OUTPUT 0 1 SEC
 $

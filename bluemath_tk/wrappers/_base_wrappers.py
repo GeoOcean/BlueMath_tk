@@ -443,18 +443,20 @@ class BaseModelWrapper(BlueMathModel, ABC):
             case_context=case_context,
             case_dir=case_dir,
         )
-        for template_name in self.templates_name:
-            try:
-                self.render_file_from_template(
-                    template_name=template_name,
-                    context=case_context,
-                    output_filename=op.join(case_dir, template_name),
-                )
-            except UnicodeDecodeError as _ude:
-                self.copy_files(
-                    src=op.join(self.templates_dir, template_name),
-                    dst=op.join(case_dir, template_name),
-                )
+        
+        # UNCOMMENT!
+        #for template_name in self.templates_name:
+        #    try:
+        #        self.render_file_from_template(
+        #            template_name=template_name,
+        #            context=case_context,
+        #            output_filename=op.join(case_dir, template_name),
+        #        )
+        #    except UnicodeDecodeError as _ude:
+        #        self.copy_files(
+        #            src=op.join(self.templates_dir, template_name),
+        #            dst=op.join(case_dir, template_name),
+        #        )
 
     def build_cases(
         self,

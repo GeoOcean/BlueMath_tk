@@ -8,6 +8,8 @@ from hydromt_sfincs import SfincsModel
 
 from .._base_wrappers import BaseModelWrapper
 
+from pyproj import CRS
+import rioxarray
 
 class SfincsModelWrapper(BaseModelWrapper):
     """
@@ -94,15 +96,20 @@ class SfincsModelWrapper(BaseModelWrapper):
         Setup the infiltration for the SFINCS model.
         """
 
-        p_infiltration = case_context.get("path_to_inf_tif")
-        ant_moisture = "avg"
+        #ant_moisture = case_context.get("antecedent_moisture_conditions")
+        
+        #p_infiltration = case_context.get("path_to_inf_tif") / f"highres_infiltration_oahu_{ant_moisture}.tif"
 
-        dataset_inf = sf.data_catalog.get_rasterdataset(p_infiltration)
+        dataset_inf = sf.data_catalog.get_rasterdataset(case_context.get("path_to_inf_tif"))
+        #dataset_inf = rioxarray.open_rasterio(p_infiltration, masked=True).squeeze(drop=True)
 
-        dataset_inf.name = "cn_{0}".format(ant_moisture)
+        #dataset_inf.raster.set_spatial_dims(x_dim="x", y_dim="y")
+        #dataset_inf.raster.set_crs(CRS.from_epsg(26904)) 
+
+        dataset_inf.name = "cn"#.format(ant_moisture)
 
         sf.setup_cn_infiltration(
-            dataset_inf.compute(), antecedent_moisture="{0}".format(ant_moisture)
+            dataset_inf.compute(), antecedent_moisture="cn"
         )
 
         return dataset_inf
@@ -215,10 +222,25 @@ class SfincsModelWrapper(BaseModelWrapper):
         self.setup_outflow(sf=sf, case_context=self.fixed_parameters)
 
         self.setup_waterlevel_mask(sf=sf, case_context=self.fixed_parameters)
-
+        
         _ = sf.plot_basemap(bmap="sat", zoomlevel=12)
 
+        sf.config["dtout"] = 900
+        sf.config["storemeteo"] = 1
+        sf.config["bzifile"] = 'sfincs.bzi'
+        sf.config["bzsfile"] = 'sfincs.bzs'
+        sf.config["tstop"] = '20100201 000000'
+        sf.config["tstart"] = '20100131 000000'
+        sf.config["tref"] = '20100131 000000'
+        sf.config["stop"] = '20100201 000000'
+        sf.config["netamprfile"] = "precip_2d.nc"
+        sf.config["dtmaxout"] = None
+        sf.config["bndfile"] = "sfincs.bnd"
+
         sf.write()
+
+        self.sf = sf
+        
 
     def build_case(self, case_context: dict, case_dir: str) -> None:
         """
@@ -227,24 +249,31 @@ class SfincsModelWrapper(BaseModelWrapper):
         applies the precipitation and waterlevel forcing if specified.
         """
 
-        sf = SfincsModel(root=case_dir, mode="w+")
+        #sf = SfincsModel(root=case_dir, mode="w+")
 
-        sf.setup_grid(
-            x0=case_context["x0"],
-            y0=case_context["y0"],
-            dx=case_context["dx"],
-            dy=case_context["dy"],
-            nmax=case_context["nmax"],
-            mmax=case_context["mmax"],
-            rotation=case_context["rotation"],
-            epsg=case_context["epsg"],
-        )
-        tstart, tstop = self.set_ctimes(case_context=case_context)
+        #sf.setup_grid(
+        #    x0=case_context["x0"],
+        #    y0=case_context["y0"],
+        #    dx=case_context["dx"],
+        #    dy=case_context["dy"],
+        #    nmax=case_context["nmax"],
+        #    mmax=case_context["mmax"],
+        #    rotation=case_context["rotation"],
+        #    epsg=case_context["epsg"],
+        #)
+        
+        sf = self.sf
 
-        sf.config["tstop"] = tstop
-        sf.config["tstart"] = tstart
-        sf.config["dtout"] = 60
-        sf.config["storemeteo"] = 1
+        sf.set_root(root=case_dir, mode="r+")
+        
+        #datasets_dep = self.setup_dem(sf=sf, case_context=self.fixed_parameters)
+
+        #tstart, tstop = self.set_ctimes(case_context=case_context)
+
+        #sf.config["tstop"] = tstop
+        #sf.config["tstart"] = tstart
+        #sf.config["dtout"] = 60
+        #sf.config["storemeteo"] = 1
 
         if case_context.get("quickly_waterlevel_forcing") is not None:
             """
@@ -259,7 +288,7 @@ class SfincsModelWrapper(BaseModelWrapper):
             )
             sf.write_forcing()
             os.rename(op.join(case_dir, "sfincs.bzs"), op.join(case_dir, "sfincs.bzi"))
-
+        
         if case_context.get("slowly_waterlevel_forcing") is not None:
             sf.setup_waterlevel_forcing(
                 timeseries=case_context.get("slowly_waterlevel_forcing"),
@@ -271,14 +300,22 @@ class SfincsModelWrapper(BaseModelWrapper):
             sf.setup_precip_forcing_from_grid(
                 precip=case_context.get("precipitation_forcing"), aggregate=False
             )
+        
+            sf.write_forcing()
 
-        if case_context.get("gdf_crs") is not None:
-            sf.setup_observation_lines(
-                locations=case_context.get("gdf_crs"), merge=False
-            )
+        #if case_context.get("gdf_crs") is not None:
+        #    sf.setup_observation_lines(
+        #        locations=case_context.get("gdf_crs"), merge=False
+        #    )
 
-        if case_context.get("gdf_obs") is not None:
-            sf.setup_observation_points(locations=case_context.get("gdf_obs"))
+        #if case_context.get("gdf_obs") is not None:
+        #    sf.setup_observation_points(locations=case_context.get("gdf_obs"))
+
+        #if case_context.get("antecedent_moisture_conditions") is not None:
+        #    self.setup_infiltration(
+        #        sf=sf,
+        #        case_context=case_context
+        #    )
 
         # if case_context.get("precipitation_forcing") is not None and case_context.get("waterlevel_forcing") is not None:
         #    self.setup_rivers(sf)
@@ -288,4 +325,4 @@ class SfincsModelWrapper(BaseModelWrapper):
 
         # sf.write_forcing()
 
-        sf.write()
+        #sf.write()
