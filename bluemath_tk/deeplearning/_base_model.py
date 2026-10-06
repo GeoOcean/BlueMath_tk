@@ -9,6 +9,7 @@ import torch.nn as nn
 from tqdm import tqdm
 
 from ..core.models import BlueMathModel
+from .latent_structure import validate_latent_structure_mode
 from .metrics import _validate_eps
 from .metrics import evaluate_reconstruction as evaluate_reconstruction_metric
 from .metrics import reconstruction_error as reconstruction_error_metric
@@ -32,7 +33,15 @@ class BaseDeepLearningModel(BlueMathModel):
     """
 
     @abstractmethod
-    def __init__(self, device: str | torch.device | None = None, **kwargs):
+    def __init__(
+        self,
+        device: str | torch.device | None = None,
+        latent_structure: str = "none",
+        latent_orthogonality_weight: float = 1e-2,
+        latent_decorrelation_weight: float = 1e-2,
+        latent_ordering_probability: float = 0.5,
+        **kwargs,
+    ):
         """
         Initialize the base deep learning model.
 
@@ -47,6 +56,32 @@ class BaseDeepLearningModel(BlueMathModel):
         """
 
         super().__init__(**kwargs)
+
+        self.latent_structure = validate_latent_structure_mode(latent_structure)
+
+        for name, value in (
+            ("latent_orthogonality_weight", latent_orthogonality_weight),
+            ("latent_decorrelation_weight", latent_decorrelation_weight),
+        ):
+            if (
+                not isinstance(value, Real)
+                or isinstance(value, (bool, np.bool_))
+                or not np.isfinite(float(value))
+                or float(value) < 0.0
+            ):
+                raise ValueError(f"{name} must be a finite non-negative number.")
+            setattr(self, name, float(value))
+
+        if (
+            not isinstance(latent_ordering_probability, Real)
+            or isinstance(latent_ordering_probability, (bool, np.bool_))
+            or not np.isfinite(float(latent_ordering_probability))
+            or not 0.0 <= float(latent_ordering_probability) <= 1.0
+        ):
+            raise ValueError(
+                "latent_ordering_probability must be finite and between 0 and 1."
+            )
+        self.latent_ordering_probability = float(latent_ordering_probability)
 
         if device is None:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -555,6 +590,36 @@ class BaseDeepLearningModel(BlueMathModel):
         staged = object.__new__(self.__class__)
         staged.__dict__ = copy.deepcopy(self.__dict__)
         checkpoint_config_names = []
+        init_config = checkpoint.get("init_config", {})
+        if not isinstance(init_config, dict):
+            raise TypeError("Checkpoint init_config must be a dictionary.")
+
+        latent_config_names = (
+            "latent_structure",
+            "latent_orthogonality_weight",
+            "latent_decorrelation_weight",
+            "latent_ordering_probability",
+        )
+        if staged.model is not None:
+            mismatches = []
+            for name in latent_config_names:
+                if name not in init_config or not hasattr(staged, name):
+                    continue
+                current = getattr(staged, name)
+                checkpoint_value = init_config[name]
+                if current != checkpoint_value:
+                    mismatches.append(
+                        f"{name}: current={current!r}, "
+                        f"checkpoint={checkpoint_value!r}"
+                    )
+            if mismatches:
+                details = "\n  - ".join(mismatches)
+                raise ValueError(
+                    "Checkpoint latent configuration does not match the "
+                    "already-built model. Load into an unbuilt compatible "
+                    "instance or use from_pytorch_model().\n  - "
+                    f"{details}"
+                )
 
         if staged.model is None:
             build_input_shape = checkpoint.get("build_input_shape")
@@ -564,9 +629,6 @@ class BaseDeepLearningModel(BlueMathModel):
                     "Build the model manually before loading it."
                 )
 
-            init_config = checkpoint.get("init_config", {})
-            if not isinstance(init_config, dict):
-                raise TypeError("Checkpoint init_config must be a dictionary.")
             for name, value in init_config.items():
                 if hasattr(staged, name):
                     setattr(staged, name, copy.deepcopy(value))
@@ -626,6 +688,54 @@ class BaseDeepLearningModel(BlueMathModel):
         if reduction == "sum":
             return value
         return value * batch_sample_count
+
+    def _model_regularization_losses(self) -> dict[str, torch.Tensor]:
+        """Collect scalar losses from BlueMath latent regularizer modules."""
+        if self.model is None:
+            return {}
+
+        collected: dict[str, torch.Tensor] = {}
+        for module_name, module in self.model.named_modules():
+            if not getattr(module, "_bluemath_latent_regularizer", False):
+                continue
+            for loss_name, loss in module.regularization_losses().items():
+                if not isinstance(loss, torch.Tensor) or loss.ndim != 0:
+                    raise TypeError(
+                        f"Regularization loss {loss_name!r} from "
+                        f"{module_name!r} must be a scalar tensor."
+                    )
+                key = f"{module_name}.{loss_name}" if module_name else loss_name
+                collected[key] = loss
+        return collected
+
+    def _model_regularization_loss(
+        self,
+        reference: torch.Tensor,
+    ) -> torch.Tensor:
+        """Return the current sum of structured-latent losses."""
+        total = torch.zeros(
+            (),
+            dtype=reference.dtype,
+            device=reference.device,
+        )
+        for loss in self._model_regularization_losses().values():
+            total = total + loss.to(
+                dtype=reference.dtype,
+                device=reference.device,
+            )
+        return total
+
+    def latent_diagnostics(
+        self,
+        X: np.ndarray,
+        batch_size: int = 64,
+        verbose: int = 0,
+    ) -> dict:
+        """Return diagnostics for encoded latent scores."""
+        from .latent_structure import compute_latent_diagnostics
+
+        latent = self.encode(X, batch_size=batch_size, verbose=verbose)
+        return compute_latent_diagnostics(latent)
 
     def fit(
         self,
@@ -730,8 +840,12 @@ class BaseDeepLearningModel(BlueMathModel):
                 self._require_matching_output_shape(output, batch_y, "Training")
                 self._require_finite_tensor(output, "Training output")
                 self._require_finite_buffers()
-                loss = criterion(output, batch_y)
-                self._require_scalar_loss(loss)
+                reconstruction_loss = criterion(output, batch_y)
+                self._require_scalar_loss(reconstruction_loss)
+                regularization_loss = self._model_regularization_loss(
+                    reconstruction_loss
+                )
+                loss = reconstruction_loss + regularization_loss
                 self._require_finite_loss(loss, "Training")
                 loss.backward()
                 self._require_finite_gradients()
@@ -739,9 +853,12 @@ class BaseDeepLearningModel(BlueMathModel):
                 self._require_finite_parameters()
 
                 train_total += self._loss_to_sample_total(
-                    loss,
+                    reconstruction_loss,
                     current_batch_size,
                     criterion,
+                )
+                train_total += (
+                    float(regularization_loss.item()) * current_batch_size
                 )
                 train_sample_count += current_batch_size
 
@@ -763,13 +880,20 @@ class BaseDeepLearningModel(BlueMathModel):
                     self._require_matching_output_shape(output, batch_y, "Validation")
                     self._require_finite_tensor(output, "Validation output")
                     self._require_finite_parameters()
-                    loss = criterion(output, batch_y)
-                    self._require_scalar_loss(loss)
+                    reconstruction_loss = criterion(output, batch_y)
+                    self._require_scalar_loss(reconstruction_loss)
+                    regularization_loss = self._model_regularization_loss(
+                        reconstruction_loss
+                    )
+                    loss = reconstruction_loss + regularization_loss
                     self._require_finite_loss(loss, "Validation")
                     validation_total += self._loss_to_sample_total(
-                        loss,
+                        reconstruction_loss,
                         current_batch_size,
                         criterion,
+                    )
+                    validation_total += (
+                        float(regularization_loss.item()) * current_batch_size
                     )
                     validation_sample_count += current_batch_size
 

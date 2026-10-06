@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as functional
 
 from ._base_model import BaseDeepLearningModel
+from .latent_structure import StructuredLatentLinear
 from .layers import ConvLSTM
 
 
@@ -107,6 +108,11 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
         n_heads: int = 4,
         n_layers: int = 2,
         device: str | torch.device | None = None,
+        *,
+        latent_structure: str = "none",
+        latent_orthogonality_weight: float = 1e-2,
+        latent_decorrelation_weight: float = 1e-2,
+        latent_ordering_probability: float = 0.5,
         **kwargs,
     ):
         if not isinstance(k, int) or isinstance(k, bool) or k < 1:
@@ -140,7 +146,14 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
         self.d_model = d_model
         self.n_heads = n_heads
         self.n_layers = n_layers
-        super().__init__(device=device, **kwargs)
+        super().__init__(
+            device=device,
+            latent_structure=latent_structure,
+            latent_orthogonality_weight=latent_orthogonality_weight,
+            latent_decorrelation_weight=latent_decorrelation_weight,
+            latent_ordering_probability=latent_ordering_probability,
+            **kwargs,
+        )
 
     def fit(
         self,
@@ -217,6 +230,11 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
         n_heads = self.n_heads
         n_layers = self.n_layers
 
+        latent_structure = self.latent_structure
+        latent_orthogonality_weight = self.latent_orthogonality_weight
+        latent_decorrelation_weight = self.latent_decorrelation_weight
+        latent_ordering_probability = self.latent_ordering_probability
+
         class SpatialTokenModel(nn.Module):
             def __init__(self):
                 super().__init__()
@@ -268,7 +286,14 @@ class SpatialTokenConvLSTMTransformerAutoencoder(BaseDeepLearningModel):
                     ]
                 )
                 self.latent_norm = nn.LayerNorm(d_model)
-                self.latent = nn.Linear(d_model, latent_dim)
+                self.latent = StructuredLatentLinear(
+                    d_model,
+                    latent_dim,
+                    mode=latent_structure,
+                    orthogonality_weight=latent_orthogonality_weight,
+                    decorrelation_weight=latent_decorrelation_weight,
+                    ordering_probability=latent_ordering_probability,
+                )
 
                 self.latent_to_tokens = nn.Linear(latent_dim, d_model)
                 self.decoder_time_query = nn.Parameter(
