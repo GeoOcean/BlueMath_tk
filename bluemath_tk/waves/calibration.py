@@ -712,21 +712,21 @@ class CalVal(BlueMathModel):
 
         # Plot no correction scatter
         validation_scatter(
-            axs=ax3,
-            x=self.calibrated_data["Hs"].values,
-            y=self.calibrated_data["Hs_CAL"].values,
-            xlabel="Hindcast",
-            ylabel="Satellite",
+            ax=ax3,
+            reference=self.calibrated_data["Hs_CAL"].values,
+            estimate=self.calibrated_data["Hs"].values,
+            reference_label="Satellite",
+            estimate_label="Hindcast",
             title="No Correction",
         )
 
         # Plot with correction scatter
         validation_scatter(
-            axs=ax4,
-            x=self.calibrated_data["Hs_CORR"].values,
-            y=self.calibrated_data["Hs_CAL"].values,
-            xlabel="Hindcast",
-            ylabel="Satellite",
+            ax=ax4,
+            reference=self.calibrated_data["Hs_CAL"].values,
+            estimate=self.calibrated_data["Hs_CORR"].values,
+            reference_label="Satellite",
+            estimate_label="Hindcast",
             title="With Correction",
         )
 
@@ -843,19 +843,19 @@ class CalVal(BlueMathModel):
         ax_sc1 = fig.add_subplot(gs[1, 0])
         ax_sc2 = fig.add_subplot(gs[1, 1])
         validation_scatter(
-            axs=ax_sc1,
-            x=data_corr["Hs"].iloc[data_times].values,
-            y=data_to_validate["Hs_VAL"].iloc[data_to_validate_times].values,
-            xlabel="Model (No Correction)",
-            ylabel="Validation",
+            ax=ax_sc1,
+            reference=data_to_validate["Hs_VAL"].iloc[data_to_validate_times].values,
+            estimate=data_corr["Hs"].iloc[data_times].values,
+            reference_label="Validation",
+            estimate_label="Model (No Correction)",
             title="No Correction",
         )
         validation_scatter(
-            axs=ax_sc2,
-            x=data_corr["Hs_CORR"].iloc[data_times].values,
-            y=data_to_validate["Hs_VAL"].iloc[data_to_validate_times].values,
-            xlabel="Model (Corrected)",
-            ylabel="Validation",
+            ax=ax_sc2,
+            reference=data_to_validate["Hs_VAL"].iloc[data_to_validate_times].values,
+            estimate=data_corr["Hs_CORR"].iloc[data_times].values,
+            reference_label="Validation",
+            estimate_label="Model (Corrected)",
             title="With Correction",
         )
 

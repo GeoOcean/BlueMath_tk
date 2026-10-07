@@ -1,0 +1,2 @@
+   0 {% for n in range(n_nodes) %} {{ wl_nodes[n] if wl_nodes is defined else 0 }}{% endfor %}
+3600 {% for n in range(n_nodes) %} {{ wl_nodes[n] if wl_nodes is defined else 0 }}{% endfor %}

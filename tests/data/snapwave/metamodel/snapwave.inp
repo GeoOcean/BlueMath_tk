@@ -1,0 +1,30 @@
+tref           = 20000101 000000
+tstart         = 20000101 000000
+tstop          = 20000101 000000
+timestep       = 3600.0
+
+gridfile       = {{ gridfile }}
+sferic         = 1
+dtheta         = 10.0
+sector         = 180
+
+bndfile        = boundary.txt
+encfile        = enclosure.txt
+bhsfile        = hs.txt
+btpfile        = tp.txt
+bwdfile        = dir.txt
+bdsfile        = spr.txt
+bzsfile        = wl.txt
+
+gamma          = 0.7
+hmin           = 0.1
+restart        = 0
+jonswapfile    = 
+uuupwindfile   = 
+niter          = 40
+map_ee         = 1
+
+obsfile        = output_sites.txt
+his_file       = output_sites.nc
+map_file       = {{ map_file }}
+map_dirspr     = {{ map_dirspr }}

@@ -1072,11 +1072,11 @@ class ExactGPInterpolation(BaseInterpolation):
             if show_plots:
                 fig, ax = plt.subplots(figsize=(6, 6))
                 validation_scatter(
-                    axs=ax,
-                    x=observed,
-                    y=predicted,
-                    xlabel=f"Observed {target_var}",
-                    ylabel=f"Predicted {target_var}",
+                    ax=ax,
+                    reference=observed,
+                    estimate=predicted,
+                    reference_label=f"Observed {target_var}",
+                    estimate_label=f"Predicted {target_var}",
                     title=f"GP Validation: {target_var}",
                     cmap="rainbow",
                 )

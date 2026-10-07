@@ -1,0 +1,2 @@
+   0 {% for n in range(n_nodes) %} {{ spr }}{% endfor %}
+3600 {% for n in range(n_nodes) %} {{ spr }}{% endfor %}

@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from functools import lru_cache
+from os import PathLike
 from typing import Dict, List, Tuple, Union
 
 import cartopy.crs as ccrs
@@ -6,11 +8,53 @@ import matplotlib.pyplot as plt
 import numpy as np
 import plotly.graph_objects as go
 import xarray as xr
+from cartopy.mpl.geoaxes import GeoAxes
+from matplotlib.collections import LineCollection
 
 from ...config.paths import PATHS
 from .colors import hex_colors_land, hex_colors_water, hex_colors_water_transition
 from .satellite import get_satellite_image
 from .utils import format_ticks, join_colormaps, nice_ticks, single_colormap
+
+
+@lru_cache(maxsize=32)
+def _cached_satellite_image(source: str, area: Tuple[float, float, float, float]):
+    """
+    Memoised :func:`get_satellite_image`.
+
+    Multi-panel figures request the same ``(source, area)`` tiles several times.
+    """
+
+    return get_satellite_image(source=source, area=area)
+
+
+def decimate_raster(da: xr.DataArray, max_pixels: int) -> xr.DataArray:
+    """
+    Stride a 2-D raster down to at most *max_pixels* cells for display.
+
+    Source rasters (e.g. GEBCO tiffs) can hold 100M+ cells; rendering them at
+    native resolution costs several GB for a figure a few thousand pixels
+    wide, with no visible gain.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        2-D raster.
+    max_pixels : int
+        Pixel budget.
+
+    Returns
+    -------
+    xr.DataArray
+        The raster, strided equally along both dimensions if needed.
+    """
+
+    total = int(np.prod([da.sizes[d] for d in da.dims]))
+    if total <= max_pixels:
+        return da
+    step = int(np.ceil((total / max_pixels) ** 0.5))
+
+    return da.isel({d: slice(None, None, step) for d in da.dims})
 
 
 class BasePlotting(ABC):
@@ -123,6 +167,10 @@ class DefaultStaticPlotting(BasePlotting):
         isodepths: Union[float, List[float]] = None,
         isodepths_labels: bool = True,
         isodepths_kwargs: Dict = None,
+        value_range: Tuple[float, float] = None,
+        max_pixels: int = None,
+        ocean_only: bool = False,
+        method: str = "pcolormesh",
         **kwargs,
     ) -> None:
         """
@@ -149,6 +197,19 @@ class DefaultStaticPlotting(BasePlotting):
             Additional keyword arguments passed to the contour call (e.g. colors,
             linewidths, linestyles), and, under the "labels_kwargs" key, a dictionary
             of arguments passed to ax.clabel().
+        value_range: Tuple[float, float]
+            Fixed (min, max) of the colour scale, e.g. (-200, 300) to resolve the
+            shelf instead of spreading colours over the deep ocean. Values beyond it
+            take the end colours. Default is None (data range).
+        max_pixels: int
+            Downsample the raster to at most this many cells before plotting (see
+            decimate_raster). Default is None (no downsampling).
+        ocean_only: bool
+            Mask land (values >= 0), e.g. to keep a satellite image visible on land
+            underneath. Default is False.
+        method: str
+            xarray plotting method, "pcolormesh" (default) or "imshow". "imshow" is
+            much faster for large regular rasters.
         **kwargs
             Additional keyword arguments passed to the xr.Dataset.plot() function.
         """
@@ -169,9 +230,20 @@ class DefaultStaticPlotting(BasePlotting):
         elif isinstance(source, xr.DataArray):
             bathymetry_ds = source
 
+        if max_pixels is not None:
+            bathymetry_ds = decimate_raster(bathymetry_ds, max_pixels)
+        isodepths_source = bathymetry_ds
+        if ocean_only:
+            bathymetry_ds = bathymetry_ds.where(bathymetry_ds < 0)
+        plot_func = getattr(bathymetry_ds.plot, method)
+
         cmap = kwargs.pop("cmap", self.bathymetry_defaults.get("cmap"))
         if cmap == "albita_ocean":
-            vmin, vmax = float(bathymetry_ds.min()), float(bathymetry_ds.max())
+            if value_range is not None:
+                vmin, vmax = map(float, value_range)
+            else:
+                vmin = float(bathymetry_ds.min())
+                vmax = float(bathymetry_ds.max())
             anchor = (
                 None
                 if transition_depth is None
@@ -211,7 +283,7 @@ class DefaultStaticPlotting(BasePlotting):
                     cbar_kwargs["ticks"] = ticks
                 kwargs["cbar_kwargs"] = cbar_kwargs
 
-            p = bathymetry_ds.plot(ax=ax, cmap=cmap, norm=norm, **kwargs)
+            p = plot_func(ax=ax, cmap=cmap, norm=norm, **kwargs)
             if hasattr(p, "colorbar") and p.colorbar is not None:
                 # Hide minor ticks on colorbar
                 p.colorbar.minorticks_off()
@@ -219,12 +291,15 @@ class DefaultStaticPlotting(BasePlotting):
                     # End ticks sit at the exact data limits, so round their labels
                     p.colorbar.set_ticklabels(format_ticks(ticks))
         else:
-            bathymetry_ds.plot(ax=ax, cmap=cmap, **kwargs)
+            if value_range is not None:
+                kwargs.setdefault("vmin", value_range[0])
+                kwargs.setdefault("vmax", value_range[1])
+            plot_func(ax=ax, cmap=cmap, **kwargs)
 
         if isodepths is not None:
             self.plot_isodepths(
                 ax=ax,
-                bathymetry=bathymetry_ds,
+                bathymetry=isodepths_source,
                 isodepths=isodepths,
                 labels=isodepths_labels,
                 transform=kwargs.get("transform"),
@@ -238,6 +313,7 @@ class DefaultStaticPlotting(BasePlotting):
         isodepths: Union[float, List[float]],
         labels: bool = True,
         transform=None,
+        legend: bool = False,
         **kwargs,
     ):
         """
@@ -255,8 +331,12 @@ class DefaultStaticPlotting(BasePlotting):
             Whether to annotate the contour lines with their value. Default is True.
         transform
             Cartopy transform of the data, if any.
+        legend: bool
+            Add one invisible proxy line per level, labelled e.g. "10m isobath", so
+            the contours appear in a later ax.legend() call. Default is False.
         **kwargs
-            Additional keyword arguments passed to the contour call. The
+            Additional keyword arguments passed to the contour call. "colors" may
+            be one colour or one per level (in ascending level order). The
             "labels_kwargs" key holds a dictionary of arguments passed to ax.clabel().
 
         Returns
@@ -269,12 +349,14 @@ class DefaultStaticPlotting(BasePlotting):
         labels_kwargs = kwargs.pop("labels_kwargs", {})
         if transform is not None:
             kwargs.setdefault("transform", transform)
+        colors = kwargs.pop("colors", "black")
+        linewidths = kwargs.pop("linewidths", 0.5)
 
         contours = bathymetry.plot.contour(
             ax=ax,
             levels=levels,
-            colors=kwargs.pop("colors", "black"),
-            linewidths=kwargs.pop("linewidths", 0.5),
+            colors=colors,
+            linewidths=linewidths,
             # Solid by default, as matplotlib dashes negative levels (i.e. all depths)
             linestyles=kwargs.pop("linestyles", "solid"),
             add_colorbar=False,
@@ -291,6 +373,14 @@ class DefaultStaticPlotting(BasePlotting):
                     **labels_kwargs,
                 },
             )
+        if legend:
+            level_colors = (
+                [colors] * len(levels) if isinstance(colors, str) else list(colors)
+            )
+            for level, color in zip(levels, level_colors):
+                ax.plot(
+                    [], [], color=color, linewidth=1.2, label=f"{abs(level):g}m isobath"
+                )
 
         return contours
 
@@ -316,17 +406,89 @@ class DefaultStaticPlotting(BasePlotting):
             Additional keyword arguments passed to the plotting function.
         """
 
-        map_img, extent = get_satellite_image(
-            source=source,
-            area=area,
-        )
-        ax.set_extent(area)
+        if not isinstance(ax, GeoAxes):
+            raise TypeError(
+                "plot_satellite needs cartopy axes "
+                "(e.g. subplot_kw={'projection': ccrs.PlateCarree()})"
+            )
+        # Tiles are cached per (source, area): figures with several panels over the
+        # same region fetch them once.
+        map_img, extent = _cached_satellite_image(source, tuple(map(float, area)))
+        ax.set_extent(area, crs=ccrs.PlateCarree())
         ax.imshow(
             map_img,
             extent=extent,
             transform=ccrs.Mercator.GOOGLE,
             **kwargs,
         )
+
+
+    @staticmethod
+    def plot_ugrid_mesh(
+        ax: plt.Axes,
+        mesh: Union[str, PathLike, xr.Dataset],
+        color: str = "#fbbf24",
+        linewidth: float = 0.3,
+        alpha: float = 0.55,
+        **kwargs,
+    ) -> LineCollection:
+        """
+        Draw the edges of a UGRID mesh (e.g. a Delft3D-FM / SnapWave grid).
+
+        At a whole-domain zoom individual triangles are far below one pixel, so
+        the mesh reads as a tint over its footprint; a saturated colour keeps that
+        footprint visible over satellite imagery.
+
+        Parameters
+        ----------
+        ax: plt.Axes
+            The axes on which to draw (plain or cartopy).
+        mesh: Union[str, PathLike, xr.Dataset]
+            Mesh netCDF path or dataset with ``mesh2d_node_x``, ``mesh2d_node_y``
+            (lon/lat) and ``mesh2d_edge_nodes`` (``start_index`` attribute honoured).
+        color, linewidth, alpha
+            Line style.
+        **kwargs
+            Additional keyword arguments passed to LineCollection.
+
+        Returns
+        -------
+        LineCollection
+            The drawn edges.
+        """
+
+        ds = mesh if isinstance(mesh, xr.Dataset) else xr.open_dataset(mesh)
+        try:
+            node_x = ds["mesh2d_node_x"].values
+            node_y = ds["mesh2d_node_y"].values
+            edge_var = ds["mesh2d_edge_nodes"]
+            edges = edge_var.values.astype(int) - int(
+                edge_var.attrs.get("start_index", 0)
+            )
+        finally:
+            if ds is not mesh:
+                ds.close()
+
+        segments = np.stack(
+            [
+                np.column_stack([node_x[edges[:, 0]], node_y[edges[:, 0]]]),
+                np.column_stack([node_x[edges[:, 1]], node_y[edges[:, 1]]]),
+            ],
+            axis=1,
+        )
+        kwargs.setdefault("zorder", 2)
+        collection = LineCollection(
+            segments, colors=color, linewidths=linewidth, alpha=alpha, **kwargs
+        )
+        if isinstance(ax, GeoAxes):
+            # add_collection is not wrapped by cartopy to default the transform
+            collection.set_transform(ccrs.PlateCarree())
+        # Data limits are updated, but the view is left alone: the mesh is usually
+        # drawn over a map whose extent is already set (call ax.autoscale_view()
+        # for a standalone plot).
+        ax.add_collection(collection)
+
+        return collection
 
 
 class DefaultInteractivePlotting(BasePlotting):

@@ -575,3 +575,141 @@ def mathematical_to_nautical(math_degrees: np.ndarray) -> np.ndarray:
 
     # Convert mathematical degrees to nautical degrees
     return (90 - math_degrees) % 360
+
+
+def in_nautical_sector(
+    direction: float | np.ndarray, left: float, right: float
+) -> bool | np.ndarray:
+    """
+    Test whether nautical direction(s) lie inside a clockwise sector.
+
+    The sector runs clockwise from *left* to *right* (both inclusive) and may
+    wrap through North, e.g. ``(350, 30)`` or, equivalently, ``(-10, 30)``.
+
+    Parameters
+    ----------
+    direction : float or np.ndarray
+        Nautical direction(s) in degrees (any range; wrapped to [0, 360)).
+    left : float
+        Clockwise start of the sector, in degrees.
+    right : float
+        Clockwise end of the sector, in degrees.
+
+    Returns
+    -------
+    bool or np.ndarray
+        True where *direction* is inside the sector.
+
+    Examples
+    --------
+    >>> in_nautical_sector(np.array([0.0, 90.0, 355.0]), -10, 30)
+    array([ True, False,  True])
+    """
+
+    left_n = left % 360.0
+    right_n = right % 360.0
+    dir_n = np.mod(direction, 360.0)
+    if left_n <= right_n:
+        return (dir_n >= left_n) & (dir_n <= right_n)
+
+    return (dir_n >= left_n) | (dir_n <= right_n)
+
+
+def math_sector_to_nautical_clockwise(low_math: float, high_math: float) -> list[float]:
+    """
+    Convert a sector in math degrees to nautical clockwise ``[left, right]``.
+
+    The sector runs counter-clockwise from *low_math* to *high_math* (degrees
+    from East). The result runs clockwise from North, with ``left < right``;
+    ``left`` is negative when the sector crosses North (e.g. ``[-10, 50]``).
+
+    Parameters
+    ----------
+    low_math : float
+        Counter-clockwise start of the sector, math degrees.
+    high_math : float
+        Counter-clockwise end of the sector, math degrees.
+
+    Returns
+    -------
+    list[float]
+        ``[left, right]`` nautical bounds, rounded to 0.1 degree.
+
+    Examples
+    --------
+    >>> math_sector_to_nautical_clockwise(0.0, 90.0)
+    [0.0, 90.0]
+    """
+
+    left = float((90.0 - high_math) % 360.0)
+    right = float((90.0 - low_math) % 360.0)
+    if left <= right:
+        return [round(left, 1), round(right, 1)]
+
+    return [round(left - 360.0, 1), round(right, 1)]
+
+
+def nautical_sector_to_wedge_angles(left: float, right: float) -> tuple[float, float]:
+    """
+    Matplotlib ``Wedge`` angles (CCW from East) for a nautical sector.
+
+    Parameters
+    ----------
+    left : float
+        Clockwise start of the nautical sector, degrees.
+    right : float
+        Clockwise end of the nautical sector, degrees.
+
+    Returns
+    -------
+    tuple[float, float]
+        ``(theta1, theta2)`` with ``theta1 < theta2``.
+    """
+
+    theta1 = 90.0 - right % 360.0
+    theta2 = 90.0 - left % 360.0
+    if theta2 <= theta1:
+        theta2 += 360.0
+
+    return theta1, theta2
+
+
+def nautical_sector_wedge_coords(
+    lon: float,
+    lat: float,
+    left: float,
+    right: float,
+    radius_deg: float,
+    n_pts: int | None = None,
+) -> list[tuple[float, float]]:
+    """
+    Build the closed polygon ring of a nautical sector wedge (maps, GIS).
+
+    Parameters
+    ----------
+    lon, lat : float
+        Wedge origin, degrees.
+    left, right : float
+        Nautical clockwise sector bounds, degrees.
+    radius_deg : float
+        Wedge radius, degrees.
+    n_pts : int, optional
+        Arc points. Default is one every ~5 degrees (at least 8).
+
+    Returns
+    -------
+    list[tuple[float, float]]
+        ``[(lon, lat), arc..., (lon, lat)]``.
+    """
+
+    theta1, theta2 = nautical_sector_to_wedge_angles(left, right)
+    if n_pts is None:
+        n_pts = max(8, int(abs(theta2 - theta1) / 5))
+    arc = np.radians(np.linspace(theta1, theta2, n_pts))
+    coords = [(lon, lat)]
+    coords += [
+        (lon + radius_deg * np.cos(a), lat + radius_deg * np.sin(a)) for a in arc
+    ]
+    coords.append((lon, lat))
+
+    return coords
