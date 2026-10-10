@@ -1,5 +1,3 @@
-from typing import Tuple, Union
-
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import matplotlib as mpl
@@ -20,7 +18,7 @@ def get_matching_times_between_arrays(
     times1: np.ndarray,
     times2: np.ndarray,
     max_time_diff: int,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Finds matching time indices between two arrays of timestamps.
 
@@ -197,7 +195,7 @@ class CalVal(BlueMathModel):
         self._max_time_diff: int = None
 
         # Initialize calibration results
-        self._data_to_fit: Tuple[pd.DataFrame, pd.DataFrame] = (None, None)
+        self._data_to_fit: tuple[pd.DataFrame, pd.DataFrame] = (None, None)
         self._calibration_model: sm.OLS = None
         self._calibrated_data: pd.DataFrame = None
         self._calibration_params: pd.Series = None
@@ -242,7 +240,7 @@ class CalVal(BlueMathModel):
 
         return self._calibration_params
 
-    def _plot_data_domains(self) -> Tuple[Figure, Axes]:
+    def _plot_data_domains(self) -> tuple[Figure, Axes]:
         """
         Plots the domains of the data points.
 
@@ -489,9 +487,7 @@ class CalVal(BlueMathModel):
 
         self.logger.info("Calibration fit procedure completed.")
 
-    def correct(
-        self, data: Union[pd.DataFrame, xr.Dataset]
-    ) -> Union[pd.DataFrame, xr.Dataset]:
+    def correct(self, data: pd.DataFrame | xr.Dataset) -> pd.DataFrame | xr.Dataset:
         """
         Apply the calibration correction to new data.
 
@@ -568,7 +564,7 @@ class CalVal(BlueMathModel):
 
             corrected_data = data.copy()
             corrected_data["Hsea"] = (
-                corrected_data["Hsea"] ** 2
+                corrected_data["Hsea"].fillna(0) ** 2
                 * np.array(
                     [
                         self.calibration_params["sea_correction"][
@@ -584,7 +580,7 @@ class CalVal(BlueMathModel):
             corrected_data["Hs_CORR"] = corrected_data["Hsea"]
             for n_part in range(1, self._get_nparts(corrected_data) + 1):
                 corrected_data[f"Hswell{n_part}"] = (
-                    corrected_data[f"Hswell{n_part}"] ** 2
+                    corrected_data[f"Hswell{n_part}"].fillna(0) ** 2
                     * np.array(
                         [
                             self.calibration_params["swell_correction"][
@@ -604,7 +600,7 @@ class CalVal(BlueMathModel):
 
             return corrected_data[["Hs", "Hs_CORR"]]
 
-    def plot_calibration_results(self) -> Tuple[Figure, list]:
+    def plot_calibration_results(self) -> tuple[Figure, list]:
         """
         Plot the calibration results, including:
         - Pie charts of correction coefficients for sea and swell
@@ -716,21 +712,21 @@ class CalVal(BlueMathModel):
 
         # Plot no correction scatter
         validation_scatter(
-            axs=ax3,
-            x=self.calibrated_data["Hs"].values,
-            y=self.calibrated_data["Hs_CAL"].values,
-            xlabel="Hindcast",
-            ylabel="Satellite",
+            ax=ax3,
+            reference=self.calibrated_data["Hs_CAL"].values,
+            estimate=self.calibrated_data["Hs"].values,
+            reference_label="Satellite",
+            estimate_label="Hindcast",
             title="No Correction",
         )
 
         # Plot with correction scatter
         validation_scatter(
-            axs=ax4,
-            x=self.calibrated_data["Hs_CORR"].values,
-            y=self.calibrated_data["Hs_CAL"].values,
-            xlabel="Hindcast",
-            ylabel="Satellite",
+            ax=ax4,
+            reference=self.calibrated_data["Hs_CAL"].values,
+            estimate=self.calibrated_data["Hs_CORR"].values,
+            reference_label="Satellite",
+            estimate_label="Hindcast",
             title="With Correction",
         )
 
@@ -778,7 +774,7 @@ class CalVal(BlueMathModel):
 
     def validate_calibration(
         self, data_to_validate: pd.DataFrame
-    ) -> Tuple[Figure, list]:
+    ) -> tuple[Figure, list]:
         """
         Validate the calibration using independent validation data.
 
@@ -847,19 +843,19 @@ class CalVal(BlueMathModel):
         ax_sc1 = fig.add_subplot(gs[1, 0])
         ax_sc2 = fig.add_subplot(gs[1, 1])
         validation_scatter(
-            axs=ax_sc1,
-            x=data_corr["Hs"].iloc[data_times].values,
-            y=data_to_validate["Hs_VAL"].iloc[data_to_validate_times].values,
-            xlabel="Model (No Correction)",
-            ylabel="Validation",
+            ax=ax_sc1,
+            reference=data_to_validate["Hs_VAL"].iloc[data_to_validate_times].values,
+            estimate=data_corr["Hs"].iloc[data_times].values,
+            reference_label="Validation",
+            estimate_label="Model (No Correction)",
             title="No Correction",
         )
         validation_scatter(
-            axs=ax_sc2,
-            x=data_corr["Hs_CORR"].iloc[data_times].values,
-            y=data_to_validate["Hs_VAL"].iloc[data_to_validate_times].values,
-            xlabel="Model (Corrected)",
-            ylabel="Validation",
+            ax=ax_sc2,
+            reference=data_to_validate["Hs_VAL"].iloc[data_to_validate_times].values,
+            estimate=data_corr["Hs_CORR"].iloc[data_times].values,
+            reference_label="Validation",
+            estimate_label="Model (Corrected)",
             title="With Correction",
         )
 
