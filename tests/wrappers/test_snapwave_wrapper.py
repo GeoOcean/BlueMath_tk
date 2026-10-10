@@ -60,6 +60,7 @@ class TestSnapWaveMetaModelWrapper(unittest.TestCase):
         self.wrapper = SnapWaveMetaModelWrapper(
             templates_dir=str(TEMPLATES_DIR / "metamodel"),
             metamodel_parameters={
+                "hs": [1.0, 2.5, 0.5],
                 "tp": [8.0, 10.0, 12.0],
                 "dir": [280.0, 300.0, 320.0],
                 "spr": [20.0, 25.0, 30.0],
@@ -92,7 +93,7 @@ class TestSnapWaveMetaModelWrapper(unittest.TestCase):
         self.assertEqual(len(read_enclosure_polygon(case_dir).exterior.coords), 5)
 
         hs = read_forcing_table(op.join(case_dir, "hs.txt"))
-        np.testing.assert_array_equal(hs.iloc[0].values, [0, 1, 0])
+        np.testing.assert_array_equal(hs.iloc[0].values, [0, 2.5, 0])
         tp = read_forcing_table(op.join(case_dir, "tp.txt"))
         np.testing.assert_array_equal(tp.iloc[0].values, [10.0] * 3)
         with open(op.join(case_dir, "snapwave.inp")) as f:
@@ -134,6 +135,7 @@ class TestSnapWaveMetaModelWrapper(unittest.TestCase):
         self.assertEqual(active_boundary_node(self.wrapper.cases_dirs[2]), 2)
         fig = plot_case(self.wrapper.cases_dirs[2], mode="metamodel")
         self.assertIn("bnd3", fig._suptitle.get_text())
+        self.assertIn("hs=0.5m @bnd3", " ".join(t.get_text() for t in fig.texts))
 
 
 class TestSnapWaveOutputOptions(unittest.TestCase):
@@ -147,6 +149,7 @@ class TestSnapWaveOutputOptions(unittest.TestCase):
         self.wrapper = SnapWaveMetaModelWrapper(
             templates_dir=str(TEMPLATES_DIR / "metamodel"),
             metamodel_parameters={
+                "hs": [1.0, 2.0, 1.0, 2.0],
                 "tp": [8.0, 9.0, 10.0, 11.0],
                 "dir": [280.0] * 4,
                 "spr": [20.0] * 4,
@@ -160,7 +163,7 @@ class TestSnapWaveOutputOptions(unittest.TestCase):
             output_points=points,
             point_dim="sites",
             point_coords={"sites": "name", "site_depth": "depth"},
-            store_parameters=("tp", "wl"),
+            store_parameters=("hs", "tp", "wl"),
             split_by="active_node",
             split_filename="node_{}.nc",
             debug=False,
@@ -185,10 +188,12 @@ class TestSnapWaveOutputOptions(unittest.TestCase):
         np.testing.assert_array_equal(ds.site_depth.values, [5.0, 10.0])
         np.testing.assert_array_equal(ds.case_num.values, [2, 3])
         np.testing.assert_array_equal(ds.tp_forcing.values, [10.0, 11.0])
+        np.testing.assert_array_equal(ds.hs_forcing.values, [1.0, 2.0])
         self.assertNotIn("station_x", ds.coords)
         self.assertNotIn("active_node", ds.coords)
         self.assertEqual(
-            sorted(ds.data_vars), ["dir", "hs", "spr", "tp", "tp_forcing", "wl_forcing"]
+            sorted(ds.data_vars),
+            ["dir", "hs", "hs_forcing", "spr", "tp", "tp_forcing", "wl_forcing"],
         )
         ds.close()
 
@@ -265,6 +270,49 @@ class TestSnapWaveDynamic(unittest.TestCase):
         self.assertEqual(joined.sizes["time"], 2)
         fig = plot_case(case_dir, mode="dynamic")
         self.assertEqual(len(fig.axes) >= 5, True)
+
+    def test_wind_field_samples(self):
+        """A wind field is interpolated to each case time and written as samples."""
+
+        lon, lat = np.array([-0.5, 0.5, 1.5]), np.array([-0.5, 1.5])
+        # from 350 deg in the west column, from 10 deg elsewhere (crosses North)
+        dirs = np.array([[350.0, 10.0, 10.0], [350.0, 10.0, 10.0]])
+        u = -10.0 * np.sin(np.deg2rad(dirs))
+        v = -10.0 * np.cos(np.deg2rad(dirs))
+        wind = xr.Dataset(
+            {
+                "u10": (("time", "latitude", "longitude"), np.stack([u, 3 * u])),
+                "v10": (("time", "latitude", "longitude"), np.stack([v, 3 * v])),
+            },
+            coords={
+                "time": pd.to_datetime(["2020-01-01 00:00", "2020-01-01 02:00"]),
+                "latitude": lat,
+                "longitude": lon,
+            },
+        )
+        params = {
+            "tref": ["20200101 010000"],
+            **{f"{v}_nodes": [[1.0, 1.0, 1.0]] for v in ("hs", "tp", "dir", "spr")},
+        }
+        wrapper = SnapWaveDynamicModelWrapper(
+            templates_dir=str(TEMPLATES_DIR / "dynamic"),
+            metamodel_parameters=params,
+            fixed_parameters={"gridfile": "mesh.nc"},
+            output_dir=op.join(self.test_dir, "cases"),
+            boundary_nodes=NODES,
+            enclosure_polygon=build_enclosure_polygon(box(0, 0, 1, 1)),
+            output_points=POINTS.to_numpy(),
+            wind=wind,
+            debug=False,
+        )
+        wrapper.build_cases()
+        self.assertEqual(wrapper.cases_context[0]["u10"], "u10.txt")
+        speed = np.loadtxt(op.join(wrapper.cases_dirs[0], "u10.txt"))
+        direction = np.loadtxt(op.join(wrapper.cases_dirs[0], "u10dir.txt"))
+        np.testing.assert_allclose(speed[:, 2], 20.0)  # halfway between 10 and 30
+        np.testing.assert_allclose(speed[:, :2], np.c_[np.tile(lon, 2), np.repeat(lat, 3)])
+        # continuous across North: 350 is written as -10 next to 10
+        np.testing.assert_allclose(direction[:, 2], [-10.0, 10.0, 10.0] * 2, atol=1e-6)
 
     def test_missing_variables(self):
         """Forcing without a required variable is rejected."""

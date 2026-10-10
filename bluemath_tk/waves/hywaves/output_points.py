@@ -4,6 +4,13 @@ HyWaves output points: where nearshore waves are computed and reconstructed.
 Typical sources are points along depth contours of a bathymetry raster
 (:func:`get_isobath_points`) and unstructured-mesh nodes inside a polygon
 (:func:`get_mesh_nodes_in_polygon`), plus any observation sites (buoys).
+
+Raw contours of a high-resolution bathymetry follow every small sandbank and
+pit, which puts points in odd places. :func:`get_isobath_points` can smooth
+the bathymetry first (:func:`smooth_raster`, Gaussian width in metres), drop
+short contour pieces, and space points evenly in metres along the result
+(:func:`polyline_length_m`, :func:`resample_polyline`). Geographic (lon/lat)
+rasters are measured with great-circle distances.
 """
 
 from __future__ import annotations
@@ -16,8 +23,11 @@ import shapely
 import xarray as xr
 from shapely.geometry import MultiPolygon, Polygon
 
+from ...core.constants import EARTH_RADIUS
+
 _X_NAMES = ("x", "lon", "longitude")
 _Y_NAMES = ("y", "lat", "latitude")
+EARTH_RADIUS_M = EARTH_RADIUS * 1000.0
 
 
 def xy_coord_names(da: xr.DataArray) -> tuple[str, str]:
@@ -51,16 +61,86 @@ def xy_coord_names(da: xr.DataArray) -> tuple[str, str]:
     return x, y
 
 
-def resample_polyline(pts: np.ndarray, spacing: float) -> np.ndarray:
+def is_geographic(da: xr.DataArray) -> bool:
     """
-    Resample a polyline at approximately uniform arc length.
+    Whether a raster is in longitude/latitude degrees.
+
+    Uses the rioxarray CRS when there is one, else the coordinate names
+    (``lon``/``longitude``) or, for ``x``/``y``, value ranges within +-360/+-90.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        2-D raster.
+
+    Returns
+    -------
+    bool
+        True for geographic coordinates.
+    """
+
+    try:
+        crs = da.rio.crs
+    except Exception:
+        crs = None
+    if crs is not None:
+        return bool(crs.is_geographic)
+    xname, yname = xy_coord_names(da)
+    if xname in ("lon", "longitude"):
+        return True
+    x, y = np.asarray(da[xname]), np.asarray(da[yname])
+
+    return bool(np.nanmax(np.abs(x)) <= 360 and np.nanmax(np.abs(y)) <= 90)
+
+
+def _segment_lengths(pts: np.ndarray, geographic: bool) -> np.ndarray:
+    """Length of each polyline edge: metres (great circle) or raster units."""
+
+    if not geographic:
+        return np.linalg.norm(np.diff(pts, axis=0), axis=1)
+    lon, lat = np.radians(pts[:, 0]), np.radians(pts[:, 1])
+    a = (
+        np.sin(np.diff(lat) / 2) ** 2
+        + np.cos(lat[:-1]) * np.cos(lat[1:]) * np.sin(np.diff(lon) / 2) ** 2
+    )
+
+    return 2 * EARTH_RADIUS_M * np.arcsin(np.sqrt(np.clip(a, 0, 1)))
+
+
+def polyline_length_m(pts: np.ndarray, geographic: bool = True) -> float:
+    """
+    Length of a polyline in metres.
 
     Parameters
     ----------
     pts : np.ndarray
-        ``(N, 2)`` vertices.
-    spacing : float
-        Target spacing between output points (units of *pts*).
+        ``(N, 2)`` vertices, lon/lat degrees or projected metres.
+    geographic : bool, optional
+        Lon/lat input (great-circle distances). Default is True.
+
+    Returns
+    -------
+    float
+        Total length.
+    """
+
+    return float(_segment_lengths(np.asarray(pts, dtype=float), geographic).sum())
+
+
+def resample_polyline(
+    pts: np.ndarray, spacing_m: float, geographic: bool = True
+) -> np.ndarray:
+    """
+    Resample a polyline every *spacing_m* metres of arc length.
+
+    Parameters
+    ----------
+    pts : np.ndarray
+        ``(N, 2)`` vertices: lon/lat degrees, or projected metres.
+    spacing_m : float
+        Distance between output points, in metres.
+    geographic : bool, optional
+        *pts* are lon/lat (great-circle arc length). Default is True.
 
     Returns
     -------
@@ -69,15 +149,15 @@ def resample_polyline(pts: np.ndarray, spacing: float) -> np.ndarray:
         the polyline has zero length.
     """
 
-    seg = np.diff(pts, axis=0)
-    seg_len = np.linalg.norm(seg, axis=1)
+    pts = np.asarray(pts, dtype=float)
+    seg_len = _segment_lengths(pts, geographic)
     total = float(seg_len.sum())
     if total <= 0.0:
         return np.empty((0, 2), dtype=float)
 
     cum = np.concatenate(([0.0], np.cumsum(seg_len)))
-    ds = np.arange(0.0, total, float(spacing))
-    if ds.size == 0 or (total - ds[-1]) > 0.25 * spacing:
+    ds = np.arange(0.0, total, float(spacing_m))
+    if ds.size == 0 or (total - ds[-1]) > 0.25 * spacing_m:
         ds = np.append(ds, total)
 
     out = np.empty((ds.size, 2), dtype=float)
@@ -90,14 +170,65 @@ def resample_polyline(pts: np.ndarray, spacing: float) -> np.ndarray:
     return out
 
 
+def smooth_raster(da: xr.DataArray, sigma_m: float) -> xr.DataArray:
+    """
+    Gaussian-smooth a raster, with the filter width in metres and NaNs respected.
+
+    NaN cells (e.g. outside a model domain) neither contribute to nor receive
+    values: the filter is normalised by the smoothed valid-data mask, and the
+    original NaNs are restored, so contours do not drift into missing areas.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        2-D raster on ``(y, x)``, lon/lat degrees or projected metres.
+    sigma_m : float
+        Gaussian standard deviation in metres (converted per axis to cells;
+        for lon/lat rasters at the raster's mean latitude).
+
+    Returns
+    -------
+    xr.DataArray
+        Smoothed copy of *da*.
+    """
+
+    from scipy.ndimage import gaussian_filter
+
+    xname, yname = xy_coord_names(da)
+    x, y = np.asarray(da[xname], dtype=float), np.asarray(da[yname], dtype=float)
+    dx, dy = abs(float(np.median(np.diff(x)))), abs(float(np.median(np.diff(y))))
+    if is_geographic(da):
+        metres_per_deg = np.pi / 180.0 * EARTH_RADIUS_M
+        dy *= metres_per_deg
+        dx *= metres_per_deg * np.cos(np.radians(float(np.nanmean(y))))
+    sigma = (sigma_m / dy, sigma_m / dx)
+    if da.dims.index(xname) == 0:
+        sigma = sigma[::-1]
+
+    values = np.asarray(da.values, dtype=float)
+    valid = np.isfinite(values)
+    weight = gaussian_filter(valid.astype(float), sigma, mode="nearest")
+    smooth = gaussian_filter(np.where(valid, values, 0.0), sigma, mode="nearest")
+    with np.errstate(invalid="ignore", divide="ignore"):
+        smooth = np.where(valid & (weight > 0), smooth / weight, np.nan)
+
+    return da.copy(data=smooth)
+
+
 def get_isobath_points(
     da: xr.DataArray,
     level: float,
-    spacing: float | None = None,
+    spacing_m: float | None = None,
+    smooth_m: float | None = None,
+    min_length_m: float | None = None,
     aoi_polygon: Polygon | MultiPolygon | None = None,
 ) -> np.ndarray:
     """
     Points along one depth contour of a bathymetry raster.
+
+    Order of operations: smooth the raster (*smooth_m*), contour it, keep the
+    pieces touching *aoi_polygon* and at least *min_length_m* long, then
+    resample each piece every *spacing_m* metres.
 
     Parameters
     ----------
@@ -105,11 +236,17 @@ def get_isobath_points(
         Topobathy raster (elevation, negative below sea level), dims ``(y, x)``.
     level : float
         Contour level, e.g. ``-10`` for the 10 m isobath.
-    spacing : float, optional
-        Resample each contour segment at this spacing (raster units, e.g.
-        degrees). Default is None (contour vertices as they are).
+    spacing_m : float, optional
+        Resample each contour piece every *spacing_m* metres of arc length.
+        Default is None (contour vertices as they are).
+    smooth_m : float, optional
+        Gaussian smoothing of the raster before contouring, in metres (see
+        :func:`smooth_raster`). Removes small wiggles and tiny closed
+        contours around sandbanks and pits. Default is None (no smoothing).
+    min_length_m : float, optional
+        Drop contour pieces shorter than this, in metres. Default is None.
     aoi_polygon : Polygon or MultiPolygon, optional
-        Keep only contour segments with at least one vertex inside it.
+        Keep only contour pieces with at least one vertex inside it.
 
     Returns
     -------
@@ -121,6 +258,10 @@ def get_isobath_points(
     ValueError
         If the raster shape does not match ``(len(y), len(x))``.
     """
+
+    geographic = is_geographic(da)
+    if smooth_m:
+        da = smooth_raster(da, smooth_m)
 
     xname, yname = xy_coord_names(da)
     x = da[xname].values
@@ -146,9 +287,13 @@ def get_isobath_points(
             for s in segments
             if shapely.contains_xy(aoi_polygon, s[:, 0], s[:, 1]).any()
         ]
-    if spacing is not None and spacing > 0:
-        segments = [resample_polyline(s, spacing) for s in segments]
-        segments = [s for s in segments if s.shape[0] > 0]
+    if min_length_m:
+        segments = [
+            s for s in segments if polyline_length_m(s, geographic) >= min_length_m
+        ]
+    if spacing_m:
+        segments = [resample_polyline(s, spacing_m, geographic) for s in segments]
+    segments = [s for s in segments if s.shape[0] > 0]
 
     return np.vstack(segments) if segments else np.empty((0, 2), dtype=float)
 

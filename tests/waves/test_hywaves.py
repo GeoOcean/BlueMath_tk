@@ -99,26 +99,86 @@ class TestOutputPoints(unittest.TestCase):
     """Tests for contour and mesh output points."""
 
     def test_isobath_points(self):
-        """Points along the -10 m contour of a linear slope lie at x = 0.5."""
+        """Points along the -10 m contour of a projected slope (x/y in metres)."""
 
-        x = np.linspace(0.0, 1.0, 51)
-        y = np.linspace(0.0, 1.0, 41)
+        x = np.linspace(0.0, 50_000.0, 51)
+        y = np.linspace(0.0, 40_000.0, 41)
         da = xr.DataArray(
-            np.tile(-20.0 * x, (y.size, 1)), coords={"y": y, "x": x}, dims=("y", "x")
+            np.tile(-20.0 * x / x.max(), (y.size, 1)),
+            coords={"y": y, "x": x},
+            dims=("y", "x"),
         )
-        pts = output_points.get_isobath_points(da, -10.0, spacing=0.1)
-        np.testing.assert_allclose(pts[:, 0], 0.5, atol=1e-6)
-        self.assertGreaterEqual(len(pts), 10)
+        self.assertFalse(output_points.is_geographic(da))
+        pts = output_points.get_isobath_points(da, -10.0, spacing_m=4000.0)
+        np.testing.assert_allclose(pts[:, 0], 25_000.0, atol=1e-6)
+        np.testing.assert_allclose(np.diff(pts[:-1, 1]), 4000.0)
         clipped = output_points.get_isobath_points(
-            da, -10.0, aoi_polygon=box(2.0, 2.0, 3.0, 3.0)
+            da, -10.0, aoi_polygon=box(0.0, 0.0, 1000.0, 1000.0)
         )
         self.assertEqual(clipped.shape, (0, 2))
 
     def test_resample_polyline(self):
         """Uniform spacing along a straight line, end point included."""
 
-        out = output_points.resample_polyline(np.array([[0.0, 0.0], [1.0, 0.0]]), 0.25)
-        np.testing.assert_allclose(out[:, 0], [0.0, 0.25, 0.5, 0.75, 1.0])
+        out = output_points.resample_polyline(
+            np.array([[0.0, 0.0], [1000.0, 0.0]]), 250.0, geographic=False
+        )
+        np.testing.assert_allclose(out[:, 0], [0.0, 250.0, 500.0, 750.0, 1000.0])
+
+    def _lonlat_slope(self, bumps: bool = False):
+        """Lon/lat raster at 52N: depth increasing eastwards, optional pits."""
+
+        lon = np.linspace(4.0, 5.0, 201)
+        lat = np.linspace(52.0, 52.5, 101)
+        z = np.tile(-40.0 * (lon - 4.0), (lat.size, 1))
+        if bumps:  # small pits (about 1 km) deeper than -10 m on the shallow side
+            for lo, la in ((4.12, 52.1), (4.12, 52.3), (4.15, 52.4)):
+                z -= 30.0 * np.exp(
+                    -(
+                        ((lon[None, :] - lo) / 0.006) ** 2
+                        + ((lat[:, None] - la) / 0.004) ** 2
+                    )
+                )
+        return xr.DataArray(z, coords={"lat": lat, "lon": lon}, dims=("lat", "lon"))
+
+    def test_spacing_in_metres_on_lonlat(self):
+        """Points along a meridian contour are ~2 km apart (great circle)."""
+
+        da = self._lonlat_slope()
+        self.assertTrue(output_points.is_geographic(da))
+        pts = output_points.get_isobath_points(da, -10.0, spacing_m=2000.0)
+        gaps = [
+            output_points.polyline_length_m(pts[i : i + 2]) for i in range(len(pts) - 2)
+        ]
+        np.testing.assert_allclose(gaps, 2000.0, rtol=1e-3)
+
+    def test_smoothing_removes_small_loops(self):
+        """Pits add closed -10 m contours; smoothing or min length removes them."""
+
+        da = self._lonlat_slope(bumps=True)
+        raw = output_points.get_isobath_points(da, -10.0, spacing_m=500.0)
+        clean = output_points.get_isobath_points(
+            da, -10.0, spacing_m=500.0, smooth_m=2000.0
+        )
+        filtered = output_points.get_isobath_points(
+            da, -10.0, spacing_m=500.0, min_length_m=20_000.0
+        )
+        self.assertTrue((raw[:, 0] < 4.2).any())  # points around the pits
+        self.assertFalse((clean[:, 0] < 4.2).any())
+        self.assertFalse((filtered[:, 0] < 4.2).any())
+        np.testing.assert_allclose(filtered[:, 0], 4.25, atol=1e-6)
+
+    def test_smooth_raster_keeps_nans(self):
+        """NaN cells stay NaN and do not leak into their neighbours."""
+
+        da = self._lonlat_slope()
+        da[:, :50] = np.nan
+        smooth = output_points.smooth_raster(da, 1000.0)
+        self.assertTrue(np.isnan(smooth[:, :50]).all())
+        self.assertTrue(np.isfinite(smooth[:, 50:]).all())
+        np.testing.assert_allclose(
+            smooth[:, 100], da[:, 100], atol=0.05
+        )  # linear field
 
     def test_mesh_nodes_in_polygon(self):
         """Only (wet) nodes inside the polygon are returned."""
@@ -139,15 +199,22 @@ class TestOutputPoints(unittest.TestCase):
 
 
 def _synthetic_cases(n_cases: int = 60, n_sites: int = 5, seed: int = 0) -> xr.Dataset:
-    """SnapWave-like cases: hs/dir/spr fields that depend smoothly on the forcing."""
+    """SnapWave-like cases: hs/dir/spr fields that depend smoothly on the forcing.
+
+    Site ``hs`` grows with the offshore Hs and is depth-limited (capped) at the
+    last site, as breaking would do.
+    """
 
     rng = np.random.default_rng(seed)
+    hs_off = rng.uniform(0.5, 4, n_cases)
     tp = rng.uniform(4, 16, n_cases)
     wdir = rng.uniform(250, 340, n_cases)
     spr = rng.uniform(10, 40, n_cases)
     wl = rng.uniform(-1, 1, n_cases)
     gain = np.linspace(0.3, 0.9, n_sites)
-    hs = np.clip(gain[None, :] * (0.5 + tp[:, None] / 32) + 0.05 * wl[:, None], 0, None)
+    hs = gain[None, :] * hs_off[:, None] * (0.5 + tp[:, None] / 32)
+    hs = np.clip(hs + 0.05 * wl[:, None], 0, None)
+    hs[:, -1] = np.minimum(hs[:, -1], 1.5)
     hs[:, 0] = np.nan  # a dry site, dropped by the PCA NaN threshold
     sites = [f"s{i}" for i in range(n_sites)]
     return xr.Dataset(
@@ -155,6 +222,7 @@ def _synthetic_cases(n_cases: int = 60, n_sites: int = 5, seed: int = 0) -> xr.D
             "hs": (("case_num", "sites"), hs),
             "dir": (("case_num", "sites"), np.repeat(wdir[:, None], n_sites, 1) - 5),
             "spr": (("case_num", "sites"), np.repeat(spr[:, None], n_sites, 1) * 0.8),
+            "hs_forcing": (("case_num",), hs_off),
             "tp_forcing": (("case_num",), tp),
             "dir_forcing": (("case_num",), wdir),
             "spr_forcing": (("case_num",), spr),
@@ -164,6 +232,7 @@ def _synthetic_cases(n_cases: int = 60, n_sites: int = 5, seed: int = 0) -> xr.D
     )
 
 
+INPUTS = ["hs", "tp", "dir", "spr", "wl"]
 VARS = {
     "hs": {"vars_to_stack": ["hs"], "pca_variance": 0.999},
     "tp": "raw",
@@ -180,18 +249,23 @@ class TestMetamodel(unittest.TestCase):
 
         self.cases = metamodel.add_direction_components(_synthetic_cases())
         self.forcing = self.cases[
-            ["tp_forcing", "dir_forcing", "spr_forcing", "wl_forcing"]
+            ["hs_forcing", "tp_forcing", "dir_forcing", "spr_forcing", "wl_forcing"]
         ].to_dataframe()
-        self.forcing.columns = ["tp", "dir", "spr", "wl"]
+        self.forcing.columns = INPUTS
 
     def test_site_filter(self):
-        """Sites breaking a {var}_max rule are listed and dropped."""
+        """Sites breaking a {var}_max or {var}_ratio_max rule are dropped."""
 
-        bad = metamodel.detect_removed_sites(self.cases, {"hs_max": 0.75})
-        self.assertIn("s4", bad)
-        self.assertNotIn("s1", bad)
+        bad = metamodel.detect_removed_sites(self.cases, {"hs_max": 1.6})
+        self.assertIn("s3", bad)
+        self.assertNotIn("s4", bad)  # depth-limited at 1.5 m
         kept = metamodel.drop_sites(self.cases, bad)
         self.assertEqual(kept.sizes["sites"], 5 - len(bad))
+
+        cases = self.cases.copy(deep=True)
+        cases["hs"][3, 2] = 50 * float(cases.hs_forcing[3])  # numerical blow-up
+        bad = metamodel.detect_removed_sites(cases, {"hs_ratio_max": 3.0})
+        self.assertEqual(bad, ["s2"])
 
     def test_fit_and_predict(self):
         """Fit on MDA centroids, predict held-out cases with floors applied."""
@@ -203,9 +277,7 @@ class TestMetamodel(unittest.TestCase):
         train = self.cases.isel(case_num=train_idx)
         pcas, summary = metamodel.fit_pcas(train, targets)
         self.assertNotIn("s0", summary["pca_sites_kept"]["hs"])
-        gp = metamodel.fit_gp(
-            mda.centroids[["tp", "dir", "spr", "wl"]], pcas, ["dir"], epochs=200
-        )
+        gp = metamodel.fit_gp(mda.centroids[INPUTS], pcas, ["dir"], epochs=200)
         sites = summary["pca_sites_kept"]["hs"]
         test_forcing = self.forcing.iloc[test_idx]
         pred = metamodel.predict_fields(gp, pcas, test_forcing, VARS, sites)
@@ -218,7 +290,7 @@ class TestMetamodel(unittest.TestCase):
         )
         np.testing.assert_allclose(pred.tp.isel(sites=0), test_forcing.tp)
         true_hs = self.cases.hs.isel(case_num=test_idx).sel(sites=sites)
-        self.assertLess(float(np.abs(pred.hs - true_hs.values).max()), 0.05)
+        self.assertLess(float(np.abs(pred.hs - true_hs.values).max()), 0.1)
 
     def test_goal_forcing_and_valid_steps(self):
         """Partition forcing is renamed; empty partitions and off-sector steps drop."""
@@ -233,10 +305,10 @@ class TestMetamodel(unittest.TestCase):
             },
             coords={"time": time},
         )
-        df, hs = metamodel.goal_forcing(goal, partition=1, wl=0.5)
-        self.assertEqual(list(df.columns), ["tp", "dir", "spr", "wl"])
+        df = metamodel.goal_forcing(goal, partition=1, wl=0.5)
+        self.assertEqual(list(df.columns), INPUTS)
         self.assertEqual(float(df.wl.iloc[0]), 0.5)
-        valid = metamodel.valid_timesteps(df, hs, 1, sector=(250.0, 350.0))
+        valid = metamodel.valid_timesteps(df, sector=(250.0, 350.0))
         self.assertEqual(valid.tolist(), [True, False, False])
 
 

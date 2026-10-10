@@ -764,7 +764,8 @@ class ExactGPInterpolation(BaseInterpolation):
         result.index = dataset.index
 
         if return_std:
-            std_df = pd.DataFrame(stds_dict)
+            # same index as the predictions, or concat misaligns the rows
+            std_df = pd.DataFrame(stds_dict, index=dataset.index)
             result = pd.concat([result, std_df], axis=1)
 
         # Denormalize if needed

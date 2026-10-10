@@ -12,6 +12,12 @@ metamodel; nearshore conditions at the output points (see
 contributions.
 """
 
-from . import metamodel, output_points, reconstruction, sectors
+from . import metamodel, output_points, reconstruction, sectors, wind_correction
 
-__all__ = ["metamodel", "output_points", "reconstruction", "sectors"]
+__all__ = [
+    "metamodel",
+    "output_points",
+    "reconstruction",
+    "sectors",
+    "wind_correction",
+]

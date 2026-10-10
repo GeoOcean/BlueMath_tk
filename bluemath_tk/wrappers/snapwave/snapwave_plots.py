@@ -8,10 +8,14 @@ below.
 
 Two modes, matching the wrappers:
 
-- ``"metamodel"``: a stationary case with unit Hs at one active boundary node
+- ``"metamodel"``: a stationary case with Hs at one active boundary node
   (read from ``hs.txt``), highlighted with its wave direction.
 - ``"dynamic"``: a time-series case; every boundary node is coloured and
   sized by its forcing Hs, with one direction arrow per active node.
+
+When the case has wind (``u10`` / ``u10dir`` in ``snapwave.inp``, sample files
+or uniform values), wind arrows are drawn on the domain panel and its range
+and mean direction go in the subtitle.
 
 Backgrounds are pluggable: pass ``background(ax, extent, panel=...)`` to draw
 a project basemap; by default a satellite image is drawn when requested, and
@@ -81,9 +85,6 @@ class CasePlotStyle:
             "dir": "twilight_shifted",
             "spr": "cividis",
         }
-    )
-    metamodel_vlims: dict[str, tuple[float, float]] = field(
-        default_factory=lambda: {"hs": (0.0, 1.0)}
     )
     site_marker_size: float = 28
     top_vars: tuple[str, ...] = TOP_VARS
@@ -256,6 +257,59 @@ def _forcing_row(case_dir: Path, var: str, time_index: int) -> tuple[float, np.n
     return float(table.index[idx]), table.iloc[idx].to_numpy(float)
 
 
+def read_case_wind(ctx: CaseContext, extent: Extent | None = None) -> tuple[np.ndarray, ...] | None:
+    """
+    The wind a case was given: ``lon, lat, speed, direction`` (None without wind).
+
+    Sample files (``u10`` / ``u10dir`` naming files with ``x y value`` rows) are
+    read as they are; a uniform wind (numbers) is spread on a small grid over
+    *extent* for plotting.
+
+    Parameters
+    ----------
+    ctx : CaseContext
+        Case folder context.
+    extent : tuple, optional
+        ``(xmin, xmax, ymin, ymax)`` for a uniform wind.
+
+    Returns
+    -------
+    tuple of np.ndarray or None
+        Coordinates, speed (m/s) and nautical direction (deg, from).
+    """
+
+    u10, u10dir = ctx.snapwave_inp.get("u10", "").strip(), ctx.snapwave_inp.get("u10dir", "").strip()
+    if not u10:
+        return None
+    speed_file, dir_file = ctx.case_dir / u10, ctx.case_dir / u10dir
+    if speed_file.is_file() and dir_file.is_file():
+        speed, direction = np.loadtxt(speed_file), np.loadtxt(dir_file)
+        return speed[:, 0], speed[:, 1], speed[:, 2], np.mod(direction[:, 2], 360.0)
+    try:
+        value, angle = float(u10), float(u10dir or 270.0)
+    except ValueError:
+        return None
+    if value <= 0 or extent is None:
+        return None
+    lon, lat = np.meshgrid(np.linspace(extent[0], extent[1], 8)[1:-1], np.linspace(extent[2], extent[3], 6)[1:-1])
+
+    return lon.ravel(), lat.ravel(), np.full(lon.size, value), np.full(lon.size, angle)
+
+
+def wind_summary(wind: tuple[np.ndarray, ...] | None) -> str | None:
+    """``u10=[min, max] m/s from <mean dir>°`` of :func:`read_case_wind` output."""
+
+    if wind is None:
+        return None
+    from ...core.plotting.wind import wind_components
+
+    _, _, speed, direction = wind
+    u, v = wind_components(speed, direction)
+    mean_dir = np.mod(np.rad2deg(np.arctan2(-np.nanmean(u), -np.nanmean(v))), 360.0)
+
+    return f"u10=[{np.nanmin(speed):.3g}, {np.nanmax(speed):.3g}] m/s from {mean_dir:.0f}°"
+
+
 def active_boundary_node(case_dir: str | Path, time_index: int = 0) -> int:
     """
     0-based index of a metamodel case's active boundary node (largest Hs).
@@ -286,13 +340,9 @@ def active_boundary_node(case_dir: str | Path, time_index: int = 0) -> int:
     return idx
 
 
-def _color_limits(
-    var: str, values: np.ndarray, mode: str, style: CasePlotStyle
-) -> tuple[float, float]:
-    """Return fixed metamodel limits, else the 2nd-98th percentile."""
+def _color_limits(values: np.ndarray) -> tuple[float, float]:
+    """Return the 2nd-98th percentile of the finite values."""
 
-    if mode == "metamodel" and var in style.metamodel_vlims:
-        return style.metamodel_vlims[var]
     finite = values[np.isfinite(values)]
     if finite.size == 0:
         return 0.0, 1.0
@@ -379,7 +429,7 @@ def _plot_domain_panel(
         )
         vals = np.asarray(values.values, dtype=float)
         if np.isfinite(vals).any():
-            vmin, vmax = _color_limits(map_variable, vals, mode, style)
+            vmin, vmax = _color_limits(vals)
             mesh = ax.tripcolor(
                 map_triangulation(map_ds),
                 vals,
@@ -442,6 +492,12 @@ def _plot_domain_panel(
             if h > 0:
                 _draw_dir_arrow(ax, lon, lat, d, extent)
 
+    wind = read_case_wind(ctx, extent)
+    if wind is not None:
+        from ...core.plotting.wind import plot_wind_arrows
+
+        plot_wind_arrows(ax, *wind)
+
     if his_ds is not None:
         ax.scatter(
             his_ds["station_x"].values,
@@ -473,7 +529,7 @@ def _plot_site_panel(
     background(ax, extent, panel="site", has_map=False)
     vals = np.asarray(values.values, dtype=float)
     ok = np.isfinite(vals)
-    vmin, vmax = _color_limits(var, vals, mode, style)
+    vmin, vmax = _color_limits(vals)
     sc = ax.scatter(
         his_ds["station_x"].values.astype(float)[ok],
         his_ds["station_y"].values.astype(float)[ok],
@@ -494,12 +550,16 @@ def _plot_site_panel(
     _add_colorbar(ax, sc, vmin, vmax, fraction=0.05)
 
 
-def _subtitle(ctx: CaseContext, mode: str, time_index: int, has_map: bool) -> str:
+def _subtitle(
+    ctx: CaseContext, mode: str, time_index: int, has_map: bool, extent: Extent | None = None
+) -> str:
     """One-line forcing summary."""
 
     parts: list[str] = []
     if mode == "metamodel":
-        parts.append(f"hs=1 @bnd{active_boundary_node(ctx.case_dir, time_index) + 1}")
+        node = active_boundary_node(ctx.case_dir, time_index)
+        _, hs = _forcing_row(ctx.case_dir, "hs", time_index)
+        parts.append(f"hs={hs[node]:.3g}m @bnd{node + 1}")
         for var, unit in (("tp", "s"), ("dir", "°"), ("spr", "°"), ("wl", "m")):
             if (ctx.case_dir / FORCING_FILES[var]).exists():
                 _, vals = _forcing_row(ctx.case_dir, var, time_index)
@@ -511,9 +571,22 @@ def _subtitle(ctx: CaseContext, mode: str, time_index: int, has_map: bool) -> st
                 parts.append(
                     f"{var}=[{np.nanmin(vals):.3g}, {np.nanmax(vals):.3g}] @t={t:g}s"
                 )
+    wind = wind_summary(read_case_wind(ctx, extent))
+    if wind:
+        parts.append(wind)
     parts.append("map=yes" if has_map else "map=no")
 
-    return "  ·  ".join(parts)
+    # two lines when long, so the figure does not cut it
+    lines, line = [], ""
+    for part in parts:
+        candidate = f"{line}  ·  {part}" if line else part
+        if line and len(candidate) > 110:
+            lines.append(line)
+            candidate = part
+        line = candidate
+    lines.append(line)
+
+    return "\n".join(lines)
 
 
 def plot_case(
@@ -618,13 +691,13 @@ def plot_case(
     fig.text(
         0.5,
         0.94,
-        _subtitle(ctx, mode, time_index, map_ds is not None),
+        _subtitle(ctx, mode, time_index, map_ds is not None, extent),
         ha="center",
         va="top",
         fontsize=10,
         color="#444444",
     )
-    fig.subplots_adjust(top=0.90)
+    fig.subplots_adjust(top=0.875)
     ax_map.set_xlim(extent[0], extent[1])
     ax_map.set_ylim(extent[2], extent[3])
     ax_map.set_aspect("equal", adjustable="datalim")

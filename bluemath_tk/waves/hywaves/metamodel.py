@@ -1,9 +1,9 @@
 """
 HyWaves metamodel for one goal: MDA -> per-variable PCA -> stacked exact GP.
 
-Training data are stationary SnapWave runs from one goal (unit offshore Hs,
-sampled Tp/Dir/Spr/WL), on ``(case_num, sites)``. The metamodel maps offshore
-forcing to nearshore fields:
+Training data are stationary SnapWave runs from one goal (sampled Hs, Tp, Dir,
+Spr and WL), on ``(case_num, sites)``. The metamodel maps offshore forcing to
+nearshore fields, ``hs`` included, in absolute terms:
 
 1. :func:`detect_removed_sites` / :func:`drop_sites` - optional site filter.
 2. :func:`fit_mda` - MDA centroids of the forcing are the training cases (the
@@ -15,9 +15,8 @@ forcing to nearshore fields:
    (:data:`MIN_HS`, :data:`MIN_DIRECTIONAL_SPREAD_DEG`).
 
 Offshore hindcasts enter through :func:`goal_forcing` (bulk or one spectral
-partition) and :func:`valid_timesteps`; predicted ``hs`` is a transfer
-coefficient, scaled by the offshore Hs before summing goals (see
-:mod:`.reconstruction`).
+partition, Hs included) and :func:`valid_timesteps`; the predicted fields of
+every goal and partition are then summed (see :mod:`.reconstruction`).
 
 ``vars_to_predict`` maps each output variable to ``"raw"`` (passed through
 from the forcing, e.g. ``tp``) or ``{"vars_to_stack": [...], "pca_variance": f}``.
@@ -50,11 +49,10 @@ BULK_PARTITION = -1
 # the reconstructed spectrum (and any average over it) into inf/NaN.
 MIN_DIRECTIONAL_SPREAD_DEG = 1.0
 
-# Predicted ``hs`` is a per-goal transfer coefficient (scaled by offshore Hs),
-# so it cannot be negative. The PCA inverse can still return small negative
-# values at calm, sheltered sites (down to about -0.18 at Netherlands 5 m
-# sites). Flooring keeps them as near-zero estimates and stops them adding
-# spurious energy when goals are summed.
+# Predicted ``hs`` cannot be negative, but the PCA inverse can still return
+# small negative values at calm, sheltered sites. Flooring keeps them as
+# near-zero estimates and stops them adding spurious energy when goals are
+# summed.
 MIN_HS = 0.0
 
 #: Default PCA NaN handling: fraction of NaN cases above which a site is
@@ -76,15 +74,23 @@ def detect_removed_sites(
     cases: xr.Dataset, site_filter: Mapping[str, float]
 ) -> list[str]:
     """
-    Sites whose training fields break a ``{var}_max`` / ``{var}_min`` rule.
+    Sites whose training fields break a site-filter rule in any case.
+
+    Rules, keyed ``{var}_{rule}``:
+
+    - ``{var}_max`` / ``{var}_min``: absolute bounds, e.g. ``{"tp_min": 0.5}``
+      drops sites where ``tp`` is below 0.5 in any case.
+    - ``{var}_ratio_max``: bound on ``var / {var}_forcing`` (the case forcing),
+      e.g. ``{"hs_ratio_max": 3}`` drops sites where ``hs`` exceeds three
+      times the offshore Hs of a case (numerical anomalies).
 
     Parameters
     ----------
     cases : xr.Dataset
-        SnapWave cases on ``(case_num, sites)``.
+        SnapWave cases on ``(case_num, sites)``, with ``{var}_forcing`` for the
+        ratio rules.
     site_filter : mapping
-        e.g. ``{"hs_max": 1.5}`` drops sites where ``hs`` exceeds 1.5 in any
-        case; ``{"tp_min": 0}`` drops sites where ``tp`` is below 0 in any case.
+        Rule -> threshold.
 
     Returns
     -------
@@ -94,17 +100,26 @@ def detect_removed_sites(
 
     bad: set[str] = set()
     for key, threshold in site_filter.items():
-        if key.endswith("_max"):
-            var, op = key[:-4], "max"
-        elif key.endswith("_min"):
-            var, op = key[:-4], "min"
+        if key.endswith("_ratio_max"):
+            var, rule = key[: -len("_ratio_max")], "ratio_max"
         else:
-            logger.warning("Ignoring site_filter key %r (expected {var}_max/_min)", key)
+            var, _, rule = key.rpartition("_")
+        if rule not in ("max", "min", "ratio_max"):
+            logger.warning(
+                "Ignoring site_filter key %r (expected {var}_max, _min or _ratio_max)",
+                key,
+            )
             continue
         if var not in cases.data_vars:
             logger.warning("site_filter %r: variable %r not in cases", key, var)
             continue
-        if op == "max":
+        if rule == "ratio_max":
+            if f"{var}_forcing" not in cases.data_vars:
+                logger.warning("site_filter %r: %s_forcing not in cases", key, var)
+                continue
+            agg = (cases[var] / cases[f"{var}_forcing"]).max("case_num")
+            offenders = agg.where(agg > float(threshold), drop=True)
+        elif rule == "max":
             agg = cases[var].max("case_num")
             offenders = agg.where(agg > float(threshold), drop=True)
         else:
@@ -490,9 +505,9 @@ def predict_fields(
 
 def goal_forcing(
     offshore_goal: xr.Dataset, partition: int = BULK_PARTITION, wl: float = 0.0
-) -> tuple[pd.DataFrame, xr.DataArray]:
+) -> pd.DataFrame:
     """
-    Metamodel forcing and offshore Hs of one goal, bulk or one partition.
+    Metamodel forcing of one goal, bulk or one partition.
 
     Parameters
     ----------
@@ -506,9 +521,8 @@ def goal_forcing(
 
     Returns
     -------
-    tuple[pd.DataFrame, xr.DataArray]
-        Forcing (``tp``, ``dir``, ``spr``, ``wl``) indexed by time, and the
-        offshore Hs that scales the predicted transfer coefficient.
+    pd.DataFrame
+        Forcing (``hs``, ``tp``, ``dir``, ``spr``, ``wl``) indexed by time.
     """
 
     if "seapoint" in offshore_goal.coords:
@@ -520,30 +534,27 @@ def goal_forcing(
         part = offshore_goal[[f"phs{i}", f"ptp{i}", f"pdir{i}", f"pspr{i}"]].rename(
             {f"phs{i}": "hs", f"ptp{i}": "tp", f"pdir{i}": "dir", f"pspr{i}": "spr"}
         )
-    df = part[["tp", "dir", "spr"]].to_dataframe()
+    df = part[["hs", "tp", "dir", "spr"]].to_dataframe()
     df["wl"] = wl
 
-    return df, part["hs"]
+    return df
 
 
 def valid_timesteps(
     forcing: pd.DataFrame,
-    hs_offshore: xr.DataArray,
-    partition: int,
-    required_columns: Iterable[str] = ("tp", "dir", "spr"),
+    required_columns: Iterable[str] = ("hs", "tp", "dir", "spr"),
     sector: tuple[float, float] | None = None,
 ) -> pd.Series:
     """
     Time steps the metamodel can reconstruct for one goal and partition.
 
+    Steps with a missing required column or without energy (``hs <= 0``, e.g.
+    an empty spectral partition) are dropped.
+
     Parameters
     ----------
     forcing : pd.DataFrame
         Output of :func:`goal_forcing`.
-    hs_offshore : xr.DataArray
-        Offshore Hs of the same partition.
-    partition : int
-        For spectral partitions, steps without energy (``hs <= 0``) are dropped.
     required_columns : iterable of str, optional
         Forcing columns that must be finite.
     sector : tuple[float, float], optional
@@ -557,19 +568,10 @@ def valid_timesteps(
     """
 
     valid = forcing[list(required_columns)].notna().all(axis=1)
+    valid &= forcing["hs"].fillna(0) > 0
     if sector is not None:
         valid &= pd.Series(
             in_nautical_sector(forcing["dir"].to_numpy(), *sector), index=forcing.index
         )
-    if partition == BULK_PARTITION:
-        return valid
 
-    row_dim = forcing.index.name or "time"
-    hs = (
-        hs_offshore
-        if hs_offshore.dims[0] == row_dim
-        else hs_offshore.rename({hs_offshore.dims[0]: row_dim})
-    )
-    hs_pos = hs.reindex({row_dim: forcing.index}).fillna(0).values > 0
-
-    return valid & hs_pos
+    return valid

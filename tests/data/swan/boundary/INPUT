@@ -1,0 +1,13 @@
+PROJECT 'test' '{{ "%04d" % case_num }}'
+MODE STATIONARY TWODIMENSIONAL
+COORDINATES SPHERICAL CCM
+SET LEVEL={{ wl }} NAUTICAL
+CGRID UNSTRUCTURED CIRCLE 36 0.03 1.0 36
+READGRID UNSTRUCTURED ADCIRC
+BOUND SHAPE JONSWAP 3.3 PEAK DSPR DEGREES
+BOUNDSPEC SIDE {{ boundary_side }} VARIABLE PAR &
+{% for row in boundary_par %}    {{ row }}{% if not loop.last %} &{% endif %}
+{% endfor %}POINTS 'sites' FILE '{{ points_file }}'
+TABLE 'sites' NOHEAD '{{ table_file }}' {{ table_quantities }}
+COMPUTE
+STOP

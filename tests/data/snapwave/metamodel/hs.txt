@@ -1,2 +1,2 @@
-   0 {% for n in range(n_nodes) %} {{ 1 if n == active_node - 1 else 0 }}{% endfor %}
-3600 {% for n in range(n_nodes) %} {{ 1 if n == active_node - 1 else 0 }}{% endfor %}
+   0 {% for n in range(n_nodes) %} {{ hs if n == active_node - 1 else 0 }}{% endfor %}
+3600 {% for n in range(n_nodes) %} {{ hs if n == active_node - 1 else 0 }}{% endfor %}

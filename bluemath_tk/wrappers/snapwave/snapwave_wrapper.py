@@ -9,8 +9,8 @@ over the mesh (``map_file``).
 Two flavours share the same case setup:
 
 - :class:`SnapWaveMetaModelWrapper`: stationary cases sampled from a design
-  (e.g. LHS), with unit Hs on one active boundary node. Postprocessed on a
-  ``case_num`` dimension, for building a metamodel.
+  (e.g. LHS), with the case Hs on one active boundary node. Postprocessed on
+  a ``case_num`` dimension, for building a metamodel.
 - :class:`SnapWaveDynamicModelWrapper`: one case per time step of a boundary
   forcing time series (see
   :func:`~bluemath_tk.wrappers.snapwave.snapwave_utils.boundary_time_series`).
@@ -160,7 +160,7 @@ class SnapWaveModelWrapper(BaseModelWrapper):
         store_parameters : tuple of str, optional
             Scalar case parameters stored in each postprocessed case as
             ``f"{name}_forcing"`` variables along the case dimension (e.g.
-            ``("tp", "dir", "spr", "wl")`` for metamodel training data).
+            ``("hs", "tp", "dir", "spr", "wl")`` for metamodel training data).
         """
 
         super().__init__(
@@ -479,15 +479,20 @@ class SnapWaveModelWrapper(BaseModelWrapper):
 
 class SnapWaveMetaModelWrapper(SnapWaveModelWrapper):
     """
-    Stationary SnapWave cases for a metamodel (e.g. LHS over Tp, Dir, Spr, WL).
+    Stationary SnapWave cases for a metamodel (e.g. LHS over Hs, Tp, Dir, Spr, WL).
 
-    Metamodel templates are expected to apply unit Hs at the
+    Metamodel templates are expected to apply the case ``hs`` at the
     ``active_node`` (1-based) case parameter and zero elsewhere, with the
     case's ``tp``, ``dir``, ``spr`` and ``wl`` at every node. Each case is
     postprocessed to a single ``case_num`` row.
     """
 
     default_parameters = {
+        "hs": {
+            "type": _NUMBER,
+            "value": None,
+            "description": "Significant wave height at the active node (m).",
+        },
         "tp": {"type": _NUMBER, "value": None, "description": "Peak period (s)."},
         "dir": {
             "type": _NUMBER,
@@ -503,7 +508,7 @@ class SnapWaveMetaModelWrapper(SnapWaveModelWrapper):
         "active_node": {
             "type": (int, np.integer),
             "value": None,
-            "description": "1-based boundary node with unit Hs.",
+            "description": "1-based boundary node where the case Hs is applied.",
         },
         "save_map": _SAVE_MAP,
     }
@@ -607,6 +612,15 @@ class SnapWaveDynamicModelWrapper(SnapWaveModelWrapper):
     dynamic templates are expected to read ``tref`` and the
     per-node ``hs_nodes``, ``tp_nodes``, ``dir_nodes``, ``spr_nodes`` (and
     optional ``wl_nodes``) lists.
+
+    Wind, for templates that switch it on when ``u10`` is set (SnapWave turns
+    wind on for any ``u10`` other than 0; use a build with the wind fixes,
+    e.g. the GeoOcean module ``snapwave/b663c81-wind1``):
+
+    - a wind field (``wind``): each case gets the field at its ``tref`` as
+      sample files, and ``u10`` / ``u10dir`` in the context are their names;
+    - a uniform wind: scalar ``u10`` (m/s) and ``u10dir`` (deg, nautical,
+      coming from) case parameters.
     """
 
     default_parameters = {
@@ -623,5 +637,57 @@ class SnapWaveDynamicModelWrapper(SnapWaveModelWrapper):
             }
             for var in ("hs", "tp", "dir", "spr", "wl")
         },
+        "u10": {
+            "type": _NUMBER,
+            "value": None,
+            "description": "Uniform 10 m wind speed (m/s); 0 = no wind.",
+        },
+        "u10dir": {
+            "type": _NUMBER,
+            "value": None,
+            "description": "Uniform wind direction (deg, nautical, coming from).",
+        },
         "save_map": _SAVE_MAP,
     }
+
+    def __init__(self, *args, wind: xr.Dataset | None = None, **kwargs) -> None:
+        """
+        Initialise the dynamic wrapper.
+
+        Parameters
+        ----------
+        *args, **kwargs
+            See :class:`SnapWaveModelWrapper`.
+        wind : xr.Dataset, optional
+            ``u10`` and ``v10`` (m/s) on ``(time, latitude, longitude)``
+            covering the mesh and the cases' times (see
+            :func:`~bluemath_tk.waves.wind.wind_field_at`). Default is None.
+        """
+
+        self.wind = wind
+        super().__init__(*args, **kwargs)
+
+    def build_case(self, case_context: dict, case_dir: str) -> None:
+        """
+        As :meth:`SnapWaveModelWrapper.build_case`, plus the wind sample files.
+
+        Parameters
+        ----------
+        case_context : dict
+            Case parameters; with :attr:`wind`, ``u10`` and ``u10dir`` are set
+            to the sample file names.
+        case_dir : str
+            Case folder.
+        """
+
+        super().build_case(case_context, case_dir)
+        if self.wind is None:
+            return
+
+        from ...waves.wind import wind_field_at
+        from .snapwave_utils import write_wind_samples
+
+        time = pd.to_datetime(case_context["tref"], format="%Y%m%d %H%M%S")
+        speed, direction = write_wind_samples(case_dir, wind_field_at(self.wind, time))
+        case_context["u10"] = speed.name
+        case_context["u10dir"] = direction.name

@@ -189,6 +189,56 @@ def write_points_to_txt(points: np.ndarray, out_path: str | Path) -> Path:
     return out_path
 
 
+def write_wind_samples(
+    case_dir: str | Path,
+    wind: xr.Dataset,
+    speed_filename: str = "u10.txt",
+    direction_filename: str = "u10dir.txt",
+) -> tuple[Path, Path]:
+    """
+    Write a wind field as SnapWave ``u10`` / ``u10dir`` sample files (``x y value``).
+
+    SnapWave interpolates the samples onto the mesh (0 outside the sample
+    cloud, so the field must cover the whole mesh) and the directions
+    linearly in degrees before converting them. Directions are therefore
+    written continuous around the field's vector-mean direction (e.g. 350 and
+    370, not 350 and 10), which interpolates correctly for any field
+    spanning less than 180 degrees.
+
+    Parameters
+    ----------
+    case_dir : str or Path
+        Case folder.
+    wind : xr.Dataset
+        ``u10`` and ``v10`` (m/s) on ``(latitude, longitude)`` (see
+        :func:`bluemath_tk.waves.wind.wind_field_at`).
+    speed_filename, direction_filename : str, optional
+        File names, referenced as ``u10`` / ``u10dir`` in ``snapwave.inp``.
+
+    Returns
+    -------
+    tuple[Path, Path]
+        The speed and direction files.
+    """
+
+    from ...waves.wind import wind_speed_direction
+
+    lon, lat = np.meshgrid(wind["longitude"].values, wind["latitude"].values)
+    u10 = wind["u10"].transpose("latitude", "longitude").values
+    v10 = wind["v10"].transpose("latitude", "longitude").values
+    speed, direction = wind_speed_direction(u10, v10)
+    _, mean_dir = wind_speed_direction(np.nanmean(u10), np.nanmean(v10))
+    direction = mean_dir + np.mod(direction - mean_dir + 180.0, 360.0) - 180.0
+
+    paths = []
+    for name, values in [(speed_filename, speed), (direction_filename, direction)]:
+        path = Path(case_dir) / name
+        np.savetxt(path, np.c_[lon.ravel(), lat.ravel(), values.ravel()], fmt="%.5f")
+        paths.append(path)
+
+    return paths[0], paths[1]
+
+
 # ---------------------------------------------------------------------------
 # Reading case folders
 # ---------------------------------------------------------------------------

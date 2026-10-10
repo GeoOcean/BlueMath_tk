@@ -20,6 +20,7 @@ from .snapwave_utils import (
     read_his_file,
     write_points_to_txt,
     write_polygon_vertices_to_txt,
+    write_wind_samples,
 )
 from .snapwave_wrapper import (
     SnapWaveDynamicModelWrapper,
@@ -44,4 +45,5 @@ __all__ = [
     "read_his_file",
     "write_points_to_txt",
     "write_polygon_vertices_to_txt",
+    "write_wind_samples",
 ]
