@@ -1,3 +1,6 @@
+import json
+import os
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -132,6 +135,96 @@ class DownloadResult:
             self.skipped_files.append(file_path)
         if reason:
             self.metadata.setdefault("skip_reasons", {})[file_path] = reason
+
+    def merge(self, other: "DownloadResult") -> "DownloadResult":
+        """
+        Add the files, errors and metadata of another result to this one.
+
+        Dictionary metadata (e.g. skip reasons) are merged, other values replaced.
+
+        Parameters
+        ----------
+        other : DownloadResult
+            The result to merge into this one.
+
+        Returns
+        -------
+        DownloadResult
+            This result, updated.
+        """
+        for file_path in other.downloaded_files:
+            self.add_downloaded(file_path)
+        for file_path in other.skipped_files:
+            if file_path not in self.skipped_files:
+                self.skipped_files.append(file_path)
+        for file_path in other.error_files:
+            if file_path not in self.error_files:
+                self.error_files.append(file_path)
+        self.errors.extend(other.errors)
+        for key, value in other.metadata.items():
+            if isinstance(value, dict):
+                self.metadata.setdefault(key, {}).update(value)
+            else:
+                self.metadata[key] = value
+        return self
+
+    def save(self, file_path: str) -> None:
+        """
+        Save the result as JSON (e.g. to keep a log of automated runs).
+
+        Parameters
+        ----------
+        file_path : str
+            Path of the JSON file to write.
+        """
+        os.makedirs(os.path.dirname(file_path) or ".", exist_ok=True)
+        with open(file_path, "w") as f:
+            json.dump(self.to_dict(), f, indent=2, default=str)
+
+    def summary(self, max_errors: int = 20) -> str:
+        """
+        Multi-line report: counts, skip reasons, size to download and errors.
+
+        Parameters
+        ----------
+        max_errors : int, optional
+            Maximum number of errors listed. Default is 20.
+
+        Returns
+        -------
+        str
+            The report.
+        """
+        lines = [
+            str(self),
+            f"  downloaded: {len(self.downloaded_files)}",
+            f"  skipped:    {len(self.skipped_files)}",
+            f"  errors:     {len(self.error_files)}",
+        ]
+        reasons = Counter(self.metadata.get("skip_reasons", {}).values())
+        for reason, count in reasons.most_common():
+            lines.append(f"    {count:6d} x {reason}")
+
+        remote_sizes = self.metadata.get("remote_sizes", {})
+        pending = [
+            path
+            for path, reason in self.metadata.get("skip_reasons", {}).items()
+            if "dry run" in reason
+        ]
+        if pending and remote_sizes:
+            total = sum(remote_sizes.get(path, 0) for path in pending)
+            lines.append(
+                f"  to download: {total / 1e9:,.1f} GB in {len(pending)} files"
+            )
+
+        for error in self.errors[:max_errors]:
+            lines.append(f"  ERROR {error['file']}: {error['error']}")
+        if len(self.errors) > max_errors:
+            lines.append(f"  ... and {len(self.errors) - max_errors} more errors")
+        if self.duration_seconds is not None:
+            lines.append(f"  duration: {self.duration_seconds / 3600:.2f} h")
+
+        return "\n".join(lines)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert the result to a dictionary."""

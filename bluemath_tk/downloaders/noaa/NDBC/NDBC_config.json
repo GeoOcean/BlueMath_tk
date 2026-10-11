@@ -13,17 +13,6 @@
                 "buoy_id",
                 "year"
             ]
-        },
-        "forecast_data": {
-            "name": "NOAA GFS Forecast Data",
-            "description": "GFS 0.25 degree forecast data",
-            "base_url": "https://nomads.ncep.noaa.gov/dods/gfs_0p25_1hr",
-            "template": {
-                "date": null
-            },
-            "mandatory_fields": [
-                "date"
-            ]
         }
     },
     "data_types": {
@@ -94,21 +83,6 @@
                     "name": "c11",
                     "url_pattern": "historical/swden/{buoy_id}w{year}.txt.gz"
                 }
-            }
-        },
-        "wind_forecast": {
-            "name": "wind_forecast",
-            "long_name": "GFS Wind Forecast",
-            "description": "Wind speed and direction forecast from GFS model",
-            "dataset": "forecast_data",
-            "file_format": "netcdf",
-            "variables": [
-                "ugrd10m",
-                "vgrd10m"
-            ],
-            "output_variables": {
-                "u10": "ugrd10m",
-                "v10": "vgrd10m"
             }
         }
     }

@@ -1,15 +1,32 @@
-import json
-import os
+"""
+Downloader for ECMWF Open Data forecasts, through ``ecmwf-opendata``.
 
+Products (configs in ``ecmwf/<PRODUCT>/<PRODUCT>_config.json``):
+
+- OpenData: IFS and AIFS real-time forecasts.
+"""
+
+import os
+from datetime import date, datetime, timedelta
+from typing import Any, Dict
+
+import pandas as pd
 from ecmwf.opendata import Client
 
-from .._base_downloaders import BaseDownloader
+from .._base_downloaders import BaseDownloader, load_config
 from .._download_result import DownloadResult
+
+_HERE = os.path.dirname(__file__)
 
 
 class ECMWFDownloader(BaseDownloader):
     """
-    This is the main class to download data from the ECMWF.
+    Downloader for ECMWF Open Data real-time forecasts.
+
+    Each call downloads one GRIB2 file for one forecast run, saved to
+    base_path_to_download/product/dataset/model/resolution/<YYYYMMDDHH>/
+    <params>_<steps>_<type>.grib2, so files of different runs never overwrite
+    each other. Without ``date``, the latest available run is used.
 
     Examples
     --------
@@ -17,7 +34,8 @@ class ECMWFDownloader(BaseDownloader):
     ...     product="OpenData",
     ...     base_path_to_download="./ecmwf_data",
     ...     model="ifs",
-    ...     resolution="0p25"
+    ...     resolution="0p25",
+    ...     source="aws",
     ... )
     >>> result = downloader.download_data(
     ...     dataset="forecast_data",
@@ -30,13 +48,7 @@ class ECMWFDownloader(BaseDownloader):
     """
 
     products_configs = {
-        "OpenData": json.load(
-            open(
-                os.path.join(
-                    os.path.dirname(__file__), "OpenData", "OpenData_config.json"
-                )
-            )
-        )
+        "OpenData": load_config(_HERE, "OpenData", "OpenData_config.json"),
     }
 
     def __init__(
@@ -45,7 +57,9 @@ class ECMWFDownloader(BaseDownloader):
         base_path_to_download: str,
         model: str = "ifs",
         resolution: str = "0p25",
+        source: str = "ecmwf",
         debug: bool = True,
+        **kwargs,
     ) -> None:
         """
         Initialize the ECMWFDownloader.
@@ -60,8 +74,14 @@ class ECMWFDownloader(BaseDownloader):
             The model to download data from (e.g., "ifs", "aifs"). Default is "ifs".
         resolution : str, optional
             The resolution to download data from (e.g., "0p25"). Default is "0p25".
+        source : str, optional
+            Where to download from: "ecmwf" (the ECMWF portal, limited to 500
+            simultaneous connections) or one of its mirrors "aws", "azure",
+            "google". Default is "ecmwf".
         debug : bool, optional
             If True, sets logger to DEBUG level. Default is True.
+        **kwargs
+            Passed to BaseDownloader (e.g., retries, retry_backoff).
 
         Raises
         ------
@@ -70,15 +90,11 @@ class ECMWFDownloader(BaseDownloader):
         """
 
         super().__init__(
-            product=product, base_path_to_download=base_path_to_download, debug=debug
+            product=product,
+            base_path_to_download=base_path_to_download,
+            debug=debug,
+            **kwargs,
         )
-
-        self._product_config = self.products_configs.get(product)
-        if self._product_config is None:
-            available_products = list(self.products_configs.keys())
-            raise ValueError(
-                f"{product} configuration not found. Available products: {available_products}"
-            )
 
         self.set_logger_name(
             f"ECMWFDownloader-{product}", level="DEBUG" if debug else "INFO"
@@ -94,9 +110,8 @@ class ECMWFDownloader(BaseDownloader):
             raise ValueError(
                 f"Resolution {resolution} not supported for {self.product}"
             )
-        # Always initialize client (will skip API calls in dry_run mode)
         self._client = Client(
-            source="ecmwf",
+            source=source,
             model=model,
             resol=resolution,
             preserve_request_order=False,
@@ -104,21 +119,9 @@ class ECMWFDownloader(BaseDownloader):
         )
         self.logger.info(f"---- ECMWF DOWNLOADER INITIALIZED ({product}) ----")
 
-        # Set the model and resolution parameters
         self.model = model
         self.resolution = resolution
-
-    @property
-    def product_config(self) -> dict:
-        """
-        Product configuration dictionary loaded from config file.
-
-        Returns
-        -------
-        dict
-            Product configuration dictionary.
-        """
-        return self._product_config
+        self.source = source
 
     @property
     def client(self) -> Client:
@@ -132,43 +135,6 @@ class ECMWFDownloader(BaseDownloader):
         """
         return self._client
 
-    def download_data(
-        self,
-        dry_run: bool = True,
-        *args,
-        **kwargs,
-    ) -> DownloadResult:
-        """
-        Download data for the product.
-
-        Routes to product-specific download methods based on the product type.
-
-        Parameters
-        ----------
-        dry_run : bool, optional
-            If True, only check what would be downloaded without actually downloading.
-            Default is True.
-        *args
-            Arguments passed to product-specific download method.
-        **kwargs
-            Keyword arguments passed to product-specific download method.
-
-        Returns
-        -------
-        DownloadResult
-            Result with information about downloaded, skipped, and error files.
-
-        Raises
-        ------
-        ValueError
-            If the product is not supported.
-        """
-
-        if self.product == "OpenData":
-            return self.download_data_open_data(dry_run=dry_run, *args, **kwargs)
-        else:
-            raise ValueError(f"Download for product {self.product} not supported")
-
     def download_data_open_data(
         self,
         dataset: str,
@@ -179,8 +145,10 @@ class ECMWFDownloader(BaseDownloader):
         """
         Download data for the OpenData product.
 
-        Downloads files based on the specified parameters. Files are saved to:
-        base_path_to_download/product/dataset/model/resolution/filename.grib2
+        Downloads one GRIB2 file with the requested parameters and steps of one
+        forecast run. Files are saved to:
+        base_path_to_download/product/dataset/model/resolution/<YYYYMMDDHH>/
+        <params>_<steps>_<type>.grib2
 
         Parameters
         ----------
@@ -193,7 +161,10 @@ class ECMWFDownloader(BaseDownloader):
             If True, only check what would be downloaded. Default is True.
         **kwargs
             Keyword arguments passed to the ECMWF client retrieve method
-            (e.g., param, step, type).
+            (e.g., param, step, type). ``date`` (YYYYMMDD, a datetime, or 0, -1,
+            ... for days before today) and ``time`` (run hour) select the
+            forecast run; without ``date`` the latest run is used. Finding the
+            latest run needs a request to the server, also in dry runs.
 
         Returns
         -------
@@ -214,64 +185,66 @@ class ECMWFDownloader(BaseDownloader):
 
         result = self.create_download_result()
 
-        try:
-            # Extract parameters from kwargs
-            if "param" in kwargs:
-                variables = kwargs["param"]
-            else:
-                variables = []
-            if "step" in kwargs:
-                steps = kwargs["step"]
-                if not isinstance(steps, list):
-                    steps = [steps]
-            else:
-                steps = []
-            if "type" in kwargs:
-                type = kwargs["type"]
-            else:
-                type = "fc"
+        # Pin the forecast run, so the file always matches its path
+        run = self._get_run_datetime(kwargs)
+        kwargs["date"] = run.strftime("%Y%m%d")
+        kwargs["time"] = run.hour
 
-            # Construct output file path: base_path/product/dataset/model/resolution/filename.grib2
-            output_grib_file = os.path.join(
-                self.base_path_to_download,
-                self.product,
-                dataset,
-                self.model,
-                self.resolution,
-                f"{'_'.join(variables)}_{'_'.join(str(step) for step in steps)}_{type}.grib2",
-            )
+        variables = kwargs.get("param", [])
+        if not isinstance(variables, list):
+            variables = [variables]
+        steps = kwargs.get("step", [])
+        if not isinstance(steps, list):
+            steps = [steps]
+        type = kwargs.get("type", "fc")
 
-            # Skip if file already exists (unless force=True)
-            if not force and os.path.exists(output_grib_file):
-                result.add_skipped(output_grib_file, "Already downloaded")
-                return self.finalize_download_result(result)
+        output_grib_file = os.path.join(
+            self.base_path_to_download,
+            self.product,
+            dataset,
+            self.model,
+            self.resolution,
+            run.strftime("%Y%m%d%H"),
+            f"{'_'.join(variables)}_{'_'.join(str(step) for step in steps)}_{type}.grib2",
+        )
 
-            # Handle dry run: record as skipped without actual download
-            if dry_run:
-                result.add_skipped(output_grib_file, "Would download (dry run)")
-                return self.finalize_download_result(result)
+        def fetch(part_file: str) -> None:
+            self.client.retrieve(target=part_file, **kwargs)
 
-            # Attempt to download the file
-            try:
-                # Create local directory structure if needed
-                os.makedirs(os.path.dirname(output_grib_file), exist_ok=True)
+        self.fetch_file(output_grib_file, fetch, result, force=force, dry_run=dry_run)
 
-                # Download the file
-                self.logger.debug(f"Downloading: {output_grib_file}")
-                self.client.retrieve(
-                    target=output_grib_file,
-                    **kwargs,
-                )
+        return self.finalize_download_result(result)
 
-                result.add_downloaded(output_grib_file)
-                self.logger.info(f"Downloaded: {output_grib_file}")
+    def _get_run_datetime(self, request: Dict[str, Any]) -> datetime:
+        """
+        Date and hour of the forecast run selected by a request.
 
-            except Exception as e:
-                result.add_error(output_grib_file, e)
-                self.logger.error(f"Error downloading {output_grib_file}: {e}")
+        Parameters
+        ----------
+        request : Dict[str, Any]
+            Retrieve keyword arguments. ``date`` may be missing (latest run), an
+            integer (0 today, -1 yesterday, ...), "YYYYMMDD" or a date/datetime.
+            ``time`` is the run hour (default 0).
 
-            return self.finalize_download_result(result)
+        Returns
+        -------
+        datetime
+            The run date and hour.
+        """
 
-        except Exception as e:
-            result.add_error("download_operation", e)
-            return self.finalize_download_result(result)
+        run_date = request.get("date")
+        if run_date is None:
+            latest_request = {
+                key: value
+                for key, value in request.items()
+                if key not in ("date", "time")
+            }
+            return self.client.latest(**latest_request)
+
+        if isinstance(run_date, int) and run_date <= 0:
+            run_day = date.today() + timedelta(days=run_date)
+        else:
+            run_day = pd.Timestamp(str(run_date)).date()
+        hour = int(str(request.get("time", 0)).split(":")[0])
+
+        return datetime(run_day.year, run_day.month, run_day.day, hour)

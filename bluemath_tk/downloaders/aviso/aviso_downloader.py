@@ -1,38 +1,48 @@
+"""
+Downloader for AVISO+ altimetry products, served over FTP.
+
+Products (configs in ``aviso/<PRODUCT>/<PRODUCT>_config.json``):
+
+- SWOT: SWOT L2/L3 KaRIn expert products, one directory per cycle.
+"""
+
 import ftplib
-import json
 import os
+import posixpath
 from typing import List, Optional
 
-from .._base_downloaders import BaseDownloader
+from .._base_downloaders import BaseDownloader, load_config
 from .._download_result import DownloadResult
+
+_HERE = os.path.dirname(__file__)
 
 
 class AvisoDownloader(BaseDownloader):
     """
-    Simple downloader for AVISO data.
+    Downloader for AVISO+ altimetry data, served over FTP (requires an account).
 
-    Downloads all available files from the FTP base path specified in the config.
+    Downloads all .nc files of the requested cycles of a dataset.
+    The FTP connection is opened on first use, re-opened after failures, and
+    closed with ``close()`` or when used as a context manager.
 
     Examples
     --------
-    >>> downloader = AvisoDownloader(
+    >>> with AvisoDownloader(
     ...     product="SWOT",
     ...     base_path_to_download="./swot_data",
     ...     username="your_username",
     ...     password="your_password"
-    ... )
-    >>> result = downloader.download_data(
-    ...     dataset="swot-l3-expert",
-    ...     cycles=["cycle_001"],
-    ...     force=False,
-    ...     dry_run=False
-    ... )
+    ... ) as downloader:
+    ...     result = downloader.download_data(
+    ...         dataset="swot-l3-expert",
+    ...         cycles=["cycle_001"],
+    ...         force=False,
+    ...         dry_run=False
+    ...     )
     """
 
     products_configs = {
-        "SWOT": json.load(
-            open(os.path.join(os.path.dirname(__file__), "SWOT", "SWOT_config.json"))
-        )
+        "SWOT": load_config(_HERE, "SWOT", "SWOT_config.json"),
     }
 
     def __init__(
@@ -42,6 +52,7 @@ class AvisoDownloader(BaseDownloader):
         username: str,
         password: str,
         debug: bool = True,
+        **kwargs,
     ) -> None:
         """
         Initialize the AvisoDownloader.
@@ -58,6 +69,8 @@ class AvisoDownloader(BaseDownloader):
             AVISO FTP password.
         debug : bool, optional
             If True, sets logger to DEBUG level. Default is True.
+        **kwargs
+            Passed to BaseDownloader (e.g., retries, retry_backoff).
 
         Raises
         ------
@@ -66,88 +79,57 @@ class AvisoDownloader(BaseDownloader):
         """
 
         super().__init__(
-            product=product, base_path_to_download=base_path_to_download, debug=debug
+            product=product,
+            base_path_to_download=base_path_to_download,
+            debug=debug,
+            **kwargs,
         )
-
-        self._product_config = self.products_configs.get(product)
-        if self._product_config is None:
-            raise ValueError(
-                f"Product '{product}' not found. Available: {list(self.products_configs.keys())}"
-            )
 
         self.set_logger_name(
             f"AvisoDownloader-{product}", level="DEBUG" if debug else "INFO"
         )
 
-        # Initialize FTP client
-        ftp_server = self._product_config.get("ftp_server")
-        if ftp_server is None:
+        self._ftp_server = self.product_config.get("ftp_server")
+        if self._ftp_server is None:
             raise ValueError("FTP server not found in product configuration")
-        self._client = ftplib.FTP(ftp_server)
-        self._client.login(username, password)
+        self._username = username
+        self._password = password
+        self._client: Optional[ftplib.FTP] = None
+        self._exclude_attributes.extend(["_client", "_password"])
 
         self.logger.info(f"---- AVISO DOWNLOADER INITIALIZED ({product}) ----")
 
-    @property
-    def product_config(self) -> dict:
-        """
-        Product configuration dictionary loaded from config file.
+    def __enter__(self) -> "AvisoDownloader":
+        return self
 
-        Returns
-        -------
-        dict
-            Product configuration dictionary.
-        """
-        return self._product_config
+    def __exit__(self, *exc) -> None:
+        self.close()
 
     @property
     def client(self) -> ftplib.FTP:
         """
-        FTP client connection (initialized and logged in).
+        FTP client connection, opened and logged in on first use.
 
         Returns
         -------
         ftplib.FTP
             FTP client instance.
         """
+        if self._client is None:
+            self._client = ftplib.FTP(self._ftp_server, timeout=120)
+            self._client.login(self._username, self._password)
         return self._client
 
-    def download_data(
-        self,
-        dry_run: bool = True,
-        *args,
-        **kwargs,
-    ) -> DownloadResult:
+    def close(self) -> None:
         """
-        Download data for the product.
-
-        Routes to product-specific download methods based on the product type.
-
-        Parameters
-        ----------
-        dry_run : bool, optional
-            If True, only check what would be downloaded without actually downloading.
-            Default is True.
-        *args
-            Arguments passed to product-specific download method.
-        **kwargs
-            Keyword arguments passed to product-specific download method.
-
-        Returns
-        -------
-        DownloadResult
-            Result with information about downloaded, skipped, and error files.
-
-        Raises
-        ------
-        ValueError
-            If the product is not supported.
+        Close the FTP connection, if open.
         """
-
-        if self.product == "SWOT":
-            return self.download_data_swot(dry_run=dry_run, *args, **kwargs)
-        else:
-            raise ValueError(f"Download for product {self.product} not supported")
+        if self._client is not None:
+            try:
+                self._client.quit()
+            except Exception:
+                self._client.close()
+            self._client = None
 
     def download_data_swot(
         self,
@@ -193,144 +175,73 @@ class AvisoDownloader(BaseDownloader):
 
         dataset_config = self.product_config["datasets"][dataset]
         ftp_base_path = dataset_config["ftp_base_path"]
+        if cycles is None:
+            cycles = dataset_config.get("cycles", [])
+            if not cycles:
+                raise ValueError(
+                    f"No cycles specified for dataset '{dataset}' and cycles parameter not provided"
+                )
+
+        self.logger.info(f"Downloading dataset: {dataset}, cycles: {cycles}")
         result = self.create_download_result()
 
-        try:
-            if cycles is None:
-                cycles = dataset_config.get("cycles", [])
-                if not cycles:
-                    raise ValueError(
-                        f"No cycles specified for dataset '{dataset}' and cycles parameter not provided"
-                    )
-
-            self.logger.info(f"Downloading dataset: {dataset}, cycles: {cycles}")
-
-            all_downloaded_files = []
-
-            for cycle in cycles:
-                files = self._list_all_files_in_cycle(ftp_base_path, cycle)
-                if not files:
-                    self.logger.warning(f"No files found in cycle {cycle}")
-                    continue
-
-                downloaded_files = self._download_files(
-                    files=files,
-                    dataset=dataset,
-                    ftp_base_path=ftp_base_path,
-                    cycle=cycle,
-                    force=force,
-                    dry_run=dry_run,
-                    result=result,
-                )
-                all_downloaded_files.extend(downloaded_files)
-
-            result.downloaded_files = all_downloaded_files
-            return self.finalize_download_result(result)
-
-        except Exception as e:
-            result.add_error("download_operation", e)
-            return self.finalize_download_result(result)
-
-    def _list_all_files_in_cycle(self, ftp_base_path: str, cycle: str) -> List[str]:
-        """
-        List all .nc files from a cycle directory on FTP server.
-
-        This method navigates to the specified FTP base path and then into the
-        cycle directory, lists its contents, and filters for files ending with '.nc'.
-        It assumes the current FTP connection is already logged in.
-
-        Parameters
-        ----------
-        ftp_base_path : str
-            FTP base path for the dataset (e.g., "/swot_products/l3_karin_nadir/l3_lr_ssh/v1_0/Expert/").
-        cycle : str
-            Cycle directory name (e.g., "cycle_001").
-
-        Returns
-        -------
-        List[str]
-            List of .nc filenames (without path) found in the cycle directory.
-        """
-
-        files = []
-        self._client.cwd(ftp_base_path)
-        self._client.cwd(cycle)
-        items = []
-        self._client.retrlines("LIST", items.append)
-        for item in items:
-            parts = item.split()
-            if len(parts) >= 9:
-                name = " ".join(parts[8:])
-                if name.endswith(".nc"):
-                    files.append(name)
-
-        return files
-
-    def _download_files(
-        self,
-        files: List[str],
-        dataset: str,
-        ftp_base_path: str,
-        cycle: str,
-        force: bool,
-        dry_run: bool,
-        result: DownloadResult,
-    ) -> List[str]:
-        """
-        Download all files from the list.
-
-        Files are saved to: base_path_to_download/dataset/cycle/filename.nc
-
-        Parameters
-        ----------
-        files : List[str]
-            List of filenames to download (without path).
-        dataset : str
-            Dataset name (used in local path, e.g., "swot-l3-expert").
-        ftp_base_path : str
-            FTP base path for the dataset (e.g., "/swot_products/l3_karin_nadir/l3_lr_ssh/v1_0/Expert/").
-        cycle : str
-            Cycle directory name (used in local path, e.g., "cycle_001").
-        force : bool
-            Force re-download even if file exists.
-        dry_run : bool
-            If True, only simulate download.
-        result : DownloadResult
-            Download result object to update.
-
-        Returns
-        -------
-        List[str]
-            List of local file paths for successfully downloaded files only.
-        """
-
-        downloaded_files = []
-
-        for filename in files:
-            local_path = os.path.join(
-                self.base_path_to_download, dataset, cycle, filename
-            )
-
-            if not force and os.path.exists(local_path):
-                result.add_skipped(local_path, "Already downloaded")
-                continue
-
-            if dry_run:
-                result.add_skipped(local_path, f"Would download {filename} (dry run)")
-                continue
-
+        for cycle in cycles:
+            remote_dir = posixpath.join(ftp_base_path, cycle)
             try:
-                os.makedirs(os.path.dirname(local_path), exist_ok=True)
-                self._client.cwd(ftp_base_path)
-                self._client.cwd(cycle)
-                with open(local_path, "wb") as f:
-                    self._client.retrbinary(f"RETR {filename}", f.write)
-                result.add_downloaded(local_path)
-                self.logger.info(f"Downloaded: {filename} -> {local_path}")
-                downloaded_files.append(local_path)
-
+                files = self._list_nc_files(remote_dir)
             except Exception as e:
-                result.add_error(local_path, e)
-                self.logger.error(f"Error downloading {filename}: {e}")
+                self.logger.error(f"Error listing {remote_dir}: {e}")
+                result.add_error(remote_dir, e)
+                continue
+            if not files:
+                self.logger.warning(f"No files found in cycle {cycle}")
+                continue
 
-        return downloaded_files
+            for filename in files:
+                local_path = os.path.join(
+                    self.base_path_to_download, dataset, cycle, filename
+                )
+                remote_path = posixpath.join(remote_dir, filename)
+
+                def fetch(part_file: str, remote_path: str = remote_path) -> None:
+                    try:
+                        with open(part_file, "wb") as f:
+                            self.client.retrbinary(f"RETR {remote_path}", f.write)
+                    except Exception:
+                        # The connection may be broken: reconnect on next attempt
+                        self.close()
+                        raise
+
+                self.fetch_file(local_path, fetch, result, force=force, dry_run=dry_run)
+
+        return self.finalize_download_result(result)
+
+    def _list_nc_files(self, remote_dir: str) -> List[str]:
+        """
+        List the .nc files (names only) in a directory of the FTP server.
+
+        Parameters
+        ----------
+        remote_dir : str
+            Absolute FTP directory (e.g., "/swot_products/.../Expert/cycle_001").
+
+        Returns
+        -------
+        List[str]
+            Sorted list of .nc filenames.
+        """
+
+        try:
+            names = self.client.nlst(remote_dir)
+        except ftplib.error_perm as e:
+            # Some servers answer "550 No files found" for empty directories
+            if str(e).startswith("550"):
+                return []
+            raise
+        except (ftplib.error_temp, OSError, EOFError):
+            self.close()
+            names = self.client.nlst(remote_dir)
+
+        return sorted(
+            {posixpath.basename(name) for name in names if name.endswith(".nc")}
+        )

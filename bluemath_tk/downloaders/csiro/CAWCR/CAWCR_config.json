@@ -1,0 +1,51 @@
+{
+    "description": "CAWCR Wave Hindcast, WAVEWATCH III forced by CFSR / CFSv2",
+    "fileserver_url": "https://data-cbr.csiro.au/thredds5/fileServer/catch_all/",
+    "opendap_url": "https://data-cbr.csiro.au/thredds5/dodsC/catch_all/",
+    "catalog_url": "https://data-cbr.csiro.au/thredds5/catalog/catch_all/",
+    "datasets": {
+        "gridded": {
+            "description": "Global 24 arc-minute grid, hourly, all variables in one file per month",
+            "remote_dir": "CMAR_CAWCR-Wave_archive/CAWCR_Wave_Hindcast_aggregate/gridded/",
+            "filename": "ww3.glob_24m.{year}{month:02d}.nc",
+            "local_dir": "CAWCR/CSIRO_partition",
+            "start": "1979-01",
+            "end": null,
+            "file_per_variable": false
+        },
+        "spec": {
+            "description": "Spectra at output stations, hourly, one file per month. The station list and variable names change in 2013-06.",
+            "remote_dir": "CMAR_CAWCR-Wave_archive/CAWCR_Wave_Hindcast_aggregate/spec/",
+            "filename": "ww3.{year}{month:02d}_spec.nc",
+            "local_dir": "CAWCR/CSIRO_spectra/{era}",
+            "eras": {
+                "1979": [
+                    "1979-01",
+                    "2013-05"
+                ],
+                "2013": [
+                    "2013-06",
+                    null
+                ]
+            },
+            "start": "1979-01",
+            "end": null,
+            "file_per_variable": false,
+            "point_dim": "station",
+            "drop_variables": [
+                "string16",
+                "station_name",
+                "frequency1",
+                "frequency2"
+            ],
+            "rename": {
+                "Efth": "efth",
+                "depth": "dpt",
+                "u10m": "wnd",
+                "udir": "wnddir",
+                "curr": "cur",
+                "currdir": "curdir"
+            }
+        }
+    }
+}
