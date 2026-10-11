@@ -110,6 +110,3 @@ test_data/
 TODO.md
 newsletter.py
 notion/
-
-# Tests
-tests/downloaders/

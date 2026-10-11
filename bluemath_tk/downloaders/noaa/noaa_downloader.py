@@ -1,18 +1,28 @@
+"""
+Downloader and readers for NOAA products.
+
+Products (configs in ``noaa/<PRODUCT>/<PRODUCT>_config.json``):
+
+- NDBC: National Data Buoy Center buoy data (bulk parameters, wave spectra,
+  directional spectra).
+
+The ``read_*`` functions read the files written by NOAADownloader.
+"""
+
 import gzip
 import io
-import json
 import os
-import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
 import pandas as pd
-import requests
-import xarray as xr
 
-from .._base_downloaders import BaseDownloader
+from .._base_downloaders import BaseDownloader, load_config
 from .._download_result import DownloadResult
+from .._transfer import RemoteFileNotFound, http_download, http_get, make_session
+
+_HERE = os.path.dirname(__file__)
 
 
 def read_bulk_parameters(
@@ -39,35 +49,38 @@ def read_bulk_parameters(
     if isinstance(years, int):
         years = [years]
 
-    all_data = []
-    for year in years:
-        file_path = os.path.join(
-            base_path,
-            "NDBC",
-            "buoy_data",
-            buoy_id,
-            f"buoy_{buoy_id}_bulk_parameters.csv",
-        )
-        try:
-            df = pd.read_csv(file_path)
-            df["datetime"] = pd.to_datetime(
-                df["YYYY"].astype(str)
-                + "-"
-                + df["MM"].astype(str).str.zfill(2)
-                + "-"
-                + df["DD"].astype(str).str.zfill(2)
-                + " "
-                + df["hh"].astype(str).str.zfill(2)
-                + ":"
-                + df["mm"].astype(str).str.zfill(2)
-            )
-            all_data.append(df)
-        except FileNotFoundError:
-            print(f"No bulk parameters file found for buoy {buoy_id} year {year}")
+    # All years of a buoy are stored in a single file
+    file_path = os.path.join(
+        base_path,
+        "NDBC",
+        "buoy_data",
+        buoy_id,
+        f"buoy_{buoy_id}_bulk_parameters.csv",
+    )
+    try:
+        df = pd.read_csv(file_path)
+    except FileNotFoundError:
+        print(f"No bulk parameters file found for buoy {buoy_id}")
+        return None
 
-    if all_data:
-        return pd.concat(all_data, ignore_index=True).sort_values("datetime")
-    return None
+    df = df[df["YYYY"].isin([int(year) for year in years])].copy()
+    if df.empty:
+        print(f"No bulk parameters found for buoy {buoy_id} years {years}")
+        return None
+
+    df["datetime"] = pd.to_datetime(
+        df["YYYY"].astype(str)
+        + "-"
+        + df["MM"].astype(str).str.zfill(2)
+        + "-"
+        + df["DD"].astype(str).str.zfill(2)
+        + " "
+        + df["hh"].astype(str).str.zfill(2)
+        + ":"
+        + df["mm"].astype(str).str.zfill(2)
+    )
+
+    return df.sort_values("datetime").reset_index(drop=True)
 
 
 def read_wave_spectra(
@@ -295,7 +308,10 @@ def read_directional_spectra(
 
 class NOAADownloader(BaseDownloader):
     """
-    This is the main class to download data from NOAA.
+    Downloader for NOAA NDBC buoy data.
+
+    Buoy data are saved per buoy under base_path_to_download/NDBC/buoy_data/
+    <buoy_id>/ and can be read back with the ``read_*`` functions of this module.
 
     Examples
     --------
@@ -314,9 +330,7 @@ class NOAADownloader(BaseDownloader):
     """
 
     products_configs = {
-        "NDBC": json.load(
-            open(os.path.join(os.path.dirname(__file__), "NDBC", "NDBC_config.json"))
-        )
+        "NDBC": load_config(_HERE, "NDBC", "NDBC_config.json"),
     }
 
     def __init__(
@@ -324,6 +338,7 @@ class NOAADownloader(BaseDownloader):
         product: str,
         base_path_to_download: str,
         debug: bool = True,
+        **kwargs,
     ) -> None:
         """
         Initialize the NOAA downloader.
@@ -336,6 +351,8 @@ class NOAADownloader(BaseDownloader):
             The base path to download the data to.
         debug : bool, optional
             Whether to run in debug mode. Default is True.
+        **kwargs
+            Passed to BaseDownloader (e.g., retries, retry_backoff).
 
         Raises
         ------
@@ -344,32 +361,18 @@ class NOAADownloader(BaseDownloader):
         """
 
         super().__init__(
-            product=product, base_path_to_download=base_path_to_download, debug=debug
+            product=product,
+            base_path_to_download=base_path_to_download,
+            debug=debug,
+            **kwargs,
         )
-
-        self._product_config = self.products_configs.get(product)
-        if self._product_config is None:
-            available_products = list(self.products_configs.keys())
-            raise ValueError(
-                f"Product '{product}' not found. Available: {available_products}"
-            )
 
         self.set_logger_name(
             f"NOAADownloader-{product}", level="DEBUG" if debug else "INFO"
         )
+        self._session = make_session()
+        self._exclude_attributes.append("_session")
         self.logger.info(f"---- NOAA DOWNLOADER INITIALIZED ({product}) ----")
-
-    @property
-    def product_config(self) -> dict:
-        """
-        Product configuration dictionary loaded from config file.
-
-        Returns
-        -------
-        dict
-            Product configuration dictionary.
-        """
-        return self._product_config
 
     @property
     def data_types(self) -> dict:
@@ -394,73 +397,8 @@ class NOAADownloader(BaseDownloader):
         """
         return list(self.data_types.keys())
 
-    def _check_file_exists(
-        self, file_path: str, result: DownloadResult, force: bool, dry_run: bool
-    ) -> bool:
-        """
-        Check if file exists and handle accordingly.
-
-        Parameters
-        ----------
-        file_path : str
-            Path to the file to check.
-        result : DownloadResult
-            The download result to update.
-        force : bool
-            Whether to force re-download.
-        dry_run : bool
-            If True, only check files without downloading.
-
-        Returns
-        -------
-        bool
-            True if should skip download (file exists or dry_run mode), False otherwise.
-        """
-
-        if not force and os.path.exists(file_path):
-            result.add_skipped(file_path, "File already exists")
-            return True
-
-        if dry_run:
-            result.add_skipped(file_path, "File does not exist (dry run)")
-            return True
-
-        return False
-
-    def download_data(self, dry_run: bool = True, *args, **kwargs) -> DownloadResult:
-        """
-        Download data for the product.
-
-        Routes to product-specific download methods based on the product type.
-
-        Parameters
-        ----------
-        dry_run : bool, optional
-            If True, only check what would be downloaded without actually downloading.
-            Default is True.
-        *args
-            Arguments passed to product-specific download method.
-        **kwargs
-            Keyword arguments passed to product-specific download method.
-
-        Returns
-        -------
-        DownloadResult
-            Result with information about downloaded, skipped, and error files.
-
-        Raises
-        ------
-        ValueError
-            If the product is not supported.
-        """
-
-        if self.product == "NDBC":
-            return self.download_data_ndbc(dry_run=dry_run, *args, **kwargs)
-        else:
-            raise ValueError(f"Download for product {self.product} not supported")
-
     def download_data_ndbc(
-        self, data_type: str, dry_run: bool = True, **kwargs
+        self, data_type: str, force: bool = False, dry_run: bool = True, **kwargs
     ) -> DownloadResult:
         """
         Download data for the NDBC product.
@@ -472,17 +410,17 @@ class NOAADownloader(BaseDownloader):
         ----------
         data_type : str
             The data type to download. Available types:
+
             - 'bulk_parameters': Standard meteorological data
             - 'wave_spectra': Wave spectral density data
             - 'directional_spectra': Directional wave spectra coefficients
-            - 'wind_forecast': GFS wind forecast data
+        force : bool, optional
+            Force re-download even if the file exists. Default is False.
         dry_run : bool, optional
             If True, only check what would be downloaded without actually downloading.
             Default is True.
         **kwargs
-            Additional keyword arguments specific to each data type:
-            - For bulk_parameters, wave_spectra, directional_spectra: buoy_id, years, force
-            - For wind_forecast: date, region, force
+            Keyword arguments of the data type: buoy_id and years.
 
         Returns
         -------
@@ -508,19 +446,15 @@ class NOAADownloader(BaseDownloader):
 
         if data_type == "bulk_parameters":
             result = self._download_bulk_parameters(
-                data_type_config, dataset_config, dry_run=dry_run, **kwargs
+                data_type_config, dataset_config, force=force, dry_run=dry_run, **kwargs
             )
         elif data_type == "wave_spectra":
             result = self._download_wave_spectra(
-                data_type_config, dataset_config, dry_run=dry_run, **kwargs
+                data_type_config, dataset_config, force=force, dry_run=dry_run, **kwargs
             )
         elif data_type == "directional_spectra":
             result = self._download_directional_spectra(
-                data_type_config, dataset_config, dry_run=dry_run, **kwargs
-            )
-        elif data_type == "wind_forecast":
-            result = self._download_wind_forecast(
-                data_type_config, dataset_config, dry_run=dry_run, **kwargs
+                data_type_config, dataset_config, force=force, dry_run=dry_run, **kwargs
             )
         else:
             raise ValueError(f"Download for data type {data_type} not implemented")
@@ -538,6 +472,9 @@ class NOAADownloader(BaseDownloader):
     ) -> DownloadResult:
         """
         Download bulk parameters for a specific buoy and years.
+
+        All years are combined into a single file:
+        base_path_to_download/product/dataset/buoy_id/buoy_{buoy_id}_bulk_parameters.csv
 
         Parameters
         ----------
@@ -568,19 +505,19 @@ class NOAADownloader(BaseDownloader):
         base_url = dataset_config["base_url"]
         dataset_name = data_type_config["dataset"]
 
-        try:
-            # Determine output file path: base_path/product/dataset/buoy_id/filename.csv
-            buoy_dir = os.path.join(
-                self.base_path_to_download, self.product, dataset_name, buoy_id
-            )
-            output_file = os.path.join(buoy_dir, f"buoy_{buoy_id}_bulk_parameters.csv")
+        # Determine output file path: base_path/product/dataset/buoy_id/filename.csv
+        output_file = os.path.join(
+            self.base_path_to_download,
+            self.product,
+            dataset_name,
+            buoy_id,
+            f"buoy_{buoy_id}_bulk_parameters.csv",
+        )
+        missing_years = []
 
-            # Check if file exists
-            if self._check_file_exists(output_file, result, force, dry_run):
-                return self.finalize_download_result(result)
-
-            # Prepare download tasks
-            download_tasks = []
+        def fetch(part_file: str) -> None:
+            missing_years.clear()
+            all_data = []
             for year in years:
                 urls = [
                     f"{base_url}/{data_type_config['url_pattern'].format(buoy_id=buoy_id, year=year)}"
@@ -589,68 +526,32 @@ class NOAADownloader(BaseDownloader):
                     urls.append(
                         f"{base_url}/{fallback.format(buoy_id=buoy_id, year=year)}"
                     )
-
-                download_tasks.append(
-                    {
-                        "urls": urls,
-                        "columns": data_type_config["columns"],
-                        "year": year,
-                        "buoy_id": buoy_id,
-                    }
-                )
-
-            if dry_run:
-                # In dry run mode, just mark what would be downloaded
-                for task in download_tasks:
-                    result.add_skipped(
-                        output_file,
-                        f"Would download year {task['year']} (dry run)",
+                df = self._download_single_year_bulk(urls, data_type_config["columns"])
+                if df is None:
+                    self.logger.warning(
+                        f"Buoy {buoy_id}: No data available for year {year}"
                     )
-                return self.finalize_download_result(result)
+                    missing_years.append(year)
+                else:
+                    self.logger.info(f"Buoy {buoy_id}: Data found for year {year}")
+                    all_data.append(df)
 
-            # Execute downloads sequentially
-            all_data = []
-            for task in download_tasks:
-                try:
-                    df = self._download_single_year_bulk(task["urls"], task["columns"])
-                    if df is not None:
-                        all_data.append(df)
-                        self.logger.info(
-                            f"Buoy {buoy_id}: Data found for year {task['year']}"
-                        )
-                    else:
-                        self.logger.warning(
-                            f"Buoy {buoy_id}: No data available for year {task['year']}"
-                        )
-                        result.add_error(
-                            output_file,
-                            Exception(f"No data available for year {task['year']}"),
-                        )
-                except Exception as e:
-                    self.logger.error(f"Error downloading year {task['year']}: {e}")
-                    result.add_error(output_file, e)
+            if not all_data:
+                raise RemoteFileNotFound(f"No data found for buoy {buoy_id}")
 
-            if all_data:
-                # Combine all years
-                combined_df = pd.concat(all_data, ignore_index=True)
-                combined_df = combined_df.sort_values(["YYYY", "MM", "DD", "hh"])
+            combined_df = pd.concat(all_data, ignore_index=True)
+            combined_df = combined_df.sort_values(["YYYY", "MM", "DD", "hh"])
+            combined_df.to_csv(part_file, index=False)
 
-                # Save to CSV
-                os.makedirs(buoy_dir, exist_ok=True)
-                combined_df.to_csv(output_file, index=False)
-                self.logger.info(f"Data saved to {output_file}")
-                result.add_downloaded(output_file)
-            else:
-                self.logger.error(f"No data found for buoy {buoy_id}")
-                result.add_error(
-                    output_file,
-                    Exception(f"No data found for buoy {buoy_id}"),
-                )
-        except Exception as e:
-            result.add_error(output_file, e)
-            self.logger.error(f"Error processing data for buoy {buoy_id}: {e}")
+        self.fetch_file(
+            output_file, fetch, result, force=force, dry_run=dry_run, validate=False
+        )
+        if missing_years:
+            result.metadata.setdefault("missing_years", {})[output_file] = list(
+                missing_years
+            )
 
-        return self.finalize_download_result(result)
+        return result
 
     def _download_single_year_bulk(
         self,
@@ -679,8 +580,7 @@ class NOAADownloader(BaseDownloader):
         for url in urls:
             try:
                 # Download the file
-                response = requests.get(url, timeout=30)
-                response.raise_for_status()
+                response = http_get(self._session, url)
                 content = gzip.decompress(response.content).decode("utf-8")
 
                 # Skip the header rows and read the data
@@ -787,53 +687,25 @@ class NOAADownloader(BaseDownloader):
             "wave_spectra",
         )
 
-        if not dry_run:
-            os.makedirs(buoy_dir, exist_ok=True)
-
         for year in years:
             url = f"{base_url}/{data_type_config['url_pattern'].format(buoy_id=buoy_id, year=year)}"
             output_file = os.path.join(buoy_dir, f"buoy_{buoy_id}_spectra_{year}.csv")
 
-            # Check if file exists
-            if self._check_file_exists(output_file, result, force, dry_run):
-                continue
-
-            if dry_run:
-                result.add_skipped(output_file, f"Would download year {year} (dry run)")
-                continue
-
-            try:
-                # Download and read the data
-                response = requests.get(url, timeout=30)
-                response.raise_for_status()
-
-                # Read the data
+            def fetch(part_file: str, url: str = url, year: int = year) -> None:
+                response = http_get(self._session, url)
                 df = pd.read_csv(
                     io.BytesIO(response.content),
                     compression="gzip",
                     sep=r"\s+",
                     na_values=["MM", "99.00", "999.0"],
                 )
-
-                # Skip if empty or invalid data
                 if df.empty or len(df.columns) < 5:
-                    self.logger.warning(f"No valid data for {buoy_id} - {year}")
-                    result.add_error(
-                        output_file,
-                        Exception(f"No valid data for {buoy_id} - {year}"),
-                        context={"year": year},
-                    )
-                    continue
+                    raise RemoteFileNotFound(f"No valid data for {buoy_id} - {year}")
+                df.to_csv(part_file, index=False)
 
-                # Save the data
-                df.to_csv(output_file, index=False)
-                result.add_downloaded(output_file)
-                self.logger.info(f"Successfully saved data for {buoy_id} - {year}")
-
-            except Exception as e:
-                self.logger.warning(f"No data found for: {buoy_id} - {year}: {e}")
-                result.add_error(output_file, e, context={"year": year})
-                continue
+            self.fetch_file(
+                output_file, fetch, result, force=force, dry_run=dry_run, validate=False
+            )
 
         return result
 
@@ -890,8 +762,6 @@ class NOAADownloader(BaseDownloader):
             buoy_id,
             "directional_spectra",
         )
-        if not dry_run:
-            os.makedirs(buoy_dir, exist_ok=True)
 
         for year in years:
             for coef, info in coefficients.items():
@@ -899,127 +769,9 @@ class NOAADownloader(BaseDownloader):
                 url = f"{base_url}/{info['url_pattern'].format(buoy_id=buoy_id, year=year)}"
                 save_path = os.path.join(buoy_dir, filename)
 
-                # Check if file exists
-                if self._check_file_exists(save_path, result, force, dry_run):
-                    continue
+                def fetch(part_file: str, url: str = url) -> None:
+                    http_download(self._session, url, part_file, resume=False)
 
-                if dry_run:
-                    result.add_skipped(
-                        save_path,
-                        f"Would download {info['name']} for year {year} (dry run)",
-                    )
-                    continue
+                self.fetch_file(save_path, fetch, result, force=force, dry_run=dry_run)
 
-                try:
-                    self.logger.debug(f"Downloading {info['name']} data for {year}...")
-
-                    # Download the file
-                    response = requests.get(url, stream=True, timeout=30)
-                    response.raise_for_status()
-
-                    # Save the compressed file
-                    with open(save_path, "wb") as f:
-                        shutil.copyfileobj(response.raw, f)
-
-                    result.add_downloaded(save_path)
-                    self.logger.info(f"Successfully downloaded {filename}")
-
-                except Exception as e:
-                    self.logger.warning(f"Error downloading {filename}: {e}")
-                    result.add_error(save_path, e)
-                    continue
-
-        return self.finalize_download_result(result)
-
-    def _download_wind_forecast(
-        self,
-        data_type_config: dict,
-        dataset_config: dict,
-        date: str = None,
-        region: List[float] = None,
-        force: bool = False,
-        dry_run: bool = False,
-    ) -> DownloadResult:
-        """
-        Download NOAA GFS wind forecast data.
-
-        Downloads and crops GFS wind forecast data for a specific date and region.
-        Files are saved to:
-        base_path_to_download/product/dataset/{date}_{region}.nc
-
-        Parameters
-        ----------
-        data_type_config : dict
-            Configuration for the data type.
-        dataset_config : dict
-            Configuration for the dataset.
-        date : str, optional
-            Date to download data for (format: "YYYYMMDD"). If None, uses today's date.
-            Default is None.
-        region : List[float], optional
-            Geographic region coordinates. Default is None.
-        force : bool, optional
-            Force re-download even if file exists. Default is False.
-        dry_run : bool, optional
-            If True, only check what would be downloaded. Default is False.
-
-        Returns
-        -------
-        DownloadResult
-            Result with information about downloaded, skipped, and error files.
-
-        Notes
-        -----
-        This method will be DEPRECATED in the future.
-        """
-
-        if date is None:
-            date = datetime.today().strftime("%Y%m%d")
-
-        self.logger.info(f"Downloading wind forecast for date {date}")
-
-        result = self.create_download_result()
-        url_base = dataset_config["base_url"]
-        dataset_name = data_type_config["dataset"]
-        dbn = "gfs_0p25_1hr"
-        url = f"{url_base}/gfs{date}/{dbn}_00z"
-
-        # File path for local storage: base_path/product/dataset/filename.nc
-        forecast_dir = os.path.join(
-            self.base_path_to_download, self.product, dataset_name
-        )
-        if not dry_run:
-            os.makedirs(forecast_dir, exist_ok=True)
-
-        file_path = os.path.join(
-            forecast_dir, f"{date}_{'_'.join(map(str, region))}.nc"
-        )
-
-        # Check if file exists
-        if self._check_file_exists(file_path, result, force, dry_run):
-            return result
-
-        if dry_run:
-            result.add_skipped(
-                file_path, f"Would download wind forecast for {date} (dry run)"
-            )
-            return result
-
-        try:
-            self.logger.info(f"Downloading and cropping forecast data from: {url}")
-            # Open dataset from URL
-            data = xr.open_dataset(url)
-
-            # Select only wind data
-            variables = data_type_config["variables"]
-            data_select = data[variables]
-
-            self.logger.info(f"Storing local copy at: {file_path}")
-            data_select.to_netcdf(file_path)
-            result.add_downloaded(file_path)
-
-        except Exception as e:
-            self.logger.error(f"Error downloading wind forecast: {e}")
-            result.add_error(file_path, e)
-
-        return self.finalize_download_result(result)
+        return result
