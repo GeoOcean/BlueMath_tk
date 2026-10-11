@@ -9,7 +9,7 @@ from bluemath_tk.downloaders.noaa.noaa_downloader import read_bulk_parameters
 
 class TestReadBulkParameters(unittest.TestCase):
     def test_years_are_not_duplicated(self):
-        with tempfile.TemporaryDirectory() as tmp_dir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp_dir:
             buoy_dir = os.path.join(tmp_dir, "NDBC", "buoy_data", "41001")
             os.makedirs(buoy_dir)
             pd.DataFrame(

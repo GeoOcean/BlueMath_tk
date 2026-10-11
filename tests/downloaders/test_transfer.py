@@ -44,7 +44,7 @@ class LocalServerTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.served_dir = tempfile.TemporaryDirectory()
+        cls.served_dir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         handler = partial(RangeRequestHandler, directory=cls.served_dir.name)
         cls.server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
         threading.Thread(target=cls.server.serve_forever, daemon=True).start()
@@ -61,7 +61,7 @@ class LocalServerTestCase(unittest.TestCase):
         cls.served_dir.cleanup()
 
     def setUp(self):
-        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.tmp_dir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         self.session = make_session(retries=0)
 
     def tearDown(self):
@@ -146,7 +146,7 @@ class TestRetryCall(unittest.TestCase):
 
 class TestValidateFile(unittest.TestCase):
     def setUp(self):
-        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.tmp_dir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
 
     def tearDown(self):
         self.tmp_dir.cleanup()
@@ -207,7 +207,7 @@ class DummyDownloader(BaseDownloader):
 
 class TestFetchFile(unittest.TestCase):
     def setUp(self):
-        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.tmp_dir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         self.downloader = DummyDownloader(self.tmp_dir.name)
         self.output_file = os.path.join(self.tmp_dir.name, "sub", "file.txt")
         self.result = DownloadResult()
@@ -321,7 +321,7 @@ class TestDownloadResult(unittest.TestCase):
         self.assertEqual(result.error_files, ["d"])
         self.assertEqual(result.metadata["skip_reasons"], {"c": "Already downloaded"})
 
-        with tempfile.TemporaryDirectory() as tmp_dir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp_dir:
             path = os.path.join(tmp_dir, "logs", "result.json")
             result.save(path)
             self.assertTrue(os.path.exists(path))

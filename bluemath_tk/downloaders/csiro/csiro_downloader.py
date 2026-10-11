@@ -289,7 +289,10 @@ class CSIRODownloader(BaseDownloader):
         local_dir = dataset_config["local_dir"].format(**template_args)
         filename = dataset_config["filename"].format(**template_args)
 
-        return os.path.join(self.base_path_to_download, local_dir, filename)
+        # local_dir is written with "/" in the config: use the native separator
+        return os.path.normpath(
+            os.path.join(self.base_path_to_download, local_dir, filename)
+        )
 
     def download_data(
         self,

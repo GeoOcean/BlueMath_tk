@@ -48,8 +48,10 @@ class TestCSIROPaths(unittest.TestCase):
         )
         self.assertEqual(
             self.whacs.get_local_path("global-smc", period, "phs1"),
-            "/data/WHACS/global-smc/phs1/"
-            "phs1_WHACS_hindcast_WHACS_ERA5_1hr_200002010000-200002292300.nc",
+            os.path.normpath(
+                "/data/WHACS/global-smc/phs1/"
+                "phs1_WHACS_hindcast_WHACS_ERA5_1hr_200002010000-200002292300.nc"
+            ),
         )
         self.assertIn(
             "/thredds5/dodsC/",
@@ -59,15 +61,15 @@ class TestCSIROPaths(unittest.TestCase):
     def test_cawcr_spec_eras(self):
         self.assertEqual(
             self.cawcr.get_local_path("spec", pd.Period("2013-05", freq="M")),
-            "/data/CAWCR/CSIRO_spectra/1979/ww3.201305_spec.nc",
+            os.path.normpath("/data/CAWCR/CSIRO_spectra/1979/ww3.201305_spec.nc"),
         )
         self.assertEqual(
             self.cawcr.get_local_path("spec", pd.Period("2013-06", freq="M")),
-            "/data/CAWCR/CSIRO_spectra/2013/ww3.201306_spec.nc",
+            os.path.normpath("/data/CAWCR/CSIRO_spectra/2013/ww3.201306_spec.nc"),
         )
         self.assertEqual(
             self.cawcr.get_local_path("gridded", pd.Period("2025-01", freq="M")),
-            "/data/CAWCR/CSIRO_partition/ww3.glob_24m.202501.nc",
+            os.path.normpath("/data/CAWCR/CSIRO_partition/ww3.glob_24m.202501.nc"),
         )
 
     def test_months_are_clipped_to_availability(self):
