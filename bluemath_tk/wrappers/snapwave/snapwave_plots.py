@@ -25,12 +25,11 @@ the mesh edges when there is no map output.
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
 import matplotlib.tri as mtri
 import numpy as np
 import xarray as xr
@@ -41,6 +40,15 @@ from matplotlib.gridspec import GridSpec
 from shapely.geometry import Polygon
 
 from ...core.plotting.base_plotting import DefaultStaticPlotting
+from ...core.plotting.cases import (
+    DEFAULT_CASE_PLOT_STYLE,
+    CasePlotStyle,
+    Extent,
+    add_colorbar,
+    color_limits,
+    draw_dir_arrow,
+    wind_summary,
+)
 from .snapwave_utils import (
     FORCING_FILES,
     parse_snapwave_inp,
@@ -49,7 +57,6 @@ from .snapwave_utils import (
     read_forcing_table,
 )
 
-Extent = tuple[float, float, float, float]
 Background = Callable[..., None]
 
 #: Native SnapWave names accepted for each short variable name.
@@ -60,59 +67,7 @@ WAVE_VAR_ALIASES: dict[str, tuple[str, ...]] = {
     "spr": ("point_dirspr", "dirspr", "spr"),
 }
 
-#: Default observation-point panels (2x2 under the domain panel).
-TOP_VARS: tuple[str, ...] = ("hs", "tp", "dir", "spr")
-
 _STATIC = DefaultStaticPlotting()
-
-
-@dataclass
-class CasePlotStyle:
-    """Colormaps, limits and marker size for SnapWave case plots."""
-
-    cmaps: dict[str, str] = field(
-        default_factory=lambda: {
-            "hs": "viridis",
-            "tp": "plasma",
-            "dir": "twilight_shifted",
-            "spr": "cividis",
-        }
-    )
-    metamodel_cmaps: dict[str, str] = field(
-        default_factory=lambda: {
-            "hs": "Blues_r",
-            "tp": "plasma",
-            "dir": "twilight_shifted",
-            "spr": "cividis",
-        }
-    )
-    site_marker_size: float = 28
-    top_vars: tuple[str, ...] = TOP_VARS
-
-    def cmap_for(self, var: str, mode: str = "dynamic") -> str:
-        """
-        Colormap name for *var* in *mode*.
-
-        Parameters
-        ----------
-        var : str
-            Short variable name.
-        mode : str, optional
-            "metamodel" or "dynamic". Default is "dynamic".
-
-        Returns
-        -------
-        str
-            Colormap name.
-        """
-
-        if mode == "metamodel":
-            return self.metamodel_cmaps.get(var, self.cmaps.get(var, "viridis"))
-
-        return self.cmaps.get(var, "viridis")
-
-
-DEFAULT_CASE_PLOT_STYLE = CasePlotStyle()
 
 
 @dataclass
@@ -257,7 +212,9 @@ def _forcing_row(case_dir: Path, var: str, time_index: int) -> tuple[float, np.n
     return float(table.index[idx]), table.iloc[idx].to_numpy(float)
 
 
-def read_case_wind(ctx: CaseContext, extent: Extent | None = None) -> tuple[np.ndarray, ...] | None:
+def read_case_wind(
+    ctx: CaseContext, extent: Extent | None = None
+) -> tuple[np.ndarray, ...] | None:
     """
     The wind a case was given: ``lon, lat, speed, direction`` (None without wind).
 
@@ -278,7 +235,10 @@ def read_case_wind(ctx: CaseContext, extent: Extent | None = None) -> tuple[np.n
         Coordinates, speed (m/s) and nautical direction (deg, from).
     """
 
-    u10, u10dir = ctx.snapwave_inp.get("u10", "").strip(), ctx.snapwave_inp.get("u10dir", "").strip()
+    u10, u10dir = (
+        ctx.snapwave_inp.get("u10", "").strip(),
+        ctx.snapwave_inp.get("u10dir", "").strip(),
+    )
     if not u10:
         return None
     speed_file, dir_file = ctx.case_dir / u10, ctx.case_dir / u10dir
@@ -291,23 +251,12 @@ def read_case_wind(ctx: CaseContext, extent: Extent | None = None) -> tuple[np.n
         return None
     if value <= 0 or extent is None:
         return None
-    lon, lat = np.meshgrid(np.linspace(extent[0], extent[1], 8)[1:-1], np.linspace(extent[2], extent[3], 6)[1:-1])
+    lon, lat = np.meshgrid(
+        np.linspace(extent[0], extent[1], 8)[1:-1],
+        np.linspace(extent[2], extent[3], 6)[1:-1],
+    )
 
     return lon.ravel(), lat.ravel(), np.full(lon.size, value), np.full(lon.size, angle)
-
-
-def wind_summary(wind: tuple[np.ndarray, ...] | None) -> str | None:
-    """``u10=[min, max] m/s from <mean dir>°`` of :func:`read_case_wind` output."""
-
-    if wind is None:
-        return None
-    from ...core.plotting.wind import wind_components
-
-    _, _, speed, direction = wind
-    u, v = wind_components(speed, direction)
-    mean_dir = np.mod(np.rad2deg(np.arctan2(-np.nanmean(u), -np.nanmean(v))), 360.0)
-
-    return f"u10=[{np.nanmin(speed):.3g}, {np.nanmax(speed):.3g}] m/s from {mean_dir:.0f}°"
 
 
 def active_boundary_node(case_dir: str | Path, time_index: int = 0) -> int:
@@ -340,31 +289,6 @@ def active_boundary_node(case_dir: str | Path, time_index: int = 0) -> int:
     return idx
 
 
-def _color_limits(values: np.ndarray) -> tuple[float, float]:
-    """Return the 2nd-98th percentile of the finite values."""
-
-    finite = values[np.isfinite(values)]
-    if finite.size == 0:
-        return 0.0, 1.0
-    vmin, vmax = (float(v) for v in np.percentile(finite, [2, 98]))
-    scale = max(abs(vmin), abs(vmax), 1.0)
-    if vmax - vmin < max(1e-6, 1e-4 * scale):
-        mid = 0.5 * (vmin + vmax)
-        pad = max(0.5, 0.05 * abs(mid))
-        return mid - pad, mid + pad
-
-    return vmin, vmax
-
-
-def _add_colorbar(ax: Axes, mappable, vmin: float, vmax: float, fraction: float):
-    """Colorbar with a few ticks and two decimals."""
-
-    cb = plt.colorbar(mappable, ax=ax, fraction=fraction, pad=0.02)
-    cb.locator = mticker.MaxNLocator(nbins=5 if vmax - vmin < 1 else 6)
-    cb.formatter = mticker.FormatStrFormatter("%.2f")
-    cb.update_ticks()
-
-
 def _default_background(
     show_satellite: bool, satellite_source: str, gridfile: Path | None
 ) -> Background:
@@ -385,27 +309,6 @@ def _extent(enclosure: Polygon, pad: float = 0.08) -> Extent:
     minx, miny, maxx, maxy = enclosure.bounds
 
     return minx - pad, maxx + pad, miny - pad, maxy + pad
-
-
-def _draw_dir_arrow(ax: Axes, lon: float, lat: float, dir_deg: float, extent: Extent):
-    """Arrow pointing at ``(lon, lat)`` from the nautical wave-from direction."""
-
-    theta = np.deg2rad(float(dir_deg))
-    length = 0.08 * max(extent[1] - extent[0], extent[3] - extent[2])
-    ax.annotate(
-        "",
-        xy=(lon, lat),
-        xytext=(lon + np.sin(theta) * length, lat + np.cos(theta) * length),
-        arrowprops=dict(
-            arrowstyle="-|>",
-            color="black",
-            lw=2.0,
-            shrinkA=0,
-            shrinkB=0,
-            mutation_scale=22,
-        ),
-        zorder=7,
-    )
 
 
 def _plot_domain_panel(
@@ -429,7 +332,7 @@ def _plot_domain_panel(
         )
         vals = np.asarray(values.values, dtype=float)
         if np.isfinite(vals).any():
-            vmin, vmax = _color_limits(vals)
+            vmin, vmax = color_limits(vals)
             mesh = ax.tripcolor(
                 map_triangulation(map_ds),
                 vals,
@@ -442,7 +345,7 @@ def _plot_domain_panel(
                     {"transform": ccrs.PlateCarree()} if isinstance(ax, GeoAxes) else {}
                 ),
             )
-            _add_colorbar(ax, mesh, vmin, vmax, fraction=0.025)
+            add_colorbar(ax, mesh, vmin, vmax, fraction=0.025)
         ax.set_title(f"domain map · {map_variable}", fontsize=11)
     else:
         ax.set_title("domain overview", fontsize=11)
@@ -475,7 +378,7 @@ def _plot_domain_panel(
             zorder=6,
             label="active boundary",
         )
-        _draw_dir_arrow(ax, *nodes[active], dirs[active], extent)
+        draw_dir_arrow(ax, *nodes[active], dirs[active], extent)
     else:
         peak = np.nanmax(hs)
         hs_norm = hs / peak if peak > 0 else hs
@@ -490,7 +393,7 @@ def _plot_domain_panel(
         )
         for (lon, lat), h, d in zip(nodes, hs, dirs):
             if h > 0:
-                _draw_dir_arrow(ax, lon, lat, d, extent)
+                draw_dir_arrow(ax, lon, lat, d, extent)
 
     wind = read_case_wind(ctx, extent)
     if wind is not None:
@@ -529,7 +432,7 @@ def _plot_site_panel(
     background(ax, extent, panel="site", has_map=False)
     vals = np.asarray(values.values, dtype=float)
     ok = np.isfinite(vals)
-    vmin, vmax = _color_limits(vals)
+    vmin, vmax = color_limits(vals)
     sc = ax.scatter(
         his_ds["station_x"].values.astype(float)[ok],
         his_ds["station_y"].values.astype(float)[ok],
@@ -547,11 +450,15 @@ def _plot_site_panel(
     ax.set_ylim(extent[2], extent[3])
     ax.set_aspect("equal", adjustable="box")
     ax.tick_params(labelsize=8)
-    _add_colorbar(ax, sc, vmin, vmax, fraction=0.05)
+    add_colorbar(ax, sc, vmin, vmax, fraction=0.05)
 
 
 def _subtitle(
-    ctx: CaseContext, mode: str, time_index: int, has_map: bool, extent: Extent | None = None
+    ctx: CaseContext,
+    mode: str,
+    time_index: int,
+    has_map: bool,
+    extent: Extent | None = None,
 ) -> str:
     """One-line forcing summary."""
 

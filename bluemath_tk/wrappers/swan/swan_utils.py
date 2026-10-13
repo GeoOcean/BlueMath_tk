@@ -51,6 +51,7 @@ with open(output_file_raw, "wb") as f:
 EOF
 """
 
+
 def generate_forcing_file_GreenWaves(
     case_context: dict,
     case_dir: str,
@@ -68,7 +69,7 @@ def generate_forcing_file_GreenWaves(
     new_date = ref_date + pd.Timedelta(hours=int(case_context.get("simul_time")))
     d_date = pd.Timedelta(seconds=int(case_context.get("time_step_comp")))
 
-    time = np.arange(ref_date, new_date + d_date, step = d_date, dtype = "datetime64[s]")
+    time = np.arange(ref_date, new_date + d_date, step=d_date, dtype="datetime64[s]")
 
     connectivity = ds_GFD_info.triangle_forcing_connectivity
     triangle_longitude = ds_GFD_info.node_forcing_longitude.isel(
@@ -110,12 +111,12 @@ def generate_forcing_file_GreenWaves(
     windx = np.zeros((n_time, n_points))
     windy = np.zeros((n_time, n_points))
 
-
-
     windx[:, triangle_mask] = wind_u
     windy[:, triangle_mask] = wind_v
 
-    with open(op.join(case_dir, case_context.get("forcing_file", "wind_forcing.wind")), "w") as f:
+    with open(
+        op.join(case_dir, case_context.get("forcing_file", "wind_forcing.wind")), "w"
+    ) as f:
         for t in range(n_time):
             time_str = np.datetime_as_string(time[t], unit="s")
             time_str = time_str.replace("T", ".").replace("-", "").replace(":", "")
@@ -129,18 +130,18 @@ def generate_forcing_file_GreenWaves(
 def mat_to_xr_dataset(path, variables=None, time_range=None):
     """
     Convert a MATLAB file to xarray.Dataset, loading only requested data.
-    
+
     Parameters
     ----------
     path : str
         Path to .mat file
     variables : list of str, optional
-        Variable names to load (e.g., ['Hsig', 'Windv_x']). 
+        Variable names to load (e.g., ['Hsig', 'Windv_x']).
         If None, loads all variables.
     time_range : tuple of (start, end), optional
         Only load timesteps within this range.
         e.g., ('2000-01-01', '2000-01-02')
-    
+
     Returns
     -------
     xr.Dataset
@@ -149,7 +150,7 @@ def mat_to_xr_dataset(path, variables=None, time_range=None):
     all_keys = [name for name, shape, dtype in mat_info]
 
     vars_with_keys = {}
-    
+
     for key in all_keys:
         if key.startswith(("Xp", "Yp", "__")):
             continue
@@ -165,16 +166,17 @@ def mat_to_xr_dataset(path, variables=None, time_range=None):
 
     if variables is not None:
         vars_with_keys = {k: v for k, v in vars_with_keys.items() if k in variables}
-    
+
     if not vars_with_keys:
-        raise ValueError(f"No matching variables found. Available: {list(vars_with_keys.keys())}")
+        raise ValueError(
+            f"No matching variables found. Available: {list(vars_with_keys.keys())}"
+        )
 
     if time_range is not None:
         t_start, t_end = pd.to_datetime(time_range[0]), pd.to_datetime(time_range[1])
         for varname in vars_with_keys:
             vars_with_keys[varname] = [
-                (k, t) for k, t in vars_with_keys[varname] 
-                if t_start <= t <= t_end
+                (k, t) for k, t in vars_with_keys[varname] if t_start <= t <= t_end
             ]
 
     keys_to_load = {"Xp", "Yp"}
@@ -184,7 +186,7 @@ def mat_to_xr_dataset(path, variables=None, time_range=None):
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="Duplicate variable name")
         mat = loadmat(path, variable_names=list(keys_to_load))
-    
+
     lon = mat["Xp"].ravel().astype(np.float32)
     lat = mat["Yp"].ravel().astype(np.float32)
 
@@ -192,22 +194,22 @@ def mat_to_xr_dataset(path, variables=None, time_range=None):
 
     for varname, key_times in vars_with_keys.items():
         key_times.sort(key=lambda x: x[1])  # Sort by timestamp
-        
+
         n_times = len(key_times)
         n_points = lon.size
         data_array = np.empty((n_times, n_points), dtype=np.float32)
-        
+
         for i, (key, _) in enumerate(key_times):
             data_array[i] = mat[key].ravel()
-        
+
         time_index = pd.DatetimeIndex([t for _, t in key_times])
-        
+
         unique_times, time_indices = np.unique(time_index, return_index=True)
         data_array = data_array[time_indices]
         time_index = pd.DatetimeIndex(unique_times)
-        
+
         ds_vars[varname] = (("time", "points"), data_array)
-    
+
     return xr.Dataset(
         data_vars=ds_vars,
         coords={
@@ -241,7 +243,7 @@ def vortex2SWAN(
         The extension for the forcing file, default is "GreenSurge_GFDcase_wind.ext".
     fill_value : float
         The fill value to use for missing data, default is 0.
-        
+
     Returns
     -------
     xarray.Dataset
@@ -307,6 +309,7 @@ def vortex2SWAN(
             np.savetxt(f, windx[t, :].reshape(1, -1), fmt="%.3f")
             f.write("wind y component\n")
             np.savetxt(f, windy[t, :].reshape(1, -1), fmt="%.3f")
+
 
 # --------------------------------------------------------------------------------------
 # Unstructured SWAN cases forced along the open boundary (HyWaves-style), see
@@ -516,10 +519,12 @@ def boundary_par_table(
     ``BOUNDSPEC SIDE ... VARIABLE PAR`` rows for values given at boundary nodes.
 
     Each node (e.g. a HyWaves goal) is snapped to its nearest boundary
-    vertex; SWAN interpolates linearly between them along the boundary. The
-    first and last vertices repeat the values of the nearest node, so the
-    whole boundary is forced (beyond the last ``[len]`` SWAN would leave it
-    unforced).
+    vertex; SWAN interpolates the spectra (energy) linearly between them along
+    the boundary (see :func:`boundary_hs_profile`). The first and last
+    vertices repeat the values of the nearest node, so the whole boundary is
+    forced (beyond the last ``[len]`` SWAN would leave it unforced): the
+    stretch between a boundary end and its nearest node takes that node's
+    forcing in full.
 
     Parameters
     ----------
@@ -568,6 +573,37 @@ def boundary_par_table(
         }
 
     return rows
+
+
+def boundary_hs_profile(open_xy: np.ndarray, rows: np.ndarray) -> np.ndarray:
+    """
+    Hs that SWAN imposes at each open-boundary vertex for ``VARIABLE PAR`` rows.
+
+    SWAN builds one spectrum per ``PAR`` row and interpolates the *spectra*
+    linearly in ``[len]`` between consecutive rows (``SINTRP``), so the energy
+    (``Hs**2``) is linear along the boundary and Hs is not: halfway between a
+    goal with Hs ``H`` and a neighbour with Hs 0 it is ``H / sqrt(2)``. This
+    is what makes goal contributions add up as energy, as SnapWave does with
+    its two-nearest-goals weights.
+
+    Parameters
+    ----------
+    open_xy : np.ndarray
+        ``(n, 2)`` boundary vertices in the order SWAN walks them (see
+        :func:`swan_boundary_side`).
+    rows : np.ndarray
+        ``(m, >=2)`` ``PAR`` rows, ``[len, hs, ...]``.
+
+    Returns
+    -------
+    np.ndarray
+        ``(n,)`` imposed Hs at the vertices.
+    """
+
+    rows = np.asarray(rows, dtype=float)
+    energy = np.interp(boundary_distances(open_xy), rows[:, 0], rows[:, 1] ** 2)
+
+    return np.sqrt(energy)
 
 
 def write_swan_points(points: np.ndarray, out_path: str) -> str:
@@ -623,7 +659,55 @@ def write_swan_wind(path: str, wind: xr.Dataset) -> str:
     dx = float(np.diff(lon).mean()) if lon.size > 1 else 1.0
     dy = float(np.diff(lat).mean()) if lat.size > 1 else 1.0
 
-    return f"{lon[0]:.6f} {lat[0]:.6f} 0 {lon.size - 1} {lat.size - 1} {dx:.6f} {dy:.6f}"
+    return (
+        f"{lon[0]:.6f} {lat[0]:.6f} 0 {lon.size - 1} {lat.size - 1} {dx:.6f} {dy:.6f}"
+    )
+
+
+#: ``BLOCK ... LAY 3`` (.mat) variable names -> HyWaves short names.
+SWAN_MAP_NAMES: dict[str, str] = {
+    "Hsig": "hs",
+    "TPsmoo": "tp",
+    "Dir": "dir",
+    "Dspr": "spr",
+    "Depth": "depth",
+}
+
+
+def read_swan_map(path: str, grid: dict | None = None) -> xr.Dataset:
+    """
+    Read a stationary ``BLOCK 'COMPGRID' ... LAY 3`` output on an unstructured grid.
+
+    Parameters
+    ----------
+    path : str
+        The ``.mat`` file SWAN wrote.
+    grid : dict, optional
+        Output of :func:`read_adcirc_grid` for the same grid; adds ``lon`` /
+        ``lat`` coordinates on ``node``.
+
+    Returns
+    -------
+    xr.Dataset
+        One variable per quantity on ``node`` (``hs``, ``tp``, ``dir``, ``spr``,
+        ``depth``; other SWAN names kept as they are), exception values
+        (dry or outside points, ``<= -9``) as NaN.
+    """
+
+    data = {
+        SWAN_MAP_NAMES.get(k, k): np.asarray(v, dtype=float).ravel()
+        for k, v in loadmat(path).items()
+        if not k.startswith("__")
+    }
+    ds = xr.Dataset(
+        {k: ("node", np.where(v <= -9, np.nan, v)) for k, v in data.items()}
+    )
+    if grid is not None:
+        ds = ds.assign_coords(
+            lon=("node", grid["vertices"][:, 0]), lat=("node", grid["vertices"][:, 1])
+        )
+
+    return ds
 
 
 def read_swan_table(path: str, quantities: list[str]) -> pd.DataFrame:

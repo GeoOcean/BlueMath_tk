@@ -916,6 +916,11 @@ swan.exe > wrapper_out.log 2> wrapper_error.log
 """
 
 _SWAN_NUMBER = (int, float, np.integer, np.floating)
+_SAVE_MAP = {
+    "type": (bool, np.bool_),
+    "value": None,
+    "description": "Also write the grid output (BLOCK, map_file) for this case.",
+}
 
 
 class SwanBoundaryModelWrapper(BaseModelWrapper):
@@ -926,8 +931,8 @@ class SwanBoundaryModelWrapper(BaseModelWrapper):
     requires) with counterclockwise triangles and boundary node strings
     covering the whole outline (open + land). Boundary conditions are given
     at ``boundary_nodes`` (e.g. HyWaves goals), each snapped to the nearest
-    vertex of the grid's open boundary, and SWAN interpolates linearly
-    between them along it (see
+    vertex of the grid's open boundary, and SWAN interpolates the spectra
+    linearly between them along it (see
     :func:`~bluemath_tk.wrappers.swan.swan_utils.swan_boundary_side` and
     :func:`~bluemath_tk.wrappers.swan.swan_utils.boundary_par_table`).
 
@@ -936,12 +941,18 @@ class SwanBoundaryModelWrapper(BaseModelWrapper):
     - ``boundary_side``: e.g. ``"1 CCW"``, for ``BOUNDSPEC SIDE``;
     - ``boundary_par``: list of ``"len hs per dir dd"`` rows, for
       ``VARIABLE PAR``;
-    - ``n_nodes``, ``points_file``, ``table_file``, ``table_quantities``.
+    - ``n_nodes``, ``points_file``, ``table_file``, ``table_quantities``;
+    - ``map_file`` (``""`` unless the optional boolean ``save_map`` case
+      parameter is true) and ``map_quantities``, for a
+      ``BLOCK 'COMPGRID' ... LAY 3`` output on the whole grid (read it with
+      :func:`~bluemath_tk.wrappers.swan.swan_utils.read_swan_map`).
 
     Attributes
     ----------
     table_quantities : tuple of str
         SWAN quantities written by the templates' ``TABLE`` command, in order.
+    map_quantities : tuple of str
+        SWAN quantities written by the ``BLOCK`` command of ``save_map`` cases.
     """
 
     default_parameters: dict = {}
@@ -952,6 +963,7 @@ class SwanBoundaryModelWrapper(BaseModelWrapper):
     }
 
     table_quantities: tuple[str, ...] = ("HSIGN", "TPS", "DIR", "DSPR")
+    map_quantities: tuple[str, ...] = ("HSIGN", "TPS", "DIR", "DSPR", "DEPTH")
 
     def __init__(
         self,
@@ -967,6 +979,7 @@ class SwanBoundaryModelWrapper(BaseModelWrapper):
         open_boundary: int = 0,
         points_filename: str = "output_sites.txt",
         table_filename: str = "output_sites.tab",
+        map_filename: str = "output_map.mat",
         point_dim: str = "points",
         point_coords: dict[str, str] | None = None,
         store_parameters: tuple[str, ...] = (),
@@ -1001,6 +1014,8 @@ class SwanBoundaryModelWrapper(BaseModelWrapper):
             Which open boundary of *grid_file* is forced. Default is 0.
         points_filename, table_filename : str, optional
             Output-points file and ``TABLE`` output names.
+        map_filename : str, optional
+            ``BLOCK`` output of ``save_map`` cases. Default is "output_map.mat".
         point_dim : str, optional
             Name of the output-points dimension. Default is "points".
         point_coords : dict, optional
@@ -1042,6 +1057,7 @@ class SwanBoundaryModelWrapper(BaseModelWrapper):
         self.output_points = np.asarray(output_points, dtype=float).reshape(-1, 2)
         self.points_filename = points_filename
         self.table_filename = table_filename
+        self.map_filename = map_filename
         self.point_dim = point_dim
         self.point_coords = dict(point_coords or {})
         self.store_parameters = tuple(store_parameters)
@@ -1109,6 +1125,9 @@ class SwanBoundaryModelWrapper(BaseModelWrapper):
         case_context["points_file"] = self.points_filename
         case_context["table_file"] = self.table_filename
         case_context["table_quantities"] = " ".join(self.table_quantities)
+        save_map = bool(case_context.get("save_map", False))
+        case_context["map_file"] = self.map_filename if save_map else ""
+        case_context["map_quantities"] = " ".join(self.map_quantities)
 
     def monitor_cases(self, value_counts: str | None = None):
         """
@@ -1291,9 +1310,9 @@ class SwanMetaModelWrapper(SwanBoundaryModelWrapper):
 
     The case ``hs`` is applied at ``active_node`` (1-based) and zero at the
     other boundary nodes, with the case ``tp``, ``dir``, ``spr`` everywhere,
-    so along the boundary Hs decays linearly from the active node to zero at
-    its two neighbouring nodes (as in SnapWave): each goal's metamodel learns
-    its own contribution, to be summed with the others. Templates read ``wl``
+    so along the boundary the energy decays linearly (Hs as its square root)
+    from the active node to zero at its two neighbouring nodes: each goal's
+    metamodel learns its own contribution, to be summed with the others. Templates read ``wl``
     for ``SET LEVEL``. Each case is postprocessed to a single ``case_num`` row.
     """
 
@@ -1320,6 +1339,7 @@ class SwanMetaModelWrapper(SwanBoundaryModelWrapper):
             "value": None,
             "description": "1-based boundary node where the case Hs is applied.",
         },
+        "save_map": _SAVE_MAP,
     }
 
     def __init__(
@@ -1468,6 +1488,7 @@ class SwanDynamicModelWrapper(SwanBoundaryModelWrapper):
             "value": None,
             "description": "Uniform wind direction (deg, nautical, coming from).",
         },
+        "save_map": _SAVE_MAP,
     }
 
     def __init__(self, *args, wind: xr.Dataset | None = None, **kwargs) -> None:
