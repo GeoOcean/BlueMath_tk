@@ -22,22 +22,25 @@ import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
+from matplotlib.tri import Triangulation
 
-from ..snapwave.snapwave_plots import (
+from ...core.plotting.cases import (
     DEFAULT_CASE_PLOT_STYLE,
     CasePlotStyle,
-    _add_colorbar,
-    _color_limits,
-    _draw_dir_arrow,
+    Extent,
+    add_colorbar,
+    color_limits,
+    draw_dir_arrow,
+    wind_summary,
 )
 from .swan_utils import (
     boundary_distances,
+    boundary_hs_profile,
+    read_swan_map,
     read_adcirc_grid,
     read_swan_table,
     swan_boundary_side,
 )
-
-Extent = tuple[float, float, float, float]
 
 
 @dataclass
@@ -50,6 +53,7 @@ class SwanCase:
     points: np.ndarray | None  # (n, 2)
     table: dict[str, np.ndarray] | None
     wind: tuple[np.ndarray, ...] | None  # lon, lat, speed, dir
+    map_file: Path | None  # BLOCK output on the grid (save_map cases)
 
 
 def _read_wind_field(path: Path, grid: str) -> tuple[np.ndarray, ...]:
@@ -68,7 +72,7 @@ def _read_wind_field(path: Path, grid: str) -> tuple[np.ndarray, ...]:
 
 def load_swan_case(case_dir: str | Path, extent: Extent | None = None) -> SwanCase:
     """
-    Parse a SWAN case folder: water level, boundary rows, points, table, wind.
+    Parse a SWAN case folder: water level, boundary rows, points, table, wind, map.
 
     Parameters
     ----------
@@ -85,7 +89,11 @@ def load_swan_case(case_dir: str | Path, extent: Extent | None = None) -> SwanCa
 
     case_dir = Path(case_dir)
     text = (case_dir / "INPUT").read_text()
-    lines = [l.strip() for l in text.splitlines() if l.strip() and not l.strip().startswith("$")]
+    lines = [
+        l.strip()
+        for l in text.splitlines()
+        if l.strip() and not l.strip().startswith("$")
+    ]
 
     level = re.search(r"LEVEL\s*=\s*([-\d.eE+]+)", text)
     rows = []
@@ -120,10 +128,20 @@ def load_swan_case(case_dir: str | Path, extent: Extent | None = None) -> SwanCa
         wind = _read_wind_field(case_dir / readinp.group(1), grid.group(1))
     elif uniform and float(uniform.group(1)) > 0 and extent is not None:
         lon, lat = np.meshgrid(
-            np.linspace(extent[0], extent[1], 8)[1:-1], np.linspace(extent[2], extent[3], 6)[1:-1]
+            np.linspace(extent[0], extent[1], 8)[1:-1],
+            np.linspace(extent[2], extent[3], 6)[1:-1],
         )
-        wind = (lon.ravel(), lat.ravel(), np.full(lon.size, float(uniform.group(1))),
-                np.full(lon.size, float(uniform.group(2))))
+        wind = (
+            lon.ravel(),
+            lat.ravel(),
+            np.full(lon.size, float(uniform.group(1))),
+            np.full(lon.size, float(uniform.group(2))),
+        )
+
+    map_file = None
+    m = re.search(r"^BLOCK\s+'COMPGRID'\s+\w+\s+'([^']+)'", text, re.MULTILINE)
+    if m and (case_dir / m.group(1)).is_file():
+        map_file = case_dir / m.group(1)
 
     return SwanCase(
         case_dir=case_dir,
@@ -132,7 +150,23 @@ def load_swan_case(case_dir: str | Path, extent: Extent | None = None) -> SwanCa
         points=points,
         table=table,
         wind=wind,
+        map_file=map_file,
     )
+
+
+def _active_row(rows: np.ndarray) -> int:
+    """``PAR`` row of a metamodel case's goal (largest Hs, not the end padding).
+
+    :func:`~.swan_utils.boundary_par_table` repeats the first and last nodes
+    at the boundary ends, so the largest Hs can appear twice; the goal is the
+    row that is not at an end.
+    """
+
+    hs = rows[:, 1]
+    peak = np.flatnonzero(np.isclose(hs, hs.max()))
+    inner = [i for i in peak if 0 < i < len(hs) - 1]
+
+    return int(inner[0] if inner else peak[0])
 
 
 def _boundary_xy(side_xy: np.ndarray, lengths: np.ndarray) -> np.ndarray:
@@ -140,26 +174,40 @@ def _boundary_xy(side_xy: np.ndarray, lengths: np.ndarray) -> np.ndarray:
 
     dist = boundary_distances(side_xy)
 
-    return np.c_[np.interp(lengths, dist, side_xy[:, 0]), np.interp(lengths, dist, side_xy[:, 1])]
+    return np.c_[
+        np.interp(lengths, dist, side_xy[:, 0]), np.interp(lengths, dist, side_xy[:, 1])
+    ]
 
 
 def _plot_site_panel(
-    ax: Axes, points: np.ndarray, values: np.ndarray, var: str, mode: str,
-    style: CasePlotStyle, extent: Extent,
+    ax: Axes,
+    points: np.ndarray,
+    values: np.ndarray,
+    var: str,
+    mode: str,
+    style: CasePlotStyle,
+    extent: Extent,
 ) -> None:
     ok = np.isfinite(values)
-    vmin, vmax = _color_limits(values)
+    vmin, vmax = color_limits(values)
     sc = ax.scatter(
-        points[ok, 0], points[ok, 1], c=values[ok], s=style.site_marker_size,
-        cmap=style.cmap_for(var, mode), vmin=vmin, vmax=vmax,
-        edgecolors="white", linewidths=0.25, zorder=3,
+        points[ok, 0],
+        points[ok, 1],
+        c=values[ok],
+        s=style.site_marker_size,
+        cmap=style.cmap_for(var, mode),
+        vmin=vmin,
+        vmax=vmax,
+        edgecolors="white",
+        linewidths=0.25,
+        zorder=3,
     )
     ax.set_title(var, fontsize=11)
     ax.set_xlim(extent[0], extent[1])
     ax.set_ylim(extent[2], extent[3])
     ax.set_aspect("equal", adjustable="box")
     ax.tick_params(labelsize=8)
-    _add_colorbar(ax, sc, vmin, vmax, fraction=0.05)
+    add_colorbar(ax, sc, vmin, vmax, fraction=0.05)
 
 
 def plot_case(
@@ -169,9 +217,14 @@ def plot_case(
     title: str | None = None,
     show_satellite: bool = False,
     satellite_source: str = "arcgis",
+    map_variable: str = "hs",
 ) -> Figure:
     """
     Diagnostic figure of a finished (or only built) SWAN case.
+
+    When the case wrote a grid map (``save_map``), the domain panel shows
+    *map_variable* on the whole grid; the open boundary is coloured by the Hs
+    SWAN imposes there.
 
     Parameters
     ----------
@@ -185,6 +238,8 @@ def plot_case(
         Figure title.
     show_satellite, satellite_source : bool, str, optional
         Draw a satellite image under the panels.
+    map_variable : str, optional
+        Grid map variable (``hs``, ``tp``, ``dir``, ``spr``, ``depth``). Default "hs".
 
     Returns
     -------
@@ -194,7 +249,6 @@ def plot_case(
 
     from ...core.plotting.base_plotting import DefaultStaticPlotting
     from ...core.plotting.wind import plot_wind_arrows
-    from ..snapwave.snapwave_plots import wind_summary
 
     if mode not in ("metamodel", "dynamic"):
         raise ValueError(f"mode must be 'metamodel' or 'dynamic', got {mode!r}")
@@ -209,41 +263,108 @@ def plot_case(
     static = DefaultStaticPlotting()
 
     fig = plt.figure(figsize=(11, 11))
-    gs = GridSpec(3, 2, figure=fig, height_ratios=[1.25, 1.0, 1.0], hspace=0.32, wspace=0.22)
+    gs = GridSpec(
+        3, 2, figure=fig, height_ratios=[1.25, 1.0, 1.0], hspace=0.32, wspace=0.22
+    )
     axes_kw = {"projection": ccrs.PlateCarree()} if show_satellite else {}
     ax_map = fig.add_subplot(gs[0, :], **axes_kw)
 
     if show_satellite:
         static.plot_satellite(ax_map, area=extent, source=satellite_source, zorder=0)
+    if case.map_file is not None:
+        field = read_swan_map(str(case.map_file))[map_variable].to_numpy()
+        tri = Triangulation(x, y, grid["triangles"])
+        tri.set_mask(np.isnan(field)[grid["triangles"]].any(axis=1))
+        vmin, vmax = color_limits(field)
+        if map_variable == "hs":
+            vmin = 0.0
+        mesh = ax_map.tripcolor(
+            tri,
+            np.nan_to_num(field, nan=vmin),
+            shading="gouraud",
+            cmap=style.cmap_for(map_variable),
+            vmin=vmin,
+            vmax=vmax,
+            zorder=1,
+        )
+        add_colorbar(ax_map, mesh, vmin, vmax, fraction=0.03)
+        mesh.colorbar.set_label(map_variable, fontsize=8)
     for b in grid["land_boundaries"]:
         ax_map.plot(x[b], y[b], color="#555555", lw=0.6, zorder=2)
     ax_map.plot(*side_xy.T, color="#d62728", lw=1.6, label="open boundary", zorder=3)
+    if case.boundary is not None:
+        imposed = boundary_hs_profile(side_xy, case.boundary)
+        sc = ax_map.scatter(
+            *side_xy.T,
+            c=imposed,
+            s=6,
+            cmap=style.cmap_for("hs"),
+            vmin=0,
+            vmax=max(float(imposed.max()), 1e-6),
+            zorder=4,
+        )
+        if case.map_file is None:
+            add_colorbar(ax_map, sc, 0.0, float(imposed.max()), fraction=0.03)
+            sc.colorbar.set_label("imposed Hs (m)", fontsize=8)
 
     if case.boundary is not None:
         bxy = _boundary_xy(side_xy, case.boundary[:, 0])
         hs, dirs = case.boundary[:, 1], case.boundary[:, 3]
         if mode == "metamodel":
-            ax_map.scatter(*bxy.T, c="#888888", s=24, edgecolors="white", linewidths=0.4,
-                           zorder=5, label="boundary points")
-            k = int(np.argmax(hs))
-            ax_map.scatter(*bxy[k], c="#d62728", s=120, marker="*", edgecolors="black",
-                           linewidths=0.5, zorder=6, label="active boundary")
-            _draw_dir_arrow(ax_map, *bxy[k], dirs[k], extent)
+            ax_map.scatter(
+                *bxy.T,
+                c="#888888",
+                s=24,
+                edgecolors="white",
+                linewidths=0.4,
+                zorder=5,
+                label="boundary points",
+            )
+            k = _active_row(case.boundary)
+            ax_map.scatter(
+                *bxy[k],
+                c="#d62728",
+                s=120,
+                marker="*",
+                edgecolors="black",
+                linewidths=0.5,
+                zorder=6,
+                label="active boundary",
+            )
+            draw_dir_arrow(ax_map, *bxy[k], dirs[k], extent)
         else:
             peak = np.nanmax(hs)
             norm = hs / peak if peak > 0 else hs
-            ax_map.scatter(*bxy.T, c=plt.cm.viridis(norm), s=20 + 80 * norm, edgecolors="white",
-                           linewidths=0.4, zorder=5, label="boundary points")
+            ax_map.scatter(
+                *bxy.T,
+                c=plt.cm.viridis(norm),
+                s=20 + 80 * norm,
+                edgecolors="white",
+                linewidths=0.4,
+                zorder=5,
+                label="boundary points",
+            )
             for (lon, lat), h, d in zip(bxy, hs, dirs):
                 if h > 0:
-                    _draw_dir_arrow(ax_map, lon, lat, d, extent)
+                    draw_dir_arrow(ax_map, lon, lat, d, extent)
     if case.wind is not None:
         plot_wind_arrows(ax_map, *case.wind)
     if case.points is not None:
-        ax_map.scatter(*case.points.T, s=8, c="white", edgecolors="black", linewidths=0.2,
-                       alpha=0.7, label="output sites", zorder=8)
+        ax_map.scatter(
+            *case.points.T,
+            s=8,
+            c="white",
+            edgecolors="black",
+            linewidths=0.2,
+            alpha=0.7,
+            label="output sites",
+            zorder=8,
+        )
     ax_map.legend(loc="upper right", fontsize=7, framealpha=0.9)
-    ax_map.set_title("domain overview", fontsize=11)
+    ax_map.set_title(
+        f"domain map · {map_variable}" if case.map_file else "domain overview",
+        fontsize=11,
+    )
     ax_map.set_xlim(extent[0], extent[1])
     ax_map.set_ylim(extent[2], extent[3])
     ax_map.set_aspect("equal", adjustable="datalim")
@@ -252,31 +373,57 @@ def plot_case(
         ax = fig.add_subplot(gs[1 + i // 2, i % 2], **axes_kw)
         if case.table is not None and var in case.table and case.points is not None:
             if show_satellite:
-                static.plot_satellite(ax, area=extent, source=satellite_source, zorder=0)
+                static.plot_satellite(
+                    ax, area=extent, source=satellite_source, zorder=0
+                )
             _plot_site_panel(ax, case.points, case.table[var], var, mode, style, extent)
         else:
-            ax.text(0.5, 0.5, f"{var}: no TABLE output", ha="center", va="center",
-                    transform=ax.transAxes)
+            ax.text(
+                0.5,
+                0.5,
+                f"{var}: no TABLE output",
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
+            )
             ax.set_axis_off()
 
     parts = []
     if case.boundary is not None:
         b = case.boundary
         if mode == "metamodel":
-            k = int(np.argmax(b[:, 1]))
-            parts.append(f"hs={b[k, 1]:.3g}m · tp={b[k, 2]:.3g}s · dir={b[k, 3]:.0f}° · spr={b[k, 4]:.0f}°")
+            k = _active_row(b)
+            parts.append(
+                f"hs={b[k, 1]:.3g}m · tp={b[k, 2]:.3g}s · dir={b[k, 3]:.0f}° · spr={b[k, 4]:.0f}°"
+            )
         else:
-            for j, (var, unit) in enumerate((("hs", "m"), ("tp", "s"), ("dir", "°"), ("spr", "°")), start=1):
-                parts.append(f"{var}=[{np.nanmin(b[:, j]):.3g}, {np.nanmax(b[:, j]):.3g}]{unit}")
+            for j, (var, unit) in enumerate(
+                (("hs", "m"), ("tp", "s"), ("dir", "°"), ("spr", "°")), start=1
+            ):
+                parts.append(
+                    f"{var}=[{np.nanmin(b[:, j]):.3g}, {np.nanmax(b[:, j]):.3g}]{unit}"
+                )
     if case.level is not None:
         parts.append(f"wl={case.level:.3g}m")
     if case.wind is not None:
         parts.append(wind_summary(case.wind))
     parts.append("output=yes" if case.table is not None else "output=no")
-    fig.suptitle(title or f"SWAN {mode} · case {case_dir.name}", fontsize=14,
-                 fontweight="bold", y=0.98)
-    fig.text(0.5, 0.94, "  ·  ".join(parts), ha="center", va="top", fontsize=10,
-             color="#444444", wrap=True)
+    fig.suptitle(
+        title or f"SWAN {mode} · case {case_dir.name}",
+        fontsize=14,
+        fontweight="bold",
+        y=0.98,
+    )
+    fig.text(
+        0.5,
+        0.94,
+        "  ·  ".join(parts),
+        ha="center",
+        va="top",
+        fontsize=10,
+        color="#444444",
+        wrap=True,
+    )
     fig.subplots_adjust(top=0.875)
 
     return fig

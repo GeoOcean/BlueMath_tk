@@ -9,5 +9,6 @@ BOUNDSPEC SIDE {{ boundary_side }} VARIABLE PAR &
 {% for row in boundary_par %}    {{ row }}{% if not loop.last %} &{% endif %}
 {% endfor %}POINTS 'sites' FILE '{{ points_file }}'
 TABLE 'sites' NOHEAD '{{ table_file }}' {{ table_quantities }}
-COMPUTE
+{% if map_file %}BLOCK 'COMPGRID' NOHEAD '{{ map_file }}' LAY 3 {{ map_quantities }}
+{% endif %}COMPUTE
 STOP

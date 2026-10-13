@@ -1,11 +1,12 @@
 """
 HyWaves metamodel for one goal: MDA -> per-variable PCA -> stacked exact GP.
 
-Training data are stationary SnapWave runs from one goal (sampled Hs, Tp, Dir,
-Spr and WL), on ``(case_num, sites)``. The metamodel maps offshore forcing to
-nearshore fields, ``hs`` included, in absolute terms:
+Training data are stationary model runs (SnapWave or SWAN) from one goal
+(sampled Hs, Tp, Dir, Spr and WL), on ``(case_num, sites)``. The metamodel maps
+offshore forcing to nearshore fields, ``hs`` included, in absolute terms:
 
-1. :func:`detect_removed_sites` / :func:`drop_sites` - optional site filter.
+1. :func:`mask_dry_sites` -> :func:`detect_removed_sites` / :func:`drop_sites`
+   -> :func:`fill_dry_sites` - site filter and dry-case handling.
 2. :func:`fit_mda` - MDA centroids of the forcing are the training cases (the
    rest is held out).
 3. :func:`fit_pcas` - one PCA per predicted variable over the site fields
@@ -55,8 +56,9 @@ MIN_DIRECTIONAL_SPREAD_DEG = 1.0
 # summed.
 MIN_HS = 0.0
 
-#: Default PCA NaN handling: fraction of NaN cases above which a site is
-#: dropped, and the fill value for the remaining NaNs.
+#: Default PCA NaN handling: fraction of valid cases a site needs to be kept,
+#: and the fill value for the remaining NaNs. After :func:`fill_dry_sites` the
+#: training fields have no NaN, so this is only a safety net.
 DEFAULT_PCA_PREPROCESSING: dict[str, dict[str, float]] = {
     "nan_threshold_to_drop": {"hs": 0.99, "dir_u": 0.99, "dir_v": 0.99, "spr": 0.99},
     "value_to_replace_nans": {"hs": 0.0, "dir_u": 0.0, "dir_v": 0.0, "spr": 0.0},
@@ -83,6 +85,12 @@ def detect_removed_sites(
     - ``{var}_ratio_max``: bound on ``var / {var}_forcing`` (the case forcing),
       e.g. ``{"hs_ratio_max": 3}`` drops sites where ``hs`` exceeds three
       times the offshore Hs of a case (numerical anomalies).
+    - ``{var}_nan_max``: bound on the fraction of cases where ``var`` is NaN,
+      e.g. ``{"hs_nan_max": 0.01}`` drops sites outside the model grid
+      (always NaN) and sites that are dry in more than 1 % of the cases.
+      Apply :func:`mask_dry_sites` first so that dry means NaN for every model.
+
+    NaNs are skipped by the bound rules, so a dry case never trips them.
 
     Parameters
     ----------
@@ -100,13 +108,14 @@ def detect_removed_sites(
 
     bad: set[str] = set()
     for key, threshold in site_filter.items():
-        if key.endswith("_ratio_max"):
-            var, rule = key[: -len("_ratio_max")], "ratio_max"
+        for rule in ("ratio_max", "nan_max", "max", "min"):
+            if key.endswith(f"_{rule}"):
+                var = key[: -len(rule) - 1]
+                break
         else:
-            var, _, rule = key.rpartition("_")
-        if rule not in ("max", "min", "ratio_max"):
             logger.warning(
-                "Ignoring site_filter key %r (expected {var}_max, _min or _ratio_max)",
+                "Ignoring site_filter key %r (expected {var}_max, _min, _ratio_max "
+                "or _nan_max)",
                 key,
             )
             continue
@@ -119,6 +128,9 @@ def detect_removed_sites(
                 continue
             agg = (cases[var] / cases[f"{var}_forcing"]).max("case_num")
             offenders = agg.where(agg > float(threshold), drop=True)
+        elif rule == "nan_max":
+            agg = cases[var].isnull().mean("case_num")
+            offenders = agg.where(agg > float(threshold), drop=True)
         elif rule == "max":
             agg = cases[var].max("case_num")
             offenders = agg.where(agg > float(threshold), drop=True)
@@ -128,6 +140,90 @@ def detect_removed_sites(
         bad.update(str(s) for s in offenders.sites.values)
 
     return sorted(bad)
+
+
+def _site_fields(cases: xr.Dataset) -> list[str]:
+    """Variables on ``(case_num, sites)``: the model output fields."""
+
+    return [
+        v
+        for v, da in cases.data_vars.items()
+        if "case_num" in da.dims and "sites" in da.dims
+    ]
+
+
+def mask_dry_sites(cases: xr.Dataset, var: str = "hs") -> xr.Dataset:
+    """
+    Set every output field to NaN where a site is dry or outside the grid.
+
+    Models flag such points differently: SWAN writes its exception value (NaN
+    after reading) in every quantity, SnapWave writes ``hs = 0`` with
+    placeholder ``tp``/``dir`` and NaN ``spr``. Here a site-case is dry when
+    *var* is NaN or ``<= 0``, and then all its fields become NaN, so both
+    models look the same to :func:`detect_removed_sites` and
+    :func:`fill_dry_sites`.
+
+    Parameters
+    ----------
+    cases : xr.Dataset
+        Model cases on ``(case_num, sites)``.
+    var : str, optional
+        Wave height variable that defines dry. Default is "hs".
+
+    Returns
+    -------
+    xr.Dataset
+        A copy with dry site-cases set to NaN.
+    """
+
+    dry = cases[var].isnull() | (cases[var] <= 0)
+    out = cases.copy()
+    for name in _site_fields(cases):
+        out[name] = cases[name].where(~dry)
+
+    return out
+
+
+def fill_dry_sites(cases: xr.Dataset, var: str = "hs") -> xr.Dataset:
+    """
+    Fill the dry site-cases left after the site filter, for PCA training.
+
+    *var* becomes 0 (no water, no waves). Every other field takes the case
+    forcing (``{field}_forcing``, e.g. ``tp_forcing``): no value is physical
+    for a dry point, the forcing is a smooth function of the GP inputs (a
+    constant would add a jump the GP has to learn), and it does not matter in
+    the reconstruction, where a contribution with ``hs = 0`` adds no energy.
+    Fields without a forcing counterpart keep their NaNs (the PCA fills them).
+
+    Parameters
+    ----------
+    cases : xr.Dataset
+        Output of :func:`mask_dry_sites` after :func:`drop_sites`.
+    var : str, optional
+        Wave height variable. Default is "hs".
+
+    Returns
+    -------
+    xr.Dataset
+        A copy with the dry site-cases filled.
+    """
+
+    dry = cases[var].isnull()
+    if not bool(dry.any()):
+        return cases
+    out = cases.copy()
+    out[var] = cases[var].fillna(0.0)
+    for name in _site_fields(cases):
+        if name != var and f"{name}_forcing" in cases:
+            out[name] = cases[name].where(~dry, cases[f"{name}_forcing"])
+    logger.info(
+        "Filled %d dry site-cases at %d sites (%s = 0, other fields = forcing)",
+        int(dry.sum()),
+        int(dry.any("case_num").sum()),
+        var,
+    )
+
+    return out
 
 
 def drop_sites(cases: xr.Dataset, site_ids: Iterable[str]) -> xr.Dataset:

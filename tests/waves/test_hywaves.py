@@ -267,6 +267,34 @@ class TestMetamodel(unittest.TestCase):
         bad = metamodel.detect_removed_sites(cases, {"hs_ratio_max": 3.0})
         self.assertEqual(bad, ["s2"])
 
+    def test_dry_sites(self):
+        """Dry site-cases are masked, filtered by fraction and filled."""
+
+        cases = self.cases.copy(deep=True)
+        cases["hs"][:3, 1] = 0.0  # SnapWave-style dry: hs = 0, placeholder dir
+        cases["dir"][:3, 1] = 270.0
+        cases["spr"][:3, 1] = np.nan
+        cases["hs"][:30, 2] = np.nan  # SWAN-style dry in half of the cases
+
+        masked = metamodel.mask_dry_sites(cases)
+        for var in ("hs", "dir", "spr"):
+            self.assertTrue(bool(masked[var][:3, 1].isnull().all()))
+        self.assertFalse(bool(masked.hs_forcing.isnull().any()))
+
+        bad = metamodel.detect_removed_sites(masked, {"hs_nan_max": 0.1})
+        self.assertEqual(bad, ["s0", "s2"])  # outside the grid, dry 50 %
+
+        filled = metamodel.fill_dry_sites(metamodel.drop_sites(masked, bad))
+        self.assertFalse(bool(filled.hs.isnull().any()))
+        np.testing.assert_array_equal(filled.hs.sel(sites="s1")[:3], 0.0)
+        np.testing.assert_allclose(
+            filled.dir.sel(sites="s1")[:3], cases.dir_forcing[:3]
+        )
+        np.testing.assert_allclose(
+            filled.spr.sel(sites="s1")[:3], cases.spr_forcing[:3]
+        )
+        np.testing.assert_allclose(filled.hs.sel(sites="s3"), cases.hs.sel(sites="s3"))
+
     def test_fit_and_predict(self):
         """Fit on MDA centroids, predict held-out cases with floors applied."""
 

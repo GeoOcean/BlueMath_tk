@@ -13,6 +13,7 @@ from scipy.spatial import Delaunay
 
 from bluemath_tk.wrappers.snapwave import boundary_time_series
 from bluemath_tk.wrappers.swan.swan_utils import (
+    boundary_hs_profile,
     boundary_par_table,
     clockwise_triangles,
     read_adcirc_grid,
@@ -91,6 +92,20 @@ class TestSwanBoundaryUtils(unittest.TestCase):
         with self.assertRaises(ValueError):
             boundary_par_table(xy, GOALS[::-1], {"hs": [1.0, 0.0, 0.0]})
 
+    def test_imposed_hs_is_energy_linear(self):
+        """SWAN interpolates spectra: Hs**2 is linear between PAR rows."""
+
+        xy, _ = swan_boundary_side(read_adcirc_grid(self.grid))
+        rows = boundary_par_table(xy, GOALS, {"hs": [2.0, 0.0, 0.0]})
+        table = np.c_[rows["len"], rows["hs"]]
+        hs = boundary_hs_profile(xy, table)
+        d = np.r_[0.0, np.cumsum(np.hypot(*np.diff(xy, axis=0).T))]
+        np.testing.assert_allclose(hs[d <= 0.1], 2.0)
+        third = np.isclose(d, 0.2)  # a third of the way from 0.1 to 0.4
+        self.assertTrue(third.any())
+        np.testing.assert_allclose(hs[third], 2.0 * np.sqrt(2.0 / 3.0))
+        np.testing.assert_allclose(hs[d >= 0.4], 0.0)
+
     def test_clockwise_triangles_are_reoriented(self):
         """Clockwise triangles are found and a counterclockwise copy written."""
         clockwise = op.join(self.test_dir, "clockwise.grd")
@@ -144,6 +159,7 @@ class TestSwanMetaModelWrapper(unittest.TestCase):
                 "dir": [270.0, 280.0],
                 "spr": [20.0, 25.0],
                 "wl": [0.0, 1.0],
+                "save_map": [False, True],
             },
             fixed_parameters={},
             output_dir=op.join(self.test_dir, "cases"),
@@ -184,6 +200,27 @@ class TestSwanMetaModelWrapper(unittest.TestCase):
         )
         self.assertIn("SET LEVEL=1.0", inp)
         self.assertIn("TABLE 'sites' NOHEAD 'output_sites.tab' HSIGN TPS DIR DSPR", inp)
+        self.assertIn(
+            "BLOCK 'COMPGRID' NOHEAD 'output_map.mat' LAY 3 HSIGN TPS DIR DSPR DEPTH",
+            inp,
+        )
+        with open(op.join(self.wrapper.cases_dirs[0], "INPUT")) as f:
+            self.assertNotIn("BLOCK", f.read())
+
+    def test_read_map(self):
+        """The BLOCK .mat output becomes a node dataset, exceptions as NaN."""
+
+        from scipy.io import savemat
+
+        from bluemath_tk.wrappers.swan.swan_utils import read_swan_map
+
+        path = op.join(self.test_dir, "map.mat")
+        savemat(path, {"Hsig": np.array([[1.0, -9.0, 2.0]]), "Depth": np.ones((1, 3))})
+        grid = {"vertices": np.array([[0, 0, 5], [1, 0, 5], [0, 1, 5]], float)}
+        ds = read_swan_map(path, grid)
+        self.assertEqual(set(ds.data_vars), {"hs", "depth"})
+        np.testing.assert_array_equal(ds.hs.isnull(), [False, True, False])
+        np.testing.assert_array_equal(ds.lon, [0, 1, 0])
 
     def test_postprocess_split(self):
         """Fake tables are joined on case_num and split per goal."""
@@ -245,7 +282,6 @@ class TestSwanDynamicModelWrapper(unittest.TestCase):
         finally:
             shutil.rmtree(test_dir)
 
-
     def test_wind_field_and_uniform_wind(self):
         """A wind field is written as u then v blocks, south to north, with its grid."""
         test_dir = tempfile.mkdtemp()
@@ -293,7 +329,9 @@ class TestSwanDynamicModelWrapper(unittest.TestCase):
             self.assertEqual((context["u10"], context["u10dir"]), (12.0, 300.0))
             values = np.loadtxt(op.join(wrapper.cases_dirs[0], "wind.dat"))
             np.testing.assert_array_equal(values[:2], 5.0)  # u block
-            np.testing.assert_array_equal(values[2:, 0], [2.0, 1.0])  # v at 52N, then 53N
+            np.testing.assert_array_equal(
+                values[2:, 0], [2.0, 1.0]
+            )  # v at 52N, then 53N
 
             # the case plot reads INPUT, wind.dat and the TABLE output back
             import matplotlib
@@ -303,7 +341,9 @@ class TestSwanDynamicModelWrapper(unittest.TestCase):
 
             case_dir = wrapper.cases_dirs[0]
             with open(op.join(case_dir, "INPUT"), "a") as f:
-                f.write(f"INPGRID WIND REGULAR {context['wind_grid']}\nREADINP WIND 1 'wind.dat' 3 0 FREE\n")
+                f.write(
+                    f"INPGRID WIND REGULAR {context['wind_grid']}\nREADINP WIND 1 'wind.dat' 3 0 FREE\n"
+                )
             with open(op.join(case_dir, "output_sites.tab"), "w") as f:
                 f.write(" 1.0 8.0 270.0 20.0\n 0.5 8.1 275.0 15.0\n")
             case = load_swan_case(case_dir)
@@ -345,6 +385,7 @@ class TestSwanDynamicModelWrapper(unittest.TestCase):
                 self.assertEqual(a.read(), b.read())
         finally:
             shutil.rmtree(test_dir)
+
 
 if __name__ == "__main__":
     unittest.main()
