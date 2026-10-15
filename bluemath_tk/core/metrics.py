@@ -28,6 +28,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 
 import numpy as np
+import pandas as pd
 
 ArrayLike = np.ndarray | Iterable[float]
 
@@ -58,7 +59,9 @@ METRIC_LABELS: dict[str, str] = {
 
 
 def paired_finite(
-    reference: ArrayLike, estimate: ArrayLike
+    reference: ArrayLike,
+    estimate: ArrayLike,
+    bounds: tuple[float, float] | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Flatten two paired arrays and keep only the pairs finite on both sides.
@@ -69,6 +72,9 @@ def paired_finite(
         Reference values.
     estimate : array-like
         Estimated values, paired element-wise with *reference*.
+    bounds : tuple of float, optional
+        ``(low, high)``: also drop pairs with either side outside it, e.g.
+        corrupted-but-finite model output. Default is None (finite only).
 
     Returns
     -------
@@ -89,6 +95,9 @@ def paired_finite(
             f"({ref.size} != {est.size})"
         )
     mask = np.isfinite(ref) & np.isfinite(est)
+    if bounds is not None:
+        low, high = bounds
+        mask &= (ref >= low) & (ref <= high) & (est >= low) & (est <= high)
 
     return ref[mask], est[mask]
 
@@ -639,6 +648,7 @@ def compute_metrics(
     *,
     circular: bool = False,
     rrmse_normalization: str = "mean",
+    bounds: tuple[float, float] | None = None,
 ) -> dict[str, float]:
     """
     Compute several metrics at once on the finite pairs of two arrays.
@@ -658,6 +668,8 @@ def compute_metrics(
         ``NaN`` so tables keep the same columns. Default is False.
     rrmse_normalization : {"mean", "rms"}, optional
         Passed to :func:`rrmse`. Default is "mean".
+    bounds : tuple of float, optional
+        Passed to :func:`paired_finite`. Default is None.
 
     Returns
     -------
@@ -682,7 +694,7 @@ def compute_metrics(
             f"Unknown metric(s) {unknown}; available: {list(AVAILABLE_METRICS)}"
         )
 
-    ref, est = paired_finite(reference, estimate)
+    ref, est = paired_finite(reference, estimate, bounds)
     out: dict[str, float] = {"n": int(ref.size)}
     for name in names:
         if ref.size == 0:
@@ -696,3 +708,49 @@ def compute_metrics(
             out[name] = _LINEAR[name](ref, est)
 
     return out
+
+
+def pool_metrics(
+    table: pd.DataFrame,
+    by: Iterable[str],
+    metrics: Iterable[str] = ("bias", "rmse", "rrmse", "r2"),
+) -> pd.DataFrame:
+    """
+    Pool per-group metrics into one row per *by* group, weighted by ``n``.
+
+    ``bias`` (n-weighted mean) and ``rmse`` (root of the n-weighted mean
+    square) are the exact pooled values. Ratio and correlation metrics
+    (``rrmse``, ``r2``, ...) need the raw pairs to be pooled exactly, so they
+    are n-weighted means, an approximation.
+
+    Parameters
+    ----------
+    table : pd.DataFrame
+        One row per group, with an ``n`` column and the *metrics* columns.
+    by : iterable of str
+        Columns that define the pooled rows.
+    metrics : iterable of str, optional
+        Metric columns to pool.
+
+    Returns
+    -------
+    pd.DataFrame
+        The *by* columns, the pooled *metrics* and the summed ``n``.
+    """
+
+    by, metrics = list(by), list(metrics)
+
+    def pool(group: pd.DataFrame) -> pd.Series:
+        w = group["n"].to_numpy(dtype=float)
+        if w.sum() <= 0:
+            return pd.Series({m: np.nan for m in metrics} | {"n": 0})
+        out = {
+            m: float(np.sqrt(np.average(group[m] ** 2, weights=w)))
+            if m == "rmse"
+            else float(np.average(group[m], weights=w))
+            for m in metrics
+        }
+        return pd.Series(out | {"n": int(w.sum())})
+
+    out = table.groupby(by, sort=False)[["n", *metrics]].apply(pool).reset_index()
+    return out.astype({"n": int})

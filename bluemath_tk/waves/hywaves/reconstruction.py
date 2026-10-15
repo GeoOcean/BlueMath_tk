@@ -10,6 +10,16 @@ over goals and partitions, and bulk parameters are computed from the sum
 contribution, the local wind sea, is added per site batch before the sum
 (see :mod:`.wind_correction`).
 
+The sum reproduces a model run forced by every goal at once only if each
+metamodel case imposes a fraction ``w(goal, point)`` of its goal's *energy*
+along the open boundary and the fractions of all goals add up to 1. Both
+models do: SnapWave mixes the spectra of the two nearest goals at every
+boundary node with inverse-distance weights; SWAN (``BOUNDSPEC ... VARIABLE
+PAR``) interpolates the spectra linearly along the boundary, so the energy is
+linear and Hs falls as ``sqrt(w)`` between goals, and the boundary ends take
+their nearest goal in full (see
+:func:`bluemath_tk.wrappers.swan.swan_utils.boundary_par_table`).
+
 The spectral construction allocates the full ``(time, sites, goal x partition,
 freq, dir)`` array, so long periods or many sites are processed in site
 batches sized to a memory budget (:func:`site_batch_size`), optionally across
@@ -235,7 +245,7 @@ def _sum_site_batches(
     for k, i in enumerate(range(0, len(site_ids), batch), start=1):
         t_batch = time.monotonic()
         sites = site_ids[i : i + batch]
-        merged = xr.merge([c.sel(sites=sites) for c in chunks])
+        merged = xr.merge([c.sel(sites=sites) for c in chunks], join="outer", compat="no_conflicts")
         wind_k = None
         if wind_correction is not None:
             merged, wind_k = _add_wind_sea(merged, wind_correction)

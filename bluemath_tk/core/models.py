@@ -20,7 +20,7 @@ from sklearn.metrics import (
 from sklearn.preprocessing import StandardScaler
 
 from .constants import EARTH_RADIUS
-from .logging import get_file_logger
+from .logging import _coerce_level, _console_handlers, get_file_logger
 from .operations import (
     denormalize,
     destandarize,
@@ -29,6 +29,36 @@ from .operations import (
     normalize,
     standarize,
 )
+
+
+#: Console level of every model logger (PCA, MDA, GP, ...); see :func:`set_models_console_level`.
+MODELS_CONSOLE_LEVEL: Union[int, str] = "WARNING"
+
+
+def set_models_console_level(level: Union[int, str]) -> None:
+    """
+    Console level of the model loggers, existing and future (files keep their level).
+
+    Models log routine messages on every fit; ``"ERROR"`` keeps a notebook
+    that fits many models readable while ``logs/*.log`` keep the detail.
+
+    Parameters
+    ----------
+    level : int or str
+        Logging level, e.g. ``"ERROR"``.
+    """
+
+    global MODELS_CONSOLE_LEVEL
+    MODELS_CONSOLE_LEVEL = level
+    names = set()
+    stack = [BlueMathModel]
+    while stack:
+        cls = stack.pop()
+        names.add(cls.__name__)
+        stack.extend(cls.__subclasses__())
+    for name in names & set(logging.Logger.manager.loggerDict):
+        for handler in _console_handlers(logging.getLogger(name)):
+            handler.setLevel(_coerce_level(level))
 
 
 class BlueMathModel(ABC):
@@ -148,8 +178,13 @@ class BlueMathModel(ABC):
         - Thread-safe logger creation
         """
 
-        if self._logger is None:
-            self._logger = get_file_logger(name=self.__class__.__name__)
+        # an unpickled model refers to its logger by name: in a new process
+        # that logger has no handlers yet
+        if self._logger is None or not self._logger.handlers:
+            self._logger = get_file_logger(
+                name=self._logger.name if self._logger else self.__class__.__name__,
+                console_level=MODELS_CONSOLE_LEVEL,
+            )
         return self._logger
 
     @logger.setter
@@ -200,7 +235,9 @@ class BlueMathModel(ABC):
         >>> model.set_logger_name("my_model", level="DEBUG", console=False)
         """
 
-        self.logger = get_file_logger(name=name, level=level, console=console)
+        self.logger = get_file_logger(
+            name=name, level=level, console=console, console_level=MODELS_CONSOLE_LEVEL
+        )
 
     def save_model(self, model_path: str, exclude_attributes: List[str] = None) -> None:
         """

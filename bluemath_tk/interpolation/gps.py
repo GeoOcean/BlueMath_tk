@@ -683,6 +683,29 @@ class ExactGPInterpolation(BaseInterpolation):
         self.is_fitted = True
         self.logger.info("GP models fitted successfully")
 
+    def to(self, device: str | torch.device) -> "ExactGPInterpolation":
+        """
+        Move the fitted models and likelihoods to *device* (e.g. ``"cpu"``).
+
+        Parameters
+        ----------
+        device : str or torch.device
+            Target device for prediction.
+
+        Returns
+        -------
+        ExactGPInterpolation
+            This instance.
+        """
+
+        self.device = torch.device(device)
+        for model in self._models.values():
+            model.to(self.device)
+        for likelihood in self._likelihoods.values():
+            likelihood.to(self.device)
+
+        return self
+
     def predict(
         self,
         dataset: pd.DataFrame,

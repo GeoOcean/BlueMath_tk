@@ -22,6 +22,27 @@ spectra are summed (see :func:`wind_sea_contribution`):
 
 The fetch at each site and direction comes from
 :func:`bluemath_tk.waves.fetch.fetch_table`.
+
+Why not run the metamodel cases with wind: each case is one goal's
+contribution and the reconstruction sums them, so every case would grow its
+own copy of the local wind sea (counted once per goal); and growth slows as
+the sea develops, which depends on the total energy, not on one goal's share.
+
+``K`` is learned from the model, not from a growth formula (which saturates
+at ``K = 1`` for storm seas where the models still add 15-35 %). Its inputs
+are dimensionless with the wind speed (lengths ``U^2/g``), so ~100 training
+cases cover every site and wind:
+
+- ``g Hs_ws / U^2``: how developed the wind sea is (0.24 = fully developed);
+  the strongest effect, young seas grow most;
+- ``g F / U^2``: fetch left upwind inside the domain;
+- ``g d / U^2`` and ``g d_mean / U^2``: depth at the site and along the
+  fetch (shallow water limits growth);
+- ``cos(wind - wave)``: following winds grow most.
+
+Limits: training winds are uniform; wind-wave angles beyond the trained range
+(e.g. +-60 deg) keep the edge value (tree models do not extrapolate); in
+SnapWave (one period per node) wind energy over swell takes the swell period.
 """
 
 from __future__ import annotations

@@ -2,8 +2,15 @@
 HyWaves output points: where nearshore waves are computed and reconstructed.
 
 Typical sources are points along depth contours of a bathymetry raster
-(:func:`get_isobath_points`) and unstructured-mesh nodes inside a polygon
-(:func:`get_mesh_nodes_in_polygon`), plus any observation sites (buoys).
+(:func:`get_isobath_points`) and model-mesh nodes inside a polygon (thinned
+evenly with :func:`spatial_subsample`), plus any observation sites (buoys).
+Every site is then checked against the model mesh (:func:`site_status`: inside
+it and never dry; depths from :func:`bluemath_tk.topo_bathy.mesh.depth_at_points`).
+Sites are decided once, before any run: a site is kept only if its mesh depth
+plus the lowest water level of the cases stays above the models' minimum
+depth. Every kept site is then wet in every case, so ``hs = 0`` at a site is a
+result (the goal sends no energy there), not a dry or failed point; see
+:func:`bluemath_tk.waves.hywaves.metamodel.mask_zero_energy`.
 
 Raw contours of a high-resolution bathymetry follow every small sandbank and
 pit, which puts points in odd places. :func:`get_isobath_points` can smooth
@@ -14,8 +21,6 @@ rasters are measured with great-circle distances.
 """
 
 from __future__ import annotations
-
-from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -298,42 +303,118 @@ def get_isobath_points(
     return np.vstack(segments) if segments else np.empty((0, 2), dtype=float)
 
 
-def get_mesh_nodes_in_polygon(
-    polygon: Polygon | MultiPolygon,
-    mesh: xr.Dataset,
-    wet_only: bool = False,
-) -> list[dict[str, Any]]:
+def spatial_subsample(
+    x: np.ndarray,
+    y: np.ndarray,
+    fraction: float,
+    seed: int = 0,
+    geographic: bool = True,
+) -> np.ndarray:
     """
-    Unstructured-mesh nodes inside a polygon.
+    Pick a random subset of points that still covers their whole area.
+
+    Stratified sampling: the area is cut into equal square cells, sized so that
+    about ``fraction * len(x)`` cells hold points, and one point is drawn at
+    random from each of those cells. Dense clusters (e.g. a finer mesh near
+    the coast) are thinned more than sparse areas, so the subset spreads
+    evenly over the area instead of following the point density.
 
     Parameters
     ----------
-    polygon : Polygon or MultiPolygon
-        Area, in the mesh coordinates.
-    mesh : xr.Dataset
-        UGRID mesh with ``mesh2d_node_x``, ``mesh2d_node_y``, ``mesh2d_node_z``.
-    wet_only : bool, optional
-        Keep only nodes with negative bed level. Default is False.
+    x, y : np.ndarray
+        Point coordinates (lon/lat degrees or projected metres).
+    fraction : float
+        Share of the points to keep, in ``(0, 1]``. The result has about
+        ``fraction * len(x)`` points (one per occupied cell).
+    seed : int, optional
+        Random seed. Default is 0.
+    geographic : bool, optional
+        Lon/lat input (cells are square in metres). Default is True.
 
     Returns
     -------
-    list[dict]
-        One ``{"lon", "lat", "depth", "node_index"}`` dict per node.
+    np.ndarray
+        Sorted indices of the kept points.
+
+    Raises
+    ------
+    ValueError
+        If *fraction* is not in ``(0, 1]``.
     """
 
-    lon = mesh["mesh2d_node_x"].values
-    lat = mesh["mesh2d_node_y"].values
-    z = mesh["mesh2d_node_z"].values
-    mask = shapely.contains_xy(polygon, lon, lat)
-    if wet_only:
-        mask &= z < 0.0
+    if not 0 < fraction <= 1:
+        raise ValueError(f"fraction must be in (0, 1], got {fraction}")
+    x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
+    n = x.size
+    target = max(1, int(round(fraction * n)))
+    if target >= n:
+        return np.arange(n)
+    if geographic:
+        lat0 = np.radians(np.mean(y))
+        x = np.radians(x) * EARTH_RADIUS_M * np.cos(lat0)
+        y = np.radians(y) * EARTH_RADIUS_M
 
-    return [
-        {
-            "lon": float(lon[i]),
-            "lat": float(lat[i]),
-            "depth": float(z[i]),
-            "node_index": int(i),
-        }
-        for i in np.flatnonzero(mask)
-    ]
+    def cells(size: float) -> np.ndarray:
+        ij = np.floor(np.c_[x - x.min(), y - y.min()] / size).astype(np.int64)
+        return np.unique(ij, axis=0, return_inverse=True)[1].ravel()
+
+    lo, hi = 1e-9, float(max(np.ptp(x), np.ptp(y))) + 1.0
+    for _ in range(60):  # occupied cells decrease with the cell size
+        mid = np.sqrt(lo * hi)
+        if cells(mid).max() + 1 > target:
+            lo = mid
+        else:
+            hi = mid
+    cell = cells(
+        lo
+        if abs(cells(lo).max() + 1 - target) < abs(cells(hi).max() + 1 - target)
+        else hi
+    )
+
+    rng = np.random.default_rng(seed)
+    order = rng.permutation(n)
+    _, first = np.unique(cell[order], return_index=True)
+
+    return np.sort(order[first])
+
+
+#: :func:`site_status` labels.
+SITE_OK = "ok"
+SITE_OUTSIDE = "outside_mesh"
+SITE_CAN_DRY = "can_dry"
+
+
+def site_status(
+    depth: np.ndarray, wl_min: float = 0.0, min_depth: float = 0.1
+) -> np.ndarray:
+    """
+    Whether each output site can be used: inside the mesh and always wet.
+
+    A site is kept only if the model mesh covers it and its water depth stays
+    above *min_depth* at the lowest water level the cases can have, so every
+    run computes it and ``hs = 0`` there always means "no energy arrives".
+
+    Parameters
+    ----------
+    depth : np.ndarray
+        Mesh depth at the sites (m, positive down; NaN outside the mesh, see
+        :func:`bluemath_tk.topo_bathy.mesh.depth_at_points`).
+    wl_min : float, optional
+        Lowest water level of the cases (m, e.g. the lower ``wl`` bound of the
+        metamodel). Default is 0.
+    min_depth : float, optional
+        Minimum depth the model computes (SnapWave ``hmin``, SWAN ``DEPMIN``).
+        Default is 0.1.
+
+    Returns
+    -------
+    np.ndarray
+        :data:`SITE_OK`, :data:`SITE_OUTSIDE` or :data:`SITE_CAN_DRY` per site.
+    """
+
+    depth = np.asarray(depth, dtype=float)
+    status = np.full(depth.shape, SITE_OK, dtype=object)
+    status[depth + float(wl_min) < float(min_depth)] = SITE_CAN_DRY
+    status[~np.isfinite(depth)] = SITE_OUTSIDE
+
+    return status

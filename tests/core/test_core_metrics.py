@@ -212,5 +212,28 @@ class TestCircularMetrics(unittest.TestCase):
             compute_metrics([1.0], [1.0], ["nse"])
 
 
+class TestBoundsAndPooling(unittest.TestCase):
+    def test_bounds_drop_pairs_outside(self):
+        out = compute_metrics([1.0, 2.0, 3.0], [1.0, 2.0, 9e13], ["rmse"], bounds=(0.0, 15.0))
+        self.assertEqual(out["n"], 2)
+        self.assertEqual(out["rmse"], 0.0)
+
+    def test_pool_metrics(self):
+        import pandas as pd
+
+        from bluemath_tk.core.metrics import pool_metrics
+
+        table = pd.DataFrame(
+            {"set": ["a", "a", "b"], "n": [1, 3, 2], "bias": [0.0, 1.0, 2.0],
+             "rmse": [1.0, 3.0, 2.0], "rrmse": [0.1, 0.3, 0.2], "r2": [0.5, 0.9, 0.8]}
+        )
+        out = pool_metrics(table, ["set"]).set_index("set")
+        self.assertAlmostEqual(out.loc["a", "bias"], 0.75)
+        self.assertAlmostEqual(out.loc["a", "rmse"], np.sqrt((1 + 27) / 4))
+        self.assertAlmostEqual(out.loc["a", "rrmse"], 0.25)
+        self.assertEqual(out.loc["a", "n"], 4)
+        self.assertEqual(out["n"].dtype.kind, "i")
+
+
 if __name__ == "__main__":
     unittest.main()
