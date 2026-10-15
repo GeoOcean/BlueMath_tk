@@ -5,8 +5,8 @@ Training data are stationary model runs (SnapWave or SWAN) from one goal
 (sampled Hs, Tp, Dir, Spr and WL), on ``(case_num, sites)``. The metamodel maps
 offshore forcing to nearshore fields, ``hs`` included, in absolute terms:
 
-1. :func:`mask_dry_sites` -> :func:`detect_removed_sites` / :func:`drop_sites`
-   -> :func:`fill_dry_sites` - site filter and dry-case handling.
+1. :func:`mask_zero_energy` -> :func:`detect_removed_sites` / :func:`drop_sites`
+   -> :func:`fill_zero_energy` - site filter and zero-energy cases.
 2. :func:`fit_mda` - MDA centroids of the forcing are the training cases (the
    rest is held out).
 3. :func:`fit_pcas` - one PCA per predicted variable over the site fields
@@ -57,7 +57,7 @@ MIN_DIRECTIONAL_SPREAD_DEG = 1.0
 MIN_HS = 0.0
 
 #: Default PCA NaN handling: fraction of valid cases a site needs to be kept,
-#: and the fill value for the remaining NaNs. After :func:`fill_dry_sites` the
+#: and the fill value for the remaining NaNs. After :func:`fill_zero_energy` the
 #: training fields have no NaN, so this is only a safety net.
 DEFAULT_PCA_PREPROCESSING: dict[str, dict[str, float]] = {
     "nan_threshold_to_drop": {"hs": 0.99, "dir_u": 0.99, "dir_v": 0.99, "spr": 0.99},
@@ -86,11 +86,11 @@ def detect_removed_sites(
       e.g. ``{"hs_ratio_max": 3}`` drops sites where ``hs`` exceeds three
       times the offshore Hs of a case (numerical anomalies).
     - ``{var}_nan_max``: bound on the fraction of cases where ``var`` is NaN,
-      e.g. ``{"hs_nan_max": 0.01}`` drops sites outside the model grid
-      (always NaN) and sites that are dry in more than 1 % of the cases.
-      Apply :func:`mask_dry_sites` first so that dry means NaN for every model.
+      e.g. ``{"hs_nan_max": 0.01}`` drops sites where the model failed in
+      more than 1 % of the cases (sites are inside the mesh and always wet,
+      so NaN ``hs`` is never a dry point; ``hs = 0`` is not NaN).
 
-    NaNs are skipped by the bound rules, so a dry case never trips them.
+    NaNs are skipped by the bound rules.
 
     Parameters
     ----------
@@ -152,75 +152,76 @@ def _site_fields(cases: xr.Dataset) -> list[str]:
     ]
 
 
-def mask_dry_sites(cases: xr.Dataset, var: str = "hs") -> xr.Dataset:
+def mask_zero_energy(cases: xr.Dataset, var: str = "hs") -> xr.Dataset:
     """
-    Set every output field to NaN where a site is dry or outside the grid.
+    Blank the fields of site-cases where no wave energy arrives.
 
-    Models flag such points differently: SWAN writes its exception value (NaN
-    after reading) in every quantity, SnapWave writes ``hs = 0`` with
-    placeholder ``tp``/``dir`` and NaN ``spr``. Here a site-case is dry when
-    *var* is NaN or ``<= 0``, and then all its fields become NaN, so both
-    models look the same to :func:`detect_removed_sites` and
-    :func:`fill_dry_sites`.
+    Output sites are inside the mesh and always wet (see
+    :func:`bluemath_tk.waves.hywaves.output_points.site_status`), so
+    ``hs = 0`` is a real result: the goal sends no energy there in that case.
+    Models then write NaN (SWAN) or a placeholder (SnapWave) in the other
+    fields; here they all become NaN, ``hs`` stays 0 and NaN ``hs`` (a model
+    failure) stays NaN for :func:`detect_removed_sites`.
 
     Parameters
     ----------
     cases : xr.Dataset
         Model cases on ``(case_num, sites)``.
     var : str, optional
-        Wave height variable that defines dry. Default is "hs".
+        Wave height variable. Default is "hs".
 
     Returns
     -------
     xr.Dataset
-        A copy with dry site-cases set to NaN.
+        A copy, ``hs = 0`` (``hs <= 0`` clipped to 0) and the other fields NaN
+        where no energy arrives.
     """
 
-    dry = cases[var].isnull() | (cases[var] <= 0)
+    zero = cases[var] <= 0
     out = cases.copy()
+    out[var] = cases[var].where(~zero, 0.0)
     for name in _site_fields(cases):
-        out[name] = cases[name].where(~dry)
+        if name != var:
+            out[name] = cases[name].where(~zero)
 
     return out
 
 
-def fill_dry_sites(cases: xr.Dataset, var: str = "hs") -> xr.Dataset:
+def fill_zero_energy(cases: xr.Dataset, var: str = "hs") -> xr.Dataset:
     """
-    Fill the dry site-cases left after the site filter, for PCA training.
+    Fill the fields of zero-energy site-cases for PCA training.
 
-    *var* becomes 0 (no water, no waves). Every other field takes the case
-    forcing (``{field}_forcing``, e.g. ``tp_forcing``): no value is physical
-    for a dry point, the forcing is a smooth function of the GP inputs (a
-    constant would add a jump the GP has to learn), and it does not matter in
-    the reconstruction, where a contribution with ``hs = 0`` adds no energy.
+    Where ``hs = 0`` every other field takes the case forcing
+    (``{field}_forcing``, e.g. ``tp_forcing``): no value is physical without
+    waves, the forcing is a smooth function of the GP inputs (a constant would
+    add a jump the GP has to learn), and it does not matter in the
+    reconstruction, where a contribution with ``hs = 0`` adds no energy.
     Fields without a forcing counterpart keep their NaNs (the PCA fills them).
 
     Parameters
     ----------
     cases : xr.Dataset
-        Output of :func:`mask_dry_sites` after :func:`drop_sites`.
+        Output of :func:`mask_zero_energy` (after :func:`drop_sites`).
     var : str, optional
         Wave height variable. Default is "hs".
 
     Returns
     -------
     xr.Dataset
-        A copy with the dry site-cases filled.
+        A copy with the zero-energy site-cases filled.
     """
 
-    dry = cases[var].isnull()
-    if not bool(dry.any()):
+    zero = cases[var] == 0
+    if not bool(zero.any()):
         return cases
     out = cases.copy()
-    out[var] = cases[var].fillna(0.0)
     for name in _site_fields(cases):
         if name != var and f"{name}_forcing" in cases:
-            out[name] = cases[name].where(~dry, cases[f"{name}_forcing"])
+            out[name] = cases[name].where(~zero, cases[f"{name}_forcing"])
     logger.info(
-        "Filled %d dry site-cases at %d sites (%s = 0, other fields = forcing)",
-        int(dry.sum()),
-        int(dry.any("case_num").sum()),
-        var,
+        "Filled %d zero-energy site-cases at %d sites (other fields = forcing)",
+        int(zero.sum()),
+        int(zero.any("case_num").sum()),
     )
 
     return out
@@ -539,7 +540,9 @@ def predict_fields(
     pcas : mapping
         Fitted PCAs by target name.
     forcing : pd.DataFrame
-        Forcing rows (columns as at fit time); the index labels the rows.
+        Forcing rows (columns as at fit time); the index labels the rows and
+        its name (``case_num`` if unnamed) is the row dimension of the output,
+        e.g. ``time`` for a hindcast.
     vars_to_predict : mapping
         Same specification as at fit time.
     sites : list of str
@@ -548,11 +551,11 @@ def predict_fields(
     Returns
     -------
     xr.Dataset
-        Predicted variables on ``(case_num, sites)``.
+        Predicted variables on ``(row, sites)``.
     """
 
-    if forcing.index.name != "case_num":
-        forcing = forcing.rename_axis("case_num")
+    row_dim = forcing.index.name or "case_num"
+    forcing = forcing.rename_axis("case_num")
     rows = forcing.index.values
     blocks = split_pcs(gp.predict(dataset=forcing).values, pcas)
 
@@ -591,7 +594,8 @@ def predict_fields(
             arr = arr.clip(min=MIN_HS)
         out[name] = arr.sel(sites=sites)
 
-    return xr.Dataset(out)
+    ds = xr.Dataset(out)
+    return ds if row_dim == "case_num" else ds.rename(case_num=row_dim)
 
 
 # ---------------------------------------------------------------------------

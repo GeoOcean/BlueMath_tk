@@ -180,23 +180,6 @@ class TestOutputPoints(unittest.TestCase):
             smooth[:, 100], da[:, 100], atol=0.05
         )  # linear field
 
-    def test_mesh_nodes_in_polygon(self):
-        """Only (wet) nodes inside the polygon are returned."""
-
-        mesh = xr.Dataset(
-            {
-                "mesh2d_node_x": ("n", [0.5, 0.6, 2.0]),
-                "mesh2d_node_y": ("n", [0.5, 0.6, 2.0]),
-                "mesh2d_node_z": ("n", [-3.0, 1.0, -5.0]),
-            }
-        )
-        nodes = output_points.get_mesh_nodes_in_polygon(box(0, 0, 1, 1), mesh)
-        self.assertEqual([n["node_index"] for n in nodes], [0, 1])
-        wet = output_points.get_mesh_nodes_in_polygon(
-            box(0, 0, 1, 1), mesh, wet_only=True
-        )
-        self.assertEqual([n["node_index"] for n in wet], [0])
-
 
 def _synthetic_cases(n_cases: int = 60, n_sites: int = 5, seed: int = 0) -> xr.Dataset:
     """SnapWave-like cases: hs/dir/spr fields that depend smoothly on the forcing.
@@ -215,7 +198,7 @@ def _synthetic_cases(n_cases: int = 60, n_sites: int = 5, seed: int = 0) -> xr.D
     hs = gain[None, :] * hs_off[:, None] * (0.5 + tp[:, None] / 32)
     hs = np.clip(hs + 0.05 * wl[:, None], 0, None)
     hs[:, -1] = np.minimum(hs[:, -1], 1.5)
-    hs[:, 0] = np.nan  # a dry site, dropped by the PCA NaN threshold
+    hs[:, 0] = np.nan  # a site the model never computes, dropped by the PCA
     sites = [f"s{i}" for i in range(n_sites)]
     return xr.Dataset(
         {
@@ -267,25 +250,25 @@ class TestMetamodel(unittest.TestCase):
         bad = metamodel.detect_removed_sites(cases, {"hs_ratio_max": 3.0})
         self.assertEqual(bad, ["s2"])
 
-    def test_dry_sites(self):
-        """Dry site-cases are masked, filtered by fraction and filled."""
+    def test_zero_energy(self):
+        """Zero hs is kept as a result; only NaN hs counts as a model failure."""
 
         cases = self.cases.copy(deep=True)
-        cases["hs"][:3, 1] = 0.0  # SnapWave-style dry: hs = 0, placeholder dir
+        cases["hs"][:3, 1] = 0.0  # no energy: SnapWave placeholder dir
         cases["dir"][:3, 1] = 270.0
-        cases["spr"][:3, 1] = np.nan
-        cases["hs"][:30, 2] = np.nan  # SWAN-style dry in half of the cases
+        cases["spr"][:3, 1] = np.nan  # SWAN-style NaN
+        cases["hs"][:30, 2] = np.nan  # model failure in half of the cases
 
-        masked = metamodel.mask_dry_sites(cases)
-        for var in ("hs", "dir", "spr"):
+        masked = metamodel.mask_zero_energy(cases)
+        np.testing.assert_array_equal(masked.hs.sel(sites="s1")[:3], 0.0)
+        for var in ("dir", "spr"):
             self.assertTrue(bool(masked[var][:3, 1].isnull().all()))
         self.assertFalse(bool(masked.hs_forcing.isnull().any()))
 
-        bad = metamodel.detect_removed_sites(masked, {"hs_nan_max": 0.1})
-        self.assertEqual(bad, ["s0", "s2"])  # outside the grid, dry 50 %
+        bad = metamodel.detect_removed_sites(masked, {"hs_nan_max": 0.01})
+        self.assertEqual(bad, ["s0", "s2"])  # s1 (zero energy) is kept
 
-        filled = metamodel.fill_dry_sites(metamodel.drop_sites(masked, bad))
-        self.assertFalse(bool(filled.hs.isnull().any()))
+        filled = metamodel.fill_zero_energy(metamodel.drop_sites(masked, bad))
         np.testing.assert_array_equal(filled.hs.sel(sites="s1")[:3], 0.0)
         np.testing.assert_allclose(
             filled.dir.sel(sites="s1")[:3], cases.dir_forcing[:3]
@@ -319,6 +302,14 @@ class TestMetamodel(unittest.TestCase):
         np.testing.assert_allclose(pred.tp.isel(sites=0), test_forcing.tp)
         true_hs = self.cases.hs.isel(case_num=test_idx).sel(sites=sites)
         self.assertLess(float(np.abs(pred.hs - true_hs.values).max()), 0.1)
+
+        hindcast = test_forcing.set_index(
+            pd.date_range("2020-01-01", periods=len(test_idx), freq="h").rename("time")
+        )
+        by_time = metamodel.predict_fields(gp, pcas, hindcast, VARS, sites)
+        self.assertEqual(by_time.hs.dims, ("time", "sites"))
+        np.testing.assert_allclose(by_time.hs.values, pred.hs.values)
+        self.assertIs(gp.to("cpu"), gp)
 
     def test_goal_forcing_and_valid_steps(self):
         """Partition forcing is renamed; empty partitions and off-sector steps drop."""

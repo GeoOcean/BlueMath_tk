@@ -126,6 +126,7 @@ def validation_scatter(
     seed: int = 0,
     fmt: str = ".3f",
     rrmse_normalization: str = "mean",
+    bounds: tuple[float, float] | None = None,
 ) -> dict[str, float]:
     """
     Density scatter of an estimate against its reference, with metrics.
@@ -177,6 +178,9 @@ def validation_scatter(
         Seed for the drawing subsample. Default is 0.
     fmt : str, optional
         Number format for the annotation. Default is ".3f".
+    bounds : tuple of float, optional
+        Drop pairs outside ``(low, high)`` before plotting and scoring (see
+        :func:`bluemath_tk.core.metrics.paired_finite`).
     rrmse_normalization : {"mean", "rms"}, optional
         Passed to :func:`bluemath_tk.core.metrics.rrmse`. Default is "mean".
 
@@ -186,7 +190,7 @@ def validation_scatter(
         The metrics computed on all finite pairs (always includes ``n``).
     """
 
-    ref, est = paired_finite(reference, estimate)
+    ref, est = paired_finite(reference, estimate, bounds)
     if circular:
         ref, est = np.mod(ref, 360.0), np.mod(est, 360.0)
 
