@@ -377,10 +377,15 @@ class TestReconstruction(unittest.TestCase):
         cube = self._cube([1.0, 2.0])
         chunks = [cube.isel(goal=[i]) for i in range(2)]
         batched, _ = reconstruction.sum_partition_spectra_batched(
-            chunks, ["a", "b"], 2, 2, {"hs": "hs"}, budget_bytes=1
+            chunks, ["a", "b"], {"hs": "hs"}, budget_bytes=1
         )
         single, _ = reconstruction.sum_partition_spectra(cube, ["a", "b"], {"hs": "hs"})
         xr.testing.assert_allclose(batched, single)
+        pooled, spectra = reconstruction.sum_partition_spectra_batched(
+            chunks, ["a", "b"], {"hs": "hs"}, budget_bytes=1, workers=4, save_spectra=True
+        )
+        xr.testing.assert_allclose(pooled.transpose(*single.dims), single)
+        self.assertEqual(dict(spectra.efth.sizes)["time"], single.sizes["time"])
 
     def test_partitions_and_batch_size(self):
         """Partition ids per mode, and a batch size that shrinks with the problem."""
@@ -390,11 +395,13 @@ class TestReconstruction(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             reconstruction.partition_ids(xr.Dataset(), spectral=True)
-        big = reconstruction.site_batch_size(24, 4)
-        self.assertGreater(big, reconstruction.site_batch_size(24 * 30, 40))
-        self.assertEqual(
-            reconstruction.site_batch_size(10**6, 10**3, budget_bytes=1), 1
-        )
+        budget = 2**34
+        big, steps = reconstruction.batch_shape(24, 4, budget)
+        self.assertEqual(steps, 24)
+        self.assertGreater(big, reconstruction.batch_shape(24 * 30, 40, budget)[0])
+        one_site = reconstruction.site_sum_bytes(1, 10)
+        self.assertEqual(reconstruction.batch_shape(100, 10, 30 * one_site), (1, 30))
+        self.assertEqual(reconstruction.batch_shape(10**6, 10**3, 1), (1, 1))
 
 
 if __name__ == "__main__":
