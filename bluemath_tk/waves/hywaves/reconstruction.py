@@ -7,7 +7,7 @@ Each goal (and spectral partition) contributes nearshore ``hs``, ``tp``,
 contribution becomes a JONSWAP x Cartwright spectrum, the spectra are summed
 over goals and partitions, and bulk parameters are computed from the sum
 (:func:`sum_partition_spectra`). With a wind correction, one more
-contribution, the local wind sea, is added per site batch before the sum
+contribution, the local wind sea, is added per block before the sum
 (see :mod:`.wind_correction`).
 
 The sum reproduces a model run forced by every goal at once only if each
@@ -21,22 +21,24 @@ their nearest goal in full (see
 :func:`bluemath_tk.wrappers.swan.swan_utils.boundary_par_table`).
 
 The spectral construction allocates the full ``(time, sites, goal x partition,
-freq, dir)`` array, so long periods or many sites are processed in site
-batches sized to a memory budget (:func:`site_batch_size`), optionally across
-worker processes (:func:`sum_partition_spectra_batched`).
+freq, dir)`` array (its peak was measured at 6.55x the float32 array, see
+:func:`site_sum_bytes`). Every site and hour is independent, so the sum runs
+in site x time blocks sized to a memory budget (:func:`batch_shape`),
+optionally across worker processes (:func:`sum_partition_spectra_batched`);
+the budget and the workers come from :mod:`.resources`.
 """
 
 from __future__ import annotations
 
-import contextlib
 import logging
-import os
 import time
 from collections.abc import Mapping
 from typing import Any
 
 import numpy as np
 import xarray as xr
+
+from ...core.resources import child_threads
 
 logger = logging.getLogger(__name__)
 
@@ -47,14 +49,13 @@ SPECTRAL_DIR = np.arange(0.0, 360.0, 5)
 #: Spectral partitions expected in an offshore dataset (``phs0``...).
 SPECTRAL_PARTITIONS = (0, 1, 2, 3)
 
-#: Default memory budget for one :func:`sum_partition_spectra` call.
-DEFAULT_MEMORY_BUDGET_BYTES = 12 * 1024**3
-
 # wavespectra's construct_partition (jonswap x cartwright, then the sum) keeps
-# several temporaries of the size of the full (time, sites, parts, freq, dir)
-# array alive at once; peaks of at least ~5x that array were measured (a run
-# sized for 12 GiB reached 55+ GiB), so batches are sized with this margin.
-PEAK_MEMORY_MULTIPLIER = 8
+# several temporaries of the size of the float32 (time, sites, parts, freq,
+# dir) array alive at once, and the stats add a few of the summed spectrum:
+# measured peaks (2026-10-15) were 6.35x per part + 2.3x per summed spectrum,
+# sized here with a margin.
+PEAK_MEMORY_PER_PART = 8
+PEAK_MEMORY_PER_SUM = 4
 
 
 def partition_ids(offshore: xr.Dataset, spectral: bool) -> list[int]:
@@ -93,39 +94,63 @@ def partition_ids(offshore: xr.Dataset, spectral: bool) -> list[int]:
     return list(SPECTRAL_PARTITIONS)
 
 
-def site_batch_size(
-    n_times: int,
-    n_parts: int,
-    budget_bytes: int = DEFAULT_MEMORY_BUDGET_BYTES,
-    n_freq: int = len(SPECTRAL_FREQ),
-    n_dir: int = len(SPECTRAL_DIR),
-) -> int:
+def site_sum_bytes(n_times: int, n_parts: int) -> int:
     """
-    Sites per :func:`sum_partition_spectra` call that fit a memory budget.
+    Peak memory of :func:`sum_partition_spectra` per site (bytes).
+
+    :data:`PEAK_MEMORY_PER_PART` float32 spectra per contribution plus
+    :data:`PEAK_MEMORY_PER_SUM` for the summed spectrum and its stats.
 
     Parameters
     ----------
     n_times : int
-        Time steps in the call.
+        Time steps summed.
     n_parts : int
-        Goals x partitions summed.
-    budget_bytes : int, optional
-        Memory budget. Default is :data:`DEFAULT_MEMORY_BUDGET_BYTES`.
-    n_freq, n_dir : int, optional
-        Spectral grid size.
+        Contributions summed per site.
 
     Returns
     -------
     int
-        At least 1.
+        Bytes.
     """
 
-    # float32 spectra (see sum_partition_spectra), times the peak multiplier
-    bytes_per_site = (
-        max(1, n_times) * max(1, n_parts) * n_freq * n_dir * 4 * PEAK_MEMORY_MULTIPLIER
-    )
+    spectrum = max(1, n_times) * len(SPECTRAL_FREQ) * len(SPECTRAL_DIR) * 4
+    return spectrum * (PEAK_MEMORY_PER_PART * max(1, n_parts) + PEAK_MEMORY_PER_SUM)
 
-    return max(1, budget_bytes // bytes_per_site)
+
+def spectra_bytes(n_times: int, n_sites: int) -> int:
+    """Size of the summed float32 spectra ``efth`` of *n_sites* over *n_times* steps."""
+
+    return n_times * n_sites * len(SPECTRAL_FREQ) * len(SPECTRAL_DIR) * 4
+
+
+def batch_shape(n_times: int, n_parts: int, budget_bytes: int) -> tuple[int, int]:
+    """
+    Sites and time steps per :func:`sum_partition_spectra` call within a memory budget.
+
+    Whole time series of as many sites as fit; when one site does not fit,
+    one site over as many steps as fit (every step is independent).
+
+    Parameters
+    ----------
+    n_times : int
+        Time steps to sum.
+    n_parts : int
+        Contributions summed per site.
+    budget_bytes : int
+        Memory budget.
+
+    Returns
+    -------
+    tuple[int, int]
+        Sites and steps per call, each at least 1.
+    """
+
+    per_site = site_sum_bytes(n_times, n_parts)
+    if per_site <= budget_bytes:
+        return budget_bytes // per_site, max(1, n_times)
+
+    return 1, max(1, budget_bytes // site_sum_bytes(1, n_parts))
 
 
 def sum_partition_spectra(
@@ -162,7 +187,7 @@ def sum_partition_spectra(
         Bulk parameters on ``(time, sites)`` and the optional spectra.
     """
 
-    from wavespectra.construct import STATS, construct_partition
+    from wavespectra.construct import construct_partition
 
     parts = cube.sel(sites=site_ids).stack(part=("goal", "partition"))
     # contributions never predicted (e.g. a goal x partition combination
@@ -199,7 +224,7 @@ def sum_partition_spectra(
         if load:
             spectra = spectra.load()
 
-    stats = combined.spec.stats(list(STATS))
+    stats = combined.spec.stats(sorted(set(variables.values())))
     result = xr.Dataset({name: stats[stat] for name, stat in variables.items()})
     if load:
         result = result.load()
@@ -222,11 +247,19 @@ def _add_wind_sea(
     return xr.merge([merged, contrib.drop_vars("k")]), k
 
 
-def _sum_site_batches(
+def _time_axis(chunks: list[xr.Dataset]) -> np.ndarray:
+    return np.unique(np.concatenate([c["time"].values for c in chunks]))
+
+
+def _n_parts(chunks: list[xr.Dataset], wind_correction: Any) -> int:
+    return sum(c.sizes["goal"] * c.sizes["partition"] for c in chunks) + int(
+        wind_correction is not None
+    )
+
+
+def _sum_blocks(
     chunks: list[xr.Dataset],
     site_ids: list[str],
-    n_times: int,
-    n_parts: int,
     variables: Mapping[str, str],
     save_spectra: bool,
     budget_bytes: int,
@@ -234,39 +267,49 @@ def _sum_site_batches(
     label: str = "",
     wind_correction: Mapping[str, Any] | None = None,
 ) -> tuple[xr.Dataset, xr.Dataset | None]:
-    """Merge contribution chunks and sum them, site batch by site batch."""
+    """Merge contribution chunks and sum them, in site x time blocks within the budget."""
 
-    if wind_correction is not None:
-        n_parts += 1
-    batch = site_batch_size(n_times, n_parts, budget_bytes)
-    n_batches = -(-len(site_ids) // batch)
+    times = _time_axis(chunks)
+    n_sites, n_steps = batch_shape(len(times), _n_parts(chunks, wind_correction), budget_bytes)
+    n_blocks = -(-len(site_ids) // n_sites) * -(-len(times) // n_steps)
     results, spectras = [], []
     t0 = time.monotonic()
-    for k, i in enumerate(range(0, len(site_ids), batch), start=1):
-        t_batch = time.monotonic()
-        sites = site_ids[i : i + batch]
-        merged = xr.merge([c.sel(sites=sites) for c in chunks], join="outer", compat="no_conflicts")
-        wind_k = None
-        if wind_correction is not None:
-            merged, wind_k = _add_wind_sea(merged, wind_correction)
-        result, spectra = sum_partition_spectra(
-            merged, sites, variables, save_spectra=save_spectra, load=load
+    k = 0
+    for i in range(0, len(site_ids), n_sites):
+        sites = site_ids[i : i + n_sites]
+        merged = xr.merge(
+            [c.sel(sites=sites) for c in chunks], join="outer", compat="no_conflicts"
         )
-        if wind_k is not None:
-            result["wind_k"] = wind_k
-        results.append(result)
-        if save_spectra and spectra is not None:
-            spectras.append(spectra)
+        site_results, site_spectra = [], []
+        for j in range(0, merged.sizes["time"], n_steps):
+            t_block = time.monotonic()
+            block = merged.isel(time=slice(j, j + n_steps))
+            wind_k = None
+            if wind_correction is not None:
+                block, wind_k = _add_wind_sea(block, wind_correction)
+            result, spectra = sum_partition_spectra(
+                block, sites, variables, save_spectra=save_spectra, load=load
+            )
+            if wind_k is not None:
+                result["wind_k"] = wind_k
+            site_results.append(result)
+            if save_spectra and spectra is not None:
+                site_spectra.append(spectra)
+            k += 1
+            logger.info(
+                "%ssum block %d/%d (%d sites x %d steps) in %.1fs (%.1fs elapsed)",
+                f"[{label}] " if label else "",
+                k,
+                n_blocks,
+                len(sites),
+                block.sizes["time"],
+                time.monotonic() - t_block,
+                time.monotonic() - t0,
+            )
+        results.append(xr.concat(site_results, dim="time"))
+        if site_spectra:
+            spectras.append(xr.concat(site_spectra, dim="time"))
         del merged
-        logger.info(
-            "%ssum batch %d/%d (%d sites) in %.1fs (%.1fs elapsed)",
-            f"[{label}] " if label else "",
-            k,
-            n_batches,
-            len(sites),
-            time.monotonic() - t_batch,
-            time.monotonic() - t0,
-        )
 
     return (
         xr.concat(results, dim="sites"),
@@ -275,39 +318,14 @@ def _sum_site_batches(
 
 
 # ---------------------------------------------------------------------------
-# Parallel site batches
+# Parallel blocks
 # ---------------------------------------------------------------------------
 #
-# Summation is embarrassingly parallel across sites and pure CPU. Worker
+# Summation is independent per site and per time step, and pure CPU. Worker
 # processes use the "spawn" start method: by this point the caller has usually
 # run GP inference on CUDA, and fork()ed children inheriting a CUDA context
 # hang. Each worker is limited to one BLAS/OpenMP thread (the parallelism is
 # the processes), and gets an equal share of the memory budget.
-
-_BLAS_THREAD_ENV_VARS = (
-    "OMP_NUM_THREADS",
-    "OPENBLAS_NUM_THREADS",
-    "MKL_NUM_THREADS",
-    "NUMEXPR_NUM_THREADS",
-    "VECLIB_MAXIMUM_THREADS",
-)
-
-
-@contextlib.contextmanager
-def _single_threaded_blas_for_children():
-    """Set BLAS/OpenMP threads to 1 in the environment workers inherit."""
-
-    previous = {name: os.environ.get(name) for name in _BLAS_THREAD_ENV_VARS}
-    try:
-        for name in _BLAS_THREAD_ENV_VARS:
-            os.environ[name] = "1"
-        yield
-    finally:
-        for name, value in previous.items():
-            if value is None:
-                os.environ.pop(name, None)
-            else:
-                os.environ[name] = value
 
 
 def _init_worker(log_file: str | None) -> None:
@@ -322,39 +340,51 @@ def _init_worker(log_file: str | None) -> None:
         logger.setLevel(logging.INFO)
 
 
+def _work_items(
+    site_ids: list[str], times: np.ndarray, workers: int
+) -> list[tuple[list[str], np.ndarray]]:
+    """Site groups x time spans for *workers*: sites first, time too when sites are fewer."""
+
+    groups = [g.tolist() for g in np.array_split(np.array(site_ids, dtype=object), min(workers, len(site_ids)))]
+    spans = np.array_split(times, max(1, min(len(times), workers // len(groups))))
+
+    return [(g, span) for g in groups for span in spans if len(span)]
+
+
 def sum_partition_spectra_batched(
     chunks: list[xr.Dataset],
     site_ids: list[str],
-    n_times: int,
-    n_parts: int,
     variables: Mapping[str, str],
-    save_spectra: bool = False,
-    budget_bytes: int = DEFAULT_MEMORY_BUDGET_BYTES,
+    *,
+    budget_bytes: int,
     workers: int = 1,
+    save_spectra: bool = False,
     load: bool = True,
     log_file: str | None = None,
     wind_correction: Mapping[str, Any] | None = None,
 ) -> tuple[xr.Dataset, xr.Dataset | None]:
     """
-    :func:`sum_partition_spectra` over many sites, in memory-sized batches.
+    :func:`sum_partition_spectra` over many sites and steps, in memory-sized blocks.
+
+    The work is split into site groups (and time spans when there are fewer
+    sites than workers), one per worker; each worker sums its share in site x
+    time blocks of its part of the budget (:func:`batch_shape`).
 
     Parameters
     ----------
     chunks : list of xr.Dataset
         One contribution per goal x partition, each on
-        ``(goal, partition, time, sites)``; merged per site batch.
+        ``(goal, partition, time, sites)``; merged per block.
     site_ids : list of str
         All sites.
-    n_times, n_parts : int
-        See :func:`site_batch_size`.
     variables : mapping
         Output name -> wavespectra stat.
-    save_spectra : bool, optional
-        Also return summed spectra.
-    budget_bytes : int, optional
-        Total memory budget, shared by the workers.
+    budget_bytes : int
+        Memory budget of the sum, shared by the workers.
     workers : int, optional
         Worker processes; 1 (default) runs in this process.
+    save_spectra : bool, optional
+        Also return summed spectra.
     load : bool, optional
         Load results into memory (always True in workers).
     log_file : str, optional
@@ -363,8 +393,8 @@ def sum_partition_spectra_batched(
         Keyword arguments of
         :func:`~bluemath_tk.waves.hywaves.wind_correction.wind_sea_contribution`
         (``correction``, ``fetch``, optional ``wind``, ``spr``, ``tp``): adds
-        the local wind sea per site batch, and ``wind_k`` (``K``, 1 where
-        there is no correction) to the bulk output. Chunks then also carry
+        the local wind sea per block, and ``wind_k`` (``K``, 1 where there is
+        no correction) to the bulk output. Chunks then also carry
         ``ws_weight`` (and ``u10``, ``u10dir`` without ``wind``).
 
     Returns
@@ -374,67 +404,58 @@ def sum_partition_spectra_batched(
     """
 
     if workers <= 1:
-        return _sum_site_batches(
-            chunks,
-            site_ids,
-            n_times,
-            n_parts,
-            variables,
-            save_spectra,
-            budget_bytes,
-            load,
+        return _sum_blocks(
+            chunks, site_ids, variables, save_spectra, budget_bytes, load,
             wind_correction=wind_correction,
         )
 
     import multiprocessing
     from concurrent.futures import ProcessPoolExecutor, as_completed
 
-    per_worker = max(1, budget_bytes // workers)
-    groups = [
-        g.tolist()
-        for g in np.array_split(np.array(site_ids, dtype=object), workers)
-        if len(g)
-    ]
+    items = _work_items(site_ids, _time_axis(chunks), workers)
+    per_worker = max(1, budget_bytes // len(items))
     logger.info(
         "sum: %d sites across %d workers (%.2f GiB each)",
         len(site_ids),
-        len(groups),
+        len(items),
         per_worker / 1024**3,
     )
-    results: list[xr.Dataset] = []
-    spectras: list[xr.Dataset] = []
+    out: dict[int, tuple[xr.Dataset, xr.Dataset | None]] = {}
     with (
-        _single_threaded_blas_for_children(),
+        child_threads(1),
         ProcessPoolExecutor(
-            max_workers=len(groups),
+            max_workers=len(items),
             mp_context=multiprocessing.get_context("spawn"),
             initializer=_init_worker,
             initargs=(log_file,),
         ) as executor,
     ):
-        futures: dict[Any, str] = {}
-        for k, sites in enumerate(groups, start=1):
-            label = f"group {k}/{len(groups)}"
+        futures = {}
+        for k, (sites, span) in enumerate(items):
+            span_slice = slice(span[0], span[-1])
             future = executor.submit(
-                _sum_site_batches,
-                [c.sel(sites=sites) for c in chunks],
+                _sum_blocks,
+                [c.sel(sites=sites, time=span_slice) for c in chunks],
                 sites,
-                n_times,
-                n_parts,
                 variables,
                 save_spectra,
                 per_worker,
                 True,
-                label,
+                f"item {k + 1}/{len(items)}",
                 wind_correction,
             )
-            futures[future] = label
+            futures[future] = k
         for future in as_completed(futures):
-            result, spectra = future.result()
-            results.append(result)
-            if save_spectra and spectra is not None:
-                spectras.append(spectra)
-            logger.info("%s done", futures[future])
+            out[futures[future]] = future.result()
+
+    by_group: dict[str, list[int]] = {}
+    for k, (sites, _) in enumerate(items):
+        by_group.setdefault(sites[0], []).append(k)
+    results, spectras = [], []
+    for ks in by_group.values():
+        results.append(xr.concat([out[k][0] for k in ks], dim="time"))
+        if save_spectra:
+            spectras.append(xr.concat([out[k][1] for k in ks], dim="time"))
 
     return (
         xr.concat(results, dim="sites"),

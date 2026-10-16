@@ -126,10 +126,10 @@ class TestWindSeaContribution(unittest.TestCase):
         cube = _cube()
         chunks = [cube.sel(goal=[g]) for g in (1, 2)]
         variables = {"hs": "hs"}
-        base, _ = sum_partition_spectra_batched(chunks, SITES, 3, 2, variables)
+        base, _ = sum_partition_spectra_batched(chunks, SITES, variables, budget_bytes=2**30)
         corr = _fitted(lambda h: np.full_like(h, 1.5))
         wind, _ = sum_partition_spectra_batched(
-            chunks, SITES, 3, 2, variables,
+            chunks, SITES, variables, budget_bytes=2**30,
             wind_correction={"correction": corr, "fetch": _fetch()},
         )
         k = float(wind["wind_k"].mean())

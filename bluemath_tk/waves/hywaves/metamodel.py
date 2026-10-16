@@ -483,6 +483,7 @@ def fit_gp(
     pcas: Mapping[str, PCA],
     directional_variables: list[str],
     epochs: int = 1000,
+    device: str | None = None,
 ) -> ExactGPInterpolation:
     """
     Exact GP from forcing (MDA centroids) to all stacked PCs.
@@ -497,6 +498,8 @@ def fit_gp(
         Directional columns of *centroids*.
     epochs : int, optional
         GP optimisation iterations. Default is 1000.
+    device : str, optional
+        PyTorch device; default CUDA when available.
 
     Returns
     -------
@@ -504,7 +507,7 @@ def fit_gp(
         The fitted GP.
     """
 
-    gp = ExactGPInterpolation(epochs=epochs)
+    gp = ExactGPInterpolation(epochs=epochs, device=device)
     gp.fit(
         subset_data=centroids,
         subset_directional_variables=directional_variables,
