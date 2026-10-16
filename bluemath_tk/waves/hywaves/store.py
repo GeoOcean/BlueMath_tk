@@ -28,12 +28,10 @@ lists the ones to compute (always whole months), and
 
 from __future__ import annotations
 
-import fcntl
 import json
 import logging
 import shutil
 from collections.abc import Callable, Iterable, Mapping
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -41,6 +39,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import zarr
+from filelock import FileLock
 
 logger = logging.getLogger(__name__)
 
@@ -151,14 +150,8 @@ class ReconstructionStore:
         group.attrs.update({**meta, **extra})
         return group
 
-    @contextmanager
-    def _lock(self):
-        with open(self.path.with_suffix(".lock"), "w") as handle:
-            fcntl.flock(handle, fcntl.LOCK_EX)
-            try:
-                yield
-            finally:
-                fcntl.flock(handle, fcntl.LOCK_UN)
+    def _lock(self) -> FileLock:
+        return FileLock(self.path.with_suffix(".lock"))
 
     # ------------------------------------------------------------------
     # Requests
