@@ -11,6 +11,7 @@ DOWNLOADERS_DIR = os.path.dirname(downloaders.__file__)
 PROVIDERS = {
     "copernicus": "CopernicusDownloader",
     "csiro": "CSIRODownloader",
+    "earthdata": "EarthdataDownloader",
     "ecmwf": "ECMWFDownloader",
     "noaa": "NOAADownloader",
 }
