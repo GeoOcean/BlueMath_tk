@@ -2,6 +2,7 @@ import os
 import tempfile
 import threading
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
@@ -160,6 +161,13 @@ class TestValidateFile(unittest.TestCase):
 
     def test_valid_netcdf(self):
         validate_file(self._write_netcdf())
+
+    def test_netcdf_from_several_threads(self):
+        # Download threads validate files at the same time: netCDF-C is not
+        # thread safe (HDF errors or segfaults without the lock)
+        path = self._write_netcdf()
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            list(executor.map(lambda _: validate_file(path), range(200)))
 
     def test_truncated_netcdf(self):
         path = self._write_netcdf()

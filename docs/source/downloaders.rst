@@ -26,14 +26,16 @@ Providers and products
      - ``CopernicusDownloader``
      - ERA5, CERRA
      - Copernicus Climate Data Store (``cdsapi``). Parallel requests.
+   * - ``earthdata``
+     - ``EarthdataDownloader``
+     - SWOT
+     - NASA Earthdata collections (PO.DAAC, ...), found with the CMR search API
+       and downloaded over HTTPS with an Earthdata login (``~/.netrc``).
+       Parallel, resumable, checked against the CMR size and checksum.
    * - ``noaa``
      - ``NOAADownloader``
      - NDBC
      - NDBC buoy bulk parameters, wave spectra and directional spectra.
-   * - ``aviso``
-     - ``AvisoDownloader``
-     - SWOT
-     - AVISO+ FTP server (requires an account).
    * - ``ecmwf``
      - ``ECMWFDownloader``
      - OpenData
@@ -197,8 +199,60 @@ Files are saved to
 Yearly files with the previous naming (``<name>_<YYYY>_01_02_..._12.nc``) are
 recognised and not downloaded again.
 
-NOAA, AVISO and ECMWF
----------------------
+NASA Earthdata: SWOT
+--------------------
+
+Each dataset is one NASA CMR collection. The search is public; downloads need
+a free Earthdata account in ``~/.netrc`` (``chmod 600``)::
+
+   machine urs.earthdata.nasa.gov login <user> password <password>
+
+.. code-block:: python
+
+   from bluemath_tk.downloaders.earthdata import EarthdataDownloader
+
+   downloader = EarthdataDownloader(
+       product="SWOT",
+       base_path_to_download="/lustre/geocean/DATA/NASA",
+       max_workers=4,                     # parallel downloads
+   )
+   downloader.list_datasets()             # ['L2_LR_SSH_WINDWAVE_D']
+
+   # Table of files (URL, size, checksum, start/end time), sorted by time
+   granules = downloader.search_granules(
+       "L2_LR_SSH_WINDWAVE_D",
+       start="2024-06",                   # strings are read at their resolution:
+       end="2024-06",                     # this is the whole of June 2024
+       bbox=(2.5, 51.0, 7.5, 54.0),       # west, south, east, north
+   )
+
+   result = downloader.download_data(
+       "L2_LR_SSH_WINDWAVE_D",
+       start="2024-06",
+       end="2024-06",
+       bbox=(2.5, 51.0, 7.5, 54.0),
+       dry_run=True,
+   )
+   print(result.summary())                # includes the total size to download
+
+Files are saved to ``<base>/SWOT/L2_LR_SSH_WINDWAVE_D/<YYYY-MM>/``, the month
+of the granule start time. ``updated_since="2026-10-01"`` only lists granules
+added or changed in CMR since then, which keeps a local copy up to date
+cheaply. ``download_granules(dataset, granules)`` downloads a table returned by
+``search_granules``, for example after filtering it.
+
+The downloader mirrors what CMR lists. For SWOT this means that a pass can be
+there several times (product counter ``_01``, ``_02``, ... and processing
+versions such as ``PGD0`` reprocessed / ``PID0`` forward processing); choosing
+one version per pass is left to whoever reads the files. Files that do not
+match the dataset ``filename_pattern`` (a few granules of other SWOT products
+are listed in the WindWave collection) are left out.
+
+To add another NASA collection, add a dataset with its CMR ``short_name`` to a
+product configuration (or a new ``<PRODUCT>/<PRODUCT>_config.json``).
+
+NOAA and ECMWF
+--------------
 
 .. code-block:: python
 
@@ -209,20 +263,6 @@ NOAA, AVISO and ECMWF
    result = downloader.download_data(
        data_type="wave_spectra", buoy_id="41001", years=[2022, 2023], dry_run=False
    )
-
-.. code-block:: python
-
-   from bluemath_tk.downloaders.aviso import AvisoDownloader
-
-   with AvisoDownloader(
-       product="SWOT",
-       base_path_to_download="./swot",
-       username="user",
-       password="password",
-   ) as downloader:
-       result = downloader.download_data(
-           dataset="swot-l3-expert", cycles=["cycle_001"], dry_run=False
-       )
 
 .. code-block:: python
 

@@ -1,0 +1,13 @@
+{
+    "description": "Surface Water and Ocean Topography (SWOT) mission, CNES/NASA, distributed by PO.DAAC",
+    "cmr_url": "https://cmr.earthdata.nasa.gov/search/granules.umm_json",
+    "datasets": {
+        "L2_LR_SSH_WINDWAVE_D": {
+            "description": "KaRIn L2 low-rate wind and wave product (swh_karin, wind_speed_karin, sig0_karin), 2 km swath grid, one file per half-orbit pass, version D",
+            "short_name": "SWOT_L2_LR_SSH_WINDWAVE_D",
+            "filename_pattern": "^SWOT_L2_LR_SSH_WindWave_.*\\.nc$",
+            "local_dir": "SWOT/L2_LR_SSH_WINDWAVE_D/{year}-{month:02d}",
+            "start": "2023-03"
+        }
+    }
+}
