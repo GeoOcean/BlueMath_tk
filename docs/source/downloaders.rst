@@ -32,6 +32,12 @@ Providers and products
      - NASA Earthdata collections (PO.DAAC, ...), found with the CMR search API
        and downloaded over HTTPS with an Earthdata login (``~/.netrc``).
        Parallel, resumable, checked against the CMR size and checksum.
+   * - ``imos``
+     - ``IMOSDownloader``
+     - SRS
+     - IMOS data in the public AODN bucket on AWS S3 (no account), e.g. the
+       multi-mission altimeter wave/wind archive. Mirrors a bucket prefix,
+       re-downloads files that changed, checked against the S3 ETag (MD5).
    * - ``noaa``
      - ``NOAADownloader``
      - NDBC
@@ -250,6 +256,39 @@ are listed in the WindWave collection) are left out.
 
 To add another NASA collection, add a dataset with its CMR ``short_name`` to a
 product configuration (or a new ``<PRODUCT>/<PRODUCT>_config.json``).
+
+IMOS: altimeter wave and wind archive
+-------------------------------------
+
+The IMOS multi-mission altimeter archive (Ribal and Young 2019, updated by
+IMOS) has one file per mission and 1x1 degree cell, 1985 to present, in the
+public AODN bucket. No account is needed.
+
+.. code-block:: python
+
+   from bluemath_tk.downloaders.imos import IMOSDownloader
+
+   downloader = IMOSDownloader(
+       product="SRS",
+       base_path_to_download="/lustre/geocean/DATA/IMOS",
+       max_workers=32,                    # files are small (~300 kB): many workers
+   )
+   downloader.list_subfolders("Wave-Wind-Altimetry-DM00")   # the missions
+
+   result = downloader.download_data(
+       "Wave-Wind-Altimetry-DM00",
+       subfolders=["JASON-3", "SWOT"],    # default: all missions
+       dry_run=True,
+   )
+   print(result.summary())
+
+Files mirror the bucket below the dataset prefix:
+``<base>/SRS/Surface-Waves/Wave-Wind-Altimetry-DM00/<MISSION>/<20x20 folder>/<file>``.
+IMOS rewrites whole files at each release, so a file is downloaded again when
+its size changes or the bucket copy is newer than the local one (downloaded
+files get the bucket modification time). ``modified_since`` only lists files
+changed since a date; ``list_files`` returns the table of files (path, URL,
+size, ETag, modification time) and ``download_files`` downloads such a table.
 
 NOAA and ECMWF
 --------------
