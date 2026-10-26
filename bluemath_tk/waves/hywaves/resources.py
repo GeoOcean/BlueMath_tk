@@ -29,8 +29,10 @@ How the work is split, and why (measured on a 48-core Xeon Gold 5418Y node,
   processes (:class:`FitResources`); a fit needs <= ~1.2 GiB.
 - **Reconstruction**, one call = *months* x *sites*:
 
-  1. goal contributions: GP + PCA inverse per goal and partition, threaded,
-     in the calling process (``device``, ``threads``);
+  1. goal contributions: the GP of every goal x partition in its own
+     process (``threads // 2`` processes of 2 threads, 512-row kernels;
+     ~5x faster than one threaded process), then the PCA inverse to the
+     sites, threaded, in the calling process (``device``, ``threads``);
   2. spectral sum: JONSWAP x Cartwright spectra summed per site and hour in
      ``workers`` single-thread processes. Every site and hour is
      independent, so the sum is split into site x time blocks
@@ -76,16 +78,24 @@ MIN_SUM_BYTES_PER_WORKER = GIB // 2
 #: Memory of a sum worker process itself (imports, its share of the inputs).
 WORKER_BYTES = 3 * GIB // 4
 
-# Xeon Gold 5418Y (2026-10-15). One core: building and summing the spectra per
-# step x site x contribution, plus the bulk stats per step x site. Workers
-# slow each other down (memory bandwidth): speedup = w / (1 + _CONTENTION w),
-# measured 7.1 / 10.9 / 14.1 with 8 / 18 / 36 workers. GP + PCA (36 threads):
-# a fixed part per month x contribution (models, kernel) plus one per site.
+# Xeon Gold 5418Y. Sum (2026-10-15), one core: building and summing the
+# spectra per step x site x contribution, plus the bulk stats per step x site;
+# workers slow each other down (memory bandwidth): speedup = w / (1 +
+# _CONTENTION w), measured 7.1 / 10.9 / 14.1 with 8 / 18 / 36 workers.
+# GP step (2026-10-16, MDA 550, 18 processes x 2 threads, 512-row kernels):
+# ~6 s per call to start the processes, then per month x contribution (GP)
+# and per site x month x contribution (PCA inverse, 36 threads).
 _SUM_SECONDS_PER_PART = 2.2e-5
 _SUM_SECONDS_PER_SITE = 1.0e-4
 _CONTENTION = 0.04
-_GP_SECONDS_PER_MONTH_PART = 0.125
-_GP_SECONDS_PER_SITE_MONTH_PART = 1.9e-4
+_GP_SECONDS_PER_CALL = 6.0
+_GP_SECONDS_PER_MONTH_PART = 0.05
+_GP_SECONDS_PER_SITE_MONTH_PART = 2.9e-4
+
+#: Cost of a sum worker pool (s): starting the processes (~6 s) and sending
+#: them the contributions; one site-year sum took 11-18 s in a pool for
+#: ~0.5 s of work.
+POOL_SECONDS = 10.0
 
 
 @dataclass
@@ -234,13 +244,49 @@ def sum_budget(memory: int, held: int, workers: int) -> int:
     return max(0, min(workers * SUM_BYTES_PER_WORKER, memory - held - workers * WORKER_BYTES))
 
 
+def _single_core_seconds(sites: int, steps: int, parts: int) -> float:
+    return sites * steps * (_SUM_SECONDS_PER_PART * parts + _SUM_SECONDS_PER_SITE)
+
+
+def _speedup(workers: int) -> float:
+    return workers / (1 + _CONTENTION * workers)
+
+
+def sum_workers(sites: int, steps: int, parts: int, workers: int) -> int:
+    """
+    Workers worth using for one spectral sum.
+
+    *workers* when the time they save beats :data:`POOL_SECONDS`, else 1
+    (the sum runs in the calling process; e.g. one site over a year).
+
+    Parameters
+    ----------
+    sites, steps : int
+        Sites and time steps summed.
+    parts : int
+        Contributions per site.
+    workers : int
+        Workers available (``ReconstructionResources.workers``).
+
+    Returns
+    -------
+    int
+        *workers* or 1.
+    """
+
+    single = _single_core_seconds(sites, steps, parts)
+    saved = single - single / _speedup(max(1, workers))
+
+    return workers if saved > POOL_SECONDS else 1
+
+
 def hours(site_months: int, months: int, parts: int, workers: int) -> float:
     """
     Rough wall time (hours) of a reconstruction.
 
-    From rates measured on one 48-core Xeon Gold 5418Y node (GP + PCA with
-    36 threads, the sum slowed by memory bandwidth as workers grow); other
-    machines differ, so take it as an order of magnitude.
+    From rates measured on one 48-core Xeon Gold 5418Y node (GP processes and
+    PCA, the sum slowed by memory bandwidth as workers grow); other machines
+    differ, so take it as an order of magnitude.
 
     Parameters
     ----------
@@ -259,12 +305,12 @@ def hours(site_months: int, months: int, parts: int, workers: int) -> float:
         Hours.
     """
 
-    workers = max(1, workers)
-    speedup = workers / (1 + _CONTENTION * workers)
-    per_site_month = STEPS_PER_MONTH * (_SUM_SECONDS_PER_PART * parts + _SUM_SECONDS_PER_SITE)
-    seconds = site_months * (per_site_month / speedup + _GP_SECONDS_PER_SITE_MONTH_PART * parts)
+    per_site_month = _single_core_seconds(1, STEPS_PER_MONTH, parts)
+    seconds = site_months * (per_site_month / _speedup(max(1, workers)) + _GP_SECONDS_PER_SITE_MONTH_PART * parts)
+    calls = -(-months // MONTHS_PER_CALL["cpu"])
+    seconds += calls * _GP_SECONDS_PER_CALL + months * parts * _GP_SECONDS_PER_MONTH_PART
 
-    return (seconds + months * parts * _GP_SECONDS_PER_MONTH_PART) / 3600
+    return seconds / 3600
 
 
 def _halvings(n: int) -> list[int]:
@@ -377,6 +423,7 @@ __all__ = [
     "STEPS_PER_MONTH",
     "FitResources",
     "MIN_SUM_BYTES_PER_WORKER",
+    "POOL_SECONDS",
     "ReconstructionResources",
     "SUM_BYTES_PER_WORKER",
     "WORKER_BYTES",
@@ -385,4 +432,5 @@ __all__ = [
     "plan_fit",
     "plan_reconstruction",
     "sum_budget",
+    "sum_workers",
 ]

@@ -711,6 +711,7 @@ class ExactGPInterpolation(BaseInterpolation):
         dataset: pd.DataFrame,
         return_std: bool = False,
         verbose: int = 1,
+        batch_size: int | None = None,
     ) -> pd.DataFrame:
         """
         Predict using the fitted GP model.
@@ -723,6 +724,12 @@ class ExactGPInterpolation(BaseInterpolation):
             If True, returns standard deviations. Default is False.
         verbose : int, optional
             Verbosity level. Default is 1.
+        batch_size : int, optional
+            Rows predicted per kernel evaluation. Every row is independent,
+            so the result is the same (to float32 rounding); a kernel of a few
+            hundred rows x the training points stays in the CPU cache, which
+            was ~8x faster than all rows at once for 6,648 rows x 550 training
+            points (512 rows; 256 was slower). Default: all rows at once.
 
         Returns
         -------
@@ -760,27 +767,26 @@ class ExactGPInterpolation(BaseInterpolation):
             model.eval()
             likelihood.eval()
 
+            step = batch_size or max(1, len(X_tensor))
+            means, lowers, uppers = [], [], []
             with torch.no_grad(), gpytorch.settings.fast_pred_var():
-                pred_dist = likelihood(model(X_tensor))
-                predictions_dict[target_var] = pred_dist.mean.cpu().numpy()
-                if return_std:
-                    # stds_dict[f"{target_var}_std"] = pred_dist.stddev.cpu().numpy()
-                    # self._target_scale_factor[f"{target_var}_std"] = (
-                    #     self._target_scale_factor[target_var]
-                    # )
-                    (
-                        stds_dict[f"{target_var}_lower_ci"],
-                        stds_dict[f"{target_var}_upper_ci"],
-                    ) = (
-                        pred_dist.confidence_region()[0].cpu().numpy(),
-                        pred_dist.confidence_region()[1].cpu().numpy(),
-                    )
-                    self._target_scale_factor[f"{target_var}_lower_ci"] = (
-                        self._target_scale_factor[target_var]
-                    )
-                    self._target_scale_factor[f"{target_var}_upper_ci"] = (
-                        self._target_scale_factor[target_var]
-                    )
+                for start in range(0, len(X_tensor), step):
+                    pred_dist = likelihood(model(X_tensor[start : start + step]))
+                    means.append(pred_dist.mean.cpu().numpy())
+                    if return_std:
+                        lower, upper = pred_dist.confidence_region()
+                        lowers.append(lower.cpu().numpy())
+                        uppers.append(upper.cpu().numpy())
+            predictions_dict[target_var] = np.concatenate(means)
+            if return_std:
+                stds_dict[f"{target_var}_lower_ci"] = np.concatenate(lowers)
+                stds_dict[f"{target_var}_upper_ci"] = np.concatenate(uppers)
+                self._target_scale_factor[f"{target_var}_lower_ci"] = (
+                    self._target_scale_factor[target_var]
+                )
+                self._target_scale_factor[f"{target_var}_upper_ci"] = (
+                    self._target_scale_factor[target_var]
+                )
 
         # Convert to DataFrame
         result = pd.DataFrame(predictions_dict)

@@ -13,7 +13,9 @@ offshore forcing to nearshore fields, ``hs`` included, in absolute terms:
    (``dir`` as ``dir_u``/``dir_v``).
 4. :func:`fit_gp` - an exact GP from the forcing to all stacked PCs.
 5. :func:`predict_fields` - GP -> PCA inverse -> fields, with physical floors
-   (:data:`MIN_HS`, :data:`MIN_DIRECTIONAL_SPREAD_DEG`).
+   (:data:`MIN_HS`, :data:`MIN_DIRECTIONAL_SPREAD_DEG`); the same in two
+   steps, :func:`predict_pcs` (GP, the costly part, run in parallel
+   processes by a reconstruction) and :func:`fields_from_pcs`.
 
 Offshore hindcasts enter through :func:`goal_forcing` (bulk or one spectral
 partition, Hs included) and :func:`valid_timesteps`; the predicted fields of
@@ -55,6 +57,11 @@ MIN_DIRECTIONAL_SPREAD_DEG = 1.0
 # near-zero estimates and stops them adding spurious energy when goals are
 # summed.
 MIN_HS = 0.0
+
+# Rows (time steps) per GP kernel evaluation in predict_fields: a kernel of
+# 512 rows x the training points stays in the CPU cache; one year (6,648
+# valid hours, MDA 550) was ~8x faster than in one evaluation.
+PREDICT_BATCH_ROWS = 512
 
 #: Default PCA NaN handling: fraction of valid cases a site needs to be kept,
 #: and the fill value for the remaining NaNs. After :func:`fill_zero_energy` the
@@ -522,6 +529,30 @@ def fit_gp(
 # ---------------------------------------------------------------------------
 
 
+def predict_pcs(gp: ExactGPInterpolation, forcing: pd.DataFrame) -> np.ndarray:
+    """
+    Stacked PCs for each forcing row (the GP step of :func:`predict_fields`).
+
+    Rows are predicted :data:`PREDICT_BATCH_ROWS` at a time.
+
+    Parameters
+    ----------
+    gp : ExactGPInterpolation
+        Fitted GP (see :func:`fit_gp`).
+    forcing : pd.DataFrame
+        Forcing rows, columns as at fit time.
+
+    Returns
+    -------
+    np.ndarray
+        ``(rows, stacked PCs)``, in :func:`stack_pcs` order.
+    """
+
+    return gp.predict(
+        dataset=forcing.rename_axis("case_num"), batch_size=PREDICT_BATCH_ROWS, verbose=0
+    ).to_numpy()
+
+
 def predict_fields(
     gp: ExactGPInterpolation,
     pcas: Mapping[str, PCA],
@@ -532,14 +563,31 @@ def predict_fields(
     """
     Nearshore fields for each forcing row: GP -> PCA inverse.
 
+    :func:`predict_pcs` then :func:`fields_from_pcs`; see the latter for the
+    fields returned.
+    """
+
+    return fields_from_pcs(predict_pcs(gp, forcing), pcas, forcing, vars_to_predict, sites)
+
+
+def fields_from_pcs(
+    pcs: np.ndarray,
+    pcas: Mapping[str, PCA],
+    forcing: pd.DataFrame,
+    vars_to_predict: Mapping[str, Any],
+    sites: list[str],
+) -> xr.Dataset:
+    """
+    Nearshore fields from predicted PCs (the PCA step of :func:`predict_fields`).
+
     ``dir`` is rebuilt from ``dir_u``/``dir_v``; ``raw`` variables are copied
     from the forcing to every site; ``hs`` and ``spr`` are floored at
     :data:`MIN_HS` and :data:`MIN_DIRECTIONAL_SPREAD_DEG`.
 
     Parameters
     ----------
-    gp : ExactGPInterpolation
-        Fitted GP (see :func:`fit_gp`).
+    pcs : np.ndarray
+        :func:`predict_pcs` of *forcing*.
     pcas : mapping
         Fitted PCAs by target name.
     forcing : pd.DataFrame
@@ -560,7 +608,7 @@ def predict_fields(
     row_dim = forcing.index.name or "case_num"
     forcing = forcing.rename_axis("case_num")
     rows = forcing.index.values
-    blocks = split_pcs(gp.predict(dataset=forcing).values, pcas)
+    blocks = split_pcs(pcs, pcas)
 
     out: dict[str, xr.DataArray] = {}
     for name, spec in vars_to_predict.items():
