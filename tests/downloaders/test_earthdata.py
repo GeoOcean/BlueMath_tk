@@ -176,7 +176,8 @@ class TestCredentials(unittest.TestCase):
             with open(path, "w") as f:
                 f.write(content)
             os.chmod(path, 0o600)
-            with mock.patch.dict(os.environ, {"HOME": home}):
+            # "~" is HOME on POSIX and USERPROFILE on Windows
+            with mock.patch.dict(os.environ, {"HOME": home, "USERPROFILE": home}):
                 EarthdataDownloader.check_credentials()
 
     def test_entry_found(self):
