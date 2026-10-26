@@ -9,7 +9,6 @@ DOWNLOADERS_DIR = os.path.dirname(downloaders.__file__)
 
 # provider package -> downloader class
 PROVIDERS = {
-    "aviso": "AvisoDownloader",
     "copernicus": "CopernicusDownloader",
     "csiro": "CSIRODownloader",
     "ecmwf": "ECMWFDownloader",

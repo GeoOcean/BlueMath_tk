@@ -30,10 +30,6 @@ Providers and products
      - ``NOAADownloader``
      - NDBC
      - NDBC buoy bulk parameters, wave spectra and directional spectra.
-   * - ``aviso``
-     - ``AvisoDownloader``
-     - SWOT
-     - AVISO+ FTP server (requires an account).
    * - ``ecmwf``
      - ``ECMWFDownloader``
      - OpenData
@@ -197,8 +193,8 @@ Files are saved to
 Yearly files with the previous naming (``<name>_<YYYY>_01_02_..._12.nc``) are
 recognised and not downloaded again.
 
-NOAA, AVISO and ECMWF
----------------------
+NOAA and ECMWF
+--------------
 
 .. code-block:: python
 
@@ -209,20 +205,6 @@ NOAA, AVISO and ECMWF
    result = downloader.download_data(
        data_type="wave_spectra", buoy_id="41001", years=[2022, 2023], dry_run=False
    )
-
-.. code-block:: python
-
-   from bluemath_tk.downloaders.aviso import AvisoDownloader
-
-   with AvisoDownloader(
-       product="SWOT",
-       base_path_to_download="./swot",
-       username="user",
-       password="password",
-   ) as downloader:
-       result = downloader.download_data(
-           dataset="swot-l3-expert", cycles=["cycle_001"], dry_run=False
-       )
 
 .. code-block:: python
 
