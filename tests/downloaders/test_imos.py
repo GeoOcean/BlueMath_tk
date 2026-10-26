@@ -152,9 +152,23 @@ class TestIMOSDownloadFile(LocalServerTestCase):
         )
 
     def download(self, row, dry_run=False):
+        local = self.downloader._scan_local([self.output_file]).get(self.output_file)
         return self.downloader._download_file(
-            row, self.output_file, force=False, verify_existing=True, dry_run=dry_run
+            row,
+            self.output_file,
+            local,
+            force=False,
+            verify_existing=True,
+            dry_run=dry_run,
         )
+
+    def test_dry_run_of_missing_file(self):
+        result = self.download(self.file(), dry_run=True)
+        self.assertEqual(
+            result.metadata["skip_reasons"][self.output_file],
+            "Would download (dry run)",
+        )
+        self.assertFalse(os.path.exists(os.path.dirname(self.output_file)))
 
     def test_download_sets_bucket_time_and_skips(self):
         result = self.download(self.file())

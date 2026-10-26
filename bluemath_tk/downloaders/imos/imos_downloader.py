@@ -343,17 +343,20 @@ class IMOSDownloader(BaseDownloader):
 
         self.logger.info(f"Checking {len(files)} files of {self.product}/{dataset}")
         result = self.create_download_result()
+        paths = [self.get_local_path(dataset, path) for path in files["path"]]
+        local = self._scan_local(paths)
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures = [
                 executor.submit(
                     self._download_file,
                     row,
-                    self.get_local_path(dataset, row.path),
+                    path,
+                    local.get(path),
                     force,
                     verify_existing,
                     dry_run,
                 )
-                for row in files.itertuples(index=False)
+                for row, path in zip(files.itertuples(index=False), paths)
             ]
             for future in futures:
                 result.merge(future.result())
@@ -392,25 +395,66 @@ class IMOSDownloader(BaseDownloader):
             if token is None:
                 return objects, prefixes
 
+    def _scan_local(self, paths: List[str]) -> dict:
+        """
+        Size and modification time of the local files among ``paths``.
+
+        Each folder is read once (os.scandir) instead of one stat per file: on
+        Lustre, ~736,000 stat calls of missing files took over 30 minutes.
+
+        Returns
+        -------
+        dict
+            ``{path: (size, mtime)}`` of the files that exist.
+        """
+
+        def scan(folder: str) -> dict:
+            try:
+                with os.scandir(folder) as entries:
+                    return {
+                        os.path.join(folder, e.name): (
+                            e.stat().st_size,
+                            e.stat().st_mtime,
+                        )
+                        for e in entries
+                        if e.is_file()
+                    }
+            except FileNotFoundError:
+                return {}
+
+        folders = sorted({os.path.dirname(p) for p in paths})
+        local = {}
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            for found in executor.map(scan, folders):
+                local.update(found)
+
+        return local
+
     def _download_file(
         self,
         row,
         output_file: str,
+        local: Optional[Tuple[int, float]],
         force: bool,
         verify_existing: bool,
         dry_run: bool,
     ) -> DownloadResult:
         """
         Download a single file unless the local copy is complete and up to date.
+
+        ``local`` is the (size, mtime) of the local file, None if it does not exist.
         """
 
         result = DownloadResult()
         result.metadata["remote_sizes"] = {output_file: int(row.size)}
         modified = row.last_modified.timestamp()
 
-        if os.path.exists(output_file) and not force:
-            local_size = os.path.getsize(output_file)
-            local_time = os.path.getmtime(output_file)
+        if local is None and dry_run:
+            result.add_skipped(output_file, "Would download (dry run)")
+            return result
+
+        if local is not None and not force:
+            local_size, local_time = local
             if not verify_existing or (
                 local_size == row.size and local_time >= modified
             ):
