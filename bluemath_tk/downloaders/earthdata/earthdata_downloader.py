@@ -14,10 +14,8 @@ downloaded over HTTPS. Downloads redirect to the Earthdata login
 Each dataset of a product is one CMR collection, given by its short name.
 """
 
-import hashlib
 import netrc
 import os
-import re
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -28,7 +26,13 @@ import requests
 
 from .._base_downloaders import BaseDownloader, load_config
 from .._download_result import DownloadResult
-from .._transfer import http_download, http_get, make_session, retry_call
+from .._transfer import (
+    file_checksum,
+    http_download,
+    http_get,
+    make_session,
+    retry_call,
+)
 
 _HERE = os.path.dirname(__file__)
 URS_HOST = "urs.earthdata.nasa.gov"
@@ -131,19 +135,6 @@ def parse_granule(item: dict) -> List[dict]:
         )
 
     return rows
-
-
-def file_checksum(path: str, algorithm: str) -> str:
-    """
-    Hex digest of a file ("MD5", "SHA-256", ... as written in CMR).
-    """
-
-    digest = hashlib.new(algorithm.lower().replace("-", ""))
-    with open(path, "rb") as f:
-        for block in iter(lambda: f.read(8 * 1024 * 1024), b""):
-            digest.update(block)
-
-    return digest.hexdigest()
 
 
 class EarthdataDownloader(BaseDownloader):

@@ -12,6 +12,7 @@ PROVIDERS = {
     "copernicus": "CopernicusDownloader",
     "csiro": "CSIRODownloader",
     "earthdata": "EarthdataDownloader",
+    "imos": "IMOSDownloader",
     "ecmwf": "ECMWFDownloader",
     "noaa": "NOAADownloader",
 }
