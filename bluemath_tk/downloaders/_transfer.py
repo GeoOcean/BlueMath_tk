@@ -8,6 +8,7 @@ file validation.
 
 import logging
 import os
+import threading
 import time
 from typing import Callable, Optional, Tuple, Type, TypeVar
 
@@ -17,6 +18,10 @@ from urllib3.util.retry import Retry
 
 PART_SUFFIX = ".part"
 CHUNK_SIZE = 8 * 1024 * 1024
+
+# netCDF-C/HDF5 are not thread safe: opening files from several download threads
+# at once gives HDF errors or segfaults, so validate_file opens one at a time
+_NETCDF_LOCK = threading.Lock()
 
 T = TypeVar("T")
 
@@ -217,12 +222,13 @@ def validate_file(path: str) -> None:
         magic = f.read(8)
 
     if magic.startswith(b"CDF") or magic.startswith(b"\x89HDF"):
-        import netCDF4
+        with _NETCDF_LOCK:
+            import netCDF4
 
-        try:
-            netCDF4.Dataset(path).close()
-        except Exception as e:
-            raise IOError(f"Corrupt NetCDF file {path}: {e}") from e
+            try:
+                netCDF4.Dataset(path).close()
+            except Exception as e:
+                raise IOError(f"Corrupt NetCDF file {path}: {e}") from e
 
     elif magic.startswith(b"GRIB"):
         with open(path, "rb") as f:
