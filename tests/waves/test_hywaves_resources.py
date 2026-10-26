@@ -35,6 +35,10 @@ class TestPlans(unittest.TestCase):
         self.assertEqual(resources.sum_budget(GIB, 2 * GIB, 4), 0)
         self.assertLess(resources.hours(100, 1, 10, 36), resources.hours(100, 1, 10, 1))
 
+    def test_small_sums_skip_the_pool(self):
+        self.assertEqual(resources.sum_workers(1, 8760, 10, 36), 1)
+        self.assertEqual(resources.sum_workers(4971, 744, 10, 36), 36)
+
     def test_gpu_months_and_fits(self):
         gpu = Machine(16, 100 * GIB, 128 * GIB, "A100", 40 * GIB)
         self.assertEqual(resources.plan_reconstruction(38, 24, 10, host=gpu).months, 4)
