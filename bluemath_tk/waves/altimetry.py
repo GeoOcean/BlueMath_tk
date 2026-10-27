@@ -1,16 +1,31 @@
 """
-Satellite altimeter significant wave height near a point, ready to compare
-with a wave hindcast.
+Satellite significant wave height near a point, ready to compare with a wave
+hindcast.
 
-The altimeter store is a zarr of along-track observations on one ``obs``
-dimension, sorted by 1-degree cell and then time, with a cell index
-(``cell_start``, ``cell_count`` on ``lat_cell``, ``lon_cell``), so the
-observations near a point are read as a few contiguous slices: the layout of
-the IMOS multi-mission product (``imos_altimeter_1985_2020.zarr``):
+The stores are zarrs of observations on one ``obs`` dimension, sorted by
+1-degree cell and then time, with a cell index (``cell_start``,
+``cell_count`` on ``lat_cell`` = floor(lat), ``lon_cell`` = floor(lon) in
+0-359), so the observations near a point are read as a few contiguous slices.
+Two kinds of store are read the same way:
 
-- ``hs`` (calibrated Ku-band Hs), ``time``, ``latitude``, ``longitude``
-  (0-360), ``flag`` (1 good, 2 probably good, 3 correctable), ``depth``
-  (negative in the ocean), ``dist2coast`` (km), ``satellite`` (mission code).
+- IMOS multi-mission altimeters (``imos_altimeter_dm00.zarr``, 18 missions,
+  1985-present; also the older ``imos_altimeter_1985_2020.zarr``): ``hs``
+  (calibrated), ``time``, ``latitude``, ``longitude`` (0-360), ``flag`` (IMOS:
+  1 good, 2 probably good, 3-4 bad), ``depth`` (negative in the ocean),
+  ``dist2coast`` (km), ``satellite`` (mission code, names in
+  ``satellite.attrs["flag_meanings"]``).
+- SWOT KaRIn swaths (``swot_karin_windwave.zarr``, 2 km pixels, 2023-): the
+  index has a leading ``month`` dimension (one block per month). Its columns
+  are returned with the same names: ``hs`` (``swh_karin``), ``dist2coast``
+  (``distance_to_coast``), ``flag`` = 1 where ``swh_karin_qual == 0`` (good)
+  and 4 otherwise, ``satellite`` = 0; ``swh_karin_qual``, ``cycle``, ``pass``
+  and ``pixel`` are kept. For KaRIn use a small radius (~5 km) and
+  ``min_dist2coast=2``: the pass median is then the median of the pixels
+  around the point, the reading validated against buoys.
+
+The public copies are at ``https://geoocean.unican.es/zarr/IMOS/...`` and
+``https://geoocean.unican.es/zarr/SWOT/...``; each store's ``summary`` and
+``usage`` attributes describe it.
 
 Typical use, for one hindcast node::
 
@@ -42,6 +57,21 @@ ALTIMETER_VARIABLES: tuple[str, ...] = (
     "satellite",
 )
 
+#: Variables read from a SWOT KaRIn store (renamed to the columns above).
+SWOT_VARIABLES: tuple[str, ...] = (
+    "time",
+    "latitude",
+    "longitude",
+    "swh_karin",
+    "swh_karin_qual",
+    "distance_to_coast",
+    "depth",
+    "cycle",
+    "pass",
+    "pixel",
+)
+SWOT_RENAME = {"swh_karin": "hs", "distance_to_coast": "dist2coast"}
+
 EARTH_RADIUS_KM = 6371.0
 
 #: Deeper "depths" (m) are fill values and read as missing.
@@ -50,7 +80,7 @@ MAX_OCEAN_DEPTH = 11000.0
 
 def open_altimeter(path: str) -> xr.Dataset:
     """
-    Open a cell-indexed altimeter zarr (local path or URL), lazily.
+    Open a cell-indexed altimeter or SWOT zarr (local path or URL), lazily.
 
     Parameters
     ----------
@@ -77,6 +107,37 @@ def open_altimeter(path: str) -> xr.Dataset:
     ds["cell_count"] = ds["cell_count"].load()
 
     return ds
+
+
+def is_swot(ds: xr.Dataset) -> bool:
+    """Whether the store is a SWOT KaRIn store (else an IMOS altimeter store)."""
+
+    return "swh_karin" in ds.variables
+
+
+def _cell_slices(
+    ds: xr.Dataset, lat_cell: int, lon_cell: int, time: slice | None
+) -> list[slice]:
+    """Slices of ``obs`` of one cell: one, or one per month of a SWOT store."""
+
+    sel = {"lat_cell": lat_cell, "lon_cell": lon_cell}
+    starts = np.atleast_1d(ds["cell_start"].sel(sel).values)
+    counts = np.atleast_1d(ds["cell_count"].sel(sel).values)
+    if "month" in ds["cell_count"].dims and time is not None:
+        # skip whole months outside the window (a pass may start the month before)
+        month = pd.DatetimeIndex(ds["month"].values)
+        keep = np.ones(month.size, dtype=bool)
+        if time.start is not None:
+            keep &= month >= pd.Timestamp(time.start).to_period(
+                "M"
+            ).start_time - pd.DateOffset(months=1)
+        if time.stop is not None:
+            keep &= month <= pd.Timestamp(time.stop).to_period(
+                "M"
+            ).start_time + pd.DateOffset(years=1)
+        starts, counts = starts[keep], counts[keep]
+
+    return [slice(int(s), int(s + c)) for s, c in zip(starts, counts) if c > 0]
 
 
 def haversine_km(
@@ -118,10 +179,10 @@ def altimeter_near(
     flags: tuple[int, ...] = (1, 2),
     min_depth: float | None = None,
     min_dist2coast: float | None = None,
-    variables: tuple[str, ...] = ALTIMETER_VARIABLES,
+    variables: tuple[str, ...] | None = None,
 ) -> pd.DataFrame:
     """
-    Altimeter observations within *radius_km* of a point.
+    Altimeter (or SWOT KaRIn) observations within *radius_km* of a point.
 
     Parameters
     ----------
@@ -134,7 +195,8 @@ def altimeter_near(
     time : slice, optional
         Time window, e.g. ``slice("2000", "2020")``.
     flags : tuple of int, optional
-        Quality flags kept. Default is (1, 2): good and probably good.
+        Quality flags kept. Default is (1, 2): good and probably good (SWOT:
+        ``swh_karin_qual == 0``). None keeps every observation.
     min_depth : float, optional
         Keep only observations in water deeper than this (m, positive): the
         altimeter footprint degrades in shallow water and near the coast.
@@ -143,7 +205,8 @@ def altimeter_near(
         Keep only observations farther than this from the coast (km).
         Observations without a distance (e.g. HY-2A) are dropped.
     variables : tuple of str, optional
-        Variables read. Default is :data:`ALTIMETER_VARIABLES`.
+        Variables read. Default is :data:`ALTIMETER_VARIABLES`
+        (:data:`SWOT_VARIABLES` for a SWOT store).
 
     Returns
     -------
@@ -152,19 +215,25 @@ def altimeter_near(
         to the point, sorted by time.
     """
 
+    swot = is_swot(ds)
+    if variables is None:
+        variables = SWOT_VARIABLES if swot else ALTIMETER_VARIABLES
     present = [v for v in variables if v in ds.variables]
-    chunks = []
-    for la, lo in _cells_around(lon, lat, radius_km):
-        sel = {"lat_cell": la, "lon_cell": lo}
-        n = int(ds["cell_count"].sel(sel))
-        if n == 0:
-            continue
-        start = int(ds["cell_start"].sel(sel))
-        chunks.append(ds[present].isel(obs=slice(start, start + n)))
+    chunks = [
+        ds[present].isel(obs=part)
+        for la, lo in _cells_around(lon, lat, radius_km)
+        for part in _cell_slices(ds, la, lo, time)
+    ]
+    columns = [SWOT_RENAME.get(v, v) for v in present] if swot else present
     if not chunks:
-        return pd.DataFrame(columns=[*present, "lon", "distance_km"])
+        return pd.DataFrame(columns=[*columns, "lon", "distance_km"])
 
     obs = xr.concat(chunks, dim="obs").load().to_dataframe().reset_index(drop=True)
+    if swot:
+        obs = obs.rename(columns=SWOT_RENAME)
+        if "swh_karin_qual" in obs:
+            obs["flag"] = np.where(obs["swh_karin_qual"] == 0, 1, 4).astype("int8")
+        obs["satellite"] = np.int8(0)
     obs["lon"] = (obs["longitude"] + 180.0) % 360.0 - 180.0
     obs["distance_km"] = haversine_km(
         obs["lon"].to_numpy(), obs["latitude"].to_numpy(), lon, lat
