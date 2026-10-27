@@ -1,6 +1,7 @@
 import os
 import tempfile
 import threading
+import time
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
@@ -318,6 +319,22 @@ class TestBaseDownloader(unittest.TestCase):
 
 
 class TestDownloadResult(unittest.TestCase):
+    def test_many_files_and_direct_appends(self):
+        # A dry run of ~700,000 files merges one result per file: must not be
+        # quadratic. Lists changed directly still count as seen.
+        result = DownloadResult()
+        start = time.perf_counter()
+        for i in range(200_000):
+            other = DownloadResult()
+            other.add_skipped(f"f{i}", "Would download (dry run)")
+            result.merge(other)
+        self.assertLess(time.perf_counter() - start, 30)
+        self.assertEqual(len(result.skipped_files), 200_000)
+        result.skipped_files.append("direct")
+        result.add_skipped("direct")
+        result.add_skipped("f0")
+        self.assertEqual(len(result.skipped_files), 200_001)
+
     def test_merge_and_save(self):
         result = DownloadResult(downloaded_files=["a"])
         other = DownloadResult(downloaded_files=["a", "b"])

@@ -6,6 +6,7 @@ downloader gets the same behaviour for retries, resumable HTTP transfers and
 file validation.
 """
 
+import hashlib
 import logging
 import os
 import threading
@@ -200,6 +201,19 @@ def http_download(
             raise IOError(
                 f"Incomplete download of {url}: {size} of {expected_size} bytes"
             )
+
+
+def file_checksum(path: str, algorithm: str) -> str:
+    """
+    Hex digest of a file; algorithm as providers write it ("MD5", "SHA-256", ...).
+    """
+
+    digest = hashlib.new(algorithm.lower().replace("-", ""))
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(8 * 1024 * 1024), b""):
+            digest.update(block)
+
+    return digest.hexdigest()
 
 
 def validate_file(path: str) -> None:

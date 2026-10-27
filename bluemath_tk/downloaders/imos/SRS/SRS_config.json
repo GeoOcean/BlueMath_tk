@@ -1,0 +1,12 @@
+{
+    "description": "IMOS Satellite Remote Sensing (SRS) facility, public AODN bucket on AWS S3",
+    "bucket_url": "https://imos-data.s3-ap-southeast-2.amazonaws.com/",
+    "datasets": {
+        "Wave-Wind-Altimetry-DM00": {
+            "description": "Multi-mission altimeter wave height and wind speed (Ribal and Young 2019, updated), 1 Hz along-track, one file per mission and 1x1 degree cell, 1985-present, calibrated and raw values with quality flags",
+            "prefix": "IMOS/SRS/Surface-Waves/Wave-Wind-Altimetry-DM00/",
+            "local_dir": "SRS/Surface-Waves/Wave-Wind-Altimetry-DM00",
+            "filename_pattern": "^IMOS_SRS-Surface-Waves_MW_.*-DM00\\.nc$"
+        }
+    }
+}

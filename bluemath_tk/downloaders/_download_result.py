@@ -112,13 +112,11 @@ class DownloadResult:
         if context:
             error_dict["context"] = context
         self.errors.append(error_dict)
-        if file_path not in self.error_files:
-            self.error_files.append(file_path)
+        self._append_unique("error_files", file_path)
 
     def add_downloaded(self, file_path: str):
         """Add a successfully downloaded file."""
-        if file_path not in self.downloaded_files:
-            self.downloaded_files.append(file_path)
+        self._append_unique("downloaded_files", file_path)
 
     def add_skipped(self, file_path: str, reason: str = ""):
         """
@@ -131,10 +129,25 @@ class DownloadResult:
         reason : str, optional
             Reason why the file was skipped.
         """
-        if file_path not in self.skipped_files:
-            self.skipped_files.append(file_path)
+        self._append_unique("skipped_files", file_path)
         if reason:
             self.metadata.setdefault("skip_reasons", {})[file_path] = reason
+
+    def _append_unique(self, name: str, file_path: str) -> None:
+        """
+        Append to one of the file lists unless already there.
+
+        A set kept next to each list makes the check O(1), so results of
+        hundreds of thousands of files stay fast. It is rebuilt if the list was
+        changed directly.
+        """
+        files = getattr(self, name)
+        seen = self.__dict__.setdefault("_seen", {}).get(name)
+        if seen is None or len(seen) != len(files):
+            seen = self._seen[name] = set(files)
+        if file_path not in seen:
+            seen.add(file_path)
+            files.append(file_path)
 
     def merge(self, other: "DownloadResult") -> "DownloadResult":
         """
@@ -155,11 +168,9 @@ class DownloadResult:
         for file_path in other.downloaded_files:
             self.add_downloaded(file_path)
         for file_path in other.skipped_files:
-            if file_path not in self.skipped_files:
-                self.skipped_files.append(file_path)
+            self._append_unique("skipped_files", file_path)
         for file_path in other.error_files:
-            if file_path not in self.error_files:
-                self.error_files.append(file_path)
+            self._append_unique("error_files", file_path)
         self.errors.extend(other.errors)
         for key, value in other.metadata.items():
             if isinstance(value, dict):
