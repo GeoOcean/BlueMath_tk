@@ -116,3 +116,85 @@ class TestAltimetry(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def _write_swot_store(path: Path) -> None:
+    """SWOT-like store: cell (53, 3) in two monthly blocks, one pass each."""
+
+    def month(t0, swh, qual):
+        n = len(swh)
+        return {
+            "longitude": np.full(n, 3.90, dtype="float64") + 0.01 * np.arange(n),
+            "latitude": np.full(n, 53.50, dtype="float64"),
+            "time": (np.datetime64(t0) + np.arange(n).astype("timedelta64[s]")).astype(
+                "datetime64[ns]"
+            ),
+            "swh_karin": np.asarray(swh, dtype="float32"),
+            "swh_karin_qual": np.asarray(qual, dtype="uint32"),
+            "distance_to_coast": np.full(n, 10, dtype="float32"),
+            "depth": np.full(n, -20, dtype="int16"),
+            "cycle": np.full(n, 16, dtype="uint16"),
+            "pass": np.full(n, 85, dtype="uint16"),
+            "pixel": np.arange(n, dtype="uint8"),
+        }
+
+    # June: 4 good pixels (one 0) and one bad; July: 3 good pixels
+    blocks = [
+        month("2024-06-01T04:51", [2.0, 0.0, 2.2, 2.1, 9.0], [0, 0, 0, 0, 2**24]),
+        month("2024-07-03T10:00", [1.0, 1.2, 1.1], [0, 0, 0]),
+    ]
+    obs = {k: np.concatenate([b[k] for b in blocks]) for k in blocks[0]}
+    start = np.zeros((2, 180, 360), dtype="int64")
+    count = np.zeros((2, 180, 360), dtype="int32")
+    start[0, 53 + 90, 3], count[0, 53 + 90, 3] = 0, 5
+    start[1, 53 + 90, 3], count[1, 53 + 90, 3] = 5, 3
+    coords = ("time", "latitude", "longitude")
+    ds = xr.Dataset(
+        {k: ("obs", v) for k, v in obs.items() if k not in coords},
+        coords={
+            **{k: ("obs", obs[k]) for k in coords},
+            "month": np.array(["2024-06-01", "2024-07-01"], dtype="datetime64[ns]"),
+            "lat_cell": np.arange(-90, 90, dtype="int16"),
+            "lon_cell": np.arange(0, 360, dtype="int16"),
+        },
+    )
+    ds["cell_start"] = (("month", "lat_cell", "lon_cell"), start)
+    ds["cell_count"] = (("month", "lat_cell", "lon_cell"), count)
+    ds.to_zarr(path)
+
+
+class TestSwot(unittest.TestCase):
+    """A SWOT KaRIn store is read with the same functions."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.path = Path(self.tmp) / "swot.zarr"
+        _write_swot_store(self.path)
+        self.ds = open_altimeter(str(self.path))
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def test_near_renames_and_quality(self):
+        obs = altimeter_near(self.ds, 3.92, 53.5, radius_km=10)
+        self.assertEqual(len(obs), 7)  # the bad pixel is dropped
+        self.assertIn("hs", obs)
+        self.assertIn("dist2coast", obs)
+        self.assertTrue((obs["flag"] == 1).all())
+        every = altimeter_near(self.ds, 3.92, 53.5, radius_km=10, flags=None)
+        self.assertEqual(sorted(every["flag"].unique()), [1, 4])
+
+    def test_time_window_skips_months(self):
+        july = altimeter_near(
+            self.ds, 3.92, 53.5, radius_km=10, time=slice("2024-07", None)
+        )
+        self.assertEqual(len(july), 3)
+        self.assertTrue((july["time"] >= pd.Timestamp("2024-07-01")).all())
+
+    def test_passes_are_patch_medians(self):
+        obs = altimeter_near(self.ds, 3.92, 53.5, radius_km=10)
+        passes = altimeter_passes(obs)
+        self.assertEqual(len(passes), 2)
+        # zeros stay in the median (a failed retrieval in calm seas)
+        self.assertAlmostEqual(float(passes["hs"].iloc[0]), 2.05, places=5)
+        self.assertAlmostEqual(float(passes["hs"].iloc[1]), 1.1, places=5)
