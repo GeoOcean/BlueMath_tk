@@ -10,5 +10,7 @@ BOUNDSPEC SIDE {{ boundary_side }} VARIABLE PAR &
 {% endfor %}POINTS 'sites' FILE '{{ points_file }}'
 TABLE 'sites' NOHEAD '{{ table_file }}' {{ table_quantities }}
 {% if map_file %}BLOCK 'COMPGRID' NOHEAD '{{ map_file }}' LAY 3 {{ map_quantities }}
+{% endif %}{% if spectra_file %}POINTS 'buoys' FILE '{{ spectra_points_file }}'
+SPECOUT 'buoys' SPEC2D ABS '{{ spectra_file }}'
 {% endif %}COMPUTE
 STOP

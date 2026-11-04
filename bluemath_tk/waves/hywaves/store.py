@@ -230,7 +230,7 @@ class ReconstructionStore:
         valid = times != _NAT
         data = {}
         for name, extra in self.variables.items():
-            values = np.stack([self.group[name].oindex[m, :, site_idx] for m in month_idx])
+            values = self.group[name].oindex[month_idx, :, site_idx]  # one call: concurrent chunk reads
             data[name] = (("time", "sites", *extra), values[valid])
         coords = {"time": times[valid].view("datetime64[ns]"), "sites": sites}
         coords.update({d: self.coords[d] for extra in self.variables.values() for d in extra})

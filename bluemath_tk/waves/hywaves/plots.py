@@ -524,12 +524,306 @@ def plot_wind_k_comparison(df: pd.DataFrame, title: str = "How K is estimated") 
     return fig
 
 
+def plot_peak_period_ratio(
+    samples: pd.DataFrame, theory: Mapping[str, float], title: str = "Tp / Tm-1,0"
+) -> Figure:
+    """
+    Measured Tp / Tm-1,0 per partition kind, against spectral shapes.
+
+    Parameters
+    ----------
+    samples : pd.DataFrame
+        ``partition`` and ``ratio`` (e.g. ``offshore.peak_period_samples``).
+    theory : Mapping[str, float]
+        Label -> ratio of reference spectra (e.g. JONSWAP for a few gamma),
+        drawn as vertical lines.
+    title : str, optional
+        Figure title.
+
+    Returns
+    -------
+    Figure
+    """
+
+    kinds = list(dict.fromkeys(samples["partition"]))
+    fig, axes = plt.subplots(1, len(kinds), figsize=(6 * len(kinds), 4), sharey=True,
+                             constrained_layout=True, squeeze=False)
+    fig.suptitle(title, fontsize=14, fontweight="bold")
+    bins = np.linspace(0.9, 1.5, 61)
+    colors = plt.get_cmap("Greys")(np.linspace(0.4, 0.9, len(theory)))
+    for ax, kind in zip(axes[0], kinds):
+        ratio = samples.loc[samples["partition"] == kind, "ratio"]
+        ax.hist(ratio, bins=bins, density=True, color="#1f77b4", alpha=0.6)
+        ax.axvline(ratio.median(), color="#d62728", lw=2, label=f"median {ratio.median():.3f}")
+        for (label, value), color in zip(theory.items(), colors):
+            ax.axvline(value, color=color, ls="--", lw=1.2, label=f"{label} {value:.3f}")
+        ax.set(title=f"{kind} · {len(ratio):,} hours", xlabel="Tp / Tm-1,0", ylabel="density")
+        ax.legend(fontsize=9)
+    return fig
+
+
+def _direction_arrow(ax: Axes, direction: float, xy: tuple[float, float], color: str, label: str) -> None:
+    """Arrow towards where waves / wind go, from a nautical coming-from *direction* (axes fraction)."""
+    rad = np.deg2rad(direction)
+    dx, dy = -0.1 * np.sin(rad), -0.1 * np.cos(rad)
+    start = (xy[0] - dx / 2, xy[1] - dy / 2)
+    ax.annotate("", xy=(start[0] + dx, start[1] + dy), xytext=start, xycoords="axes fraction",
+                arrowprops={"arrowstyle": "-|>", "color": color, "lw": 2})
+    ax.text(xy[0], xy[1] - 0.1, label, transform=ax.transAxes, ha="center", va="top", fontsize=8, color=color)
+
+
+def plot_wind_case_comparison(ds: xr.Dataset, size: float = 4) -> Figure:
+    """
+    Training cases with and without wind, and the wind correction, at every site.
+
+    One row per case: what the wind adds in the runs (with - without wind),
+    what the correction adds (corrected - without wind), on the same scale;
+    their difference (corrected - with wind) with its bias and RMSE; and the
+    run with wind (x, reference) against the run without wind and the
+    corrected one. Arrows: waves (black) and wind (red), towards where they
+    go.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        ``hs0``, ``hs1``, ``hs_corrected`` on ``(case, sites)``, with site
+        ``longitude`` / ``latitude`` and case ``hs``, ``tp``, ``u10``,
+        ``dir``, ``u10dir``, ``wind_wave_angle``, ``ws_weight``,
+        ``hs_ws_u2`` coordinates.
+    size : float, optional
+        Panel size (inches). Default is 4.
+
+    Returns
+    -------
+    Figure
+    """
+
+    n = ds.sizes["case"]
+    fig, axes = plt.subplots(n, 4, figsize=(4 * size, n * size), squeeze=False, constrained_layout=True)
+    lon, lat = ds["longitude"].values, ds["latitude"].values
+    aspect = 1.0 / np.cos(np.deg2rad(np.nanmean(lat)))
+    for row, case in zip(axes, ds["case"].values):
+        c = ds.sel(case=case)
+        added = {"wind added, runs": (c["hs1"] - c["hs0"]).values,
+                 "wind added, correction": (c["hs_corrected"] - c["hs0"]).values}
+        lim = max(float(np.nanpercentile(np.abs(np.r_[tuple(added.values())]), 99)), 0.05)
+        for ax, (label, value) in zip(row, added.items()):
+            sc = ax.scatter(lon, lat, c=value, s=2, cmap="RdBu_r", vmin=-lim, vmax=lim, rasterized=True)
+            ax.set_title(f"{label} (median {np.nanmedian(value):+.2f} m)", fontsize=10)
+        fig.colorbar(sc, ax=row[:2], label="Hs difference (m)", shrink=0.8)
+        err = (c["hs_corrected"] - c["hs1"]).values
+        sc = row[2].scatter(lon, lat, c=err, s=2, cmap="RdBu_r", vmin=-lim, vmax=lim, rasterized=True)
+        fig.colorbar(sc, ax=row[2], label="corrected - with wind (m)", shrink=0.8)
+        row[2].set_title(f"bias {np.nanmean(err):+.2f} m, RMSE {np.sqrt(np.nanmean(err**2)):.2f} m", fontsize=10)
+        for ax in row[:3]:
+            ax.set_aspect(aspect)
+            ax.tick_params(labelsize=7)
+        _direction_arrow(row[0], float(c["dir"]), (0.12, 0.88), "black", "waves")
+        _direction_arrow(row[0], float(c["u10dir"]), (0.30, 0.88), "#d62728", "wind")
+        row[0].set_ylabel(
+            f"case {case}: Hs {float(c['hs']):.1f} m, Tp {float(c['tp']):.1f} s\n"
+            f"U {float(c['u10']):.1f} m/s, angle {float(c['wind_wave_angle']):+.0f}°, "
+            f"w {float(c['ws_weight']):.2f}, gHs/U² {float(c['hs_ws_u2']):.2f}",
+            fontsize=9,
+        )
+        ax = row[3]
+        ref = c["hs1"].values
+        ax.scatter(ref, c["hs0"].values, s=2, color="0.6", alpha=0.5, label="without wind", rasterized=True)
+        ax.scatter(ref, c["hs_corrected"].values, s=2, color="#1f77b4", alpha=0.5, label="corrected", rasterized=True)
+        top = float(np.nanmax(np.r_[ref, c["hs_corrected"].values]))
+        ax.plot([0, top], [0, top], "k--", lw=1)
+        ax.set(xlim=(0, top), ylim=(0, top), xlabel="Hs with wind (m)", ylabel="Hs (m)", title="all sites")
+        ax.legend(fontsize=8, markerscale=4, loc="upper left")
+    return fig
+
+
+def plot_k_response(
+    ds: xr.Dataset, ranges: Mapping[str, tuple[float, float]] | None = None, title: str = "K response"
+) -> Figure:
+    """
+    ``K`` of the wind correction against each input, one line per site.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        ``k_u10``, ``k_angle``, ``k_hs_ws_u2`` on ``(sites, <input>)``, site
+        ``depth`` and ``fetch`` (m) coordinates and the base state
+        (``wind_dir``, ``hs_ws``, ``u10``, ``angle``) in the attributes.
+    ranges : Mapping[str, tuple of float], optional
+        ``u10``, ``angle``, ``hs_ws_u2`` -> range of the training cases;
+        outside it is shaded (the model keeps its edge value there).
+    title : str, optional
+        Figure title.
+
+    Returns
+    -------
+    Figure
+    """
+
+    panels = {
+        "u10": ("wind speed U10 (m/s)", f"Hs_ws {ds.attrs['hs_ws']:g} m, angle {ds.attrs['angle']:g}°"),
+        "angle": ("wind - wave angle (°)", f"Hs_ws {ds.attrs['hs_ws']:g} m, U {ds.attrs['u10']:g} m/s"),
+        "hs_ws_u2": ("g Hs_ws / U²  (how developed the wind sea is)",
+                     f"U {ds.attrs['u10']:g} m/s, angle {ds.attrs['angle']:g}°"),
+    }
+    fig, axes = plt.subplots(1, 3, figsize=(17, 4.8), sharey=True, constrained_layout=True)
+    fig.suptitle(f"{title} · wind from {ds.attrs['wind_dir']:g}°", fontsize=14, fontweight="bold")
+    for ax, (name, (xlabel, base)) in zip(axes, panels.items()):
+        x = ds[name].values
+        for site in ds["sites"].values:
+            s = ds.sel(sites=site)
+            ax.plot(x, s[f"k_{name}"], lw=2,
+                    label=f"{site} ({float(s['depth']):.0f} m, fetch {float(s['fetch']) / 1e3:.0f} km)")
+        if ranges is not None and name in ranges:
+            low, high = ranges[name]
+            ax.axvspan(x.min(), low, color="0.85", zorder=0)
+            ax.axvspan(high, x.max(), color="0.85", zorder=0, label="outside training")
+        if name == "hs_ws_u2":
+            ax.set_xscale("log")
+            ax.axvline(0.24, color="0.4", ls=":", lw=1)
+            ax.text(0.24, 1.0, " fully developed", transform=ax.get_xaxis_transform(), va="top", fontsize=8, color="0.4")
+        ax.axhline(1, color="k", lw=0.8)
+        ax.set(xlabel=xlabel, xlim=(x.min(), x.max()), title=base)
+    axes[0].set_ylabel("K = Hs with / without wind")
+    axes[0].legend(fontsize=8, loc="upper left")
+    return fig
+
+
+def plot_wind_sea_event(
+    ws: xr.Dataset,
+    hs: Mapping[str, xr.DataArray],
+    ranges: Mapping[str, tuple[float, float]] | None = None,
+    title: str = "",
+) -> Figure:
+    """
+    The wind correction at one site through an event.
+
+    Rows: Hs of every source; the wind sea the correction sees (``hs_ws``)
+    and the wind (``u10``); how developed the wind sea is
+    (``g Hs_ws / U^2``); the wind-wave angle; ``K``. Shaded: outside the
+    training cases (*ranges*).
+
+    Parameters
+    ----------
+    ws : xr.Dataset
+        ``hs_ws``, ``u10``, ``hs_ws_u2``, ``angle``, ``k`` on ``time`` (one
+        site of ``wind_sea_inputs``).
+    hs : Mapping[str, xr.DataArray]
+        Label -> Hs on ``time`` (e.g. buoy, dynamic run, metamodel without and
+        with the correction).
+    ranges : Mapping[str, tuple of float], optional
+        ``hs_ws_u2``, ``angle`` -> training range.
+    title : str, optional
+        Figure title.
+
+    Returns
+    -------
+    Figure
+    """
+
+    fig, axes = plt.subplots(5, 1, figsize=(13, 13), sharex=True, constrained_layout=True,
+                             gridspec_kw={"height_ratios": [2, 1, 1, 1, 1]})
+    fig.suptitle(title, fontsize=14, fontweight="bold")
+    times = ws["time"].values
+    ax = axes[0]
+    for label, series in hs.items():
+        marker = "o" if label.lower().startswith("buoy") else None
+        ax.plot(series["time"], series, lw=1.5, marker=marker, ms=2.5, ls="-" if marker is None else "none", label=label)
+    ax.set(ylabel="Hs (m)")
+    ax.legend(fontsize=9, ncol=2)
+    ax = axes[1]
+    ax.plot(times, ws["hs_ws"], color="#2ca02c", lw=1.5, label="wind sea Hs_ws (m)")
+    ax.set_ylabel("Hs_ws (m)", color="#2ca02c")
+    twin = ax.twinx()
+    twin.plot(times, ws["u10"], color="#d62728", lw=1.2, label="U10")
+    twin.set_ylabel("U10 (m/s)", color="#d62728")
+    for ax, name, label, log in ((axes[2], "hs_ws_u2", "g Hs_ws / U²", True), (axes[3], "angle", "wind - wave (°)", False)):
+        values = ws[name].values if name != "angle" else (ws[name].values + 180.0) % 360.0 - 180.0
+        ax.plot(times, values, color="k", lw=1.2)
+        if ranges is not None and name in ranges:
+            low, high = ranges[name]
+            ax.axhspan(low, high, color="#1f77b4", alpha=0.12, label="training range")
+            ax.legend(fontsize=8, loc="upper left")
+        if log:
+            ax.set_yscale("log")
+            ax.axhline(0.24, color="0.4", ls=":", lw=1)
+        ax.set_ylabel(label)
+    axes[4].plot(times, ws["k"], color="#9467bd", lw=1.5)
+    axes[4].axhline(1, color="k", lw=0.8)
+    axes[4].set_ylabel("K")
+    axes[4].xaxis.set_major_formatter(mdates.DateFormatter("%d %b %H:%M"))
+    return fig
+
+
+def plot_event_maps(
+    reference: xr.DataArray,
+    estimates: Mapping[str, xr.DataArray],
+    k: xr.DataArray | None = None,
+    reference_label: str = "reference",
+    title: str = "",
+    size: float = 4.5,
+) -> Figure:
+    """
+    Hs at every site at one time: a reference, each estimate minus it, and ``K``.
+
+    Parameters
+    ----------
+    reference : xr.DataArray
+        Hs on ``sites`` with ``site_longitude`` / ``site_latitude``.
+    estimates : Mapping[str, xr.DataArray]
+        Label -> Hs on the same sites.
+    k : xr.DataArray, optional
+        ``K`` of the wind correction on the same sites.
+    reference_label : str, optional
+        Name of the reference.
+    title : str, optional
+        Figure title.
+    size : float, optional
+        Panel size (inches).
+
+    Returns
+    -------
+    Figure
+    """
+
+    n = 1 + len(estimates) + int(k is not None)
+    fig, axes = plt.subplots(1, n, figsize=(n * size, size * 1.15), constrained_layout=True, squeeze=False)
+    axes = axes[0]
+    fig.suptitle(title, fontsize=14, fontweight="bold")
+    lon, lat = reference["site_longitude"].values, reference["site_latitude"].values
+    sc = axes[0].scatter(lon, lat, c=reference.values, s=3, cmap="viridis", vmin=0, rasterized=True)
+    fig.colorbar(sc, ax=axes[0], label="Hs (m)", shrink=0.8)
+    axes[0].set_title(f"{reference_label} (median {float(reference.median()):.2f} m)", fontsize=10)
+    diffs = {label: (est.sel(sites=reference["sites"]) - reference).values for label, est in estimates.items()}
+    lim = max(float(np.nanpercentile(np.abs(np.concatenate(list(diffs.values()))), 99)), 0.05) if diffs else 1.0
+    for ax, (label, diff) in zip(axes[1:], diffs.items()):
+        sc = ax.scatter(lon, lat, c=diff, s=3, cmap="RdBu_r", vmin=-lim, vmax=lim, rasterized=True)
+        ax.set_title(f"{label} - {reference_label}\nbias {np.nanmean(diff):+.2f}, RMSE {np.sqrt(np.nanmean(diff**2)):.2f} m",
+                     fontsize=10)
+    if diffs:
+        fig.colorbar(sc, ax=axes[1 : 1 + len(diffs)], label="Hs difference (m)", shrink=0.8)
+    if k is not None:
+        sc = axes[-1].scatter(lon, lat, c=k.sel(sites=reference["sites"]).values, s=3, cmap="magma_r", vmin=1, rasterized=True)
+        fig.colorbar(sc, ax=axes[-1], label="K", shrink=0.8)
+        axes[-1].set_title("K of the wind correction", fontsize=10)
+    aspect = 1.0 / np.cos(np.deg2rad(np.nanmean(lat)))
+    for ax in axes:
+        ax.set_aspect(aspect)
+        ax.tick_params(labelsize=7)
+    return fig
+
+
 __all__ = [
     "SWEEP_METRICS",
     "goal_colors",
     "plot_direction_ranges",
     "plot_dynamic_forcing",
+    "plot_event_maps",
     "plot_goal_sectors",
+    "plot_k_response",
     "plot_mda_sweep",
+    "plot_peak_period_ratio",
+    "plot_wind_case_comparison",
     "plot_wind_k_comparison",
+    "plot_wind_sea_event",
 ]

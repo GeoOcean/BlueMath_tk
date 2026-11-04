@@ -3,8 +3,9 @@ import unittest
 import numpy as np
 import pandas as pd
 import xarray as xr
+from matplotlib import pyplot as plt
 
-from bluemath_tk.waves.calibration import CalVal, sector_index
+from bluemath_tk.waves.calibration import CalVal, QuantileMapping, sector_index
 
 
 def _pairs(n: int = 2000, seed: int = 0) -> pd.DataFrame:
@@ -88,6 +89,77 @@ class TestCalVal(unittest.TestCase):
         cv = CalVal().fit(pairs)
         self.assertEqual(list(cv.families), ["total"])
         self.assertGreater(cv.coefficients.query("sector == 12")["factor"].item(), 1.0)
+
+
+
+class TestQuantileMapping(unittest.TestCase):
+    """Second calibration step: the Hs distribution, tail included."""
+
+    def _fit(self, n: int = 20000) -> tuple[QuantileMapping, np.ndarray, np.ndarray]:
+        rng = np.random.default_rng(0)
+        hs = rng.weibull(1.3, n) * 1.5
+        reference = hs + np.maximum(hs - 3.0, 0.0) * 0.3
+        return QuantileMapping().fit(hs, reference), hs, reference
+
+    def test_recovers_distribution(self):
+        """Mapped quantiles match the reference, up to the tail quantile."""
+
+        mapping, hs, reference = self._fit()
+        probabilities = [0.5, 0.9, 0.99, 0.999]
+        np.testing.assert_allclose(
+            np.quantile(mapping.map(hs), probabilities),
+            np.quantile(reference, probabilities),
+            atol=0.02,
+        )
+
+    def test_constant_beyond_tail_and_monotonic(self):
+        """Beyond the last quantile the offset is constant; the map never decreases."""
+
+        mapping, hs, _ = self._fit()
+        last = mapping.table.iloc[-1]
+        offset = last["reference"] - last["hindcast"]
+        self.assertAlmostEqual(mapping.map(np.array([20.0]))[0], 20.0 + offset)
+        self.assertTrue((np.diff(mapping.map(np.sort(hs))) >= -1e-9).all())
+
+    def test_correct_scales_partitions(self):
+        """Partition Hs follow the bulk ratio; other variables and NaN stay."""
+
+        mapping, _, _ = self._fit()
+        data = pd.DataFrame(
+            {"hs": [0.0, 5.0, np.nan], "phs0": [0.0, 4.0, np.nan], "pdir0": [10.0, 20.0, 30.0]}
+        )
+        out = mapping.correct(data)
+        ratio = out.loc[1, "hs"] / 5.0
+        self.assertGreater(ratio, 1.0)
+        self.assertAlmostEqual(out.loc[1, "phs0"], 4.0 * ratio)
+        self.assertEqual(out.loc[0, "hs"], 0.0)
+        self.assertTrue(np.isnan(out.loc[2, "hs"]))
+        pd.testing.assert_series_equal(out["pdir0"], data["pdir0"])
+
+    def test_dataset_and_too_few_pairs(self):
+        """Datasets give the same result; a tail on too few pairs is refused."""
+
+        mapping, _, _ = self._fit()
+        table = pd.DataFrame({"hs": [1.0, 5.0], "phs0": [1.0, 4.0]})
+        dataset = xr.Dataset({k: ("time", table[k].to_numpy()) for k in table})
+        np.testing.assert_allclose(mapping.correct(dataset)["phs0"], mapping.correct(table)["phs0"])
+        with self.assertRaises(ValueError):
+            QuantileMapping().fit(np.ones(1000), np.ones(1000))
+
+    def test_quantiles_and_plot(self):
+        """Diagnostics on the fitted pairs; the samples are not saved with the model."""
+
+        mapping, hs, _ = self._fit()
+        table = mapping.quantiles(raw=hs * 0.9)
+        self.assertEqual(list(table.columns), ["reference", "raw", "hindcast", "mapped", "n_above"])
+        np.testing.assert_allclose(table["mapped"], table["reference"], atol=0.02)
+        self.assertEqual(table.loc[0.999, "n_above"], 20)
+        fig = mapping.plot(raw=hs * 0.9, labels={"reference": "satellite"})
+        self.assertEqual(len(fig.axes), 5)
+        plt.close(fig)
+        with self.assertRaises(ValueError):
+            mapping.evaluated_samples(raw=hs[:10])
+        self.assertNotIn("_samples", mapping.__getstate__())
 
 
 if __name__ == "__main__":

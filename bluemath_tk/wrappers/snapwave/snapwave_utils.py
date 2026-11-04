@@ -12,12 +12,13 @@ SnapWave case folders contain plain-text inputs next to ``snapwave.inp``:
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import xarray as xr
-from shapely.geometry import MultiPolygon, Polygon
+from shapely.geometry import LineString, MultiPolygon, Polygon
 
 #: SnapWave history (``his_file``) variables -> short names.
 POINT_VARS: dict[str, str] = {
@@ -45,83 +46,32 @@ BOUNDARY_VARS: tuple[str, ...] = ("hs", "tp", "dir", "spr")
 # ---------------------------------------------------------------------------
 
 
-def _largest_polygon(geometry: Polygon | MultiPolygon) -> Polygon:
-    """Return *geometry* itself, or the largest part of a MultiPolygon."""
-
-    if isinstance(geometry, MultiPolygon):
-        geometry = max(geometry.geoms, key=lambda g: g.area)
-    if not isinstance(geometry, Polygon):
-        raise TypeError(f"Expected Polygon/MultiPolygon, got {geometry.geom_type}")
-
-    return geometry
-
-
-def buffer_polygon(
-    polygon: Polygon | MultiPolygon,
-    buffer_m: float,
-    geo_crs: str = "EPSG:4326",
-) -> Polygon | MultiPolygon:
+def open_boundary_enclosure(boundary: np.ndarray) -> Polygon:
     """
-    Buffer a lon/lat polygon by *buffer_m* metres in a local UTM projection.
+    SnapWave enclosure of an open boundary: a thin polygon around its nodes.
+
+    SnapWave forces every mesh edge node inside the enclosure, so it must hold
+    only the open (sea) boundary; a coast node inside it would radiate the
+    boundary spectra into the domain. The polygon is the boundary polyline
+    buffered by a quarter of its shortest segment, with flat ends.
 
     Parameters
     ----------
-    polygon : Polygon or MultiPolygon
-        Input geometry in *geo_crs*.
-    buffer_m : float
-        Outward buffer distance in metres. ``0`` returns *polygon* unchanged.
-    geo_crs : str, optional
-        CRS of input and output coordinates. Default is "EPSG:4326".
-
-    Returns
-    -------
-    Polygon or MultiPolygon
-        Buffered geometry in *geo_crs*.
-    """
-
-    if buffer_m <= 0:
-        return polygon
-
-    import geopandas as gpd
-
-    gdf = gpd.GeoDataFrame(geometry=[polygon], crs=geo_crs)
-    work_crs = gdf.estimate_utm_crs()
-    if work_crs is None:
-        raise ValueError("Could not estimate a UTM CRS for the polygon.")
-
-    return gdf.to_crs(work_crs).buffer(buffer_m).to_crs(geo_crs).iloc[0]
-
-
-def build_enclosure_polygon(
-    polygon: Polygon | MultiPolygon,
-    buffer_m: float = 0.0,
-    geo_crs: str = "EPSG:4326",
-) -> Polygon:
-    """
-    Build a simple SnapWave enclosure around an area of interest.
-
-    Exterior ring only (holes dropped), buffered outwards, then reduced to its
-    minimum rotated rectangle (4 vertices).
-
-    Parameters
-    ----------
-    polygon : Polygon or MultiPolygon
-        Area of interest; for a MultiPolygon the largest part is used.
-    buffer_m : float, optional
-        Outward buffer in metres. Default is 0.
-    geo_crs : str, optional
-        CRS of input and output coordinates. Default is "EPSG:4326".
+    boundary : np.ndarray
+        ``(n, 2)`` open-boundary nodes in order (e.g.
+        :func:`~bluemath_tk.topo_bathy.mesh.open_boundary_nodes`).
 
     Returns
     -------
     Polygon
-        The enclosure quadrilateral.
+        The enclosure.
     """
 
-    exterior = Polygon(_largest_polygon(polygon).exterior.coords)
-    buffered = _largest_polygon(buffer_polygon(exterior, buffer_m, geo_crs=geo_crs))
+    boundary = np.asarray(boundary, dtype=float).reshape(-1, 2)
+    segments = np.hypot(*np.diff(boundary, axis=0).T)
+    width = 0.25 * float(segments[segments > 0].min())
 
-    return buffered.minimum_rotated_rectangle
+    return LineString(boundary).buffer(width, cap_style="flat", join_style="mitre")
 
 
 def write_polygon_vertices_to_txt(
@@ -390,6 +340,44 @@ def read_his_file(
 # ---------------------------------------------------------------------------
 # Forcing
 # ---------------------------------------------------------------------------
+
+
+#: Final relative error above which a SnapWave run did not converge.
+MAX_ERROR = 0.01
+
+
+def read_convergence(case_dir: str | Path, log_file: str = "wrapper_out.log") -> float:
+    """
+    Relative error of SnapWave's last iteration, from the run log.
+
+    SnapWave stops at ``niter`` sweeps whatever the error; an error near 1
+    means the solution never settled (e.g. wind mode under swell and light
+    wind), while converged runs end below ~1e-3.
+
+    Parameters
+    ----------
+    case_dir : str or Path
+        Case folder.
+    log_file : str, optional
+        Standard output of the run. Default is "wrapper_out.log".
+
+    Returns
+    -------
+    float
+        Error of the last iteration.
+
+    Raises
+    ------
+    ValueError
+        If the log has no iteration line (the run did not start or crashed).
+    """
+
+    text = (Path(case_dir) / log_file).read_text(errors="replace")
+    errors = re.findall(r"iteration\s+\d+\s+error\s*=\s*([-+.\dEe]+)", text)
+    if not errors:
+        raise ValueError(f"no iteration in {Path(case_dir) / log_file}")
+
+    return float(errors[-1])
 
 
 def boundary_time_series(

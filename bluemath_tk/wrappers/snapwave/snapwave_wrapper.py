@@ -32,7 +32,9 @@ from shapely.geometry import MultiPolygon, Polygon
 
 from .._base_wrappers import BaseModelWrapper
 from .snapwave_utils import (
+    MAX_ERROR,
     POINT_VARS,
+    read_convergence,
     read_his_file,
     write_points_to_txt,
     write_polygon_vertices_to_txt,
@@ -81,6 +83,9 @@ class SnapWaveModelWrapper(BaseModelWrapper):
     context gets ``n_nodes`` (number of boundary nodes), and ``map_file`` /
     ``map_dirspr`` from the optional boolean ``save_map`` case parameter.
 
+    Postprocessing checks convergence (:func:`~.snapwave_utils.read_convergence`):
+    a case whose last error is above ``max_error`` is not used.
+
     Attributes
     ----------
     available_launchers : dict
@@ -113,6 +118,7 @@ class SnapWaveModelWrapper(BaseModelWrapper):
         point_coords: dict[str, str] | None = None,
         point_variables: tuple[str, ...] | None = tuple(POINT_VARS.values()),
         store_parameters: tuple[str, ...] = (),
+        max_error: float = MAX_ERROR,
     ) -> None:
         """
         Initialise the SnapWave wrapper.
@@ -132,8 +138,8 @@ class SnapWaveModelWrapper(BaseModelWrapper):
             ``(n_nodes, 2)`` boundary node coordinates, in the order of the
             per-node forcing columns.
         enclosure_polygon : Polygon or MultiPolygon
-            Computational enclosure (see
-            :func:`~bluemath_tk.wrappers.snapwave.snapwave_utils.build_enclosure_polygon`).
+            Enclosure of the open boundary (see
+            :func:`~bluemath_tk.wrappers.snapwave.snapwave_utils.open_boundary_enclosure`).
         output_points : np.ndarray or pd.DataFrame
             Observation points: ``(n, 2)`` array, or a DataFrame with ``lon``
             and ``lat`` columns.
@@ -161,6 +167,9 @@ class SnapWaveModelWrapper(BaseModelWrapper):
             Scalar case parameters stored in each postprocessed case as
             ``f"{name}_forcing"`` variables along the case dimension (e.g.
             ``("hs", "tp", "dir", "spr", "wl")`` for metamodel training data).
+        max_error : float, optional
+            Last-iteration error above which a case did not converge. Default
+            :data:`~.snapwave_utils.MAX_ERROR`.
         """
 
         super().__init__(
@@ -193,6 +202,31 @@ class SnapWaveModelWrapper(BaseModelWrapper):
         self.point_coords = dict(point_coords or {})
         self.point_variables = point_variables
         self.store_parameters = tuple(store_parameters)
+        self.max_error = float(max_error)
+
+    def converged(self, case_dir: str) -> bool:
+        """
+        Whether a finished case converged (its last error is below ``max_error``).
+
+        Parameters
+        ----------
+        case_dir : str
+            Case folder.
+
+        Returns
+        -------
+        bool
+            True when converged; a warning is logged otherwise.
+        """
+
+        error = read_convergence(case_dir)
+        if error > self.max_error:
+            self.logger.warning(
+                f"{os.path.basename(case_dir)} did not converge (error {error:.3g})"
+            )
+            return False
+
+        return True
 
     @property
     def n_nodes(self) -> int:
@@ -390,6 +424,8 @@ class SnapWaveModelWrapper(BaseModelWrapper):
         """
         Read one case's history output (``hs``, ``tp``, ``dir``, ``spr``).
 
+        A case that did not converge keeps its time step with NaN fields.
+
         Parameters
         ----------
         case_num : int
@@ -406,6 +442,8 @@ class SnapWaveModelWrapper(BaseModelWrapper):
         """
 
         ds = read_his_file(case_dir, self.his_filename)
+        if not self.converged(case_dir):
+            ds = ds.map(lambda v: v.where(False) if "stations" in v.dims else v)
 
         return self._format_output(ds, case_context, row_dim="time")
 
@@ -519,6 +557,8 @@ class SnapWaveMetaModelWrapper(SnapWaveModelWrapper):
         """
         Read one stationary case, indexed by ``case_num`` instead of ``time``.
 
+        A case that did not converge is dropped from the training cases.
+
         Parameters
         ----------
         case_num : int
@@ -534,6 +574,8 @@ class SnapWaveMetaModelWrapper(SnapWaveModelWrapper):
             Output on ``(case_num, stations)``.
         """
 
+        if not self.converged(case_dir):
+            raise ValueError(f"case {case_num} did not converge")
         ds = read_his_file(case_dir, self.his_filename)
         ds = ds.isel(time=[-1]).rename({"time": "case_num"})
         ds = ds.assign_coords(case_num=[case_num])

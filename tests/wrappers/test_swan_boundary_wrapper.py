@@ -199,7 +199,7 @@ class TestSwanMetaModelWrapper(unittest.TestCase):
             ],
         )
         self.assertIn("SET LEVEL=1.0", inp)
-        self.assertIn("TABLE 'sites' NOHEAD 'output_sites.tab' HSIGN TPS DIR DSPR", inp)
+        self.assertIn("TABLE 'sites' NOHEAD 'output_sites.tab' HSIGN TPS TMM10 DIR DSPR", inp)
         self.assertIn(
             "BLOCK 'COMPGRID' NOHEAD 'output_map.mat' LAY 3 HSIGN TPS DIR DSPR DEPTH",
             inp,
@@ -227,7 +227,7 @@ class TestSwanMetaModelWrapper(unittest.TestCase):
 
         for case_dir in self.wrapper.cases_dirs:
             with open(op.join(case_dir, "output_sites.tab"), "w") as f:
-                f.write(" 1.0 8.0 270.0 20.0\n 0.5 8.1 275.0 15.0\n")
+                f.write(" 1.0 8.0 7.0 270.0 20.0\n 0.5 8.1 7.1 275.0 15.0\n")
         written = self.wrapper.postprocess_cases()
         ds = xr.open_dataset(written[2])
         self.assertEqual(list(ds.sites.values), ["a", "b"])
@@ -266,16 +266,21 @@ class TestSwanDynamicModelWrapper(unittest.TestCase):
                 grid_file=grid,
                 boundary_nodes=GOALS,
                 output_points=POINTS,
+                spectra_points=POINTS.iloc[:1],
                 debug=False,
             )
             wrapper.build_cases()
             with open(op.join(wrapper.cases_dirs[1], "INPUT")) as f:
                 inp = f.read()
             self.assertIn("SET LEVEL=1.5", inp)
+            self.assertIn("SPECOUT 'buoys' SPEC2D ABS 'output_spectra.spc'", inp)
+            spectra_points = op.join(wrapper.cases_dirs[1], "output_spectra.txt")
+            with open(spectra_points) as f:
+                self.assertEqual(len(f.read().splitlines()), 1)
             self.assertIn("0.40000000 2.0000 10.0000 281.000 21.000 &", inp)
             for case_dir in wrapper.cases_dirs:
                 with open(op.join(case_dir, "output_sites.tab"), "w") as f:
-                    f.write(" 1.0 8.0 270.0 20.0\n 0.5 8.1 275.0 15.0\n")
+                    f.write(" 1.0 8.0 7.0 270.0 20.0\n 0.5 8.1 7.1 275.0 15.0\n")
             ds = wrapper.postprocess_cases()
             self.assertEqual(list(pd.DatetimeIndex(ds.time.values)), list(time))
             self.assertEqual(dict(ds.hs.sizes), {"time": 2, "points": 2})
@@ -345,7 +350,7 @@ class TestSwanDynamicModelWrapper(unittest.TestCase):
                     f"INPGRID WIND REGULAR {context['wind_grid']}\nREADINP WIND 1 'wind.dat' 3 0 FREE\n"
                 )
             with open(op.join(case_dir, "output_sites.tab"), "w") as f:
-                f.write(" 1.0 8.0 270.0 20.0\n 0.5 8.1 275.0 15.0\n")
+                f.write(" 1.0 8.0 7.0 270.0 20.0\n 0.5 8.1 7.1 275.0 15.0\n")
             case = load_swan_case(case_dir)
             self.assertEqual(case.boundary.shape[1], 5)
             self.assertEqual(len(case.wind[0]), 6)

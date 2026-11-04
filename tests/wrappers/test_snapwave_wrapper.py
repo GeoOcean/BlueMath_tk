@@ -14,13 +14,14 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from matplotlib import pyplot as plt
-from shapely.geometry import box
+from shapely.geometry import Point
 
 from bluemath_tk.wrappers.snapwave import (
     SnapWaveDynamicModelWrapper,
     SnapWaveMetaModelWrapper,
     boundary_time_series,
-    build_enclosure_polygon,
+    open_boundary_enclosure,
+    read_convergence,
     read_boundary_nodes,
     read_enclosure_polygon,
     read_forcing_table,
@@ -32,8 +33,12 @@ NODES = np.array([[0.0, 1.0], [0.5, 1.0], [1.0, 1.0]])
 POINTS = pd.DataFrame({"lon": [0.2, 0.4], "lat": [0.3, 0.5]})
 
 
-def _fake_his(case_dir: str, n_times: int = 1) -> None:
-    """Write a minimal SnapWave history file into *case_dir*."""
+def _fake_his(case_dir: str, n_times: int = 1, error: float = 1e-4) -> None:
+    """Write a minimal SnapWave history file and run log into *case_dir*."""
+
+    with open(op.join(case_dir, "wrapper_out.log"), "w") as f:
+        f.write(f"   iteration      1 error =    0.05000   %ok =   40.00\n")
+        f.write(f"   iteration      2 error = {error:10.5f}   %ok =  100.00\n")
 
     shape = (n_times, len(POINTS))
     ds = xr.Dataset(
@@ -71,7 +76,7 @@ class TestSnapWaveMetaModelWrapper(unittest.TestCase):
             fixed_parameters={"gridfile": "mesh.nc"},
             output_dir=op.join(self.test_dir, "cases"),
             boundary_nodes=NODES,
-            enclosure_polygon=build_enclosure_polygon(box(0, 0, 1, 1)),
+            enclosure_polygon=open_boundary_enclosure(NODES),
             output_points=POINTS,
             debug=False,
         )
@@ -110,6 +115,23 @@ class TestSnapWaveMetaModelWrapper(unittest.TestCase):
         self.assertEqual(ds.sizes["case_num"], 3)
         self.assertIn("hs", ds)
         self.assertNotIn("point_hm0", ds)
+
+    def test_unconverged_case_dropped(self):
+        """A case whose last error is above max_error is left out."""
+
+        for i, case_dir in enumerate(self.wrapper.cases_dirs):
+            _fake_his(case_dir, error=0.9 if i == 1 else 1e-4)
+        self.assertAlmostEqual(read_convergence(self.wrapper.cases_dirs[1]), 0.9)
+        ds = self.wrapper.postprocess_cases(write_output_nc=False)
+        self.assertEqual(list(ds.case_num.values), [0, 2])
+
+    def test_enclosure_holds_only_the_open_boundary(self):
+        """The enclosure contains the boundary nodes and nothing a segment away."""
+
+        polygon = read_enclosure_polygon(self.wrapper.cases_dirs[0])
+        self.assertTrue(all(polygon.buffer(1e-9).contains(Point(p)) for p in NODES))
+        self.assertFalse(polygon.contains(Point(0.5, 0.5)))
+        self.assertFalse(polygon.contains(Point(0.0, 0.5)))
 
     def test_slurm_array(self):
         """The SLURM script reads case_dirs.txt and loads the cluster module."""
@@ -159,7 +181,7 @@ class TestSnapWaveOutputOptions(unittest.TestCase):
             fixed_parameters={"gridfile": "mesh.nc"},
             output_dir=op.join(self.test_dir, "cases"),
             boundary_nodes=NODES[:2],
-            enclosure_polygon=build_enclosure_polygon(box(0, 0, 1, 1)),
+            enclosure_polygon=open_boundary_enclosure(NODES),
             output_points=points,
             point_dim="sites",
             point_coords={"sites": "name", "site_depth": "depth"},
@@ -246,7 +268,7 @@ class TestSnapWaveDynamic(unittest.TestCase):
             fixed_parameters={"gridfile": "mesh.nc"},
             output_dir=op.join(self.test_dir, "cases"),
             boundary_nodes=NODES,
-            enclosure_polygon=build_enclosure_polygon(box(0, 0, 1, 1)),
+            enclosure_polygon=open_boundary_enclosure(NODES),
             output_points=POINTS.to_numpy(),
             debug=False,
         )
@@ -259,8 +281,8 @@ class TestSnapWaveDynamic(unittest.TestCase):
         with open(op.join(case_dir, "snapwave.inp")) as f:
             self.assertIn("tref           = 20200101 010000", f.read())
 
-        for d in wrapper.cases_dirs:
-            _fake_his(d)
+        for i, d in enumerate(wrapper.cases_dirs):
+            _fake_his(d, error=0.9 if i == 1 else 1e-4)
         joined = wrapper.join_postprocessed_files(
             [
                 wrapper.postprocess_case(i, d, {})
@@ -268,6 +290,8 @@ class TestSnapWaveDynamic(unittest.TestCase):
             ]
         )
         self.assertEqual(joined.sizes["time"], 2)
+        self.assertTrue(np.isfinite(joined["hs"].isel(time=0)).all())
+        self.assertTrue(np.isnan(joined["hs"].isel(time=1)).all())
         fig = plot_case(case_dir, mode="dynamic")
         self.assertEqual(len(fig.axes) >= 5, True)
 
@@ -300,7 +324,7 @@ class TestSnapWaveDynamic(unittest.TestCase):
             fixed_parameters={"gridfile": "mesh.nc"},
             output_dir=op.join(self.test_dir, "cases"),
             boundary_nodes=NODES,
-            enclosure_polygon=build_enclosure_polygon(box(0, 0, 1, 1)),
+            enclosure_polygon=open_boundary_enclosure(NODES),
             output_points=POINTS.to_numpy(),
             wind=wind,
             debug=False,

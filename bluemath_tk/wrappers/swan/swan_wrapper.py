@@ -945,7 +945,9 @@ class SwanBoundaryModelWrapper(BaseModelWrapper):
     - ``map_file`` (``""`` unless the optional boolean ``save_map`` case
       parameter is true) and ``map_quantities``, for a
       ``BLOCK 'COMPGRID' ... LAY 3`` output on the whole grid (read it with
-      :func:`~bluemath_tk.wrappers.swan.swan_utils.read_swan_map`).
+      :func:`~bluemath_tk.wrappers.swan.swan_utils.read_swan_map`);
+    - ``spectra_file`` (``""`` without ``spectra_points``) and
+      ``spectra_points_file``, for ``POINTS`` + ``SPECOUT`` of 2D spectra.
 
     Attributes
     ----------
@@ -962,7 +964,7 @@ class SwanBoundaryModelWrapper(BaseModelWrapper):
         "geoocean-cluster": f"{GEOOCEAN_SWAN_MODULE}\nswan.exe",
     }
 
-    table_quantities: tuple[str, ...] = ("HSIGN", "TPS", "DIR", "DSPR")
+    table_quantities: tuple[str, ...] = ("HSIGN", "TPS", "TMM10", "DIR", "DSPR")
     map_quantities: tuple[str, ...] = ("HSIGN", "TPS", "DIR", "DSPR", "DEPTH")
 
     def __init__(
@@ -983,6 +985,9 @@ class SwanBoundaryModelWrapper(BaseModelWrapper):
         point_dim: str = "points",
         point_coords: dict[str, str] | None = None,
         store_parameters: tuple[str, ...] = (),
+        spectra_points: np.ndarray | pd.DataFrame | None = None,
+        spectra_points_filename: str = "output_spectra.txt",
+        spectra_filename: str = "output_spectra.spc",
     ) -> None:
         """
         Initialise the SWAN boundary-forced wrapper.
@@ -1024,6 +1029,11 @@ class SwanBoundaryModelWrapper(BaseModelWrapper):
         store_parameters : tuple of str, optional
             Scalar case parameters stored as ``f"{name}_forcing"`` along the
             case dimension.
+        spectra_points : np.ndarray or pd.DataFrame, optional
+            Points of the 2D spectra output, as *output_points*. Default no
+            spectra.
+        spectra_points_filename, spectra_filename : str, optional
+            Spectra points file and ``SPECOUT`` output names.
         """
 
         super().__init__(
@@ -1061,6 +1071,15 @@ class SwanBoundaryModelWrapper(BaseModelWrapper):
         self.point_dim = point_dim
         self.point_coords = dict(point_coords or {})
         self.store_parameters = tuple(store_parameters)
+        if isinstance(spectra_points, pd.DataFrame):
+            spectra_points = spectra_points[["lon", "lat"]].to_numpy(float)
+        self.spectra_points = (
+            None
+            if spectra_points is None
+            else np.asarray(spectra_points, dtype=float).reshape(-1, 2)
+        )
+        self.spectra_points_filename = spectra_points_filename
+        self.spectra_filename = spectra_filename
 
     @property
     def n_nodes(self) -> int:
@@ -1128,6 +1147,14 @@ class SwanBoundaryModelWrapper(BaseModelWrapper):
         save_map = bool(case_context.get("save_map", False))
         case_context["map_file"] = self.map_filename if save_map else ""
         case_context["map_quantities"] = " ".join(self.map_quantities)
+        spectra = self.spectra_points is not None and len(self.spectra_points) > 0
+        case_context["spectra_points_file"] = self.spectra_points_filename
+        case_context["spectra_file"] = self.spectra_filename if spectra else ""
+        if spectra:
+            write_swan_points(
+                self.spectra_points,
+                os.path.join(case_dir, self.spectra_points_filename),
+            )
 
     def monitor_cases(self, value_counts: str | None = None):
         """

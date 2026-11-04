@@ -14,6 +14,7 @@ from bluemath_tk.waves.hywaves.wind_correction import (
     correction_features,
     offshore_wind_sea,
     wind_sea_contribution,
+    wind_sea_inputs,
 )
 
 SITES = ["a", "b"]
@@ -102,6 +103,19 @@ class TestWindSeaContribution(unittest.TestCase):
         np.testing.assert_allclose(out["hs"], 2.0 * np.sqrt(k**2 - 1), rtol=1e-6)
         np.testing.assert_allclose(out["dir"], 300.0)
         np.testing.assert_allclose(out["tp"], 7.0)
+
+    def test_inputs(self):
+        """The wind sea and K inputs on (time, sites); K as the contribution's."""
+
+        corr = _fitted(lambda h: np.full_like(h, 1.5))
+        ws = wind_sea_inputs(_cube(), corr, _fetch())
+        self.assertEqual(ws["k"].dims, ("time", "sites"))
+        np.testing.assert_allclose(ws["hs_ws"] ** 2, ws["e_ws"], rtol=1e-6)
+        np.testing.assert_allclose(ws["hs_ws_u2"], 9.81 * ws["hs_ws"] / ws["u10"] ** 2, rtol=1e-6)
+        np.testing.assert_allclose(ws["tp_ws"], 7.0)
+        out = wind_sea_contribution(_cube(), corr, _fetch())
+        np.testing.assert_allclose(out["k"].squeeze(["goal", "partition"]), ws["k"])
+        self.assertIsNone(wind_sea_inputs(_cube(weight=0.0), corr, _fetch()))
 
     def test_no_wind_sea(self):
         """No weighted contribution: nothing to add."""

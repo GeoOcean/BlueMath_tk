@@ -297,6 +297,73 @@ def _vector_mean(direction: xr.DataArray, weight: xr.DataArray, dims: list[str])
     return np.mod(np.rad2deg(np.arctan2(s, c)), 360.0)
 
 
+def wind_sea_inputs(
+    cube: xr.Dataset,
+    correction: WindCorrection,
+    fetch: xr.Dataset,
+    wind: xr.Dataset | None = None,
+) -> xr.Dataset | None:
+    """
+    The wind sea at each site and step of one batch, the inputs of ``K`` and ``K``.
+
+    Parameters
+    ----------
+    cube, correction, fetch, wind
+        As for :func:`wind_sea_contribution`.
+
+    Returns
+    -------
+    xr.Dataset or None
+        On ``(time, sites)``: ``e_ws`` (wind-sea energy ``sum w hs^2``, m²),
+        ``hs_ws``, ``tp_ws`` and ``ws_dir`` (its Hs, energy-weighted Tp and
+        direction), ``u10`` and ``u10dir`` (wind), ``angle`` (wind - wave),
+        ``fetch``, ``mean_depth`` (along the wind) and ``depth`` (site),
+        ``hs_ws_u2`` (``g Hs_ws / U^2``) and ``k``; None if nothing in the
+        batch is wind sea.
+    """
+
+    parts = ["goal", "partition"]
+    weight = cube["ws_weight"].fillna(0.0)
+    energy = (weight * cube["hs"].fillna(0.0) ** 2).transpose("time", "sites", ...)
+    e_ws = energy.sum(parts)
+    if not bool((e_ws > 0).any()):
+        return None
+
+    with np.errstate(invalid="ignore", divide="ignore"):
+        ws_dir = _vector_mean(cube["dir"].fillna(0.0), energy, parts)
+        tp_ws = (energy * cube["tp"].fillna(0.0)).sum(parts) / e_ws
+        if wind is None:
+            u10 = (energy * cube["u10"].fillna(0.0)).sum(parts) / e_ws
+            u10dir = _vector_mean(cube["u10dir"].fillna(0.0), energy * cube["u10"].fillna(0.0), parts)
+        else:
+            u10 = wind["u10"].sel(time=cube["time"], sites=cube["sites"])
+            u10dir = wind["u10dir"].sel(time=cube["time"], sites=cube["sites"])
+        u10 = u10.fillna(0.0).transpose("time", "sites")
+        u10dir = u10dir.transpose("time", "sites")
+        hs_ws = np.sqrt(e_ws)
+
+    fetch = fetch.sel(sites=cube["sites"].values)
+    name = "fetch_eff" if "fetch_eff" in fetch else "fetch"
+    fetch_u = _fetch_along(fetch, name, u10dir)
+    depth_u = _fetch_along(fetch, "mean_depth", u10dir)
+    site_depth = fetch["site_depth"].broadcast_like(hs_ws)
+    angle = u10dir - ws_dir
+    k = correction.predict(
+        hs_ws.values, u10.values, fetch_u.values, site_depth.values, depth_u.values, angle.values
+    )
+    with np.errstate(invalid="ignore", divide="ignore"):
+        hs_ws_u2 = GRAVITY * hs_ws / u10**2
+
+    return xr.Dataset(
+        {
+            "e_ws": e_ws, "hs_ws": hs_ws, "tp_ws": tp_ws, "ws_dir": ws_dir,
+            "u10": u10, "u10dir": u10dir, "angle": angle, "fetch": fetch_u,
+            "mean_depth": depth_u, "depth": site_depth.reset_coords(drop=True), "hs_ws_u2": hs_ws_u2,
+            "k": xr.DataArray(k, dims=hs_ws.dims, coords=hs_ws.coords),
+        }
+    )
+
+
 def wind_sea_contribution(
     cube: xr.Dataset,
     correction: WindCorrection,
@@ -340,47 +407,20 @@ def wind_sea_contribution(
         if nothing in the batch is wind sea.
     """
 
-    parts = ["goal", "partition"]
-    weight = cube["ws_weight"].fillna(0.0)
-    energy = (weight * cube["hs"].fillna(0.0) ** 2).transpose("time", "sites", ...)
-    e_ws = energy.sum(parts)
-    if not bool((e_ws > 0).any()):
+    ws = wind_sea_inputs(cube, correction, fetch, wind)
+    if ws is None:
         return None
-
-    with np.errstate(invalid="ignore", divide="ignore"):
-        ws_dir = _vector_mean(cube["dir"].fillna(0.0), energy, parts)
-        if wind is None:
-            u10 = (energy * cube["u10"].fillna(0.0)).sum(parts) / e_ws
-            u10dir = _vector_mean(cube["u10dir"].fillna(0.0), energy * cube["u10"].fillna(0.0), parts)
-        else:
-            u10 = wind["u10"].sel(time=cube["time"], sites=cube["sites"])
-            u10dir = wind["u10dir"].sel(time=cube["time"], sites=cube["sites"])
-        u10 = u10.fillna(0.0).transpose("time", "sites")
-        u10dir = u10dir.transpose("time", "sites")
-        hs_ws = np.sqrt(e_ws)
-
-    fetch = fetch.sel(sites=cube["sites"].values)
-    name = "fetch_eff" if "fetch_eff" in fetch else "fetch"
-    fetch_u = _fetch_along(fetch, name, u10dir)
-    depth_u = _fetch_along(fetch, "mean_depth", u10dir)
-    site_depth = fetch["site_depth"].broadcast_like(hs_ws)
-    angle = u10dir - ws_dir
-    k = correction.predict(
-        hs_ws.values, u10.values, fetch_u.values, site_depth.values, depth_u.values, angle.values
-    )
-    k = xr.DataArray(k, dims=hs_ws.dims, coords=hs_ws.coords)
-    hs_add = np.sqrt(np.clip(k**2 - 1.0, 0.0, None) * e_ws)
+    hs_add = np.sqrt(np.clip(ws["k"] ** 2 - 1.0, 0.0, None) * ws["e_ws"])
 
     if tp == "growth":
         from ..wind import equivalent_fetch, growth_tp
 
         with np.errstate(invalid="ignore", divide="ignore"):
-            grown = equivalent_fetch(hs_ws.values, u10.values) + fetch_u.values
-            tp_add = growth_tp(u10.values, np.where(np.isfinite(grown), grown, 1e12), depth_u.values)
-        tp_add = xr.DataArray(tp_add, dims=hs_ws.dims, coords=hs_ws.coords)
+            grown = equivalent_fetch(ws["hs_ws"].values, ws["u10"].values) + ws["fetch"].values
+            tp_add = growth_tp(ws["u10"].values, np.where(np.isfinite(grown), grown, 1e12), ws["mean_depth"].values)
+        tp_add = xr.DataArray(tp_add, dims=hs_add.dims, coords=hs_add.coords)
     elif tp == "wind_sea":
-        with np.errstate(invalid="ignore", divide="ignore"):
-            tp_add = (energy * cube["tp"].fillna(0.0)).sum(parts) / e_ws
+        tp_add = ws["tp_ws"]
     else:
         raise ValueError(f"tp must be 'wind_sea' or 'growth', got {tp!r}")
 
@@ -389,9 +429,9 @@ def wind_sea_contribution(
         {
             "hs": hs_add.where(keep),
             "tp": tp_add.where(keep),
-            "dir": u10dir.where(keep),
+            "dir": ws["u10dir"].where(keep),
             "spr": xr.full_like(hs_add, float(spr)).where(keep),
-            "k": k,
+            "k": ws["k"],
         }
     )
 

@@ -83,6 +83,53 @@ class TestHyWavesPlots(unittest.TestCase):
         )
         self.assertEqual(len(plots.plot_wind_k_comparison(df).axes), 2)
 
+    def test_peak_period_ratio(self):
+        df = pd.DataFrame({"partition": ["sea"] * 50 + ["swell"] * 50,
+                           "ratio": np.linspace(1.0, 1.3, 100)})
+        fig = plots.plot_peak_period_ratio(df, {"JONSWAP 3.3": 1.107})
+        self.assertEqual(len(fig.axes), 2)
+
+    def test_wind_case_comparison(self):
+        rng = np.random.default_rng(0)
+        hs0 = rng.uniform(0.5, 3.0, (2, 30))
+        case = {"hs": [3.0, 5.0], "tp": [7.0, 9.0], "dir": [300.0, 200.0], "u10": [15.0, 25.0],
+                "u10dir": [320.0, 180.0], "wind_wave_angle": [20.0, -20.0], "ws_weight": [1.0, 0.6],
+                "hs_ws_u2": [0.13, 0.05]}
+        ds = xr.Dataset(
+            {"hs0": (("case", "sites"), hs0), "hs1": (("case", "sites"), hs0 * 1.2),
+             "hs_corrected": (("case", "sites"), hs0 * 1.15)},
+            coords={"case": [3, 7], "longitude": ("sites", np.linspace(3, 6, 30)),
+                    "latitude": ("sites", np.linspace(51, 53, 30)),
+                    **{k: ("case", v) for k, v in case.items()}},
+        )
+        fig = plots.plot_wind_case_comparison(ds, size=2)
+        self.assertEqual(len(fig.axes), 2 * 4 + 2 * 2)  # 4 panels + 2 colorbars per case
+
+    def test_k_response(self):
+        x = {"u10": np.linspace(1, 40, 5), "angle": np.linspace(-90, 90, 5), "hs_ws_u2": np.geomspace(0.002, 0.6, 5)}
+        ds = xr.Dataset(
+            {f"k_{name}": (("sites", name), np.full((2, 5), 1.2)) for name in x},
+            coords={"sites": ["a", "b"], **x, "depth": ("sites", [8.0, 20.0]), "fetch": ("sites", [4e4, 2e4])},
+            attrs={"wind_dir": 300.0, "hs_ws": 2.0, "u10": 15.0, "angle": 0.0},
+        )
+        fig = plots.plot_k_response(ds, {"u10": (3.0, 35.0), "hs_ws_u2": (0.004, 0.29)})
+        self.assertEqual(len(fig.axes), 3)
+
+    def test_wind_sea_event(self):
+        time = pd.date_range("2013-12-05", periods=12, freq="h")
+        ws = xr.Dataset({name: ("time", np.linspace(0.1, 2.0, 12)) for name in ("hs_ws", "u10", "hs_ws_u2", "angle", "k")},
+                        coords={"time": time})
+        hs = {"Buoy": ws["hs_ws"] * 2, "model": ws["hs_ws"] * 1.8}
+        fig = plots.plot_wind_sea_event(ws, hs, {"hs_ws_u2": (0.004, 0.29), "angle": (-60.0, 60.0)})
+        self.assertEqual(len(fig.axes), 6)  # 5 rows + the wind twin axis
+
+    def test_event_maps(self):
+        coords = {"sites": ["a", "b", "c"], "site_longitude": ("sites", [3.0, 4.0, 5.0]),
+                  "site_latitude": ("sites", [51.0, 52.0, 53.0])}
+        ref = xr.DataArray([1.0, 2.0, 3.0], dims="sites", coords=coords)
+        fig = plots.plot_event_maps(ref, {"m1": ref * 1.1, "m2": ref * 0.9}, k=ref * 0 + 1.2)
+        self.assertEqual(len(fig.axes), 4 + 3)  # 4 maps + 3 colorbars
+
 
 if __name__ == "__main__":
     unittest.main()

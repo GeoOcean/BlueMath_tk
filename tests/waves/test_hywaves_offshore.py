@@ -10,7 +10,10 @@ from bluemath_tk.waves.hywaves.offshore import (
     ERA5_TO_HYWAVES,
     EDH_KEY_VARIABLE,
     era5_at_goals,
+    jonswap_tm10_ratio,
     open_era5_waves,
+    partition_peak_periods,
+    peak_period_samples,
 )
 
 
@@ -65,6 +68,48 @@ class TestEra5AtGoals(unittest.TestCase):
             self.assertNotIn(EDH_KEY_VARIABLE, os.environ)
             with self.assertRaises(ValueError):
                 open_era5_waves()
+
+
+def _partitions(phs: list[list[float]]) -> xr.Dataset:
+    """Two goals x hours; tp = 11, ptp{i} = 10 (Tm-1,0); hs from the partitions."""
+
+    phs = np.asarray(phs, dtype=float)  # (partition, time)
+    ds = xr.Dataset({f"phs{i}": ("time", h) for i, h in enumerate(phs)})
+    ds = ds.expand_dims(goal=[1, 2])
+    ds["hs"] = np.sqrt(sum(ds[f"phs{i}"] ** 2 for i in range(len(phs))))
+    ds["tp"] = xr.full_like(ds["hs"], 11.0)
+    for i in range(len(phs)):
+        ds[f"ptp{i}"] = xr.full_like(ds["hs"], 10.0)
+    return ds
+
+
+class TestPeakPeriods(unittest.TestCase):
+    """Partition mean periods (Tm-1,0) to peak periods."""
+
+    def test_jonswap_ratio(self):
+        """Pierson-Moskowitz Tm-1,0 / Tp = 0.857; narrower spectra are closer to 1."""
+
+        self.assertAlmostEqual(jonswap_tm10_ratio(1.0), 0.857, places=3)
+        self.assertGreater(jonswap_tm10_ratio(3.3), jonswap_tm10_ratio(1.0))
+
+    def test_samples_only_where_one_partition_dominates(self):
+        """Hour 0: sea dominates; hour 1: swell 1; hour 2: mixed (no sample)."""
+
+        ds = _partitions([[3.0, 0.1, 1.0], [0.1, 2.0, 1.0]])
+        samples = peak_period_samples(ds, min_fraction=0.9)
+        self.assertEqual(samples["partition"].value_counts().to_dict(), {"sea": 2, "swell": 2})
+        np.testing.assert_allclose(samples["ratio"], 1.1)
+
+    def test_conversion(self):
+        """ptp0 x sea ratio, swells x swell ratio, recorded in the attributes."""
+
+        ds = _partitions([[1.0], [1.0], [1.0]])
+        out = partition_peak_periods(ds, {"sea": 1.2, "swell": 1.1})
+        np.testing.assert_allclose(out["ptp0"], 12.0)
+        np.testing.assert_allclose(out["ptp2"], 11.0)
+        np.testing.assert_allclose(ds["ptp0"], 10.0)
+        self.assertEqual(out["ptp1"].attrs["tp_tm10_ratio"], 1.1)
+        self.assertIn("peak", out["ptp1"].attrs["long_name"].lower())
 
 
 if __name__ == "__main__":

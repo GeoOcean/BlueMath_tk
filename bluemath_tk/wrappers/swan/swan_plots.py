@@ -115,7 +115,7 @@ def load_swan_case(case_dir: str | Path, extent: Extent | None = None) -> SwanCa
     m = re.search(r"POINTS\s+'[^']*'\s+FILE\s+'([^']+)'", text)
     if m and (case_dir / m.group(1)).is_file():
         points = np.loadtxt(case_dir / m.group(1)).reshape(-1, 2)
-    m = re.search(r"TABLE\s+'[^']*'\s+\w+\s+'([^']+)'\s+([A-Z ]+)", text)
+    m = re.search(r"TABLE\s+'[^']*'\s+\w+\s+'([^']+)'\s+([A-Z0-9 ]+)", text)
     if m and (case_dir / m.group(1)).is_file():
         df = read_swan_table(str(case_dir / m.group(1)), m.group(2).split())
         table = {c: df[c].to_numpy(float) for c in df}
