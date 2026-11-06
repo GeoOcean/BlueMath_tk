@@ -14,17 +14,23 @@ This module reads ERA5 ocean waves from the Earth Data Hub zarr
 (:data:`EDH_ERA5_WAVES_URL`, hourly, 0.5 degree, 1940 onwards) at the goal
 nodes. ERA5 has no partition peak periods: ``ptp{i}`` are the partition mean
 periods (``mpww``, ``mwp1..3``, mean period Tm-1,0), shorter than the peak
-period (about Tp / 1.1 for a JONSWAP spectrum); the attributes say so. The
-three swells share the total-swell directional width (``dwps``).
+period (about Tp / 1.1 for a JONSWAP spectrum); the attributes say so.
+:func:`peak_period_samples` measures Tp / Tm-1,0 on ERA5 itself (hours one
+partition dominates, against the bulk peak period ``pp1d``) and
+:func:`partition_peak_periods` converts ``ptp{i}`` with it. The three swells
+share the total-swell directional width (``dwps``).
 """
 
 from __future__ import annotations
 
 import os
+from collections.abc import Mapping
 
 import dask
 import numpy as np
+import pandas as pd
 import xarray as xr
+from scipy.integrate import trapezoid
 
 #: Earth Data Hub (DestinE) ERA5 single-level ocean-wave variables.
 EDH_ERA5_WAVES_URL = (
@@ -174,4 +180,94 @@ def era5_at_goals(
         "the swells share the total-swell directional width (dwps)",
     }
 
+    return out
+
+
+def jonswap_tm10_ratio(gamma: float) -> float:
+    """
+    Tm-1,0 / Tp of a JONSWAP spectrum (``gamma = 1``: Pierson-Moskowitz).
+
+    Parameters
+    ----------
+    gamma : float
+        Peak enhancement factor.
+
+    Returns
+    -------
+    float
+        ``m_-1 / m_0`` in units of the peak frequency.
+    """
+
+    f = np.linspace(0.3, 20.0, 40000)  # f / fp
+    sigma = np.where(f <= 1.0, 0.07, 0.09)
+    s = f**-5 * np.exp(-1.25 * f**-4) * gamma ** np.exp(-((f - 1.0) ** 2) / (2 * sigma**2))
+    return float(trapezoid(s / f, f) / trapezoid(s, f))
+
+
+def peak_period_samples(ds: xr.Dataset, min_fraction: float = 0.9) -> pd.DataFrame:
+    """
+    Tp / Tm-1,0 at the hours one partition holds most of the energy.
+
+    There the bulk peak period ``tp`` is the peak of that partition, so
+    ``tp / ptp{i}`` measures the ratio of its peak to its mean period.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        ``hs``, ``tp`` and ``phs{i}``, ``ptp{i}`` (as :func:`era5_at_goals`).
+    min_fraction : float, optional
+        Least share of the energy ``(phs{i} / hs)²`` of the partition.
+        Default is 0.9.
+
+    Returns
+    -------
+    pd.DataFrame
+        ``partition`` (``"sea"`` for 0, ``"swell"`` for 1, 2, ...), ``ratio``
+        (Tp / Tm-1,0), one row per selected hour and goal.
+    """
+
+    parts = sorted(int(name[3:]) for name in ds.data_vars if name.startswith("phs"))
+    rows = []
+    for i in parts:
+        share = (ds[f"phs{i}"] / ds["hs"]) ** 2
+        ratio = (ds["tp"] / ds[f"ptp{i}"]).where(share >= min_fraction).values.ravel()
+        ratio = ratio[np.isfinite(ratio)]
+        rows.append(pd.DataFrame({"partition": "sea" if i == 0 else "swell", "ratio": ratio}))
+    return pd.concat(rows, ignore_index=True)
+
+
+def partition_peak_periods(ds: xr.Dataset, ratios: Mapping[str, float]) -> xr.Dataset:
+    """
+    Partition peak periods from mean periods: ``ptp{i}`` x the Tp / Tm-1,0 ratio.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        ``ptp{i}`` holding Tm-1,0 (as :func:`era5_at_goals`).
+    ratios : Mapping[str, float]
+        Tp / Tm-1,0 for ``"sea"`` (partition 0) and ``"swell"`` (1, 2, ...),
+        e.g. the medians of :func:`peak_period_samples`.
+
+    Returns
+    -------
+    xr.Dataset
+        Copy with ``ptp{i}`` peak periods; the ratio used is in each
+        variable's ``tp_tm10_ratio`` attribute.
+    """
+
+    out = ds.copy()
+    for name in [v for v in ds.data_vars if v.startswith("ptp")]:
+        kind = "sea" if name == "ptp0" else "swell"
+        out[name] = ds[name] * ratios[kind]
+        label = "wind sea" if kind == "sea" else f"swell {name[3:]}"
+        out[name].attrs = {
+            **ds[name].attrs,
+            "long_name": f"Peak wave period (Tm-1,0 x {ratios[kind]:.3f}), {label}",
+            "tp_tm10_ratio": float(ratios[kind]),
+        }
+    out.attrs["note"] = (
+        "ptp* are peak periods from the partition mean periods (Tm-1,0) "
+        f"x Tp / Tm-1,0 (sea {ratios['sea']:.3f}, swell {ratios['swell']:.3f}); "
+        "the swells share the total-swell directional width (dwps)"
+    )
     return out

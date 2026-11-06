@@ -191,8 +191,7 @@ def call_memory(
     months, sites : int
         Calendar months and sites of the call.
     parts : int
-        Contributions summed per site (goals x partitions, + 1 with the wind
-        correction).
+        Contributions summed per site (goals x partitions).
     workers : int
         Sum processes.
     save_spectra : bool, optional
@@ -295,7 +294,7 @@ def hours(site_months: int, months: int, parts: int, workers: int) -> float:
     months : int
         Calendar months they span.
     parts : int
-        Contributions per site (goals x partitions, + 1 with wind).
+        Contributions per site (goals x partitions).
     workers : int
         Sum processes.
 

@@ -12,6 +12,8 @@ from bluemath_tk.topo_bathy.mesh import (
     depth_at_points,
     mask_raster_to_mesh,
     mesh_to_raster,
+    open_boundary_nodes,
+    outline_rings,
     read_mesh,
 )
 from bluemath_tk.waves.hywaves.output_points import (
@@ -46,6 +48,38 @@ def _quad_mesh() -> Mesh:
     ]
     faces = np.r_[quads, np.c_[tris, np.full(len(tris), -1)]]
     return Mesh(x=x, y=y, faces=faces, z=z)
+
+
+class TestOpenBoundary(unittest.TestCase):
+    """Open boundary of the unit square from points on its north edge."""
+
+    def setUp(self):
+        """Build the test data."""
+
+        self.mesh = _quad_mesh()
+
+    def test_outline(self):
+        """The square has one outline ring with its 40 edge nodes."""
+
+        rings = outline_rings(self.mesh)
+        self.assertEqual([len(r) for r in rings], [40])
+
+    def test_north_edge_out_to_the_coast(self):
+        """North edge plus both laterals down to the south (coast) corners."""
+
+        for points in ([[0.2, 1.0], [0.5, 1.0], [0.8, 1.0]], [[0.8, 1.0], [0.5, 1.0], [0.2, 1.0]]):
+            nodes = open_boundary_nodes(self.mesh, np.array(points))
+            xy = np.c_[self.mesh.x[nodes], self.mesh.y[nodes]]
+            self.assertEqual(len(nodes), 31)
+            self.assertFalse(((xy[:, 1] == 0) & (xy[:, 0] > 0) & (xy[:, 0] < 1)).any())
+            ends = {tuple(xy[0]), tuple(xy[-1])}
+            self.assertEqual(ends, {(0.0, 0.0), (1.0, 0.0)})
+
+    def test_points_out_of_order(self):
+        """Points not in order along the outline are refused."""
+
+        with self.assertRaises(ValueError):
+            open_boundary_nodes(self.mesh, np.array([[0.2, 1.0], [0.8, 1.0], [0.5, 1.0], [0.6, 1.0]]))
 
 
 class TestMesh(unittest.TestCase):

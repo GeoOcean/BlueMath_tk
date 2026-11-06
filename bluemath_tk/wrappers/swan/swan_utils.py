@@ -322,6 +322,7 @@ TABLE_VARS: dict[str, str] = {
     "TPS": "tp",
     "DIR": "dir",
     "DSPR": "spr",
+    "TMM10": "tm10",
 }
 
 

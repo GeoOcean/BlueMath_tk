@@ -11,7 +11,7 @@ Figures of the HyWaves method:
   wave directions on a map (:func:`plot_goal_sectors`) and per goal
   (:func:`plot_direction_ranges`);
 - the met-ocean forcing of dynamic runs (:func:`plot_dynamic_forcing`);
-- the wind correction's K (:func:`plot_wind_k_comparison`);
+- ERA5 partition periods (:func:`plot_peak_period_ratio`);
 - the MDA-size sweep of the holdout metrics (:func:`plot_mda_sweep`).
 
 Goals are mappings ``{goal_id: {"lon", "lat", "angles": [left, right]}}``,
@@ -323,7 +323,6 @@ def plot_dynamic_forcing(
     *,
     wind: xr.Dataset | None = None,
     water_level: xr.DataArray | None = None,
-    angle_range: tuple[float, float] | None = None,
     wind_name: str | None = None,
     water_level_name: str | None = None,
     title: str = "Dynamic met-ocean forcing",
@@ -335,8 +334,7 @@ def plot_dynamic_forcing(
     vector, short where the direction keeps changing) and the wind at the
     storm hour (highest goal-mean Hs) with the goals' wave directions.
     Bottom: wind rose of the domain-mean wind; wind-wave angle at the goals
-    for hours with wind sea, with *angle_range* shaded; water-level envelope
-    over the goals.
+    for hours with wind sea; water-level envelope over the goals.
 
     Parameters
     ----------
@@ -350,8 +348,6 @@ def plot_dynamic_forcing(
         ``u10``/``v10`` on ``(time, latitude, longitude)``.
     water_level : xr.DataArray, optional
         Water level on ``(time, goal)``.
-    angle_range : tuple of float, optional
-        Wind-wave angles (deg) a wind correction was trained on.
     wind_name, water_level_name : str, optional
         Source names for the titles.
     title : str, optional
@@ -437,13 +433,7 @@ def plot_dynamic_forcing(
         angle = np.mod(w_dir - offshore["dir"].values + 180.0, 360.0) - 180.0
         sel = (weight > 0) & np.isfinite(angle) & (w_speed > 1)
         ax_angle.hist(angle[sel], bins=np.arange(-180, 181, 10), color="#4c72b0", edgecolor="white")
-        panel = "Wind − wave direction, wind-sea hours"
-        if angle_range is not None:
-            ax_angle.axvspan(*angle_range, color="#55a868", alpha=0.18, label="wind-correction training range")
-            outside = np.mean((angle[sel] < angle_range[0]) | (angle[sel] > angle_range[1])) * 100 if sel.any() else 0
-            ax_angle.legend(fontsize=8, loc="upper left")
-            panel += f" ({outside:.0f}% outside)"
-        ax_angle.set(title=panel, xlabel="angle (deg; + = wind clockwise of waves)", ylabel="goal-hours", xlim=(-180, 180))
+        ax_angle.set(title="Wind − wave direction, wind-sea hours", xlabel="angle (deg; + = wind clockwise of waves)", ylabel="goal-hours", xlim=(-180, 180))
     else:
         for ax in (ax_mean, ax_storm, ax_angle, ax_rose):
             empty(ax, "no wind forcing")
@@ -466,20 +456,19 @@ def plot_dynamic_forcing(
     return fig
 
 
-def plot_wind_k_comparison(df: pd.DataFrame, title: str = "How K is estimated") -> Figure:
+def plot_peak_period_ratio(
+    samples: pd.DataFrame, theory: Mapping[str, float], title: str = "Tp / Tm-1,0"
+) -> Figure:
     """
-    The wind correction's ``K``: fitted model and growth formulas against the runs.
-
-    Left: each estimate against the runs' ``K`` (reference, x-axis), with
-    RMSE and bias. Right: median ``K`` against how developed the wind sea
-    already is (``g Hs_ws / U^2``; 0.24 = fully developed), in bins of at
-    least 30 site-cases.
+    Measured Tp / Tm-1,0 per partition kind, against spectral shapes.
 
     Parameters
     ----------
-    df : pd.DataFrame
-        ``k_runs``, ``k_fitted``, ``k_formula_deep``, ``k_formula_depth`` and
-        ``hs_ws_u2`` per site-case.
+    samples : pd.DataFrame
+        ``partition`` and ``ratio`` (e.g. ``offshore.peak_period_samples``).
+    theory : Mapping[str, float]
+        Label -> ratio of reference spectra (e.g. JONSWAP for a few gamma),
+        drawn as vertical lines.
     title : str, optional
         Figure title.
 
@@ -488,39 +477,20 @@ def plot_wind_k_comparison(df: pd.DataFrame, title: str = "How K is estimated") 
     Figure
     """
 
-    estimates = {
-        "k_fitted": ("fitted model", "#1f77b4"),
-        "k_formula_deep": ("formula, deep water", "#ff7f0e"),
-        "k_formula_depth": ("formula, depth-limited", "#2ca02c"),
-    }
-    fig, (ax_sc, ax_bin) = plt.subplots(1, 2, figsize=(14, 6), constrained_layout=True)
+    kinds = list(dict.fromkeys(samples["partition"]))
+    fig, axes = plt.subplots(1, len(kinds), figsize=(6 * len(kinds), 4), sharey=True,
+                             constrained_layout=True, squeeze=False)
     fig.suptitle(title, fontsize=14, fontweight="bold")
-    ref = df["k_runs"].to_numpy()
-    top = float(np.nanpercentile(ref, 99.5))
-    for col, (label, color) in estimates.items():
-        est = df[col].to_numpy()
-        ok = np.isfinite(ref) & np.isfinite(est)
-        err = est[ok] - ref[ok]
-        ax_sc.scatter(ref[ok], est[ok], s=4, alpha=0.25, color=color, rasterized=True,
-                      label=f"{label}: RMSE {np.sqrt(np.mean(err**2)):.3f}, bias {np.mean(err):+.3f}")
-    ax_sc.plot([1, top], [1, top], "k--", lw=1)
-    ax_sc.set(xlim=(0.9, top), ylim=(0.9, top), xlabel="K from the runs (with / without wind)",
-              ylabel="K estimated", title=f"Held-out cases · {len(df):,} site-cases")
-    ax_sc.legend(fontsize=9, markerscale=4, loc="upper left")
-
-    bins = np.geomspace(max(float(df["hs_ws_u2"].min()), 1e-3), float(df["hs_ws_u2"].max()), 16)
-    mid = np.sqrt(bins[:-1] * bins[1:])
-    grouped = df.groupby(pd.cut(df["hs_ws_u2"], bins), observed=False)
-    enough = (grouped.size() >= 30).to_numpy()
-    medians = grouped[["k_runs", *estimates]].median()[enough]
-    ax_bin.plot(mid[enough], medians["k_runs"], "k-o", ms=4, label="runs (reference)")
-    for col, (label, color) in estimates.items():
-        ax_bin.plot(mid[enough], medians[col], "-o", ms=3, color=color, label=label)
-    ax_bin.axvline(0.24, color="0.5", ls=":", lw=1)
-    ax_bin.text(0.24, ax_bin.get_ylim()[1], " fully developed", va="top", fontsize=8, color="0.4")
-    ax_bin.set(xscale="log", xlabel="g Hs_ws / U²  (how developed the wind sea already is)",
-               ylabel="median K", title="K vs development of the wind sea")
-    ax_bin.legend(fontsize=9)
+    bins = np.linspace(0.9, 1.5, 61)
+    colors = plt.get_cmap("Greys")(np.linspace(0.4, 0.9, len(theory)))
+    for ax, kind in zip(axes[0], kinds):
+        ratio = samples.loc[samples["partition"] == kind, "ratio"]
+        ax.hist(ratio, bins=bins, density=True, color="#1f77b4", alpha=0.6)
+        ax.axvline(ratio.median(), color="#d62728", lw=2, label=f"median {ratio.median():.3f}")
+        for (label, value), color in zip(theory.items(), colors):
+            ax.axvline(value, color=color, ls="--", lw=1.2, label=f"{label} {value:.3f}")
+        ax.set(title=f"{kind} · {len(ratio):,} hours", xlabel="Tp / Tm-1,0", ylabel="density")
+        ax.legend(fontsize=9)
     return fig
 
 
@@ -531,5 +501,5 @@ __all__ = [
     "plot_dynamic_forcing",
     "plot_goal_sectors",
     "plot_mda_sweep",
-    "plot_wind_k_comparison",
+    "plot_peak_period_ratio",
 ]

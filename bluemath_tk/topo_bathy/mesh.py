@@ -10,7 +10,8 @@ formats into one :class:`Mesh` (elevation, positive up, as GEBCO):
 - ADCIRC ``fort.14`` / ``.grd`` (depth positive down in the file), used by SWAN.
 
 :func:`depth_at_points` interpolates the mesh depth linearly inside its
-triangles (NaN outside the mesh), :func:`mesh_to_raster` samples the mesh on
+triangles (NaN outside the mesh), :func:`open_boundary_nodes` finds the open
+(sea) part of the mesh outline from points on it, :func:`mesh_to_raster` samples the mesh on
 a regular grid (NaN outside), and :func:`mask_raster_to_mesh` blanks a raster
 outside the mesh, so contours traced on it stay inside the model domain.
 """
@@ -142,6 +143,133 @@ def read_mesh(path: str | Path) -> Mesh:
         return _read_adcirc(path)
 
     raise ValueError(f"Unknown mesh format: {path.name} (expected .nc, fort.14, .grd)")
+
+
+def outline_rings(mesh: Mesh) -> list[np.ndarray]:
+    """
+    Closed outlines of the mesh: node indices in order along each ring.
+
+    Parameters
+    ----------
+    mesh : Mesh
+        Model mesh.
+
+    Returns
+    -------
+    list of np.ndarray
+        One array of node indices per ring (outer boundary and islands).
+    """
+
+    tri = mesh.triangles
+    edges = np.sort(np.vstack([tri[:, [0, 1]], tri[:, [1, 2]], tri[:, [2, 0]]]), axis=1)
+    unique, counts = np.unique(edges, axis=0, return_counts=True)
+    neighbours: dict[int, list[int]] = {}
+    for a, b in unique[counts == 1]:
+        neighbours.setdefault(int(a), []).append(int(b))
+        neighbours.setdefault(int(b), []).append(int(a))
+
+    rings, seen = [], set()
+    for start in neighbours:
+        if start in seen:
+            continue
+        ring, previous, current = [start], None, start
+        seen.add(start)
+        while True:
+            following = next(n for n in neighbours[current] if n != previous)
+            if following == start or following in seen:
+                break
+            ring.append(following)
+            seen.add(following)
+            previous, current = current, following
+        rings.append(np.asarray(ring))
+
+    return rings
+
+
+def _turn_angle(xy: np.ndarray, before: int, node: int, after: int) -> float:
+    """Absolute change of direction (deg) at *node* walking before -> node -> after."""
+
+    v1, v2 = xy[node] - xy[before], xy[after] - xy[node]
+    cross = v1[0] * v2[1] - v1[1] * v2[0]
+
+    return abs(float(np.degrees(np.arctan2(cross, v1 @ v2))))
+
+
+def open_boundary_nodes(
+    mesh: Mesh, points: np.ndarray, max_turn: float = 45.0
+) -> np.ndarray:
+    """
+    Open (sea) boundary of a mesh: the outline through *points*, out to the coast.
+
+    The outline arc from the first to the last point (passing every point, in
+    order) is extended at both ends along the outline over two corners
+    sharper than *max_turn*: past the first (the end of the offshore boundary,
+    where the lateral boundary starts) and up to the second (where the
+    lateral boundary meets the coast). So the first and last points must sit
+    on the offshore boundary, at most at its corners (e.g. HyWaves goals).
+
+    Parameters
+    ----------
+    mesh : Mesh
+        Model mesh.
+    points : np.ndarray
+        ``(n, 2)`` points on the open boundary, in order along it.
+    max_turn : float, optional
+        Change of direction (deg) that ends the boundary. Default is 45.
+
+    Returns
+    -------
+    np.ndarray
+        Node indices of the open boundary, in order along it.
+
+    Raises
+    ------
+    ValueError
+        If the points are not in order along one outline.
+    """
+
+    points = np.asarray(points, dtype=float).reshape(-1, 2)
+    scale = np.cos(np.radians(np.nanmean(mesh.y))) if mesh.geographic else 1.0
+    nodes_xy = np.column_stack([mesh.x * scale, mesh.y])
+    points_xy = points * [scale, 1.0]
+
+    rings = outline_rings(mesh)
+    ring_of = np.concatenate([np.full(len(r), k) for k, r in enumerate(rings)])
+    place = np.concatenate([np.arange(len(r)) for r in rings])
+    outline_xy = nodes_xy[np.concatenate(rings)]
+    nearest = [int(np.argmin(((outline_xy - p) ** 2).sum(1))) for p in points_xy]
+    if len(set(ring_of[nearest])) != 1:
+        raise ValueError("the points are on different mesh outlines")
+    ring = rings[ring_of[nearest[0]]]
+    xy = nodes_xy[ring]
+    n = len(ring)
+    position = [int(place[i]) for i in nearest]
+
+    step = 1
+    if [(p - position[0]) % n for p in position] != sorted((p - position[0]) % n for p in position):
+        step = -1
+        if [(position[0] - p) % n for p in position] != sorted((position[0] - p) % n for p in position):
+            raise ValueError("the points are not in order along the mesh outline")
+    arc = [position[0]]
+    while arc[-1] != position[-1]:
+        arc.append((arc[-1] + step) % n)
+
+    def extend(end: int, inner: int, direction: int) -> list[int]:
+        added, previous, current, corners = [], inner, end, 0
+        while len(arc) + len(added) < n:
+            following = (current + direction) % n
+            if previous != current and _turn_angle(xy, previous, current, following) > max_turn:
+                corners += 1
+                if corners == 2:
+                    break
+            added.append(following)
+            previous, current = current, following
+        return added
+
+    head = extend(arc[0], arc[1] if len(arc) > 1 else arc[0], -step)
+    tail = extend(arc[-1], arc[-2] if len(arc) > 1 else arc[-1], step)
+
+    return ring[np.asarray(head[::-1] + arc + tail)]
 
 
 def depth_at_points(mesh: Mesh, x: np.ndarray, y: np.ndarray) -> np.ndarray:

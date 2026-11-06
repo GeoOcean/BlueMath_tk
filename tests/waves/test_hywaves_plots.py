@@ -74,14 +74,11 @@ class TestHyWavesPlots(unittest.TestCase):
         fig = plots.plot_dynamic_forcing(aoi, GOALS, offshore, water_level=level)
         self.assertEqual(len(fig.axes), 5)
 
-    def test_wind_k_comparison(self):
-        rng = np.random.default_rng(1)
-        k = 1 + rng.uniform(0, 0.5, 200)
-        df = pd.DataFrame(
-            {"k_runs": k, "k_fitted": k + 0.01, "k_formula_deep": k * 1.1,
-             "k_formula_depth": k * 1.05, "hs_ws_u2": rng.uniform(0.01, 0.3, 200)}
-        )
-        self.assertEqual(len(plots.plot_wind_k_comparison(df).axes), 2)
+    def test_peak_period_ratio(self):
+        df = pd.DataFrame({"partition": ["sea"] * 50 + ["swell"] * 50,
+                           "ratio": np.linspace(1.0, 1.3, 100)})
+        fig = plots.plot_peak_period_ratio(df, {"JONSWAP 3.3": 1.107})
+        self.assertEqual(len(fig.axes), 2)
 
 
 if __name__ == "__main__":
