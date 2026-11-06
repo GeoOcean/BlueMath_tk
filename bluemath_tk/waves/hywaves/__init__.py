@@ -21,7 +21,6 @@ from . import (
     resources,
     sectors,
     store,
-    wind_correction,
 )
 
 __all__ = [
@@ -33,5 +32,4 @@ __all__ = [
     "resources",
     "sectors",
     "store",
-    "wind_correction",
 ]

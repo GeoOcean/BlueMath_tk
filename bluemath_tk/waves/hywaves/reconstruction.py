@@ -6,9 +6,7 @@ Each goal (and spectral partition) contributes nearshore ``hs``, ``tp``,
 :func:`~bluemath_tk.waves.hywaves.metamodel.predict_fields`). Every
 contribution becomes a JONSWAP x Cartwright spectrum, the spectra are summed
 over goals and partitions, and bulk parameters are computed from the sum
-(:func:`sum_partition_spectra`). With a wind correction, one more
-contribution, the local wind sea, is added per block before the sum
-(see :mod:`.wind_correction`).
+(:func:`sum_partition_spectra`).
 
 The sum reproduces a model run forced by every goal at once only if each
 metamodel case imposes a fraction ``w(goal, point)`` of its goal's *energy*
@@ -33,7 +31,6 @@ from __future__ import annotations
 import logging
 import time
 from collections.abc import Mapping
-from typing import Any
 
 import numpy as np
 import xarray as xr
@@ -190,8 +187,8 @@ def sum_partition_spectra(
     from wavespectra.construct import construct_partition
 
     parts = cube.sel(sites=site_ids).stack(part=("goal", "partition"))
-    # contributions never predicted (e.g. a goal x partition combination
-    # created by merging, such as the wind-sea contribution) carry no energy
+    # contributions never predicted (a goal x partition combination created
+    # by merging) carry no energy
     present = parts.hs.notnull().any([d for d in parts.hs.dims if d != "part"])
     parts = parts.isel(part=np.flatnonzero(present.values))
     # float32 halves the peak array (twice the sites per batch); the relative
@@ -232,29 +229,12 @@ def sum_partition_spectra(
     return result, spectra
 
 
-def _add_wind_sea(
-    merged: xr.Dataset, wind_correction: Mapping[str, Any]
-) -> tuple[xr.Dataset, xr.DataArray | None]:
-    """Merge the wind-sea contribution of one site batch; also return its ``K``."""
-
-    from .wind_correction import wind_sea_contribution
-
-    contrib = wind_sea_contribution(merged, **wind_correction)
-    if contrib is None:
-        return merged, None
-    k = contrib["k"].squeeze(["goal", "partition"], drop=True)
-
-    return xr.merge([merged, contrib.drop_vars("k")]), k
-
-
 def _time_axis(chunks: list[xr.Dataset]) -> np.ndarray:
     return np.unique(np.concatenate([c["time"].values for c in chunks]))
 
 
-def _n_parts(chunks: list[xr.Dataset], wind_correction: Any) -> int:
-    return sum(c.sizes["goal"] * c.sizes["partition"] for c in chunks) + int(
-        wind_correction is not None
-    )
+def _n_parts(chunks: list[xr.Dataset]) -> int:
+    return sum(c.sizes["goal"] * c.sizes["partition"] for c in chunks)
 
 
 def _sum_blocks(
@@ -265,12 +245,11 @@ def _sum_blocks(
     budget_bytes: int,
     load: bool = True,
     label: str = "",
-    wind_correction: Mapping[str, Any] | None = None,
 ) -> tuple[xr.Dataset, xr.Dataset | None]:
     """Merge contribution chunks and sum them, in site x time blocks within the budget."""
 
     times = _time_axis(chunks)
-    n_sites, n_steps = batch_shape(len(times), _n_parts(chunks, wind_correction), budget_bytes)
+    n_sites, n_steps = batch_shape(len(times), _n_parts(chunks), budget_bytes)
     n_blocks = -(-len(site_ids) // n_sites) * -(-len(times) // n_steps)
     results, spectras = [], []
     t0 = time.monotonic()
@@ -284,14 +263,9 @@ def _sum_blocks(
         for j in range(0, merged.sizes["time"], n_steps):
             t_block = time.monotonic()
             block = merged.isel(time=slice(j, j + n_steps))
-            wind_k = None
-            if wind_correction is not None:
-                block, wind_k = _add_wind_sea(block, wind_correction)
             result, spectra = sum_partition_spectra(
                 block, sites, variables, save_spectra=save_spectra, load=load
             )
-            if wind_k is not None:
-                result["wind_k"] = wind_k
             site_results.append(result)
             if save_spectra and spectra is not None:
                 site_spectra.append(spectra)
@@ -361,7 +335,6 @@ def sum_partition_spectra_batched(
     save_spectra: bool = False,
     load: bool = True,
     log_file: str | None = None,
-    wind_correction: Mapping[str, Any] | None = None,
 ) -> tuple[xr.Dataset, xr.Dataset | None]:
     """
     :func:`sum_partition_spectra` over many sites and steps, in memory-sized blocks.
@@ -389,13 +362,6 @@ def sum_partition_spectra_batched(
         Load results into memory (always True in workers).
     log_file : str, optional
         Log file for worker progress messages.
-    wind_correction : mapping, optional
-        Keyword arguments of
-        :func:`~bluemath_tk.waves.hywaves.wind_correction.wind_sea_contribution`
-        (``correction``, ``fetch``, optional ``wind``, ``spr``, ``tp``): adds
-        the local wind sea per block, and ``wind_k`` (``K``, 1 where there is
-        no correction) to the bulk output. Chunks then also carry
-        ``ws_weight`` (and ``u10``, ``u10dir`` without ``wind``).
 
     Returns
     -------
@@ -405,8 +371,7 @@ def sum_partition_spectra_batched(
 
     if workers <= 1:
         return _sum_blocks(
-            chunks, site_ids, variables, save_spectra, budget_bytes, load,
-            wind_correction=wind_correction,
+            chunks, site_ids, variables, save_spectra, budget_bytes, load
         )
 
     import multiprocessing
@@ -442,7 +407,6 @@ def sum_partition_spectra_batched(
                 per_worker,
                 True,
                 f"item {k + 1}/{len(items)}",
-                wind_correction,
             )
             futures[future] = k
         for future in as_completed(futures):
