@@ -284,6 +284,8 @@ class TestSwanDynamicModelWrapper(unittest.TestCase):
             ds = wrapper.postprocess_cases()
             self.assertEqual(list(pd.DatetimeIndex(ds.time.values)), list(time))
             self.assertEqual(dict(ds.hs.sizes), {"time": 2, "points": 2})
+            self.assertTrue(all(v.dtype == np.float32 for v in ds.data_vars.values()))
+            self.assertEqual(ds.time.dtype.kind, "M")
         finally:
             shutil.rmtree(test_dir)
 

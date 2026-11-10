@@ -1586,6 +1586,11 @@ class SwanDynamicModelWrapper(SwanBoundaryModelWrapper):
     def join_postprocessed_files(
         self, postprocessed_files: list[xr.Dataset]
     ) -> xr.Dataset:
-        """Concatenate postprocessed time steps along ``time``."""
+        """
+        Concatenate postprocessed time steps along ``time``, as float32.
 
-        return xr.concat(postprocessed_files, dim="time")
+        The SWAN table holds 4 decimals, so float32 loses nothing and halves
+        the file (SnapWave writes float32 too).
+        """
+
+        return xr.concat(postprocessed_files, dim="time").astype("float32")
