@@ -12,6 +12,7 @@ SnapWave case folders contain plain-text inputs next to ``snapwave.inp``:
 
 from __future__ import annotations
 
+import logging
 import re
 from pathlib import Path
 
@@ -19,6 +20,8 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from shapely.geometry import LineString, MultiPolygon, Polygon
+
+logger = logging.getLogger(__name__)
 
 #: SnapWave history (``his_file``) variables -> short names.
 POINT_VARS: dict[str, str] = {
@@ -39,6 +42,14 @@ FORCING_FILES: dict[str, str] = {
 
 #: Bulk variables expected by :func:`boundary_time_series`.
 BOUNDARY_VARS: tuple[str, ...] = ("hs", "tp", "dir", "spr")
+
+#: Largest directional spread (deg) SnapWave can take. Its boundary spectrum is
+#: ``cos^ms`` with ``ms = 1 / σ² - 1`` (σ in rad), cut at ±90° of the direction:
+#: ``ms`` reaches 0 (a flat half circle) at σ = 57.3° and turns negative beyond,
+#: where the distribution peaks at ±90° of the wave direction. At 55° it is
+#: nearly flat (``ms`` ≈ 0.09). A broader bulk spread is a mix of seas from
+#: several directions: force their partitions instead.
+MAX_SPREAD: float = 55.0
 
 
 # ---------------------------------------------------------------------------
@@ -407,6 +418,7 @@ def boundary_time_series(
         (``hs_nodes``, ...).
     variables : tuple of str, optional
         Variables to export. Default is ``("hs", "tp", "dir", "spr")``.
+        ``spr`` is clipped at :data:`MAX_SPREAD` (with a warning).
 
     Returns
     -------
@@ -434,6 +446,14 @@ def boundary_time_series(
     else:
         forcing = forcing.sortby(node_dim)
     forcing = forcing.transpose("time", node_dim, ...)
+    if "spr" in variables:
+        broad = int((forcing["spr"] > MAX_SPREAD).sum())
+        if broad:
+            logger.warning(
+                "spr above %.0f deg (SnapWave's broadest) in %d of %d values: clipped",
+                MAX_SPREAD, broad, forcing["spr"].size,
+            )
+        forcing = forcing.assign(spr=forcing["spr"].clip(max=MAX_SPREAD))
     out: dict[str, list] = {
         f"{var}_{key_suffix}": forcing[var].values.tolist() for var in variables
     }

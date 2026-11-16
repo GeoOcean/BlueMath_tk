@@ -1,4 +1,5 @@
 import os
+import tempfile
 import unittest
 from unittest import mock
 
@@ -9,11 +10,14 @@ import xarray as xr
 from bluemath_tk.waves.hywaves.offshore import (
     ERA5_TO_HYWAVES,
     EDH_KEY_VARIABLE,
+    clean_peak_periods,
+    codec_at_goals,
     era5_at_goals,
     jonswap_tm10_ratio,
     open_era5_waves,
     partition_peak_periods,
     peak_period_samples,
+    scale_partitions_to_bulk,
 )
 
 
@@ -111,6 +115,70 @@ class TestPeakPeriods(unittest.TestCase):
         self.assertEqual(out["ptp1"].attrs["tp_tm10_ratio"], 1.1)
         self.assertIn("peak", out["ptp1"].attrs["long_name"].lower())
 
+
+
+class TestCleanPeakPeriods(unittest.TestCase):
+    def test_bulk_replaced_by_largest_partition(self):
+        time = pd.date_range("2000-01-01", periods=3, freq="h")
+        dims = ("time", "goal")
+        ds = xr.Dataset(
+            {
+                "hs": (dims, [[1.0], [1.0], [1.0]]),
+                "tp": (dims, [[10.0], [250.0], [np.nan]]),
+                "phs0": (dims, [[0.5], [0.3], [0.9]]),
+                "ptp0": (dims, [[5.0], [6.0], [7.0]]),
+                "phs1": (dims, [[0.8], [0.9], [0.1]]),
+                "ptp1": (dims, [[12.0], [14.0], [30.0]]),
+            },
+            coords={"time": time, "goal": [1]},
+        )
+        out = clean_peak_periods(ds, max_tp=25.0)
+        np.testing.assert_allclose(out["tp"].values.ravel(), [10.0, 14.0, 7.0])
+        self.assertTrue(np.isnan(float(out["ptp1"][2, 0])))
+        self.assertEqual(out.attrs["tp_replaced"], 2)
+        self.assertEqual(out.attrs["ptp_removed"], 1)
+
+
+class TestScalePartitionsToBulk(unittest.TestCase):
+    def test_partition_energy_matches_bulk(self):
+        dims = ("time", "goal")
+        ds = xr.Dataset(
+            {
+                "hs": (dims, [[2.0], [1.0], [1.0]]),
+                "phs0": (dims, [[1.0], [0.0], [np.nan]]),
+                "phs1": (dims, [[1.5], [0.0], [0.6]]),
+                "pdir1": (dims, [[200.0], [10.0], [30.0]]),
+            },
+            coords={"time": pd.date_range("2000", periods=3, freq="h"), "goal": [1]},
+        )
+        out = scale_partitions_to_bulk(ds)
+        energy = out["phs0"].fillna(0.0) ** 2 + out["phs1"] ** 2
+        np.testing.assert_allclose(energy.values[[0, 2], 0], [4.0, 1.0])
+        self.assertEqual(float(out["phs1"][1, 0]), 0.0)  # no partition energy: left as is
+        self.assertAlmostEqual(float(out["phs0"][0, 0] / out["phs1"][0, 0]), 1.0 / 1.5)
+        np.testing.assert_array_equal(out["pdir1"].values, ds["pdir1"].values)
+        self.assertAlmostEqual(out.attrs["partition_energy_share"], round((3.25 + 0.36) / 5.0, 4))
+
+
+class TestCodecAtGoals(unittest.TestCase):
+    def test_monthly_files_concatenated_per_goal(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = []
+            for month in ("01", "02"):
+                time = pd.date_range(f"2010-{month}-01", periods=4, freq="h")
+                level = np.arange(4)[:, None] + 10.0 * np.arange(5)[None, :]
+                ds = xr.Dataset(
+                    {"waterlevel": (("time", "stations"), level)},
+                    coords={"time": time, "station_x_coordinate": ("stations", np.arange(5.0))},
+                )
+                paths.append(os.path.join(tmp, f"codec_{month}.nc"))
+                ds.to_netcdf(paths[-1])
+            out = codec_at_goals(paths[::-1], np.array([3, 1]), np.array([1, 2]))
+        self.assertEqual(out["waterlevel"].dims, ("time", "goal"))
+        self.assertEqual(out.sizes["time"], 8)
+        self.assertTrue(out.indexes["time"].is_monotonic_increasing)
+        np.testing.assert_allclose(out["waterlevel"].sel(goal=1).values[:4], [30, 31, 32, 33])
+        np.testing.assert_allclose(out["station_x_coordinate"].values, [3.0, 1.0])
 
 if __name__ == "__main__":
     unittest.main()

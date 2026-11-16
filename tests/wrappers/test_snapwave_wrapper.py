@@ -19,6 +19,7 @@ from shapely.geometry import Point
 from bluemath_tk.wrappers.snapwave import (
     SnapWaveDynamicModelWrapper,
     SnapWaveMetaModelWrapper,
+    MAX_SPREAD,
     boundary_time_series,
     open_boundary_enclosure,
     read_convergence,
@@ -144,7 +145,8 @@ class TestSnapWaveMetaModelWrapper(unittest.TestCase):
         self.assertIn("#SBATCH --cpus-per-task=4", script)
         self.assertIn("#SBATCH --time=10", script)
         self.assertIn("module load snapwave", script)
-        self.assertIn('sed -n "${SLURM_ARRAY_TASK_ID}p"', script)
+        self.assertIn("line=$((SLURM_ARRAY_TASK_ID + ${OFFSET:-0}))", script)
+        self.assertIn('sed -n "${line}p"', script)
         with open(op.join(self.wrapper.output_dir, "case_dirs.txt")) as f:
             self.assertEqual(len(f.read().splitlines()), 3)
 
@@ -231,6 +233,16 @@ class TestSnapWaveOutputOptions(unittest.TestCase):
         )
         out = boundary_time_series(forcing, node_dim="goal")
         self.assertEqual(out["hs_nodes"][0], [1.0, 2.0, 10.0])
+
+    def test_boundary_spread_clipped(self):
+        forcing = xr.Dataset(
+            {v: (("time", "goal"), [[30.0, 70.0]]) for v in ("hs", "tp", "dir", "spr")},
+            coords={"time": pd.date_range("2020", periods=1), "goal": [1, 2]},
+        )
+        with self.assertLogs("bluemath_tk.wrappers.snapwave.snapwave_utils", level="WARNING"):
+            out = boundary_time_series(forcing, node_dim="goal")
+        self.assertEqual(out["spr_nodes"][0], [30.0, MAX_SPREAD])
+        self.assertEqual(out["hs_nodes"][0], [30.0, 70.0])
 
 
 class TestSnapWaveDynamic(unittest.TestCase):

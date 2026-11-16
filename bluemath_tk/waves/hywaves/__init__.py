@@ -13,6 +13,7 @@ contributions.
 """
 
 from . import (
+    depth_cap,
     metamodel,
     offshore,
     output_points,
@@ -24,6 +25,7 @@ from . import (
 )
 
 __all__ = [
+    "depth_cap",
     "metamodel",
     "offshore",
     "output_points",

@@ -27,6 +27,7 @@ from typing import Any
 
 import geopandas as gpd
 import numpy as np
+from shapely import make_valid
 from shapely.geometry import LineString, Point, Polygon
 from shapely.prepared import prep
 
@@ -219,8 +220,8 @@ def build_ring(
 
     aoi_xy = aoi.to_crs(work_crs)
     land_xy = land.to_crs(work_crs)
-    aoi_union = aoi_xy.union_all()
-    land_union = land_xy.union_all()
+    aoi_union = make_valid(aoi_xy.union_all())
+    land_union = make_valid(land_xy.make_valid().union_all())
     ring = aoi_union.difference(aoi_union.buffer(-buffer_distance_m)).difference(
         land_union
     )

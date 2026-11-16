@@ -196,7 +196,10 @@ def _turn_angle(xy: np.ndarray, before: int, node: int, after: int) -> float:
 
 
 def open_boundary_nodes(
-    mesh: Mesh, points: np.ndarray, max_turn: float = 45.0
+    mesh: Mesh,
+    points: np.ndarray,
+    max_turn: float = 45.0,
+    coast_depth: float | None = None,
 ) -> np.ndarray:
     """
     Open (sea) boundary of a mesh: the outline through *points*, out to the coast.
@@ -208,6 +211,11 @@ def open_boundary_nodes(
     lateral boundary meets the coast). So the first and last points must sit
     on the offshore boundary, at most at its corners (e.g. HyWaves goals).
 
+    With *coast_depth* the ends are instead extended to the coast: up to the
+    last outline node deeper than *coast_depth*. Use it when the points also
+    sit on the lateral boundaries, or when the outline is too irregular for
+    the corner rule (fine meshes built elsewhere).
+
     Parameters
     ----------
     mesh : Mesh
@@ -216,6 +224,9 @@ def open_boundary_nodes(
         ``(n, 2)`` points on the open boundary, in order along it.
     max_turn : float, optional
         Change of direction (deg) that ends the boundary. Default is 45.
+    coast_depth : float, optional
+        Depth (m, positive down) at which the boundary ends, replacing the
+        corner rule. Default is None (corner rule).
 
     Returns
     -------
@@ -254,11 +265,16 @@ def open_boundary_nodes(
     while arc[-1] != position[-1]:
         arc.append((arc[-1] + step) % n)
 
+    depth = mesh.depth[ring]
+
     def extend(end: int, inner: int, direction: int) -> list[int]:
         added, previous, current, corners = [], inner, end, 0
         while len(arc) + len(added) < n:
             following = (current + direction) % n
-            if previous != current and _turn_angle(xy, previous, current, following) > max_turn:
+            if coast_depth is not None:
+                if depth[following] <= coast_depth or following in taken:
+                    break
+            elif previous != current and _turn_angle(xy, previous, current, following) > max_turn:
                 corners += 1
                 if corners == 2:
                     break
@@ -266,7 +282,9 @@ def open_boundary_nodes(
             previous, current = current, following
         return added
 
+    taken = set(arc)
     head = extend(arc[0], arc[1] if len(arc) > 1 else arc[0], -step)
+    taken.update(head)
     tail = extend(arc[-1], arc[-2] if len(arc) > 1 else arc[-1], step)
 
     return ring[np.asarray(head[::-1] + arc + tail)]

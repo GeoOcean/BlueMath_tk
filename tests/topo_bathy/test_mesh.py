@@ -75,6 +75,17 @@ class TestOpenBoundary(unittest.TestCase):
             ends = {tuple(xy[0]), tuple(xy[-1])}
             self.assertEqual(ends, {(0.0, 0.0), (1.0, 0.0)})
 
+    def test_coast_depth_ends_at_the_coast(self):
+        """With coast_depth the boundary runs from the points to the last wet node each way."""
+
+        self.mesh.z = np.where(self.mesh.y == 0, 0.0, -10.0)
+        nodes = open_boundary_nodes(self.mesh, np.array([[0.0, 0.5], [0.5, 1.0], [1.0, 0.5]]), coast_depth=0.5)
+        xy = np.c_[self.mesh.x[nodes], self.mesh.y[nodes]]
+        self.assertEqual(len(nodes), len(set(nodes.tolist())))
+        self.assertEqual(len(nodes), 29)
+        self.assertTrue((xy[:, 1] > 0).all())
+        self.assertEqual({tuple(xy[0]), tuple(xy[-1])}, {(0.0, 0.1), (1.0, 0.1)})
+
     def test_points_out_of_order(self):
         """Points not in order along the outline are refused."""
 

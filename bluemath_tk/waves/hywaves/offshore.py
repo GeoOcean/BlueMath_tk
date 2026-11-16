@@ -19,6 +19,13 @@ period (about Tp / 1.1 for a JONSWAP spectrum); the attributes say so.
 partition dominates, against the bulk peak period ``pp1d``) and
 :func:`partition_peak_periods` converts ``ptp{i}`` with it. The three swells
 share the total-swell directional width (``dwps``).
+
+:func:`clean_peak_periods` replaces spurious bulk peak periods (``1 / fp``
+below the model frequency grid) by the period of the largest partition, and
+:func:`scale_partitions_to_bulk` gives the partitions the energy they miss. The
+met-ocean forcing of the dynamic runs comes from :func:`codec_at_goals`
+(CODEC / GTSM water level at one station per goal) and :func:`era5_wind`
+(ERA5 10 m wind over the case box, Earth Data Hub).
 """
 
 from __future__ import annotations
@@ -271,3 +278,170 @@ def partition_peak_periods(ds: xr.Dataset, ratios: Mapping[str, float]) -> xr.Da
         "the swells share the total-swell directional width (dwps)"
     )
     return out
+
+
+def clean_peak_periods(ds: xr.Dataset, max_tp: float = 25.0) -> xr.Dataset:
+    """
+    Replace spurious bulk peak periods by the period of the largest partition.
+
+    A bulk ``tp`` taken as ``1 / fp`` explodes when the spectral peak falls
+    below the model's frequency grid (WHACS has hours with Tp of 50-250 s).
+    Bulk ``tp`` above *max_tp* (or missing) takes the ``ptp{i}`` of the most
+    energetic partition at that hour, if that one is valid; otherwise NaN.
+    Partition periods above *max_tp* become NaN.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        ``hs``, ``tp`` and ``phs{i}``, ``ptp{i}`` on ``(time, goal)``.
+    max_tp : float, optional
+        Largest valid peak period (s). Default 25.
+
+    Returns
+    -------
+    xr.Dataset
+        Copy with clean periods; the counts replaced are in the attributes
+        ``tp_replaced`` and ``ptp_removed``.
+    """
+
+    out = ds.copy()
+    parts = sorted(int(name[3:]) for name in ds.data_vars if name.startswith("ptp"))
+    removed = 0
+    for i in parts:
+        bad = ds[f"ptp{i}"] > max_tp
+        removed += int(bad.sum())
+        out[f"ptp{i}"] = ds[f"ptp{i}"].where(~bad)
+    if parts:
+        energy = xr.concat([out[f"phs{i}"].fillna(0.0) for i in parts], dim="partition")
+        periods = xr.concat([out[f"ptp{i}"] for i in parts], dim="partition")
+        largest = periods.isel(partition=energy.argmax("partition"))
+    else:
+        largest = xr.full_like(ds["tp"], np.nan)
+    bad = ~(ds["tp"] <= max_tp)
+    out["tp"] = ds["tp"].where(~bad, largest).where(lambda t: t <= max_tp)
+    out["tp"].attrs = {**ds["tp"].attrs, "max_tp": max_tp}
+    out.attrs = {**ds.attrs, "tp_replaced": int(bad.sum()), "ptp_removed": removed}
+    return out
+
+
+def scale_partitions_to_bulk(ds: xr.Dataset) -> xr.Dataset:
+    """
+    Scale the partition heights so that their energies add up to the bulk energy.
+
+    A hindcast's partitions can miss part of the spectrum (energy left out of
+    every partition, e.g. ~9 % in WHACS around Samoa), so a sum of the
+    partition contributions starts low. Each ``phs{i}`` of an hour is scaled
+    by ``sqrt(hs² / Σ phs{i}²)``, which hands the missing energy to the
+    partitions in proportion to theirs; periods, directions and spreads are
+    kept. Hours without partition energy are left as they are.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        ``hs`` and ``phs{i}`` on ``(time, goal)``.
+
+    Returns
+    -------
+    xr.Dataset
+        Copy with scaled ``phs{i}``; the attribute ``partition_energy_share``
+        keeps the share of the bulk energy the partitions held before.
+    """
+
+    parts = sorted(int(name[3:]) for name in ds.data_vars if name.startswith("phs"))
+    out = ds.copy()
+    if not parts:
+        return out
+    energy = sum(ds[f"phs{i}"].fillna(0.0) ** 2 for i in parts)
+    factor = np.sqrt(ds["hs"] ** 2 / energy.where(energy > 0)).fillna(1.0)
+    for i in parts:
+        out[f"phs{i}"] = (ds[f"phs{i}"] * factor).assign_attrs(ds[f"phs{i}"].attrs)
+    share = float(energy.sum() / (ds["hs"] ** 2).where(energy > 0).sum())
+    out.attrs = {**ds.attrs, "partition_energy_share": round(share, 4)}
+    return out
+
+
+def codec_at_goals(
+    paths: list[str], stations: np.ndarray, goals: np.ndarray, variable: str = "waterlevel"
+) -> xr.Dataset:
+    """
+    CODEC (GTSM reanalysis) water level of one station per goal, on ``(time, goal)``.
+
+    Parameters
+    ----------
+    paths : list of str
+        Monthly CODEC netCDF files (``stations`` dimension), any order.
+    stations : np.ndarray
+        Station index (position along ``stations``) of each goal.
+    goals : np.ndarray
+        Goal ids (the ``goal`` coordinate).
+    variable : str, optional
+        ``"waterlevel"`` (total, tide + surge) or ``"surge"``. Default
+        ``"waterlevel"``.
+
+    Returns
+    -------
+    xr.Dataset
+        *variable* (m, relative to mean sea level) on ``(time, goal)`` with
+        the station of each goal as ``stations``,
+        ``station_x_coordinate``, ``station_y_coordinate``.
+    """
+
+    index = xr.DataArray(np.asarray(stations, dtype=int), dims="goal")
+    months = []
+    for path in sorted(paths):
+        with xr.open_dataset(path) as ds:
+            months.append(ds[[variable]].isel(stations=index).load())
+    out = xr.concat(months, dim="time").assign_coords(goal=np.asarray(goals))
+    out[variable].attrs = {**out[variable].attrs, "units": "m"}
+    out.attrs = {"source": "CODEC / GTSM reanalysis (Copernicus)", "variable": variable}
+    return out
+
+
+#: Earth Data Hub (DestinE) ERA5 single levels (atmosphere: u10, v10, msl, ...).
+EDH_ERA5_SINGLE_LEVELS_URL = (
+    "https://data.earthdatahub.destine.eu/era5/reanalysis-era5-single-levels-v0.zarr"
+)
+
+
+def era5_wind(
+    bounds: tuple[float, float, float, float],
+    time: slice | None = None,
+    key: str | None = None,
+    num_workers: int = 8,
+) -> xr.Dataset:
+    """
+    ERA5 10 m wind over a box, from Earth Data Hub, loaded.
+
+    Parameters
+    ----------
+    bounds : tuple of float
+        ``(west, south, east, north)`` in degrees (longitudes -180..180 or 0..360).
+    time : slice, optional
+        Time window. Default: everything (1940 onwards).
+    key : str, optional
+        Earth Data Hub key (default ``EDH_API_KEY``, see :func:`open_era5_waves`).
+    num_workers : int, optional
+        Parallel chunk reads. Default is 8.
+
+    Returns
+    -------
+    xr.Dataset
+        ``u10``, ``v10`` (m/s) on ``(time, latitude, longitude)``, latitude
+        increasing, longitudes -180..180.
+    """
+
+    ds = open_era5_waves(key=key, url=EDH_ERA5_SINGLE_LEVELS_URL)[["u10", "v10"]]
+    west, south, east, north = (float(b) for b in bounds)
+    ds = ds.sel(
+        longitude=slice(west % 360.0, east % 360.0), latitude=slice(north, south)
+    )
+    if time is not None:
+        ds = ds.sel(valid_time=time)
+    with dask.config.set(scheduler="threads", num_workers=num_workers):
+        ds = ds.compute()
+    ds = ds.rename(valid_time="time").sortby("latitude")
+    ds = ds.assign_coords(longitude=((ds["longitude"] + 180.0) % 360.0) - 180.0)
+    for name in ds.variables:
+        ds[name].encoding = {}  # the store's zarr-v2 codecs do not carry over to a new store
+    ds.attrs = {"source": "ERA5 single levels (ECMWF), via Earth Data Hub", "url": EDH_ERA5_SINGLE_LEVELS_URL}
+    return ds

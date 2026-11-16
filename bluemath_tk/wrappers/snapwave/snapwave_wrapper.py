@@ -24,6 +24,7 @@ context they receive is documented on each wrapper class.
 from __future__ import annotations
 
 import os
+import subprocess
 
 import numpy as np
 import pandas as pd
@@ -67,11 +68,54 @@ SLURM_ARRAY_TEMPLATE = """#!/bin/bash
 # default, which uses every online CPU unless told otherwise.
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
-case_dir=$(sed -n "${{SLURM_ARRAY_TASK_ID}}p" {case_dirs_file})
+# OFFSET (exported by run_cases_slurm) shifts the task id past earlier blocks
+line=$((SLURM_ARRAY_TASK_ID + ${{OFFSET:-0}}))
+case_dir=$(sed -n "${{line}}p" {case_dirs_file})
 cd "$case_dir"
 {snapwave_cmd} > wrapper_out.log 2> wrapper_error.log
 rm -f snapwave.upw
 """
+
+
+#: Largest SLURM array index on the GeoOcean cluster (MaxArraySize = 10000).
+MAX_ARRAY_INDEX = 9999
+
+
+def slurm_array_blocks(lines: np.ndarray, max_index: int = MAX_ARRAY_INDEX) -> list[tuple[int, np.ndarray]]:
+    """
+    Split 1-based case lines into SLURM array blocks below the array-size limit.
+
+    Parameters
+    ----------
+    lines : np.ndarray
+        1-based lines of ``case_dirs.txt`` to run, increasing.
+    max_index : int, optional
+        Largest array index allowed. Default :data:`MAX_ARRAY_INDEX`.
+
+    Returns
+    -------
+    list of (int, np.ndarray)
+        ``(offset, lines)`` per block; the task ids are ``lines - offset``
+        (1..max_index) and the script adds ``OFFSET`` back.
+    """
+
+    lines = np.sort(np.asarray(lines, dtype=int))
+    blocks = []
+    for b in np.unique((lines - 1) // max_index):
+        block = lines[(lines - 1) // max_index == b]
+        blocks.append((int(b * max_index), block))
+    return blocks
+
+
+def _array_spec(ids: np.ndarray) -> str:
+    """SLURM ``--array`` ranges (``1-5,8,10-12``) of increasing task ids."""
+
+    ids = np.asarray(ids, dtype=int)
+    breaks = np.flatnonzero(np.diff(ids) != 1) + 1
+    parts = []
+    for run in np.split(ids, breaks):
+        parts.append(f"{run[0]}" if run.size == 1 else f"{run[0]}-{run[-1]}")
+    return ",".join(parts)
 
 
 class SnapWaveModelWrapper(BaseModelWrapper):
@@ -410,13 +454,24 @@ class SnapWaveModelWrapper(BaseModelWrapper):
         """
 
         script = self.write_slurm_array(**script_kwargs)
-        if cases_to_run is None:
-            array = f"1-{len(self.cases_dirs)}"
-        else:
-            array = ",".join(str(int(i) + 1) for i in cases_to_run)
-        if max_parallel is not None:
-            array += f"%{int(max_parallel)}"
-        self.run_cases_bulk(launcher=f"sbatch --array={array} {script}")
+        lines = (
+            np.arange(1, len(self.cases_dirs) + 1)
+            if cases_to_run is None
+            else np.asarray(cases_to_run, dtype=int) + 1
+        )
+        previous = None
+        for offset, block in slurm_array_blocks(lines, MAX_ARRAY_INDEX):
+            array = _array_spec(block - offset)
+            if max_parallel is not None:
+                array += f"%{int(max_parallel)}"
+            command = ["sbatch", "--parsable", f"--array={array}", f"--export=ALL,OFFSET={offset}"]
+            if previous is not None:
+                command.append(f"--dependency=afterany:{previous}")
+            result = subprocess.run(
+                command + [script], cwd=self.output_dir, capture_output=True, text=True, check=True
+            )
+            previous = result.stdout.strip().split(";")[0]
+            self.logger.info(f"Submitted job {previous}: lines {block[0]}-{block[-1]} (OFFSET {offset})")
 
     def postprocess_case(
         self, case_num: int, case_dir: str, case_context: dict
