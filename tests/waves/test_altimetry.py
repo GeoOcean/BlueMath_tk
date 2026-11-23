@@ -9,6 +9,7 @@ import xarray as xr
 
 from bluemath_tk.waves.altimetry import (
     altimeter_near,
+    altimeter_near_points,
     altimeter_passes,
     collocate,
     haversine_km,
@@ -105,6 +106,19 @@ class TestAltimetry(unittest.TestCase):
         self.assertIn("sat_hs", pairs)
         none = collocate(hindcast.isel(time=slice(0, 5)), passes, max_time_diff="30min")
         self.assertTrue(none.empty)
+
+    def test_near_points_matches_one_point_reads(self):
+        """Several points read once give each point what a one-point read gives."""
+
+        lons, lats = [4.0, 3.92, 0.0], [53.5, 53.52, 10.0]
+        obs = altimeter_near_points(self.ds, lons, lats, radius_km=20, min_depth=10)
+        for i, (x, y) in enumerate(zip(lons, lats)):
+            one = altimeter_near(self.ds, x, y, radius_km=20, min_depth=10)
+            mine = obs[obs["point"] == i].drop(columns="point").reset_index(drop=True)
+            pd.testing.assert_frame_equal(mine, one, check_dtype=False)
+        self.assertEqual(int((obs["point"] == 2).sum()), 0)  # a point with no cell data
+        shared = obs.groupby(["time", "hs"]).size()
+        self.assertGreater(int((shared > 1).sum()), 0)  # obs near both points counted twice
 
     def test_haversine(self):
         """One degree of latitude is ~111 km."""

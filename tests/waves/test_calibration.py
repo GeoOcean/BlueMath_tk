@@ -146,6 +146,18 @@ class TestQuantileMapping(unittest.TestCase):
         with self.assertRaises(ValueError):
             QuantileMapping().fit(np.ones(1000), np.ones(1000))
 
+    def test_tail_quantile_for(self):
+        """The tail quantile keeps min_tail_samples pairs above it and is fittable."""
+
+        self.assertEqual(QuantileMapping.tail_quantile_for(20000), 0.999)
+        quantile = QuantileMapping.tail_quantile_for(816)
+        self.assertAlmostEqual(quantile, 1 - 5 / 816)
+        rng = np.random.default_rng(1)
+        hs = rng.weibull(1.3, 816)
+        QuantileMapping(tail_quantile=quantile).fit(hs, hs * 1.1)
+        with self.assertRaises(ValueError):
+            QuantileMapping.tail_quantile_for(400)
+
     def test_quantiles_and_plot(self):
         """Diagnostics on the fitted pairs; the samples are not saved with the model."""
 

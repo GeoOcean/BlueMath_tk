@@ -42,6 +42,7 @@ comparison or fit.
 from __future__ import annotations
 
 import numpy as np
+from numpy.typing import ArrayLike
 import pandas as pd
 import xarray as xr
 
@@ -169,27 +170,31 @@ def _cells_around(lon: float, lat: float, radius_km: float) -> list[tuple[int, i
     return [(la, lo) for la in lats for lo in sorted(lons)]
 
 
-def altimeter_near(
+def altimeter_near_points(
     ds: xr.Dataset,
-    lon: float,
-    lat: float,
+    lon: ArrayLike,
+    lat: ArrayLike,
     radius_km: float = 50.0,
     *,
     time: slice | None = None,
-    flags: tuple[int, ...] = (1, 2),
+    flags: tuple[int, ...] | None = (1, 2),
     min_depth: float | None = None,
     min_dist2coast: float | None = None,
     variables: tuple[str, ...] | None = None,
 ) -> pd.DataFrame:
     """
-    Altimeter (or SWOT KaRIn) observations within *radius_km* of a point.
+    Altimeter (or SWOT KaRIn) observations within *radius_km* of several points.
+
+    The 1-degree cells around all the points are read once, so many nearby
+    points (e.g. every hindcast node of an area) cost about one read. An
+    observation near two points appears once for each.
 
     Parameters
     ----------
     ds : xr.Dataset
         Output of :func:`open_altimeter`.
-    lon, lat : float
-        Point (degrees; longitude in -180..180 or 0..360).
+    lon, lat : array_like
+        Points (degrees; longitude in -180..180 or 0..360).
     radius_km : float, optional
         Search radius. Default is 50 km.
     time : slice, optional
@@ -211,22 +216,26 @@ def altimeter_near(
     Returns
     -------
     pd.DataFrame
-        One row per observation, with ``lon`` (-180..180) and ``distance_km``
-        to the point, sorted by time.
+        One row per observation and point within the radius, with ``lon``
+        (-180..180), ``point`` (position in *lon* / *lat*) and
+        ``distance_km`` to that point, sorted by point and time.
     """
 
+    lon = np.atleast_1d(np.asarray(lon, dtype=float))
+    lat = np.atleast_1d(np.asarray(lat, dtype=float))
     swot = is_swot(ds)
     if variables is None:
         variables = SWOT_VARIABLES if swot else ALTIMETER_VARIABLES
     present = [v for v in variables if v in ds.variables]
+    cells = sorted({c for x, y in zip(lon, lat) for c in _cells_around(x, y, radius_km)})
     chunks = [
         ds[present].isel(obs=part)
-        for la, lo in _cells_around(lon, lat, radius_km)
+        for la, lo in cells
         for part in _cell_slices(ds, la, lo, time)
     ]
     columns = [SWOT_RENAME.get(v, v) for v in present] if swot else present
     if not chunks:
-        return pd.DataFrame(columns=[*columns, "lon", "distance_km"])
+        return pd.DataFrame(columns=[*columns, "lon", "point", "distance_km"])
 
     obs = xr.concat(chunks, dim="obs").load().to_dataframe().reset_index(drop=True)
     if swot:
@@ -234,31 +243,67 @@ def altimeter_near(
         if "swh_karin_qual" in obs:
             obs["flag"] = np.where(obs["swh_karin_qual"] == 0, 1, 4).astype("int8")
         obs["satellite"] = np.int8(0)
+    obs = obs[[*columns, *(c for c in obs if c not in columns)]]  # store order first
     obs["lon"] = (obs["longitude"] + 180.0) % 360.0 - 180.0
-    obs["distance_km"] = haversine_km(
-        obs["lon"].to_numpy(), obs["latitude"].to_numpy(), lon, lat
-    )
     if "depth" in obs:
         # a few tracks carry fill values far below any ocean depth
         obs.loc[obs["depth"] < -MAX_OCEAN_DEPTH, "depth"] = np.nan
-    keep = obs["distance_km"] <= radius_km
+    keep = np.ones(len(obs), dtype=bool)
     if flags is not None and "flag" in obs:
-        keep &= obs["flag"].isin(flags)
+        keep &= obs["flag"].isin(flags).to_numpy()
     if min_depth is not None and "depth" in obs:
-        keep &= obs["depth"] <= -abs(min_depth)
+        keep &= (obs["depth"] <= -abs(min_depth)).to_numpy()
     if min_dist2coast is not None and "dist2coast" in obs:
-        keep &= obs["dist2coast"] >= min_dist2coast
+        keep &= (obs["dist2coast"] >= min_dist2coast).to_numpy()
     if time is not None:
         t = pd.to_datetime(obs["time"])
         if time.start is not None:
-            keep &= t >= pd.Timestamp(time.start)
+            keep &= (t >= pd.Timestamp(time.start)).to_numpy()
         if time.stop is not None:
             stop = pd.Timestamp(time.stop)
             if len(str(time.stop)) <= 4:  # a bare year includes the whole year
                 stop = stop + pd.DateOffset(years=1)
-            keep &= t < stop
+            keep &= (t < stop).to_numpy()
+    obs = obs[keep].reset_index(drop=True)
 
-    return obs[keep].sort_values("time").reset_index(drop=True)
+    dlat = np.rad2deg(radius_km / EARTH_RADIUS_KM)
+    olon, olat = obs["lon"].to_numpy(), obs["latitude"].to_numpy()
+    parts = []
+    for i, (x, y) in enumerate(zip(lon, lat)):
+        near = np.flatnonzero(np.abs(olat - y) <= dlat)  # cheap band before the distance
+        distance = haversine_km(olon[near], olat[near], x, y)
+        inside = near[distance <= radius_km]
+        parts.append(
+            obs.iloc[inside].assign(point=i, distance_km=distance[distance <= radius_km])
+        )
+    out = pd.concat(parts, ignore_index=True)
+
+    return out.sort_values(["point", "time"]).reset_index(drop=True)
+
+
+def altimeter_near(
+    ds: xr.Dataset,
+    lon: float,
+    lat: float,
+    radius_km: float = 50.0,
+    **kwargs,
+) -> pd.DataFrame:
+    """
+    Altimeter (or SWOT KaRIn) observations within *radius_km* of a point.
+
+    One point of :func:`altimeter_near_points` (same keyword arguments:
+    ``time``, ``flags``, ``min_depth``, ``min_dist2coast``, ``variables``).
+
+    Returns
+    -------
+    pd.DataFrame
+        One row per observation, with ``lon`` (-180..180) and ``distance_km``
+        to the point, sorted by time.
+    """
+
+    obs = altimeter_near_points(ds, [lon], [lat], radius_km, **kwargs)
+
+    return obs.drop(columns="point").reset_index(drop=True)
 
 
 def altimeter_passes(

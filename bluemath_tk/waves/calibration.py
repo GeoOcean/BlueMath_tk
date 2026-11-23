@@ -517,6 +517,42 @@ class QuantileMapping(BlueMathModel):
         self._samples: pd.DataFrame | None = None
         self._exclude_attributes += ["_samples"]
 
+    @staticmethod
+    def tail_quantile_for(
+        n_pairs: int, max_quantile: float = 0.999, min_tail_samples: int = 5
+    ) -> float:
+        """
+        Highest tail quantile that keeps ``min_tail_samples`` pairs above it.
+
+        Parameters
+        ----------
+        n_pairs : int
+            Pairs the map will be fitted on.
+        max_quantile : float, optional
+            Upper limit. Default is 0.999.
+        min_tail_samples : int, optional
+            Pairs needed above the tail quantile. Default is 5.
+
+        Returns
+        -------
+        float
+            ``min(max_quantile, 1 - min_tail_samples / n_pairs)``.
+
+        Raises
+        ------
+        ValueError
+            If that is below 0.99 (fewer than ``100 * min_tail_samples`` pairs).
+        """
+
+        quantile = min(float(max_quantile), 1.0 - min_tail_samples / max(int(n_pairs), 1))
+        if quantile < 0.99:
+            raise ValueError(
+                f"{n_pairs} pairs: keeping {min_tail_samples} above the tail needs "
+                f"quantile {quantile:.4f} < 0.99"
+            )
+
+        return quantile
+
     def fit(self, hindcast: np.ndarray, reference: np.ndarray) -> QuantileMapping:
         """
         Fit the map on paired Hs samples.
@@ -538,7 +574,7 @@ class QuantileMapping(BlueMathModel):
         finite = np.isfinite(hindcast) & np.isfinite(reference)
         hindcast, reference = hindcast[finite], reference[finite]
         tail_samples = hindcast.size * (1.0 - self.tail_quantile)
-        if tail_samples < self.min_tail_samples:
+        if tail_samples < self.min_tail_samples - 1e-6:
             raise ValueError(
                 f"{hindcast.size} pairs leave {tail_samples:.1f} above quantile "
                 f"{self.tail_quantile}; {self.min_tail_samples} are needed"
